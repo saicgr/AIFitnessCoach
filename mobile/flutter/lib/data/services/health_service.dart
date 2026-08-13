@@ -17,6 +17,9 @@ import '../providers/demo_health_mode_provider.dart';
 // uses), so the synced score equals the in-app Sleep screen's score. A part
 // file shares the parent library's imports, so the import lives here.
 import '../../screens/health/widgets/sleep_score.dart' show computeSleepScore;
+// `RingKind` — the capability probe in health_service_ui.dart answers
+// "can this user's sources produce THIS metric?", which is ring-shaped.
+import '../../screens/home/widgets/ring_catalog.dart';
 
 part 'health_service_part_daily_activity.dart';
 

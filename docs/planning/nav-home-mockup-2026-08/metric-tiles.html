@@ -412,6 +412,27 @@ html[data-theme="light"] .hero h2{color:var(--t1)}
 
 /* ---- the scrim that was never built: it must reach ABOVE the float band ---- */
 .navfade.v2{height:158px;background:linear-gradient(to top,var(--bg) 0%,var(--bg) 47%,color-mix(in srgb,var(--bg) 90%,transparent) 61%,color-mix(in srgb,var(--bg) 72%,transparent) 75%,color-mix(in srgb,var(--bg) 30%,transparent) 89%,transparent 100%)}
+
+/* ============ ROUND 5 — DAY-ONE VERDICT (#dayone) ============ */
+.co.bad{background:var(--rose)}
+.ann .b.bad{background:var(--rose);color:#fff}
+/* regression-only reconnect row (renders in place of a dark tile GROUP, never on day one) */
+.slim{display:flex;align-items:center;gap:11px;border:1px solid var(--warn-border);background:var(--warn-tint);border-radius:12px;padding:11px 12px}
+.slim .si{width:32px;height:32px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--warn);flex:none}
+.slim .st2{font-weight:600;font-size:12.5px;color:var(--t1)}
+.slim .ss2{font-size:10.5px;color:var(--t2);margin-top:1px}
+.slim .spill{margin-left:auto;flex:none;font-family:var(--f-cond);font-weight:700;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent-c);background:var(--accent);border-radius:99px;padding:7px 13px}
+/* research citation link line inside evcards */
+.evcard .src{font-family:var(--f-mono);font-size:10px;color:var(--t3);margin-top:10px;word-break:break-all}
+.evcard .src a{color:var(--t3)}
+
+/* ============ ROUND 6 — ONE HOME (#onehome) ============ */
+/* paused tiles (state F): data freezes in place — chart desaturates, value dims, slot never moves */
+.tile.paused .chart{opacity:.45;filter:saturate(0)}
+.tile.paused .tvv{color:var(--t2)}
+/* the one-grammar skeleton diagram */
+.skel{width:100%;max-width:1080px;margin:6px auto 10px}
+.skel svg{width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -442,6 +463,8 @@ html[data-theme="light"] .hero h2{color:var(--t1)}
     <a href="#antipatterns">Google&rsquo;s mistakes</a>
     <a href="#empty">Empty states</a>
     <a href="#firstrun">First run &amp; the ladder</a>
+    <a href="#dayone">Day-one verdict</a>
+    <a href="#onehome">One home</a>
     <a href="#cluster">Floating cluster</a>
   </nav>
 </header>
@@ -2155,6 +2178,1458 @@ html[data-theme="light"] .hero h2{color:var(--t1)}
 </section>
 
 </section>
+
+<!-- ================= ROUND 5 — THE DAY-ONE VERDICT ================= -->
+<section class="wide" id="dayone">
+  <span class="seckick">Round 5 &middot; the question underneath</span>
+  <h2>Stop designing<br>the <em>absence</em></h2>
+  <div class="rsub">This surface has now been restyled five times &mdash; 4-cell strip, Connect card, collapse, six ghost tiles, one consolidated panel &mdash; and every iteration kept the same premise: <b>Home must say something about metrics that do not exist yet.</b> That premise is the defect. A first-time user opens Home asking one question &mdash; <b>what do I do now?</b> &mdash; and the panel answers a different one: <i>here is an essay about what this area will eventually contain.</i> The verdict below is a render rule, not a layout: <b>a tile mounts when it has at least one real sample; a section mounts when it has at least one tile; nothing on Home ever renders its own absence.</b> On day one the rule yields two live tiles (Water and Weight are in-app metrics and already carry real values), the connect step becomes one ranked row in the coach&rsquo;s to-do list &mdash; the surface whose entire job is &ldquo;what should I do next&rdquo; &mdash; and the sections that have real content on day one own the first screen. This also deletes round 4&rsquo;s &ldquo;&ge;3 actionable dark&rdquo; counting rule outright: the only state that ever fired it can no longer occur.</div>
+</section>
+
+<section class="stage" style="padding-top:6px">
+
+<!-- ─────────── FRAME 1 — DAY ONE, RECOMMENDED ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">Day one &mdash; <em>recommended</em></div>
+    <div class="sub">Fresh account, Health not connected. My Metrics renders its two live tiles and nothing else. Coach and workout hero own the first screen.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Mon, Aug 10</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <!-- the whole day-one section: two live tiles, nothing dashed, no panel -->
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <div class="tile md">
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">0<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz today</span>
+          </div>
+        </div>
+        <div class="tile md">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>No baseline yet</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach sec">
+        <span class="co">2</span>
+        <span class="co co-r" style="top:172px;right:-6px">3</span>
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Good to see you, Jordan.</h3>
+        <div class="cs">Two minutes of setup and today has a plan&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Finish your setup</div><div class="ts">3 questions &middot; builds your week</div></div><span class="pillbtn">Continue</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Connect Apple Health</div><div class="ts">Steps, sleep &amp; readiness auto-fill</div></div><span class="pillbtn">Connect</span></div>
+      </div>
+
+      <div class="sec" style="margin-top:16px">
+      <span class="co" style="top:-6px;z-index:9">4</span>
+      <div class="hero" style="margin:0;height:240px">
+        <svg class="sil" width="114" height="152" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Start here</div>
+          <h2>Build your<br>first week</h2>
+          <div class="meta">2 minutes &middot; 6 questions left</div>
+          <div class="start">Finish setup <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+      </div>
+
+      <div class="quick">
+        <div class="qa"><span class="tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3s6 7.2 6 11.3a6 6 0 1 1-12 0C6 10.2 12 3 12 3z"/></svg></span><span class="ql">Water</span></div>
+        <div class="qa"><span class="tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg></span><span class="ql">Meal</span></div>
+        <div class="qa"><span class="tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20v-8M12 20V6M19 20v-10"/></svg></span><span class="ql">Weight</span></div>
+        <div class="qa"><span class="tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M4 12h16"/></svg></span><span class="ql">Scan</span></div>
+        <div class="qa"><span class="tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13.5" r="7"/><path d="M12 13.5V9.8M10 2.5h4"/></svg></span><span class="ql">Timer</span></div>
+        <div class="qa more"><span class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span><span class="ql">More</span></div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">7:02 AM</span><span class="nd"></span><span class="tx"><b>Account created</b> &middot; welcome aboard</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">What renders, and why</div>
+    <div class="ann"><span class="b">1</span><p><b>Two tiles, both real.</b> Water is a goal with a zero &mdash; that is content (0 of 85 oz is today&rsquo;s actual state), not absence. Weight came from onboarding. Nothing is dashed, nothing says &ldquo;waiting&rdquo;, and the header + pencil are now honest: there is a real, if small, grid to edit. The section earns its slot with what it has.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>Setup lives in the ranked list that already exists.</b> On every other day the coach card&rsquo;s job is &ldquo;what should I do next&rdquo; &mdash; day one is no different. The panel&rsquo;s two competing CTAs become positions 1 and 2 of one list: <b>Finish setup outranks Connect Health</b> because it creates the plan, the hero and the Today Score; Health only decorates them.</p></div>
+    <div class="ann"><span class="b">3</span><p><b>Connect is a to-do, not an architecture lecture.</b> One line of benefit copy (&ldquo;fill in on their own&rdquo;), one pill. &ldquo;Nothing is estimated for you&rdquo; is deleted &mdash; it reassured against a suspicion no new user has. The task recurs in the coach&rsquo;s ranked list until done or explicitly dismissed, so discoverability does not depend on a billboard.</p></div>
+    <div class="ann"><span class="b">4</span><p><b>The setup CTA is on the first screen &mdash; and the setup hero is 240 pt, not 316.</b> Header &rarr; two tiles &rarr; coach &rarr; hero headline all land inside the first viewport (in the panel build the hero began at ~1,080 pt). The hero sheds height for the same reason the ghosts died: 316 pt exists to hold program art, and there is no program yet. It grows to full height the day a real workout fills it.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>The deck follows the same rule.</b> A 0-of-5 ring over 0 volume &middot; 0:00 &middot; 0 PRs is the six-ghost-tiles defect wearing gamification clothes, so the score/streak deck <b>mounts after the first completed workout</b> gives it one real number. (A 1-day login streak is not worth 200 pt of zeros.)</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>Where &ldquo;4 metrics waiting&rdquo; went.</b> Three surfaces, none in Home&rsquo;s prime slot: the coach to-do (ranked, recurring), the pencil&rsquo;s add-tile sheet (Steps / Sleep / Ready listed with a Connect gate &mdash; the customiser doubles as the catalogue), and the Health tab, which is the destination screen that <em>deserves</em> a rich connect state.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── FRAME 2 — DAY ONE, AS SHIPPED (REJECTED) ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">Day one &mdash; <em>as shipped</em></div>
+    <div class="sub">The round-4 panel, unchanged, for honest comparison. Rose callouts mark where a first-time user bounces off.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Mon, Aug 10</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead sec">
+        <span class="co bad co-r" style="top:-2px;right:-8px">1</span>
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="setup sec">
+        <span class="co bad">2</span>
+        <span class="co bad co-r" style="top:126px">3</span>
+        <span class="co bad" style="top:auto;bottom:-6px;left:-6px">4</span>
+        <span class="sk"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/></svg>4 metrics waiting</span>
+        <h4>Your grid fills itself in.</h4>
+
+        <div class="sgrp">
+          <div class="chips">
+            <span class="mchip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 19v-5M12 19V7M19 19v-8"/></svg>Steps</span>
+            <span class="mchip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.2 14.2A8.2 8.2 0 1 1 9.8 3.8a7 7 0 0 0 10.4 10.4z"/></svg>Sleep</span>
+            <span class="mchip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 20S4.8 15.5 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9C19.2 15.5 12 20 12 20z"/></svg>Ready</span>
+          </div>
+          <div class="sb">Apple Health fills these in automatically.</div>
+          <div class="sbtn">Connect Apple Health <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+
+        <div class="sgrp">
+          <div class="chips">
+            <span class="mchip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg>Today Score</span>
+          </div>
+          <div class="srow">
+            <div class="sb">Starts the day your plan does.</div>
+            <span class="slink">Finish setup <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          </div>
+        </div>
+
+        <div class="sfoot">Nothing is estimated for you.</div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="tiles" style="margin-bottom:16px">
+        <div class="tile md">
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">0<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz today</span>
+          </div>
+        </div>
+        <div class="tile md">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>No baseline yet</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach sec">
+        <span class="co bad">5</span>
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Good to see you, Jordan.</h3>
+        <div class="cs">Two minutes of setup and today has a plan&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Finish your setup</div><div class="ts">3 questions left</div></div><span class="pillbtn">Continue</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Stay hydrated</div><div class="ts">0 / 85 oz</div></div><span class="pillbtn">Log water</span></div>
+      </div>
+
+      <div class="deck">
+        <div class="deck-top">
+          <div class="dring">
+            <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+              <circle cx="44" cy="44" r="41" stroke="currentColor" stroke-width="2" stroke-dasharray="1.5 5.2" opacity=".35" style="color:var(--t3)"/>
+              <circle cx="44" cy="44" r="33" stroke="currentColor" stroke-width="5" style="color:var(--hairS)"/>
+            </svg>
+            <span class="rc"><span class="rv">0</span><span class="rl">Of 5</span></span>
+          </div>
+          <div class="deck-streak">
+            <div class="l">Login Streak</div>
+            <div class="v">1</div>
+            <div class="days">day</div>
+          </div>
+        </div>
+        <div class="deck-stats">
+          <div class="ds"><div class="v">0</div><div class="l">Volume Lb</div></div>
+          <div class="ds"><div class="v">0:00</div><div class="l">Time Hrs</div></div>
+          <div class="ds"><div class="v">0</div><div class="l">PRs New</div></div>
+        </div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Start here</div>
+          <h2>Build your<br>first week</h2>
+          <div class="meta">2 minutes &middot; 6 questions left</div>
+          <div class="start">Finish setup <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl" style="margin-top:16px">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">7:02 AM</span><span class="nd"></span><span class="tx"><b>Account created</b> &middot; welcome aboard</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">Where a first-time user bounces</div>
+    <div class="ann"><span class="b bad">1</span><p><b>The section title promises what the section doesn&rsquo;t hold.</b> &ldquo;MY METRICS&rdquo; + an edit pencil offer to customise a thing that has no content yet &mdash; the customiser is real, but leading with it here reads as furniture for a room with nothing in it.</p></div>
+    <div class="ann"><span class="b bad">2</span><p><b>It answers &ldquo;what is this area&rdquo;, not &ldquo;what do I do&rdquo;.</b> Nine lines of copy about the future of a UI region, in the prime slot, in internal vocabulary (&ldquo;your grid&rdquo;). The dashed chips still communicate absence &mdash; the six-ghost defect consolidated, not cured.</p></div>
+    <div class="ann"><span class="b bad">3</span><p><b>Two competing CTAs with the hierarchy inverted.</b> &ldquo;Connect Apple Health&rdquo; got the filled full-width button; &ldquo;Finish setup&rdquo; &mdash; the action that actually creates the plan, the workout and the score &mdash; got a text link. A new user is steered to the <em>decorative</em> step first, and given no stated order between the two.</p></div>
+    <div class="ann"><span class="b bad">4</span><p><b>&ldquo;Nothing is estimated for you&rdquo; reassures against a suspicion nobody had.</b> It is a correct engineering principle (and stays true in the recommended build) &mdash; but printed on the panel it reads as a disclaimer, and disclaimers make people look for the problem.</p></div>
+    <div class="ann"><span class="b bad">5</span><p><b>The cost, measured.</b> The panel + spacer + survivor tiles put the coach greeting at ~560 pt and the first workout CTA at ~1,080 pt &mdash; a screen and a half below the fold. Roughly 44% of the first viewport is spent saying &ldquo;there is nothing here yet&rdquo;, on an account whose coach, hero, quick actions and timeline all have real content.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── FRAME 3 — 48 HOURS LATER, THE PROMISE KEPT ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">48 hours later &mdash; <em>kept</em></div>
+    <div class="sub">Setup finished Monday, Health connected from the coach to-do. Wednesday the grid simply exists &mdash; baselines back-filled from Health history, deck mounted by the first workout.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Wed, Aug 12</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <span class="co co-r" style="top:150px">2</span>
+        <div class="tile lg">
+          <div class="chart"><svg viewBox="0 0 358 150" preserveAspectRatio="none" fill="none">
+            <defs><linearGradient id="gR5a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+            <path d="M266 122L310 112L352 104L358 103L358 150L266 150Z" fill="url(#gR5a)"/>
+            <path d="M266 122L310 112L352 104" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+            <circle cx="352" cy="104" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="veil"></div>
+          <div class="tb">
+            <span class="tk">Today Score</span>
+            <span class="tvv">61</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From workouts &amp; logs &mdash; 2 days of history</span>
+          </div>
+          <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+
+        <div class="tile md">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="24" x2="174" y2="24" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 30L24 27L48 31L72 25L96 28L120 22L144 19L166 16" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="166" cy="16" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Steps</span>
+            <span class="tvv">7,140</span>
+            <span class="tdev" style="color:var(--v-sup)"><i class="stdot" style="background:var(--v-sup)"></i>9% above your<br>30-day baseline</span>
+          </div>
+        </div>
+
+        <div class="tile md">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="20" x2="174" y2="20" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 22L24 25L48 19L72 26L96 21L120 24L144 18L166 19" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="166" cy="19" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Sleep</span>
+            <span class="tvv">7<small>h</small> 12<small>m</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>On your 30-day<br>baseline</span>
+          </div>
+        </div>
+
+        <div class="tile sm">
+          <div class="chart foot"><svg viewBox="0 0 112 30" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="14" x2="112" y2="14" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 17L22 13L44 16L66 13L88 15L104 14" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="104" cy="14" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Ready</span>
+            <span class="tvv">68<small>%</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>On baseline</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="chart foot"><svg viewBox="0 0 112 30" preserveAspectRatio="none" fill="none">
+            <rect x="48" y="16" width="9" height="14" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="62" y="12" width="9" height="18" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="76" y="18" width="9" height="12" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="90" y="20" width="9" height="10" rx="2" fill="var(--accent)" opacity=".85"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">24<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>No baseline yet</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach">
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Two days in, Jordan.</h3>
+        <div class="cs">Sleep held steady after your first workout&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Full Body Foundations B</div><div class="ts">7 exercises &middot; 38 min</div></div><span class="pillbtn">Start workout</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Stay hydrated</div><div class="ts">24 / 85 oz</div></div><span class="pillbtn">Log water</span></div>
+      </div>
+
+      <div class="deck sec">
+        <span class="co" style="left:-6px;top:-6px">3</span>
+        <div class="deck-top">
+          <div class="dring">
+            <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+              <circle cx="44" cy="44" r="41" stroke="currentColor" stroke-width="2" stroke-dasharray="1.5 5.2" opacity=".35" style="color:var(--t3)"/>
+              <circle cx="44" cy="44" r="33" stroke="currentColor" stroke-width="5" style="color:var(--hairS)"/>
+              <circle cx="44" cy="44" r="33" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-dasharray="41 207" transform="rotate(-90 44 44)"/>
+            </svg>
+            <span class="rc"><span class="rv">1</span><span class="rl">Of 5</span></span>
+          </div>
+          <div class="deck-streak">
+            <div class="l">Login Streak</div>
+            <div class="v">3</div>
+            <div class="days">days</div>
+          </div>
+        </div>
+        <div class="deck-stats">
+          <div class="ds"><div class="v">4,120</div><div class="l">Volume Lb</div></div>
+          <div class="ds"><div class="v">0:42</div><div class="l">Time Hrs</div></div>
+          <div class="ds"><div class="v">3</div><div class="l">PRs New</div></div>
+        </div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Strength</div>
+          <h2>Full Body<br>Foundations B</h2>
+          <div class="meta">Today &middot; Strength &middot; 38m &middot; 7 exercises</div>
+          <div class="prog"><span class="sp">&#10022;</span> Foundations 12 <span class="active">Active</span></div>
+          <div class="start">Start Workout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">6:58 AM</span><span class="nd"></span><span class="tx"><b>Woke up</b> &middot; 7h 12m in bed</span></div>
+        <div class="tlr"><span class="tt">8:40 AM</span><span class="nd"></span><span class="tx"><b>Water logged</b> &middot; 24 oz</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">The promise, kept without ever being made</div>
+    <div class="ann"><span class="b">1</span><p><b>Today Score appears the day it can be computed</b> &mdash; no ghost preceded it, so its arrival is an event, not the filling of a hole. The curve draws only the two days that exist, and the copy claims only what two days can claim. Neutral grey until a baseline is real.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>Baselines arrive with the connection.</b> Apple Health back-fills history, so Steps and Sleep claim a 30-day deviation on their first render. The recommended day-one state promised nothing &mdash; and still, one tap on the coach&rsquo;s Connect to-do delivers this within a screen refresh. Weight keeps &ldquo;no baseline yet&rdquo;: one onboarding entry is one sample, and nothing is estimated for the user &mdash; the principle survives; only the disclaimer died.</p></div>
+    <div class="ann"><span class="b">3</span><p><b>The deck mounted itself.</b> Tuesday&rsquo;s first workout gave the ring, volume, time and PRs real content, so the deck renders from Wednesday on. Same rule as the tiles, one sentence of code: <code style="font-family:var(--f-mono);font-size:11px">hasContent &rarr; build, else SizedBox.shrink()</code>.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>This converges on State C.</b> Nothing about day one leaves residue &mdash; no collapsed panel to animate away, no count rule to exit, no re-packed survivor layout to restore. The grid was never in a special state; it just had fewer tiles.</p></div>
+  </div>
+</section>
+
+</section>
+
+<!-- ===== ROUND 5 — RESEARCH & THE RULE ===== -->
+<section class="wide" style="border-top:0;padding-top:8px">
+  <span class="seckick">Round 5 &middot; what strong products do on day one</span>
+  <h2>Nobody ships a<br><em>billboard of absence</em></h2>
+  <div class="rsub">Four products that face the same problem &mdash; a data-dependent home surface on an account with no data &mdash; and one honest note on where the empty-state literature does and doesn&rsquo;t apply.</div>
+
+  <div class="apgrid">
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Precedent</span></div>
+      <div class="apt">Apple Fitness &mdash; a ring without a source is not drawn</div>
+      <p>On an iPhone with no Apple Watch, the Fitness app renders <b>only the Move ring</b> &mdash; the phone&rsquo;s own motion sensors are a real source for it. Exercise and Stand rings are simply <b>not shown</b>: no grey rings, no &ldquo;connect Apple Watch&rdquo; capsule where they would sit. The surface is sized to the data that exists, and grows when a source arrives. This is the closest analogue to the tile grid, from the platform owner itself.</p>
+      <div class="apdiv"></div>
+      <p class="src">healthdigest.com &middot; igeeksblog.com/how-to-use-fitness-app-on-iphone</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Precedent</span></div>
+      <div class="apt">WHOOP &mdash; calibration is a labeled state, never a pitch</div>
+      <p>WHOOP&rsquo;s first-30-days doc: Recovery renders <b>grey and labeled &ldquo;calibrating&rdquo;</b> for 2&ndash;3 days, personalises from day 4, and completes its baseline at 30 recoveries. The home surface never argues with the user about connecting &mdash; pairing happened in mandatory onboarding, so home only ever shows real states of a real pipeline.</p>
+      <div class="apdiv"></div>
+      <p><b>The limit of the analogy:</b> WHOOP can hard-gate at onboarding because the sensor <em>is</em> the product. Zealova&rsquo;s core &mdash; plan, coach, logging &mdash; works without Health, so a hard gate would tax the fast path. Health stays an <b>optional</b> onboarding step and a coach to-do; Home must be designed for the many who skip it.</p>
+      <div class="apdiv"></div>
+      <p class="src">support.whoop.com &middot; &ldquo;What to Expect in Your First 30 Days&rdquo;</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Precedent</span></div>
+      <div class="apt">Duolingo &mdash; activation is doing, not configuring</div>
+      <p>Duolingo&rsquo;s canonical result: moving sign-up <b>behind</b> the first lesson raised DAU ~20%. Day one shows a lesson to do &mdash; never a dashboard explaining what streaks and leagues will eventually display. The stats surfaces appear as the behaviour that feeds them happens.</p>
+      <div class="apdiv"></div>
+      <p>Zealova&rsquo;s first lesson is <b>finish setup &rarr; first workout</b> &mdash; exactly what the coach card and hero already offer. The panel put a settings essay in front of the lesson.</p>
+      <div class="apdiv"></div>
+      <p class="src">relaunch.ai/blog/duolingo-onboarding-teardown &middot; userguiding.com/blog/duolingo-onboarding-ux</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Precedent</span></div>
+      <div class="apt">Linear &mdash; the checklist pattern, which Zealova already built</div>
+      <p>Linear never shows a bare workspace: it seeds real-looking content and hands the user a short <b>task checklist</b> (create an issue, use &#8984;K, set a priority) &mdash; activation is completing the first task, and the &ldquo;onboarding&rdquo; is invisible. The industry name for this is the anti-tour.</p>
+      <div class="apdiv"></div>
+      <p>The coach card&rsquo;s To-Do list <b>is</b> this pattern, already shipped and already trusted with &ldquo;Finish your setup&rdquo;. Connect Health belongs in it as row 2 &mdash; building a second, competing checklist surface (the panel) beside it is the architectural mistake, independent of any styling.</p>
+      <div class="apdiv"></div>
+      <p class="src">candu.ai/blog/linear-onboarding-teardown &middot; supademo.com/user-flow-examples/linear</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp p">Caveat</span></div>
+      <div class="apt">The empty-state literature &mdash; read for destinations, not feed modules</div>
+      <p>&ldquo;Design the empty state; make it invoke action&rdquo; (UXPin, Smashing, Pencil&nbsp;&amp;&nbsp;Paper) is advice for <b>screens the user navigated to</b> &mdash; a Health tab opened on purpose deserves a rich connect state, and gets one. A module inside a scrolling Home competes with real content above and below it; there, the honest options are <em>render something real</em> or <em>do not render</em>.</p>
+      <div class="apdiv"></div>
+      <p>The one rule the literature states unconditionally &mdash; <b>a single primary call to action</b> &mdash; is precisely what the panel broke with &ldquo;Finish setup&rdquo; vs &ldquo;Connect Apple Health&rdquo;.</p>
+      <div class="apdiv"></div>
+      <p class="src">uxpin.com &middot; smashingmagazine.com &middot; pencilandpaper.io/articles/empty-states</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp a">Rejected</span></div>
+      <div class="apt">&ldquo;Keep a panel, radically smaller&rdquo; &mdash; the slim row, and why it lost</div>
+      <p>The strongest small-panel candidate is a single-line connect row under the two live tiles. Rendered:</p>
+      <div class="slim" style="margin:12px 0">
+        <span class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg></span>
+        <span><span class="st2">Health connection paused</span><span class="ss2" style="display:block">Steps, sleep &amp; readiness stopped Tuesday</span></span>
+        <span class="spill">Reconnect</span>
+      </div>
+      <p>On day one it still fails the test: it is chrome about absence in the metrics slot, and it is a second surface competing with the coach&rsquo;s ranked list &mdash; the two-CTA defect at smaller scale. <b>But it is exactly right for regression:</b> when a user who <em>has</em> tile history revokes Health permission, the affected tiles collapse into this one row. One cause, one row, one action &mdash; and it never appears on a virgin account.</p>
+    </div>
+  </div>
+
+  <div class="place-foot" style="margin-top:28px">The rule, exactly: <b>a tile mounts when it has &ge;1 real sample; the section mounts when it has &ge;1 tile; the deck mounts after the first completed workout; virgin absence never renders.</b> Regression is different from absence &mdash; a dark tile <em>with history</em> keeps its place (per-tile capsule, State B) unless one revoked permission darkens the whole group, which collapses to the slim reconnect row. This deletes round 4&rsquo;s &ldquo;&ge;3 actionable dark&rdquo; count entirely: the only state that fired it &mdash; never-connected &mdash; no longer renders anything to count. And the fifth redesign of this surface is the first one with less UI than the fourth, which is the usual sign the framing finally matches the problem.</div>
+</section>
+
+<!-- ============ ROUND 6 — ONE HOME, DERIVED FROM SOURCES (#onehome) ============ -->
+<section class="wide" id="onehome">
+  <span class="seckick">Round 6 &middot; the founder&rsquo;s constraint</span>
+  <h2>One home, cut to<br>the <em>sources</em></h2>
+  <div class="rsub">&ldquo;I do not need multiple metrics homescreen.&rdquo; Round 5 still had the grid <b>grow as data arrived</b> &mdash; two tiles on Monday, six on Wednesday &mdash; and that is a variant, however honest each state was. The defect all six rounds shared is that they rendered three different <b>nothings</b> identically: a <b>real zero</b> (water 0 of 85 &mdash; a measurement), <b>not yet today</b> (sleep before the watch syncs &mdash; a metric with history and no sample <i>yet</i>), and <b>no source, ever</b> (sleep on an iPhone with no watch &mdash; a metric that will <i>never</i> fill). The first two are content. Only the third is absence &mdash; and it is the only one that ever produced a dead tile. So the rule inverts: <b>the tile set is derived from what the user&rsquo;s sources can actually produce, decided once, before Home ever renders.</b> Onboarding already contains the Health connect step (<code style="font-family:var(--f-mono);font-size:12px">health_connect_onboarding_screen.dart</code>, reached from <code style="font-family:var(--f-mono);font-size:12px">commitment_pact_screen.dart:86</code>), and HealthKit back-fills history on authorisation &mdash; so a capability probe at onboarding-complete knows the answer instantly, and the first Home render is already the <b>final shape</b>. The grid never grows in front of the user, never shows a ghost, and is the same screen for everyone &mdash; because a screen whose every tile is real is the same screen at any tile count.</div>
+
+  <div class="apgrid" style="margin-bottom:26px">
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Nothing #1 &middot; a real zero</span></div>
+      <div class="apt">Render the number</div>
+      <div class="demo" style="width:100%;margin:0 0 12px">
+        <div class="tile md" style="width:174px">
+          <div class="chart foot"><svg viewBox="0 0 174 40" preserveAspectRatio="none" fill="none">
+            <rect x="120" y="34" width="11" height="6" rx="2" fill="var(--accent)" opacity=".25"/>
+            <rect x="136" y="34" width="11" height="6" rx="2" fill="var(--accent)" opacity=".25"/>
+            <rect x="152" y="34" width="11" height="6" rx="2" fill="var(--accent)" opacity=".25"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">0<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz today</span>
+          </div>
+        </div>
+      </div>
+      <p>Steps = 0 at 6 AM, water 0 of 85 &mdash; measurements that legitimately read zero. <b>This is today&rsquo;s actual state, not a hole.</b> Neutral dot, full type size, no dashing, no apology. A goal with a running total is live from the first second of the day.</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Nothing #2 &middot; not yet today</span></div>
+      <div class="apt">Render the last truth, dated</div>
+      <div class="demo" style="width:100%;margin:0 0 12px">
+        <div class="tile md" style="width:174px">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="20" x2="174" y2="20" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 22L24 25L48 19L72 26L96 21L120 24L144 18L166 19" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Sleep</span>
+            <span class="tvv">7<small>h</small> 03<small>m</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Wed night &middot; watch<br>not synced yet</span>
+          </div>
+        </div>
+      </div>
+      <p>The metric exists for this user &mdash; history proves it &mdash; today just has no sample yet. Show <b>the newest true sample, labeled with when it is from</b>. Sleep is the permanent resident of this state: its &ldquo;today&rdquo; value is always last night, so the dated form is its normal costume, not an error dress.</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp p">Nothing #3 &middot; no source, ever</span></div>
+      <div class="apt">Never mounts &mdash; opt-in via the pencil</div>
+      <div style="border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:11px 12px;display:flex;align-items:center;gap:11px;margin:0 0 12px">
+        <span style="width:32px;height:32px;border-radius:9px;background:var(--elev);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--t3);flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20.2 14.2A8.2 8.2 0 1 1 9.8 3.8a7 7 0 0 0 10.4 10.4z"/></svg></span>
+        <span><span style="font-weight:600;font-size:12.5px;color:var(--t1);display:block">Sleep</span><span style="font-size:10.5px;color:var(--t3)">Needs a sleep source &middot; Apple Watch or a sleep app</span></span>
+        <span style="margin-left:auto;flex:none;font-family:var(--f-cond);font-weight:700;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);border:1px dashed var(--hairS);border-radius:99px;padding:5px 11px">Add</span>
+      </div>
+      <p>An iPhone with no watch produces steps but <b>never</b> sleep, HRV or readiness &mdash; not &ldquo;not yet&rdquo;, never. A tile for it is a permanent billboard of absence, the thing that poisoned every prior round. It renders <b>nowhere on Home</b>; it exists as a labeled row in the pencil&rsquo;s add sheet &mdash; the customiser doubles as the catalogue &mdash; and mounts the day a source exists.</p>
+    </div>
+  </div>
+
+  <div class="skel">
+    <svg viewBox="0 0 1080 436" role="img" aria-label="Four accounts, one screen grammar">
+      <!-- shared band labels -->
+      <g font-family="var(--f-cond)" font-weight="700" font-size="11.5" letter-spacing="1.6" fill="var(--t3)">
+        <text x="14" y="72">HEADER</text>
+        <text x="14" y="130">METRICS</text>
+        <text x="14" y="212">COACH</text>
+        <text x="14" y="282">WORKOUT</text>
+        <text x="14" y="340">TIMELINE</text>
+      </g>
+      <!-- screen A -->
+      <g transform="translate(110,20)">
+        <rect x="0" y="0" width="210" height="330" rx="20" fill="var(--surface)" stroke="var(--hairS)" stroke-width="1.5"/>
+        <rect x="16" y="40" width="104" height="12" rx="6" fill="var(--t3)" opacity=".45"/>
+        <circle cx="188" cy="46" r="8" fill="none" stroke="var(--t3)" stroke-width="1.5" opacity=".5"/>
+        <rect x="16" y="66" width="178" height="30" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="107" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="130" width="56" height="22" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="77" y="130" width="56" height="22" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="138" y="130" width="56" height="22" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="166" width="3" height="52" rx="1.5" fill="var(--accent)"/>
+        <rect x="23" y="166" width="171" height="52" rx="7" fill="var(--elev)"/>
+        <rect x="16" y="230" width="178" height="56" rx="9" fill="var(--elev)" stroke="var(--hairS)"/>
+        <rect x="28" y="264" width="80" height="12" rx="6" fill="var(--accent)" opacity=".8"/>
+        <rect x="16" y="298" width="178" height="20" rx="7" fill="var(--elev)"/>
+        <text x="105" y="358" text-anchor="middle" font-family="var(--f-cond)" font-weight="700" font-size="12.5" letter-spacing="1.8" fill="var(--t1)">A &middot; WATCH</text>
+        <text x="105" y="374" text-anchor="middle" font-family="var(--f-mono)" font-size="10.5" fill="var(--t3)">6 tiles</text>
+      </g>
+      <!-- screen B/C -->
+      <g transform="translate(350,20)">
+        <rect x="0" y="0" width="210" height="330" rx="20" fill="var(--surface)" stroke="var(--hairS)" stroke-width="1.5"/>
+        <rect x="16" y="40" width="104" height="12" rx="6" fill="var(--t3)" opacity=".45"/>
+        <circle cx="188" cy="46" r="8" fill="none" stroke="var(--t3)" stroke-width="1.5" opacity=".5"/>
+        <rect x="16" y="66" width="178" height="30" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="107" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="130" width="178" height="22" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="166" width="3" height="52" rx="1.5" fill="var(--accent)"/>
+        <rect x="23" y="166" width="171" height="52" rx="7" fill="var(--elev)"/>
+        <rect x="16" y="230" width="178" height="56" rx="9" fill="var(--elev)" stroke="var(--hairS)"/>
+        <rect x="28" y="264" width="80" height="12" rx="6" fill="var(--accent)" opacity=".8"/>
+        <rect x="16" y="298" width="178" height="20" rx="7" fill="var(--elev)"/>
+        <text x="105" y="358" text-anchor="middle" font-family="var(--f-cond)" font-weight="700" font-size="12.5" letter-spacing="1.8" fill="var(--t1)">B &middot; C &middot; PHONE ONLY</text>
+        <text x="105" y="374" text-anchor="middle" font-family="var(--f-mono)" font-size="10.5" fill="var(--t3)">4 tiles</text>
+      </g>
+      <!-- screen D -->
+      <g transform="translate(590,20)">
+        <rect x="0" y="0" width="210" height="330" rx="20" fill="var(--surface)" stroke="var(--hairS)" stroke-width="1.5"/>
+        <rect x="16" y="40" width="104" height="12" rx="6" fill="var(--t3)" opacity=".45"/>
+        <circle cx="188" cy="46" r="8" fill="none" stroke="var(--t3)" stroke-width="1.5" opacity=".5"/>
+        <rect x="16" y="66" width="178" height="30" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="107" y="100" width="87" height="26" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="166" width="3" height="52" rx="1.5" fill="var(--accent)"/>
+        <rect x="23" y="166" width="171" height="52" rx="7" fill="var(--elev)"/>
+        <rect x="16" y="230" width="178" height="56" rx="9" fill="var(--elev)" stroke="var(--hairS)"/>
+        <rect x="28" y="264" width="80" height="12" rx="6" fill="var(--accent)" opacity=".8"/>
+        <rect x="16" y="298" width="178" height="20" rx="7" fill="var(--elev)"/>
+        <text x="105" y="358" text-anchor="middle" font-family="var(--f-cond)" font-weight="700" font-size="12.5" letter-spacing="1.8" fill="var(--t1)">D &middot; SKIPPED</text>
+        <text x="105" y="374" text-anchor="middle" font-family="var(--f-mono)" font-size="10.5" fill="var(--t3)">3 tiles</text>
+      </g>
+      <!-- screen F -->
+      <g transform="translate(830,20)">
+        <rect x="0" y="0" width="210" height="330" rx="20" fill="var(--surface)" stroke="var(--hairS)" stroke-width="1.5"/>
+        <rect x="16" y="40" width="104" height="12" rx="6" fill="var(--t3)" opacity=".45"/>
+        <circle cx="188" cy="46" r="8" fill="none" stroke="var(--t3)" stroke-width="1.5" opacity=".5"/>
+        <rect x="16" y="60" width="178" height="12" rx="5" fill="var(--warn-tint)" stroke="var(--warn-border)"/>
+        <rect x="16" y="76" width="178" height="24" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="104" width="87" height="24" rx="7" fill="var(--t3)" opacity=".22"/>
+        <rect x="107" y="104" width="87" height="24" rx="7" fill="var(--t3)" opacity=".22"/>
+        <rect x="16" y="132" width="56" height="20" rx="7" fill="var(--t3)" opacity=".22"/>
+        <rect x="77" y="132" width="56" height="20" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="138" y="132" width="56" height="20" rx="7" fill="var(--accent-tint)" stroke="var(--accent)" stroke-opacity=".45"/>
+        <rect x="16" y="166" width="3" height="52" rx="1.5" fill="var(--accent)"/>
+        <rect x="23" y="166" width="171" height="52" rx="7" fill="var(--elev)"/>
+        <rect x="16" y="230" width="178" height="56" rx="9" fill="var(--elev)" stroke="var(--hairS)"/>
+        <rect x="28" y="264" width="80" height="12" rx="6" fill="var(--accent)" opacity=".8"/>
+        <rect x="16" y="298" width="178" height="20" rx="7" fill="var(--elev)"/>
+        <text x="105" y="358" text-anchor="middle" font-family="var(--f-cond)" font-weight="700" font-size="12.5" letter-spacing="1.8" fill="var(--t1)">F &middot; REVOKED</text>
+        <text x="105" y="374" text-anchor="middle" font-family="var(--f-mono)" font-size="10.5" fill="var(--t3)">6 tiles, 3 frozen</text>
+      </g>
+      <!-- band alignment rules -->
+      <g stroke="var(--anno)" stroke-width="1" stroke-dasharray="3 5" opacity=".4">
+        <line x1="100" y1="186" x2="1050" y2="186"/>
+        <line x1="100" y1="250" x2="1050" y2="250"/>
+        <line x1="100" y1="318" x2="1050" y2="318"/>
+      </g>
+      <text x="575" y="428" text-anchor="middle" font-family="var(--f-cond)" font-weight="700" font-size="11.5" letter-spacing="2" fill="var(--t3)">ONE GRAMMAR &mdash; SECTION ORDER AND TILE ANATOMY NEVER CHANGE; ONLY MEMBERSHIP DOES</text>
+    </svg>
+  </div>
+</section>
+
+<section class="stage" style="padding-top:6px">
+
+<!-- ─────────── R6 FRAME 1 — STATE A (+E), WATCH, 6:20 AM ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">A &middot; E &mdash; <em>watch, 6:20 AM</em></div>
+    <div class="sub">Connected in onboarding, watch history. Early morning: two metrics read near-zero <b style="color:var(--t2)">and that is content</b>. E was never a separate screen &mdash; it is this one at a different hour.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">6:20</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Thu, Aug 13</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <span class="co co-r" style="top:150px">2</span>
+        <span class="co" style="top:auto;bottom:96px;left:-6px">3</span>
+        <div class="tile lg">
+          <div class="chart"><svg viewBox="0 0 358 150" preserveAspectRatio="none" fill="none">
+            <defs><linearGradient id="gR6a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+            <path d="M312 126L336 121L352 119L358 118L358 150L312 150Z" fill="url(#gR6a)"/>
+            <path d="M312 126L336 121L352 119" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+            <circle cx="352" cy="119" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="veil"></div>
+          <div class="tb">
+            <span class="tk">Today Score</span>
+            <span class="tvv">22</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>6:20 AM &mdash; climbs as you log</span>
+          </div>
+          <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+
+        <div class="tile md">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="24" x2="174" y2="24" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 38L140 38L152 36L166 35" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="166" cy="35" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Steps</span>
+            <span class="tvv">312</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>So far &mdash; baseline<br>compares tonight</span>
+          </div>
+        </div>
+
+        <div class="tile md">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="20" x2="174" y2="20" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 22L24 25L48 19L72 26L96 21L120 24L144 18L166 17" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="166" cy="17" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Sleep</span>
+            <span class="tvv">7<small>h</small> 41<small>m</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--v-sup)"></i>Last night &middot; synced<br>6:04 AM</span>
+          </div>
+        </div>
+
+        <div class="tile sm">
+          <div class="chart foot"><svg viewBox="0 0 112 30" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="14" x2="112" y2="14" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 17L22 13L44 16L66 13L88 12L104 11" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="104" cy="11" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Ready</span>
+            <span class="tvv">74<small>%</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Last night</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">0<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>30-day trend</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach">
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Early one, Jordan.</h3>
+        <div class="cs">7h 41m of sleep &mdash; good base for leg day&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Lower Body Strength</div><div class="ts">6 exercises &middot; 42 min</div></div><span class="pillbtn">Start workout</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Stay hydrated</div><div class="ts">0 / 85 oz</div></div><span class="pillbtn">Log water</span></div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Strength</div>
+          <h2>Lower Body<br>Strength</h2>
+          <div class="meta">Today &middot; Strength &middot; 42m &middot; 6 exercises</div>
+          <div class="prog"><span class="sp">&#10022;</span> Foundations 12 <span class="active">Active</span></div>
+          <div class="start">Start Workout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">6:04 AM</span><span class="nd"></span><span class="tx"><b>Woke up</b> &middot; 7h 41m in bed</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">The three nothings, in one live screen</div>
+    <div class="ann"><span class="b">1</span><p><b>A morning number is a real number.</b> Score 22 at 6:20 is today&rsquo;s actual state, drawn from the plan and zero logs so far; Steps 312 is what the watch has counted. Nothing says &ldquo;waiting&rdquo;, because nothing is &mdash; the copy states the hour and moves on. Deviation claims wait for the evening; a 6 AM &ldquo;96% below baseline&rdquo; would be arithmetic cosplay.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>Sleep is dated by design.</b> Its today-value <em>is</em> last night, so &ldquo;Last night &middot; synced 6:04 AM&rdquo; is the tile&rsquo;s permanent grammar, not a fallback. When the watch hasn&rsquo;t synced yet, the same slot shows the newest known night with its date &mdash; one treatment for &ldquo;not yet today&rdquo;, used everywhere, never a dash.</p></div>
+    <div class="ann"><span class="b">3</span><p><b>Water&rsquo;s zero is the day&rsquo;s first fact.</b> 0 of 85 oz renders at full type size with a neutral dot. A goal with a running total is live from the first second &mdash; the real-zero rule from the definition cards, in place.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>E dissolves as a state.</b> Every row of the matrix that reads &ldquo;connected, but the value is small/absent right now&rdquo; is this screen at some hour. No layout decision hangs on the clock.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── R6 FRAME 2 — STATES B·C, IPHONE ONLY (THE MODAL CASE) ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">B &middot; C &mdash; <em>iPhone only</em></div>
+    <div class="sub">Connected, no watch &mdash; the modal user. Steps arrives <b style="color:var(--t2)">with 30 days of history</b> on its first render; Sleep &amp; Ready never mount. This shape is final on day one.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Thu, Aug 13</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <span class="co co-r" style="top:150px">2</span>
+        <span class="co" style="top:auto;bottom:126px;left:-6px">3</span>
+        <div class="tile lg">
+          <div class="chart"><svg viewBox="0 0 358 150" preserveAspectRatio="none" fill="none">
+            <defs><linearGradient id="gR6b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+            <path d="M266 122L310 112L352 104L358 103L358 150L266 150Z" fill="url(#gR6b)"/>
+            <path d="M266 122L310 112L352 104" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+            <circle cx="352" cy="104" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="veil"></div>
+          <div class="tb">
+            <span class="tk">Today Score</span>
+            <span class="tvv">61</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From workouts &amp; logs</span>
+          </div>
+          <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+
+        <div class="tile md">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="24" x2="174" y2="24" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 30L24 27L48 31L72 25L96 28L120 22L144 19L166 16" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="166" cy="16" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Steps</span>
+            <span class="tvv">4,982</span>
+            <span class="tdev" style="color:var(--v-sup)"><i class="stdot" style="background:var(--v-sup)"></i>9% above your<br>30-day baseline</span>
+          </div>
+        </div>
+
+        <div class="tile md">
+          <div class="chart foot"><svg viewBox="0 0 174 40" preserveAspectRatio="none" fill="none">
+            <rect x="76" y="26" width="12" height="14" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="94" y="22" width="12" height="18" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="112" y="28" width="12" height="12" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="130" y="30" width="12" height="10" rx="2" fill="var(--accent)" opacity=".85"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">24<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz</span>
+          </div>
+        </div>
+
+        <div class="tile md" style="grid-column:span 6;height:100px">
+          <div class="chart low"><svg viewBox="0 0 358 32" preserveAspectRatio="none" fill="none">
+            <circle cx="340" cy="18" r="2.5" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From onboarding &mdash; trend builds with weekly logs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach">
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Day one, Jordan.</h3>
+        <div class="cs">Your week is built &mdash; first session is ready&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Full Body Foundations A</div><div class="ts">6 exercises &middot; 38 min</div></div><span class="pillbtn">Start workout</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Stay hydrated</div><div class="ts">24 / 85 oz</div></div><span class="pillbtn">Log water</span></div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Strength</div>
+          <h2>Full Body<br>Foundations A</h2>
+          <div class="meta">Today &middot; Strength &middot; 38m &middot; 6 exercises</div>
+          <div class="prog"><span class="sp">&#10022;</span> Foundations 12 <span class="active">Active</span></div>
+          <div class="start">Start Workout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">8:12 AM</span><span class="nd"></span><span class="tx"><b>Setup finished</b> &middot; Foundations 12 built</span></div>
+        <div class="tlr"><span class="tt">8:40 AM</span><span class="nd"></span><span class="tx"><b>Water logged</b> &middot; 24 oz</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">Capability is measured, not assumed</div>
+    <div class="ann"><span class="b">1</span><p><b>The probe, not a device inventory.</b> No API says &ldquo;this user owns no watch&rdquo;. What is knowable: at onboarding-complete, count trailing-30-day samples per Health type. Authorisation back-fills history, so the answer is instant &mdash; Steps arrives with a month of chart and a real baseline claim <em>on its first render</em>. Day one already looks like month two.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>Sleep and Ready are not dark &mdash; they are absent.</b> Zero samples ever &rarr; the tile never mounts. No dash, no capsule, no &ldquo;connect a watch&rdquo; chrome; the metric lives as a labeled row in the pencil&rsquo;s add sheet (&ldquo;needs a sleep source&rdquo;). For the watchless user this shape is permanent &mdash; which is exactly why it must not be styled as an incomplete version of someone else&rsquo;s screen.</p></div>
+    <div class="ann"><span class="b">3</span><p><b>Rows always pack.</b> A membership of four packs as large &middot; half + half &middot; full &mdash; the would-be orphan (Weight) stretches to full width and spends the room on its trend. The grid reads as designed-for-four, never as six-minus-two.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>B is this same screen.</b> A fresh device or simulator differs only in chart depth: Steps reads a real zero with no history line, phone-native types mount on authorisation alone (the phone&rsquo;s own sensors are a source we know statically). B &rarr; C is data arriving inside fixed tiles &mdash; the layout never moves.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── R6 FRAME 3 — STATE D, SKIPPED THE CONNECT ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">D &mdash; <em>skipped connect</em></div>
+    <div class="sub">&ldquo;Maybe later&rdquo; in onboarding. Three in-app tiles, all real, full rows. The connect action lives in the coach list and the pencil &mdash; never in the grid.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Thu, Aug 13</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <div class="tile lg">
+          <div class="chart"><svg viewBox="0 0 358 150" preserveAspectRatio="none" fill="none">
+            <defs><linearGradient id="gR6c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+            <path d="M290 128L326 118L352 110L358 109L358 150L290 150Z" fill="url(#gR6c)"/>
+            <path d="M290 128L326 118L352 110" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+            <circle cx="352" cy="110" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="veil"></div>
+          <div class="tb">
+            <span class="tk">Today Score</span>
+            <span class="tvv">57</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From workouts &amp; logs</span>
+          </div>
+          <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+
+        <div class="tile md">
+          <div class="chart foot"><svg viewBox="0 0 174 40" preserveAspectRatio="none" fill="none">
+            <rect x="94" y="26" width="12" height="14" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="112" y="30" width="12" height="10" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="130" y="28" width="12" height="12" rx="2" fill="var(--accent)" opacity=".85"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">12<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz</span>
+          </div>
+        </div>
+
+        <div class="tile md">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.0<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From onboarding &mdash;<br>logs weekly</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach sec">
+        <span class="co" style="top:172px;left:-6px">2</span>
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Day one, Jordan.</h3>
+        <div class="cs">Your week is built &mdash; first session is ready&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Full Body Foundations A</div><div class="ts">6 exercises &middot; 38 min</div></div><span class="pillbtn">Start workout</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Connect Apple Health</div><div class="ts">Adds Steps to your metrics</div></div><span class="pillbtn">Connect</span></div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Strength</div>
+          <h2>Full Body<br>Foundations A</h2>
+          <div class="meta">Today &middot; Strength &middot; 38m &middot; 6 exercises</div>
+          <div class="prog"><span class="sp">&#10022;</span> Foundations 12 <span class="active">Active</span></div>
+          <div class="start">Start Workout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">8:12 AM</span><span class="nd"></span><span class="tx"><b>Setup finished</b> &middot; Foundations 12 built</span></div>
+        <div class="tlr"><span class="tt">8:40 AM</span><span class="nd"></span><span class="tx"><b>Water logged</b> &middot; 12 oz</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">The floor, not a broken version of the ceiling</div>
+    <div class="ann"><span class="b">1</span><p><b>Three tiles, all real, full rows.</b> Score, Water, Weight are in-app sources &mdash; always capable, no permission involved. The grid does not advertise what it is missing; it is simply this user&rsquo;s complete grid, in the same anatomy as everyone else&rsquo;s.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>Where connect lives &mdash; three surfaces, zero tiles.</b> The coach to-do (ranked, recurring until done or explicitly dismissed, with the honest benefit: &ldquo;adds Steps to your metrics&rdquo;), the pencil&rsquo;s add sheet (Steps / Sleep / Ready rows gated behind Connect &mdash; the catalogue), and the Health tab &mdash; the destination screen that has earned a rich connect state. Settled in round 5; unchanged here.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>If they connect in month two:</b> the probe re-runs, Steps mounts at its template slot with back-filled history, the coach says so (&ldquo;Steps joined your metrics&rdquo;) and the timeline logs it. A mount is an announced event, once &mdash; never a silent shape-shift discovered mid-scroll.</p></div>
+  </div>
+</section>
+
+<!-- ─────────── R6 FRAME 4 — STATE F, REVOKED LATER ─────────── -->
+<section class="col">
+  <div class="col-head">
+    <div class="big">F &mdash; <em>revoked later</em></div>
+    <div class="sub">Connected once, permission pulled in iOS Settings on Tuesday. Every tile <b style="color:var(--t2)">keeps its slot</b> &mdash; values freeze, dated. One row names the one cause.</div>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1.5 4a9 9 0 0 1 12 0M3.8 6.5a6 6 0 0 1 7.4 0M6.2 9a2.6 2.6 0 0 1 2.6 0"/></svg>
+        <svg width="23" height="11" viewBox="0 0 23 11" fill="none"><rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.5" fill="currentColor"/><path d="M21.5 3.5v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span>
+    </div>
+
+    <div class="content">
+      <div class="hdr">
+        <div>
+          <div class="greet">Morning, Jordan</div>
+          <div class="date">Fri, Aug 21</div>
+        </div>
+        <div class="hdr-icons">
+          <button class="icbtn" aria-label="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2.5h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+          <button class="icbtn" aria-label="Settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></svg></button>
+        </div>
+      </div>
+
+      <div class="tilehead">
+        <span class="k">My metrics</span>
+        <button class="icbtn" aria-label="Edit tiles"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20.5 7.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      </div>
+
+      <div class="sec" style="margin-bottom:10px">
+        <span class="co">2</span>
+        <div class="slim">
+          <span class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg></span>
+          <span><span class="st2">Health data paused</span><span class="ss2" style="display:block">Nothing new since Tue &middot; check Settings &rsaquo; Health</span></span>
+          <span class="spill">Reconnect</span>
+        </div>
+      </div>
+
+      <div class="tiles sec" style="margin-bottom:16px">
+        <span class="co">1</span>
+        <span class="co co-r" style="top:auto;bottom:96px">3</span>
+        <div class="tile lg">
+          <div class="chart"><svg viewBox="0 0 358 150" preserveAspectRatio="none" fill="none">
+            <defs><linearGradient id="gR6d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+            <path d="M230 124L270 118L306 112L340 105L358 102L358 150L230 150Z" fill="url(#gR6d)"/>
+            <path d="M230 124L270 118L306 112L340 105L352 103" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+            <circle cx="352" cy="103" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="veil"></div>
+          <div class="tb">
+            <span class="tk">Today Score</span>
+            <span class="tvv">66</span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>From workouts &amp; logs &mdash; unaffected</span>
+          </div>
+          <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </div>
+
+        <div class="tile md paused">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="24" x2="174" y2="24" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 30L24 27L48 31L72 25L96 28L120 22L132 20" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="132" cy="20" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Steps</span>
+            <span class="tvv">7,412</span>
+            <span class="tdev"><i class="stdot" style="background:var(--warn)"></i>Last reading &middot;<br>Tue Aug 18</span>
+          </div>
+        </div>
+
+        <div class="tile md paused">
+          <div class="chart low"><svg viewBox="0 0 174 42" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="20" x2="174" y2="20" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 22L24 25L48 19L72 26L96 21L120 24L132 22" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="132" cy="22" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Sleep</span>
+            <span class="tvv">7<small>h</small> 03<small>m</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--warn)"></i>Mon night &middot; last<br>synced Tue</span>
+          </div>
+        </div>
+
+        <div class="tile sm paused">
+          <div class="chart foot"><svg viewBox="0 0 112 30" preserveAspectRatio="none" fill="none">
+            <line x1="0" y1="14" x2="112" y2="14" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+            <path d="M0 17L22 13L44 16L66 13L82 15" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="82" cy="15" r="2" fill="var(--accent)"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Ready</span>
+            <span class="tvv">71<small>%</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--warn)"></i>Tue Aug 18</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="chart foot"><svg viewBox="0 0 112 30" preserveAspectRatio="none" fill="none">
+            <rect x="48" y="16" width="9" height="14" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="62" y="12" width="9" height="18" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="76" y="18" width="9" height="12" rx="2" fill="var(--accent)" opacity=".3"/>
+            <rect x="90" y="14" width="9" height="16" rx="2" fill="var(--accent)" opacity=".85"/>
+          </svg></div>
+          <div class="tb">
+            <span class="tk">Water</span>
+            <span class="tvv">32<small>oz</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>Of 85 oz</span>
+          </div>
+        </div>
+        <div class="tile sm">
+          <div class="tb">
+            <span class="tk">Weight</span>
+            <span class="tvv">82.4<small>lb</small></span>
+            <span class="tdev"><i class="stdot" style="background:var(--t3)"></i>+0.4 this week</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="coach">
+        <div class="krow">
+          <span class="k">&#10022; Your Coach <span class="sep">&middot; Today&rsquo;s Focus</span></span>
+          <span class="tools">
+            <span class="dots3"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></span>
+            <span class="collapse"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></span>
+          </span>
+        </div>
+        <h3>Strong week, Jordan.</h3>
+        <div class="cs">Three sessions down &mdash; one more to hit your target&hellip;<span class="chev"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        <div class="todo">To Do Today</div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Upper Body Hypertrophy</div><div class="ts">7 exercises &middot; 44 min</div></div><span class="pillbtn">Start workout</span></div>
+        <div class="task"><span class="cb"></span><div><div class="tt">Stay hydrated</div><div class="ts">32 / 85 oz</div></div><span class="pillbtn">Log water</span></div>
+      </div>
+
+      <div class="hero" style="margin-top:16px">
+        <svg class="sil" width="150" height="200" viewBox="0 0 200 260" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M46 38C64 40 84 52 98 66C96 50 104 34 120 34C136 34 144 48 138 62C132 74 116 76 106 68C114 88 118 112 112 138C108 158 96 176 84 192C76 202 70 214 68 228"/><path d="M112 138C124 154 134 172 140 192C144 204 148 218 154 230"/></svg>
+        <div class="scrim"></div>
+        <span class="today">Today</span>
+        <div class="body">
+          <div class="kick">Strength</div>
+          <h2>Upper Body<br>Hypertrophy</h2>
+          <div class="meta">Today &middot; Strength &middot; 44m &middot; 7 exercises</div>
+          <div class="prog"><span class="sp">&#10022;</span> Foundations 12 <span class="active">Active</span></div>
+          <div class="start">Start Workout <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+      </div>
+
+      <div class="tl">
+        <div class="k">Today&rsquo;s Timeline</div>
+        <div class="tlr"><span class="tt">8:05 AM</span><span class="nd"></span><span class="tx"><b>Breakfast logged</b> &middot; 430 cal</span></div>
+        <div class="tlr"><span class="tt">8:40 AM</span><span class="nd"></span><span class="tx"><b>Water logged</b> &middot; 32 oz</span></div>
+      </div>
+    </div>
+
+    <div class="navfade v2"></div>
+    <div class="fabband v2">
+      <button class="qmini" aria-label="Ask coach"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2.6l1.62 4.38 4.38 1.62-4.38 1.62-1.62 4.38-1.62-4.38-4.38-1.62 4.38-1.62z"/><path d="M6.4 13.2l.82 2.22 2.22.82-2.22.82-.82 2.22-.82-2.22-2.22-.82 2.22-.82z"/><path d="M17.9 15.1l.62 1.68 1.68.62-1.68.62-.62 1.68-.62-1.68-1.68-.62 1.68-.62z"/></svg></button>
+      <button class="qlog" aria-label="Quick Log">
+        <span class="plus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="qt">Quick Log</span>
+      </button>
+    </div>
+    <div class="navwrap">
+      <nav class="tabbar">
+        <span class="tab on"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11 12 4l8 7v8.2a.8.8 0 0 1-.8.8H14.5v-6h-5v6H4.8a.8.8 0 0 1-.8-.8z"/></svg><span class="nl">Home</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M3.5 8.5v7M17.5 6.5v11M20.5 8.5v7M6.5 12h11"/></svg><span class="nl">Workout</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.8 16 3 11.4C1.8 8.4 4 4.5 7.4 4.5c2 0 3.5 1.4 4.6 2.9 1.1-1.5 2.6-2.9 4.6-2.9 3.4 0 5.6 3.9 4.4 6.9-1.8 4.6-9 9.1-9 9.1z"/></svg><span class="nl">Health</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v18M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3v18M16.5 12c3.2-1.4 3.2-7.5 0-9"/></svg><span class="nl">Nutrition</span></span>
+        <span class="tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg><span class="nl">You</span></span>
+      </nav>
+      <div class="hi"></div>
+    </div>
+  </div></div>
+
+  <div class="anns">
+    <div class="ah">Freeze beats vanish</div>
+    <div class="ann"><span class="b">1</span><p><b>Every tile keeps its slot.</b> History is content &mdash; nothing #2 with a known cause &mdash; so Steps, Sleep and Ready freeze to their last true reading, dated, charts desaturated. This <em>supersedes</em> round 5&rsquo;s collapse-to-slim-row for the tile group: collapsing changed the screen&rsquo;s shape, which is exactly what round 6 forbids. Reconnecting refreshes values in place; the layout never moved.</p></div>
+    <div class="ann"><span class="b">2</span><p><b>One cause, one row, one action.</b> The paused row is additive, above the grid, and is the only state in which pipeline chrome appears on Home &mdash; because now there is real history to protect. It says &ldquo;paused&rdquo;, not &ldquo;revoked&rdquo;: paused is all we can actually know.</p></div>
+    <div class="ann"><span class="b">3</span><p><b>Detection honesty.</b> iOS never reveals read-permission status, and Android&rsquo;s <code style="font-family:var(--f-mono);font-size:11px">hasPermissions()</code> returns false spuriously &mdash; which is why <code style="font-family:var(--f-mono);font-size:11px">health_connected</code> is deliberately never downgraded (<code style="font-family:var(--f-mono);font-size:11px">health_service_part_daily_activity.dart:934</code>). F is therefore inferred from <b>observed silence</b>: three consecutive empty daily syncs across all previously-flowing types. A quiet day never trips it; a revocation trips it within three.</p></div>
+    <div class="ann"><span class="b grey">&ndash;</span><p><b>Score stays live.</b> It computes from in-app logs, so it keeps updating &mdash; the paused state scopes to exactly the tiles whose pipe stopped, and the copy on the Score tile says so.</p></div>
+  </div>
+</section>
+
+</section>
+
+<!-- ===== ROUND 6 — THE RULES & THE RESEARCH ===== -->
+<section class="wide" style="border-top:0;padding-top:8px">
+  <span class="seckick">Round 6 &middot; the render rules, exactly</span>
+  <h2>Derived once, mounted<br>forward, <em>never silent</em></h2>
+  <div class="rsub">The whole system in one table. Every rule is a read of a signal the code already has &mdash; <code style="font-family:var(--f-mono);font-size:12px">health_connected</code> in SharedPreferences, HealthKit / Health Connect per-type sample queries, and the plan&rsquo;s existence &mdash; no new state machine, no variant flags.</div>
+
+  <div class="tblwrap">
+    <table class="spectbl">
+      <thead><tr><th>Rule</th><th>Signal</th><th>Exact behavior</th></tr></thead>
+      <tbody>
+        <tr><td><b>Default set, first render</b></td><td>Capability probe at onboarding-complete (after the Health step or its skip)</td><td>Fixed template order: <b>Today Score (L) &rarr; Steps (M) &rarr; Sleep (M) &rarr; Ready (S) &rarr; Water (S) &rarr; Weight (S)</b>, filtered by capability. In-app types (Score, Water, Weight) are always capable. <b>Phone-native Health types</b> (steps, distance, flights) are capable iff authorisation was granted &mdash; the phone&rsquo;s sensors are a source we know statically, so a zero-sample fresh device still mounts Steps (it reads a real 0). <b>Wearable-only types</b> (sleep, HRV, readiness inputs, resting HR) are capable iff &ge;1 sample exists in the trailing 30 days &mdash; instant to answer, because authorisation back-fills history. The shape Home first renders with is its final shape.</td></tr>
+        <tr><td><b>Nothing #1 &mdash; real zero</b></td><td>Metric capable, today&rsquo;s aggregate = 0</td><td>Render the number at full type size, neutral dot. Zero is content. No deviation claim until the day can support one (baselines compare at day&rsquo;s end, never at 6 AM).</td></tr>
+        <tr><td><b>Nothing #2 &mdash; not yet today</b></td><td>Metric capable, history exists, no sample yet in today&rsquo;s local window</td><td>Render the newest true sample <b>with its date label</b> (&ldquo;Last night &middot; synced 6:04 AM&rdquo;, &ldquo;Tue Aug 18&rdquo;). Sleep lives here permanently &mdash; its today-value is always last night. Never a dash, never an estimated stand-in.</td></tr>
+        <tr><td><b>Nothing #3 &mdash; no source, ever</b></td><td>Wearable-only type, 0 samples in trailing 30 d at probe time</td><td><b>Tile does not mount.</b> The metric exists only as a labeled row in the pencil&rsquo;s add sheet (&ldquo;Sleep &mdash; needs a sleep source&rdquo;), where adding it routes through Connect. Home never renders its absence.</td></tr>
+        <tr><td><b>Source appears later</b></td><td>Probe re-runs on every foreground sync; a type&rsquo;s sample count crosses 0 &rarr; &ge;1</td><td><b>Mount-only, announced.</b> The tile mounts at its template position; the coach card gets one line (&ldquo;Sleep joined your metrics &mdash; from your Apple Watch&rdquo;) and the timeline logs the event. Never a silent shape change. Exception: a tile the user explicitly removed in edit mode stays removed &mdash; user intent beats capability.</td></tr>
+        <tr><td><b>Source disappears later</b></td><td>3 consecutive empty daily syncs across all previously-flowing types (revocation is not directly observable on iOS; Android <code>hasPermissions()</code> is spuriously false)</td><td><b>Never unmounts.</b> Affected tiles freeze to dated last-known values, charts desaturate, warn dot. One slim &ldquo;Health data paused&rdquo; row renders above the grid with a single Reconnect action. <code>health_connected</code> is never downgraded by a probe. Reconnect refreshes in place &mdash; zero layout motion in either direction.</td></tr>
+        <tr><td><b>Where connect lives</b></td><td>&mdash;</td><td>Three surfaces, zero tiles: the coach to-do (ranked, recurring until done/dismissed), the pencil add sheet (gated rows are the catalogue), the Health tab (the destination that deserves the rich state). Round 5&rsquo;s placement, unchanged.</td></tr>
+        <tr><td><b>Packing</b></td><td>Row layout after filtering</td><td>Rows always pack full; a would-be orphan half-width tile stretches to full width at its own height. Every membership count reads as designed, never as a larger grid with holes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="height:28px"></div>
+  <span class="seckick">Round 6 &middot; what the market does with an impossible metric</span>
+  <div class="apgrid">
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Hides it</span></div>
+      <div class="apt">Apple Fitness &mdash; the incapable ring is not drawn</div>
+      <p>On an iPhone with no Apple Watch, Fitness renders <b>only the Move ring</b> &mdash; the phone&rsquo;s motion sensors are a real source for it. Exercise and Stand <b>do not appear</b>: no grey rings, no capsule where they would sit. The platform owner&rsquo;s answer to &ldquo;device can&rsquo;t produce it&rdquo; is precisely the round-6 rule: the surface is sized to the sources, and the missing metric is not a visible hole.</p>
+      <div class="apdiv"></div>
+      <p class="src">iphonelife.com/content/how-to-use-fitness-app-ios-16 &middot; appleinsider.com &middot; appletoolbox.com</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Hides it + opt-in</span></div>
+      <div class="apt">Fitbit &mdash; &ldquo;if data does not appear, your device does not support it&rdquo;</div>
+      <p>Fitbit&rsquo;s own help text for Health Metrics: <span class="quote" style="display:block;margin:8px 0;border-left:2px solid var(--ok);padding-left:10px;font-style:italic">&ldquo;If data does not appear for a metric, your device does not support it.&rdquo;</span> The Today tab is user-curated through the pencil &mdash; hidden tiles are re-added from Edit, and unsupported metrics simply never carry data. No permanent dead tile; capability plus opt-in.</p>
+      <div class="apdiv"></div>
+      <p class="src">support.google.com/fitbit/answer/14236917 &middot; community.fitbit.com</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp b">Opt-in catalogue</span></div>
+      <div class="apt">Samsung Health &amp; Google Health &mdash; the edit sheet is the catalogue</div>
+      <p>Samsung Health&rsquo;s home is managed via <b>Edit home</b> &mdash; trackers are added, removed and reordered by the user; the step counter (the one metric every phone can produce) is the only permanent resident. Google Health&rsquo;s Today tab is likewise user-chosen via edit. Both put the full metric list in the customiser, not the feed &mdash; the same role the pencil&rsquo;s add sheet plays here.</p>
+      <div class="apdiv"></div>
+      <p><b>The cautionary half:</b> Google&rsquo;s May 2026 app update <b>silently hid</b> daily vitals, sleep scores and readiness for many users &mdash; and it was reported as data loss, not decluttering. Hiding without announcing reads as breakage; hence the mount-only, announced rule.</p>
+      <div class="apdiv"></div>
+      <p class="src">samsung.com/us/support/answer/ANS10001351 &middot; support.google.com/googlehealth/answer/14237011 &middot; piunikaweb.com/2026/05/05/fitbit-app-update-blank-today-tab</p>
+    </div>
+    <div class="evcard">
+      <div class="aph"><span class="stp p">Hard-gates</span></div>
+      <div class="apt">WHOOP &amp; Oura &mdash; the degenerate case of the same rule</div>
+      <p>Neither app has a &ldquo;no device&rdquo; home state at all: Oura&rsquo;s app cannot collect or show data without a paired ring, and WHOOP hard-gates pairing in mandatory onboarding, then labels early days &ldquo;calibrating&rdquo;. That is the same principle taken to its limit &mdash; <b>the surface is sized to the sources; with zero sources, zero surface.</b> Zealova can&rsquo;t hard-gate (plan, coach and logging work without Health), so its floor is the in-app tiles &mdash; state D &mdash; not a locked door.</p>
+      <div class="apdiv"></div>
+      <p class="src">support.ouraring.com &middot; support.whoop.com &middot; &ldquo;What to Expect in Your First 30 Days&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="place-foot" style="margin-top:28px">Nobody in the field renders a permanent dead tile for a metric the hardware can never produce &mdash; they hide it (Apple, Fitbit), catalogue it behind an edit affordance (Samsung, Google), or gate the whole product on the sensor (WHOOP, Oura). Round 6 composes the first two: <b>membership is derived from sources, the customiser is the catalogue, mounts are announced, and nothing ever unmounts itself.</b> One grammar at every tile count &mdash; which is what &ldquo;one homescreen&rdquo; actually meant.</div>
+</section>
+
 
 <!-- ================= SECTION 7 — THE FLOATING CLUSTER ================= -->
 <section class="wide" id="cluster">

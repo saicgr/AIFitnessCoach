@@ -19,6 +19,7 @@ import 'onboarding_nutrition_import_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/metric_capability_provider.dart';
 
 /// Health Connect / Apple Health onboarding step.
 ///
@@ -92,6 +93,29 @@ class _HealthConnectOnboardingScreenState
     await markHealthPrimerSeen();
   }
 
+  /// Decide, once, which metric tiles this user's sources can fill — BEFORE
+  /// Home first paints.
+  ///
+  /// This runs on both exits (connected and skipped) because both are answers.
+  /// Authorising grants access to past samples, so a connected user's grid is
+  /// fully populated on its first render rather than filling in over days; a
+  /// user who skipped gets the in-app tiles only. Either way the shape is
+  /// settled here and does not move under them later.
+  ///
+  /// Awaited, not fire-and-forget: probing after Home has painted is exactly
+  /// the shape-shift this is meant to prevent.
+  Future<void> _resolveTileCapability({required bool connected}) async {
+    try {
+      await ref
+          .read(metricCapabilityProvider.notifier)
+          .probe(healthAuthorised: connected);
+    } catch (e) {
+      // Never trap onboarding on a probe. An unresolved capability set mounts
+      // the in-app tiles, and the next probe can only ADD to it.
+      debugPrint('📐 [Onboarding] capability probe failed: $e');
+    }
+  }
+
   /// Connect the platform health store AND record the Art. 9 server-storage
   /// consent. Whatever the outcome, the user is routed onward — onboarding
   /// is never trapped behind an OS permission grant.
@@ -154,6 +178,7 @@ class _HealthConnectOnboardingScreenState
 
     if (connectedOk) {
       await _markShown();
+      await _resolveTileCapability(connected: true);
       router.go(_nextRoute());
     } else if (failureMessage != null) {
       // Stay on the screen — the "Maybe later" button still lets them skip,
@@ -168,6 +193,7 @@ class _HealthConnectOnboardingScreenState
         .read(posthogServiceProvider)
         .capture(eventName: 'onboarding_health_connect_skipped');
     await _markShown();
+    await _resolveTileCapability(connected: false);
     if (!mounted) return;
     context.go(_nextRoute());
   }

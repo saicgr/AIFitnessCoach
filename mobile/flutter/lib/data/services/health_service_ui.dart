@@ -207,6 +207,63 @@ extension HealthServiceExt on HealthService {
   ///
   /// The actual aggregation lives in [aggregateSleepSummary] so it can be
   /// unit-tested against synthetic Health Connect / HealthKit payloads.
+  /// Does this user's Health store hold at least one sample of [kind] in the
+  /// trailing [days]?
+  ///
+  /// This is the capability probe behind Home's tile grid. It answers the
+  /// question no platform API answers directly — "does this user own a device
+  /// that produces this metric?" — by looking for evidence rather than for a
+  /// device inventory. Authorising Health grants access to PAST samples, so
+  /// this resolves on the first run with no waiting period.
+  ///
+  /// Returns false on any error. A false is not proof of absence, which is why
+  /// the caller only ever ADDS capabilities and never removes them.
+  Future<bool> hasRecentSamples(RingKind kind, {int days = 30}) async {
+    final types = _probeTypesFor(kind);
+    if (types.isEmpty) return false;
+    try {
+      final available = _getAvailableTypes(types);
+      if (available.isEmpty) return false;
+      if (!await hasReadAccess(available)) return false;
+
+      final now = DateTime.now();
+      final data = await _health.getHealthDataFromTypes(
+        startTime: now.subtract(Duration(days: days)),
+        endTime: now,
+        types: available,
+      );
+      final found = data.isNotEmpty;
+      debugPrint('📐 [Probe] ${kind.id}: ${data.length} samples in $days d '
+          '=> ${found ? 'capable' : 'no source'}');
+      return found;
+    } catch (e) {
+      debugPrint('📐 [Probe] ${kind.id} failed: $e');
+      return false;
+    }
+  }
+
+  /// The Health types that count as evidence for a ring kind.
+  List<HealthDataType> _probeTypesFor(RingKind kind) {
+    switch (kind) {
+      case RingKind.sleep:
+      case RingKind.sleepLatency:
+      case RingKind.wakeConsistency:
+      case RingKind.bedtimeWindow:
+        return _sleepQueryTypes;
+      case RingKind.hrv:
+      case RingKind.recovery:
+        return const [HealthDataType.HEART_RATE_VARIABILITY_SDNN];
+      case RingKind.heartRate:
+        return const [HealthDataType.RESTING_HEART_RATE];
+      case RingKind.stress:
+        // No dedicated stress type on either platform — it is derived from
+        // HRV, so HRV evidence is stress evidence.
+        return const [HealthDataType.HEART_RATE_VARIABILITY_SDNN];
+      default:
+        return const [];
+    }
+  }
+
   Future<SleepSummary> getSleepData({int days = 1}) async {
     try {
       await _ensureConfigured();

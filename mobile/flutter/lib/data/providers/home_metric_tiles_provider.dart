@@ -121,6 +121,36 @@ const Map<String, String> _kTileKickerOverrides = {
   'hydration': 'Water',
 };
 
+/// Whether a metric can ONLY come from a worn device.
+///
+/// This is the distinction that makes one Home shape possible. Steps, distance
+/// and flights come from the phone's own motion coprocessor — authorising
+/// Health is enough, and a brand-new phone with zero history still reads a
+/// real 0. Sleep, HRV and readiness need something worn: no watch or ring
+/// means those metrics never arrive, not "not yet".
+///
+/// A wearable-only metric with no history is therefore not an empty tile to
+/// style — it is a tile that must not mount at all. Rendering a permanently
+/// unfillable box is the defect five rounds of empty-state design kept
+/// restyling instead of removing.
+bool metricNeedsWornDevice(RingKind k) {
+  switch (k) {
+    case RingKind.sleep:
+    case RingKind.hrv:
+    case RingKind.recovery:
+    case RingKind.stress:
+    case RingKind.heartRate:
+    case RingKind.sleepLatency:
+    case RingKind.wakeConsistency:
+    case RingKind.bedtimeWindow:
+      return true;
+    default:
+      // `move` (steps/distance/flights) is phone-native — the handset is a
+      // source we know statically, so it mounts on authorisation alone.
+      return false;
+  }
+}
+
 MetricTileSource _sourceFor(RingKind k) {
   switch (k) {
     case RingKind.hydration:

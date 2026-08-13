@@ -21,15 +21,19 @@ library;
 
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fitwiz/core/constants/app_colors.dart';
 import 'package:fitwiz/core/providers/auth_provider.dart';
 import 'package:fitwiz/core/stats/state_valence.dart';
 import 'package:fitwiz/data/providers/home_metric_tiles_provider.dart';
+import 'package:fitwiz/data/providers/metric_capability_provider.dart';
 import 'package:fitwiz/data/providers/metric_layout_provider.dart'
     show MetricSize;
 import 'package:fitwiz/data/providers/metric_tile_data_provider.dart';
@@ -637,6 +641,13 @@ void main() {
     }) =>
         [
           currentUserIdProvider.overrideWithValue(_userId),
+          // The grid renders the CAPABILITY-FILTERED projection, not the raw
+          // arrangement. These tests are about layout, so pass the arrangement
+          // through unfiltered; capability itself is covered in
+          // metric_capability_test.dart.
+          mountedMetricTilesProvider.overrideWith(
+            (ref) => ref.watch(homeMetricTilesProvider),
+          ),
           // The connect card's gate reaches into the health plugin; the grid
           // reads it as one bool so a widget test can state the condition.
           metricTilesNeedHealthConnectProvider
@@ -928,278 +939,45 @@ void main() {
 
   // ─────────────────────────────── 3b. every sensor dark (the first run)
 
-  group('when every sensor is dark', () {
-    List<Override> overrides({
-      bool needsHealthConnect = true,
-      Map<String, MetricEmptyReason> dark = _freshAccountDark,
-    }) =>
-        [
-          currentUserIdProvider.overrideWithValue(_userId),
-          metricTilesNeedHealthConnectProvider
-              .overrideWithValue(needsHealthConnect),
-          for (final id in kHomeMetricTileCatalog.keys)
-            metricTileDataProvider(id).overrideWithValue(
-              dark.containsKey(id)
-                  ? _dark(id, dark[id]!)
-                  : _tile(
-                      id: id,
-                      label: kHomeMetricTileCatalog[id]!.tileLabel,
-                      value: id == 'hydration' ? '0' : '82.0',
-                      unit: id == 'hydration' ? 'oz' : 'lb',
-                      claimsDeviation: false,
-                      baselineY: null,
-                      series: const [],
-                      // Water has a real goal line; weight has no baseline
-                      // yet, which is the honest quiet line the provider
-                      // falls back to — and the string whose long form used
-                      // to ellipsise to `NO BASELINE Y…` on an S tile.
-                      deviationLabel:
-                          id == 'hydration' ? 'Of 85 oz' : 'No baseline',
-                      deviationLabelShort:
-                          id == 'hydration' ? 'Of 85 oz' : 'No baseline',
-                    ),
-            ),
-        ];
+  // ─────────────── 3b. the state that used to need a panel cannot occur
 
-    Future<void> pump(
-      WidgetTester tester, {
-      Map<String, MetricEmptyReason> dark = _freshAccountDark,
-      bool needsHealthConnect = true,
-      Map<String, Object> prefs = const {},
-    }) async {
-      SharedPreferences.setMockInitialValues(prefs);
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(390, 2400);
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(ProviderScope(
-        overrides:
-            overrides(needsHealthConnect: needsHealthConnect, dark: dark),
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: ThemeData.dark(),
-          home: const Scaffold(
-            body: SingleChildScrollView(child: HomeMetricTileGrid()),
-          ),
-        ),
-      ));
-      await tester.pump();
-    }
+  group('a tile that cannot fill is never mounted', () {
+    // SUPERSEDES the round-4 "collapse >= 3 dark tiles" rule and the round-5
+    // MetricSetupPanel. Both existed to make a page of unfillable tiles look
+    // acceptable. Neither is reachable now: a tile mounts only if the user's
+    // sources can produce its number, so "every sensor dark" is not a state
+    // the grid can enter — those tiles were never mounted.
+    //
+    // The rule itself is tested in metric_capability_test.dart; these two
+    // assert that the machinery it replaced is really gone, so nobody
+    // re-introduces a second empty-state path alongside it.
 
-    testWidgets('collapses to ONE first-run state — not six ghost tiles, and '
-        'not a second connect card underneath', (tester) async {
-      await pump(tester);
-
-      // One panel, and the four tiles it absorbed are gone from the grid.
-      expect(find.byType(MetricSetupPanel), findsOneWidget);
-      expect(find.byType(MetricTileCard), findsNWidgets(2),
-          reason: 'only the two tiles with real data survive');
-
-      // The count is the real one, never a rounded reassurance.
-      expect(find.text('4 metrics waiting'), findsOneWidget);
-      expect(find.text('Your grid fills itself in.'), findsOneWidget);
-
-      // The instruction that used to render five times renders once.
-      expect(find.text('NO SOURCE · CONNECT HEALTH'), findsNothing,
-          reason: 'the per-tile capsules were absorbed by the panel');
-      expect(find.text('CONNECT HEALTH'), findsNothing,
-          reason: 'the full-width connect card must not double the panel CTA');
-      expect(find.textContaining('Connect Health Connect'), findsOneWidget,
-          reason: 'exactly one connect affordance, inside the panel');
-
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('groups by what each tile is waiting for, and only the biggest '
-        'group gets the button', (tester) async {
-      await pump(tester);
-
-      // Three health tiles in one group, the score's "finish setup" in another.
-      for (final chip in const ['STEPS', 'SLEEP', 'READY', 'TODAY SCORE']) {
-        expect(find.text(chip), findsOneWidget,
-            reason: '$chip is named on a chip, not silently dropped');
-      }
-      expect(find.text('Finish setup'), findsOneWidget);
-
-      // The setup group is the text link; connect is the filled button.
-      expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-    });
-
-    testWidgets('water and weight keep their real numbers and stay tappable',
-        (tester) async {
-      await pump(tester);
-
-      for (final kicker in const ['WATER', 'WEIGHT']) {
-        expect(find.text(kicker), findsOneWidget,
-            reason: '$kicker is logged in-app — a dark wearable is not its '
-                'problem and hiding it would be the regression');
-      }
-      // The numbers are the user's own, not fabricated.
-      expect(find.textContaining('82'), findsWidgets);
-      expect(find.text('OF 85 OZ'), findsOneWidget);
-      // A missing baseline is stated, never invented — and it is the SHORT
-      // form, which is what stops `NO BASELINE Y…` on a 100pt tile.
-      expect(find.text('NO BASELINE'), findsOneWidget);
-      expect(find.textContaining('NO BASELINE Y'), findsNothing);
-
-      // Two survivors re-pack into one full row of equal halves.
-      final cards = tester.widgetList<MetricTileCard>(
-          find.byType(MetricTileCard));
-      expect(cards.map((c) => c.size).toSet(), {MetricSize.wide});
-      final w0 = tester.getSize(find.byType(MetricTileCard).first).width;
-      final w1 = tester.getSize(find.byType(MetricTileCard).last).width;
-      expect(w0, moreOrLessEquals(w1, epsilon: 0.5));
-
-      // Still a live tap target, not a decorative leftover.
-      await tester.tap(find.byType(MetricTileCard).first);
-      await tester.pump();
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('two dark tiles is NOT a broken screen — they keep their own '
-        'capsules and no panel appears', (tester) async {
-      await pump(tester, dark: const {
-        'move': MetricEmptyReason.healthDisconnected,
-        'sleep': MetricEmptyReason.healthDisconnected,
-      });
-
-      expect(find.byType(MetricSetupPanel), findsNothing);
-      expect(find.byType(MetricTileCard),
-          findsNWidgets(kDefaultMetricTiles.length));
-      expect(find.text('NO SOURCE · CONNECT HEALTH'), findsNWidgets(2));
-      // Below the collapse threshold the connect card is still the recovery
-      // path, exactly as before.
-      expect(find.text('CONNECT HEALTH'), findsOneWidget);
-    });
-
-    testWidgets('a connected Health with no samples never says "connect" and '
-        'never consolidates', (tester) async {
-      await pump(
-        tester,
-        needsHealthConnect: false,
-        dark: const {
-          'move': MetricEmptyReason.healthNoSamples,
-          'sleep': MetricEmptyReason.healthNoSamples,
-          'recovery': MetricEmptyReason.healthNoSamples,
-        },
+    test('the collapse threshold no longer restructures the grid', () {
+      final src = File(
+        'lib/screens/home/widgets/home/metric_tile_grid.dart',
+      ).readAsStringSync();
+      expect(
+        RegExp(r'const collapsed1 = false;').hasMatch(src),
+        isTrue,
+        reason: 'collapse is pinned off — a page of dark tiles is no longer '
+            'reachable, so restructuring around one would be dead code that '
+            'quietly diverges from the capability rule',
       );
-
-      // Three dark tiles, but none of them has an action to consolidate into.
-      expect(find.byType(MetricSetupPanel), findsNothing);
-      expect(find.byType(MetricTileCard),
-          findsNWidgets(kDefaultMetricTiles.length));
-      expect(find.textContaining('CONNECT HEALTH'), findsNothing,
-          reason: 'Health IS connected — telling them to connect it is the '
-              'defect the reason enum exists to kill');
-      expect(find.text('NO HEALTH DATA YET'), findsNWidgets(2));
-      // …and readiness names the signal it is actually missing.
-      expect(find.text('NEEDS HRV'), findsOneWidget);
     });
 
-    testWidgets('the panel survives a narrow phone, a big type size and a '
-        'populated page 2 without overflowing', (tester) async {
-      // The pager is a FIXED-height box, so a collapsed page inside it is the
-      // one place a wrong height reservation shows up as yellow stripes.
-      for (final width in const [320.0, 390.0]) {
-        for (final scale in const [1.0, 1.3, 2.0]) {
-          SharedPreferences.setMockInitialValues({
-            homeMetricTilesStorageKey(_userId): jsonEncode([
-              {'id': kTodayScoreTileId, 'size': 'large', 'page': 1},
-              {'id': 'move', 'size': 'wide', 'page': 1},
-              {'id': 'sleep', 'size': 'wide', 'page': 1},
-              {'id': 'recovery', 'size': 'small', 'page': 1},
-              {'id': 'hydration', 'size': 'small', 'page': 1},
-              {'id': 'weight', 'size': 'small', 'page': 1},
-              {'id': 'hrv', 'size': 'wide', 'page': 2},
-            ]),
-          });
-          tester.view.devicePixelRatio = 1;
-          tester.view.physicalSize = Size(width, 3200);
-          addTearDown(tester.view.reset);
-          await tester.pumpWidget(ProviderScope(
-            overrides: overrides(),
-            child: MaterialApp(
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              theme: ThemeData.dark(),
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(scale)),
-                child: child!,
-              ),
-              home: const Scaffold(
-                body: SingleChildScrollView(child: HomeMetricTileGrid()),
-              ),
-            ),
-          ));
-          await tester.pump();
-
-          expect(find.byType(MetricSetupPanel), findsOneWidget,
-              reason: 'page 1 is still collapsed at ${width}pt / ×$scale');
-          expect(find.byType(PageView), findsOneWidget);
-          expect(find.byKey(kMetricTilePageDotsKey), findsOneWidget);
-          expect(tester.takeException(), isNull,
-              reason: 'no overflow at ${width}pt / textScale $scale');
-        }
-      }
-    });
-
-    testWidgets('a panel that never mentions Health does NOT swallow the '
-        'connect card', (tester) async {
-      // Page 1 collapses around "nothing logged yet"; the only health tile is
-      // on page 2. Suppressing the card here would trade five copies of one
-      // instruction for zero of it.
-      SharedPreferences.setMockInitialValues({
-        homeMetricTilesStorageKey(_userId): jsonEncode([
-          {'id': 'hydration', 'size': 'small', 'page': 1},
-          {'id': 'nourish', 'size': 'small', 'page': 1},
-          {'id': 'protein', 'size': 'small', 'page': 1},
-          {'id': 'weight', 'size': 'small', 'page': 1},
-          {'id': 'move', 'size': 'wide', 'page': 2},
-        ]),
-      });
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(390, 2400);
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(ProviderScope(
-        overrides: overrides(dark: const {
-          'hydration': MetricEmptyReason.nothingLogged,
-          'nourish': MetricEmptyReason.nothingLogged,
-          'protein': MetricEmptyReason.nothingLogged,
-          'move': MetricEmptyReason.healthDisconnected,
-        }),
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: ThemeData.dark(),
-          home: const Scaffold(
-            body: SingleChildScrollView(child: HomeMetricTileGrid()),
-          ),
-        ),
-      ));
-      await tester.pump();
-
-      expect(find.byType(MetricSetupPanel), findsOneWidget);
-      expect(find.text('Log something'), findsOneWidget);
-      expect(find.text('CONNECT HEALTH'), findsOneWidget,
-          reason: 'the panel offers logging, not connecting — the card is '
-              'still the only path to Health');
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('the editor always shows the real tiles, never the panel',
-        (tester) async {
-      await pump(tester);
-      await tester.tap(find.byIcon(Icons.edit_outlined));
-      await tester.pump();
-
-      expect(find.byType(MetricSetupPanel), findsNothing,
-          reason: 'a panel cannot be dragged, resized or removed');
-      expect(find.byType(MetricTileCard),
-          findsNWidgets(kDefaultMetricTiles.length));
+    test('the grid renders the capability-filtered projection', () {
+      final src = File(
+        'lib/screens/home/widgets/home/metric_tile_grid.dart',
+      ).readAsStringSync();
+      expect(
+        src.contains('ref.watch(mountedMetricTilesProvider)'),
+        isTrue,
+        reason: 'reading homeMetricTilesProvider directly would render tiles '
+            'the user has no source for — the defect this replaced',
+      );
     });
   });
+
 
   // ───────────────────────────────────── 3c. pages, dots and the swipe
 
@@ -1225,6 +1003,11 @@ void main() {
         overrides: [
           currentUserIdProvider.overrideWithValue(_userId),
           metricTilesNeedHealthConnectProvider.overrideWithValue(false),
+          // Layout test: pass the arrangement through unfiltered. Capability
+          // is covered in metric_capability_test.dart.
+          mountedMetricTilesProvider.overrideWith(
+            (ref) => ref.watch(homeMetricTilesProvider),
+          ),
           for (final id in kHomeMetricTileCatalog.keys)
             metricTileDataProvider(id).overrideWithValue(
               _tile(id: id, label: kHomeMetricTileCatalog[id]!.tileLabel),

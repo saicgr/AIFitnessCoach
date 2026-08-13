@@ -37,6 +37,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/home_metric_tiles_provider.dart';
+import '../../../../data/providers/metric_capability_provider.dart';
 import '../../../../data/providers/metric_layout_provider.dart'
     show MetricSize;
 import '../../../../data/providers/metric_tile_data_provider.dart';
@@ -174,7 +175,10 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
     final l10n = AppLocalizations.of(context);
-    final tiles = ref.watch(homeMetricTilesProvider);
+    // Capability-filtered: the arrangement is what the user chose, this is
+    // what their sources can fill. A tile they cannot fill is not rendered
+    // empty — it is not rendered. See metric_capability_provider.dart.
+    final tiles = ref.watch(mountedMetricTilesProvider);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
     // Every tile removed and not editing: collapse rather than leave a header
@@ -190,26 +194,32 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
     //
     // Editing never collapses: the editor exists to move and remove the real
     // tiles, and it cannot do that to tiles a panel has swallowed.
+    // Rounds 4 and 5 collapsed a page of dark tiles into a setup panel. That
+    // whole mechanism is gone: a tile only mounts if its source can produce a
+    // number (metric_capability_provider.dart), so a page of dark tiles is no
+    // longer a state the grid can reach. What used to be "four tiles that
+    // cannot fill" is now four tiles that were never mounted, and the screen
+    // keeps ONE shape instead of swapping into a panel.
+    //
+    // The darkness aggregate survives only to decide whether the connect card
+    // is worth showing — never to restructure the grid.
     final dark1 = ref.watch(metricGridDarknessProvider(1));
     final dark2 =
         pageTwo.isEmpty ? null : ref.watch(metricGridDarknessProvider(2));
-    final collapsed1 = !_editing && dark1.collapse;
-    final collapsed2 = !_editing && (dark2?.collapse ?? false);
+    const collapsed1 = false;
+    const collapsed2 = false;
 
     // The connect affordance renders EXACTLY ONCE per grid, ever — but the
     // suppression keys off whether a panel is actually OFFERING it, not merely
     // on something having collapsed. A page that collapsed around "nothing
     // logged yet" says nothing about Health, and dropping the card there would
     // trade five copies of one instruction for zero.
-    final panelOffersConnect = (collapsed1 &&
-            dark1.darkByAction.containsKey(MetricEmptyAction.connectHealth)) ||
-        (collapsed2 &&
-            (dark2?.darkByAction
-                    .containsKey(MetricEmptyAction.connectHealth) ??
-                false));
-    final showConnect = !_editing &&
-        !panelOffersConnect &&
-        ref.watch(metricTilesNeedHealthConnectProvider);
+    // Connect is offered by the coach's ranked to-do list, the pencil's
+    // add-sheet and the Health tab — three surfaces, zero tiles. The card here
+    // is the fallback for a user who has capable tiles but has since stopped
+    // flowing data; it never advertises a metric they have no device for.
+    final showConnect =
+        !_editing && ref.watch(metricTilesNeedHealthConnectProvider);
 
     return Padding(
       padding: kHomeHPad,
