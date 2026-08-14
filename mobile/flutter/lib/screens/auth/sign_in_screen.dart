@@ -1060,11 +1060,34 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
   Widget build(BuildContext context) {
     final isDark = widget.t.isDark;
     final neutral = isDark ? Colors.white : Colors.black;
-    final scrimColor = isDark
-        ? const Color(0xFF050505)
-        : const Color(0xFFFAFAFA);
 
-    return Stack(
+    // Fade the LOOP OUT rather than painting a colour OVER it.
+    //
+    // This used to be a `Positioned.fill` gradient ramping to a flat
+    // `scrimColor`. That works in dark mode, where the page gradient is
+    // uniform `#050505` top to bottom, so a solid scrim is invisible. Light
+    // mode's page is NOT uniform — `#FFF4EA` (warm cream) -> `#FFFFFF` ->
+    // `#FAFAFA` — so painting the bottom stop's neutral `#FAFAFA` across a
+    // region that is still cream produced a visible grey band behind the
+    // headline. Reported on device.
+    //
+    // `BlendMode.dstIn` fades the animation's own alpha instead, so whatever
+    // the page is painting shows through unaltered. Theme-agnostic and
+    // gradient-agnostic: it cannot mismatch a background it never samples.
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        stops: [0.0, 0.62, 0.85, 1.0],
+        colors: [
+          Colors.white,
+          Colors.white,
+          Color(0x26FFFFFF),
+          Colors.transparent,
+        ],
+      ).createShader(rect),
+      child: Stack(
       children: [
         // Scene 1 — workout list rows, anchored top.
         _scene(
@@ -1168,27 +1191,8 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
             ),
           ),
         ),
-        // Bottom scrim — fades the loop into the surrounding page
-        // background (OnboardingBackground's gradient is solid by this
-        // point) so it blends instead of hard-cutting at an edge.
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0.0, 0.62, 0.85, 1.0],
-                colors: [
-                  Colors.transparent,
-                  Colors.transparent,
-                  scrimColor.withValues(alpha: 0.85),
-                  scrimColor,
-                ],
-              ),
-            ),
-          ),
-        ),
       ],
+      ),
     );
   }
 }
