@@ -192,6 +192,22 @@ class OnboardingBackground extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(gradient: t.backgroundGradient),
       child: Stack(
+        // MUST be expand, not the default `loose`.
+        //
+        // Under loose constraints a shrink-wrapping child — a
+        // `SingleChildScrollView`, a `Column` with `mainAxisSize.min` — sizes
+        // itself to its content, the Stack sizes to that child, and this
+        // Container sizes to the Stack. The gradient then covers only as much
+        // as the content, and every screen using this background sits on a
+        // `Colors.transparent` Scaffold, so the remainder renders BLACK.
+        //
+        // That is what the email sign-in screen showed on device: content to
+        // ~68% of the viewport, hard black below. The sign-in screen escaped
+        // it only because its content happens to fill the height.
+        //
+        // Expanding here fixes the whole class at the one place that owns the
+        // background, rather than requiring every screen to remember to fill.
+        fit: StackFit.expand,
         children: [
           // Single static warm glow anchoring the top of the canvas.
           Positioned(
