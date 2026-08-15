@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today Score — zero state mockup</title>
+<style>
+/* App's real bundled faces, by relative path (no base64 — keeps this file tiny) */
+@font-face{font-family:'Anton';src:url('../../../mobile/flutter/assets/fonts/Anton-Regular.ttf');font-weight:400}
+@font-face{font-family:'Barlow Condensed';src:url('../../../mobile/flutter/assets/fonts/BarlowCondensed-SemiBold.ttf');font-weight:600}
+@font-face{font-family:'Barlow Condensed';src:url('../../../mobile/flutter/assets/fonts/BarlowCondensed-Bold.ttf');font-weight:700}
+@font-face{font-family:'Archivo';src:url('../../../mobile/flutter/assets/fonts/Archivo.ttf');font-weight:100 900}
+
+*{box-sizing:border-box}
+body{
+  margin:0; padding:40px 24px 80px; background:#1B1D1A; color:#D9DED6;
+  font-family:'Archivo',system-ui,sans-serif; font-size:14px;
+  display:flex; flex-direction:column; align-items:center; gap:34px;
+}
+h1{font-family:'Anton',sans-serif; font-weight:400; font-size:20px; letter-spacing:.06em;
+   text-transform:uppercase; margin:0; color:#fff}
+.sub{margin:-24px 0 0; color:#7C857A; font-size:13px}
+.row{display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start}
+.col{display:flex; flex-direction:column; align-items:center; gap:11px}
+.cap{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px;
+     letter-spacing:.16em; text-transform:uppercase; color:#7C857A}
+.cap.now{color:#C97B4E} .cap.new{color:#6FC873}
+
+/* ── the phone: app light palette, 1:1 at 393pt ── */
+.phone{width:393px; background:#fff; border-radius:30px; padding:10px 0 18px; color:#18181B}
+.screen{padding:0 16px}
+.mrow{display:flex; align-items:center; justify-content:space-between; padding:8px 0 12px}
+.mrow span{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px;
+  letter-spacing:2px; color:#71717A; text-transform:uppercase}
+.pencil{width:26px; height:26px; border-radius:50%; border:1px solid #E4E4E7;
+  background:#F9FAFB; display:grid; place-items:center; color:#52525B; font-size:12px}
+
+.tile{position:relative; height:144px; background:#F4F4F5; border:1px solid #E4E4E7;
+  border-radius:14px; padding:13px 14px; overflow:hidden}
+.kicker{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px;
+  letter-spacing:2px; text-transform:uppercase; color:#4CAF50}
+.valrow{display:flex; align-items:baseline; gap:11px; margin-top:6px; min-height:52px}
+.val{font-family:'Anton',sans-serif; font-size:56px; line-height:.92; color:#18181B;
+  font-variant-numeric:tabular-nums}
+.val.dim{color:#A1A1AA}
+.companion{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px;
+  letter-spacing:1.4px; text-transform:uppercase; color:#2E7D32; white-space:nowrap;
+  background:rgba(76,175,80,.14); padding:2.5px 8px; border-radius:999px; position:relative; top:-4px}
+.subline{display:flex; align-items:center; gap:7px; margin-top:9px}
+.dot{width:6px; height:6px; border-radius:50%; background:#71717A; flex:0 0 auto}
+.dot.live{background:#4CAF50}
+.subtext{font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:10px;
+  letter-spacing:1.5px; text-transform:uppercase; color:#71717A; line-height:1.5}
+.subtext.act{color:#3F3F46}
+.arrow{position:absolute; right:9px; bottom:7px; color:#4CAF50; font-size:13px; line-height:1}
+
+/* the hole in the shipped version */
+.void{position:absolute; left:14px; right:14px; top:78px; bottom:12px;
+  border:1px dashed rgba(201,123,78,.5); border-radius:8px; display:grid; place-items:center;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px;
+  letter-spacing:1.6px; text-transform:uppercase; color:#B4653C}
+
+/* composition bar */
+.comp{position:absolute; left:14px; right:14px; bottom:13px}
+.track{display:flex; gap:3px; height:9px}
+.seg{background:#E4E4E7; border-radius:2px; overflow:hidden; position:relative}
+.seg i{position:absolute; inset:0 auto 0 0; background:#4CAF50; border-radius:2px;
+  transition:width .3s cubic-bezier(.4,0,.2,1)}
+.labels{display:flex; gap:3px; margin-top:6px}
+.labels span{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:8.5px;
+  letter-spacing:1.1px; text-transform:uppercase; color:#71717A; white-space:nowrap; overflow:hidden}
+
+/* ── controls ── */
+.ctl{width:393px; max-width:100%; background:#232720; border:1px solid #313629;
+  border-radius:12px; padding:14px 15px 16px}
+.tabs{display:flex; gap:6px; margin-bottom:13px}
+.tabs button{flex:1; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:.1em; text-transform:uppercase; padding:7px 6px; cursor:pointer;
+  border-radius:8px; border:1px solid #313629; background:#1B1F19; color:#A8B0A3}
+.tabs button[aria-pressed=true]{background:#4CAF50; border-color:#4CAF50; color:#0F120E}
+.ctop{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px}
+.ctop p{margin:0; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:.15em; text-transform:uppercase; color:#7C857A}
+.clock{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px;
+  letter-spacing:.08em; color:#E6EAE2}
+input[type=range]{width:100%; accent-color:#4CAF50; margin:0}
+.evt{margin-top:10px; font-size:12.5px; color:#8C958A; min-height:2.6em; line-height:1.4}
+.evt b{color:#D9DED6}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<h1>Today Score — zero state</h1>
+<p class="sub">1:1 at 393pt, app fonts + palette. Drag the day.</p>
+
+<div class="row">
+  <div class="col">
+    <p class="cap now">As shipped</p>
+    <div class="phone"><div class="screen">
+      <div class="mrow"><span>My metrics</span><div class="pencil">&#9998;</div></div>
+      <div class="tile">
+        <div class="kicker">Today score</div>
+        <div class="valrow"><div class="val">0</div></div>
+        <div class="subline"><i class="dot"></i><div class="subtext">From workouts &amp; logs</div></div>
+        <div class="void">No chart &mdash; 1 day of history</div>
+        <div class="arrow">&#8599;</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col">
+    <p class="cap new">Proposed</p>
+    <div class="phone"><div class="screen">
+      <div class="mrow"><span>My metrics</span><div class="pencil">&#9998;</div></div>
+      <div class="tile">
+        <div class="kicker">Today score</div>
+        <div class="valrow">
+          <div class="val dim" id="val">0</div>
+          <div class="companion" id="comp">+100 available today</div>
+        </div>
+        <div class="subline"><i class="dot" id="dot"></i><div class="subtext act" id="act"></div></div>
+        <div class="comp">
+          <div class="track" id="track"></div>
+          <div class="labels" id="labels"></div>
+        </div>
+        <div class="arrow">&#8599;</div>
+      </div>
+    </div></div>
+
+    <div class="ctl">
+      <div class="tabs" role="group" aria-label="Which pillars apply">
+        <button id="btnA" aria-pressed="true">One pillar applies</button>
+        <button id="btnB" aria-pressed="false">Four pillars apply</button>
+      </div>
+      <div class="ctop"><p>Time of day</p><div class="clock" id="clock">06:00</div></div>
+      <input type="range" id="scrub" min="6" max="23" step="1" value="6" aria-label="Hour of day">
+      <div class="evt" id="evt"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var W = {train:{l:'Train',w:.40}, nourish:{l:'Nourish',w:.30}, move:{l:'Move',w:.15}, sleep:{l:'Sleep',w:.15}};
+  var ACT = {train:'Finish your workout', nourish:'Log your meals', move:'Get your steps in', sleep:'Sleep counts tonight'};
+
+  // Only Train applies — no Health, no nutrition targets. A real 0 that holds all day.
+  function A(h){
+    var c=0, n;
+    if(h>=21){ c=1;    n='<b>18:34</b> &mdash; session finished, 6 of 6.'; }
+    else if(h>=19){ c=4/6; n='<b>18:02</b> &mdash; 4 of 6 exercises done.'; }
+    else if(h>=18){ c=2/6; n='<b>17:41</b> &mdash; session started, 2 of 6.'; }
+    else { n='Nothing yet. The score is honestly 0 &mdash; and says nothing for another '+(18-h)+' hours.'; }
+    return {p:[{k:'train',c:c}], n:n};
+  }
+  // All four apply — connected wearable, training day.
+  function B(h){
+    var n='Sleep synced overnight &mdash; the day opens with something already true.';
+    if(h>=22) n='<b>21:40</b> &mdash; step goal hit, dinner logged.';
+    else if(h>=19) n='<b>18:50</b> &mdash; workout complete. Train was the 40-point pillar.';
+    else if(h>=17) n='<b>17:20</b> &mdash; mid-session, 4 of 6.';
+    else if(h>=13) n='<b>13:05</b> &mdash; lunch logged.';
+    else if(h>=11) n='<b>11:10</b> &mdash; 4,200 steps.';
+    else if(h>=8)  n='<b>08:15</b> &mdash; breakfast logged.';
+    return {p:[
+      {k:'train',   c: h>=19?1 : h>=17?.67 : 0},
+      {k:'nourish', c: h>=22?.96 : h>=19?.78 : h>=17?.60 : h>=13?.48 : h>=8?.22 : 0},
+      {k:'move',    c: h>=22?1 : h>=19?.95 : h>=17?.78 : h>=11?.52 : h>=8?.18 : .04},
+      {k:'sleep',   c: h>=6?.82 : 0}
+    ], n:n};
+  }
+
+  var $=function(id){return document.getElementById(id)};
+  var val=$('val'), comp=$('comp'), act=$('act'), dot=$('dot'), track=$('track'),
+      labels=$('labels'), clock=$('clock'), evt=$('evt'), scrub=$('scrub'), bA=$('btnA'), bB=$('btnB');
+  var mode='A';
+
+  function render(){
+    var h=+scrub.value, s=(mode==='A'?A:B)(h), sum=0, score=0;
+    s.p.forEach(function(p){ sum+=W[p.k].w; });
+    s.p.forEach(function(p){ p.e=W[p.k].w/sum; score+=p.e*p.c*100; });
+    score=Math.round(score);
+
+    // muted numeral + companion at zero; full ink and no companion above it
+    val.textContent=score;
+    val.classList.toggle('dim', score===0);
+    comp.style.display = score===0 ? '' : 'none';
+
+    // largest incomplete applicable pillar, priced
+    var best=null;
+    s.p.forEach(function(p){
+      var left=p.e*(1-p.c)*100;
+      if(left>.5 && (!best||left>best.left)) best={k:p.k,left:left};
+    });
+    act.textContent = best ? ACT[best.k]+' · worth '+Math.round(best.left)
+                           : 'Every pillar complete — that’s the day';
+    dot.classList.toggle('live', score>0);
+
+    // composition: width from effectiveWeight, fill from completion
+    track.innerHTML=''; labels.innerHTML='';
+    s.p.forEach(function(p){
+      var seg=document.createElement('div'); seg.className='seg'; seg.style.flex=p.e;
+      var f=document.createElement('i'); f.style.width=(p.c*100)+'%';
+      seg.appendChild(f); track.appendChild(seg);
+      var l=document.createElement('span'); l.style.flex=p.e;
+      l.textContent=W[p.k].l+' '+Math.round(p.e*100); labels.appendChild(l);
+    });
+
+    clock.textContent=(h<10?'0':'')+h+':00';
+    evt.innerHTML=s.n;
+  }
+  function set(m){ mode=m; bA.setAttribute('aria-pressed',String(m==='A'));
+                   bB.setAttribute('aria-pressed',String(m==='B')); render(); }
+  scrub.addEventListener('input',render);
+  bA.addEventListener('click',function(){set('A')});
+  bB.addEventListener('click',function(){set('B')});
+  render();
+})();
+</script>
+</body>
+</html>
