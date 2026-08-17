@@ -63,6 +63,18 @@
 **Must be visible on screen:** the BEFORE (empty photo picker, 1-2s) then the AFTER (analysis result showing at least 2-3 named food items with individual calorie counts, held 5-6s so it's readable at 1x speed, then the confirm tap).
 **Device:** iOS Simulator. No Android-specific behavior to capture.
 
+### B1b — Food photo, full-bleed reveal (hook plate)
+**Feature:** the logged photo itself, opened full screen from the result card's expand control.
+**Nav path:** complete a B1 capture → on the analysis result, tap the ⤢ expand badge on the food
+thumbnail (top-left, under the title) → hold on the full-bleed photo → dismiss.
+**Target length:** 6-8s
+**Must be visible on screen:** the food filling the frame, edge to edge, with no numbers on it. Hold
+3-4s so a Ken Burns push has room, then the dismiss.
+**Device:** iOS Simulator.
+**Why this exists:** B1 opens in the photo picker, where the dish is one tile in a grid. A hook that
+says "guess the calories" has to show *what* is being guessed, large enough to read at a glance on a
+phone. This is the plate shot that B1 never contains — pair them, don't substitute one for the other.
+
 ### B2 — Food photo logging (multi-image buffet mode)
 **Feature:** food image logging, buffet mode (up to 10 photos)
 **Nav path:** Nutrition tab → camera/log button → switch analysis mode to "Buffet" → select 4-6 of the pre-loaded buffet-spread photos → hold on the AI analysis result screen showing the combined breakdown across all dishes.
