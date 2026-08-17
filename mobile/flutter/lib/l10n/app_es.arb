@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Sin referencia",
   "metricTileNoData": "Sin datos",
   "metricGridMyMetrics": "MIS MÉTRICAS",
+  "metricGridToday": "Hoy",
   "metricGridEditTiles": "EDITAR MOSAICOS",
   "metricGridChangesSaveInstantly": "LOS CAMBIOS SE GUARDAN AL INSTANTE",
   "metricGridEditHint": "ARRASTRA PARA REORDENAR · TOCA UN MOSAICO PARA EL TAMAÑO · − PARA QUITAR",

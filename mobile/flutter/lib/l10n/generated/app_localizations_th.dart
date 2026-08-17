@@ -15134,6 +15134,12 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'ชื่อยิม';
 
   @override
@@ -44899,6 +44905,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'ตัวชี้วัดของฉัน';
+
+  @override
+  String get metricGridToday => 'วันนี้';
 
   @override
   String get metricGridEditTiles => 'แก้ไขไทล์';

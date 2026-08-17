@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Ingen baslinje",
   "metricTileNoData": "Inga data",
   "metricGridMyMetrics": "MINA MÄTVÄRDEN",
+  "metricGridToday": "Idag",
   "metricGridEditTiles": "REDIGERA RUTOR",
   "metricGridChangesSaveInstantly": "ÄNDRINGAR SPARAS DIREKT",
   "metricGridEditHint": "DRA FÖR ATT SORTERA · TRYCK PÅ EN RUTA FÖR STORLEK · − TAR BORT",

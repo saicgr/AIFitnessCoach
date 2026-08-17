@@ -15168,6 +15168,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'Jeneng gym';
 
   @override
@@ -45013,6 +45019,9 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'METRIKKU';
+
+  @override
+  String get metricGridToday => 'Dina iki';
 
   @override
   String get metricGridEditTiles => 'EDIT UBIN';

@@ -358,6 +358,7 @@ class _TileBody extends StatelessWidget {
           _ShrinkToFit(child: _TileValue(
             value: data.hasData ? data.value : '—',
             unit: data.hasData ? data.unit : '',
+            denominator: data.hasData ? data.valueDenominator : null,
             big: ZType.disp(
               valueSize,
               color: data.hasData ? c.textPrimary : c.textMuted,
@@ -378,6 +379,15 @@ class _TileBody extends StatelessWidget {
                 colors: c,
               );
             }),
+          ] else if (data.scoreSegments.isNotEmpty && isLarge) ...[
+            // The Today Score's own arithmetic, drawn where the chart used to
+            // be reserved. On day one there is no series to plot — one
+            // snapshot is not a line — so the tallest tile on Home used to
+            // render a numeral above an empty band. The track fills it with
+            // something true at every hour of every day: what today is worth,
+            // and how much of it is banked.
+            const Spacer(),
+            _ScoreCapacityTrack(segments: data.scoreSegments, colors: c),
           ] else ...[
             SizedBox(height: isLarge ? 9 : 5),
             Flexible(
@@ -443,6 +453,11 @@ class _ShrinkToFit extends StatelessWidget {
 class _TileValue extends StatelessWidget {
   final String value;
   final String unit;
+
+  /// What the value is out of ("of 100"). Set on the Today Score, where the
+  /// numeral is a share of a total the user can still reach — without it a 0
+  /// reads as a verdict rather than a measurement.
+  final String? denominator;
   final TextStyle big;
   final TextStyle small;
 
@@ -451,13 +466,15 @@ class _TileValue extends StatelessWidget {
     required this.unit,
     required this.big,
     required this.small,
+    this.denominator,
   });
 
   static final RegExp _run = RegExp(r'[0-9][0-9.,:]*|[^0-9]+');
 
   @override
   Widget build(BuildContext context) {
-    // No digits at all ("—") — it IS the value, so it keeps the display face.
+    // No digits at all ("—", "At goal") — it IS the value, so it keeps the
+    // display face.
     if (!value.contains(RegExp(r'[0-9]'))) {
       return Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: big);
     }
@@ -473,11 +490,114 @@ class _TileValue extends StatelessWidget {
     if (unit.isNotEmpty) {
       spans.add(TextSpan(text: unit.toUpperCase(), style: small));
     }
+    if (denominator != null && denominator!.isNotEmpty) {
+      spans.add(TextSpan(text: '  ${denominator!.toUpperCase()}', style: small));
+    }
     return Text.rich(
       TextSpan(children: spans),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: big,
+    );
+  }
+}
+
+/// The Today Score's earnable slices: an outlined segment per applicable
+/// contributor, widths proportional to what each is worth today, filling with
+/// accent as points are banked.
+///
+/// Outline-until-earned is the whole point. A filled grey bar reads as a
+/// progress cliché and, at 0, as a failure; a hairline outline reads as
+/// capacity — a day that has not been spent yet. The segments are the score's
+/// real renormalised weights, so a Health-less account shows TRAIN / NOURISH
+/// only and is never shown a slice it has no way to earn.
+class _ScoreCapacityTrack extends StatelessWidget {
+  final List<MetricScoreSegment> segments;
+  final ThemeColors colors;
+
+  const _ScoreCapacityTrack({required this.segments, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 9,
+          child: Row(
+            children: [
+              for (var i = 0; i < segments.length; i++) ...[
+                if (i > 0) const SizedBox(width: 5),
+                Expanded(
+                  flex: segments[i].weight.clamp(1, 100),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: c.cardBorder),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: segments[i].fill.clamp(0.0, 1.0),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: c.accent,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 7),
+        // The legend names what the widths mean. Without it the track is
+        // decoration; with it the tile teaches the score's recipe using the
+        // user's own weights, and no tutorial card is ever needed.
+        Row(
+          children: [
+            for (var i = 0; i < segments.length; i++) ...[
+              if (i > 0) const SizedBox(width: 12),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: segments[i].fill > 0 ? c.accent : null,
+                        border: segments[i].fill > 0
+                            ? null
+                            : Border.all(color: c.cardBorder),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        '${segments[i].label} ${segments[i].weight}'
+                            .toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZType.lbl(
+                          9.5,
+                          color: c.textMuted,
+                          weight: FontWeight.w600,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 }

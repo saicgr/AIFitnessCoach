@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "ಆಧಾರ ಇಲ್ಲ",
   "metricTileNoData": "ಡೇಟಾ ಇಲ್ಲ",
   "metricGridMyMetrics": "ನನ್ನ ಮೆಟ್ರಿಕ್‌ಗಳು",
+  "metricGridToday": "ಇಂದು",
   "metricGridEditTiles": "ಟೈಲ್‌ಗಳನ್ನು ಸಂಪಾದಿಸಿ",
   "metricGridChangesSaveInstantly": "ಬದಲಾವಣೆಗಳು ತಕ್ಷಣ ಉಳಿಯುತ್ತವೆ",
   "metricGridEditHint": "ಕ್ರಮ ಬದಲಿಸಲು ಎಳೆಯಿರಿ · ಗಾತ್ರಕ್ಕೆ ಟೈಲ್ ಟ್ಯಾಪ್ ಮಾಡಿ · ತೆಗೆಯಲು −",

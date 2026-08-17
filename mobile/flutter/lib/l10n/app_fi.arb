@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Ei vertailutasoa",
   "metricTileNoData": "Ei tietoja",
   "metricGridMyMetrics": "OMAT MITTARIT",
+  "metricGridToday": "Tänään",
   "metricGridEditTiles": "MUOKKAA RUUTUJA",
   "metricGridChangesSaveInstantly": "MUUTOKSET TALLENTUVAT HETI",
   "metricGridEditHint": "VEDÄ JÄRJESTÄÄKSESI · NAPAUTA RUUTUA KOKOA VARTEN · − POISTAA",

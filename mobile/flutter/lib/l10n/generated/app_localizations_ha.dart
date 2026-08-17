@@ -15224,6 +15224,12 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'Sunan gym';
 
   @override
@@ -45144,6 +45150,9 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'MA\'AUNAINA';
+
+  @override
+  String get metricGridToday => 'Yau';
 
   @override
   String get metricGridEditTiles => 'GYARA FALALEN';

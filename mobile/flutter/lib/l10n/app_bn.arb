@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "বেসলাইন নেই",
   "metricTileNoData": "ডেটা নেই",
   "metricGridMyMetrics": "আমার মেট্রিক",
+  "metricGridToday": "আজ",
   "metricGridEditTiles": "টাইল সম্পাদনা",
   "metricGridChangesSaveInstantly": "পরিবর্তন সঙ্গে সঙ্গে সংরক্ষিত হয়",
   "metricGridEditHint": "সাজাতে টানুন · আকারের জন্য টাইলে ট্যাপ · − সরাতে",

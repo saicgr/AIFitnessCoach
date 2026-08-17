@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "基準値なし",
   "metricTileNoData": "データなし",
   "metricGridMyMetrics": "マイ指標",
+  "metricGridToday": "今日",
   "metricGridEditTiles": "タイルを編集",
   "metricGridChangesSaveInstantly": "変更はすぐに保存されます",
   "metricGridEditHint": "ドラッグで並べ替え · タップでサイズ変更 · − で削除",

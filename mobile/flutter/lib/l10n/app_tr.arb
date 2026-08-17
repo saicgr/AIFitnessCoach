@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Referans yok",
   "metricTileNoData": "Veri yok",
   "metricGridMyMetrics": "ÖLÇÜMLERİM",
+  "metricGridToday": "Bugün",
   "metricGridEditTiles": "KARTLARI DÜZENLE",
   "metricGridChangesSaveInstantly": "DEĞİŞİKLİKLER ANINDA KAYDEDİLİR",
   "metricGridEditHint": "SIRALAMAK İÇİN SÜRÜKLE · BOYUT İÇİN DOKUN · KALDIRMAK İÇİN −",

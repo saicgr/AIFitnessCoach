@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "आधाररेखा छैन",
   "metricTileNoData": "डेटा छैन",
   "metricGridMyMetrics": "मेरा मेट्रिक",
+  "metricGridToday": "आज",
   "metricGridEditTiles": "टाइल सम्पादन",
   "metricGridChangesSaveInstantly": "परिवर्तन तुरुन्तै सुरक्षित हुन्छ",
   "metricGridEditHint": "क्रम मिलाउन तान्नुहोस् · आकारका लागि टाइल ट्याप गर्नुहोस् · हटाउन −",

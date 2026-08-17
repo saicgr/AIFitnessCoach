@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Kein Basiswert",
   "metricTileNoData": "Keine Daten",
   "metricGridMyMetrics": "MEINE WERTE",
+  "metricGridToday": "Heute",
   "metricGridEditTiles": "KACHELN BEARBEITEN",
   "metricGridChangesSaveInstantly": "ÄNDERUNGEN WERDEN SOFORT GESPEICHERT",
   "metricGridEditHint": "ZIEHEN ZUM SORTIEREN · TIPPEN FÜR GRÖSSE · − ZUM ENTFERNEN",

@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Sem referência",
   "metricTileNoData": "Sem dados",
   "metricGridMyMetrics": "MINHAS MÉTRICAS",
+  "metricGridToday": "Hoje",
   "metricGridEditTiles": "EDITAR BLOCOS",
   "metricGridChangesSaveInstantly": "AS ALTERAÇÕES SÃO SALVAS NA HORA",
   "metricGridEditHint": "ARRASTE PARA REORDENAR · TOQUE UM BLOCO PARA O TAMANHO · − PARA REMOVER",

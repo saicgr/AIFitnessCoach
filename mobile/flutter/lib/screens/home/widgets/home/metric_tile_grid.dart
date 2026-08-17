@@ -46,6 +46,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/health_connect_sheet.dart';
 import '../quick_log_sheet.dart' show showQuickLogSheet;
+import '../ring_catalog.dart' show RingKindX;
 import 'metric_tile_card.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
@@ -365,7 +366,13 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
             )
           else ...[
             Text(
-              l10n.metricGridMyMetrics,
+              // Uppercased here rather than in the bundles, like every other
+              // tracked label on this screen (`data.label.toUpperCase()` in
+              // the tile body). The retired `metricGridMyMetrics` shouted from
+              // inside the .arb, which left each translator to decide the
+              // casing and produced a header that was uppercase in some
+              // languages and not others.
+              l10n.metricGridToday.toUpperCase(),
               style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2),
             ),
             const Spacer(),
@@ -1623,6 +1630,20 @@ class AddMetricTileSheet extends ConsumerWidget {
                 return GestureDetector(
                   onTap: () {
                     HapticService.light();
+                    // A manual add beats the probe. The probe can only see
+                    // evidence — 30 days of samples — so a user who just
+                    // bought a watch, or whose ring syncs through a source we
+                    // could not sample, would otherwise place a tile that
+                    // `mountedMetricTilesProvider` immediately filters back
+                    // out. They know about a source we cannot see; believe
+                    // them. (`markCapable` was written for exactly this and
+                    // then never called from anywhere.)
+                    final kind = RingKindX.fromId(spec.id);
+                    if (kind != null) {
+                      ref
+                          .read(metricCapabilityProvider.notifier)
+                          .markCapable(kind);
+                    }
                     notifier.add(spec.id);
                     Navigator.of(context).maybePop();
                   },
@@ -1655,6 +1676,11 @@ class AddMetricTileSheet extends ConsumerWidget {
                             MetricTileSource.health => l10n.metricGridSourceHealth,
                             MetricTileSource.inApp => l10n.metricGridSourceInApp,
                             MetricTileSource.computed =>
+                              l10n.metricGridSourceComputed,
+                            // Where a plan tile's number comes from is the
+                            // same answer as a computed one from the reader's
+                            // side: the app worked it out, they did not log it.
+                            MetricTileSource.plan =>
                               l10n.metricGridSourceComputed,
                           },
                           style: TextStyle(

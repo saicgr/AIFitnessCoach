@@ -14586,6 +14586,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => '헬스장 이름';
 
   @override
@@ -43285,6 +43291,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => '내 지표';
+
+  @override
+  String get metricGridToday => '오늘';
 
   @override
   String get metricGridEditTiles => '타일 편집';

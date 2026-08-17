@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Geen basislijn",
   "metricTileNoData": "Geen gegevens",
   "metricGridMyMetrics": "MIJN METINGEN",
+  "metricGridToday": "Vandaag",
   "metricGridEditTiles": "TEGELS BEWERKEN",
   "metricGridChangesSaveInstantly": "WIJZIGINGEN WORDEN DIRECT OPGESLAGEN",
   "metricGridEditHint": "SLEEP OM TE ORDENEN · TIK EEN TEGEL VOOR GROOTTE · − OM TE VERWIJDEREN",

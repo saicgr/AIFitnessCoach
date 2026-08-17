@@ -15290,6 +15290,12 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'జిమ్ పేరు';
 
   @override
@@ -45373,6 +45379,9 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'నా మెట్రిక్‌లు';
+
+  @override
+  String get metricGridToday => 'ఈరోజు';
 
   @override
   String get metricGridEditTiles => 'టైల్స్ సవరించండి';

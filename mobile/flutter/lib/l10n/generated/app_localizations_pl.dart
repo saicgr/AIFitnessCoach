@@ -15239,6 +15239,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'Nazwa siłowni';
 
   @override
@@ -45195,6 +45201,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'MOJE WSKAŹNIKI';
+
+  @override
+  String get metricGridToday => 'Dzisiaj';
 
   @override
   String get metricGridEditTiles => 'EDYTUJ KAFELKI';

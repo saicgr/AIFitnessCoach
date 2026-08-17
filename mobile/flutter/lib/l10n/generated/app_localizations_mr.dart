@@ -15168,6 +15168,12 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'जिमचे नाव';
 
   @override
@@ -45021,6 +45027,9 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'माझे मेट्रिक';
+
+  @override
+  String get metricGridToday => 'आज';
 
   @override
   String get metricGridEditTiles => 'टाइल संपादित करा';

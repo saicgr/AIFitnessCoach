@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "ไม่มีค่าอ้างอิง",
   "metricTileNoData": "ไม่มีข้อมูล",
   "metricGridMyMetrics": "ตัวชี้วัดของฉัน",
+  "metricGridToday": "วันนี้",
   "metricGridEditTiles": "แก้ไขไทล์",
   "metricGridChangesSaveInstantly": "บันทึกการเปลี่ยนแปลงทันที",
   "metricGridEditHint": "ลากเพื่อจัดลำดับ · แตะไทล์เพื่อเปลี่ยนขนาด · − เพื่อลบ",

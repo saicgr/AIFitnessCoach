@@ -39,6 +39,36 @@ import 'metric_layout_provider.dart' show MetricSize, MetricSizeX;
 /// four contributor rings feed, so it has no ring of its own.
 const String kTodayScoreTileId = 'today_score';
 
+/// The plan-backed tiles, all sourced from what onboarding produced.
+///
+/// Ids are stable persistence keys and deliberately do NOT collide with any
+/// [RingKind.id] — `RingKindX.fromId` must keep returning null for them, which
+/// is what routes them down the plan branch everywhere.
+const String kNextSessionTileId = 'next_session';
+const String kToGoalTileId = 'to_goal';
+const String kThisWeekTileId = 'this_week';
+const String kDailyFuelTileId = 'daily_fuel';
+const String kMaintenanceTileId = 'maintenance';
+const String kProgramWeekTileId = 'program_week';
+
+/// Every plan-backed tile id, in the order they are offered as substitutes.
+///
+/// Order is by how much the tile tells a brand-new account about its own day:
+/// the session it is meant to do, then where it is heading, then the shape of
+/// the week, then the numbers it is eating to.
+const List<String> kPlanTileIds = [
+  kNextSessionTileId,
+  kToGoalTileId,
+  kThisWeekTileId,
+  kDailyFuelTileId,
+  kMaintenanceTileId,
+  kProgramWeekTileId,
+];
+
+/// True for a tile that reads the plan/profile rather than a sensor or a log.
+bool isPlanTileId(String id) =>
+    kHomeMetricTileCatalog[id]?.source == MetricTileSource.plan;
+
 /// Where a tile's number comes from — decides what its empty state says.
 enum MetricTileSource {
   /// A wearable / platform health source (Apple Health, Health Connect).
@@ -51,6 +81,22 @@ enum MetricTileSource {
 
   /// Computed from in-app activity; never dark on a fresh install.
   computed,
+
+  /// Read from what onboarding produced: the profile the user filled in and
+  /// the plan generated from it — goal weight, calorie/protein targets, the
+  /// generated session, the program week.
+  ///
+  /// This source exists because the capability rule was only ever applied in
+  /// one direction. It removed tiles no sensor could fill and left a fresh
+  /// account with a grid of one, when the app had been holding a page of the
+  /// user's own numbers since before Home first painted. A generated plan is
+  /// as real a source as a step count; it is simply not a *measurement*, so it
+  /// gets its own source rather than being smuggled in as [computed].
+  ///
+  /// Missing → the tile does not mount (see `mountedMetricTilesProvider`).
+  /// A plan tile whose backing field is null is the same "no source, ever"
+  /// case a watch-less account has for Sleep: not an empty box to style.
+  plan,
 }
 
 /// How a tile phrases its distance from the 30-day baseline.
@@ -247,6 +293,69 @@ final Map<String, MetricTileSpec> kHomeMetricTileCatalog = {
       defaultSize: _defaultSizeFor(k),
       route: _routeFor(k),
     ),
+
+  // ── Plan-backed tiles ──────────────────────────────────────────────────
+  // No ring, no sensor, no log: these read the profile the user filled in and
+  // the plan generated from it. They carry no deviation style that matters —
+  // a "30-day baseline" of your own goal weight is meaningless — so they use
+  // the default and simply never claim a deviation (see the plan branch in
+  // metric_tile_data_provider.dart).
+  kNextSessionTileId: const MetricTileSpec(
+    id: kNextSessionTileId,
+    label: 'Next session',
+    tileLabel: 'Next session',
+    ring: null,
+    source: MetricTileSource.plan,
+    defaultSize: MetricSize.large,
+    // Static fallback; the live tile carries the specific workout's route.
+    route: '/workouts',
+  ),
+  kToGoalTileId: const MetricTileSpec(
+    id: kToGoalTileId,
+    label: 'To goal',
+    tileLabel: 'To goal',
+    ring: null,
+    source: MetricTileSource.plan,
+    deviationStyle: MetricDeviationStyle.absolute,
+    defaultSize: MetricSize.wide,
+    route: '/metric/weight',
+  ),
+  kThisWeekTileId: const MetricTileSpec(
+    id: kThisWeekTileId,
+    label: 'This week',
+    tileLabel: 'This week',
+    ring: null,
+    source: MetricTileSource.plan,
+    defaultSize: MetricSize.wide,
+    route: '/schedule',
+  ),
+  kDailyFuelTileId: const MetricTileSpec(
+    id: kDailyFuelTileId,
+    label: 'Daily fuel',
+    tileLabel: 'Daily fuel',
+    ring: null,
+    source: MetricTileSource.plan,
+    defaultSize: MetricSize.small,
+    route: '/nutrition',
+  ),
+  kMaintenanceTileId: const MetricTileSpec(
+    id: kMaintenanceTileId,
+    label: 'Maintenance',
+    tileLabel: 'Maintenance',
+    ring: null,
+    source: MetricTileSource.plan,
+    defaultSize: MetricSize.small,
+    route: '/nutrition-settings',
+  ),
+  kProgramWeekTileId: const MetricTileSpec(
+    id: kProgramWeekTileId,
+    label: 'Program week',
+    tileLabel: 'Week',
+    ring: null,
+    source: MetricTileSource.plan,
+    defaultSize: MetricSize.small,
+    route: '/workout/your-programs',
+  ),
 };
 
 /// One placed tile.
@@ -316,6 +425,83 @@ const List<HomeMetricTile> kDefaultMetricTiles = [
   HomeMetricTile(id: 'hydration', size: MetricSize.small),
   HomeMetricTile(id: 'weight', size: MetricSize.small),
 ];
+
+/// The default arrangement, shaped for what THIS account's sources can fill.
+///
+/// [kDefaultMetricTiles] is the arrangement for an account with a watch and a
+/// full Health grant. Every other account used to get the same list minus
+/// whatever was filtered out at read time, which is how a Health-skipped
+/// account arrived at a single tile reading 0.
+///
+/// The rule here is the mirror of the capability rule, not an exception to it:
+/// a slot whose sensor can never fill it is handed to a plan-backed metric —
+/// **same size, same position** — so the grid keeps one shape and simply says
+/// something true in every cell. Substitutes are taken from [kPlanTileIds] in
+/// order, each used at most once.
+///
+/// The Today Score keeps its slot rather than being replaced: it is not
+/// unfillable, it is merely zero until the day starts (see
+/// `metricScoreEverScoredProvider`). It gets a plan tile inserted directly
+/// after it, at the same size, which is what the hero slot renders on the
+/// mornings the score has nothing to say yet.
+///
+/// Called once, at seed time, before the first render. Nothing re-runs it, so
+/// the arrangement cannot change under the user later; a plan tile that turns
+/// out to have no backing data is filtered at read time exactly like a sensor
+/// tile, and a user can remove or resize any of it.
+List<HomeMetricTile> defaultMetricTilesFor({
+  required bool capabilityResolved,
+  required Set<RingKind> capable,
+}) {
+  final out = <HomeMetricTile>[];
+  final used = <String>{};
+  final pool = List<String>.of(kPlanTileIds);
+
+  String? takeSubstitute() {
+    while (pool.isNotEmpty) {
+      final id = pool.removeAt(0);
+      if (used.add(id)) return id;
+    }
+    return null;
+  }
+
+  for (final tile in kDefaultMetricTiles) {
+    if (tile.id == kTodayScoreTileId) {
+      out.add(tile);
+      used.add(tile.id);
+      final sub = takeSubstitute();
+      if (sub != null) {
+        out.add(HomeMetricTile(id: sub, size: tile.size, page: tile.page));
+      }
+      continue;
+    }
+
+    final kind = RingKindX.fromId(tile.id);
+    final spec = kHomeMetricTileCatalog[tile.id];
+    // Only a DEVICE-backed slot can be handed over. Water and Weight are
+    // logged by hand — they are fillable on any phone, capability set or not,
+    // and substituting them would repeat the mistake this function exists to
+    // undo. Unknown-to-rings ids (nothing today, but the catalogue may grow)
+    // are likewise left alone: only a metric we KNOW has no source frees its
+    // slot.
+    final fillable = kind == null ||
+        spec == null ||
+        spec.source != MetricTileSource.health ||
+        (capabilityResolved && capable.contains(kind));
+    if (fillable) {
+      out.add(tile);
+      used.add(tile.id);
+      continue;
+    }
+
+    final sub = takeSubstitute();
+    if (sub != null) {
+      out.add(HomeMetricTile(id: sub, size: tile.size, page: tile.page));
+    }
+  }
+
+  return _sanitise(out);
+}
 
 /// A named starting arrangement. A preset carries **everything the layout is**
 /// — which metrics, in what order, at what size, on which page — because a
@@ -501,6 +687,22 @@ class HomeMetricTilesNotifier extends StateNotifier<List<HomeMetricTile>> {
 
   /// Whether a layout has been written for this account.
   bool get hasPersistedLayout => _persisted;
+
+  /// Take the account-shaped default ([defaultMetricTilesFor]) as the starting
+  /// arrangement — in memory only, and only while the user has no layout of
+  /// their own.
+  ///
+  /// Pushed by [MetricCapabilityNotifier] once capability is known, because
+  /// the shape depends on it and capability resolves asynchronously. A user's
+  /// own arrangement always wins, and this never persists: a future change to
+  /// the default must still reach accounts that have not edited theirs, which
+  /// is the same reason the plain default is not persisted either.
+  void adoptDefaultShape(List<HomeMetricTile> shaped) {
+    if (_persisted) return;
+    if (listEquals(state, shaped)) return;
+    if (!mounted) return;
+    state = shaped;
+  }
 
   void _set(List<HomeMetricTile> next) {
     state = _sanitise(next);

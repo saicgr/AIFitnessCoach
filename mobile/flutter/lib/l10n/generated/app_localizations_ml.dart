@@ -15424,6 +15424,12 @@ class AppLocalizationsMl extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'ജിമ്മിന്റെ പേര്';
 
   @override
@@ -45717,6 +45723,9 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'എന്റെ മെട്രിക്കുകൾ';
+
+  @override
+  String get metricGridToday => 'ഇന്ന്';
 
   @override
   String get metricGridEditTiles => 'ടൈലുകൾ എഡിറ്റ് ചെയ്യുക';

@@ -23,14 +23,22 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/providers/user_provider.dart' show currentUserProvider;
 import '../../core/stats/state_valence.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../services/score_history_service.dart';
 import '../models/metric_value.dart';
+import '../models/today_score.dart' show ContributorKindMeta;
+import '../models/weekly_plan.dart' show DayType;
 import '../services/health_service.dart' show healthSyncProvider;
+import 'branded_program_provider.dart' show activeUserProgramProvider;
 import 'home_metric_tiles_provider.dart';
 import 'metric_value_provider.dart';
+import 'nutrition_preferences_provider.dart' show nutritionPreferencesProvider;
 import 'today_score_provider.dart';
+import 'today_workout_provider.dart' show todayWorkoutProvider;
 import 'trend_series_provider.dart';
+import 'weekly_plan_provider.dart' show weeklyPlanProvider;
 
 /// Prior days required before a tile may claim a deviation. Below this the
 /// "baseline" would be a rumour.
@@ -109,7 +117,35 @@ MetricDeviation? computeMetricDeviation(
   }
 }
 
-/// Display-ready state of one tile.
+/// One earnable slice of the Today Score, as the hero tile draws it.
+///
+/// The score is the only tile whose "chart" is not a history: a 14-day line
+/// says nothing about a day in progress, and on the first day there is no line
+/// to draw at all — which is how the tallest tile on Home came to reserve
+/// chart height it could not fill and render a numeral above a void.
+///
+/// The segments are the score's own arithmetic: [weight] is the contributor's
+/// renormalised share of 100 (so a Health-less account reads TRAIN 57 /
+/// NOURISH 43 and is never shown a Steps slice it cannot earn), and [fill] is
+/// how much of that share is already banked.
+@immutable
+class MetricScoreSegment {
+  /// Short contributor label — TRAIN, NOURISH, MOVE, SLEEP.
+  final String label;
+
+  /// Points this contributor is worth today, out of 100.
+  final int weight;
+
+  /// 0..1 of [weight] already earned.
+  final double fill;
+
+  const MetricScoreSegment({
+    required this.label,
+    required this.weight,
+    required this.fill,
+  });
+}
+
 @immutable
 class MetricTileData {
   final String id;
@@ -180,6 +216,15 @@ class MetricTileData {
   /// Bars instead of a line — daily totals that reset (water, protein).
   final bool usesBars;
 
+  /// The Today Score's earnable slices, drawn in place of a chart. Empty for
+  /// every other tile.
+  final List<MetricScoreSegment> scoreSegments;
+
+  /// Denominator shown beside the numeral ("of 100"), or null. The score's
+  /// zero is a measurement against a total the user can still reach; without
+  /// the total it is just a zero.
+  final String? valueDenominator;
+
   final String route;
 
   const MetricTileData({
@@ -202,6 +247,8 @@ class MetricTileData {
     this.deviation = 0,
     this.deviationEpsilon = 0,
     this.usesBars = false,
+    this.scoreSegments = const [],
+    this.valueDenominator,
   });
 }
 
@@ -351,6 +398,11 @@ MetricEmptyReason _emptyReasonFor(MetricTileSource source,
           : MetricEmptyReason.healthDisconnected,
       MetricTileSource.inApp => MetricEmptyReason.nothingLogged,
       MetricTileSource.computed => MetricEmptyReason.needsSetup,
+      // A plan tile with no backing field does not mount at all
+      // (`mountedMetricTilesProvider`), so this reason is never rendered —
+      // it exists so the switch stays exhaustive and any future caller that
+      // does render one says something true rather than "connect Health".
+      MetricTileSource.plan => MetricEmptyReason.needsSetup,
     };
 
 String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
@@ -426,9 +478,15 @@ List<double> _tailValues(List<double> values) => values.length <= kTileChartPoin
 /// a connect card would be an ad, not a fix.
 final metricTilesNeedHealthConnectProvider = Provider<bool>((ref) {
   if (ref.watch(healthSyncProvider.select((s) => s.isConnected))) return false;
-  return ref.watch(homeMetricTilesProvider).any(
-        (t) => t.spec?.source == MetricTileSource.health,
-      );
+  final tiles = ref.watch(homeMetricTilesProvider);
+  if (tiles.any((t) => t.spec?.source == MetricTileSource.health)) return true;
+
+  // No health tile placed — but that is only a *choice* if the user made a
+  // layout. On the account-shaped default the sensor slots were handed to
+  // plan tiles precisely BECAUSE Health is off (`defaultMetricTilesFor`), so
+  // treating their absence as disinterest would delete the one affordance on
+  // Home that turns those slots back into sensors.
+  return !ref.watch(homeMetricTilesProvider.notifier).hasPersistedLayout;
 });
 
 /// How many *actionable* dark tiles on one page turn a grid of empty states
@@ -564,6 +622,196 @@ MetricTileData _emptyTile(
   );
 }
 
+/// Whether a point is visible in the data we hold right now — today's live
+/// score, or any day still inside the retained history.
+///
+/// NOT the mount gate on its own: `ScoreHistoryNotifier` keeps 90 days, so a
+/// user who scored in March and nothing since would fall back to false and
+/// lose a tile they have been reading. [MetricCapabilityNotifier] watches this
+/// and promotes the first `true` into a persisted, one-way fact; the gate is
+/// the OR of the two.
+final metricScoreSeenInWindowProvider = Provider<bool>((ref) {
+  if (ref.watch(todayScoreProvider).score > 0) return true;
+  return ref.watch(scoreHistoryProvider).days.any((d) => d.score > 0);
+});
+
+/// The Today Score's earnable slices, in contributor order.
+///
+/// Only contributors that APPLY today are included — the score renormalises
+/// its weights over those, so a Health-less account genuinely has a 57/43
+/// Train/Nourish day and is never shown a Move slice it cannot earn. Empty
+/// while the score is in its setup state, where there is nothing to slice.
+final metricScoreSegmentsProvider = Provider<List<MetricScoreSegment>>((ref) {
+  final score = ref.watch(todayScoreProvider);
+  if (score.isSetupState) return const [];
+  return [
+    for (final c in score.contributors)
+      if (c.applicable)
+        MetricScoreSegment(
+          label: c.kind.label,
+          weight: (c.effectiveWeight * 100).round(),
+          fill: c.completion.clamp(0.0, 1.0),
+        ),
+  ];
+});
+
+/// A plan-backed tile's contents, or null when the field behind it is not
+/// there — which is the signal that the tile must not mount at all.
+///
+/// Everything here was produced by onboarding: the profile the user filled in,
+/// the targets computed from it, and the plan generated for them. None of it
+/// is a measurement, and none of it is estimated on their behalf — a null
+/// field yields no tile rather than a placeholder number.
+({String value, String unit, String footnote, String? route})? _planTileValues(
+  Ref ref,
+  String tileId,
+) {
+  switch (tileId) {
+    // ── The session the app generated for them ──────────────────────────
+    case kNextSessionTileId:
+      final res = ref.watch(todayWorkoutProvider).valueOrNull;
+      // Mid-generation is not content: a tile that renders a placeholder while
+      // Gemini is still writing the plan is the skeleton this design rejects.
+      final w = res?.todayWorkout ?? res?.nextWorkout;
+      if (w == null || w.durationMinutes <= 0) return null;
+      final today = res?.todayWorkout != null;
+      final days = res?.daysUntilNext ?? 0;
+      final when = today
+          ? 'today'
+          : (days == 1 ? 'tomorrow' : 'in $days days');
+      final parts = <String>[
+        w.name,
+        if (w.exerciseCount > 0) '${w.exerciseCount} exercises',
+        when,
+      ];
+      return (
+        value: '${w.durationMinutes}',
+        unit: 'min',
+        footnote: parts.join(' · '),
+        // Straight to the session itself rather than the list it sits in —
+        // the tile named one workout, so tapping it opens that workout.
+        route: '/workout/${w.id}',
+      );
+
+    // ── The distance to the goal they typed ─────────────────────────────
+    case kToGoalTileId:
+      final user = ref.watch(currentUserProvider).valueOrNull;
+      final now = user?.weightKg;
+      final target = user?.targetWeightKg;
+      if (now == null || target == null || now <= 0 || target <= 0) return null;
+      final lbs = (user?.weightUnit ?? 'lbs') != 'kg';
+      double show(double kg) => lbs ? WeightUtils.kgToLbs(kg) : kg;
+      final delta = (show(now) - show(target)).abs();
+      // Already there: a "0.0 to go" tile is the zero this whole change is
+      // about, so say the true thing instead.
+      final unit = lbs ? 'lb' : 'kg';
+      if (delta < 0.1) {
+        return (
+          value: 'At goal',
+          unit: '',
+          footnote: 'You hit your target',
+          route: null,
+        );
+      }
+      return (
+        value: delta.toStringAsFixed(1),
+        unit: unit,
+        footnote: '${show(now).toStringAsFixed(1)} now → '
+            '${show(target).toStringAsFixed(1)} target',
+        route: null,
+      );
+
+    // ── The shape of the week the plan holds ────────────────────────────
+    case kThisWeekTileId:
+      final plan = ref.watch(weeklyPlanProvider).currentPlan;
+      if (plan == null) return null;
+      final sessions =
+          plan.dailyEntries.where((e) => e.dayType == DayType.training).toList();
+      if (sessions.isEmpty) return null;
+      final done = sessions.where((e) => e.workoutCompleted).length;
+      final minutes = sessions.fold<int>(
+          0, (sum, e) => sum + (e.workoutDurationMinutes ?? 0));
+      final days = [
+        for (final e in sessions) _kWeekdayAbbr[e.planDate.weekday] ?? '',
+      ].where((d) => d.isNotEmpty).toList();
+      return (
+        value: done > 0 ? '$done/${sessions.length}' : '${sessions.length}',
+        unit: 'sessions',
+        footnote: minutes > 0
+            ? '${days.join(' · ')} — $minutes min planned'
+            : days.join(' · '),
+        route: null,
+      );
+
+    // ── What they are eating to ─────────────────────────────────────────
+    case kDailyFuelTileId:
+      final prefs = ref.watch(nutritionPreferencesProvider);
+      if (!prefs.hasConfiguredTargets) return null;
+      final kcal = prefs.currentCalorieTarget;
+      if (kcal == null || kcal <= 0) return null;
+      final protein = prefs.currentProteinTarget;
+      return (
+        value: _thousands(kcal),
+        unit: 'kcal',
+        footnote: (protein != null && protein > 0)
+            ? '$protein g protein · your daily target'
+            : 'Your daily target',
+        route: null,
+      );
+
+    // ── The burn their targets were built from ──────────────────────────
+    case kMaintenanceTileId:
+      final tdee = ref.watch(nutritionPreferencesProvider).preferences?.calculatedTdee;
+      if (tdee == null || tdee <= 0) return null;
+      // Named for what it is: a figure computed from the user's own height,
+      // weight, age and activity answers — not something measured off them.
+      return (
+        value: _thousands(tdee),
+        unit: '/day',
+        footnote: 'From your height, weight and age',
+        route: null,
+      );
+
+    // ── Where they are in the program ───────────────────────────────────
+    case kProgramWeekTileId:
+      final assignment = ref.watch(activeUserProgramProvider);
+      final week = assignment?.currentWeek;
+      final total = assignment?.program?.durationWeeks;
+      if (week == null || week <= 0) return null;
+      final focus = assignment?.currentPhase?.trim();
+      return (
+        value: '$week',
+        unit: (total != null && total > 0) ? 'of $total' : 'week',
+        footnote: (focus != null && focus.isNotEmpty)
+            ? focus
+            : (assignment?.program?.name ?? 'Your program'),
+        route: null,
+      );
+  }
+  return null;
+}
+
+const Map<int, String> _kWeekdayAbbr = {
+  DateTime.monday: 'Mon',
+  DateTime.tuesday: 'Tue',
+  DateTime.wednesday: 'Wed',
+  DateTime.thursday: 'Thu',
+  DateTime.friday: 'Fri',
+  DateTime.saturday: 'Sat',
+  DateTime.sunday: 'Sun',
+};
+
+String _thousands(int n) {
+  final s = n.toString();
+  if (s.length <= 3) return s;
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}
+
 /// Live tile state for [tileId]. Unknown ids resolve to an empty tile rather
 /// than throwing — a stale persisted layout must never crash Home.
 final metricTileDataProvider =
@@ -586,6 +834,32 @@ final metricTileDataProvider =
   }
 
   final valence = MetricValence.forKey(spec.id);
+
+  // ── Plan-backed tiles: the profile and the plan onboarding produced.
+  //
+  // Checked before the `spec.ring == null` branch below, which these would
+  // otherwise fall into (they have no ring either). They never claim a
+  // deviation and never draw a chart: a 30-day baseline of your own goal
+  // weight, or of the number of sessions your plan holds, is not a thing.
+  if (spec.source == MetricTileSource.plan) {
+    final v = _planTileValues(ref, spec.id);
+    if (v == null) {
+      return _emptyTile(spec, valence,
+          _emptyReasonFor(spec.source, healthConnected: false));
+    }
+    return MetricTileData(
+      id: spec.id,
+      label: spec.tileLabel,
+      value: v.value,
+      unit: _impliedUnits.contains(v.unit.toLowerCase()) ? '' : v.unit,
+      hasData: true,
+      series: const [],
+      valence: valence,
+      deviationLabel: v.footnote,
+      deviationLabelShort: v.footnote,
+      route: v.route ?? spec.route,
+    );
+  }
 
   // ── The Today Score hero: computed from in-app workouts + logs, so it is
   // alive on a fresh install where every sensor tile is dark. Its history is
@@ -627,6 +901,11 @@ final metricTileDataProvider =
       value: '${score.score}',
       unit: '',
       hasData: true,
+      // The denominator is what makes the numeral a measurement rather than a
+      // verdict: 8 of 100 is a day in progress, 8 alone is a mark out of
+      // nothing.
+      valueDenominator: 'of 100',
+      scoreSegments: ref.watch(metricScoreSegmentsProvider),
       series: norm.series,
       baselineY: norm.baselineY,
       claimsDeviation: dev != null,

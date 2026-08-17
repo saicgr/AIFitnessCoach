@@ -15009,6 +15009,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'اسم النادي الرياضي';
 
   @override
@@ -44551,6 +44557,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'مقاييسي';
+
+  @override
+  String get metricGridToday => 'اليوم';
 
   @override
   String get metricGridEditTiles => 'تعديل البطاقات';

@@ -14416,6 +14416,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => '健身房名称';
 
   @override
@@ -42749,6 +42755,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => '我的指标';
+
+  @override
+  String get metricGridToday => '今天';
 
   @override
   String get metricGridEditTiles => '编辑磁贴';

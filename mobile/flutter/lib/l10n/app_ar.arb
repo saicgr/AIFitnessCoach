@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "لا خط أساس",
   "metricTileNoData": "لا بيانات",
   "metricGridMyMetrics": "مقاييسي",
+  "metricGridToday": "اليوم",
   "metricGridEditTiles": "تعديل البطاقات",
   "metricGridChangesSaveInstantly": "التغييرات تُحفظ فورًا",
   "metricGridEditHint": "اسحب لإعادة الترتيب · اضغط بطاقة للحجم · − للإزالة",

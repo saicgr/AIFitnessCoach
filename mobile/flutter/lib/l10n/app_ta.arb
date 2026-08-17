@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "அடிப்படை இல்லை",
   "metricTileNoData": "தரவு இல்லை",
   "metricGridMyMetrics": "என் அளவீடுகள்",
+  "metricGridToday": "இன்று",
   "metricGridEditTiles": "டைல்களைத் திருத்து",
   "metricGridChangesSaveInstantly": "மாற்றங்கள் உடனே சேமிக்கப்படும்",
   "metricGridEditHint": "வரிசை மாற்ற இழுக்கவும் · அளவுக்கு டைலைத் தட்டவும் · நீக்க −",

@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Walang baseline",
   "metricTileNoData": "Walang datos",
   "metricGridMyMetrics": "AKING MGA SUKATAN",
+  "metricGridToday": "Ngayon",
   "metricGridEditTiles": "I-EDIT ANG MGA TILE",
   "metricGridChangesSaveInstantly": "AGAD NASE-SAVE ANG MGA PAGBABAGO",
   "metricGridEditHint": "I-DRAG PARA MAG-AYOS · I-TAP ANG TILE PARA SA LAKI · − PARA ALISIN",

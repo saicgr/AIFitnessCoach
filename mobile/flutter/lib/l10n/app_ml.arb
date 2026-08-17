@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "അടിസ്ഥാനം ഇല്ല",
   "metricTileNoData": "ഡാറ്റ ഇല്ല",
   "metricGridMyMetrics": "എന്റെ മെട്രിക്കുകൾ",
+  "metricGridToday": "ഇന്ന്",
   "metricGridEditTiles": "ടൈലുകൾ എഡിറ്റ് ചെയ്യുക",
   "metricGridChangesSaveInstantly": "മാറ്റങ്ങൾ ഉടൻ സേവ് ആകും",
   "metricGridEditHint": "ക്രമം മാറ്റാൻ വലിക്കുക · വലുപ്പത്തിന് ടൈൽ ടാപ്പ് ചെയ്യുക · നീക്കാൻ −",

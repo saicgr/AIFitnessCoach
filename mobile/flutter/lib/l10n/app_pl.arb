@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Brak odniesienia",
   "metricTileNoData": "Brak danych",
   "metricGridMyMetrics": "MOJE WSKAŹNIKI",
+  "metricGridToday": "Dzisiaj",
   "metricGridEditTiles": "EDYTUJ KAFELKI",
   "metricGridChangesSaveInstantly": "ZMIANY ZAPISUJĄ SIĘ OD RAZU",
   "metricGridEditHint": "PRZECIĄGNIJ, BY ZMIENIĆ KOLEJNOŚĆ · DOTKNIJ, BY ZMIENIĆ ROZMIAR · − USUWA",

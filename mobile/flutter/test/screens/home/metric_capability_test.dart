@@ -22,8 +22,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fitwiz/data/providers/home_metric_tiles_provider.dart';
+import 'package:fitwiz/data/providers/metric_layout_provider.dart' show MetricSize;
 import 'package:fitwiz/data/providers/metric_capability_provider.dart';
+import 'package:fitwiz/data/providers/metric_tile_data_provider.dart'
+    show metricScoreSeenInWindowProvider;
 import 'package:fitwiz/screens/home/widgets/ring_catalog.dart';
+
+/// A container for the capability notifier alone.
+///
+/// The score-visibility input is supplied rather than computed: reaching for
+/// the live one would build the whole score graph, which needs a Supabase
+/// session a unit test has no way to give it. Stating it here also makes each
+/// test say which account it is describing — one that has never scored.
+ProviderContainer _capabilityContainer({bool scoreSeen = false}) =>
+    ProviderContainer(overrides: [
+      metricScoreSeenInWindowProvider.overrideWithValue(scoreSeen),
+    ]);
 
 /// Pumps microtasks until [test] passes or [tries] is exhausted.
 Future<void> _settle(bool Function() test, {int tries = 60}) async {
@@ -68,7 +82,7 @@ void main() {
 
   group('the capability set', () {
     test('starts unresolved, so the grid does not guess', () {
-      final c = ProviderContainer();
+      final c = _capabilityContainer();
       addTearDown(c.dispose);
       final cap = c.read(metricCapabilityProvider);
       expect(cap.resolved, isFalse);
@@ -76,7 +90,7 @@ void main() {
     });
 
     test('a manual add makes a kind capable — the user beats the probe', () async {
-      final c = ProviderContainer();
+      final c = _capabilityContainer();
       addTearDown(c.dispose);
       final notifier = c.read(metricCapabilityProvider.notifier);
 
@@ -87,12 +101,12 @@ void main() {
     });
 
     test('the resolved set survives a restart', () async {
-      final c1 = ProviderContainer();
+      final c1 = _capabilityContainer();
       await c1.read(metricCapabilityProvider.notifier).markCapable(RingKind.sleep);
       c1.dispose();
 
       // A fresh container = a fresh launch reading the same prefs.
-      final c2 = ProviderContainer();
+      final c2 = _capabilityContainer();
       addTearDown(c2.dispose);
       await _settle(() => c2.read(metricCapabilityProvider).can(RingKind.sleep));
       expect(c2.read(metricCapabilityProvider).can(RingKind.sleep), isTrue,
@@ -101,7 +115,7 @@ void main() {
     });
 
     test('capability is never removed once granted', () async {
-      final c = ProviderContainer();
+      final c = _capabilityContainer();
       addTearDown(c.dispose);
       final notifier = c.read(metricCapabilityProvider.notifier);
       await notifier.markCapable(RingKind.sleep);
@@ -117,18 +131,29 @@ void main() {
   });
 
   group('which tiles mount', () {
-    /// The grid's projection, with the arrangement and capability supplied
-    /// directly so the test does not need a Health store.
+    /// The grid's projection, driven through the REAL predicate
+    /// ([metricTileMountable]) with its inputs supplied, so the test cannot
+    /// drift from production the way the previous hand-rolled copy did.
+    ///
+    /// [scoreEverScored] defaults to true because most cases here are about
+    /// sensors; the score's own gate has its own group below.
     List<HomeMetricTile> mounted({
       required List<HomeMetricTile> arrangement,
       required Set<RingKind> capable,
+      bool resolved = true,
+      bool scoreEverScored = true,
+      bool planHasData = true,
     }) {
-      return arrangement.where((t) {
-        if (t.id == kTodayScoreTileId) return true;
-        final kind = RingKindX.fromId(t.id);
-        if (kind == null) return true;
-        return capable.contains(kind);
-      }).toList();
+      final capability =
+          MetricCapability(capable: capable, resolved: resolved);
+      return arrangement
+          .where((t) => metricTileMountable(
+                t.id,
+                capability: capability,
+                scoreEverScored: scoreEverScored,
+                planHasData: planHasData,
+              ))
+          .toList();
     }
 
     test('an iPhone-only user gets no Sleep or Ready tile — not empty ones',
@@ -197,6 +222,212 @@ void main() {
         arrangement.map((t) => t.id).toList(),
         reason: 'order preserved exactly — filtering is a read-time projection',
       );
+    });
+
+    // ── The regression. ──────────────────────────────────────────────────
+    //
+    // This is the state the screenshot was taken in, and the state no test
+    // covered: `probe()` had exactly one call site (onboarding), so every
+    // account that finished onboarding before it existed sat at
+    // `capable: {}, resolved: false` forever. The grid rendered ONE tile.
+    test('a never-probed account still mounts every in-app metric', () {
+      final out = mounted(
+        arrangement: kDefaultMetricTiles,
+        capable: const {}, // the probe never ran for this account
+        resolved: false,
+        scoreEverScored: true,
+      );
+      final ids = out.map((t) => t.id).toList();
+
+      expect(ids, contains('hydration'),
+          reason: 'water is logged by hand — it never needed a device, so an '
+              'empty capability set cannot withhold it');
+      expect(ids, contains('weight'));
+      expect(ids, isNot(contains('sleep')),
+          reason: 'unknown capability is still not a reason to mount a '
+              'wearable-only metric');
+    });
+
+    test('capability gates devices only, never hand-logged metrics', () {
+      for (final id in ['hydration', 'weight', 'protein', 'nourish', 'train']) {
+        expect(
+          metricTileMountable(id,
+              capability: const MetricCapability(),
+              scoreEverScored: true,
+              planHasData: true),
+          isTrue,
+          reason: '$id needs no device and must mount regardless of capability',
+        );
+      }
+    });
+  });
+
+  group('the first point is a one-way fact', () {
+    test('is recorded, and survives a restart', () async {
+      // A point lands while the app is open.
+      final c1 = _capabilityContainer(scoreSeen: true);
+      await _settle(() => c1.read(metricCapabilityProvider).scoreEverScored);
+      expect(c1.read(metricCapabilityProvider).scoreEverScored, isTrue);
+      c1.dispose();
+
+      // Months later the 90-day history has rolled past it and today is a
+      // real 0 — the tile must still be there. Inferring "ever scored" from
+      // the retained history alone would silently unmount it.
+      final c2 = _capabilityContainer(scoreSeen: false);
+      addTearDown(c2.dispose);
+      await _settle(() => c2.read(metricCapabilityProvider).scoreEverScored);
+      expect(c2.read(metricCapabilityProvider).scoreEverScored, isTrue,
+          reason: 'a tile someone has been reading never disappears');
+    });
+
+    test('copyWith cannot un-earn it', () {
+      const earned = MetricCapability(scoreEverScored: true);
+      expect(earned.copyWith(resolved: true).scoreEverScored, isTrue);
+      expect(earned.copyWith(scoreEverScored: false).scoreEverScored, isTrue);
+    });
+  });
+
+  group('the Today Score gate', () {
+    test('does not mount for an account that has never scored', () {
+      expect(
+        metricTileMountable(kTodayScoreTileId,
+            capability: const MetricCapability(),
+            scoreEverScored: false,
+            planHasData: true),
+        isFalse,
+        reason: 'a 56pt zero above a chart with one point is the "no source '
+            'yet" case every other tile is spared',
+      );
+    });
+
+    test('mounts forever once a point has ever been scored', () {
+      // Day 300, 6 AM: today's score is a real 0 and the tile must still be
+      // there. Hiding a tile someone reads daily is the data-loss failure.
+      expect(
+        metricTileMountable(kTodayScoreTileId,
+            capability: const MetricCapability(),
+            scoreEverScored: true,
+            planHasData: true),
+        isTrue,
+      );
+    });
+  });
+
+  group('plan-backed tiles', () {
+    test('mount only when the field behind them exists', () {
+      for (final id in kPlanTileIds) {
+        expect(
+          metricTileMountable(id,
+              capability: const MetricCapability(),
+              scoreEverScored: true,
+              planHasData: false),
+          isFalse,
+          reason: '$id must not render "0 to go" for a user who set no target',
+        );
+        expect(
+          metricTileMountable(id,
+              capability: const MetricCapability(),
+              scoreEverScored: true,
+              planHasData: true),
+          isTrue,
+        );
+      }
+    });
+
+    test('never depend on Health capability', () {
+      // The whole point: these come from onboarding, so a user who skipped
+      // Health entirely still gets all of them.
+      for (final id in kPlanTileIds) {
+        expect(
+          metricTileMountable(id,
+              capability: const MetricCapability(resolved: true),
+              scoreEverScored: false,
+              planHasData: true),
+          isTrue,
+          reason: '$id is plan-sourced; a Health grant is irrelevant to it',
+        );
+      }
+    });
+  });
+
+  group('the account-shaped default', () {
+    test('a Health-skipped account gets a full grid of plan tiles', () {
+      final tiles = defaultMetricTilesFor(
+        capabilityResolved: true,
+        capable: const {RingKind.hydration, RingKind.weight},
+      );
+      final ids = tiles.map((t) => t.id).toList();
+
+      // What the founder saw replaced: one tile reading 0.
+      expect(ids, contains(kNextSessionTileId));
+      expect(ids, contains(kToGoalTileId));
+      expect(ids, contains(kThisWeekTileId));
+      expect(ids, contains(kDailyFuelTileId));
+      // The hand-logged tiles keep their slots — they were never the problem.
+      expect(ids, contains('hydration'));
+      expect(ids, contains('weight'));
+      // And nothing sensor-backed is seeded for a phone with no sources.
+      expect(ids, isNot(contains('move')));
+      expect(ids, isNot(contains('sleep')));
+      expect(ids, isNot(contains('recovery')));
+    });
+
+    test('substitutes keep the slot they took — same size, same position', () {
+      final tiles = defaultMetricTilesFor(
+        capabilityResolved: true,
+        capable: const {RingKind.hydration, RingKind.weight},
+      );
+      final bySize = {for (final t in tiles) t.id: t.size};
+
+      // `move` and `sleep` were the two wide tiles; `recovery` was small.
+      expect(bySize[kToGoalTileId], MetricSize.wide);
+      expect(bySize[kThisWeekTileId], MetricSize.wide);
+      expect(bySize[kDailyFuelTileId], MetricSize.small);
+      // The hero slot's substitute is large, like the hero.
+      expect(bySize[kNextSessionTileId], MetricSize.large);
+      expect(tiles.every((t) => t.page == 1), isTrue,
+          reason: 'nothing is ever auto-filled onto page 2');
+    });
+
+    test('a fully-equipped account keeps every sensor tile it earned', () {
+      final tiles = defaultMetricTilesFor(
+        capabilityResolved: true,
+        capable: const {
+          RingKind.move,
+          RingKind.sleep,
+          RingKind.recovery,
+          RingKind.hydration,
+          RingKind.weight,
+        },
+      );
+      final ids = tiles.map((t) => t.id).toList();
+      for (final t in kDefaultMetricTiles) {
+        expect(ids, contains(t.id),
+            reason: 'a substitution must never displace a metric that CAN '
+                'fill its slot');
+      }
+    });
+
+    test('the Today Score keeps its slot rather than being substituted', () {
+      final tiles = defaultMetricTilesFor(
+        capabilityResolved: true,
+        capable: const {RingKind.hydration, RingKind.weight},
+      );
+      expect(tiles.first.id, kTodayScoreTileId,
+          reason: 'the score is not unfillable, only zero until the day '
+              'starts — it stays in the arrangement so it can come back');
+      expect(tiles[1].id, kNextSessionTileId,
+          reason: 'and the tile that renders while it is hidden sits in its '
+              'place, at its size');
+    });
+
+    test('no tile is ever seeded twice', () {
+      final tiles = defaultMetricTilesFor(
+        capabilityResolved: false,
+        capable: const {},
+      );
+      final ids = tiles.map((t) => t.id).toList();
+      expect(ids.toSet().length, ids.length);
     });
   });
 }

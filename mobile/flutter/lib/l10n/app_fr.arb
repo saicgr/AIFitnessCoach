@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Pas de référence",
   "metricTileNoData": "Aucune donnée",
   "metricGridMyMetrics": "MES MESURES",
+  "metricGridToday": "Aujourd'hui",
   "metricGridEditTiles": "MODIFIER LES TUILES",
   "metricGridChangesSaveInstantly": "LES MODIFICATIONS SONT ENREGISTRÉES AUSSITÔT",
   "metricGridEditHint": "GLISSEZ POUR RÉORGANISER · TOUCHEZ POUR LA TAILLE · − POUR RETIRER",

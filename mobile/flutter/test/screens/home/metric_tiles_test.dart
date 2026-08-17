@@ -61,6 +61,8 @@ MetricTileData _tile({
   String deviationLabel = '12% below your 30-day baseline',
   String deviationLabelShort = 'Below baseline',
   bool usesBars = false,
+  List<MetricScoreSegment> scoreSegments = const [],
+  String? valueDenominator,
 }) =>
     MetricTileData(
       id: id,
@@ -68,6 +70,8 @@ MetricTileData _tile({
       value: value,
       unit: unit,
       hasData: hasData,
+      scoreSegments: scoreSegments,
+      valueDenominator: valueDenominator,
       noDataReason: noDataReason,
       noDataNamesSource: noDataNamesSource,
       series: series,
@@ -703,7 +707,10 @@ void main() {
       await pumpGrid(tester);
 
       expect(find.byType(MetricTileCard), findsNWidgets(kDefaultMetricTiles.length));
-      expect(find.text('MY METRICS'), findsOneWidget);
+      // The section header is ageless: "TODAY" is true for an account on its
+      // first morning and on its three-hundredth, where "MY METRICS" was a
+      // claim a day-0 grid could not cash.
+      expect(find.text('TODAY'), findsOneWidget);
       // Page 2 is empty by default, so there is no pager…
       expect(find.byType(PageView), findsNothing);
       // …and therefore no dots. A dot over a plain Column advertises a swipe
@@ -1264,6 +1271,123 @@ void main() {
       final tiles = container.read(homeMetricTilesProvider);
       expect(tiles.map((t) => t.id).toList(), ['move', 'sleep']);
       expect(tiles.last.page, 1, reason: 'pages are clamped to 1..2');
+    });
+  });
+
+  // ────────────────────────────────── what a fresh account actually sees
+
+  group('day zero', () {
+    /// The founder's screenshot, reproduced: Health skipped, nothing logged.
+    /// The grid used to render ONE tile — a 56pt zero over a chart it could
+    /// not draw — because the score was exempt from the mount rule and every
+    /// other default was sensor-backed.
+    List<HomeMetricTile> dayZeroGrid() => defaultMetricTilesFor(
+          capabilityResolved: true,
+          capable: const {RingKind.hydration, RingKind.weight},
+        )
+            .where((t) => t.id != kTodayScoreTileId) // never scored yet
+            .toList();
+
+    testWidgets('renders a full grid of plan tiles and no zero hero',
+        (tester) async {
+      final tiles = dayZeroGrid();
+      SharedPreferences.setMockInitialValues({});
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 2400);
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          currentUserIdProvider.overrideWithValue(_userId),
+          mountedMetricTilesProvider.overrideWithValue(tiles),
+          metricTilesNeedHealthConnectProvider.overrideWithValue(true),
+          // Every id, like the harness above: the grid reaches for tile data
+          // outside the mounted set (darkness aggregate, edit sheet), and an
+          // un-overridden family member falls through to the live provider
+          // graph, which needs a Supabase session a widget test has no way to
+          // give it.
+          for (final id in kHomeMetricTileCatalog.keys)
+            metricTileDataProvider(id).overrideWithValue(_tile(
+              id: id,
+              label: kHomeMetricTileCatalog[id]!.tileLabel,
+              value: '45',
+              series: const [],
+              claimsDeviation: false,
+              deviationLabel: 'Upper Body A · 6 exercises · today',
+              deviationLabelShort: 'Upper Body A',
+            )),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: ThemeData.dark(),
+          home: const Scaffold(
+            body: SingleChildScrollView(child: HomeMetricTileGrid()),
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.byType(MetricTileCard), findsNWidgets(tiles.length));
+      expect(tiles.length, greaterThanOrEqualTo(5),
+          reason: 'the whole complaint was a Home holding one tile');
+      expect(find.text('TODAY SCORE'), findsNothing,
+          reason: 'the score cannot read anything but 0 yet, so it is not '
+              'mounted — this is the big zero the founder objected to');
+      expect(find.text('NEXT SESSION'), findsOneWidget,
+          reason: 'the hero slot renders the session onboarding generated');
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  // ──────────────────────────────────────────── the score capacity track
+
+  group('the score capacity track', () {
+    testWidgets('draws a segment per applicable contributor, with its weight',
+        (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 800);
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: SizedBox(
+            width: 358,
+            child: MetricTileCard(
+              // Health skipped: the score renormalises over Train + Nourish
+              // only, so no Move slice is advertised to someone who cannot
+              // earn one.
+              data: _tile(
+                id: kTodayScoreTileId,
+                label: 'Today Score',
+                value: '0',
+                valueDenominator: 'of 100',
+                series: const [],
+                claimsDeviation: false,
+                deviationLabel: 'From workouts & logs',
+                deviationLabelShort: 'From your logs',
+                scoreSegments: const [
+                  MetricScoreSegment(label: 'Train', weight: 57, fill: 0),
+                  MetricScoreSegment(label: 'Nourish', weight: 43, fill: 0),
+                ],
+              ),
+              size: MetricSize.large,
+              width: 358,
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.textContaining('OF 100'), findsOneWidget,
+          reason: 'a zero with a denominator is a measurement; a zero alone '
+              'is a verdict');
+      expect(find.text('TRAIN 57'), findsOneWidget);
+      expect(find.text('NOURISH 43'), findsOneWidget);
+      expect(find.textContaining('MOVE'), findsNothing,
+          reason: 'never advertise points this account has no way to earn');
+      expect(tester.takeException(), isNull);
     });
   });
 }

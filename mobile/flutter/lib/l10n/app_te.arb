@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "బేస్‌లైన్ లేదు",
   "metricTileNoData": "డేటా లేదు",
   "metricGridMyMetrics": "నా మెట్రిక్‌లు",
+  "metricGridToday": "ఈరోజు",
   "metricGridEditTiles": "టైల్స్ సవరించండి",
   "metricGridChangesSaveInstantly": "మార్పులు వెంటనే సేవ్ అవుతాయి",
   "metricGridEditHint": "క్రమం మార్చడానికి లాగండి · పరిమాణం కోసం టైల్ నొక్కండి · తీసివేయడానికి −",

@@ -15189,6 +15189,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'Tên phòng tập';
 
   @override
@@ -45071,6 +45077,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'CHỈ SỐ CỦA TÔI';
+
+  @override
+  String get metricGridToday => 'Hôm nay';
 
   @override
   String get metricGridEditTiles => 'SỬA Ô';

@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "无基准",
   "metricTileNoData": "无数据",
   "metricGridMyMetrics": "我的指标",
+  "metricGridToday": "今天",
   "metricGridEditTiles": "编辑磁贴",
   "metricGridChangesSaveInstantly": "更改即时保存",
   "metricGridEditHint": "拖动可排序 · 点按磁贴改大小 · − 可移除",

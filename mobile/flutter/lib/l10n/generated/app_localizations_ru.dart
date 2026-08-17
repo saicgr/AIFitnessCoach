@@ -15253,6 +15253,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get gymProfileSwitcherFindAGymNearMe => 'Find a gym near me';
+
+  @override
+  String get gymProfileSwitcherGymOptions => 'Gym options';
+
+  @override
   String get gymProfileSwitcherGymName => 'Название зала';
 
   @override
@@ -45210,6 +45216,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get metricGridMyMetrics => 'МОИ ПОКАЗАТЕЛИ';
+
+  @override
+  String get metricGridToday => 'Сегодня';
 
   @override
   String get metricGridEditTiles => 'ИЗМЕНИТЬ ПЛИТКИ';

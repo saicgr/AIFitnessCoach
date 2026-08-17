@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "기준값 없음",
   "metricTileNoData": "데이터 없음",
   "metricGridMyMetrics": "내 지표",
+  "metricGridToday": "오늘",
   "metricGridEditTiles": "타일 편집",
   "metricGridChangesSaveInstantly": "변경 사항은 즉시 저장됩니다",
   "metricGridEditHint": "드래그해 순서 변경 · 탭해 크기 변경 · −로 제거",

@@ -25681,6 +25681,18 @@ abstract class AppLocalizations {
   /// **'Failed to switch profile: {e}'**
   String gymProfileSwitcherFailedToSwitchProfile(Object e);
 
+  /// No description provided for @gymProfileSwitcherFindAGymNearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a gym near me'**
+  String get gymProfileSwitcherFindAGymNearMe;
+
+  /// No description provided for @gymProfileSwitcherGymOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Gym options'**
+  String get gymProfileSwitcherGymOptions;
+
   /// No description provided for @gymProfileSwitcherGymName.
   ///
   /// In en, this message translates to:
@@ -75827,6 +75839,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'MY METRICS'**
   String get metricGridMyMetrics;
+
+  /// No description provided for @metricGridToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get metricGridToday;
 
   /// No description provided for @metricGridEditTiles.
   ///

@@ -28322,6 +28322,7 @@
   "metricTileNoBaseline": "Нет базы",
   "metricTileNoData": "Нет данных",
   "metricGridMyMetrics": "МОИ ПОКАЗАТЕЛИ",
+  "metricGridToday": "Сегодня",
   "metricGridEditTiles": "ИЗМЕНИТЬ ПЛИТКИ",
   "metricGridChangesSaveInstantly": "ИЗМЕНЕНИЯ СОХРАНЯЮТСЯ СРАЗУ",
   "metricGridEditHint": "ПЕРЕТАЩИТЕ, ЧТОБЫ ИЗМЕНИТЬ ПОРЯДОК · НАЖМИТЕ ДЛЯ РАЗМЕРА · − УБИРАЕТ",

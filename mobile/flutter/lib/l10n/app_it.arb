@@ -28321,6 +28321,7 @@
   "metricTileNoBaseline": "Nessun riferimento",
   "metricTileNoData": "Nessun dato",
   "metricGridMyMetrics": "LE MIE METRICHE",
+  "metricGridToday": "Oggi",
   "metricGridEditTiles": "MODIFICA RIQUADRI",
   "metricGridChangesSaveInstantly": "LE MODIFICHE SI SALVANO SUBITO",
   "metricGridEditHint": "TRASCINA PER RIORDINARE · TOCCA UN RIQUADRO PER LA DIMENSIONE · − PER RIMUOVERE",
