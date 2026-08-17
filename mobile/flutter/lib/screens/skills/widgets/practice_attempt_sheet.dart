@@ -465,7 +465,7 @@ class _QuickSelectChip extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? cyan : AppColors.cardBorder,
+            color: isSelected ? cyan : ThemeColors.of(context).cardBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),

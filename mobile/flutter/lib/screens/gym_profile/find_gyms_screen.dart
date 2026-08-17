@@ -112,8 +112,6 @@ class _FindGymsScreenState extends ConsumerState<FindGymsScreen> {
     HapticService.light();
     showGlassSheet(
       context: context,
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
       builder: (_) => _GymDetailSheet(gym: gym),
     );
   }

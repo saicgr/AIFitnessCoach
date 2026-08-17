@@ -6,6 +6,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Agent info header widget for the app bar
 /// Shows agent name, avatar, and online status
 class AgentInfoHeader extends StatelessWidget {
@@ -35,7 +36,7 @@ class AgentInfoHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [context.accentColor, AppColors.teal],
+                  colors: [context.accentColor, ThemeColors.of(context).teal],
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
                 ),
@@ -116,7 +117,7 @@ class _OnlineIndicator extends StatelessWidget {
         color: isOnline ? AppColors.success : AppColors.textMuted, // accent-allowlist: agent online/available status, success semantic
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.pureBlack,
+          color: ThemeColors.of(context).background,
           width: 2,
         ),
       ),

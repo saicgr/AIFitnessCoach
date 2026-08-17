@@ -23,9 +23,6 @@ Future<Map<String, dynamic>?> showEquipmentWeightSheet(
 }) {
   return showGlassSheet<Map<String, dynamic>>(
     context: context,
-    initialChildSize: 0.72,
-    minChildSize: 0.5,
-    maxChildSize: 0.94,
     builder: (ctx) => GlassSheet(
       showHandle: true,
       child: _EquipmentWeightSheet(

@@ -526,7 +526,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: isToday
                             ? null
-                            : Border.all(color: AppColors.cardBorder),
+                            : Border.all(color: ThemeColors.of(context).cardBorder),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1204,7 +1204,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -1403,7 +1403,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
+            border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           ),
           child: Material(
             color: Colors.transparent,

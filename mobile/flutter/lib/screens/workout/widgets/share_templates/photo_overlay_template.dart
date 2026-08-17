@@ -65,7 +65,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
       width: 320,
       height: templateHeight,
       decoration: BoxDecoration(
-        color: AppColors.nearBlack,
+        color: AppColors.nearBlack,  // accent-allowlist: share-card template renders over a photo -- dark in both themes by design
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(

@@ -13,9 +13,6 @@ Future<void> showWeightIncrementsSheet(BuildContext context) async {
     context: context,
     useRootNavigator: true,
     enableDrag: true,
-    initialChildSize: 0.75,
-    minChildSize: 0.4,
-    maxChildSize: 0.85,
     builder: (context) => DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.4,

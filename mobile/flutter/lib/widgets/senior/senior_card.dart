@@ -168,13 +168,15 @@ class SeniorWorkoutCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Text(
-                AppLocalizations.of(context).seniorCardTodaySWorkout,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.accentColor,
-                  letterSpacing: 1.2,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).seniorCardTodaySWorkout,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: context.accentColor,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ],

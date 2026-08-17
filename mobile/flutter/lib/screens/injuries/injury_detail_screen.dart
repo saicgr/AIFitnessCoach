@@ -179,7 +179,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
         backgroundColor: tc.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: AppColors.cardBorder),
+          side: BorderSide(color: ThemeColors.of(context).cardBorder),
         ),
         title: Text(
           AppLocalizations.of(context).injuryDetailMarkAsHealed.toUpperCase(),
@@ -246,7 +246,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     final textSecondary = tc.textSecondary;
     final textMuted = tc.textMuted;
     final elevated = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     return Scaffold(
       backgroundColor: backgroundColor,

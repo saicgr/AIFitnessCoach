@@ -82,12 +82,17 @@ class SeniorButton extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                   ],
-                  Text(
-                    text,
-                    style: TextStyle(
-                      color: fgColor,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        color: fgColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

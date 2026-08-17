@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/accent_color_provider.dart';
+import '../design_system/adaptive_label_row.dart';
 
 /// Horizontal Wrap of "vibe" chips for a cardio session — Hill workout,
 /// Negative split, New route, Dawn run, Dusk run, PR session.
@@ -106,21 +107,25 @@ class _AutoTagChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: border, width: 0.8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      // Ellipsize rather than overflow at large text scales on a 320pt phone —
+      // "Negative split" at 200% is wider than the screen. See
+      // [AdaptiveLabelRow] for why this can't just be a `Flexible`.
+      child: AdaptiveLabelRow(
+        leading: [
           Text(meta.emoji, style: const TextStyle(fontSize: 12)),
           const SizedBox(width: 4),
-          Text(
-            meta.label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: fg,
-              height: 1.1,
-            ),
-          ),
         ],
+        label: Text(
+          meta.label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: fg,
+            height: 1.1,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
   }

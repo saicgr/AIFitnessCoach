@@ -389,7 +389,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
               primary: context.accentColor,
-              surface: AppColors.nearBlack,  // deliberately-dark: forces a dark date-picker regardless of app theme; ColorScheme.dark() pairs it with matching light on-surface text, so it's internally consistent
+              surface: AppColors.nearBlack,  // deliberately-dark: forces a dark date-picker regardless of app theme; ColorScheme.dark() pairs it with matching light on-surface text, so it's internally consistent  // accent-allowlist: deliberately dark in both themes -- forces a dark date-picker surface, see the note below
             ),
           ),
           child: child!,

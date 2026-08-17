@@ -44,7 +44,7 @@ class ProgressionChainCard extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: tc.surface,
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.cardBorder),  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
         borderRadius: BorderRadius.circular(9),
       ),
       child: Icon(

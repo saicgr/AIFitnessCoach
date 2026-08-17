@@ -6,6 +6,7 @@ import '../../../core/theme/app_typography.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Represents different streak milestones with their properties
 enum StreakMilestone {
   bronze(3, 6, 'Getting Started'),
@@ -551,7 +552,7 @@ class _MilestoneBadgesRow extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: isAchieved
                       ? milestone.color.withOpacity(0.3)
-                      : AppColors.glassSurface,
+                      : ThemeColors.of(context).glassSurface,
                   border: Border.all(
                     color: isAchieved
                         ? milestone.color

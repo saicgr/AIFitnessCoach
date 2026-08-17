@@ -178,7 +178,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                   gradient: LinearGradient(
                     colors: [
                       context.accentColor.withOpacity(0.15),
-                      AppColors.teal.withOpacity(0.1),
+                      ThemeColors.of(context).teal.withOpacity(0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),

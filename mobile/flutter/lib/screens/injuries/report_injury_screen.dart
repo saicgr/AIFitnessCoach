@@ -164,7 +164,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
     final textSecondary = tc.textSecondary;
     final textMuted = tc.textMuted;
     final elevated = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -453,7 +453,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         children: [

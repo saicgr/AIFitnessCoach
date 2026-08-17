@@ -19,6 +19,7 @@ import '../../data/providers/subjective_feedback_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/theme_colors.dart';
 /// Main screen for viewing subjective results/feel results
 class FeelResultsScreen extends ConsumerStatefulWidget {
   const FeelResultsScreen({super.key});
@@ -299,7 +300,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary.withOpacity(0.8),
+            color: ThemeColors.of(context).textSecondary.withOpacity(0.8),
           ),
         ),
       ],
@@ -578,9 +579,9 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
           ),
         ],
@@ -772,9 +773,9 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
           ),
         ),
       ],

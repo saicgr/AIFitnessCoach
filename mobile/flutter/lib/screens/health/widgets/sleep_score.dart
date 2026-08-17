@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Pure, unit-tested sleep-score computation + its display ring.
 ///
@@ -185,7 +186,7 @@ SleepScore? computeSleepScore({
 /// Color for a score band — green / lime / amber / red.
 Color sleepScoreColor(int score) {
   if (score >= 85) return AppColors.success; // accent-allowlist: sleep-score severity scale + sleep-stage identity
-  if (score >= 70) return AppColors.teal;
+  if (score >= 70) return AppColors.teal;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
   if (score >= 50) return AppColors.warning; // accent-allowlist: sleep-score severity scale + sleep-stage identity
   return AppColors.error; // accent-allowlist: sleep-score severity scale + sleep-stage identity
 }

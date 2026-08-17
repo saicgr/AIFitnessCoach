@@ -420,7 +420,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

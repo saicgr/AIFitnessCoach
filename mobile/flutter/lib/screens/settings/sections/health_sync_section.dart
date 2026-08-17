@@ -218,9 +218,6 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.9,
       builder: (context) {
         return GlassSheet(
           showHandle: false,

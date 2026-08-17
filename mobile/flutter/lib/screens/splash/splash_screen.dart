@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Animated splash screen shown while app initializes and checks auth state.
 /// This prevents the login screen flash when user is already authenticated.
@@ -111,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(21),
                     child: Container(
-                      color: AppColors.pureBlack,
+                      color: ThemeColors.of(context).background,
                       padding: const EdgeInsets.all(18),
                       child: CustomPaint(
                         painter: _ZMarkPainter(

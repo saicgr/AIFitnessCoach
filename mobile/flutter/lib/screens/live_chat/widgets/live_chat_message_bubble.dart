@@ -6,6 +6,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/live_chat_session.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Message bubble widget for live chat messages
 /// Supports different styling for user vs agent messages
 class LiveChatMessageBubble extends StatelessWidget {
@@ -165,7 +166,7 @@ class _AgentAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [context.accentColor, AppColors.teal],
+          colors: [context.accentColor, ThemeColors.of(context).teal],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
@@ -233,7 +234,7 @@ class SystemMessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.glassSurface,
+            color: ThemeColors.of(context).glassSurface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(

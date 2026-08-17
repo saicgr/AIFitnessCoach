@@ -14,6 +14,7 @@ import '../../data/models/exercise.dart';
 import '../workout/widgets/exercise_info_sheet.dart';
 import 'preview_exercise_catalog.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 part 'plan_preview_screen_ui.dart';
 
 /// Signature v2 type system (docs/planning/app-redesign-2026-06/signature-v2.html):
@@ -648,13 +649,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'pull',
               'name': 'Pull',
               'icon': Icons.fitness_center,
-              'color': AppColors.electricBlue,
+              'color': ThemeColors.of(context).electricBlue,
             },
             {
               'id': 'legs',
               'name': 'Legs',
               'icon': Icons.directions_walk,
-              'color': AppColors.teal,
+              'color': ThemeColors.of(context).teal,
             },
             {
               'id': 'upper',
@@ -666,7 +667,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'lower',
               'name': 'Lower',
               'icon': Icons.directions_walk,
-              'color': AppColors.teal,
+              'color': ThemeColors.of(context).teal,
             },
             {
               'id': 'full',
@@ -693,7 +694,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'lower',
               'name': 'Lower Body',
               'icon': Icons.directions_walk,
-              'color': AppColors.teal,
+              'color': ThemeColors.of(context).teal,
             },
             {
               'id': 'full',
@@ -734,7 +735,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'full',
             'name': 'Full Body',
             'icon': Icons.accessibility_new,
-            'color': AppColors.teal,
+            'color': ThemeColors.of(context).teal,
           },
           {
             'id': 'recovery',
@@ -768,13 +769,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'endurance',
             'name': 'Endurance',
             'icon': Icons.directions_bike,
-            'color': AppColors.teal,
+            'color': ThemeColors.of(context).teal,
           },
           {
             'id': 'tempo',
             'name': 'Tempo',
             'icon': Icons.speed,
-            'color': AppColors.electricBlue,
+            'color': ThemeColors.of(context).electricBlue,
           },
           {
             'id': 'long',
@@ -814,13 +815,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'strength',
             'name': 'Strength',
             'icon': Icons.fitness_center,
-            'color': AppColors.electricBlue,
+            'color': ThemeColors.of(context).electricBlue,
           },
           {
             'id': 'flexibility',
             'name': 'Flexibility',
             'icon': Icons.self_improvement,
-            'color': AppColors.teal,
+            'color': ThemeColors.of(context).teal,
           },
           {
             'id': 'hiit',

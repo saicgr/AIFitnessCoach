@@ -1,9 +1,9 @@
 {
   "_comment": "Grandfathered hardcoded-dark-colour findings: raw `AppColors.<token>` references under lib/screens/** + lib/widgets/** where <token> has a light counterpart in AppColorsLight, so the surface paints a DARK literal in light mode. See light_mode_scan.dart doc comment for the derivation rules and exemptions (lib/core/theme/**, `// accent-allowlist:` lines, tokens with no light counterpart). `light_mode_gate_test.dart` fails only on findings NOT covered here, so the backlog cannot grow while the fix lanes drain it. Keyed by file + token with a count (NOT line numbers — those churn on every unrelated edit). Regenerate with `dart run test/ui_gates/light_mode_scan.dart > test/ui_gates/light_mode_baseline.json` after converting a screen — never hand-edit to silence a fresh violation.",
-  "total": 5217,
+  "total": 4666,
   "byRule": {
-    "theme-mapped": 5161,
-    "no-accessor": 56
+    "theme-mapped": 4616,
+    "no-accessor": 50
   },
   "findings": [
     {
@@ -61,12 +61,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/auth/email_sign_in_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/auth/intro_screen.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
@@ -97,12 +91,6 @@
       "count": 2
     },
     {
-      "file": "lib/screens/auth/sign_in_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/body_analyzer/body_analyzer_capture_screen.dart",
       "token": "background",
       "rule": "theme-mapped",
@@ -256,7 +244,7 @@
       "file": "lib/screens/cardio/cardio_pr_history_sheet.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 3
     },
     {
       "file": "lib/screens/cardio/fitness_index_detail_screen.dart",
@@ -796,7 +784,7 @@
       "file": "lib/screens/demo/demo_active_workout_screen.dart",
       "token": "teal",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/demo/demo_active_workout_screen.dart",
@@ -843,12 +831,6 @@
     {
       "file": "lib/screens/demo/demo_active_workout_screen_ui_2.dart",
       "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/demo/demo_active_workout_screen_ui_2.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -887,12 +869,6 @@
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/demo/demo_workout_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 3
     },
     {
       "file": "lib/screens/demo/demo_workout_screen.dart",
@@ -956,12 +932,6 @@
     },
     {
       "file": "lib/screens/demo/plan_preview_screen.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/demo/plan_preview_screen.dart",
       "token": "elevated",
       "rule": "theme-mapped",
       "count": 2
@@ -971,12 +941,6 @@
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/demo/plan_preview_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 6
     },
     {
       "file": "lib/screens/demo/plan_preview_screen.dart",
@@ -1028,12 +992,6 @@
     },
     {
       "file": "lib/screens/diabetes/diabetes_dashboard_screen.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/diabetes/diabetes_dashboard_screen_part_glucose_status.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
@@ -1586,49 +1544,7 @@
     },
     {
       "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "background",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
       "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 6
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/goals/custom_goals_screen.dart",
-      "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 6
     },
@@ -1711,24 +1627,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/habits/widgets/create_habit_sheet.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/habits/widgets/habit_card.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/habits/widgets/habit_templates_sheet.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
       "file": "lib/screens/habits/widgets/habit_templates_sheet.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
@@ -1757,12 +1655,6 @@
       "token": "surface",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/health/combined_health_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
     },
     {
       "file": "lib/screens/health/combined_health_screen.dart",
@@ -1940,12 +1832,6 @@
     },
     {
       "file": "lib/screens/health/widgets/sleep_score.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/health/widgets/sleep_score.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 1
@@ -1955,294 +1841,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/home/home_screen.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/home_screen_ui_2.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/combined_health_card.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/exercise_image_thumbnail.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/exercise_image_thumbnail.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/fitness_score_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/fitness_score_card.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/habits_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/habits_card.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/mood_picker_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/next_workout_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/next_workout_card.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/next_workout_card.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/next_workout_card.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/quick_start_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/quick_start_card.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/quick_start_card.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/today_workout_card.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/today_workout_card.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/todays_health_card.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/weight_trend_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/cards/workout_state_cards.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/home/widgets/components/notification_bell_button.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/quick_actions_row_part_hero_action_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/components/sheet_theme_colors.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/daily_crate_banner.dart",
-      "token": "nearBlack",
-      "rule": "no-accessor",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/edit_gym_profile_sheet_ext.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/first_action_prompt.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/gym_equipment_sheet.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/home/widgets/gym_equipment_sheet.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/hero_workout_card.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/hero_workout_card_modes.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/hero_workout_card_part_completed_workout_hero_card.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/import_equipment_result_sheet.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/missed_workout_banner.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/missed_workout_banner.dart",
-      "token": "nearBlack",
-      "rule": "no-accessor",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/open_all_crates_sheet.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/stacked_banner_panel.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/stacked_banner_panel.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/stacked_banner_panel.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/home/widgets/synced_workouts_summary_card.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/home/widgets/workout_category_pills.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 3
     },
     {
       "file": "lib/screens/hormonal_health/widgets/hormone_log_sheet.dart",
@@ -2251,24 +1849,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/injuries/injuries_list_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/injuries/injuries_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/injuries/injury_detail_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
       "file": "lib/screens/injuries/injury_detail_screen.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
@@ -2303,12 +1883,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/injuries/report_injury_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
     },
     {
       "file": "lib/screens/injuries/report_injury_screen.dart",
@@ -2990,12 +2564,6 @@
     },
     {
       "file": "lib/screens/live_chat/live_chat_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/live_chat/live_chat_screen.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
@@ -3007,18 +2575,6 @@
       "count": 2
     },
     {
-      "file": "lib/screens/live_chat/live_chat_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/live_chat/live_chat_screen.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/live_chat/widgets/agent_info_header.dart",
       "token": "elevated",
       "rule": "theme-mapped",
@@ -3026,15 +2582,9 @@
     },
     {
       "file": "lib/screens/live_chat/widgets/agent_info_header.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/live_chat/widgets/agent_info_header.dart",
       "token": "teal",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/live_chat/widgets/agent_info_header.dart",
@@ -3052,18 +2602,12 @@
       "file": "lib/screens/live_chat/widgets/live_chat_input_bar.dart",
       "token": "glassSurface",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/live_chat/widgets/live_chat_input_bar.dart",
       "token": "nearBlack",
       "rule": "no-accessor",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/live_chat/widgets/live_chat_input_bar.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
       "count": 1
     },
     {
@@ -3079,26 +2623,8 @@
       "count": 1
     },
     {
-      "file": "lib/screens/live_chat/widgets/live_chat_input_bar.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/live_chat/widgets/live_chat_message_bubble.dart",
       "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/live_chat/widgets/live_chat_message_bubble.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/live_chat/widgets/live_chat_message_bubble.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -3214,7 +2740,7 @@
       "file": "lib/screens/measurements/measurement_detail_screen.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/measurements/measurement_detail_screen.dart",
@@ -3464,57 +2990,9 @@
     },
     {
       "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 11
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "nearBlack",
-      "rule": "no-accessor",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 13
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/metrics/metrics_dashboard_screen.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 7
-    },
-    {
-      "file": "lib/screens/metrics/widgets/health_checks_section.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/metrics/widgets/health_checks_section.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
     },
     {
       "file": "lib/screens/metrics/widgets/health_checks_section.dart",
@@ -3523,46 +3001,10 @@
       "count": 4
     },
     {
-      "file": "lib/screens/metrics/widgets/health_checks_section.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/metrics/widgets/health_checks_section.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/metrics/widgets/key_metrics_grid.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/metrics/widgets/key_metrics_grid.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
       "file": "lib/screens/metrics/widgets/key_metrics_grid.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 7
-    },
-    {
-      "file": "lib/screens/metrics/widgets/key_metrics_grid.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/metrics/widgets/key_metrics_grid.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 6
     },
     {
       "file": "lib/screens/mood/mood_history_screen.dart",
@@ -3748,7 +3190,7 @@
       "file": "lib/screens/neat/widgets/neat_achievement_card.dart",
       "token": "glassSurface",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 3
     },
     {
       "file": "lib/screens/neat/widgets/neat_achievement_card.dart",
@@ -3776,19 +3218,7 @@
     },
     {
       "file": "lib/screens/neat/widgets/neat_gamification_widgets_part_neat_level.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/neat/widgets/neat_gamification_widgets_part_neat_level.dart",
       "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/neat/widgets/neat_gamification_widgets_part_neat_milestone_popup_state.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -3898,7 +3328,7 @@
       "file": "lib/screens/neat/widgets/streak_badges.dart",
       "token": "glassSurface",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/neat/widgets/streak_badges.dart",
@@ -6698,49 +6128,7 @@
     },
     {
       "file": "lib/screens/onboarding/widgets/quiz_fasting.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_fasting.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_fasting.dart",
       "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_motivation.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_nutrition_goals.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_nutrition_goals.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_training_preferences.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/onboarding/widgets/quiz_training_preferences.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -7660,13 +7048,7 @@
       "file": "lib/screens/progress/feel_results_screen.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
-      "count": 6
-    },
-    {
-      "file": "lib/screens/progress/milestones_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
+      "count": 3
     },
     {
       "file": "lib/screens/progress/milestones_screen_ui.dart",
@@ -7814,12 +7196,6 @@
     },
     {
       "file": "lib/screens/reports/reports_hub_screen.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/reports/reports_hub_screen.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 3
@@ -7835,12 +7211,6 @@
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/schedule/schedule_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
     },
     {
       "file": "lib/screens/scores/scoring_screen.dart",
@@ -8621,54 +7991,6 @@
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/settings/homescreen_customization_screen.dart",
-      "token": "background",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/settings/homescreen_customization_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/settings/homescreen_customization_screen.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/settings/homescreen_customization_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/settings/layout_editor_screen.dart",
-      "token": "background",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/settings/layout_editor_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/settings/layout_editor_screen.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/settings/layout_editor_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
     },
     {
       "file": "lib/screens/settings/meal_reminders_settings_screen.dart",
@@ -10294,7 +9616,7 @@
       "file": "lib/screens/skills/chain_detail_screen.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/skills/chain_detail_screen.dart",
@@ -10310,12 +9632,6 @@
     },
     {
       "file": "lib/screens/skills/skill_progressions_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/skills/skill_progressions_screen.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
@@ -10324,29 +9640,11 @@
       "file": "lib/screens/skills/widgets/practice_attempt_sheet.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 2
     },
     {
       "file": "lib/screens/skills/widgets/practice_attempt_sheet.dart",
       "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/skills/widgets/progression_chain_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/skills/widgets/progression_step_card.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/skills/widgets/progression_step_card.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -10948,7 +10246,7 @@
       "file": "lib/screens/splash/splash_screen.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/stats/comprehensive_stats_screen.dart",
@@ -11446,7 +10744,7 @@
       "file": "lib/screens/weekly_plan/weekly_plan_screen.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/active_workout_screen_refactored.dart",
@@ -11458,19 +10756,19 @@
       "file": "lib/screens/workout/custom_workout_builder_screen.dart",
       "token": "surface",
       "rule": "theme-mapped",
-      "count": 6
+      "count": 1
     },
     {
       "file": "lib/screens/workout/custom_workout_builder_screen.dart",
       "token": "textPrimary",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 1
     },
     {
       "file": "lib/screens/workout/custom_workout_builder_screen.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
-      "count": 12
+      "count": 1
     },
     {
       "file": "lib/screens/workout/customization_studio_sheet.dart",
@@ -11684,12 +10982,6 @@
     },
     {
       "file": "lib/screens/workout/import_workout_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/import_workout_screen.dart",
       "token": "elevated",
       "rule": "theme-mapped",
       "count": 3
@@ -11708,43 +11000,7 @@
     },
     {
       "file": "lib/screens/workout/list_workout_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/list_workout_screen.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/list_workout_screen.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/list_workout_screen.dart",
       "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/list_workout_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/list_workout_screen.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/mixins/exercise_management_mixin.dart",
-      "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -11768,12 +11024,6 @@
     },
     {
       "file": "lib/screens/workout/mixins/timer_rest_mixin.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/mixins/timer_rest_mixin.dart",
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
@@ -11810,27 +11060,15 @@
     },
     {
       "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
       "token": "textPrimary",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/mixins/workout_ui_builders_mixin.dart",
@@ -11905,12 +11143,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/workout/mood_workout_pre_start_screen.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/workout/program_builder_part_exercise_picker.dart",
       "token": "background",
       "rule": "theme-mapped",
@@ -11932,7 +11164,7 @@
       "file": "lib/screens/workout/program_builder_part_exercise_picker.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 2
     },
     {
       "file": "lib/screens/workout/program_builder_part_template_meta.dart",
@@ -12022,7 +11254,7 @@
       "file": "lib/screens/workout/widgets/ai_coach_report_card.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 3
     },
     {
       "file": "lib/screens/workout/widgets/ai_input_preview_sheet.dart",
@@ -12099,12 +11331,6 @@
     {
       "file": "lib/screens/workout/widgets/body_map_selector.dart",
       "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/breathing_guide_sheet.dart",
-      "token": "electricBlue",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -12308,12 +11534,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/exercise_analytics_page.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 6
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_analytics_page.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
@@ -12374,12 +11594,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/exercise_options_info_sheet.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_options_info_sheet.dart",
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
@@ -12392,12 +11606,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/exercise_options_sheet.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 7
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_options_sheet.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 1
@@ -12407,12 +11615,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_preview_overlay.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 9
     },
     {
       "file": "lib/screens/workout/widgets/exercise_preview_overlay.dart",
@@ -12433,42 +11635,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 6
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 8
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/exercise_set_tracker.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 6
-    },
-    {
       "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_option_card.dart",
       "token": "elevated",
       "rule": "theme-mapped",
@@ -12532,7 +11698,7 @@
       "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart",
       "token": "textPrimary",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart",
@@ -12574,7 +11740,7 @@
       "file": "lib/screens/workout/widgets/expanded_exercise_card.dart",
       "token": "glassSurface",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/expanded_exercise_card.dart",
@@ -12592,7 +11758,7 @@
       "file": "lib/screens/workout/widgets/expanded_exercise_card.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart",
@@ -12614,12 +11780,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_2.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
@@ -12770,18 +11930,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/inline_rest_row.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/inline_rest_row.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/inline_rest_row.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 1
@@ -12797,12 +11945,6 @@
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/inline_workout_chat.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 3
     },
     {
       "file": "lib/screens/workout/widgets/inline_workout_chat.dart",
@@ -12856,19 +11998,13 @@
       "file": "lib/screens/workout/widgets/number_input_widgets.dart",
       "token": "elevated",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 2
     },
     {
       "file": "lib/screens/workout/widgets/number_input_widgets.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/number_input_widgets.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/parsed_exercises_preview_sheet.dart",
@@ -12939,12 +12075,6 @@
     {
       "file": "lib/screens/workout/widgets/pr_details_sheet.dart",
       "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/pr_inline_celebration.dart",
-      "token": "electricBlue",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -12994,7 +12124,7 @@
       "file": "lib/screens/workout/widgets/pre_workout_reshape_gate.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/pre_workout_reshape_gate.dart",
@@ -13027,42 +12157,6 @@
       "count": 4
     },
     {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/program_setup_dialog.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
       "file": "lib/screens/workout/widgets/progression_suggestion_card.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
@@ -13094,25 +12188,7 @@
     },
     {
       "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state.dart",
-      "token": "cardio",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state.dart",
       "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state.dart",
-      "token": "flexibility",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state.dart",
-      "token": "strength",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -13411,60 +12487,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 8
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row_part_increment_button.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row_part_increment_button.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_row_part_increment_button.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/workout/widgets/set_row_part_rpe_rir_selector_state.dart",
       "token": "elevated",
       "rule": "theme-mapped",
@@ -13504,7 +12526,7 @@
       "file": "lib/screens/workout/widgets/set_row_visuals.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/set_row_visuals.dart",
@@ -13514,12 +12536,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/set_tracking_overlay.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 7
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_tracking_overlay.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 1
@@ -13535,12 +12551,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_tracking_overlay_ui_1.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 9
     },
     {
       "file": "lib/screens/workout/widgets/set_tracking_overlay_ui_1.dart",
@@ -13549,18 +12559,6 @@
       "count": 2
     },
     {
-      "file": "lib/screens/workout/widgets/set_tracking_overlay_ui_1.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_tracking_overlay_ui_2.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 11
-    },
-    {
       "file": "lib/screens/workout/widgets/set_tracking_section.dart",
       "token": "elevated",
       "rule": "theme-mapped",
@@ -13583,12 +12581,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/set_tracking_sheets.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 3
     },
     {
       "file": "lib/screens/workout/widgets/set_tracking_sheets.dart",
@@ -13637,12 +12629,6 @@
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/share_templates/photo_overlay_template.dart",
-      "token": "nearBlack",
-      "rule": "no-accessor",
-      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/share_templates/pr_share_card.dart",
@@ -13772,12 +12758,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/summary_exercise_table.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/summary_exercise_table.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
       "count": 1
@@ -13845,48 +12825,6 @@
     {
       "file": "lib/screens/workout/widgets/superset_exercise_picker.dart",
       "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_indicator.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/superset_pair_sheet.dart",
-      "token": "teal",
       "rule": "theme-mapped",
       "count": 1
     },
@@ -13985,42 +12923,6 @@
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "glassSurface",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/timed_exercise_timer.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 4
     },
     {
       "file": "lib/screens/workout/widgets/transition_countdown_overlay.dart",
@@ -14071,46 +12973,10 @@
       "count": 8
     },
     {
-      "file": "lib/screens/workout/widgets/variant_picker.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/widgets/variant_picker.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/widgets/variant_picker.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
-      "file": "lib/screens/workout/widgets/variant_picker.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/video_pip.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/widgets/video_pip.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
       "file": "lib/screens/workout/widgets/video_pip.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/widgets/warmup_controller.dart",
@@ -14167,24 +13033,6 @@
       "count": 1
     },
     {
-      "file": "lib/screens/workout/widgets/workout_actions_sheet.dart",
-      "token": "nearBlack",
-      "rule": "no-accessor",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_actions_sheet.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_ai_coach_sheet.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 2
-    },
-    {
       "file": "lib/screens/workout/widgets/workout_ai_coach_sheet.dart",
       "token": "elevated",
       "rule": "theme-mapped",
@@ -14228,27 +13076,15 @@
     },
     {
       "file": "lib/screens/workout/widgets/workout_bottom_bar.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 11
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_bottom_bar.dart",
       "token": "nearBlack",
       "rule": "no-accessor",
       "count": 4
     },
     {
       "file": "lib/screens/workout/widgets/workout_bottom_bar.dart",
-      "token": "teal",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_bottom_bar.dart",
       "token": "textMuted",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 3
     },
     {
       "file": "lib/screens/workout/widgets/workout_detail_ai_insights.dart",
@@ -14318,12 +13154,6 @@
     },
     {
       "file": "lib/screens/workout/widgets/workout_plan_drawer.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_plan_drawer.dart",
       "token": "elevated",
       "rule": "theme-mapped",
       "count": 2
@@ -14348,21 +13178,9 @@
     },
     {
       "file": "lib/screens/workout/widgets/workout_top_overlay.dart",
-      "token": "electricBlue",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/widgets/workout_top_overlay.dart",
       "token": "pureBlack",
       "rule": "theme-mapped",
       "count": 4
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 2
     },
     {
       "file": "lib/screens/workout/workout_complete_screen.dart",
@@ -14378,12 +13196,6 @@
     },
     {
       "file": "lib/screens/workout/workout_complete_screen.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen.dart",
       "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 1
@@ -14392,73 +13204,61 @@
       "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 4
+      "count": 1
     },
     {
       "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
       "token": "elevated",
       "rule": "theme-mapped",
-      "count": 3
+      "count": 1
     },
     {
       "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
+      "token": "textPrimary",
+      "rule": "theme-mapped",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
+      "token": "textSecondary",
+      "rule": "theme-mapped",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
+      "token": "cardBorder",
+      "rule": "theme-mapped",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
+      "token": "elevated",
+      "rule": "theme-mapped",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
       "token": "textMuted",
+      "rule": "theme-mapped",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
+      "token": "textPrimary",
+      "rule": "theme-mapped",
+      "count": 3
+    },
+    {
+      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
+      "token": "textSecondary",
       "rule": "theme-mapped",
       "count": 2
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ext_2.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
-      "token": "elevated",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 5
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 4
-    },
-    {
-      "file": "lib/screens/workout/workout_complete_screen_ui_2.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
     },
     {
       "file": "lib/screens/workout/workout_detail_screen.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/workout_detail_screen.dart",
@@ -14650,7 +13450,7 @@
       "file": "lib/screens/workout/workout_summary_screen_v2.dart",
       "token": "cardBorder",
       "rule": "theme-mapped",
-      "count": 2
+      "count": 1
     },
     {
       "file": "lib/screens/workout/workout_summary_screen_v2.dart",
@@ -14669,42 +13469,6 @@
       "token": "textPrimary",
       "rule": "theme-mapped",
       "count": 1
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "cardBorder",
-      "rule": "theme-mapped",
-      "count": 3
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "pureBlack",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "surface",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "textMuted",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 7
-    },
-    {
-      "file": "lib/screens/workout/your_programs_screen.dart",
-      "token": "textSecondary",
-      "rule": "theme-mapped",
-      "count": 2
     },
     {
       "file": "lib/screens/workouts/widgets/exercise_preferences_card.dart",
@@ -16377,12 +15141,6 @@
     {
       "file": "lib/widgets/stats/fueling_split_card.dart",
       "token": "textPrimary",
-      "rule": "theme-mapped",
-      "count": 1
-    },
-    {
-      "file": "lib/widgets/stats/stat_delta_chip.dart",
-      "token": "textMuted",
       "rule": "theme-mapped",
       "count": 1
     },

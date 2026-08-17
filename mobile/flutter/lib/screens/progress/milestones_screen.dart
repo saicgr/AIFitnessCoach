@@ -397,7 +397,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
         style: ZType.lbl(8, color: tc.accent, letterSpacing: 0.8),
       );
     } else {
-      borderColor = AppColors.cardBorder;
+      borderColor = ThemeColors.of(context).cardBorder;
       numeralColor = tc.textMuted;
       fillColor = null;
       stateLine = Text(
@@ -532,7 +532,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(

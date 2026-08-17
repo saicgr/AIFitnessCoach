@@ -399,9 +399,6 @@ void showGoalHistorySheet(
   showGlassSheet(
     context: context,
     useRootNavigator: true,
-    initialChildSize: 0.85,
-    minChildSize: 0.5,
-    maxChildSize: 0.95,
     builder: (context) => DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,

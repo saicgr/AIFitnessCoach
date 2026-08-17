@@ -19,6 +19,7 @@ import '../../l10n/generated/app_localizations.dart';
 import 'widgets/key_metrics_grid.dart';
 import 'widgets/health_checks_section.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/theme_colors.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -80,7 +81,7 @@ class _MetricsDashboardScreenState
     );
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: ThemeColors.of(context).background,
       body: SafeArea(
         child: AppRefreshIndicator(
           onRefresh: _loadMetrics,
@@ -104,7 +105,7 @@ class _MetricsDashboardScreenState
                       Text(
                         l10n.metricsDashboardTrackYourProgressOver,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
+                              color: ThemeColors.of(context).textSecondary,
                             ),
                       ),
                     ],
@@ -168,12 +169,12 @@ class _MetricsDashboardScreenState
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? context.accentColor.withOpacity(0.2)
-                                  : AppColors.elevated,
+                                  : ThemeColors.of(context).elevated,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isSelected
                                     ? context.accentColor
-                                    : AppColors.cardBorder,
+                                    : ThemeColors.of(context).cardBorder,
                               ),
                             ),
                             child: Center(
@@ -186,7 +187,7 @@ class _MetricsDashboardScreenState
                                       : FontWeight.normal,
                                   color: isSelected
                                       ? context.accentColor
-                                      : AppColors.textSecondary,
+                                      : ThemeColors.of(context).textSecondary,
                                 ),
                               ),
                             ),
@@ -252,12 +253,12 @@ class _MetricsDashboardScreenState
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? context.accentColor.withOpacity(0.2)
-                                  : AppColors.elevated,
+                                  : ThemeColors.of(context).elevated,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected
                                     ? context.accentColor
-                                    : AppColors.cardBorder,
+                                    : ThemeColors.of(context).cardBorder,
                               ),
                             ),
                             child: Row(
@@ -279,7 +280,7 @@ class _MetricsDashboardScreenState
                                         : FontWeight.normal,
                                     color: isSelected
                                         ? context.accentColor
-                                        : AppColors.textSecondary,
+                                        : ThemeColors.of(context).textSecondary,
                                   ),
                                 ),
                               ],
@@ -301,7 +302,7 @@ class _MetricsDashboardScreenState
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.elevated,
+                    color: ThemeColors.of(context).elevated,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: metricsState.isLoading
@@ -412,7 +413,7 @@ class _MetricsDashboardScreenState
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddMetricSheet(context),
         backgroundColor: context.accentColor,
-        foregroundColor: AppColors.pureBlack,
+        foregroundColor: ThemeColors.of(context).accentContrast,
         child: const Icon(Icons.add),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
@@ -534,7 +535,7 @@ class _MetricsDashboardScreenState
           drawVerticalLine: false,
           horizontalInterval: (maxY - minY) / 4,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: AppColors.cardBorder,
+            color: ThemeColors.of(context).cardBorder,
             strokeWidth: 0.5,
           ),
         ),
@@ -596,7 +597,7 @@ class _MetricsDashboardScreenState
                   radius: 4,
                   color: context.accentColor,
                   strokeWidth: 2,
-                  strokeColor: AppColors.pureBlack,
+                  strokeColor: ThemeColors.of(context).background,
                 );
               },
             ),
@@ -615,7 +616,7 @@ class _MetricsDashboardScreenState
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (spot) => AppColors.nearBlack,
+            getTooltipColor: (spot) => ThemeColors.of(context).elevated,
             tooltipRoundedRadius: 8,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
@@ -625,8 +626,8 @@ class _MetricsDashboardScreenState
                     : DateTime.now();
                 return LineTooltipItem(
                   '${spot.y.toStringAsFixed(1)}\n${date.month}/${date.day}',
-                  const TextStyle(
-                    color: AppColors.textPrimary,
+                  TextStyle(
+                    color: ThemeColors.of(context).textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
@@ -805,7 +806,7 @@ class _MetricCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -844,9 +845,9 @@ class _MetricCard extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: StatType.label,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
           ),
           if (hasTrend) ...[
@@ -887,7 +888,7 @@ class _QuickStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -996,7 +997,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
           hintText: hint,
           suffixText: suffix,
           filled: true,
-          fillColor: AppColors.elevated,
+          fillColor: ThemeColors.of(context).elevated,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -1055,10 +1056,10 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
         decoration: BoxDecoration(
           color: isSelected
               ? context.accentColor.withOpacity(0.2)
-              : AppColors.elevated,
+              : ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? context.accentColor : AppColors.cardBorder,
+            color: isSelected ? context.accentColor : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Text(
@@ -1066,7 +1067,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? context.accentColor : AppColors.textSecondary,
+            color: isSelected ? context.accentColor : ThemeColors.of(context).textSecondary,
           ),
         ),
       ),
@@ -1143,10 +1144,10 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? context.accentColor.withOpacity(0.2)
-                          : AppColors.elevated,
+                          : ThemeColors.of(context).elevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? context.accentColor : AppColors.cardBorder,
+                        color: isSelected ? context.accentColor : ThemeColors.of(context).cardBorder,
                       ),
                     ),
                     child: Text(
@@ -1154,7 +1155,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? context.accentColor : AppColors.textSecondary,
+                        color: isSelected ? context.accentColor : ThemeColors.of(context).textSecondary,
                       ),
                     ),
                   ),
@@ -1186,7 +1187,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                   hintText: l10n.metricsDashboardEnterValue,
                   suffixText: selectedOption['unit'],
                   filled: true,
-                  fillColor: AppColors.elevated,
+                  fillColor: ThemeColors.of(context).elevated,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -1210,7 +1211,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.accentColor,
-                  foregroundColor: AppColors.pureBlack,
+                  foregroundColor: ThemeColors.of(context).accentContrast,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1336,7 +1337,7 @@ class _CustomMetricCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -1374,9 +1375,9 @@ class _CustomMetricCard extends ConsumerWidget {
               def.label,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: StatType.label,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
               ),
             ),
             if (hasTrend) ...[
@@ -1429,10 +1430,10 @@ class _LogCustomValueDialogState extends State<_LogCustomValueDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.nearBlack,
+      backgroundColor: ThemeColors.of(context).surface,
       title: Text(
         'Log ${widget.def.label}',
-        style: const TextStyle(color: AppColors.textPrimary),
+        style: TextStyle(color: ThemeColors.of(context).textPrimary),
       ),
       content: TextField(
         controller: _controller,
@@ -1443,7 +1444,7 @@ class _LogCustomValueDialogState extends State<_LogCustomValueDialog> {
           hintText: 'Enter value',
           suffixText: widget.def.unit.isEmpty ? null : widget.def.unit,
           filled: true,
-          fillColor: AppColors.elevated,
+          fillColor: ThemeColors.of(context).elevated,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -1459,7 +1460,7 @@ class _LogCustomValueDialogState extends State<_LogCustomValueDialog> {
           onPressed: _submit,
           style: ElevatedButton.styleFrom(
             backgroundColor: context.accentColor,
-            foregroundColor: AppColors.pureBlack,
+            foregroundColor: ThemeColors.of(context).accentContrast,
           ),
           child: const Text('Save'),
         ),

@@ -42,9 +42,22 @@ class GlassSheetStyle {
   /// aesthetic. Use via `showGlassSheet(barrierColor: ...)`.
   static Color nestedBarrierColor() => Colors.black.withValues(alpha: 0.6);
 
+  /// The frosted surface.
+  ///
+  /// Opacity was 0.5 dark / 0.7 light, which let a saturated card behind the
+  /// sheet paint a coloured band straight through it — a green hero card on
+  /// Home showed up as a green wash across the gym switcher's header, reading
+  /// as a rendering fault rather than as glass. 12-sigma blur softens an edge
+  /// but does nothing about hue: at 30% transmission a saturated fill still
+  /// tints everything on top of it, including body text.
+  ///
+  /// These values are still translucent — motion and shape behind the sheet
+  /// stay visible, which is the point of the material — but no longer let a
+  /// single colour dominate. Sheets that must be fully legible over arbitrary
+  /// content should use `GlassSheet(opaque: true)` instead of nudging this.
   static Color backgroundColor(bool isDark) => isDark
-      ? Colors.black.withValues(alpha: 0.5)
-      : Colors.white.withValues(alpha: 0.7);
+      ? Colors.black.withValues(alpha: 0.72)
+      : Colors.white.withValues(alpha: 0.88);
 
   /// Fully opaque surface used by `GlassSheet(opaque: true)` — legible
   /// text, no blur, no bleed-through. Use when the background content
@@ -86,9 +99,12 @@ Future<T?> showGlassSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   bool useRootNavigator = true,
-  double? initialChildSize,
-  double? minChildSize,
-  double? maxChildSize,
+  // NOTE: this function deliberately takes NO initialChildSize/minChildSize/
+  // maxChildSize. It used to accept all three and then never read them — a
+  // dozen call sites passed sizes that did nothing while their real sizing
+  // lived on a DraggableScrollableSheet inside the builder, which is exactly
+  // the kind of silent no-op that hides a broken sheet. Size the content, not
+  // the route.
   /// When true, renders the sheet on a fully opaque surface with a stronger
   /// scrim — background content is NOT visible through the sheet. Use for
   /// mandatory prompts (RPE, confirmation dialogs) where legibility matters
@@ -183,9 +199,35 @@ class GlassSheet extends StatelessWidget {
     // double-pad and push content too far up when the keyboard is hidden.
     final safeAreaBottom = MediaQuery.of(context).padding.bottom;
 
+    // Height cap.
+    //
+    // A `DraggableScrollableSheet` child sizes ITSELF as a fraction of the box
+    // it is handed. Capping that box at `maxHeightFraction` first meant every
+    // such sheet silently resolved its fractions against 90% of the screen
+    // rather than the screen — a sheet asking for `initialChildSize: 0.55` got
+    // 0.55 × 0.9 = 49.5%. That shortfall is invisible on a sheet with a thin
+    // header and fatal on one with real chrome: the gym switcher's header +
+    // Travel Mode tile + "Find a gym" row + add button measured 376pt of the
+    // 418pt it was given, leaving its profile list a 23pt viewport with the
+    // first gym card sliced in half.
+    //
+    // A DSS is already self-clamping via its own `maxChildSize`, so hand it the
+    // full height and let it do its job. Non-draggable children keep the cap —
+    // they have nothing else stopping them from filling the screen.
+    final isSelfSizingChild = child is DraggableScrollableSheet;
+    final reservedBottom = keyboardInset > 0
+        ? keyboardInset
+        : (reserveBottomInset ? safeAreaBottom : 0.0);
+    final screenHeight = MediaQuery.of(context).size.height;
     final container = Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * maxHeightFraction,
+        // A self-sizing child gets the whole screen to measure against; the
+        // Column below still hands it `screenHeight - reservedBottom`, so its
+        // fractions resolve against the USABLE height (screen minus the home
+        // indicator band) rather than against 90% of the screen.
+        maxHeight: isSelfSizingChild
+            ? screenHeight
+            : screenHeight * maxHeightFraction,
       ),
       decoration: BoxDecoration(
         color: opaque
@@ -217,9 +259,26 @@ class GlassSheet extends StatelessWidget {
           children: [
             if (showHandle) GlassSheetHandle(isDark: isDark),
             Flexible(
-              child: padding != null
-                  ? Padding(padding: padding!, child: child)
-                  : child,
+              // The child must not see a bottom inset this widget has already
+              // reserved. Sheet bodies routinely end in
+              // `SizedBox(height: MediaQuery.padding.bottom + 16)` or a
+              // `SafeArea`; combined with the AnimatedPadding below that
+              // reserved the home-indicator band TWICE and left a strip of
+              // empty glass under the last control (the gym switcher's add
+              // button floated in ~80pt of it). Zeroing `padding.bottom` here
+              // makes those bodies contribute their own 16 and lets this
+              // widget own the indicator band exactly once.
+              //
+              // Only when we are actually reserving it: a sheet that opted out
+              // with `reserveBottomInset: false` is padding itself on purpose
+              // and still needs the real number.
+              child: MediaQuery.removePadding(
+                context: context,
+                removeBottom: reserveBottomInset,
+                child: padding != null
+                    ? Padding(padding: padding!, child: child)
+                    : child,
+              ),
             ),
             // When the keyboard is up, viewInsets.bottom > 0 — shift the entire
             // sheet up by that amount via AnimatedPadding. When it's down,
@@ -228,11 +287,7 @@ class GlassSheet extends StatelessWidget {
             AnimatedPadding(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
-              padding: EdgeInsets.only(
-                bottom: keyboardInset > 0
-                    ? keyboardInset
-                    : (reserveBottomInset ? safeAreaBottom : 0),
-              ),
+              padding: EdgeInsets.only(bottom: reservedBottom),
             ),
           ],
         ),

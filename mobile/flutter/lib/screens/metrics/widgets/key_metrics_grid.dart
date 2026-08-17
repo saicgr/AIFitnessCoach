@@ -26,6 +26,7 @@ import '../../../data/providers/nutrition_stats_provider.dart';
 import '../../../data/repositories/metrics_repository.dart';
 import '../../../data/services/health_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 class KeyMetricsGrid extends ConsumerWidget {
   const KeyMetricsGrid({super.key});
@@ -342,14 +343,14 @@ class _GetStartedCta extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(title,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary)),
+                            color: ThemeColors.of(context).textPrimary)),
                     const SizedBox(height: 2),
                     Text(body,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textSecondary)),
+                        style: TextStyle(
+                            fontSize: 12, color: ThemeColors.of(context).textSecondary)),
                   ],
                 ),
               ),
@@ -425,9 +426,9 @@ class _MetricTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: ThemeColors.of(context).elevated,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,17 +442,17 @@ class _MetricTile extends StatelessWidget {
                       label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: ThemeColors.of(context).textSecondary,
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              _body(l10n),
+              _body(context, l10n),
               if (bars != null && !loading && !error && value != null) ...[
                 const SizedBox(height: 10),
                 // Decorative — the spoken Semantics label already conveys the
@@ -465,13 +466,13 @@ class _MetricTile extends StatelessWidget {
     );
   }
 
-  Widget _body(AppLocalizations l10n) {
+  Widget _body(BuildContext context, AppLocalizations l10n) {
     if (loading) {
       return Container(
         height: 26,
         width: 60,
         decoration: BoxDecoration(
-          color: AppColors.cardBorder.withValues(alpha: 0.5),
+          color: ThemeColors.of(context).cardBorder.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(6),
         ),
       );
@@ -504,10 +505,10 @@ class _MetricTile extends StatelessWidget {
                 value!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                 ),
               ),
             ),
@@ -523,8 +524,8 @@ class _MetricTile extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(subtitle!,
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.textSecondary)),
+                style: TextStyle(
+                    fontSize: 11.5, color: ThemeColors.of(context).textSecondary)),
           ),
       ],
     );
@@ -558,23 +559,23 @@ class _MacrosCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.pie_chart_outline,
-                    size: 16, color: AppColors.textSecondary),
+                Icon(Icons.pie_chart_outline,
+                    size: 16, color: ThemeColors.of(context).textSecondary),
                 const SizedBox(width: 6),
                 Text(l10n.metricsDashboardMacros,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary)),
+                        color: ThemeColors.of(context).textSecondary)),
               ],
             ),
             const SizedBox(height: 12),
@@ -582,7 +583,7 @@ class _MacrosCard extends StatelessWidget {
               Container(
                 height: 22,
                 decoration: BoxDecoration(
-                    color: AppColors.cardBorder.withValues(alpha: 0.5),
+                    color: ThemeColors.of(context).cardBorder.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6)),
               )
             else if (error)
@@ -600,10 +601,10 @@ class _MacrosCard extends StatelessWidget {
             else
               Row(
                 children: [
-                  _macro(l10n.metricsDashboardCarbs,
+                  _macro(context, l10n.metricsDashboardCarbs,
                       today!.carbs.round(), cCarbs),
-                  _macro(l10n.metricsDashboardFat, today!.fat.round(), cFat),
-                  _macro(l10n.metricsDashboardProtein,
+                  _macro(context, l10n.metricsDashboardFat, today!.fat.round(), cFat),
+                  _macro(context, l10n.metricsDashboardProtein,
                       today!.protein.round(), cProtein),
                 ],
               ),
@@ -613,7 +614,8 @@ class _MacrosCard extends StatelessWidget {
     );
   }
 
-  Widget _macro(String label, int grams, Color color) => Expanded(
+  Widget _macro(BuildContext context, String label, int grams, Color color) =>
+      Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -627,16 +629,16 @@ class _MacrosCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text(label,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: AppColors.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 11.5, color: ThemeColors.of(context).textSecondary)),
               ],
             ),
             const SizedBox(height: 3),
             Text('${grams}g',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary)),
+                    color: ThemeColors.of(context).textPrimary)),
           ],
         ),
       );
@@ -672,7 +674,7 @@ class _MiniBars extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 1.5),
                 height: 3,
                 decoration: BoxDecoration(
-                  color: AppColors.cardBorder.withValues(alpha: 0.4),
+                  color: ThemeColors.of(context).cardBorder.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

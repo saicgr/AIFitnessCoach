@@ -83,13 +83,17 @@ class CycleDisclaimer extends StatelessWidget {
               children: [
                 Icon(Icons.shield_outlined, size: 16, color: accent),
                 const SizedBox(width: 6),
-                Text(
-                  AppLocalizations.of(context).cycleDisclaimerBeforeYouStart,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                    letterSpacing: 0.2,
+                // Expanded, not bare: at 200% text scale on a 320pt phone the
+                // heading is wider than the row.
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context).cycleDisclaimerBeforeYouStart,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ],

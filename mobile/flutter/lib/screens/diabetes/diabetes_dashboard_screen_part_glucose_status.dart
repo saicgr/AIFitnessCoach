@@ -119,7 +119,7 @@ class InsulinDose {
       case 'mixed':
         return AppColors.orange; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       default:
-        return AppColors.textSecondary;
+        return AppColors.textSecondary;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     }
   }
 }

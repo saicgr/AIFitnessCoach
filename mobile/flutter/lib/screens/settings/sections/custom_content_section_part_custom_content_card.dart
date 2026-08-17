@@ -44,9 +44,6 @@ class _CustomContentCard extends ConsumerWidget {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
       builder: (context) => GlassSheet(
         showHandle: false,
         child: DraggableScrollableSheet(
@@ -106,9 +103,6 @@ class _CustomContentCard extends ConsumerWidget {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
       builder: (context) => GlassSheet(
         showHandle: false,
         child: DraggableScrollableSheet(

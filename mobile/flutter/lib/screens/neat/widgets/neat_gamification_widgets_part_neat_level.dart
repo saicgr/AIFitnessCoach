@@ -69,7 +69,7 @@ enum NeatLevel {
       case NeatLevel.casualMover:
         return AppColors.info;  // accent-allowlist: informational state — must stay blue regardless of accent
       case NeatLevel.activeWalker:
-        return AppColors.teal;
+        return AppColors.teal;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
       case NeatLevel.neatEnthusiast:
         return AppColors.orange;  // accent-allowlist: no BuildContext available in this scope (enum getter) — level-tier identity color
       case NeatLevel.neatChampion:
@@ -504,7 +504,7 @@ class _DailyChallengeState extends State<DailyChallenge>
           colors: isCompleted
               ? [
                   AppColors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
-                  AppColors.teal.withOpacity(0.1),
+                  ThemeColors.of(context).teal.withOpacity(0.1),
                 ]
               : [
                   context.accentColor.withOpacity(0.15),

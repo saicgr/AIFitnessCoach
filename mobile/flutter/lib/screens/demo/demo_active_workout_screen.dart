@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 part 'demo_active_workout_screen_part_demo_workout_phase.dart';
 
 part 'demo_active_workout_screen_ui_1.dart';
@@ -772,7 +773,7 @@ class _DemoActiveWorkoutScreenState
             height: 50,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [context.accentColor, AppColors.teal],
+                colors: [context.accentColor, ThemeColors.of(context).teal],
               ),
               borderRadius: BorderRadius.circular(12),
             ),

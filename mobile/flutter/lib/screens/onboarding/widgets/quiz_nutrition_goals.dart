@@ -8,6 +8,7 @@ import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Nutrition goals and dietary restrictions for the pre-auth quiz.
 /// Collects both nutrition goals and any dietary restrictions.
 /// Shows calculated daily targets preview when user data is available.
@@ -114,13 +115,13 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'maintain',
       'label': 'Maintain Weight',
       'icon': Icons.balance,
-      'color': AppColors.teal,
+      'color': AppColors.teal,  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     },
     {
       'id': 'improve_energy',
       'label': 'Improve Energy',
       'icon': Icons.bolt,
-      'color': AppColors.electricBlue,
+      'color': AppColors.electricBlue,  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     },
     {
       'id': 'eat_healthier',

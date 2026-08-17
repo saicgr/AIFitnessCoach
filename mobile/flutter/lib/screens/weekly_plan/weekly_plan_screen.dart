@@ -394,7 +394,7 @@ class _ShareOptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           children: [
@@ -402,7 +402,7 @@ class _ShareOptionTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,

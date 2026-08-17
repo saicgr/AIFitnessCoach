@@ -7,6 +7,7 @@ import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 part 'quiz_fasting_ui.dart';
 
 
@@ -91,7 +92,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 14,
       'eatingHours': 10,
       'icon': Icons.access_time,
-      'color': AppColors.teal,
+      'color': AppColors.teal,  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
       'difficulty': 'Beginner',
       'bestFor': ['beginners', 'maintain', 'lose'],
     },
@@ -125,7 +126,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 20,
       'eatingHours': 4,
       'icon': Icons.hourglass_top,
-      'color': AppColors.electricBlue,
+      'color': AppColors.electricBlue,  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
       'difficulty': 'Advanced',
       'bestFor': ['advanced', 'lose'],
     },

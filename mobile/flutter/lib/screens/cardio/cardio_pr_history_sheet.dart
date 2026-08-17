@@ -417,7 +417,7 @@ class _InlineSparkline extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           error: (e, _) => Center(
             child: Text(AppLocalizations.of(context).cardioPrHistoryCouldNotLoadTrend,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                style: TextStyle(fontSize: 12, color: ThemeColors.of(context).textSecondary)),
           ),
         ),
       ),

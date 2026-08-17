@@ -302,7 +302,7 @@ class _SkillProgressionsScreenState
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: tc.surface,
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(

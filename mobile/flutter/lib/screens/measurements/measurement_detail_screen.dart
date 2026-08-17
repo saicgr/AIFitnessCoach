@@ -21,6 +21,7 @@ import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/theme_colors.dart';
 part 'measurement_detail_screen_part_stat_item.dart';
 
 part 'measurement_detail_screen_ui.dart';
@@ -716,7 +717,7 @@ class _MeasurementDetailScreenState
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,7 +932,7 @@ class _MeasurementDetailScreenState
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [

@@ -24,6 +24,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
@@ -301,7 +302,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.support_agent, color: Colors.white),
+            Icon(Icons.support_agent, color: ThemeColors.of(context).accentContrast),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -312,7 +313,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                     'Welcome to ${Branding.appName}!',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: ThemeColors.of(context).accentContrast,
                       fontSize: 14,
                     ),
                   ),
@@ -320,7 +321,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   Text(
                     '${Branding.appName} Support is now your friend. Reach out anytime for help!',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: ThemeColors.of(context).accentContrast.withOpacity(0.9),
                       fontSize: 12,
                     ),
                   ),
@@ -330,7 +331,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           ],
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.teal,
+        backgroundColor: ThemeColors.of(context).teal,
         duration: const Duration(seconds: 5),
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

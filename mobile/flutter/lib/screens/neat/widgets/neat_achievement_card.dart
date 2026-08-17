@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Achievement tier levels with their properties
 enum AchievementTier {
   bronze('Bronze', 0.2),
@@ -705,7 +706,7 @@ class _TierBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: isUnlocked
             ? tier.color.withOpacity(0.15)
-            : AppColors.glassSurface,
+            : ThemeColors.of(context).glassSurface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isUnlocked

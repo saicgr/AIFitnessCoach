@@ -7,6 +7,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Input bar widget for live chat
 /// Includes text field, send button, and typing detection
 class LiveChatInputBar extends StatefulWidget {
@@ -180,12 +181,12 @@ class _SendButton extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: enabled
             ? LinearGradient(
-                colors: [context.accentColor, AppColors.teal],
+                colors: [context.accentColor, ThemeColors.of(context).teal],
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
               )
             : null,
-        color: enabled ? null : AppColors.glassSurface,
+        color: enabled ? null : ThemeColors.of(context).glassSurface,
         shape: BoxShape.circle,
         boxShadow: enabled
             ? [
@@ -237,7 +238,7 @@ class AttachmentButton extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(
         Icons.attach_file_rounded,
-        color: AppColors.textSecondary,
+        color: ThemeColors.of(context).textSecondary,
       ),
       tooltip: AppLocalizations.of(context).liveChatInputAttachFile,
     );

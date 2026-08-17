@@ -17,6 +17,7 @@ import 'widgets/queue_position_card.dart';
 import 'widgets/typing_indicator.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
 /// Live Chat Screen - wired to real backend API via LiveChatNotifier
 class LiveChatScreen extends ConsumerStatefulWidget {
   const LiveChatScreen({super.key});
@@ -85,7 +86,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -151,7 +152,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -238,7 +239,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                         AppLocalizations.of(context).liveChatFailedToConnectTo,
                         style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -248,7 +249,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: ThemeColors.of(context).textSecondary,
                         ),
                       ),
                       const SizedBox(height: 24),

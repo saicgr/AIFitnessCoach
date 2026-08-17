@@ -16,6 +16,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
 /// Suggestions for custom goals
 const List<String> _goalSuggestions = [
   'Improve box jump height',
@@ -228,15 +229,15 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                       Text(
                         AppLocalizations.of(context).customGoalsGoalCreated,
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         goal.goalText,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: ThemeColors.of(context).textSecondary,
                           fontSize: 14,
                         ),
                         maxLines: 1,
@@ -267,14 +268,14 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.glassSurface,
+                    color: ThemeColors.of(context).glassSurface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Text(
                     keyword,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: ThemeColors.of(context).textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -369,7 +370,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: ThemeColors.of(context).background,
       appBar: PillAppBar(
         title: AppLocalizations.of(context).customGoalsCustomGoals,
       ),
@@ -404,9 +405,9 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         border: Border(
-          bottom: BorderSide(color: AppColors.cardBorder),
+          bottom: BorderSide(color: ThemeColors.of(context).cardBorder),
         ),
       ),
       child: Column(
@@ -417,12 +418,12 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
             controller: _goalController,
             focusNode: _focusNode,
             enabled: !_isCreating,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: ThemeColors.of(context).textPrimary),
             decoration: InputDecoration(
               hintText: AppLocalizations.of(context).customGoalsEGImproveBox,
               hintStyle: const TextStyle(color: AppColors.textMuted),
               filled: true,
-              fillColor: AppColors.glassSurface,
+              fillColor: ThemeColors.of(context).glassSurface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -470,9 +471,9 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.glassSurface,
+                          color: ThemeColors.of(context).glassSurface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppColors.cardBorder),
+                          border: Border.all(color: ThemeColors.of(context).cardBorder),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -485,8 +486,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                             const SizedBox(width: 4),
                             Text(
                               suggestion,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: ThemeColors.of(context).textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -534,7 +535,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
             Text(
               AppLocalizations.of(context).customGoalsNoCustomGoalsYet,
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: ThemeColors.of(context).textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -544,7 +545,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               AppLocalizations.of(context).customGoalsAddSpecificSkillsOr,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 fontSize: 14,
               ),
             ),
@@ -567,7 +568,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           const SizedBox(height: 16),
           Text(
             _error ?? AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: ThemeColors.of(context).textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -624,7 +625,7 @@ class _GoalCard extends StatelessWidget {
         return AppColors.red;  // accent-allowlist: goal-type badge legend colour -- strength
       case 'flexibility':
       case 'mobility':
-        return AppColors.teal;
+        return AppColors.teal;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
       default:
         return AppColors.cyan;  // accent-allowlist: goal-type badge legend colour -- default
     }
@@ -637,9 +638,9 @@ class _GoalCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,8 +704,8 @@ class _GoalCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               goal.goalText,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: ThemeColors.of(context).textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -726,7 +727,7 @@ class _GoalCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.glassSurface,
+                      color: ThemeColors.of(context).glassSurface,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -759,8 +760,8 @@ class _GoalCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       goal.trainingNotes!,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: ThemeColors.of(context).textSecondary,
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                       ),

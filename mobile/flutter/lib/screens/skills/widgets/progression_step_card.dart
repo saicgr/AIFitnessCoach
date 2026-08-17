@@ -29,7 +29,7 @@ class ProgressionStepCard extends StatelessWidget {
     final tc = ThemeColors.of(context);
     final green = tc.success;
 
-    final borderColor = isCurrent ? tc.accent : AppColors.cardBorder;
+    final borderColor = isCurrent ? tc.accent : ThemeColors.of(context).cardBorder;
 
     return GestureDetector(
       onTap: isUnlocked ? onTap : null,
@@ -111,7 +111,7 @@ class ProgressionStepCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: tc.surface,
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: ThemeColors.of(context).cardBorder),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Icon(
@@ -249,7 +249,7 @@ class _DifficultyBadge extends StatelessWidget {
 
   Color _getDifficultyColor(int level) {
     if (level <= 2) return AppColors.green;  // accent-allowlist: difficulty-tier ramp -- levels 1-2
-    if (level <= 4) return AppColors.teal;
+    if (level <= 4) return AppColors.teal;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     if (level <= 6) return AppColors.orange;  // accent-allowlist: difficulty-tier ramp -- levels 5-6
     if (level <= 8) return AppColors.coral;  // accent-allowlist: difficulty-tier ramp -- levels 7-8
     return AppColors.purple;  // accent-allowlist: difficulty-tier ramp -- levels 9+

@@ -18,6 +18,7 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/health_goals_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Plausible resting-HR bounds — anything outside reads as "no data" rather
 /// than a real value, so a glitchy 0 never renders as "Low" (edge case N).
@@ -66,9 +67,9 @@ class HealthChecksSection extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.elevated,
+              color: ThemeColors.of(context).elevated,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Row(
               children: [
@@ -91,10 +92,10 @@ class HealthChecksSection extends ConsumerWidget {
                     children: [
                       Text(
                         l10n.metricsDashboardRestingHeartRate,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -102,9 +103,9 @@ class HealthChecksSection extends ConsumerWidget {
                         status == HrStatus.noData
                             ? l10n.metricsDashboardConnectWearable
                             : '$rhr bpm',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: ThemeColors.of(context).textSecondary,
                         ),
                       ),
                     ],
@@ -192,10 +193,10 @@ class HealthChecksSection extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   l10n.metricsDashboardRestingHeartRate,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: ThemeColors.of(context).textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -210,14 +211,14 @@ class HealthChecksSection extends ConsumerWidget {
             const SizedBox(height: 14),
             Text(
               l10n.metricsDashboardHrRangeExplainer(low, high),
-              style: const TextStyle(
-                  fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(
+                  fontSize: 13, color: ThemeColors.of(context).textSecondary, height: 1.4),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cardBorder.withValues(alpha: 0.3),
+                color: ThemeColors.of(context).cardBorder.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -245,7 +246,7 @@ class HealthChecksSection extends ConsumerWidget {
               label: Text(l10n.metricsDashboardCustomizeThresholds),
               style: OutlinedButton.styleFrom(
                 foregroundColor: context.accentColor,
-                side: const BorderSide(color: AppColors.cardBorder),
+                side: BorderSide(color: ThemeColors.of(context).cardBorder),
                 minimumSize: const Size(double.infinity, 46),
               ),
             ),
@@ -360,10 +361,10 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
         children: [
           Text(
             l10n.metricsDashboardCustomizeThresholds,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary),
+                color: ThemeColors.of(context).textPrimary),
           ),
           const SizedBox(height: 16),
           _stepper(l10n.metricsDashboardHrLow, _low, _kHrFloor, 80,
@@ -404,8 +405,8 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
       children: [
         Expanded(
           child: Text('$label (bpm)',
-              style: const TextStyle(
-                  fontSize: 14, color: AppColors.textPrimary)),
+              style: TextStyle(
+                  fontSize: 14, color: ThemeColors.of(context).textPrimary)),
         ),
         IconButton(
           onPressed: value > min ? () => onChanged(value - 1) : null,
@@ -416,10 +417,10 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
           width: 44,
           child: Text('$value',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary)),
+                  color: ThemeColors.of(context).textPrimary)),
         ),
         IconButton(
           onPressed: value < max ? () => onChanged(value + 1) : null,

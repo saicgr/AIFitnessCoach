@@ -508,7 +508,7 @@ class _RecoveryHero extends ConsumerWidget {
         : (score >= 80
             ? AppColors.success // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
             : score >= 60
-                ? AppColors.teal
+                ? AppColors.teal  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
                 : score >= 40
                     ? AppColors.warning // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
                     : AppColors.error); // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
@@ -613,7 +613,7 @@ class _TrainingLoadTile extends ConsumerWidget {
           stateColor = AppColors.warning; // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           break;
         case 'detraining':
-          stateColor = AppColors.teal;
+          stateColor = ThemeColors.of(context).teal;
           break;
         default:
           stateColor = AppColors.success; // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention

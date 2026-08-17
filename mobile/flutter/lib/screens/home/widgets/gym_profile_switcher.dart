@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
@@ -476,250 +475,276 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
         ? Colors.black
         : Colors.white;
 
+    // Sized by its CONTENT, not by a hard-coded screen fraction.
+    //
+    // This sheet used to be a `DraggableScrollableSheet(initialChildSize: 0.55)`
+    // nested inside the GlassSheet. Two bugs came out of that:
+    //   1. Double fractional sizing — GlassSheet already caps its own height at
+    //      `maxHeightFraction` (0.9), so the DSS's 0.55 resolved against 90% of
+    //      the screen, not the screen: 0.55 × 0.9 × 844 = 418pt on an iPhone 14
+    //      Pro.
+    //   2. The chrome above the list (handle + header + Travel Mode + Find a
+    //      gym) plus the docked add-row measured ~376pt of that 418 — so the
+    //      profile list, the entire POINT of the sheet, got a 23pt viewport and
+    //      the first gym card was sliced in half, with a dead glass band under
+    //      the add button where the sheet's own 0.55 box ended.
+    //
+    // A `Column(mainAxisSize.min)` + a `Flexible` shrink-wrapping list lets the
+    // sheet grow to exactly what it holds, clamped by GlassSheet's max height,
+    // so the list always gets whatever is left and never collapses.
+    //
+    // `reserveBottomInset: false` because the add-row below adds the home
+    // indicator inset itself — GlassSheet adding it too painted ~34pt of empty
+    // glass under the button.
     return GlassSheet(
       showHandle: false,
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (context, scrollController) => Stack(
-              clipBehavior: Clip.none,
+      maxHeightFraction: 0.88,
+      reserveBottomInset: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar - drag indicator for the sheet
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.textMuted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 8, 12),
+            child: Row(
               children: [
-                Column(
-                  children: [
-                    // Handle bar - drag indicator for the sheet
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.only(top: 12, bottom: 8),
-                        child: Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: colors.textMuted.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: appAccentColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.fitness_center_rounded,
+                    color: appAccentColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context).gymProfileSwitcherSwitchGym,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-
-                    // Header
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 12, 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: appAccentColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.fitness_center_rounded,
-                              color: appAccentColor,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context).gymProfileSwitcherSwitchGym,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  AppLocalizations.of(context).gymProfileSwitcherDragToReorderProfiles,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: colors.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Open the full Manage Gym Profiles sheet — same
-                          // entry point used by Settings → Preferences. Surfaced
-                          // here so the user can jump from the quick switcher
-                          // to advanced options (reorder, days, split, location)
-                          // without leaving Home.
-                          IconButton(
-                            tooltip: AppLocalizations.of(context).gymProfileSwitcherManageProfiles,
-                            onPressed: () {
-                              HapticService.light();
-                              widget.onManageProfiles();
-                            },
-                            icon: Icon(
-                              Icons.settings_rounded,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: Icon(
-                              Icons.close_rounded,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Feature 3B — one-tap Travel Mode at the top of the picker.
-                    // Self-contained tile: activates the bodyweight Travel/Hotel
-                    // profile, then pops the picker on success.
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                      child: TravelModeTile(
-                        onActivated: () {
-                          // Tile already activated + invalidated the workout
-                          // providers; just close the picker. The parent
-                          // switcher reflects the new active gym reactively.
-                          if (Navigator.canPop(context)) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                      ),
-                    ),
-
-                    // Feature 3B — "Find a gym near me" entry → community catalog.
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () {
-                            HapticService.light();
-                            Navigator.of(context).pop();
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              context.push('/find-gyms');
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: colors.glassSurface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: colors.cardBorder),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.travel_explore_rounded,
-                                    color: colors.textSecondary, size: 22),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Text(
-                                    'Find a gym near me',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                Icon(Icons.chevron_right_rounded,
-                                    color: colors.textMuted, size: 20),
-                              ],
-                            ),
-                          ),
+                      Text(
+                        AppLocalizations.of(context)
+                            .gymProfileSwitcherDragToReorderProfiles,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.textMuted,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-
-                    // Reorderable profile list
-                    Expanded(
-                      child: ReorderableListView.builder(
-                        scrollController: scrollController,
-                        // Small bottom gap only — the add button is now docked
-                        // in its own strip below the list (was 100 to clear the
-                        // floating FAB that overlapped the last card).
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        buildDefaultDragHandles: false,
-                        itemCount: _profiles.length,
-                        proxyDecorator: (child, index, animation) {
-                          return AnimatedBuilder(
-                            animation: animation,
-                            builder: (context, child) {
-                              final elevationValue =
-                                  Curves.easeInOut.transform(animation.value) *
-                                  8;
-                              return Material(
-                                elevation: elevationValue,
-                                color: Colors.transparent,
-                                shadowColor: Colors.black26,
-                                borderRadius: BorderRadius.circular(16),
-                                child: child,
-                              );
-                            },
-                            child: child,
-                          );
-                        },
-                        onReorder: _onReorder,
-                        itemBuilder: (context, index) {
-                          final profile = _profiles[index];
-                          return _buildProfileTile(
-                            context,
-                            profile,
-                            colors,
-                            index,
-                          );
-                        },
-                      ),
-                    ),
-                    // Docked add button — its own strip beneath the list so the
-                    // "+" can never float over a gym card (it used to overlap
-                    // the active profile's content + clip its "Active" badge).
-                    Padding(
-                      padding: EdgeInsets.only(
-                        right: 20,
-                        top: 4,
-                        bottom: 12 + MediaQuery.of(context).padding.bottom,
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticService.light();
-                            widget.onAddProfile();
-                          },
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: appAccentColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: appAccentColor.withValues(alpha: 0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.add_rounded,
-                              color: accentContrastColor,
-                              size: 28,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                // Open the full Manage Gym Profiles sheet — same
+                // entry point used by Settings → Preferences. Surfaced
+                // here so the user can jump from the quick switcher
+                // to advanced options (reorder, days, split, location)
+                // without leaving Home.
+                IconButton(
+                  tooltip: AppLocalizations.of(context)
+                      .gymProfileSwitcherManageProfiles,
+                  onPressed: () {
+                    HapticService.light();
+                    widget.onManageProfiles();
+                  },
+                  icon: Icon(
+                    Icons.settings_rounded,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: colors.textSecondary,
+                  ),
                 ),
               ],
             ),
+          ),
+
+          // Feature 3B — one-tap Travel Mode at the top of the picker.
+          // Self-contained tile: activates the bodyweight Travel/Hotel
+          // profile, then pops the picker on success.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: TravelModeTile(
+              onActivated: () {
+                // Tile already activated + invalidated the workout
+                // providers; just close the picker. The parent
+                // switcher reflects the new active gym reactively.
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+
+          // Feature 3B — "Find a gym near me" entry → community catalog.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  HapticService.light();
+                  Navigator.of(context).pop();
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    context.push('/find-gyms');
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.glassSurface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: colors.cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.travel_explore_rounded,
+                          color: colors.textSecondary, size: 22),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)
+                              .gymProfileSwitcherFindAGymNearMe,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded,
+                          color: colors.textMuted, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Reorderable profile list.
+          //
+          // `shrinkWrap` + `Flexible` is what makes the sheet content-sized:
+          // with one gym the list is one card tall and the sheet is short; with
+          // eight it grows until GlassSheet's max height clamps it and the list
+          // starts scrolling. It can never be squeezed to nothing.
+          Flexible(
+            child: ReorderableListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              buildDefaultDragHandles: false,
+              itemCount: _profiles.length,
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) {
+                    final elevationValue =
+                        Curves.easeInOut.transform(animation.value) * 8;
+                    return Material(
+                      elevation: elevationValue,
+                      color: Colors.transparent,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(16),
+                      child: child,
+                    );
+                  },
+                  child: child,
+                );
+              },
+              onReorder: _onReorder,
+              itemBuilder: (context, index) {
+                final profile = _profiles[index];
+                return _buildProfileTile(context, profile, colors, index);
+              },
+            ),
+          ),
+
+          // Docked "add a gym" row. Was a 56pt circular FAB in its own 102pt
+          // strip — on a short sheet that strip was mostly empty glass and the
+          // circle read as a stray floating button. A labelled full-width
+          // button says what it does and gives the list back ~50pt.
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              12 + MediaQuery.of(context).padding.bottom,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: Material(
+                color: appAccentColor,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    HapticService.light();
+                    widget.onAddProfile();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        color: accentContrastColor,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          AppLocalizations.of(context)
+                              .gymProfileSwitcherAddGym,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: accentContrastColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -868,94 +893,24 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${profile.equipmentCount} equipment • ${profile.environmentDisplayName}',
+                          AppLocalizations.of(context)
+                              .gymProfileSwitcherEquipment(
+                            profile.equipmentCount,
+                            profile.environmentDisplayName,
+                          ),
                           style: TextStyle(
                             fontSize: 12,
                             color: colors.textSecondary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  // Duplicate button
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      _showDuplicateDialog(context, profile, colors);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.glassSurface,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.cardBorder),
-                      ),
-                      child: Icon(
-                        Icons.copy_rounded,
-                        color: colors.textSecondary,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Edit button
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      widget.onEditProfile(profile);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.glassSurface,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.cardBorder),
-                      ),
-                      child: Icon(
-                        Icons.edit_rounded,
-                        color: colors.textSecondary,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Delete button (only for non-active and not last profile)
-                  if (canDelete)
-                    GestureDetector(
-                      onTap: () async {
-                        HapticService.medium();
-                        final confirmed = await _showDeleteConfirmation(
-                          context,
-                          profile,
-                          colors,
-                        );
-                        if (confirmed) {
-                          setState(() {
-                            _profiles.removeAt(index);
-                          });
-                          widget.onDeleteProfile(profile);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive -- must stay red
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3),  // accent-allowlist: error/destructive -- must stay red
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  if (!canDelete) const SizedBox(width: 6),
                   // Active indicator
                   if (isActive) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -979,7 +934,8 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            AppLocalizations.of(context).syncedWorkoutsHistoryActive,
+                            AppLocalizations.of(context)
+                                .syncedWorkoutsHistoryActive,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -994,12 +950,103 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                       ),
                     ),
                   ],
+                  // Duplicate / edit / delete used to sit here as three 32pt
+                  // boxed icon buttons next to the "Active" badge. On a 390pt
+                  // phone that left ~80pt for the name + "N equipment •
+                  // Environment" line, so the meta text wrapped to three lines
+                  // and the row read as a collision. One overflow menu keeps
+                  // every action reachable and gives the text ~110pt back.
+                  PopupMenuButton<String>(
+                    tooltip:
+                        AppLocalizations.of(context).gymProfileSwitcherGymOptions,
+                    padding: EdgeInsets.zero,
+                    position: PopupMenuPosition.under,
+                    color: colors.elevated,
+                    icon: Icon(
+                      Icons.more_vert_rounded,
+                      color: colors.textSecondary,
+                      size: 20,
+                    ),
+                    onSelected: (value) async {
+                      switch (value) {
+                        case 'edit':
+                          HapticService.light();
+                          widget.onEditProfile(profile);
+                          break;
+                        case 'duplicate':
+                          HapticService.light();
+                          _showDuplicateDialog(context, profile, colors);
+                          break;
+                        case 'delete':
+                          HapticService.medium();
+                          final confirmed = await _showDeleteConfirmation(
+                            context,
+                            profile,
+                            colors,
+                          );
+                          if (confirmed && mounted) {
+                            setState(() {
+                              _profiles.removeAt(index);
+                            });
+                            widget.onDeleteProfile(profile);
+                          }
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: _menuRow(
+                          Icons.edit_rounded,
+                          AppLocalizations.of(context).commonEdit,
+                          colors.textPrimary,
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'duplicate',
+                        child: _menuRow(
+                          Icons.copy_rounded,
+                          AppLocalizations.of(context)
+                              .gymProfileSwitcherDuplicate,
+                          colors.textPrimary,
+                        ),
+                      ),
+                      if (canDelete)
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: _menuRow(
+                            Icons.delete_outline_rounded,
+                            AppLocalizations.of(context).commonDelete,
+                            colors.error,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// One row of the per-gym overflow menu (icon + label, tinted).
+  Widget _menuRow(IconData icon, String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 14, color: color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 

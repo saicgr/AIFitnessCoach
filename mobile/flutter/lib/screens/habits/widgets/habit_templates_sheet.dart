@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/habit.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Bottom sheet showing habit templates grouped by category
 class HabitTemplatesSheet extends StatelessWidget {
   final ScrollController? scrollController;
@@ -92,7 +93,7 @@ class HabitTemplatesSheet extends StatelessWidget {
                           Icon(
                             _getCategoryIcon(category),
                             size: 20,
-                            color: AppColors.teal,
+                            color: ThemeColors.of(context).teal,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -291,7 +292,7 @@ class HabitTemplatesSheet extends StatelessWidget {
       final hex = colorString.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (e) {
-      return AppColors.teal;
+      return AppColors.teal;  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     }
   }
 }

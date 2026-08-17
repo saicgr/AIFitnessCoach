@@ -356,9 +356,6 @@ class _HormonalHealthSettingsScreenState
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.7,
-      maxChildSize: 0.9,
-      minChildSize: 0.5,
       builder: (context) {
         return GlassSheet(
           showHandle: false,

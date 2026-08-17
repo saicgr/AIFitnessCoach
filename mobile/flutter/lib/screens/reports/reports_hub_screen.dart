@@ -20,6 +20,7 @@ import 'report_thumbnail_provider.dart';
 import 'widgets/report_share_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Reports Hub — one catalog of every shareable report in the app.
 ///
@@ -128,7 +129,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
 
   /// Single source of truth for the hub's contents. Both views iterate this.
   List<_ReportDef> _allReports() {
-    return const [
+    return [
       // Training
       _ReportDef(
         section: _Section.training,
@@ -160,7 +161,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       _ReportDef(
         section: _Section.training,
         icon: Icons.fitness_center_rounded,
-        accent: AppColors.teal,
+        accent: ThemeColors.of(context).teal,
         title: '1-Rep Maxes',
         subtitle: 'Estimated 1RMs for every main lift',
         route: '/settings/my-1rms',

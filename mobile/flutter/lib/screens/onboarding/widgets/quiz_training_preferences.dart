@@ -8,6 +8,7 @@ import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Combined Training Preferences widget for quiz screens.
 /// Includes: Training Split, Workout Type, Progression Pace, Sleep Quality, and Obstacles
 /// With glassmorphic cards and learn more functionality.
@@ -65,9 +66,9 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.purple, 'desc': "I'll let AI decide"},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.onboardingAccent, 'desc': '6 days \u2022 Popular'},
     {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.green, 'desc': '3 days \u2022 Beginners'},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
-    {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days \u2022 Balanced'},
+    {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days \u2022 Balanced'},  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.pink, 'desc': '4 days \u2022 Power + Hypertrophy'},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
-    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.teal, 'desc': '5-6 days \u2022 Advanced'},
+    {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.teal, 'desc': '5-6 days \u2022 Advanced'},  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
   ];
 
   // \u2500\u2500 Split rationale + muscle map (Gravl-gap, `onboarding_split_rationale`) \u2500\u2500
@@ -129,13 +130,13 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   static final _workoutTypes = [
     {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.purple},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.onboardingAccent},
-    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.electricBlue},
+    {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.electricBlue},  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
   ];
 
   // Progression pace with colors
   static final _paces = [
     {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.green},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
-    {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},
+    {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
     {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.onboardingAccent},
   ];
 
@@ -144,7 +145,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.pink},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.onboardingAccent},
     {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.green},  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
-    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.electricBlue},
+    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.electricBlue},  // accent-allowlist: categorical identity colour in a fixed legend/ramp -- resolved outside a BuildContext, siblings are allowlisted the same way
   ];
 
   // Obstacle options
@@ -226,7 +227,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               ),
               const SizedBox(height: 12),
               _buildExplanationItem('Slow', 'Increase weight every 3-4 weeks. Best for beginners.', AppColors.success, Icons.trending_up, textPrimary, textSecondary),  // accent-allowlist: success/positive state - must stay green regardless of accent
-              _buildExplanationItem('Medium', 'Increase weight every 1-2 weeks. Standard progression.', AppColors.electricBlue, Icons.trending_up, textPrimary, textSecondary),
+              _buildExplanationItem('Medium', 'Increase weight every 1-2 weeks. Standard progression.', ThemeColors.of(context).electricBlue, Icons.trending_up, textPrimary, textSecondary),
               // Mirrors `_paces` above.
               _buildExplanationItem('Fast', 'Increase weight every session if ready. For experienced lifters.', AppColors.onboardingAccent, Icons.trending_up, textPrimary, textSecondary),
               const SizedBox(height: 20),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../design_system/adaptive_label_row.dart';
 
 /// A signature-v2 pill chip with a Barlow-Condensed uppercase label.
 ///
@@ -55,9 +56,13 @@ class ZChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: borderColor),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      // A chip's label is caller-supplied and can be long (a translated
+      // category, "Sports Performance 12"). Chips render both inside a bounded
+      // `Wrap` and inside a horizontally-scrolling list, so the label has to
+      // ellipsize in the first case without throwing in the second —
+      // see [AdaptiveLabelRow].
+      child: AdaptiveLabelRow(
+        leading: [
           if (leadingDot != null) ...[
             Container(
               width: 6,
@@ -69,11 +74,13 @@ class ZChip extends StatelessWidget {
             ),
             const SizedBox(width: 7),
           ],
-          Text(
-            label.toUpperCase(),
-            style: ZType.lbl(12, color: textColor, letterSpacing: 1.2),
-          ),
         ],
+        label: Text(
+          label.toUpperCase(),
+          style: ZType.lbl(12, color: textColor, letterSpacing: 1.2),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     );
 

@@ -13,6 +13,7 @@ import '../../core/constants/api_constants.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 part 'demo_workout_screen_ui.dart';
 
 
@@ -528,7 +529,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [context.accentColor, AppColors.teal],
+                                colors: [context.accentColor, ThemeColors.of(context).teal],
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -548,7 +549,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [context.accentColor, AppColors.teal],
+                                colors: [context.accentColor, ThemeColors.of(context).teal],
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -571,7 +572,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                         height: 50,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [context.accentColor, AppColors.teal],
+                            colors: [context.accentColor, ThemeColors.of(context).teal],
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),

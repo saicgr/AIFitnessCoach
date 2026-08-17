@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/habit.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Bottom sheet for creating or editing a habit
 class CreateHabitSheet extends StatefulWidget {
   final HabitWithStatus? existingHabit;
@@ -178,7 +179,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
                 onSelected: (selected) {
                   if (selected) setState(() => _category = category);
                 },
-                selectedColor: AppColors.teal.withValues(alpha: 0.2),
+                selectedColor: ThemeColors.of(context).teal.withValues(alpha: 0.2),
               );
             }).toList(),
           ),
@@ -356,7 +357,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       final hex = colorString.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (e) {
-      return AppColors.teal;
+      return ThemeColors.of(context).teal;
     }
   }
 }

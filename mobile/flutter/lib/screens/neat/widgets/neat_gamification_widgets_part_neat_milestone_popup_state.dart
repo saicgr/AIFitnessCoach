@@ -362,7 +362,7 @@ class CompactNeatStatsCard extends StatelessWidget {
                 value: '$activeHours',
                 subValue: l10n.neatGamificationWidgetsTargetActiveHours(targetActiveHours),
                 progress: activeProgress,
-                progressColor: AppColors.teal,
+                progressColor: ThemeColors.of(context).teal,
               ),
             ),
             Container(

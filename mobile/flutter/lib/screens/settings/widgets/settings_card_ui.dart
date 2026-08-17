@@ -10,9 +10,6 @@ extension _SettingsCardExt on SettingsCard {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.9,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
@@ -210,9 +207,6 @@ extension _SettingsCardExt on SettingsCard {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.75,
         minChildSize: 0.5,

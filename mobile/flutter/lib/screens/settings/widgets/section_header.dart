@@ -107,9 +107,6 @@ class SectionHeader extends StatelessWidget {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      initialChildSize: 0.5,
-      minChildSize: 0.3,
-      maxChildSize: 0.85,
       builder: (context) => GlassSheet(
         showHandle: false,
         child: DraggableScrollableSheet(
