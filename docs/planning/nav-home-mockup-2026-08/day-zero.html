@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Home, Populated From Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens — verbatim from metric-tiles.html ============ */
+:root{
+  --bg:#0A0A0B; --surface:#151518; --surface2:#151518; --elev:#1D1D21; --raised:#1D1D21;
+  --border:rgba(255,255,255,.06); --hair:rgba(255,255,255,.05); --hairS:rgba(255,255,255,.09);
+  --t1:#FAFAFA; --t2:#A1A1AA; --t3:#84848D;
+  --accent:#F97316; --accent-text:#F97316; --accent-c:#1C0E05;
+  --accent-tint:rgba(249,115,22,.14);
+  --anno:#3B82F6; --anno-c:#FFFFFF; --co-shadow:rgba(0,0,0,.4);
+  --rose:#FB7185; --rose-border:rgba(251,113,133,.32); --rose-tint:rgba(251,113,133,.12);
+  --page-shadow:0 30px 80px rgba(0,0,0,.55);
+  --card-shadow:none;
+  --float-shadow:0 2px 6px rgba(0,0,0,.30), 0 16px 40px -8px rgba(0,0,0,.45);
+  --f-display:'Anton','Arial Narrow',Impact,sans-serif;
+  --f-cond:'Barlow Condensed','Arial Narrow','Avenir Next Condensed',sans-serif;
+  --f-body:'Archivo',-apple-system,'Helvetica Neue',Arial,sans-serif;
+  --f-ser:'Fraunces',Georgia,serif;
+  --f-mono:'Space Mono',ui-monospace,Menlo,'Courier New',monospace;
+  --ok:#34D399; --ok-tint:rgba(52,211,153,.13); --ok-border:rgba(52,211,153,.34);
+  --warn:#FBBF24; --warn-tint:rgba(251,191,36,.13); --warn-border:rgba(251,191,36,.34);
+  --v-sup:#7EC8A2; --v-str:#E0A45E;
+}
+html[data-theme="light"]{
+  --bg:#F5F5F7; --surface:#FFFFFF; --surface2:#FFFFFF; --elev:#EFEFF2; --raised:#FFFFFF;
+  --border:rgba(24,24,27,.07); --hair:rgba(24,24,27,.06); --hairS:rgba(24,24,27,.12);
+  --t1:#18181B; --t2:#52525B; --t3:#71717A;
+  --accent:#EA580C; --accent-text:#C2410C; --accent-c:#1C0E05;
+  --accent-tint:rgba(234,88,12,.10);
+  --anno:#2563EB; --anno-c:#FFFFFF; --co-shadow:rgba(17,24,39,.18);
+  --rose:#E11D48; --rose-border:rgba(225,29,72,.28); --rose-tint:rgba(225,29,72,.07);
+  --page-shadow:0 24px 60px rgba(24,24,27,.16);
+  --card-shadow:0 1px 2px rgba(17,24,39,.04), 0 12px 32px -16px rgba(17,24,39,.10);
+  --float-shadow:0 1px 3px rgba(17,24,39,.08), 0 12px 32px -8px rgba(17,24,39,.16);
+  --ok:#059669; --ok-tint:rgba(5,150,105,.09); --ok-border:rgba(5,150,105,.30);
+  --warn:#B45309; --warn-tint:rgba(180,83,9,.09); --warn-border:rgba(180,83,9,.30);
+  --v-sup:#047857; --v-str:#B45309;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--t1);font-family:var(--f-body);overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;background:none;border:0;color:inherit}
+svg{display:block}
+.k{font-family:var(--f-cond);font-weight:700;text-transform:uppercase;letter-spacing:2px}
+html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:130px}
+
+/* ============ control bar ============ */
+.ctrl{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border)}
+.ctrl-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 24px;max-width:1500px;margin:0 auto}
+.ctrl-title{margin-right:auto}
+.ctrl-title h1{font-family:var(--f-display);font-size:20px;letter-spacing:.5px;line-height:.98;text-transform:uppercase}
+.ctrl-title .k{font-size:10px;letter-spacing:2.5px;color:var(--t3);display:block;margin-top:3px;font-weight:600}
+.seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;padding:9px 14px;color:var(--t3)}
+.seg button + button{border-left:1px solid var(--border)}
+.seg button.on{background:var(--accent);color:var(--accent-c)}
+.jump{display:flex;gap:8px;flex-wrap:wrap;padding:0 24px 12px;max-width:1500px;margin:0 auto}
+.jump a{font-family:var(--f-cond);font-weight:700;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t3);text-decoration:none;border:1px solid var(--border);border-radius:99px;padding:4px 11px;background:var(--surface)}
+.jump a:hover{color:var(--accent-text);border-color:var(--accent-text)}
+
+/* ============ stage / columns ============ */
+.stage{display:flex;gap:40px;justify-content:center;align-items:flex-start;flex-wrap:wrap;padding:30px 24px 20px;max-width:1500px;margin:0 auto}
+.col{display:flex;flex-direction:column;align-items:center;width:400px;max-width:100%}
+.col-head{width:390px;max-width:100%;margin-bottom:14px;min-height:96px}
+.col-head .big{font-family:var(--f-display);font-size:24px;letter-spacing:.5px;line-height:.98;text-transform:uppercase}
+.col-head .big em{font-style:normal;color:var(--accent)}
+.col-head .big.bad em{color:var(--rose)}
+.col-head .sub{font-size:12.5px;color:var(--t3);margin-top:5px;line-height:1.45}
+
+/* ============ phone frame — verbatim ============ */
+.phone{width:390px;max-width:100%;height:844px;border-radius:54px;background:#101012;padding:9px;box-shadow:var(--page-shadow),inset 0 0 0 2px #2c2c30;position:relative;flex:none}
+html[data-theme="light"] .phone{background:#1c1c1f;box-shadow:var(--page-shadow),inset 0 0 0 2px #3a3a3e}
+.screen{position:relative;width:100%;height:100%;border-radius:45px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:26px;border-radius:14px;background:#000;z-index:20}
+html[data-theme="light"] .notch{background:#18181B}
+.statusbar{flex:none;height:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 4px;position:relative;z-index:10}
+.sb-time{font-family:var(--f-body);font-weight:600;font-size:14px;letter-spacing:.2px}
+.sb-icons{display:flex;align-items:center;gap:6px;color:var(--t1)}
+.content{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 16px 160px;scrollbar-width:none}
+.content::-webkit-scrollbar{display:none;width:0}
+.navfade{position:absolute;left:0;right:0;bottom:0;height:138px;background:linear-gradient(to top,var(--bg) 46%,transparent);pointer-events:none;z-index:5}
+.sec{position:relative}
+.co{position:absolute;z-index:8;width:20px;height:20px;border-radius:50%;background:var(--anno);color:var(--anno-c);font-family:var(--f-cond);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px var(--bg),0 2px 8px var(--co-shadow);left:-6px;top:-6px}
+.co.bad{background:var(--rose)}
+.co.co-r{left:auto;right:-4px}
+.co.co-h{left:auto;right:36px;top:-1px}
+
+/* ============ in-phone header ============ */
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0 14px}
+.hdr .greet{font-family:var(--f-body);font-weight:600;font-size:20px;letter-spacing:-.2px}
+.hdr .date{font-family:var(--f-cond);font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-top:4px}
+.hdr-icons{display:flex;align-items:center;gap:8px;padding-top:2px}
+.icbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--t2);background:var(--surface2)}
+
+/* ============ METRIC TILES ============ */
+.tilehead{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+.tilehead .k{font-size:10.5px;color:var(--t3)}
+.tilehead .icbtn{width:26px;height:26px}
+.tiles{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.tile{position:relative;grid-column:span 6;border:1px solid var(--border);border-radius:14px;background:var(--surface2);box-shadow:var(--card-shadow)}
+.tile.lg{height:150px}
+.tile.md{grid-column:span 3;height:132px}
+.tile.sm{grid-column:span 2;height:100px}
+.tile .chart{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:14px}
+.tile .chart svg{width:100%;height:100%}
+.tile .chart.low{top:auto;bottom:0;height:34%}
+.tile .veil{position:absolute;inset:0;border-radius:14px;pointer-events:none;background:linear-gradient(104deg,var(--surface2) 34%,transparent 74%)}
+.tile .tb{position:relative;z-index:2;height:100%;padding:11px 12px 9px;display:flex;flex-direction:column}
+.tile .tk{font-family:var(--f-cond);font-weight:700;font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t3)}
+.tile.lg .tk{font-size:10.5px;letter-spacing:2px;color:var(--accent-text)}
+.tile .tvv{font-family:var(--f-display);letter-spacing:.5px;line-height:1;margin-top:6px}
+.tile.lg .tvv{font-size:56px;line-height:.92;margin-top:8px}
+.tile.md .tvv{font-size:26px}
+.tile.sm .tvv{font-size:20px;margin-top:5px}
+.tile .tvv small{font-family:var(--f-cond);font-weight:700;font-size:10px;letter-spacing:1.5px;color:var(--t3);text-transform:uppercase}
+.tile.lg .tvv small{font-size:12px}
+.tile .tdev{font-family:var(--f-cond);font-weight:600;font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);margin-top:6px;line-height:1.5}
+.tile.lg .tdev{font-size:10px;letter-spacing:1.5px;margin-top:9px}
+.tile.sm .tdev{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.stdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;flex:none;background:var(--t3)}
+.stdot.sup{background:var(--v-sup)}
+.tile .arr{position:absolute;right:9px;bottom:7px;color:var(--accent-text);z-index:3}
+.void{flex:1}
+.voidmark{position:absolute;left:12px;right:34px;top:74px;bottom:30px;border:1.5px dashed var(--rose-border);border-radius:8px;display:flex;align-items:center;justify-content:center;z-index:3}
+.voidmark span{font-family:var(--f-cond);font-weight:700;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--rose)}
+
+/* ---- the capacity track (Direction 2) ---- */
+.cap{margin-top:auto;padding-top:6px}
+.captrack{display:flex;gap:5px}
+.captrack .cs{height:9px;border:1px solid var(--hairS);border-radius:3px;position:relative;overflow:hidden}
+.captrack .cs i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);display:block}
+.caplab{display:flex;gap:12px;margin-top:7px;font-family:var(--f-cond);font-weight:600;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3)}
+.caplab b{font-weight:700;color:var(--t2)}
+.caplab .lk{display:flex;align-items:center;gap:5px}
+.caplab .sw{width:7px;height:7px;border-radius:2px;border:1px solid var(--hairS)}
+.caplab .sw.on{background:var(--accent);border-color:transparent}
+
+/* ---- connect: shipped chore vs. the reveal ---- */
+.connect{border:1px solid var(--border);background:var(--surface2);border-radius:14px;padding:16px 14px;text-align:center;margin:15px 0 16px}
+.connect .ct{font-weight:600;font-size:13.5px}
+.connect .cs2{font-size:11.5px;color:var(--t3);margin-top:3px;line-height:1.35}
+.connect .cbtn{display:inline-flex;margin-top:11px;background:var(--accent);color:var(--accent-c);font-family:var(--f-cond);font-weight:700;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;border-radius:99px;padding:9px 20px}
+.reveal{text-align:left}
+.reveal .rk{font-family:var(--f-cond);font-weight:700;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-text)}
+.reveal .rp{font-family:var(--f-ser);font-size:12.5px;line-height:1.5;color:var(--t2);margin-top:6px}
+.reveal .cbtn{margin-top:12px}
+.manifest{margin-top:12px;border-top:1px solid var(--hair);padding-top:9px;font-family:var(--f-mono);font-size:9px;line-height:1.7;color:var(--t3)}
+.manifest b{color:var(--t2);font-weight:700;display:inline-block;width:46px}
+.loaded{position:absolute;left:12px;bottom:9px;z-index:4;font-family:var(--f-mono);font-size:8.5px;letter-spacing:.4px;color:var(--v-sup)}
+.firstlight{position:absolute;inset:0;border-radius:14px;border:1px solid var(--accent);pointer-events:none;z-index:4;opacity:.75}
+
+/* ============ page furniture ============ */
+.note{max-width:1500px;margin:0 auto;padding:0 24px 40px}
+.note h2{font-family:var(--f-display);font-size:26px;text-transform:uppercase;letter-spacing:.5px;margin:34px 0 6px}
+.note h2 em{font-style:normal;color:var(--accent)}
+.note .lead{font-size:14px;color:var(--t2);line-height:1.6;max-width:860px}
+.note p{font-size:13.5px;color:var(--t2);line-height:1.65;max-width:860px;margin-top:10px}
+.note code{font-family:var(--f-mono);font-size:12px;color:var(--accent-text);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+table{width:100%;max-width:1180px;border-collapse:collapse;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+th{font-family:var(--f-cond);font-weight:700;font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--t3);text-align:left;padding:11px 13px;border-bottom:1px solid var(--border);background:var(--elev)}
+td{font-size:12.5px;color:var(--t2);padding:11px 13px;border-bottom:1px solid var(--hair);vertical-align:top;line-height:1.5}
+td:first-child{color:var(--t1);font-weight:600;width:210px}
+td code{font-size:11px}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font-family:var(--f-cond);font-weight:700;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;border-radius:99px;padding:2px 8px;border:1px solid var(--border);color:var(--t3)}
+.pill.s{color:var(--v-sup);border-color:var(--ok-border)}
+.pill.m{color:var(--warn);border-color:var(--warn-border)}
+.pill.l{color:var(--rose);border-color:var(--rose-border)}
+.callouts{display:flex;gap:26px;flex-wrap:wrap;max-width:1500px;margin:0 auto;padding:0 24px 26px}
+.callouts .ci{display:flex;gap:9px;align-items:flex-start;width:340px}
+.callouts .n{width:20px;height:20px;border-radius:50%;background:var(--anno);color:var(--anno-c);font-family:var(--f-cond);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.callouts .n.bad{background:var(--rose)}
+.callouts .ct2{font-size:12.5px;color:var(--t2);line-height:1.5}
+.callouts .ct2 b{color:var(--t1)}
+.rule{height:1px;background:var(--border);max-width:1500px;margin:10px auto;}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <div class="ctrl-row">
+    <div class="ctrl-title">
+      <h1>Home — No Big Zero</h1>
+      <span class="k">Round 7 · populate from onboarding · 2026-08-16</span>
+    </div>
+    <div class="seg">
+      <button id="tDark" class="on">Dark</button>
+      <button id="tLight">Light</button>
+    </div>
+  </div>
+  <div class="jump">
+    <a href="#stage">The four states</a>
+    <a href="#fields">What onboarding gives us</a>
+    <a href="#rule">The score-tile rule</a>
+    <a href="#parked">Parked</a>
+    <a href="#shipped">What shipped</a>
+    <a href="#spec">Build spec</a>
+  </div>
+</div>
+
+<section id="stage" class="stage">
+
+  <!-- ══════════ A · SHIPPED ══════════ -->
+  <div class="col">
+    <div class="col-head">
+      <div class="big bad">A · <em>What ships today</em></div>
+      <div class="sub">Aug 16, 9:46 AM. Health skipped, nothing logged yet. One tile, one void, one chore — and a 56pt zero.</div>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span class="sb-time">9:46</span><span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="1.6" fill="currentColor"/><path d="M22 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span></div>
+      <div class="content">
+        <div class="hdr">
+          <div><div class="greet">Morning, Gigi</div><div class="date">Sun · Aug 16</div></div>
+          <div class="hdr-icons">
+            <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H1a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 2.6 7a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H7a1.7 1.7 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V7a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" transform="translate(1.2 1.2) scale(.9)"/></svg></span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <span class="co bad co-h">1</span>
+          <div class="tilehead"><span class="k">My Metrics</span>
+            <span class="icbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span>
+          </div>
+          <div class="tiles">
+            <div class="tile lg">
+              <span class="co bad co-r">2</span>
+              <div class="tb">
+                <div class="tk">Today Score</div>
+                <div class="tvv">0</div>
+                <div class="void"></div>
+                <div class="tdev"><span class="stdot"></span>From workouts &amp; logs</div>
+              </div>
+              <div class="voidmark"><span>reserved chart height · series.length &lt; 2</span></div>
+              <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+            </div>
+          </div>
+          <div class="connect" style="position:relative">
+            <span class="co bad co-r">3</span>
+            <div class="ct">Connect Apple Health</div>
+            <div class="cs2">Steps, sleep and readiness fill in automatically — nothing is estimated for you.</div>
+            <span class="cbtn">Connect Health</span>
+          </div>
+        </div>
+      </div>
+      <div class="navfade"></div>
+    </div></div>
+  </div>
+
+  <!-- ══════════ B · DAY 0, POPULATED ══════════ -->
+  <div class="col">
+    <div class="col-head">
+      <div class="big">B · <em>Day 0, populated</em></div>
+      <div class="sub">Same account, same minute. No score tile — it cannot read anything but 0 yet, so it does not mount. Every number here was typed during onboarding or computed from it.</div>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span class="sb-time">9:46</span><span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="1.6" fill="currentColor"/><path d="M22 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span></div>
+      <div class="content">
+        <div class="hdr">
+          <div><div class="greet">Morning, Gigi</div><div class="date">Sun · Aug 16</div></div>
+          <div class="hdr-icons">
+            <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <span class="icbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="9" opacity=".45"/></svg></span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <span class="co co-h">4</span>
+          <div class="tilehead"><span class="k">Today</span>
+            <span class="icbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span>
+          </div>
+          <div class="tiles">
+
+            <div class="tile lg">
+              <span class="co co-r">5</span>
+              <div class="tb">
+                <div class="tk">Next Session</div>
+                <div class="tvv">45<small> min</small></div>
+                <div class="tdev"><span class="stdot sup"></span>Upper Body A · 6 exercises · today</div>
+                <div style="margin-top:auto;font-family:var(--f-mono);font-size:9px;color:var(--t3);letter-spacing:.3px">PLAN GENERATED 9:41 AM</div>
+              </div>
+              <span class="arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+            </div>
+
+            <div class="tile md">
+              <span class="co">6</span>
+              <div class="tb">
+                <div class="tk">To Goal</div>
+                <div class="tvv">18.4<small> lb</small></div>
+                <div class="tdev"><span class="stdot"></span>212.4 now → 194 target</div>
+              </div>
+            </div>
+
+            <div class="tile md">
+              <div class="tb">
+                <div class="tk">This Week</div>
+                <div class="tvv">4<small> sessions</small></div>
+                <div class="tdev"><span class="stdot"></span>Mon · Wed · Fri · Sat — 180 min</div>
+              </div>
+            </div>
+
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Daily Fuel</div><div class="tvv">2,150<small> kcal</small></div><div class="tdev">160 g protein</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Water</div><div class="tvv">0<small>/85 oz</small></div><div class="tdev">Your daily target</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Weight</div><div class="tvv">212.4<small> lb</small></div><div class="tdev">From onboarding</div></div>
+            </div>
+          </div>
+
+          <div class="connect" style="position:relative">
+            <span class="co co-r">7</span>
+            <div class="ct">Connect Apple Health</div>
+            <div class="cs2">Steps, sleep and readiness fill in automatically — nothing is estimated for you.</div>
+            <span class="cbtn">Connect Health</span>
+          </div>
+        </div>
+      </div>
+      <div class="navfade"></div>
+    </div></div>
+  </div>
+
+  <!-- ══════════ C · THE FIRST POINT ══════════ -->
+  <div class="col">
+    <div class="col-head">
+      <div class="big">C · <em>9:52 AM — the first point</em></div>
+      <div class="sub">Breakfast logged. The score can now read something other than zero, so it mounts — into the slot it has always held, first and large.</div>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span class="sb-time">9:52</span><span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="1.6" fill="currentColor"/><path d="M22 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span></div>
+      <div class="content">
+        <div class="hdr">
+          <div><div class="greet">Morning, Gigi</div><div class="date">Sun · Aug 16</div></div>
+          <div class="hdr-icons">
+            <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <span class="icbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="9" opacity=".45"/></svg></span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="tilehead"><span class="k">Today</span>
+            <span class="icbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span>
+          </div>
+          <div class="tiles">
+
+            <div class="tile lg">
+              <span class="co co-r">8</span>
+              <div class="firstlight"></div>
+              <div class="tb">
+                <div class="tk">Today Score</div>
+                <div class="tvv">8<small style="margin-left:8px">of 100</small></div>
+                <div class="cap">
+                  <div class="captrack">
+                    <div class="cs" style="flex:57"><i style="width:0"></i></div>
+                    <div class="cs" style="flex:43"><i style="width:19%"></i></div>
+                  </div>
+                  <div class="caplab">
+                    <span class="lk"><span class="sw"></span>Train <b>57</b></span>
+                    <span class="lk"><span class="sw on"></span>Nourish <b>43</b></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tile md">
+              <span class="co">9</span>
+              <div class="tb">
+                <div class="tk">Next Session</div>
+                <div class="tvv">45<small> min</small></div>
+                <div class="tdev"><span class="stdot sup"></span>Upper Body A · 6 exercises · today</div>
+              </div>
+            </div>
+            <div class="tile md">
+              <div class="tb">
+                <div class="tk">This Week</div>
+                <div class="tvv">4<small> sessions</small></div>
+                <div class="tdev"><span class="stdot"></span>Mon · Wed · Fri · Sat — 180 min</div>
+              </div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Daily Fuel</div><div class="tvv">2,150<small> kcal</small></div><div class="tdev">160 g protein</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">To Goal</div><div class="tvv">18.4<small> lb</small></div><div class="tdev">212.4 → 194</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Week</div><div class="tvv">1<small> of 8</small></div><div class="tdev">Build a base</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navfade"></div>
+    </div></div>
+  </div>
+
+  <!-- ══════════ D · DAY 30 ══════════ -->
+  <div class="col">
+    <div class="col-head">
+      <div class="big">D · <em>Day 30, 9:46 AM</em></div>
+      <div class="sub">Still no Health connected — the account that produced the complaint, one month on. Same six tiles, no day-0 mode to retire, bigger numerators.</div>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span class="sb-time">9:46</span><span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="1.6" fill="currentColor"/><path d="M22 4v4a2.2 2.2 0 0 0 0-4z" fill="currentColor" opacity=".5"/></svg>
+      </span></div>
+      <div class="content">
+        <div class="hdr">
+          <div><div class="greet">Morning, Gigi</div><div class="date">Tue · Sep 15</div></div>
+          <div class="hdr-icons">
+            <span class="icbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <span class="icbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="9" opacity=".45"/></svg></span>
+          </div>
+        </div>
+
+        <div class="sec">
+          <span class="co co-h">10</span>
+          <div class="tilehead"><span class="k">Today</span>
+            <span class="icbtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span>
+          </div>
+          <div class="tiles">
+            <div class="tile lg">
+              <div class="tb">
+                <div class="tk">Today Score</div>
+                <div class="tvv">22<small style="margin-left:8px">of 100</small></div>
+                <div class="cap">
+                  <div class="captrack">
+                    <div class="cs" style="flex:57"><i style="width:0"></i></div>
+                    <div class="cs" style="flex:43"><i style="width:51%"></i></div>
+                  </div>
+                  <div class="caplab">
+                    <span class="lk"><span class="sw"></span>Train <b>57</b></span>
+                    <span class="lk"><span class="sw on"></span>Nourish <b>43</b></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tile md">
+              <div class="tb">
+                <div class="tk">Next Session</div>
+                <div class="tvv">52<small> min</small></div>
+                <div class="tdev"><span class="stdot sup"></span>Lower Body B · 7 exercises · today</div>
+              </div>
+            </div>
+            <div class="tile md">
+              <div class="tb">
+                <div class="tk">This Week</div>
+                <div class="tvv">2/4<small> sessions</small></div>
+                <div class="tdev"><span class="stdot sup"></span>88 min done · Fri next</div>
+              </div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Daily Fuel</div><div class="tvv">2,150<small> kcal</small></div><div class="tdev">160 g protein</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">To Goal</div><div class="tvv">14.1<small> lb</small></div><div class="tdev">1.2 lb under</div></div>
+            </div>
+            <div class="tile sm">
+              <div class="tb"><div class="tk">Week</div><div class="tvv">5<small> of 8</small></div><div class="tdev">Weights up</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navfade"></div>
+    </div></div>
+  </div>
+
+</section>
+
+<div class="callouts">
+  <div class="ci"><span class="n bad">1</span><span class="ct2"><b>Two tiles were filtered out, silently.</b> Water and Weight are in <code>kDefaultMetricTiles</code> and need no wearable — but <code>mountedMetricTilesProvider</code> gates every tile on a capability set that only <code>probe()</code> ever fills, and <code>probe()</code> has one call site: onboarding. Every pre-upgrade account is frozen at <code>capable: {}</code>.</span></div>
+  <div class="ci"><span class="n bad">2</span><span class="ct2"><b>The tallest tile reserves a chart it cannot draw.</b> <code>hasChart = hasData &amp;&amp; series.length >= 2</code>. Day 0 has one snapshot, so the 56pt zero sits above a void.</span></div>
+  <div class="ci"><span class="n bad">3</span><span class="ct2"><b>A chore card compensating for an empty section.</b> It describes work to do, directly beneath a section with nothing in it.</span></div>
+  <div class="ci"><span class="n">4</span><span class="ct2"><b>Header says <code>TODAY</code>, unconditionally.</b> True at every account age. Not a conditional header — conditional headers are the same shape-shifting the capability rule exists to prevent, applied to typography.</span></div>
+  <div class="ci"><span class="n">5</span><span class="ct2"><b>No score tile, and no zero.</b> The score is definitionally 0 before any input exists — the exact "no source yet" case <code>490a7aba</code> says should not mount. The L slot holds the session the app generated during onboarding, with the generation timestamp as its telemetry line.</span></div>
+  <div class="ci"><span class="n">6</span><span class="ct2"><b>Every number came from onboarding.</b> Goal delta from <code>target_weight_kg</code> − <code>weight_kg</code>; fuel from <code>daily_calorie_target</code>; maintenance from <code>calculated_tdee</code>; week from the program assignment. Each tile seeds only if its backing field is non-null.</span></div>
+  <div class="ci"><span class="n">7</span><span class="ct2"><b>The connect card is unchanged.</b> Out of scope for this build — it now sits under a full grid instead of compensating for an empty one. The rewrite is parked below, not deleted.</span></div>
+  <div class="ci"><span class="n">8</span><span class="ct2"><b>The score arrives in its own slot.</b> It is first and large in the stored arrangement, so un-filtering restores it exactly there — the read-time filtering doctrine already in the code, not a new layout rule. One border sweep marks the arrival.</span></div>
+  <div class="ci"><span class="n">9</span><span class="ct2"><b>The track, not a bare numeral.</b> Segment widths are the real renormalised <code>effectiveWeight</code>s. Health is off, so the score honestly renormalises to Train 57 / Nourish 43 and never advertises steps this account cannot earn.</span></div>
+  <div class="ci"><span class="n">10</span><span class="ct2"><b>Day 30 is the proof.</b> Same six tiles, no retirement flags, no day-0 mode to maintain. The tiles simply carry bigger numerators.</span></div>
+</div>
+
+<div class="rule"></div>
+
+<div class="note">
+
+<h2 id="fields">What onboarding <em>actually</em> gives us</h2>
+<p class="lead">Verified against <code>backend/scripts/schema_columns_snapshot.json</code> — the checked-in dump of production <code>information_schema</code>. Every field below exists today and is filled before Home first paints. Nothing here is estimated, assumed, or borrowed from a "typical user".</p>
+
+<table>
+  <tr><th>Tile</th><th>Renders</th><th>Source</th><th>Seeded when</th></tr>
+  <tr><td>Next session</td><td><code>45 MIN</code> · Upper Body A · 6 exercises</td><td>the plan generated at onboarding — <code>todayWorkoutProvider</code> ← <code>workouts</code></td><td>a workout exists for today; otherwise the next scheduled day</td></tr>
+  <tr><td>To goal</td><td><code>18.4 LB</code> · 212.4 → 194</td><td><code>users.target_weight_kg</code> − <code>users.weight_kg</code>, in <code>users.weight_unit</code></td><td><code>target_weight_kg</code> is non-null (maintenance goals have none)</td></tr>
+  <tr><td>This week</td><td><code>4 SESSIONS</code> · 180 min</td><td>count of this week's <code>workouts</code> rows — <strong>not</strong> a profile field; there is no days-per-week column on <code>users</code></td><td>the first week has been generated</td></tr>
+  <tr><td>Daily fuel</td><td><code>2,150 KCAL</code> · 160 g protein — the target, not the intake (the Nourish and Protein tiles already own consumption)</td><td><code>users.daily_calorie_target</code>, <code>daily_protein_target_g</code> / <code>nutrition_preferences.target_calories</code></td><td><code>hasConfiguredTargets</code> — never a fabricated 2000</td></tr>
+  <tr><td>Maintenance</td><td><code>2,480 /DAY</code></td><td><code>nutrition_preferences.calculated_tdee</code> — computed from their own height, weight, age, <code>activity_level</code></td><td><code>calculated_tdee</code> is non-null</td></tr>
+  <tr><td>Week</td><td><code>1 OF 8</code> · Build a base</td><td>program assignment + <code>program_variant_weeks.focus</code> (plain-language, jargon-gated)</td><td>the account is on a program, not an ad-hoc plan</td></tr>
+  <tr><td>Goal date</td><td><code>14 WEEKS</code></td><td><code>users.goal_target_date</code> / <code>nutrition_preferences.weeks_to_goal</code></td><td>a goal date was set</td></tr>
+  <tr><td>Baseline</td><td><code>22 PUSH-UPS</code> · measured today</td><td><code>users.pushup_capacity</code> / <code>squat_capacity</code> / <code>plank_capacity</code> / <code>pullup_capacity</code></td><td><code>calibration_completed</code> is true</td></tr>
+</table>
+
+<p>The last two are catalog entries rather than defaults — they ride the same rule at near-zero marginal cost and are available from the pencil. Six tiles is the default count, matching <code>kDefaultMetricTiles</code> today.</p>
+
+<h2 id="rule">The score-tile rule</h2>
+<p class="lead">The Today Score is an <em>execution</em> score — "how much of today's plan have you done". By construction it reads 0 every morning of every account's life. The 9:46 AM zero was never an onboarding bug; day 0 is just the first time you see it without yesterday's 84 in your memory.</p>
+<p>So the rule is the one the codebase already committed to, applied to the one tile that was exempted from it: <strong>a tile mounts only when its source can produce a number.</strong> Before any contributor has real progress today, the score's source cannot — so it does not mount. It takes its stored slot the moment there is a point to show, which is the existing read-time filtering behaviour, not a new mechanism.</p>
+<p>And when it does mount, it does not render a bare numeral above a void: the segmented capacity track fills the zone the undrawable sparkline was reserving, with segment widths set by the score's own renormalised weights. That also makes the afternoon tile better than today's, because you watch the bar close.</p>
+<p><strong>Rejected on the way here:</strong> leading the morning with Anton <code>100</code> and <code>PTS OPEN</code>. Arithmetically the same fact read from the other side, but a giant 100 under a kicker reading TODAY SCORE reads as a perfect day at a glance.</p>
+
+<h2 id="parked">Parked — the Health moment</h2>
+<p class="lead">Documented, not scheduled. Nothing in the build below depends on it.</p>
+<p>The current connect card describes a chore. The truth is more interesting: authorising Health grants access to <em>past</em> samples — <code>hasRecentSamples(days: 30)</code> already depends on this, which is why capability resolves instantly instead of after a waiting period. The card could sell the backfill ("Your phone already has the data — connecting reads your last 30 days back"), print a scope manifest derived from the requested-types constant, and stage the arrival: newly-capable tiles mounting ~90 ms apart, sparklines drawing from real history, each with a caption counted from actual sample days. <code>metric_capability_provider.dart</code> already promises an arriving tile is "announced rather than discovered mid-scroll" — that would build the announcement the comment owes.</p>
+
+<h2 id="spec">Build spec</h2>
+<p class="lead">Fix zero is not a design choice. Until the probe backfill lands, every existing account renders one tile and none of this is reachable.</p>
+
+<table>
+  <tr><th>Change</th><th>What</th><th>Files</th><th>Cost</th></tr>
+  <tr>
+    <td>0 · Probe backfill <span class="pill l">defect</span></td>
+    <td>Run <code>probe()</code> on launch when <code>!resolved</code>, passing the live connection state. Wire the dead <code>markCapable()</code> into the Add-metric flow. Scope <code>metric_capability_v1</code> per user like <code>homeMetricTilesStorageKey</code>. Add the regression test that drives <code>mountedMetricTilesProvider</code> through the real unresolved state.</td>
+    <td><code>metric_capability_provider.dart</code>, <code>home_metric_tiles_provider.dart</code>, <code>metric_capability_test.dart</code></td>
+    <td><span class="pill s">S</span></td>
+  </tr>
+  <tr>
+    <td>1 · Onboarding as a tile source</td>
+    <td><code>MetricTileSource.plan</code>; catalog specs for Next session, To goal, This week, Daily fuel, Maintenance, Week n of m (+ Goal date, Baseline as non-default entries); seed-time substitution — same size, same slot, once, before first render; each seeds only if its backing field is non-null.</td>
+    <td><code>home_metric_tiles_provider.dart</code>, <code>metric_capability_provider.dart</code>, <code>metric_tile_data_provider.dart</code>, small read-only providers</td>
+    <td><span class="pill m">M</span></td>
+  </tr>
+  <tr>
+    <td>2 · Score tile gating</td>
+    <td>The score tile mounts only once a contributor has real progress today; it un-filters into its stored slot with a one-time border sweep.</td>
+    <td><code>metric_capability_provider.dart</code>, <code>today_score_provider.dart</code>, <code>metric_tile_card.dart</code></td>
+    <td><span class="pill s">S</span></td>
+  </tr>
+  <tr>
+    <td>3 · Capacity track</td>
+    <td>New painter beside <code>_TileBarsPainter</code>; segments = <code>ScoreContributor.effectiveWeight</code>, fill = <code>points</code>. Drop the reserved chart height when <code>series.length &lt; 2</code>.</td>
+    <td><code>metric_tile_card.dart</code>, <code>metric_tile_data_provider.dart</code>, <code>today_score.dart</code></td>
+    <td><span class="pill m">M</span></td>
+  </tr>
+  <tr>
+    <td>4 · Header</td>
+    <td><code>MY METRICS</code> → <code>TODAY</code>, unconditionally, all locales.</td>
+    <td><code>metric_tile_grid.dart</code>, 36 ARBs</td>
+    <td><span class="pill s">S</span></td>
+  </tr>
+  <tr style="opacity:.55">
+    <td>— · Health reveal <span class="pill">parked</span></td>
+    <td>Backfill copy + scope manifest + staged arrival + first light. Not in this build.</td>
+    <td><code>metric_tile_grid.dart</code>, <code>metric_capability_provider.dart</code>, <code>health_service.dart</code></td>
+    <td><span class="pill m">M</span></td>
+  </tr>
+</table>
+
+<h2 id="shipped">What shipped</h2>
+<p class="lead">Built 2026-08-16. <code>flutter analyze</code> clean on every touched file; 4,052 tests pass, including a new day-zero widget test that fails if the score tile ever renders its zero on a fresh account again.</p>
+<p>Three things landed differently from the drawings above, all deliberate:</p>
+<p><strong>1. Water and Weight keep their slots.</strong> They are logged in-app and need no device, so they were never candidates for substitution — only the four sensor-backed slots were handed to plan tiles. Maintenance and Week are catalog entries you can add from the pencil rather than defaults. <strong>2. Daily fuel shows the target, not the intake</strong> — the Nourish and Protein tiles already render consumption, and two tiles counting the same calories is worse than one. <strong>3. When the score returns it is a seventh tile</strong>, taking its own large slot above Next session, which stays where it is. Two large tiles is heavier than the drawing; both are draggable and resizable, so it is a starting arrangement rather than a fixed one.</p>
+<p>One more rule earned its way in during the build. The score's mount gate cannot ask the history "have you ever scored" — <code>ScoreHistoryNotifier</code> keeps 90 days, so a user who scored in March and nothing since would answer no and lose a tile they had been reading. The first point is now a one-way persisted fact on the capability record, so the tile disappears exactly once in an account's life.</p>
+
+<p style="margin-top:22px;color:var(--t3);font-size:12px">Nothing in this document renders a number the user did not type, log, or have computed from their own inputs. No skeletons, no sample data, no "coming soon", and <code>_defaultOrder</code> is untouched — every change lives inside the section that already occupies this slot.</p>
+</div>
+
+<script>
+const r=document.documentElement;
+document.getElementById('tDark').onclick=()=>{r.setAttribute('data-theme','dark');tDark.classList.add('on');tLight.classList.remove('on')};
+document.getElementById('tLight').onclick=()=>{r.setAttribute('data-theme','light');tLight.classList.add('on');tDark.classList.remove('on')};
+</script>
+</body>
+</html>
