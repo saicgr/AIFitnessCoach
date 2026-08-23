@@ -868,6 +868,9 @@ class ParseCardioTextResponse(BaseModel):
     distance_km: Optional[float] = None
     intensity: Optional[str] = None
     calories_burned: Optional[int] = None
+    location: Optional[str] = None
+    avg_heart_rate: Optional[int] = None
+    max_heart_rate: Optional[int] = None
     matched: bool
 
 
@@ -889,6 +892,14 @@ _CARDIO_KEYWORDS = {
     "jump_rope": ["jump rope", "jumprope", "skipping", "skip rope"],
 }
 _INTENSITY_FACTOR = {"light": 0.8, "moderate": 1.0, "vigorous": 1.2}
+_LOCATION_KEYWORDS = {
+    "treadmill": ["treadmill"],
+    "track": ["track"],
+    "trail": ["trail"],
+    "pool": ["pool"],
+    "indoor": ["indoor", "inside", "gym"],
+    "outdoor": ["outdoor", "outside"],
+}
 
 
 def parse_cardio_text(text: str, weight_kg: Optional[float]) -> ParseCardioTextResponse:
@@ -924,6 +935,25 @@ def parse_cardio_text(text: str, weight_kg: Optional[float]) -> ParseCardioTextR
     elif any(w in t for w in [" brisk", " fast", " hard", " intense", " vigorous", " hiit", " sprint"]):
         intensity = "vigorous"
 
+    location: Optional[str] = None
+    for loc, words in _LOCATION_KEYWORDS.items():
+        if any(w in t for w in words):
+            location = loc
+            break
+
+    avg_hr: Optional[int] = None
+    max_hr: Optional[int] = None
+    max_hr_match = re.search(r"max(?:imum)?\s*(?:heart\s*rate|hr)\s*(?:of|was|is|:)?\s*(\d{2,3})\b", t)
+    if max_hr_match:
+        max_hr = int(max_hr_match.group(1))
+    avg_hr_match = re.search(r"(?:avg|average)\s*(?:heart\s*rate|hr)\s*(?:of|was|is|:)?\s*(\d{2,3})\b", t)
+    if avg_hr_match:
+        avg_hr = int(avg_hr_match.group(1))
+    elif not max_hr_match:
+        hr_match = re.search(r"heart\s*rate\s*(?:of|was|is|:)?\s*(\d{2,3})\b", t)
+        if hr_match:
+            avg_hr = int(hr_match.group(1))
+
     calories: Optional[int] = None
     if weight_kg and duration_min:
         met = _CARDIO_MET.get(cardio_type, 6.0) * _INTENSITY_FACTOR[intensity]
@@ -936,6 +966,9 @@ def parse_cardio_text(text: str, weight_kg: Optional[float]) -> ParseCardioTextR
         distance_km=distance_km,
         intensity=intensity,
         calories_burned=calories,
+        location=location,
+        avg_heart_rate=avg_hr,
+        max_heart_rate=max_hr,
         matched=matched,
     )
 

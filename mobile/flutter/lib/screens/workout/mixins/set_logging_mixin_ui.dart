@@ -99,6 +99,29 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       return;
     }
 
+    // Guard against an outlier/corrupted input (e.g. a fat-fingered "0120"
+    // typed over a "30" prefill) getting amplified into the next pattern
+    // instead of rejected. A single session-to-session jump beyond 50% over
+    // the prior working target is not a physiologically plausible strength
+    // gain — cap it to a 10% increase over that prior target rather than
+    // basing the whole pyramid/pattern on the corrupted value.
+    final priorWorkingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+      (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+      orElse: () => null,
+    );
+    final priorWorkingKg = priorWorkingTarget?.targetWeightKg;
+    if (priorWorkingKg != null && priorWorkingKg > 0) {
+      final candidateKg = _displayToKg(displayWeight);
+      if (candidateKg > priorWorkingKg * 1.5) {
+        final cappedKg = priorWorkingKg * 1.1;
+        debugPrint('⚠️ [ApplyTargets] ex=$exerciseIndex REJECTED outlier weight=$displayWeight '
+            '(≈${candidateKg.toStringAsFixed(1)}kg) vs prior target ${priorWorkingKg.toStringAsFixed(1)}kg — capping to ${cappedKg.toStringAsFixed(1)}kg');
+        displayWeight = useKg
+            ? cappedKg
+            : kgToDisplayLbs(cappedKg, exercise.equipment, exerciseName: exercise.name);
+      }
+    }
+
     final enteredWeight = effectiveIncrement > 0
         ? (displayWeight / effectiveIncrement).round() * effectiveIncrement
         : displayWeight;

@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -856,9 +857,11 @@ class _IntegrationTile {
 }
 
 List<_IntegrationTile> _integrationTiles(BuildContext context) => [
-  _IntegrationTile(
-      Icons.health_and_safety_rounded, 'Health Connect', const Color(0xFF34A853)),  // accent-allowlist: third-party brand mark -- Google Health Connect green
-  _IntegrationTile(Icons.favorite_rounded, 'Apple Health', const Color(0xFFFF375F)),  // accent-allowlist: third-party brand mark -- Apple Health red
+  if (Platform.isAndroid)
+    _IntegrationTile(
+        Icons.health_and_safety_rounded, 'Health Connect', const Color(0xFF34A853)),  // accent-allowlist: third-party brand mark -- Google Health Connect green
+  if (Platform.isIOS)
+    _IntegrationTile(Icons.favorite_rounded, 'Apple Health', const Color(0xFFFF375F)),  // accent-allowlist: third-party brand mark -- Apple Health red
   _IntegrationTile(
       Icons.directions_walk_rounded, 'Steps', context.accentColor),
   _IntegrationTile(
@@ -1124,6 +1127,19 @@ class ShareablesScene extends StatelessWidget {
           const Positioned(top: 12, right: 12, child: _BaTag('AFTER')),
           // Centre delta pill straddling the seam.
           Center(child: _deltaPill(context)),
+          // Results-vary disclaimer, directly under the quantified claim.
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 34,
+            child: Center(
+              child: Text('Results not typical',
+                  style: TextStyle(
+                      color: Color(0xB3FFFFFF),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600)),
+            ),
+          ),
           // Brand watermark.
           const Positioned(
             left: 0,

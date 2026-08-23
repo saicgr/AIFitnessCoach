@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/auth_error_utils.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/pre_auth_quiz_data.dart';
@@ -157,8 +158,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                     ? 'This email already has an account. Tap Sign In to log '
                         'in — or if you first signed up with Google or Apple, '
                         'go back and continue with that.'
-                    : "An account exists for that email but the password "
-                        "doesn't match. Tap Forgot Password to reset.";
+                    : "Email or password doesn't match our records. Tap "
+                        "Forgot Password if you need to reset.";
               });
             }
             return;
@@ -329,56 +330,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   /// Translate raw Supabase / repository auth errors into actionable copy.
   /// Without this, users see strings like "Exception: AuthApiException(...)"
   /// or "Invalid login credentials" without context — hard to act on.
-  String _humanizeAuthError(String raw) {
-    final lower = raw.toLowerCase();
-    if (lower.contains('invalid login credentials') ||
-        lower.contains('invalid email or password') ||
-        lower.contains('wrong password')) {
-      return _isSignUp
-          ? 'Could not create the account. Try a different email or password.'
-          : "Email or password doesn't match our records. Tap Forgot Password if you need to reset.";
-    }
-    if (lower.contains('email not confirmed') ||
-        lower.contains('verify your account') ||
-        lower.contains('check your email')) {
-      return 'Please confirm your email first — check your inbox for a verification link.';
-    }
-    if (lower.contains('user already registered') ||
-        lower.contains('already exists') ||
-        lower.contains('duplicate key')) {
-      return 'An account with that email already exists. Try signing in instead.';
-    }
-    if (lower.contains('rate limit') || lower.contains('too many requests')) {
-      return 'Too many attempts. Wait a minute and try again.';
-    }
-    if (lower.contains('network') ||
-        lower.contains('socket') ||
-        lower.contains('timed out') ||
-        lower.contains('connection')) {
-      return "Can't reach the server. Check your connection and try again.";
-    }
-    if (lower.contains('weak password') ||
-        lower.contains('password is too short')) {
-      return 'Use a stronger password — at least 8 characters with a letter and a number.';
-    }
-    // Never surface a raw exception / stack blob to the user (App Store
-    // reviewers were seeing the full "DioException [bad response]: …"
-    // dump). If the text still looks like one, fall back to generic copy.
-    if (lower.contains('dioexception') ||
-        lower.contains('requestoptions') ||
-        lower.contains('stacktrace') ||
-        lower.contains('status code of') ||
-        raw.length > 160) {
-      return _isSignUp
-          ? 'Could not create your account. Please try again.'
-          : 'Sign-in failed. Please try again.';
-    }
-    // Strip the most verbose decoration before showing raw text as a fallback.
-    return raw
-        .replaceAll('Exception: ', '')
-        .replaceAll(RegExp(r'^AuthApiException\([^)]*\)\s*:?\s*'), '')
-        .trim();
-  }
+  String _humanizeAuthError(String raw) =>
+      humanizeAuthError(raw, isSignUp: _isSignUp);
 
   void _showSupportFriendWelcome() {
     ScaffoldMessenger.of(context).showSnackBar(

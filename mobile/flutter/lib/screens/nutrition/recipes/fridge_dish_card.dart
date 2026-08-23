@@ -365,26 +365,38 @@ class _HaveBar extends StatelessWidget {
   }
 }
 
-class _NeedPill extends StatelessWidget {
+class _NeedPill extends StatefulWidget {
   final String missing;
   final Color amber;
   final VoidCallback onTap;
   const _NeedPill({required this.missing, required this.amber, required this.onTap});
 
   @override
+  State<_NeedPill> createState() => _NeedPillState();
+}
+
+class _NeedPillState extends State<_NeedPill> {
+  bool _added = false;
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _added
+          ? null
+          : () {
+              setState(() => _added = true);
+              widget.onTap();
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: amber.withValues(alpha: 0.55)),
+          border: Border.all(color: widget.amber.withValues(alpha: _added ? 0.3 : 0.55)),
         ),
         child: Text(
-          '+ $missing → list',
-          style: ZType.lbl(10, color: amber, letterSpacing: 0.5),
+          _added ? '✓ on your list' : '+ ${widget.missing} → list',
+          style: ZType.lbl(10, color: widget.amber.withValues(alpha: _added ? 0.6 : 1), letterSpacing: 0.5),
         ),
       ),
     );

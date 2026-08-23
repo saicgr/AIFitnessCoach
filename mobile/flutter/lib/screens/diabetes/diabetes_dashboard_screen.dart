@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +12,7 @@ import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/health_connect_sheet.dart' show showHealthConnectSheet;
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 
@@ -314,13 +317,20 @@ class _DiabetesDashboardScreenState
 
           const SizedBox(height: 16),
 
-          // Health Connect Sync Button
+          // Health Connect Sync Button — Health Connect is Android-only, so
+          // iOS gets the Apple Health connect path instead (row 410: this
+          // card must never claim a sync happened for a service that
+          // doesn't exist on the platform it's rendered on).
           _HealthConnectSyncCard(
-            lastSyncedAt: diabetesState.lastSyncedAt,
+            lastSyncedAt: Platform.isAndroid ? diabetesState.lastSyncedAt : null,
             isSyncing: diabetesState.isSyncing,
             onSync: () {
               HapticService.light();
-              ref.read(diabetesProvider.notifier).syncHealthConnect();
+              if (Platform.isAndroid) {
+                ref.read(diabetesProvider.notifier).syncHealthConnect();
+              } else {
+                showHealthConnectSheet(context, ref);
+              }
             },
             isDark: isDark,
             elevatedColor: elevatedColor,

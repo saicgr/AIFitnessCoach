@@ -20328,6 +20328,10 @@
   "homeScreenResetToDefaultBody": "This will restore your home screen to the default layout.",
   "homeScreenTourCarouselDesc": "Swipe to see your workout plan. Tap to start!",
   "homeScreenTourCarouselTitle": "Today's Workout",
+  "homeScreenTourCommunityDesc": "See the feed, challenges, ranks, and friends",
+  "homeScreenTourCommunityTitle": "Community Tab",
+  "homeScreenTourHealthDesc": "Check your sleep, recovery, and body data",
+  "homeScreenTourHealthTitle": "Health Tab",
   "homeScreenTourNutritionDesc": "Track your macros, water, fasting, and daily nutrition",
   "homeScreenTourNutritionTitle": "Nutrition Tab",
   "homeScreenTourProfileDesc": "View your progress and settings",
@@ -28372,11 +28376,11 @@
   "@paywallTesterName": {
     "description": "v7 paywall sequence"
   },
-  "paywallTesterQuote2": "“I'm diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I've got into dinner without blowing my carbs.”",
+  "paywallTesterQuote2": "“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I've got into dinner without blowing my carb budget.”",
   "@paywallTesterQuote2": {
-    "description": "v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user managing diabetes"
+    "description": "v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user tracking macros"
   },
-  "paywallTesterName2": "Toby · type 2 diabetic",
+  "paywallTesterName2": "Toby · macro tracker",
   "@paywallTesterName2": {
     "description": "v7 paywall sequence"
   },

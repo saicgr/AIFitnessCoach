@@ -790,12 +790,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
           ],
 
+          // Fast-logging actions: bulk "same as last time" + voice mic. Hidden
+          // in display-only showcase mode. Rendered above the header so the
+          // header stays adjacent to the first data row.
+          if (!widget.showcase) _buildFastLogRow(context),
+
           // Table header
           _buildTableHeader(context, theme),
-
-          // Fast-logging actions: bulk "same as last time" + voice mic. Hidden
-          // in display-only showcase mode.
-          if (!widget.showcase) _buildFastLogRow(context),
 
           // Windowed set rows (header + inline rest + RIR bar + banner interleaved)
           ...setRows,

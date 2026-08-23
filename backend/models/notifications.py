@@ -77,7 +77,7 @@ class NotificationPreferences(BaseModel):
     # Timing
     quiet_hours_start: str = "22:00"
     quiet_hours_end: str = "07:00"
-    timezone: str = "America/New_York"
+    timezone: str = "UTC"
 
 
 class NotificationPreferencesUpdate(BaseModel):

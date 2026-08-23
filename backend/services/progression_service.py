@@ -328,6 +328,30 @@ class ProgressionService:
             confidence=0.5,
         )
 
+    @staticmethod
+    def _sanitized_last_weight(last_performance: ExercisePerformance) -> float:
+        """Baseline weight for progression math, guarded against a single
+        corrupt/outlier set (e.g. a fat-fingered "30120" logged over a "30"
+        target). Uses the median of this session's completed set weights
+        instead of the max, so one wild typo can't dominate the baseline;
+        additionally falls back to the previously prescribed target when even
+        the median implausibly overshoots it (>50%)."""
+        completed_weights = sorted(
+            s.weight_kg for s in last_performance.sets if s.completed
+        )
+        if not completed_weights:
+            return 0.0
+        n = len(completed_weights)
+        median_weight = (
+            completed_weights[n // 2]
+            if n % 2 == 1
+            else (completed_weights[n // 2 - 1] + completed_weights[n // 2]) / 2
+        )
+        target = last_performance.target_weight_kg
+        if target and target > 0 and median_weight > target * 1.5:
+            return target
+        return median_weight
+
     def _calculate_progression(
         self,
         exercise_id: str,
@@ -366,7 +390,7 @@ class ProgressionService:
         # Get equipment-aware increment (instead of exercise-type based)
         increment = get_equipment_increment(equipment_type)
 
-        last_weight = max(s.weight_kg for s in last_performance.sets if s.completed)
+        last_weight = self._sanitized_last_weight(last_performance)
         last_reps = last_performance.target_reps
         last_sets = last_performance.target_sets
 

@@ -48,6 +48,15 @@ logger = get_logger(__name__)
 # Statuses that mean "this session row has not been closed yet".
 _OPEN_LOG_STATUSES = ("in_progress",)
 
+# Statuses `finalize_open_logs_for_workout` reconciles at /complete time. This
+# includes "completed" alongside the open ones: the Easy tier's fire-and-forget
+# PATCH can flip a row to 'completed' with a stale `completed_at` (stamped when
+# an earlier, abandoned resumption of the same workout backfilled sets_json)
+# hours before the user actually taps Finish. /complete is the one place the
+# server knows the TRUE end of the session, so it must still reconcile a row
+# that already reads 'completed'.
+_RECONCILE_LOG_STATUSES = _OPEN_LOG_STATUSES + ("completed",)
+
 
 def build_sets_json_from_performance_logs(
     db, workout_log_id: str
@@ -197,7 +206,7 @@ def finalize_workout_log_row(
         update["status"] = "completed"
         status_written = True
 
-    if completed_at and not log_row.get("completed_at"):
+    if completed_at:
         update["completed_at"] = completed_at
     if duration_minutes is not None and log_row.get("duration_minutes") is None:
         update["duration_minutes"] = duration_minutes
@@ -265,7 +274,7 @@ def finalize_open_logs_for_workout(
         .select("id, status, sets_json, completed_at, duration_minutes, total_time_seconds")
         .eq("workout_id", workout_id)
         .eq("user_id", user_id)
-        .in_("status", list(_OPEN_LOG_STATUSES))
+        .in_("status", list(_RECONCILE_LOG_STATUSES))
         .execute()
     )
     rows = res.data or []

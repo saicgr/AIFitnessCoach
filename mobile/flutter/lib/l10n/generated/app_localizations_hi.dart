@@ -17150,6 +17150,20 @@ class AppLocalizationsHi extends AppLocalizations {
   String get homeScreenTourCarouselTitle => 'आज का वर्कआउट';
 
   @override
+  String get homeScreenTourCommunityDesc =>
+      'See the feed, challenges, ranks, and friends';
+
+  @override
+  String get homeScreenTourCommunityTitle => 'Community Tab';
+
+  @override
+  String get homeScreenTourHealthDesc =>
+      'Check your sleep, recovery, and body data';
+
+  @override
+  String get homeScreenTourHealthTitle => 'Health Tab';
+
+  @override
   String get homeScreenTourNutritionDesc =>
       'अपने मैक्रोज़ और दैनिक पोषण को ट्रैक करें';
 
@@ -44894,10 +44908,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paywallTesterQuote2 =>
-      '“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”';
+      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
-  String get paywallTesterName2 => 'Toby · type 2 diabetic';
+  String get paywallTesterName2 => 'Toby · macro tracker';
 
   @override
   String get paywallEarlyAccess =>

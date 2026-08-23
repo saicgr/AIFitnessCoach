@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_links.dart';
+import '../../core/utils/auth_error_utils.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
@@ -361,7 +362,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                authState.errorMessage!,
+                humanizeAuthError(authState.errorMessage!),
                 style: const TextStyle(color: AppColors.error, fontSize: 13),  // accent-allowlist: error/destructive -- must stay red
               ),
             ),

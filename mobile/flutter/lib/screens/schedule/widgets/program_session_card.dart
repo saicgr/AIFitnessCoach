@@ -134,10 +134,10 @@ class ProgramSessionCard extends StatelessWidget {
                         if (isAi) ...[
                           _Pill(
                             text: 'AI',
-                            bg: ProgramColors.ai.withValues(alpha: 0.20),
+                            bg: accent.withValues(alpha: 0.20),
                             fg: Colors.white,
                             icon: Icons.auto_awesome_rounded,
-                            iconColor: ProgramColors.ai,
+                            iconColor: accent,
                           ),
                           const SizedBox(width: 6),
                         ],

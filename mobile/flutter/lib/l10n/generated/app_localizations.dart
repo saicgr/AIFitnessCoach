@@ -28928,6 +28928,30 @@ abstract class AppLocalizations {
   /// **'Today\'s Workout'**
   String get homeScreenTourCarouselTitle;
 
+  /// No description provided for @homeScreenTourCommunityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'See the feed, challenges, ranks, and friends'**
+  String get homeScreenTourCommunityDesc;
+
+  /// No description provided for @homeScreenTourCommunityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Community Tab'**
+  String get homeScreenTourCommunityTitle;
+
+  /// No description provided for @homeScreenTourHealthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your sleep, recovery, and body data'**
+  String get homeScreenTourHealthDesc;
+
+  /// No description provided for @homeScreenTourHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Tab'**
+  String get homeScreenTourHealthTitle;
+
   /// No description provided for @homeScreenTourNutritionDesc.
   ///
   /// In en, this message translates to:
@@ -75600,16 +75624,16 @@ abstract class AppLocalizations {
   /// **'Keertan · early tester'**
   String get paywallTesterName;
 
-  /// v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user managing diabetes
+  /// v7 paywall sequence — second tester testimonial, menu scan + recipe from fridge for a user tracking macros
   ///
   /// In en, this message translates to:
-  /// **'“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”'**
+  /// **'“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”'**
   String get paywallTesterQuote2;
 
   /// v7 paywall sequence
   ///
   /// In en, this message translates to:
-  /// **'Toby · type 2 diabetic'**
+  /// **'Toby · macro tracker'**
   String get paywallTesterName2;
 
   /// v7 paywall sequence

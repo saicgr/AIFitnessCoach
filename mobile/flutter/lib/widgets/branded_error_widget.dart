@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Branded replacement for Flutter's default error box (red in debug, grey in
 /// release). Installed globally via `ErrorWidget.builder` in `main.dart`.
@@ -112,8 +112,8 @@ class BrandedErrorWidget extends StatelessWidget {
                 // `canPop()`: this widget also replaces small inline widgets
                 // mid-screen and can surface before any Navigator exists, and
                 // a dead button would be worse than none.
-                if (Navigator.maybeOf(context)?.canPop() ?? false) ...[
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
+                if (Navigator.maybeOf(context)?.canPop() ?? false)
                   TextButton.icon(
                     onPressed: () => Navigator.maybeOf(context)?.maybePop(),
                     icon: const Icon(Icons.arrow_back_rounded,
@@ -130,21 +130,24 @@ class BrandedErrorWidget extends StatelessWidget {
                       minimumSize: const Size(88, 44),
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
-                  ),
-                ],
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      details.exceptionAsString(),
-                      textAlign: TextAlign.center,
-                      maxLines: 6,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: Color(0xFFEF4444), // accent-allowlist: error state color, semantic
-                          fontSize: 11,
-                          fontFamily: 'monospace'),
+                  )
+                else
+                  // No back stack to pop (e.g. reached via a deep link) —
+                  // route home so the user always has a way out.
+                  TextButton.icon(
+                    onPressed: () => context.go('/home'),
+                    icon: const Icon(Icons.home_outlined,
+                        size: 18, color: _amber),
+                    label: const Text('Go to Home',
+                        style: TextStyle(
+                            color: _amber,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(88, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),

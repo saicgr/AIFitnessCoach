@@ -16244,6 +16244,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeScreenTourCarouselTitle => '今日训练';
 
   @override
+  String get homeScreenTourCommunityDesc =>
+      'See the feed, challenges, ranks, and friends';
+
+  @override
+  String get homeScreenTourCommunityTitle => 'Community Tab';
+
+  @override
+  String get homeScreenTourHealthDesc =>
+      'Check your sleep, recovery, and body data';
+
+  @override
+  String get homeScreenTourHealthTitle => 'Health Tab';
+
+  @override
   String get homeScreenTourNutritionDesc => '追踪你的宏量营养素和日常营养摄入';
 
   @override
@@ -42624,10 +42638,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get paywallTesterQuote2 =>
-      '“I\'m diabetic, so eating out used to be a guessing game. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carbs.”';
+      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
-  String get paywallTesterName2 => 'Toby · type 2 diabetic';
+  String get paywallTesterName2 => 'Toby · macro tracker';
 
   @override
   String get paywallEarlyAccess => '抢先体验 · 成为首批 1,000 名会员之一';

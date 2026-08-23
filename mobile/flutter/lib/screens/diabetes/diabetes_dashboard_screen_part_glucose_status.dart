@@ -367,7 +367,6 @@ class DiabetesNotifier extends StateNotifier<DiabetesState> {
         todayInsulinSummary: todayInsulinSummary,
         todayInsulinDoses: todayInsulinDoses,
         isLoading: false,
-        lastSyncedAt: now,
       );
     } catch (e) {
       state = state.copyWith(
@@ -398,7 +397,9 @@ class DiabetesNotifier extends StateNotifier<DiabetesState> {
 
       state = state.copyWith(
         isSyncing: false,
-        lastSyncedAt: DateTime.now(),
+        // Health Connect is Android-only — never claim a sync happened on a
+        // platform where the service this card names does not exist.
+        lastSyncedAt: Platform.isAndroid ? DateTime.now() : state.lastSyncedAt,
       );
     } catch (e) {
       state = state.copyWith(

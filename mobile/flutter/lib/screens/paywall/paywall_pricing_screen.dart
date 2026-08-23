@@ -762,9 +762,12 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () => _handleMaybeLater(context, ref),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           AppLocalizations.of(context).notifsLaterButton,
                           style: TextStyle(
@@ -776,6 +779,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
 
                 SizedBox(height: isFoldable ? 10 : 16),

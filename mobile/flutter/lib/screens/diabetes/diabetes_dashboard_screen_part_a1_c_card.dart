@@ -530,7 +530,9 @@ class _HealthConnectSyncCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).settingsHealthConnect,
+                  Platform.isAndroid
+                      ? AppLocalizations.of(context).settingsHealthConnect
+                      : 'Apple Health',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

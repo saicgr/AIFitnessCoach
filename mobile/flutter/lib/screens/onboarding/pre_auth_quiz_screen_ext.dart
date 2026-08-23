@@ -113,16 +113,6 @@ const List<String> kCommercialGymEquipmentPreset = [
   'trx',
   'suspension_trainer',
   'Suspension Trainer',
-
-  // ── Indian / traditional ────────────────────────────────────────────
-  'gada (mace)',
-  'gar nal (stone neck ring)',
-  'jori (indian clubs)',
-  'lathi (bamboo staff)',
-  'mallakhamb pole',
-  'matka (water pot)',
-  'nal (stone lock)',
-  'samtola (indian barbell)',
 ];
 
 /// Splits a mixed preset list (canonical snake_case ids + raw "Other

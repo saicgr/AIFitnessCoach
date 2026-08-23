@@ -1064,6 +1064,15 @@ class _DarkInputField extends StatelessWidget {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         textAlign: TextAlign.center,
         onChanged: onChanged,
+        // Select the existing value on focus so typing a new number replaces
+        // it instead of inserting into the middle (was producing values like
+        // "0120" when overwriting a prefilled "30").
+        onTap: () {
+          controller.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: controller.text.length,
+          );
+        },
         // Signature telemetry numerals (Space Mono) for the editable value.
         style: ZType.data(
           16,

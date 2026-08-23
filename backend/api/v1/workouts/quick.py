@@ -63,6 +63,7 @@ from .scheduled_date_anchor import (
     anchor_today,
     scheduled_local_date,
 )
+from ._gym_profile_helpers import get_active_gym_profile_id
 from core.timezone_utils import get_user_today, local_day_bounds, resolve_timezone
 
 router = APIRouter()
@@ -652,6 +653,10 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 "source": body.source,
             }),
             "is_current": False,
+            # Scope this session to the user's active gym profile (row 208) —
+            # without this, a Quick Generate workout stays on the schedule
+            # after a gym switch, sitting alongside the new profile's sessions.
+            "gym_profile_id": get_active_gym_profile_id(db, body.user_id),
         }
 
         created = db.create_workout(workout_db_data)
@@ -818,6 +823,10 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
             "generation_metadata": json.dumps(body.generation_metadata) if body.generation_metadata else None,
             # Quick saved workouts are extra sessions — not the canonical day plan.
             "is_current": False,
+            # Scope this session to the user's active gym profile (row 208) —
+            # without this, a Quick Generate workout stays on the schedule
+            # after a gym switch, sitting alongside the new profile's sessions.
+            "gym_profile_id": get_active_gym_profile_id(db, user_id),
         }
 
         # Upsert to handle both new and re-saved workouts

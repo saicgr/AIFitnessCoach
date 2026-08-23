@@ -212,7 +212,7 @@ async def get_notification_preferences(user_id: str, current_user: dict = Depend
                 email_merch_alerts=np.get("email_merch_alerts", True),
                 quiet_hours_start=np.get("quiet_hours_start", "22:00"),
                 quiet_hours_end=np.get("quiet_hours_end", "07:00"),
-                timezone=np.get("timezone", "America/New_York")
+                timezone=np.get("timezone", "UTC")
             )
 
         # Return defaults if no preferences exist

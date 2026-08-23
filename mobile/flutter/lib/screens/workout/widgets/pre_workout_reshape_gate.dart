@@ -121,11 +121,16 @@ Future<void> maybeRunPreWorkoutReshape(
   // popped mid-sheet (a stale true would block tours on the NEXT workout).
   final tourGate = ref.read(preWorkoutModalDepthProvider.notifier);
   tourGate.state++;
+  final clockGate = ref.read(preWorkoutClockGateProvider.notifier);
+  clockGate.state = true;
   try {
     final input = await showGlassSheet<_CheckInInput>(
       context: context,
       builder: (_) => const _ReshapeCheckInSheet(),
     );
+    // Sheet is dismissed either way (Start or Skip) — the clock should run
+    // from here, regardless of the reshape network call/diff dialog below.
+    clockGate.state = false;
     if (input == null || !context.mounted) return; // dismissed → no change
 
     final _ReshapeResult result;
@@ -166,6 +171,7 @@ Future<void> maybeRunPreWorkoutReshape(
     ref.read(activeWorkoutLiveProvider.notifier).state = reshaped;
   } finally {
     tourGate.state--;
+    clockGate.state = false;
   }
 }
 

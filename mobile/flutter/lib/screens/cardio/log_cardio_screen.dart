@@ -578,16 +578,39 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
       );
       final d = (res.data as Map).cast<String, dynamic>();
       if (!mounted) return;
+      final extracted = <String>[];
       setState(() {
         final ct = d['cardio_type'] as String?;
         if (ct != null) _selectedType = CardioType.fromValue(ct);
         final dur = d['duration_minutes'];
-        if (dur != null) _durationController.text = '$dur';
+        if (dur != null) {
+          _durationController.text = '$dur';
+          extracted.add('duration');
+        }
         final dist = d['distance_km'];
-        if (dist != null) _distanceController.text = '${dist is num ? dist : dist}';
+        if (dist != null) {
+          _distanceController.text = '${dist is num ? dist : dist}';
+          extracted.add('distance');
+        }
         final cal = d['calories_burned'];
         if (cal != null) _caloriesController.text = '$cal';
+        final locationValue = d['location'] as String?;
+        if (locationValue != null) {
+          _selectedLocation = CardioLocation.fromValue(locationValue);
+          if (!_selectedLocation.isOutdoor) _selectedWeather = null;
+          extracted.add('location');
+        }
+        final avgHr = d['avg_heart_rate'];
+        if (avgHr != null) {
+          _avgHeartRateController.text = '$avgHr';
+          extracted.add('avg HR');
+        }
+        final maxHr = d['max_heart_rate'];
+        if (maxHr != null) _maxHeartRateController.text = '$maxHr';
       });
+      if (mounted && extracted.isNotEmpty) {
+        _showInfo('Set ${extracted.join(', ')}');
+      }
     } catch (_) {
       if (mounted) {
         _showError('Couldn\'t read that. Try e.g. "30 min brisk walk".');
@@ -595,6 +618,15 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
     } finally {
       if (mounted) setState(() => _parsing = false);
     }
+  }
+
+  void _showInfo(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _showError(String message) {

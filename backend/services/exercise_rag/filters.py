@@ -620,8 +620,26 @@ def get_base_exercise_name(name: str) -> str:
     # Remove "v2", "v3" etc suffix
     name = re.sub(r'\s+v\d+\s*', '', name, flags=re.IGNORECASE)
 
-    # Remove common filler words
-    filler_words = ['with', 'and', 'the', 'a', 'an', 'on', 'in', 'to', 'for']
+    # Drop stray parentheses (their contents already survive as words, e.g.
+    # "(Pro Lat Bar)") so those words aren't glued to the parenthesis when we
+    # split below.
+    name = name.replace('(', ' ').replace(')', ' ')
+
+    # Remove common filler words, plus equipment/apparatus and grip/stance
+    # descriptors. Two exercises that differ only in *how* the same base
+    # movement is loaded or gripped (e.g. "Cable Pulldown (Pro Lat Bar)" vs
+    # "Cable Underhand Pulldown Wide Grips", or "Arnold Press Dumbbell" vs
+    # "Arnold Press Cable Resistance Band Standing") must collapse to the
+    # same base name so dedup treats them as the same movement, not two
+    # distinct exercises.
+    filler_words = [
+        'with', 'and', 'the', 'a', 'an', 'on', 'in', 'to', 'for',
+        'cable', 'dumbbell', 'dumbbells', 'barbell', 'band', 'bands',
+        'resistance', 'machine', 'kettlebell', 'kettlebells', 'plate',
+        'plates', 'smith', 'bar', 'pro', 'lat', 'grip', 'grips',
+        'underhand', 'overhand', 'wide', 'narrow', 'close', 'standing',
+        'seated',
+    ]
     words = name.split()
     words = [w for w in words if w not in filler_words]
     name = ' '.join(words)

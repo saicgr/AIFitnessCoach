@@ -34,6 +34,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/utils/default_weights.dart';
 import '../../core/utils/exercise_tracking_metric.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/parsed_exercise.dart';
 import '../../data/models/rest_suggestion.dart';
@@ -489,6 +490,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   // Watches workout-UI tier changes; if the user flips tier mid-tour, aborts
   // the current tour and re-fires the new tier's tour (if unseen).
   ProviderSubscription<WorkoutUiModeState>? _tierSwitchSub;
+  // Pauses the workout clock while the pre-workout reshape "Quick check-in"
+  // sheet is up so duration/calories don't accrue before Start/Skip is tapped.
+  ProviderSubscription<bool>? _clockGateSub;
 
   // ── Mixin @override getters/setters ──
   @override
@@ -1296,6 +1300,21 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0,
     );
 
+    // The pre-workout reshape "Quick check-in" sheet (shown post-frame by the
+    // parent ActiveWorkoutEntry) hasn't resolved yet in the common case —
+    // pause the clock the instant the gate goes up so duration/calories can't
+    // accrue under an un-actioned sheet, and resume the instant it clears.
+    if (ref.read(preWorkoutClockGateProvider) && !_timerController.isPaused) {
+      _timerController.togglePause();
+    }
+    _clockGateSub = ref.listenManual<bool>(preWorkoutClockGateProvider, (
+      previous,
+      gated,
+    ) {
+      if (gated == _timerController.isPaused) return;
+      _timerController.togglePause();
+    });
+
     // Keep the screen on while working out — ignore failure (plugin missing on
     // non-mobile platforms, permission denied, etc.) so we never block the
     // workout from starting.
@@ -1482,6 +1501,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     _weightController.dispose();
     _tourSeenSub?.close();
     _tierSwitchSub?.close();
+    _clockGateSub?.close();
     // The active-workout tour was fired into the global AppTourController
     // from initState, but AppTourOverlay only mounts inside MainShell — this
     // screen is a top-level route OUTSIDE the shell, so the tour state was
@@ -2357,11 +2377,17 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         _exerciseProgressionPattern[_viewingExerciseIndex] ??
         SetProgressionPattern.pyramidUp;
 
-    // Get increment display string in user's unit
+    // Get increment display string in the session's ACTIVE display unit —
+    // the increment preference has its own stored unit which can drift from
+    // the workout weight unit shown everywhere else on this screen.
     final exercise = _exercises[_viewingExerciseIndex];
     final incrementState = ref.read(weightIncrementsProvider);
-    final incrementValue = incrementState.getIncrement(exercise.equipment);
-    final incrementUnit = incrementState.unit;
+    final incrementValueKg = incrementState.getIncrementKg(exercise.equipment);
+    final useKgDisplay = ref.read(useKgForWorkoutProvider);
+    final rawIncrementValue =
+        WeightUtils.fromKg(incrementValueKg, displayInLbs: !useKgDisplay);
+    final incrementValue = (rawIncrementValue * 2).round() / 2;
+    final incrementUnit = WeightUtils.workoutUnitLabel(useKgDisplay);
     final incrementLabel =
         '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
 

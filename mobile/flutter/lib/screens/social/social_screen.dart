@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/accessibility/accessibility_provider.dart';
@@ -136,13 +135,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         // nav bar intact and pops straight back.
         leadingWidth: 60,
         leading: _buildProfileAvatar(context),
-        title: Text(
-          l10n.navCommunity.toUpperCase(),
-          style: ZType.disp(
-            24,
-            color: ThemeColors.of(context).textPrimary,
-          ),
-        ),
         centerTitle: false,
         titleSpacing: 0,
         actions: [
@@ -260,14 +252,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     );
   }
 
-  // Distinct pill colors per tab
-  static const _pillColors = [
-    Color(0xFF5B8DEF), // Feed — blue  // accent-allowlist: informational state — must stay blue regardless of accent
-    Color(0xFFFFB020), // Challenges — amber  // accent-allowlist: warning severity — must stay amber regardless of accent
-    Color(0xFF34D399), // Ranks — emerald  // accent-allowlist: success/positive state — must stay green regardless of accent
-    Color(0xFFE879F9), // Friends — fuchsia  // accent-allowlist: tab identity — distinct pill color per social tab (Feed/Challenges/Ranks/Friends), fixed categorical palette, not tied to accent
-  ];
-
   Widget _buildPillTabs(BuildContext context, bool isDark) {
     return AnimatedBuilder(
       animation: _tabController,
@@ -298,7 +282,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     required double animationValue,
     required bool isDark,
   }) {
-    final pillColor = _pillColors[index];
+    final pillColor = ThemeColors.of(context).accent;
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
     // Unselected: subtle tinted bg; Selected: full pill color

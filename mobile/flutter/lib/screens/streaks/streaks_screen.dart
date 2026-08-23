@@ -374,7 +374,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
         ),
         const SizedBox(height: 6),
         Text(
-          'WEEK STREAK',
+          'DAY STREAK',
           style: ZType.lbl(13, color: c.textSecondary, letterSpacing: 3),
         ),
         const SizedBox(height: 4),

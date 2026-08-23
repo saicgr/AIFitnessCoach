@@ -76,14 +76,15 @@ class QuizDaysSelector extends StatelessWidget {
               ),
             _buildDaysPerWeekSelector(context, t),
             const SizedBox(height: 20),
-            if (selectedDays != null) ...[
-              _buildWhichDaysSection(context, t, requiredDays, selectedCount),
-            ],
 
             // Workout Duration Section (only show if callback is provided)
             if (onDurationChanged != null) ...[
-              const SizedBox(height: 20),
               _buildDurationSection(context, t),
+              const SizedBox(height: 20),
+            ],
+
+            if (selectedDays != null) ...[
+              _buildWhichDaysSection(context, t, requiredDays, selectedCount),
             ],
           ],
         ),

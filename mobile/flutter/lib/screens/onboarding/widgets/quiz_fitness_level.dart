@@ -8,7 +8,7 @@ import 'onboarding_theme.dart';
 import 'quiz_step_header.dart';
 
 /// Glassmorphic combined fitness level, training experience, and activity level widget.
-class QuizFitnessLevel extends StatelessWidget {
+class QuizFitnessLevel extends StatefulWidget {
   final String? selectedLevel;
   final String? selectedExperience;
   final String? selectedActivityLevel;
@@ -68,16 +68,52 @@ class QuizFitnessLevel extends StatelessWidget {
   ];
 
   @override
+  State<QuizFitnessLevel> createState() => _QuizFitnessLevelState();
+}
+
+class _QuizFitnessLevelState extends State<QuizFitnessLevel> {
+  final _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant QuizFitnessLevel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Progressive disclosure inserts the experience/activity sections below
+    // whatever is already on screen. Auto-scroll so the newly revealed
+    // section, not just a sliver of it, ends up in view.
+    final revealedExperience = oldWidget.selectedExperience == null &&
+        widget.selectedExperience != null;
+    final revealedActivity = oldWidget.selectedActivityLevel == null &&
+        widget.selectedActivityLevel != null;
+    if (revealedExperience || revealedActivity) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showHeader)
+            if (widget.showHeader)
               QuizStepHeader(
                 title: AppLocalizations.of(context)!
                     .quizFitnessLevelWhatSYourCurrent,
@@ -85,15 +121,15 @@ class QuizFitnessLevel extends StatelessWidget {
                     AppLocalizations.of(context)!.quizFitnessLevelBeHonestWeLl,
               ),
             ..._buildLevelCards(context, t),
-            if (selectedLevel != null) ...[
+            if (widget.selectedLevel != null) ...[
               const SizedBox(height: 20),
               _buildExperienceSection(context, t),
             ],
-            if (selectedExperience != null && onActivityLevelChanged != null) ...[
+            if (widget.selectedExperience != null && widget.onActivityLevelChanged != null) ...[
               const SizedBox(height: 20),
               _buildActivityLevelSection(context, t),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 48),
           ],
         ),
       ),
@@ -102,17 +138,17 @@ class QuizFitnessLevel extends StatelessWidget {
 
   List<Widget> _buildLevelCards(BuildContext context, OnboardingTheme t) {
     final l10n = AppLocalizations.of(context)!;
-    return _buildLevels(l10n).asMap().entries.map((entry) {
+    return QuizFitnessLevel._buildLevels(l10n).asMap().entries.map((entry) {
       final index = entry.key;
       final level = entry.value;
-      final isSelected = selectedLevel == level['id'];
+      final isSelected = widget.selectedLevel == level['id'];
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
-            onLevelChanged(level['id'] as String);
+            widget.onLevelChanged(level['id'] as String);
           },
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -192,7 +228,7 @@ class QuizFitnessLevel extends StatelessWidget {
 
   Widget _buildExperienceSection(BuildContext context, OnboardingTheme t) {
     final l10n = AppLocalizations.of(context)!;
-    final experienceOptions = _buildExperienceOptions(l10n);
+    final experienceOptions = QuizFitnessLevel._buildExperienceOptions(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -212,12 +248,12 @@ class QuizFitnessLevel extends StatelessWidget {
           children: experienceOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
-            final isSelected = selectedExperience == option['id'];
+            final isSelected = widget.selectedExperience == option['id'];
 
             return GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
-                onExperienceChanged(option['id'] as String);
+                widget.onExperienceChanged(option['id'] as String);
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
@@ -259,7 +295,7 @@ class QuizFitnessLevel extends StatelessWidget {
 
   Widget _buildActivityLevelSection(BuildContext context, OnboardingTheme t) {
     final l10n = AppLocalizations.of(context)!;
-    final activityLevelOptions = _buildActivityLevelOptions(l10n);
+    final activityLevelOptions = QuizFitnessLevel._buildActivityLevelOptions(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -279,12 +315,12 @@ class QuizFitnessLevel extends StatelessWidget {
           children: activityLevelOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
-            final isSelected = selectedActivityLevel == option['id'];
+            final isSelected = widget.selectedActivityLevel == option['id'];
 
             return GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
-                onActivityLevelChanged?.call(option['id'] as String);
+                widget.onActivityLevelChanged?.call(option['id'] as String);
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),

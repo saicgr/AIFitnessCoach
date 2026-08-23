@@ -175,6 +175,11 @@ class EasyActiveWorkoutScreenState
   /// Easy walkthrough fires exactly once. Closed in [dispose].
   ProviderSubscription<AppTourState>? _tourSeenSub;
 
+  /// Pauses the workout clock while the pre-workout reshape "Quick check-in"
+  /// sheet is up so duration/calories don't accrue before Start/Skip is
+  /// tapped. Closed in [dispose].
+  ProviderSubscription<bool>? _clockGateSub;
+
   @override
   void initState() {
     super.initState();
@@ -278,6 +283,21 @@ class EasyActiveWorkoutScreenState
       // it returns null when no blob has been written yet). Falls back to 0
       // for a genuinely fresh session.
       ..startWorkoutTimer(initialSeconds: _liveSessionElapsedSeconds());
+
+    // The pre-workout reshape "Quick check-in" sheet (shown post-frame by the
+    // parent ActiveWorkoutEntry) hasn't resolved yet in the common case —
+    // pause the clock the instant the gate goes up so duration/calories
+    // can't accrue under an un-actioned sheet, and resume when it clears.
+    if (ref.read(preWorkoutClockGateProvider) && !_timer.isPaused) {
+      _timer.togglePause();
+    }
+    _clockGateSub = ref.listenManual<bool>(preWorkoutClockGateProvider, (
+      previous,
+      gated,
+    ) {
+      if (gated == _timer.isPaused) return;
+      _timer.togglePause();
+    });
 
     _prService = ref.read(prDetectionServiceProvider)..startNewWorkout();
     unawaited(
@@ -855,6 +875,7 @@ class EasyActiveWorkoutScreenState
   @override
   void dispose() {
     _tourSeenSub?.close();
+    _clockGateSub?.close();
     _timer.dispose();
     _restBroadcaster?.dispose();
     // E2E register row 125: the warm-up rest countdown is a Timer.periodic. It

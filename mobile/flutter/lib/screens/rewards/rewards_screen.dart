@@ -543,21 +543,21 @@ class _RewardCard extends StatelessWidget {
       case 'gift_card':
         icon = Icons.card_giftcard;
         iconColor = const Color(0xFFFF9800);  // accent-allowlist: reward-type identity colour -- gift card
-        title = '\$$rewardValue Gift Card';
-        subtitle = _getTriggerDescription(triggerType);
+        title = reward['title'] as String? ?? '\$$rewardValue Gift Card';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
         break;
       case 'merch':
         icon = Icons.checkroom;
         iconColor = const Color(0xFF9C27B0);  // accent-allowlist: reward-type identity colour -- merch
         final details = reward['reward_details'] as Map<String, dynamic>?;
-        title = details?['item'] as String? ?? '${Branding.appName} Merch';
-        subtitle = _getTriggerDescription(triggerType);
+        title = reward['title'] as String? ?? details?['item'] as String? ?? '${Branding.appName} Merch';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
         break;
       case 'premium':
         icon = Icons.workspace_premium;
         iconColor = AppColors.gamGold;  // accent-allowlist: reward-type identity colour -- premium
-        title = 'Premium Subscription';
-        subtitle = _getTriggerDescription(triggerType);
+        title = reward['title'] as String? ?? 'Premium Subscription';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
         break;
       case 'discount':
         icon = Icons.local_offer;
@@ -565,14 +565,26 @@ class _RewardCard extends StatelessWidget {
         // Guard against Infinity/NaN from DB — `.toInt()` throws UnsupportedError
         // on non-finite doubles, which crashed the Rewards screen in production.
         final discountPercent = rewardValue.isFinite ? rewardValue.toInt() : 0;
-        title = '$discountPercent% Discount';
-        subtitle = _getTriggerDescription(triggerType);
+        title = reward['title'] as String? ?? '$discountPercent% Discount';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
+        break;
+      case 'daily_crate':
+        icon = Icons.card_giftcard;
+        iconColor = const Color(0xFFFF9800);  // accent-allowlist: reward-type identity colour -- daily crate
+        title = reward['title'] as String? ?? 'Daily Crate';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
+        break;
+      case 'consumable':
+        icon = Icons.auto_awesome;
+        iconColor = AppColors.gamGold;  // accent-allowlist: reward-type identity colour -- consumable
+        title = reward['title'] as String? ?? 'Reward';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
         break;
       default:
         icon = Icons.redeem;
         iconColor = c.textSecondary;
-        title = 'Reward';
-        subtitle = _getTriggerDescription(triggerType);
+        title = reward['title'] as String? ?? 'Reward';
+        subtitle = reward['subtitle'] as String? ?? _getTriggerDescription(triggerType);
     }
 
     return Container(

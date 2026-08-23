@@ -877,8 +877,8 @@ class MacroViz extends StatelessWidget {
   Widget _bigPill(String label, String value, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: 16 * scale,
-        vertical: 10 * scale,
+        horizontal: 18 * scale,
+        vertical: 13 * scale,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
@@ -890,7 +890,7 @@ class MacroViz extends StatelessWidget {
           TextSpan(
             text: '$label  ',
             style: TextStyle(
-              fontSize: 14 * scale,
+              fontSize: 19 * scale,
               fontWeight: FontWeight.w800,
               color: color,
             ),
@@ -898,7 +898,7 @@ class MacroViz extends StatelessWidget {
           TextSpan(
             text: value,
             style: TextStyle(
-              fontSize: 14 * scale,
+              fontSize: 19 * scale,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
@@ -918,7 +918,7 @@ class MacroViz extends StatelessWidget {
       MacroWedge(_cKcal, _cColor),
       MacroWedge(_fKcal, _fColor),
     ];
-    final size = 156.0 * scale;
+    final size = 176.0 * scale;
     final showScore = healthScore != null;
     return SizedBox(
       width: size,
@@ -967,7 +967,7 @@ class MacroViz extends StatelessWidget {
               ),
               _text(
                 showScore ? 'HEALTH SCORE' : 'CALORIES',
-                size: 9,
+                size: 13,
                 weight: FontWeight.w700,
                 color: _muted,
                 letterSpacing: 1.8,

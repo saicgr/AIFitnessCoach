@@ -1240,6 +1240,37 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           ),
         ],
       ),
+      // Header scrim — the floating top bar below has no backdrop of its
+      // own, so scrolled content (and the status bar clock/notch) showed
+      // straight through it once the list moved past the initial spacer.
+      // Painted before the bar so it sits behind it in the Stack, and
+      // absorbs any tap that misses a real button instead of falling
+      // through to the card underneath (same pattern as
+      // `SummaryHeaderScrim` in workout_summary_screen_v2.dart).
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: safePadding.top + 8 + 44 + 12,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {},
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  backgroundColor,
+                  backgroundColor,
+                  backgroundColor.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.62, 1.0],
+              ),
+            ),
+          ),
+        ),
+      ),
       // Floating top bar - positioned below status bar
       Positioned(
         top: safePadding.top + 8,

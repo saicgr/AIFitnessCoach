@@ -431,9 +431,44 @@ class GroceryListService:
 
         `quantity` is a free-text string ("2", "2 cups", "a bunch"): a leading
         number lands in the numeric `quantity` column with any trailing text as
-        the `unit`; an unparseable string is stored in `notes` instead."""
+        the `unit`; an unparseable string is stored in `notes` instead.
+
+        Merges into an existing row with the same `ingredient_name_normalized`
+        (same rule as `add_from_food_log`) instead of inserting blindly, so
+        repeat taps on the same chip don't create duplicate rows."""
         list_id = await self._resolve_active_list_id(user_id)
         qty_num, qty_unit, qty_note = _parse_quantity_str(quantity)
+        norm = normalize_food_name(item_name.strip())
+
+        existing_res = (
+            self.db.client.table("grocery_list_items")
+            .select("id,ingredient_name,ingredient_name_normalized,quantity,unit,notes,created_at")
+            .eq("list_id", list_id)
+            .eq("ingredient_name_normalized", norm)
+            .limit(1)
+            .execute()
+        )
+        existing_row = (existing_res.data or [None])[0]
+        if existing_row and _units_compatible(existing_row.get("unit"), qty_unit):
+            merged_qty = (existing_row.get("quantity") or 0) + (qty_num or 0)
+            merged_unit = existing_row.get("unit") or qty_unit
+            now_iso = datetime.utcnow().isoformat()
+            self.db.client.table("grocery_list_items").update({
+                "quantity": merged_qty,
+                "unit": merged_unit,
+                "updated_at": now_iso,
+            }).eq("id", existing_row["id"]).execute()
+            return GroceryListItem(
+                id=existing_row["id"],
+                list_id=list_id,
+                ingredient_name=existing_row["ingredient_name"],
+                quantity=merged_qty,
+                unit=merged_unit,
+                notes=existing_row.get("notes"),
+                created_at=existing_row["created_at"],
+                updated_at=now_iso,
+            )
+
         base = GroceryListItemBase(
             ingredient_name=item_name.strip(),
             quantity=qty_num,

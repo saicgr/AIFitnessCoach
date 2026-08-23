@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/schedule_item.dart';
@@ -222,8 +223,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       // FAB for adding new schedule items
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddItemSheet(context, colors),
-        backgroundColor: colors.isDark ? Colors.white : Colors.black,
-        foregroundColor: colors.isDark ? Colors.black : Colors.white,
+        backgroundColor: context.accentColor,
+        foregroundColor: colors.accentContrast,
         child: const Icon(Icons.add),
       ),
     );
@@ -767,11 +768,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
 
     // Program sessions get their program's distinct accent; everything else
-    // (AI / synced / ad-hoc) uses the reserved AI cyan — the old per-type
+    // (AI / synced / ad-hoc) uses the user's own accent — the old per-type
     // fallback made a "strength" AI card the same blue as a blue program.
     final Color accent = (assignmentId != null && assignmentId.isNotEmpty)
         ? ProgramColors.forKey(assignmentId)
-        : ProgramColors.ai;
+        : context.accentColor;
 
     final isAddon = ctx?.isAddon ?? false;
     String? slotBadge;

@@ -236,6 +236,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         position: TooltipPosition.above,
       ),
       AppTourStep(
+        id: 'nav_step_health',
+        targetKey: AppTourKeys.healthNavKey,
+        title: l10n.homeScreenTourHealthTitle,
+        description: l10n.homeScreenTourHealthDesc,
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
         id: 'nav_step_nutrition',
         targetKey: AppTourKeys.nutritionNavKey,
         title: l10n.homeScreenTourNutritionTitle,
@@ -243,10 +250,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         position: TooltipPosition.above,
       ),
       AppTourStep(
-        id: 'nav_step_profile',
-        targetKey: AppTourKeys.profileNavKey,
-        title: l10n.homeScreenTourProfileTitle,
-        description: l10n.homeScreenTourProfileDesc,
+        id: 'nav_step_community',
+        targetKey: AppTourKeys.communityNavKey,
+        title: l10n.homeScreenTourCommunityTitle,
+        description: l10n.homeScreenTourCommunityDesc,
         position: TooltipPosition.above,
       ),
     ];

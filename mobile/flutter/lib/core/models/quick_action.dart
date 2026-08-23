@@ -402,6 +402,17 @@ const quickActionRegistry = <String, QuickAction>{
     color: _defaultChipColor,
     behavior: QuickActionBehavior.addExercise,
   ),
+  // Pelvic Floor Exercises — built (Quick Start card, Beginner/Intermediate
+  // tiers, postpartum + prostate protocols) but previously reachable only by
+  // deep link. More-only by default, pinnable.
+  'kegel': QuickAction(
+    id: 'kegel',
+    label: 'Pelvic Floor',
+    icon: Icons.self_improvement_outlined,
+    color: _defaultChipColor,
+    behavior: QuickActionBehavior.route,
+    route: '/kegel-session',
+  ),
 };
 
 // Home shortcut bar layout (`CompactQuickActionsRow`):
@@ -449,6 +460,8 @@ const defaultQuickActionOrder = [
   // the AI form-analysis flow (no exercise name → AI auto-detects); Add
   // Exercise opens the Fill-with-AI create-exercise sheet.
   'form_check', 'add_exercise',
+  // Pelvic Floor Exercises — More-only by default, pinnable.
+  'kegel',
   // 'chat' kept in the catalog for users who want to re-pin it.
   'chat',
 ];

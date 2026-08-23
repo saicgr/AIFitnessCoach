@@ -26,3 +26,10 @@ final activeWorkoutWarmupDoneProvider = StateProvider<bool>((ref) => false);
 /// because both flows are kicked off post-frame at mount and can overlap —
 /// the first one to finish must not unlatch the gate while the other is up.
 final preWorkoutModalDepthProvider = StateProvider<int>((ref) => 0);
+
+/// True while the pre-workout reshape "Quick check-in" sheet is on screen and
+/// un-actioned. Both active-workout tiers pause their workout clock (so
+/// duration/calories can't accrue before the user taps the sheet's own
+/// "Start workout" / "Skip") while this is true, and resume the instant it
+/// clears — set by [maybeRunPreWorkoutReshape] around showing the sheet.
+final preWorkoutClockGateProvider = StateProvider<bool>((ref) => false);
