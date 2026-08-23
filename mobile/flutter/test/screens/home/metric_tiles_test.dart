@@ -37,6 +37,7 @@ import 'package:fitwiz/data/providers/metric_capability_provider.dart';
 import 'package:fitwiz/data/providers/metric_layout_provider.dart'
     show MetricSize;
 import 'package:fitwiz/data/providers/metric_tile_data_provider.dart';
+import 'package:fitwiz/data/models/today_score.dart';
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
 import 'package:fitwiz/screens/home/widgets/home/metric_tile_card.dart';
 import 'package:fitwiz/screens/home/widgets/home/metric_tile_grid.dart';
@@ -1368,8 +1369,8 @@ void main() {
                 deviationLabel: 'From workouts & logs',
                 deviationLabelShort: 'From your logs',
                 scoreSegments: const [
-                  MetricScoreSegment(label: 'Train', weight: 57, fill: 0),
-                  MetricScoreSegment(label: 'Nourish', weight: 43, fill: 0),
+                  MetricScoreSegment(kind: ContributorKind.train, label: 'Train', weight: 57, fill: 0),
+                  MetricScoreSegment(kind: ContributorKind.fuel, label: 'Nourish', weight: 43, fill: 0),
                 ],
               ),
               size: MetricSize.large,

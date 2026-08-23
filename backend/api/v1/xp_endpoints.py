@@ -1369,6 +1369,53 @@ async def list_merch_claims(current_user=Depends(get_current_user)):
         db = get_supabase_db()
         user_id = current_user["id"]
 
+        # Retroactive entitlement backfill (finding #443, mirrors the
+        # cosmetics backfill in get_my_cosmetics below): merch_claims rows
+        # are normally created as a side effect of distribute_level_rewards
+        # firing on the INCREMENTAL level-up transition inside award_xp. Any
+        # path that moves user_xp.current_level WITHOUT that transition (a
+        # direct admin/QA correction, a level-curve recalculation migration)
+        # leaves the account past a merch threshold with no claim row ever
+        # created -- "Level 55, no merch unlocked" even though the level read
+        # is correct. Creating the row here only makes the reward CLAIMABLE
+        # (status='pending_address') -- nothing ships until the user accepts
+        # it and submits an address, so this carries the same low
+        # blast-radius as the cosmetics backfill, not the class of harm
+        # migrations 2324/2325 guarded against (those granted spendable XP
+        # outright). Idempotent via ux_merch_claims_user_level (user_id,
+        # awarded_at_level); best-effort -- a failure here must not break
+        # the read. Requires migration 2423 (drops the orphaned legacy
+        # reward_type/shipping_name/shipping_address NOT NULL constraints
+        # that otherwise make this insert -- and distribute_level_rewards'
+        # own insert -- fail outright).
+        try:
+            level_row = (await run_db(lambda: db.client.table("user_xp")
+                .select("current_level")
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()))
+            current_level = (level_row.data or {}).get("current_level") if level_row else None
+            if current_level:
+                existing_claims = (await run_db(lambda: db.client.table("merch_claims")
+                    .select("awarded_at_level")
+                    .eq("user_id", user_id)
+                    .not_.is_("awarded_at_level", "null")
+                    .execute()))
+                already_awarded = {r.get("awarded_at_level") for r in (existing_claims.data or [])}
+                for threshold_level, merch_type in MERCH_TYPE_FOR_LEVEL.items():
+                    if current_level >= threshold_level and threshold_level not in already_awarded:
+                        try:
+                            await run_db(lambda tl=threshold_level, mt=merch_type: db.client.table("merch_claims").upsert({
+                                "user_id": user_id,
+                                "merch_type": mt,
+                                "awarded_at_level": tl,
+                                "status": "pending_address",
+                            }, on_conflict="user_id,awarded_at_level").execute())
+                        except Exception as claim_err:
+                            logger.warning(f"[Merch] Retroactive claim backfill failed for level {threshold_level}: {claim_err}")
+        except Exception as backfill_err:
+            logger.warning(f"[Merch] Retroactive grant backfill failed: {backfill_err}")
+
         result = (await run_db(lambda: db.client.rpc("get_user_merch_claims", {"p_user_id": user_id}).execute()))
         rows = result.data or []
 

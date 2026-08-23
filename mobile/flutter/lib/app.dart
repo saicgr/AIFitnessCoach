@@ -15,7 +15,6 @@ import 'core/theme/theme_provider.dart';
 import 'data/providers/root_messenger.dart';
 import 'widgets/recipe_save_jobs_listener.dart';
 import 'widgets/app_tour/app_tour_overlay.dart';
-import 'data/providers/admin_provider.dart';
 import 'data/providers/coach_unread_provider.dart';
 import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';

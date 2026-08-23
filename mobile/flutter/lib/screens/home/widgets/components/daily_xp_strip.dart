@@ -104,7 +104,8 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
     final multiplier = ref.watch(xpMultiplierProvider);
 
     // Calculate daily goals progress
-    final dailyGoalsData = _calculateDailyGoals(hasLoggedInToday, multiplier);
+    final dailyGoalsData = _calculateDailyGoals(
+        hasLoggedInToday, multiplier, loginStreak?.currentStreak ?? 0);
 
     return GestureDetector(
       onTap: () {
@@ -287,17 +288,25 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
     );
   }
 
-  _DailyGoalsData _calculateDailyGoals(bool hasLoggedInToday, double multiplier) {
+  _DailyGoalsData _calculateDailyGoals(
+      bool hasLoggedInToday, double multiplier, int currentStreak) {
     // Daily goals:
-    // 1. Log in today - Fixed +5 XP (one-time per day)
+    // 1. Log in today - base 25 XP, streak-scaled up to a 7x cap
     // 2. Complete 1 workout - 100 XP
     // 3. Log a meal - 25 XP
     // 4. Log weight - 15 XP
     // 5. Hit protein goal - 50 XP
     // 6. Log body measurements - 20 XP
     const totalGoals = 6;
-    // Fixed daily login XP
-    const dailyLoginXP = 5;
+    // E2E #357: this used to be a flat "+5" that never once matched what
+    // process_daily_login actually paid (xp_bonus_templates.daily_login:
+    // base_xp=25, streak-scaled up to a 7x cap -- migration 2400). Mirror
+    // that same formula instead of a made-up constant.
+    const dailyLoginBaseXp = 25;
+    const dailyLoginMaxStreakMultiplier = 7;
+    final dailyLoginStreakDay = (hasLoggedInToday ? currentStreak : currentStreak + 1)
+        .clamp(1, dailyLoginMaxStreakMultiplier);
+    final dailyLoginXP = dailyLoginBaseXp * dailyLoginStreakDay;
 
     // For now, only login goal is tracked
     // TODO: Integrate with workout and nutrition providers for full tracking

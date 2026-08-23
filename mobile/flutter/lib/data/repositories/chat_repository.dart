@@ -406,6 +406,38 @@ class ChatRepository {
     }
   }
 
+  /// Presign + upload a local file to S3 in one call, returning the s3_key.
+  /// Single chokepoint for the presign-response parsing (`presigned_url`/
+  /// `presigned_fields`/`s3_key`) so callers — chat, workout import, exercise
+  /// import — can't independently drift onto stale/wrong keys.
+  Future<String> presignAndUploadFile({
+    required File file,
+    required String contentType,
+  }) async {
+    final size = await file.length();
+    final filename = file.path.split('/').last;
+    final mediaType = contentType.startsWith('video') ? 'video' : 'image';
+    final presign = await getPresignedUrl(
+      filename: filename,
+      contentType: contentType,
+      mediaType: mediaType,
+      expectedSizeBytes: size,
+    );
+    final url = presign['presigned_url'] as String? ?? presign['url'] as String?;
+    final fields = presign['presigned_fields'] as Map?;
+    final s3Key = presign['s3_key'] as String?;
+    if (url == null || s3Key == null) {
+      throw Exception('Malformed presign response');
+    }
+    await uploadToS3(
+      presignedUrl: url,
+      fields: fields?.map((k, v) => MapEntry(k.toString(), v)),
+      file: file,
+      contentType: contentType,
+    );
+    return s3Key;
+  }
+
   /// Fetch the lightweight meal-context summary used by the AI-Coach popup
   /// on the meal-log sheet. Returns remaining macros, today's workout,
   /// favorites preview, etc. A failure throws — callers should fall back

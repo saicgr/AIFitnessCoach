@@ -123,11 +123,16 @@ class DailyGoals {
   double get progress => completedCount / totalCount;
 
   /// Total XP available from daily goals
-  /// Login XP is fixed at 5 XP per day (one-time, doesn't stack with streak)
+  ///
+  /// E2E #357: login XP used to be a flat +5 that never once matched what
+  /// process_daily_login actually paid (xp_bonus_templates.daily_login:
+  /// base_xp=25, streak-scaled up to a 7x cap -- migration 2400). `streak`
+  /// already reflects today's post-login streak day by the time [loggedIn]
+  /// is true, so this mirrors the server formula directly, no +1 adjustment
+  /// needed here (unlike the pre-login "what would I earn" displays).
   int xpEarned(int streak, double multiplier) {
     int xp = 0;
-    // Fixed +5 XP for daily login (one-time per day)
-    if (loggedIn) xp += 5;
+    if (loggedIn) xp += 25 * streak.clamp(1, 7);
     if (completedWorkout) xp += 100;
     if (loggedMeal) xp += 25;
     if (loggedWeight) xp += 15;

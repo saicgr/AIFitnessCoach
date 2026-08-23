@@ -1159,6 +1159,14 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   Widget _buildBottomBar(ProgramLibraryCard card) {
     final joined = card.joinedCount;
     final showJoined = joined != null && joined >= _kJoinedDisplayFloor;
+    // The Schedule tab preview (customize_template_days over all sessions) can
+    // still be loading or have failed while START PROGRAM itself would still
+    // work — assignment schedules its own days independently. Rather than
+    // block the CTA on a preview that isn't load-bearing for Start, say so.
+    final scheduleAsync = ref.watch(
+      programScheduleProvider((programId: _resolveId, variantId: _selectedVariantId)),
+    );
+    final schedulePending = scheduleAsync.isLoading || scheduleAsync.hasError;
     return Container(
       decoration: BoxDecoration(
         color: ThemeColors.of(context).background,
@@ -1168,50 +1176,64 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (showJoined) ...[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatJoined(joined),
-                      style: ZType.data(17, color: ThemeColors.of(context).textPrimary),
+              if (schedulePending)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Still building your schedule preview — the full plan finishes generating after you start',
+                    textAlign: TextAlign.center,
+                    style: ZType.lbl(11, color: ThemeColors.of(context).textMuted),
+                  ),
+                ),
+              Row(
+                children: [
+                  if (showJoined) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatJoined(joined),
+                          style: ZType.data(17, color: ThemeColors.of(context).textPrimary),
+                        ),
+                        Text(
+                          'JOINED',
+                          style: ZType.lbl(
+                            10,
+                            color: ThemeColors.of(context).textMuted,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'JOINED',
-                      style: ZType.lbl(
-                        10,
-                        color: ThemeColors.of(context).textMuted,
-                        letterSpacing: 1.6,
+                    const SizedBox(width: 16),
+                  ],
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.accentColor,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: _startFlow,
+                      icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                      label: Text(
+                        'START PROGRAM',
+                        style: ZType.lbl(
+                          14,
+                          color: Colors.white,
+                          weight: FontWeight.w800,
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-              ],
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: context.accentColor,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
-                  onPressed: _startFlow,
-                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                  label: Text(
-                    'START PROGRAM',
-                    style: ZType.lbl(
-                      14,
-                      color: Colors.white,
-                      weight: FontWeight.w800,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
+                ],
               ),
             ],
           ),

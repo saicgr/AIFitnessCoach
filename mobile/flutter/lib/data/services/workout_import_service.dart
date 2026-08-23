@@ -55,28 +55,7 @@ class WorkoutImportService {
     required File file,
     required String contentType,
   }) async {
-    final size = await file.length();
-    final filename = file.path.split('/').last;
-    final mediaType = contentType.startsWith('video') ? 'video' : 'image';
-    final presign = await _chatRepo.getPresignedUrl(
-      filename: filename,
-      contentType: contentType,
-      mediaType: mediaType,
-      expectedSizeBytes: size,
-    );
-    final url = presign['presigned_url'] as String? ?? presign['url'] as String?;
-    final fields = presign['presigned_fields'] as Map?;
-    final s3Key = presign['s3_key'] as String?;
-    if (url == null || s3Key == null) {
-      throw Exception('Malformed presign response');
-    }
-    await _chatRepo.uploadToS3(
-      presignedUrl: url,
-      fields: fields?.map((k, v) => MapEntry(k.toString(), v)),
-      file: file,
-      contentType: contentType,
-    );
-    return s3Key;
+    return _chatRepo.presignAndUploadFile(file: file, contentType: contentType);
   }
 
   Future<WorkoutImportResult> importFromPhoto({

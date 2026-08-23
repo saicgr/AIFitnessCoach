@@ -71,7 +71,9 @@ def clean_exercise_name_for_display(exercise_name: str) -> str:
     # Remove trailing underscores or spaces
     cleaned = cleaned.strip().rstrip('_')
 
-    return cleaned
+    # Normalize casing so display never leaks a raw lowercase/mixed-case
+    # library row (e.g. "trap bar deadlift") next to Title Case peers.
+    return _title_case_words(cleaned)
 
 
 # Hyphenation map applied at runtime by `canonicalize_exercise_name` as a
@@ -127,6 +129,30 @@ _NAME_RENAME_MAP: dict[str, str] = {
 _SMALL_CONNECTORS = {"With", "To", "And", "Of", "The", "On", "In", "At", "By"}
 
 
+def _title_case_words(s: str) -> str:
+    """Title Case via initcap-equivalent: capitalize first letter of each word.
+
+    Manual word-by-word loop to preserve hyphenation and small connectors.
+    `str.title()` mangles "Cross-Body" → "Cross-Body" (OK) but also things
+    like "PR-1" → "Pr-1" (OK enough). Keep it simple.
+    """
+    parts = s.split(" ")
+    out_parts: list[str] = []
+    for i, p in enumerate(parts):
+        if not p:
+            continue
+        # If the part has a hyphen, title-case each side.
+        if "-" in p:
+            sub = "-".join(seg[:1].upper() + seg[1:].lower() for seg in p.split("-"))
+        else:
+            sub = p[:1].upper() + p[1:].lower()
+        # Lowercase small connectors except when first or last word.
+        if 0 < i < len(parts) - 1 and sub in _SMALL_CONNECTORS:
+            sub = sub.lower()
+        out_parts.append(sub)
+    return " ".join(out_parts)
+
+
 def canonicalize_exercise_name(raw: str) -> str:
     """Normalize exercise name to the project style guide.
 
@@ -160,25 +186,7 @@ def canonicalize_exercise_name(raw: str) -> str:
     for pat, repl in _HYPHENATION_FIXES:
         s = pat.sub(repl, s)
 
-    # Title Case via initcap-equivalent: capitalize first letter of each word.
-    # We use a manual word-by-word loop to preserve hyphenation and small
-    # connectors. `str.title()` mangles "Cross-Body" → "Cross-Body" (OK) but
-    # also things like "PR-1" → "Pr-1" (OK enough). Keep it simple.
-    parts = s.split(" ")
-    out_parts: list[str] = []
-    for i, p in enumerate(parts):
-        if not p:
-            continue
-        # If the part has a hyphen, title-case each side.
-        if "-" in p:
-            sub = "-".join(seg[:1].upper() + seg[1:].lower() for seg in p.split("-"))
-        else:
-            sub = p[:1].upper() + p[1:].lower()
-        # Lowercase small connectors except when first or last word.
-        if 0 < i < len(parts) - 1 and sub in _SMALL_CONNECTORS:
-            sub = sub.lower()
-        out_parts.append(sub)
-    s = " ".join(out_parts)
+    s = _title_case_words(s)
 
     # Re-apply rename map after Title Case in case it normalized the key.
     if s.lower() in _NAME_RENAME_MAP:

@@ -153,7 +153,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         maxHR: maxHR,
                         restingHR: restingHR,
                         durationMinutes: durationMinutes,
-                        totalCalories: widget.calories,
+                        totalCalories: _effectiveCalories,
                         showZoneBreakdown: true,
                         showTrainingEffect: true,
                         showVO2Max: restingHR != null,

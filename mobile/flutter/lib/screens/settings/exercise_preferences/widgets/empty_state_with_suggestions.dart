@@ -41,11 +41,11 @@ const List<SuggestedExercise> kPopularFavorites = [
   SuggestedExercise(name: 'Leg Press', muscleGroup: 'Quadriceps'),
   SuggestedExercise(name: 'Cable Tricep Pushdown', muscleGroup: 'Triceps'),
   SuggestedExercise(name: 'Lateral Raise', muscleGroup: 'Shoulders'),
-  SuggestedExercise(name: 'Face Pull', muscleGroup: 'Shoulders'),
-  SuggestedExercise(name: 'Hammer Curl', muscleGroup: 'Biceps'),
+  SuggestedExercise(name: 'Cable Face Pull', muscleGroup: 'Shoulders'),
+  SuggestedExercise(name: 'Dumbbell Hammer Curl', muscleGroup: 'Biceps'),
   SuggestedExercise(name: 'Leg Curl', muscleGroup: 'Hamstrings'),
   SuggestedExercise(name: 'Cable Row', muscleGroup: 'Back'),
-  SuggestedExercise(name: 'Goblet Squat', muscleGroup: 'Quadriceps'),
+  SuggestedExercise(name: 'Dumbbell Goblet Squat', muscleGroup: 'Quadriceps'),
   SuggestedExercise(name: 'Calf Raise', muscleGroup: 'Calves'),
 ];
 

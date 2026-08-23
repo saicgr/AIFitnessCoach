@@ -63,6 +63,10 @@ class EasyActiveWorkoutView extends StatelessWidget {
   final ValueChanged<double> onDistanceChanged;
   final Future<void> Function() onLogSet;
 
+  /// Emits the RIR chosen via the felt picker for the set about to be
+  /// logged. Null hides the picker (e.g. the warm-up screen).
+  final ValueChanged<int?>? onRirChanged;
+
   /// Edits a dynamic EXTRA metric (box_height, calories, custom…) on the
   /// current set, keyed by metric KEY. Forwarded to [EasyFocalColumn].
   final void Function(String key, double value)? onMetricChanged;
@@ -160,6 +164,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     required this.onDurationChanged,
     required this.onDistanceChanged,
     required this.onLogSet,
+    this.onRirChanged,
     this.onMetricChanged,
     this.onAddMetric,
     this.editingSetIndex,
@@ -285,6 +290,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   onDurationChanged: onDurationChanged,
                   onDistanceChanged: onDistanceChanged,
                   onLogSet: onLogSet,
+                  onRirChanged: onRirChanged,
                   onMetricChanged: onMetricChanged,
                   onAddMetric: onAddMetric,
                   editingSetIndex: editingSetIndex,

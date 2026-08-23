@@ -364,6 +364,7 @@ EasyLocalAggregates computeEasyAggregates({
         if (targetReps != null) 'target_reps': targetReps,
         if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
         if (s.rir != null) 'rir': s.rir,
+        if (s.rpe != null) 'rpe': s.rpe,
         if (s.previousWeightKg != null) 'previous_weight_kg': s.previousWeightKg,
         if (s.previousReps != null) 'previous_reps': s.previousReps,
         'completed_at': s.completedAt.toIso8601String(),
@@ -399,8 +400,11 @@ EasyLocalAggregates computeEasyAggregates({
     totalVolumeKg: totalVolumeKg,
     // No server-computed calories yet — fall back to the stored estimate.
     // The completion screen silently upgrades this if /complete later
-    // returns a precise number.
-    calories: workout.estimatedCalories,
+    // returns a precise number. Zero real sets means zero calories, never
+    // the plan's elapsed-time estimate for work that never happened
+    // (finding #151) — `_completeWorkoutNow` pads unlogged sets with
+    // zero-stamped placeholders, which must not count as real work here.
+    calories: totalSets > 0 ? workout.estimatedCalories : 0,
     exercisesPerformance: exercisesPerformance,
     exerciseSets: exerciseSets,
     setsJson: jsonEncode(setsJsonList),

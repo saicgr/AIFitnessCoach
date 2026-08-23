@@ -591,13 +591,22 @@ async def get_dashboard_data(user_id: str, current_user: dict = Depends(get_curr
         "user_id", user_id
     ).gte("recorded_at", today_start.isoformat()).execute()
 
-    current_glucose = latest_glucose.data.get("value_mg_dl") if latest_glucose.data else None
+    # maybe_single() returns None (not a response with data=None) on zero
+    # rows — every account with no glucose/A1C history yet, i.e. most
+    # accounts right after the write-path 404 fix. Guard the response object
+    # itself, not just `.data` (see CLAUDE.md "maybe_single() returns None").
+    current_glucose = (
+        latest_glucose.data.get("value_mg_dl")
+        if latest_glucose and latest_glucose.data else None
+    )
     current_status = classify_glucose_status(current_glucose) if current_glucose else None
 
     return DashboardDataResponse(
         current_glucose=current_glucose,
         current_glucose_status=current_status,
-        a1c_latest=latest_a1c.data.get("value") if latest_a1c.data else None,
+        a1c_latest=(
+            latest_a1c.data.get("value") if latest_a1c and latest_a1c.data else None
+        ),
         today_insulin_total=insulin_total,
         readings_today=today_readings.count or 0
     )

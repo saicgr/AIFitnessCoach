@@ -5,7 +5,10 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
 
   // ── Helpers to access State<T> members through the mixin ──
   BuildContext get _ctx => (this as dynamic).context as BuildContext;
-  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
+  bool get _mounted => (this as dynamic).mounted as bool;
+  void _setState(VoidCallback fn) {
+    if (_mounted) (this as dynamic).setState(fn);
+  }
 
   /// Build the V2 MacroFactor-style active workout screen.
   Widget buildActiveWorkoutScreenV2(bool isDark, Color backgroundColor) {
@@ -780,11 +783,20 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
             // between-exercise RestTimerOverlay (which has its own Ask-AI
             // button) should hide it — otherwise the coach button vanished the
             // moment the user logged their first set.
+            //
+            // `right: 52` (not the usual 20): SetTrackingTable freezes its
+            // completion checkbox in the rightmost 44px of the row (12px row
+            // padding + 32px checkbox, see set_tracking_table.dart), and that
+            // column sits at the same on-screen x-band as this 56pt avatar
+            // when the active/last set row lands at this bottom offset — the
+            // avatar sat directly on top of the checkbox, blocking the tap
+            // that logs the set. 52 clears the checkbox's 44px span with an
+            // 8px buffer.
             if (!isRestingBetweenExercises && !hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
               Positioned(
                 key: AppTourKeys.workoutAiKey,
                 bottom: MediaQuery.of(context).padding.bottom + 100, // Above thumbnail strip (~80px height + padding)
-                right: 20,
+                right: 52,
                 child: buildFloatingAICoachButton(currentExercise),
               ),
           ],

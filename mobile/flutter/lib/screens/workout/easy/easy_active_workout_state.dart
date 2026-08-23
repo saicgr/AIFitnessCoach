@@ -907,6 +907,12 @@ class EasyActiveWorkoutScreenState
     HapticService.instance.tick();
   }
 
+  /// Felt-picker RIR selection for the set about to be logged (E2E #168).
+  void _setRir(int? v) {
+    setState(() => _perExercise[_currentIndex]!.rir = v);
+    HapticService.instance.tick();
+  }
+
   void _setDuration(double v) {
     setState(() => _perExercise[_currentIndex]!.durationSeconds = v.round());
     HapticService.instance.tick();
@@ -1310,9 +1316,13 @@ class EasyActiveWorkoutScreenState
           startedAt: original.startedAt,
           durationSeconds: original.durationSeconds,
           // Preserve the metric-bag + distance captured when the set was first
-          // logged — a weight/reps correction must not drop them.
+          // logged — a weight/reps correction must not drop them. Same for
+          // rir/rpe (E2E #168) — this dialog only edits weight/reps, so a
+          // correction must not silently null out the felt-picker rating.
           distanceMeters: original.distanceMeters,
           extraMetrics: original.extraMetrics,
+          rir: original.rir,
+          rpe: original.rpe,
           loggingMode: 'easy',
         );
         state.completed[idx] = updated;
@@ -1403,6 +1413,11 @@ class EasyActiveWorkoutScreenState
       distanceMeters: isDistance ? state.distanceMeters : null,
       extraMetrics: extraBag,
       loggingMode: 'easy',
+      // E2E #168: Easy previously had no path to collect effort at all. The
+      // felt picker writes RIR directly (see FeltBucket); RPE is the standard
+      // 10-RIR mirror so both columns feed progression the same as Advanced.
+      rir: state.rir,
+      rpe: state.rir != null ? (10 - state.rir!).clamp(0, 10) : null,
       notes: _pendingNoteText.trim().isNotEmpty
           ? [_pendingNoteText.trim()]
           : const [],
@@ -2174,6 +2189,7 @@ class EasyActiveWorkoutScreenState
       onRepsChanged: _setReps,
       onDurationChanged: _setDuration,
       onDistanceChanged: _setDistance,
+      onRirChanged: _setRir,
       onMetricChanged: _setExtraMetric,
       onAddMetric: _addMetric,
       onLogSet: _logCurrentSet,

@@ -364,6 +364,13 @@ class QueuedExercise(BaseModel):
     added_at: str
     expires_at: str
     used_at: Optional[str] = None
+    # Row 280: populated only for spent items (`used_at` set) whose
+    # destination workout is still upcoming, so the Queue tab can render
+    # "Added to Wed 19 Aug · Posterior Chain Focus" instead of presenting a
+    # spent item as pending.
+    used_in_workout_id: Optional[str] = None
+    used_in_workout_name: Optional[str] = None
+    used_in_workout_date: Optional[str] = None
 
 
 class QueueExerciseUpdateRequest(BaseModel):

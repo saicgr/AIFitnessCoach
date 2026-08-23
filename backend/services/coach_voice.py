@@ -364,6 +364,27 @@ _TEMPLATES: dict[str, dict[str, list[Template]]] = {
         ],
     },
 
+    # ── Quick-adjust no-op confirmation (E2E #146) ──────────────────────
+    # The "Adjust" decision tree can conclude nothing needs to change
+    # (no time pressure, no fatigue signal). Reusing quick_adjust_summary's
+    # variants here said "Got it — trimmed to..." / "ADJUSTED." even though
+    # nothing was trimmed or eased — a contradiction between the verdict and
+    # the confirmation. This is the honest no-mutation counterpart.
+    "quick_adjust_no_change": {
+        "body": [
+            Template("No changes needed — you've got this. ~{minutes} min left.",
+                     tags=frozenset({"neutral", "factual", "reserved"})),
+            Template("You're good as-is — keep going. ~{minutes} min left.",
+                     tags=frozenset({"warm", "supportive", "direct"})),
+            Template("NO CHANGES NEEDED. YOU'VE GOT THIS.",
+                     tags=frozenset({"hype", "loud", "intense"})),
+            Template("Nothing to adjust — you're set. Breathe and continue.",
+                     tags=frozenset({"calm", "reserved"})),
+            Template("All good bestie, no changes here — keep at it.",
+                     tags=frozenset({"casual", "playful"})),
+        ],
+    },
+
     # ── Weekly summary AI system-prompt addendum (Item 1 Gemini call) ───
     # Not user-facing copy — this gets prepended to the Gemini prompt in
     # _generate_ai_summary so the generated narrative sounds voiced. Only

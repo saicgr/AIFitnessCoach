@@ -46,6 +46,12 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
     _loadAICoachFeedback();
 
+    // The `/complete` call is still draining in the background (see
+    // `_runBackgroundCompletionSave`) — poll for its tracked calories once it
+    // has had time to land instead of leaving the ENERGY chip pinned to the
+    // pre-workout plan estimate forever.
+    _refreshResolvedCalories();
+
     // Workstream E4 — discover whether the user has a Strava connection so the
     // "Share to Strava" affordance can render. Best-effort; a failure just
     // leaves the affordance hidden.
@@ -94,6 +100,44 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
     }
   }
 
+  /// What the ENERGY chip (and every share surface) should render: the
+  /// server-tracked calories once `_refreshResolvedCalories` lands, else the
+  /// locally-stored plan estimate `widget.calories` passed at navigation
+  /// time. Single accessor so no surface can disagree with another.
+  int get _effectiveCalories => _resolvedCalories ?? widget.calories;
+
+  /// Poll `GET /workouts/{id}/completion-summary` for the calories the
+  /// `/complete` call derived from the sets the user actually logged
+  /// (`calories_kcal` / `calories_source: "tracked"`) — the same number
+  /// persisted to `workout_performance_summary.estimated_calories`. The
+  /// completion screen navigates before that background write finishes
+  /// (see `_runBackgroundCompletionSave` in workout_flow_mixin.dart), so a
+  /// short delay + one retry gives it time to land before giving up and
+  /// leaving the plan estimate on screen.
+  Future<void> _refreshResolvedCalories() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+    for (final delay in const [Duration(seconds: 2), Duration(seconds: 3)]) {
+      await Future.delayed(delay);
+      if (!mounted) return;
+      try {
+        final summary = await workoutRepo.getWorkoutCompletionSummary(workoutId);
+        final tracked = summary?.caloriesKcal;
+        if (summary != null &&
+            tracked != null &&
+            tracked > 0 &&
+            summary.caloriesSource == 'tracked') {
+          if (mounted && _resolvedCalories != tracked) {
+            setState(() => _resolvedCalories = tracked);
+          }
+          return;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [Complete] _refreshResolvedCalories attempt failed: $e');
+      }
+    }
+  }
 
   /// Show full-screen trophy celebration overlay
   void _showTrophyCelebration() {

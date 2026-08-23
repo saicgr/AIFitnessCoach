@@ -82,9 +82,12 @@ class ChatLanguageSection extends ConsumerWidget {
 
     final chatLocaleState = ref.watch(chatLocaleProvider);
     final selectedCode = chatLocaleState.locale?.languageCode;
-    final selectedName = _localeNames[selectedCode] ??
-        selectedCode ??
-        AppLocalizations.of(context).settingsChatLanguageSameAsApp;
+    // `_localeNames[null]` itself resolves to a real (English-only) string,
+    // so the `??` fallback chain below it never actually ran for the default
+    // state — check the null case first so the localized fallback is reachable.
+    final selectedName = selectedCode == null
+        ? AppLocalizations.of(context).settingsChatLanguageSameAsApp
+        : _localeNames[selectedCode] ?? selectedCode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +206,10 @@ class ChatLanguageSection extends ConsumerWidget {
                                     e.key;
                             return ListTile(
                               title: Text(
-                                e.value,
+                                e.key == null
+                                    ? AppLocalizations.of(ctx)
+                                        .settingsChatLanguageSameAsApp
+                                    : e.value,
                                 // Force LTR direction so RTL native scripts
                                 // (Arabic, Urdu) render correctly inside the
                                 // LTR picker shell.

@@ -2171,7 +2171,16 @@ async def library_program_schedule(
         else:
             raw_workouts = workouts_blob if isinstance(workouts_blob, list) else []
 
+        # Row 230: curated programs (no program_variants row) hit this branch,
+        # so their exercises previously shipped `exercise_id: null` unconditionally
+        # — no resolution was ever attempted here (unlike the variant path above).
+        # Reuse the same exact->fuzzy->RAG resolver the program importer uses to
+        # attach `exercise_id` at authoring time, so free-text names like
+        # "Bodyweight squat" resolve against exercise_library_cleaned here too.
+        _resolver = ExerciseResolver()
+
         days: List[Dict[str, Any]] = []
+        _resolved_ids: set = set()
         for wi, w in enumerate(raw_workouts):
             if not isinstance(w, dict):
                 continue
@@ -2183,11 +2192,24 @@ async def library_program_schedule(
                 ex_name = (
                     ex.get("exercise_name") or ex.get("name") or ""
                 ).strip()
+                try:
+                    _resolved_id = _resolver.resolve(ex_name).get("exercise_id") if ex_name else None
+                except Exception as re_:  # noqa: BLE001
+                    logger.warning("schedule: exercise_id resolution failed for %r: %s", ex_name, re_)
+                    _resolved_id = None
+                if _resolved_id:
+                    _resolved_ids.add(_resolved_id)
+                # Row 230: these used to be `str(...)` unconditionally, so a
+                # client reading this payload got `"sets": "2"` even though the
+                # authored data is a real JSON number. `reps` genuinely mixes
+                # numbers with descriptive text, so it keeps its stored type.
+                _raw_sets = ex.get("sets")
+                _raw_reps = ex.get("reps")
                 exercises_out.append({
-                    "exercise_id": None,
+                    "exercise_id": _resolved_id,
                     "name": ex_name,
-                    "sets": str(ex.get("sets") or "") or None,
-                    "reps": str(ex.get("reps") or "") or None,
+                    "sets": int(_raw_sets) if isinstance(_raw_sets, (int, float)) else (str(_raw_sets) if _raw_sets else None),
+                    "reps": _raw_reps if isinstance(_raw_reps, (int, float, str)) and _raw_reps != "" else None,
                     "duration": str(ex.get("duration") or "") or None,
                     "rest_seconds": ex.get("rest_seconds"),
                     "duration_seconds": ex.get("duration_seconds"),
@@ -2213,6 +2235,33 @@ async def library_program_schedule(
                 "workout_type": w.get("type"),
                 "exercises": exercises_out,
             })
+
+        # Now that every slot's exercise_id is resolved, batch-fetch media so a
+        # curated program with a real library match no longer ships the
+        # generic placeholder (row 221) for exercises the RAG/importer path
+        # already knows how to find.
+        if _resolved_ids:
+            try:
+                _media_resp = (
+                    db.client.table("exercise_library")
+                    .select("id, image_s3_path, video_s3_path, gif_url")
+                    .in_("id", list(_resolved_ids))
+                    .execute()
+                )
+                _media_by_id = {str(r["id"]): r for r in (_media_resp.data or [])}
+            except Exception as me_:  # noqa: BLE001
+                logger.warning("schedule: curated media fetch failed: %s", me_)
+                _media_by_id = {}
+            if _media_by_id:
+                for _day in days:
+                    for _ex_out in _day["exercises"]:
+                        _eid = _ex_out.get("exercise_id")
+                        _row = _media_by_id.get(_eid) if _eid else None
+                        if not _row:
+                            continue
+                        _ex_out["image_url"] = _presign_s3_path(_row.get("image_s3_path"))
+                        _ex_out["video_url"] = _presign_s3_path(_row.get("video_s3_path"))
+                        _ex_out["gif_url"] = _row.get("gif_url")
 
         # Wrap the single plan as week 1 so the response shape is consistent.
         return {

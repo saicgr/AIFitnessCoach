@@ -17197,6 +17197,18 @@ class AppLocalizationsKn extends AppLocalizations {
   String get homeLogMeal => 'ಊಟ ದಾಖಲಿಸಿ';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'ಹೆಚ್ಚು';
 
   @override
@@ -22835,6 +22847,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get milestonesYourRoi => 'ನಿಮ್ಮ ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'ಜಿಮ್ ಪ್ರೊಫೈಲ್ ಬದಲಾಯಿಸಿ';
 
   @override
@@ -22846,10 +22861,16 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'ವಾರದ ಪಟ್ಟಿಯನ್ನು ವಿಸ್ತರಿಸಿ';
 
   @override
   String get minimalHeaderHideDayStrip => 'ದಿನದ ಪಟ್ಟಿಯನ್ನು ಮರೆಮಾಡಿ';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'ನನ್ನ ಜಾಗ';
@@ -33546,6 +33567,15 @@ class AppLocalizationsKn extends AppLocalizations {
   String get ringLabelWeight => 'ತೂಕ';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'ಕ್ಯಾಲೋರಿಗಳು';
 
   @override
@@ -35230,9 +35260,24 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return '$url ತೆರೆಯಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'ಚೇತನ್ ಅವರಿಂದ ಒಂದು ಟಿಪ್ಪಣಿ';
@@ -35293,6 +35338,9 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek ದಿನಗಳು';
   }
@@ -35309,6 +35357,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return 'Zealova v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹುಡುಕಿ';
@@ -36209,6 +36260,11 @@ class AppLocalizationsKn extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · $durationMinutesನಿಮಿಷ · $exercisesCount ವ್ಯಾಯಾಮಗಳು';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

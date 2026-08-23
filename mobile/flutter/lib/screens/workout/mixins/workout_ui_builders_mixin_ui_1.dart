@@ -5,7 +5,10 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
 
   // ── Helpers to access State<T> members through the mixin ──
   BuildContext get _ctx => (this as dynamic).context as BuildContext;
-  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
+  bool get _mounted => (this as dynamic).mounted as bool;
+  void _setState(VoidCallback fn) {
+    if (_mounted) (this as dynamic).setState(fn);
+  }
 
   // ── UI Builder Methods ──
 

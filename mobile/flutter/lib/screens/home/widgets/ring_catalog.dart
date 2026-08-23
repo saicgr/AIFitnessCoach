@@ -313,6 +313,21 @@ extension RingKindX on RingKind {
     }
   }
 
+  /// Localized tile kicker — what a Home metric tile's number actually IS,
+  /// which for a few rings differs from the ring's own scored label (see
+  /// `_kTileKickerOverrides` in `home_metric_tiles_provider.dart`): Move's
+  /// tile says "Steps", Hydration's says "Water", Recovery's says "Ready".
+  /// Every other ring's tile kicker is just its own [localizedLabel].
+  String localizedTileKickerLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    switch (this) {
+      case RingKind.move: return l10n.ringTileKickerSteps;
+      case RingKind.hydration: return l10n.ringTileKickerWater;
+      case RingKind.recovery: return l10n.ringTileKickerReady;
+      default: return localizedLabel(context);
+    }
+  }
+
   static RingKind? fromId(String id) {
     for (final entry in kRingCatalog.entries) {
       if (entry.value.id == id) return entry.key;

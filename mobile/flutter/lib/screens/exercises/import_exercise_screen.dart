@@ -737,33 +737,11 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
     required String contentType,
   }) async {
     final chatRepo = ref.read(chatRepositoryProvider);
-    final size = await file.length();
-    final filename = file.path.split('/').last;
     if (kDebugMode) {
       debugPrint(
-          '🔍 [ImportExercise] Presigning $filename ($contentType, $size bytes)');
+          '🔍 [ImportExercise] Presigning ${file.path.split('/').last} ($contentType)');
     }
-    // "image" / "video" discriminator for the backend presign endpoint.
-    final mediaType = contentType.startsWith('video') ? 'video' : 'image';
-    final presign = await chatRepo.getPresignedUrl(
-      filename: filename,
-      contentType: contentType,
-      mediaType: mediaType,
-      expectedSizeBytes: size,
-    );
-    final url = presign['presigned_url'] as String? ?? presign['url'] as String?;
-    final fields = presign['presigned_fields'] as Map?;
-    final s3Key = presign['s3_key'] as String?;
-    if (url == null || s3Key == null) {
-      throw Exception('Malformed presign response');
-    }
-    await chatRepo.uploadToS3(
-      presignedUrl: url,
-      fields: fields?.map((k, v) => MapEntry(k.toString(), v)),
-      file: file,
-      contentType: contentType,
-    );
-    return s3Key;
+    return chatRepo.presignAndUploadFile(file: file, contentType: contentType);
   }
 
   Future<void> _pollVideoJob(String jobId) async {

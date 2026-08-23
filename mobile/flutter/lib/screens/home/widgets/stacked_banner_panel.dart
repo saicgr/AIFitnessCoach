@@ -316,10 +316,12 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         type: BannerType.missedWorkout,
         id: 'missed_${workout.id}',
         icon: Icons.schedule_rounded,
-        title: 'Missed: ${_formatWorkoutType(workout.type)}',
-        subtitle: '${workout.missedDescription} · ${workout.durationMinutes}min · ${workout.exercisesCount} exercises',
+        title: AppLocalizations.of(context).stackedBannerPanelMissedColon(
+            _formatWorkoutType(workout.type)),
+        subtitle: AppLocalizations.of(context).stackedBannerPanelMinExercises(
+            workout.durationMinutes, workout.exercisesCount, workout.missedDescription),
         accentColor: context.accentColor,
-        actionLabel: 'Do Today',
+        actionLabel: AppLocalizations.of(context).missedWorkoutBannerDoToday,
         onAction: () => _handleDoToday(workout),
         onTap: () => _handleDoToday(workout),
         payload: workout,

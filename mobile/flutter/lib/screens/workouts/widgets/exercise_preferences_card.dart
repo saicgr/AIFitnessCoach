@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart'
+    show kFloatCircleDiameter, kFabClusterEdgeInset;
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/avoided_provider.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
@@ -301,6 +303,12 @@ class _ExercisePreferencesCardState
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
+                  // This row lands directly under the bottom-right coach FAB
+                  // when the card is expanded from a short scroll offset,
+                  // covering its chevron tap target. Reserve the FAB's
+                  // (collapsed, mid-scroll) footprint on the right so the row
+                  // never renders under it.
+                  reserveForFab: true,
                 ),
                 _buildPreferenceItem(
                   context,
@@ -635,6 +643,7 @@ class _ExercisePreferencesCardState
     required Color textPrimary,
     required Color textMuted,
     bool isLast = false,
+    bool reserveForFab = false,
   }) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
@@ -646,7 +655,12 @@ class _ExercisePreferencesCardState
             onTap();
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              12,
+              reserveForFab ? 16 + kFloatCircleDiameter + kFabClusterEdgeInset : 16,
+              12,
+            ),
             child: Row(
               children: [
                 Icon(icon, size: 20, color: textMuted),

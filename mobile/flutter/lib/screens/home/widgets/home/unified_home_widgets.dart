@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/chrome_constants.dart'
+    show kFabClusterHorizontalReserve;
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/widgets/line_icon.dart';
@@ -1596,7 +1598,17 @@ class HomeFuelStrip extends ConsumerWidget {
     // back to the full card the moment the first log lands.
     if (nutrition.logs.isEmpty) {
       return Padding(
-        padding: kHomeHPad,
+        // Right-inset beyond the usual kHomeHPad: on a near-empty Home (the
+        // account this compact line is for) this strip can be the last thing
+        // on screen, sitting directly under the fixed bottom-right coach +
+        // Quick Log FAB cluster, which covered the "0"/"KCAL" figures and
+        // swallowed taps meant for this row.
+        padding: EdgeInsets.fromLTRB(
+          kHomeHPad.horizontal / 2,
+          0,
+          kHomeHPad.horizontal / 2 + kFabClusterHorizontalReserve,
+          0,
+        ),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {

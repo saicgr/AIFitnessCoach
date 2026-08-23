@@ -647,6 +647,13 @@ async def complete_workout(
                     total_reps += ex_reps
                     total_volume += ex_volume
                     exercises_performance.append(entry)
+                if workout_log_id is not None and total_sets == 0:
+                    # sets_json was non-empty but every entry was an unlogged/
+                    # zero-filled placeholder (is_completed: false) — the "23
+                    # sets · 0 reps" case. No real work was done, so this must
+                    # not fall through to the elapsed-time calorie estimate
+                    # below any more than the genuinely-empty-list case does.
+                    no_sets_tracked = True
             elif workout_log_id is not None and isinstance(logged_sets_json, list):
                 # A workout_logs session row exists for this workout, but its
                 # sets_json is an empty list — the user tracked the session

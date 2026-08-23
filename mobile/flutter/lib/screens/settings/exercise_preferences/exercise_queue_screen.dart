@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -64,17 +63,19 @@ class ExerciseQueueScreen extends ConsumerWidget {
 
     final queueState = ref.watch(exerciseQueueProvider);
     final activeQueue = queueState.activeQueue;
+    final addedToUpcoming = queueState.addedToUpcoming;
 
     final body = queueState.isLoading
         // Cache-first: layout-matched skeleton on the cold first load only;
         // re-opens render instantly from the retained app-scoped provider.
         ? _buildSkeleton()
-        : activeQueue.isEmpty
+        : (activeQueue.isEmpty && addedToUpcoming.isEmpty)
             ? _buildEmptyState(context, ref, textMuted)
             : _buildQueueList(
                 context,
                 ref,
                 activeQueue,
+                addedToUpcoming,
                 isDark,
                 textPrimary,
                 textMuted,
@@ -188,6 +189,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<QueuedExercise> queue,
+    List<QueuedExercise> addedToUpcoming,
     bool isDark,
     Color textPrimary,
     Color textMuted,
@@ -282,6 +284,38 @@ class ExerciseQueueScreen extends ConsumerWidget {
             },
           ),
         ),
+
+        // "Added to upcoming" — spent items (row 280): already injected into
+        // a specific upcoming workout, so shown with their real destination
+        // instead of staying numbered among the pending list above.
+        if (addedToUpcoming.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Added to upcoming',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...addedToUpcoming.map(
+                  (item) => _AddedToUpcomingTile(
+                    key: ValueKey(item.id),
+                    item: item,
+                    isDark: isDark,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    elevated: elevated,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -433,5 +467,79 @@ class _QueuedExerciseTile extends StatelessWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}';
+  }
+}
+
+/// Row for a spent queue item whose destination workout is still upcoming
+/// (row 280) — shows "Added to `date` · `workout name`" instead of the
+/// numbered pending tile, and offers no drag/delete since the exercise is
+/// already committed to that workout.
+class _AddedToUpcomingTile extends StatelessWidget {
+  final QueuedExercise item;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color elevated;
+
+  const _AddedToUpcomingTile({
+    super.key,
+    required this.item,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textMuted,
+    required this.elevated,
+  });
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  String _formatDate(DateTime date) => '${_months[date.month - 1]} ${date.day}';
+
+  @override
+  Widget build(BuildContext context) {
+    final workoutDate = item.usedInWorkoutDate;
+    final destination = [
+      if (workoutDate != null) _formatDate(workoutDate),
+      if (item.usedInWorkoutName != null) item.usedInWorkoutName!,
+    ].join(' · ');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: elevated.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Center(
+            child: Icon(Icons.check, color: AppColors.success),
+          ),
+        ),
+        title: Text(
+          item.exerciseName,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+        subtitle: Text(
+          destination.isEmpty ? 'Added to an upcoming workout' : 'Added to $destination',
+          style: TextStyle(
+            fontSize: 12,
+            color: textMuted,
+          ),
+        ),
+      ),
+    );
   }
 }

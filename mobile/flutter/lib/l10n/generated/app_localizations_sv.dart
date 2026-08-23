@@ -17012,6 +17012,18 @@ class AppLocalizationsSv extends AppLocalizations {
   String get homeLogMeal => 'Logga måltid';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'Mer';
 
   @override
@@ -22595,6 +22607,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get milestonesYourRoi => 'Din ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'Ändra gymprofil';
 
   @override
@@ -22606,10 +22621,16 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'Expandera veckovy';
 
   @override
   String get minimalHeaderHideDayStrip => 'Dölj dagvy';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'Mitt utrymme';
@@ -33146,6 +33167,15 @@ class AppLocalizationsSv extends AppLocalizations {
   String get ringLabelWeight => 'Vikt';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'Kalorier';
 
   @override
@@ -34819,9 +34849,24 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return 'Kunde inte öppna $url';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Ett meddelande från Chetan';
@@ -34881,6 +34926,9 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek dagar';
   }
@@ -34896,6 +34944,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'Sök i inställningar';
@@ -35787,6 +35838,11 @@ class AppLocalizationsSv extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · ${durationMinutes}min · $exercisesCount övningar';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

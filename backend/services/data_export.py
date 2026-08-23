@@ -24,6 +24,7 @@ import pandas as pd
 from core import branding
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, utc_to_local_date
 
 logger = get_logger(__name__)
 
@@ -40,7 +41,11 @@ _PORTABILITY_TABLES: List[Dict[str, Any]] = [
     {"name": "chat_history", "date_col": "timestamp", "limit": 10000},
     {"name": "food_logs", "date_col": "logged_at", "limit": 10000},
     {"name": "progress_photos", "date_col": "taken_at", "limit": 2000},
-    {"name": "nutrition_summaries", "date_col": "summary_date", "limit": 2000},
+    # "nutrition_summaries" is NOT a real table (register #198) — there is no
+    # daily nutrition roll-up table/view anywhere in the schema. Rather than
+    # querying a name that will always 404 into an empty CSV, it's derived
+    # in `_collect_portability_tables` below by aggregating `food_logs` per
+    # local calendar day, right after food_logs is fetched in this same pass.
     {"name": "user_ai_settings", "date_col": None, "limit": 10},
     {"name": "injuries", "date_col": "reported_at", "limit": 500},
     {"name": "habits", "date_col": None, "limit": 500},
@@ -191,6 +196,43 @@ def _fetch_portability_table(
         return []
 
 
+_NUTRITION_SUMMARY_SUM_FIELDS = (
+    "total_calories", "protein_g", "carbs_g", "fat_g",
+    "fiber_g", "sugar_g", "sodium_mg",
+)
+
+
+def _derive_nutrition_summaries(
+    db, user_id: str, food_log_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Daily nutrition roll-up, derived from `food_logs` at export time.
+
+    There is no `nutrition_summaries` table/view anywhere in the schema
+    (register #198) — querying that name always 404s into a silently empty
+    CSV. Rather than ship an unresolvable source, this aggregates the same
+    `food_logs` rows the export already fetched into one row per LOCAL
+    calendar day (never a UTC-date bucketing of a timestamptz column — see
+    the CLAUDE.md "Local-day windows" gate), matching what a real daily
+    summary table would have held.
+    """
+    if not food_log_rows:
+        return []
+    tz = resolve_timezone(None, db, user_id)
+    by_day: Dict[str, Dict[str, Any]] = {}
+    for row in food_log_rows:
+        day = utc_to_local_date(row.get("logged_at"), tz)
+        if not day:
+            continue
+        bucket = by_day.setdefault(day, {
+            "summary_date": day, "entries_count": 0,
+            **{f: 0 for f in _NUTRITION_SUMMARY_SUM_FIELDS},
+        })
+        bucket["entries_count"] += 1
+        for field in _NUTRITION_SUMMARY_SUM_FIELDS:
+            bucket[field] += row.get(field) or 0
+    return sorted(by_day.values(), key=lambda r: r["summary_date"], reverse=True)
+
+
 def _collect_portability_tables(
     user_id: str,
     start_date: Optional[str],
@@ -211,6 +253,10 @@ def _collect_portability_tables(
         )
         out[spec["name"]] = rows
         logger.info(f"  ✓ {spec['name']}: {len(rows)} rows")
+    out["nutrition_summaries"] = _derive_nutrition_summaries(
+        db, user_id, out.get("food_logs") or [],
+    )
+    logger.info(f"  ✓ nutrition_summaries: {len(out['nutrition_summaries'])} rows (derived)")
     return out
 
 

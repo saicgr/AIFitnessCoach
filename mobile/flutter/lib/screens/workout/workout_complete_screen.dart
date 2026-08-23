@@ -342,6 +342,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   int? _saunaMinutes;
   int? _saunaCalories;
 
+  // Server-tracked calories once the background `/complete` write lands
+  // (see `_refreshResolvedCalories`). Null until then — `_effectiveCalories`
+  // falls back to `widget.calories` (the locally-stored plan estimate) so the
+  // ENERGY chip renders instantly and silently upgrades to the real tracked
+  // number instead of staying pinned to the plan estimate forever.
+  int? _resolvedCalories;
+
   // Optional post-workout photo (Workstream C). Local file path of the picked
   // image — set immediately on capture so the Share flow can pre-select it via
   // Shareable.customPhotoPath, while the S3 upload runs in the background.

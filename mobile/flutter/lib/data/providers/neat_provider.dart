@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../../core/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/neat.dart';
@@ -117,11 +118,13 @@ class NeatState {
 // NEAT Notifier
 // ============================================
 
-class NeatNotifier extends StateNotifier<NeatState> {
+class NeatNotifier extends StateNotifier<NeatState> with CacheFirstMixin {
   final NeatRepository _repository;
   String? _currentUserId;
 
   NeatNotifier(this._repository) : super(const NeatState());
+
+  static const int _dashboardSchemaVersion = 1;
 
   /// Set user ID for this session
   void setUserId(String userId) {
@@ -132,7 +135,12 @@ class NeatNotifier extends StateNotifier<NeatState> {
   // Dashboard Loading
   // -------------------------------------------------------------------------
 
-  /// Load complete dashboard data
+  /// Load complete dashboard data.
+  ///
+  /// Instant-load standard (Part 2): the /neat dashboard used to sit on a
+  /// wall of skeleton cards for the full round trip because this notifier
+  /// lived only in memory. Disk-cache-first (via [CacheFirstMixin]) paints
+  /// today's last-seen dashboard instantly, then a fresh copy replaces it.
   Future<void> loadDashboard({String? userId}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) {
@@ -143,26 +151,43 @@ class NeatNotifier extends StateNotifier<NeatState> {
 
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      final dashboard = await _repository.getNeatDashboard(uid);
-      state = state.copyWith(
-        dashboard: dashboard,
-        todayScore: dashboard.todayScore,
-        currentGoal: dashboard.stepGoal,
-        hourlyBreakdown: dashboard.hourlyBreakdown,
-        streaks: dashboard.streaks,
-        achievements: dashboard.recentAchievements,
-        weeklySummary: dashboard.weeklySummary,
-        isLoading: false,
-      );
-      debugPrint('\u{1F6B6} [NeatProvider] Dashboard loaded - steps: ${dashboard.todayScore?.totalSteps ?? 0}');
-    } catch (e) {
-      debugPrint('\u274C [NeatProvider] Error loading dashboard: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load activity data: $e',
-      );
-    }
+    await loadCacheFirst<NeatDashboard>(
+      cacheKey: 'neat_dashboard',
+      userId: uid,
+      ttl: const Duration(hours: 12),
+      schemaVersion: _dashboardSchemaVersion,
+      localDateScoped: true,
+      fetch: () => _repository.getNeatDashboard(uid),
+      decode: NeatDashboard.fromJson,
+      encode: (d) => d.toJson(),
+      emit: (dashboard, {required bool fromCache}) {
+        if (!mounted) return;
+        state = state.copyWith(
+          dashboard: dashboard,
+          todayScore: dashboard.todayScore,
+          currentGoal: dashboard.stepGoal,
+          hourlyBreakdown: dashboard.hourlyBreakdown,
+          streaks: dashboard.streaks,
+          achievements: dashboard.recentAchievements,
+          weeklySummary: dashboard.weeklySummary,
+          isLoading: false,
+        );
+        debugPrint(
+            '\u{1F6B6} [NeatProvider] Dashboard ${fromCache ? "cache" : "loaded"} - steps: ${dashboard.todayScore?.totalSteps ?? 0}');
+      },
+      onError: (e, st) {
+        debugPrint('\u274C [NeatProvider] Error loading dashboard: $e');
+        if (!mounted) return;
+        if (state.dashboard == null) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Failed to load activity data: $e',
+          );
+        } else {
+          state = state.copyWith(isLoading: false);
+        }
+      },
+    );
   }
 
   // -------------------------------------------------------------------------

@@ -663,7 +663,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _LanguagePickerSheet(
-        items: {null: 'Same as app language', ..._kSettingsLocaleNames.entries
+        items: {null: AppLocalizations.of(context).settingsChatLanguageSameAsApp, ..._kSettingsLocaleNames.entries
             .where((e) => e.key != null)
             .fold<Map<String?, String>>({}, (m, e) {
               m[e.key] = e.value;

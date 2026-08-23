@@ -123,6 +123,12 @@ class QuizLimitations extends StatefulWidget {
   /// "None" is the only selection, so the safe default reads as intentional.
   final bool smartDefaults;
 
+  /// Gender answered so far (null until the user picks one). The body map
+  /// below only has a single anatomical figure, so this is asked here —
+  /// before the map is shown — rather than several screens later.
+  final String? gender;
+  final ValueChanged<String>? onGenderChanged;
+
   const QuizLimitations({
     super.key,
     required this.selectedLimitations,
@@ -131,6 +137,8 @@ class QuizLimitations extends StatefulWidget {
     this.onCustomLimitationChanged,
     this.showHeader = true,
     this.smartDefaults = true,
+    this.gender,
+    this.onGenderChanged,
   });
 
   @override
@@ -251,6 +259,13 @@ class _QuizLimitationsState extends State<QuizLimitations> {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+                // Ask gender before the body map renders, if not already
+                // known — see [QuizLimitations.gender].
+                if (widget.gender == null && widget.onGenderChanged != null) ...[
+                  _buildGenderPrompt(context, t),
+                  const SizedBox(height: 16),
+                ],
+
                 // Visual body map — secondary control that mirrors the chips.
                 _buildBodyMap(t),
                 const SizedBox(height: 20),
@@ -412,15 +427,90 @@ class _QuizLimitationsState extends State<QuizLimitations> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: t.borderDefault, width: 1),
           ),
-          child: BodyMuscleSelectorWidget(
-            key: ValueKey('injury_body_$keySig'),
-            height: 260,
-            selectedMuscles: highlighted,
-            onMuscleToggle: _onBodyMuscleToggle,
+          child: Column(
+            children: [
+              BodyMuscleSelectorWidget(
+                key: ValueKey('injury_body_$keySig'),
+                height: 260,
+                selectedMuscles: highlighted,
+                onMuscleToggle: _onBodyMuscleToggle,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                // Plain English, not localized — same precedent as the
+                // chip labels above (_limitationOptions).
+                'General anatomical reference diagram',
+                style: TextStyle(fontSize: 11, color: t.textSecondary),
+              ),
+            ],
           ),
         ),
       ),
     ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.04);
+  }
+
+  /// A short gender prompt shown above the body map the first time this
+  /// screen is reached without a gender already on file — the map has one
+  /// figure, so this is asked ahead of it rather than several screens later.
+  Widget _buildGenderPrompt(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'One quick one before the body diagram — your gender',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: t.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _buildGenderChip(t, 'male', l10n.quizPersonalizationGateMale),
+              const SizedBox(width: 8),
+              _buildGenderChip(t, 'female', l10n.quizPersonalizationGateFemale),
+              const SizedBox(width: 8),
+              _buildGenderChip(t, 'other', l10n.selectableChipOther),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 150.ms);
+  }
+
+  Widget _buildGenderChip(OnboardingTheme t, String value, String label) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onGenderChanged?.call(value);
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              color: t.cardFill,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: t.borderDefault, width: 1),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: t.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLimitationChip(OnboardingTheme t, String id, String label, Duration delay) {

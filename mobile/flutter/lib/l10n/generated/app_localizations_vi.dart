@@ -17073,6 +17073,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeLogMeal => 'Ghi bữa ăn';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'Thêm';
 
   @override
@@ -22672,6 +22684,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get milestonesYourRoi => 'ROI của bạn';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'Thay đổi hồ sơ phòng tập';
 
   @override
@@ -22683,10 +22698,16 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'Mở rộng thanh tuần';
 
   @override
   String get minimalHeaderHideDayStrip => 'Ẩn thanh ngày';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'Không gian của tôi';
@@ -33306,6 +33327,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get ringLabelWeight => 'Cân nặng';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'Calo';
 
   @override
@@ -34977,9 +35007,24 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return 'Không thể mở $url';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Một lời nhắn từ Chetan';
@@ -35038,6 +35083,9 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek ngày';
   }
@@ -35053,6 +35101,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'Tìm kiếm cài đặt';
@@ -35948,6 +35999,11 @@ class AppLocalizationsVi extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · ${durationMinutes}phút · $exercisesCount bài tập';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

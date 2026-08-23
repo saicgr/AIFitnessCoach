@@ -17,6 +17,13 @@ class ExerciseQueueState {
   late final Set<String> queuedNames =
       activeQueue.map((q) => q.exerciseName.toLowerCase()).toSet();
 
+  /// Spent items whose destination workout hasn't happened yet (row 280) —
+  /// shown in their own "Added to upcoming" section instead of counted
+  /// among the pending queue.
+  late final List<QueuedExercise> addedToUpcoming =
+      (queue.where((q) => q.isAddedToUpcoming).toList()
+        ..sort((a, b) => (a.usedAt ?? a.addedAt).compareTo(b.usedAt ?? b.addedAt)));
+
   ExerciseQueueState({
     this.queue = const [],
     this.isLoading = false,

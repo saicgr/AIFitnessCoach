@@ -28,7 +28,7 @@ import '../../core/stats/state_valence.dart';
 import '../../core/utils/weight_utils.dart';
 import '../../services/score_history_service.dart';
 import '../models/metric_value.dart';
-import '../models/today_score.dart' show ContributorKindMeta;
+import '../models/today_score.dart' show ContributorKind, ContributorKindMeta;
 import '../models/weekly_plan.dart' show DayType;
 import '../services/health_service.dart' show healthSyncProvider;
 import 'branded_program_provider.dart' show activeUserProgramProvider;
@@ -130,7 +130,13 @@ MetricDeviation? computeMetricDeviation(
 /// how much of that share is already banked.
 @immutable
 class MetricScoreSegment {
-  /// Short contributor label — TRAIN, NOURISH, MOVE, SLEEP.
+  /// Which contributor this slice is — lets the rendering layer resolve a
+  /// localized label (see [ContributorKindMeta.label] for the English
+  /// fallback this is built from).
+  final ContributorKind kind;
+
+  /// Short contributor label — TRAIN, NOURISH, MOVE, SLEEP. English; the
+  /// rendering layer prefers a localized label resolved from [kind].
   final String label;
 
   /// Points this contributor is worth today, out of 100.
@@ -140,6 +146,7 @@ class MetricScoreSegment {
   final double fill;
 
   const MetricScoreSegment({
+    required this.kind,
     required this.label,
     required this.weight,
     required this.fill,
@@ -648,6 +655,7 @@ final metricScoreSegmentsProvider = Provider<List<MetricScoreSegment>>((ref) {
     for (final c in score.contributors)
       if (c.applicable)
         MetricScoreSegment(
+          kind: c.kind,
           label: c.kind.label,
           weight: (c.effectiveWeight * 100).round(),
           fill: c.completion.clamp(0.0, 1.0),

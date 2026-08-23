@@ -468,7 +468,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _shortDate(DateTime d) => '${_monthsShort[d.month - 1]} ${d.day}';
 
   // --- Helper: split display name ---
-  String _splitDisplayName(String split) {
+  String _splitDisplayName(BuildContext context, String split) {
     switch (split) {
       case 'push_pull_legs':
         return 'PPL';
@@ -480,7 +480,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return 'Bro Split';
       case 'dont_know':
       case 'ai_decide':
-        return 'AI Decides';
+        return AppLocalizations.of(context).settingsScreenAiDecidesSplit;
       default:
         return split.replaceAll('_', ' ');
     }
@@ -628,7 +628,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
 
     // Training split + days display
-    final splitName = _splitDisplayName(trainingPrefs.trainingSplit);
+    final splitName = _splitDisplayName(context, trainingPrefs.trainingSplit);
     final daysPerWeek = authState.user?.workoutsPerWeek ?? 4;
 
     // Vacation mode subtitle — shows scheduled range, active state, or Off.
@@ -644,16 +644,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final chatLocaleCode = ref.watch(chatLocaleProvider).locale?.languageCode;
     final chatLocaleName = chatLocaleCode != null
         ? (_kSettingsLocaleNames[chatLocaleCode] ?? chatLocaleCode)
-        : 'Same as app language';
+        : AppLocalizations.of(context).settingsScreenSameAsAppLanguage;
 
     // Workout-UI mode (Easy / Simple / Advanced) — shared with Profile,
     // Workouts tab, and the active-workout top bar via workoutUiModeProvider.
     final workoutUiMode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
     final workoutUiModeSubtitle = switch (workoutUiMode) {
-      WorkoutUiMode.easy => 'Easy · Full tracking',
+      WorkoutUiMode.easy => AppLocalizations.of(context).settingsScreenEasyFullTracking,
       // ignore: deprecated_member_use_from_same_package
-      WorkoutUiMode.simple => 'Easy · Full tracking',
-      WorkoutUiMode.advanced => 'Advanced · All tools',
+      WorkoutUiMode.simple => AppLocalizations.of(context).settingsScreenEasyFullTracking,
+      WorkoutUiMode.advanced => AppLocalizations.of(context).settingsScreenAdvancedAllTools,
     };
     final workoutUiModeAccent =
         AccentColorScope.of(context).getColor(isDark);
@@ -682,7 +682,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.speed,
             iconColor: context.accentColor,
             title: AppLocalizations.of(context).workoutSettingsWorkoutSettings,
-            value: '$splitName \u00B7 $daysPerWeek days',
+            value: AppLocalizations.of(context).settingsScreenUBDays(daysPerWeek, splitName),
             route: '/settings/workout-settings',
             sectionKeys: const ['training'],
           ),
@@ -748,7 +748,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.psychology_outlined,
             iconColor: context.accentColor,
-            title: 'Coach memory',
+            title: AppLocalizations.of(context).settingsScreenCoachMemory,
             value: 'View & manage what your AI coach remembers',
             route: '/settings/coach-memory',
             sectionKeys: const [
@@ -758,7 +758,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.hub_outlined,
             iconColor: isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: informational state - must stay blue regardless of accent
-            title: 'AI Integrations',
+            title: AppLocalizations.of(context).settingsScreenAiIntegrations,
             value: 'Claude, ChatGPT, Cursor',
             route: '/settings/ai-integrations',
             sectionKeys: const ['ai_integrations', 'mcp', 'claude', 'chatgpt', 'cursor'],
@@ -798,7 +798,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.beach_access_rounded,
             iconColor: const Color(0xFF4FC3F7),  // accent-allowlist: Vacation Mode's own thematic feature colour (beach blue), consistent within this feature, not the app accent
-            title: 'Vacation Mode',
+            title: AppLocalizations.of(context).settingsScreenVacationMode,
             value: vacationModeValue,
             route: '/settings/vacation-mode',
             sectionKeys: const ['vacation', 'pause', 'notifications', 'comeback', 'away'],

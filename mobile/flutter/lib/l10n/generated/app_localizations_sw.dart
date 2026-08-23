@@ -17114,6 +17114,18 @@ class AppLocalizationsSw extends AppLocalizations {
   String get homeLogMeal => 'Ingiza chakula';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'Zaidi';
 
   @override
@@ -22726,6 +22738,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get milestonesYourRoi => 'ROI Yako';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'Badilisha wasifu wa gym';
 
   @override
@@ -22737,10 +22752,16 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'Panua utepe wa wiki';
 
   @override
   String get minimalHeaderHideDayStrip => 'Ficha utepe wa siku';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'Nafasi Yangu';
@@ -33365,6 +33386,15 @@ class AppLocalizationsSw extends AppLocalizations {
   String get ringLabelWeight => 'Uzito';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'Kalori';
 
   @override
@@ -35042,9 +35072,24 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return 'Imeshindwa kufungua $url';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Ujumbe kutoka kwa Chetan';
@@ -35104,6 +35149,9 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek siku';
   }
@@ -35120,6 +35168,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'Tafuta mipangilio';
@@ -36017,6 +36068,11 @@ class AppLocalizationsSw extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · ${durationMinutes}dak · mazoezi $exercisesCount';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

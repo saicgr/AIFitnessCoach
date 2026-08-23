@@ -12443,6 +12443,13 @@
       }
     }
   },
+  "@stackedBannerPanelMissedColon": {
+    "placeholders": {
+      "workoutType": {
+        "type": "Object"
+      }
+    }
+  },
   "@stackedBannerPanelRenewsInDaysFor": {
     "placeholders": {
       "days": {
@@ -20283,6 +20290,10 @@
   "homeGreetingMorning_v4": "¿Madrugando, {name}?",
   "homeGreetingMorning_v5": "Bienvenido de nuevo, {name}",
   "homeLogMeal": "Registrar comida",
+  "homeMetricTileNextSession": "Próxima sesión",
+  "homeMetricTileOfHundred": "de 100",
+  "homeMetricTileToGoal": "Para la meta",
+  "homeMetricTileTodayScore": "Puntuación de hoy",
   "homeMore": "Más",
   "homeMySpaceApply": "Aplicar",
   "homeMySpaceCurrentLayout": "● Diseño actual",
@@ -21858,10 +21869,13 @@
   "milestonesTotalWorkouts": "Entrenamientos totales",
   "milestonesYourJourney": "Tu trayectoria",
   "milestonesYourRoi": "Tu ROI",
+  "minimalHeaderAfternoon": "Tarde",
   "minimalHeaderChangeGymProfile": "Cambiar perfil de gimnasio",
   "minimalHeaderD": "{streakDays}d",
+  "minimalHeaderEvening": "Noche",
   "minimalHeaderExpandWeekStrip": "Expandir franja semanal",
   "minimalHeaderHideDayStrip": "Ocultar franja diaria",
+  "minimalHeaderMorning": "Mañana",
   "minimalHeaderMySpace": "Mi espacio",
   "minimalHeaderShowDayStrip": "Mostrar franja diaria",
   "missedWorkoutBannerDoToday": "Hacer hoy",
@@ -24813,6 +24827,9 @@
   "ringLabelStress": "Estrés",
   "ringLabelTrain": "Entrenar",
   "ringLabelWeight": "Peso",
+  "ringTileKickerReady": "Listo",
+  "ringTileKickerSteps": "Pasos",
+  "ringTileKickerWater": "Agua",
   "roiSummaryCardCalories": "Calorías",
   "roiSummaryCardCompleteYourFirstWorkout": "¡Completa tu primer entrenamiento para empezar a seguir tu progreso!",
   "roiSummaryCardInvested": "Invertido",
@@ -25279,7 +25296,12 @@
   "settingsReplayToursOrReset": "Repetir tours o restablecer sugerencias integradas",
   "settingsResearchScience": "Investigación y ciencia",
   "settingsScreenAbout": "Sobre {appName}",
+  "settingsScreenAdvancedAllTools": "Avanzado · Todas las herramientas",
+  "settingsScreenAiDecidesSplit": "La IA decide",
+  "settingsScreenAiIntegrations": "Integraciones de IA",
+  "settingsScreenCoachMemory": "Memoria del coach",
   "settingsScreenCouldNotOpen": "No se pudo abrir {url}",
+  "settingsScreenEasyFullTracking": "Fácil · Seguimiento completo",
   "settingsScreenExtANoteFromChetan": "Una nota de Chetan",
   "settingsScreenExtInlineHints": "SUGERENCIAS INTEGRADAS",
   "settingsScreenExtReplay": "Repetir",
@@ -25294,10 +25316,12 @@
   "settingsScreenExtWhyIBuilt": "Por qué creé {appName}",
   "settingsScreenExtYourAiPoweredPersonal": "Tu entrenador personal de fitness impulsado por IA. Obtén planes de entrenamiento personalizados, sigue tu progreso y alcanza tus objetivos de fitness.",
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject=Solicitud de soporte de {appName}",
+  "settingsScreenSameAsAppLanguage": "Igual que el idioma de la app",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} días",
   "settingsScreenUiNoSettingsFound": "No se encontraron ajustes",
   "settingsScreenUiTryDifferentKeywordsLike": "Prueba otras palabras clave como \"tema\", \"notificaciones\" o \"voz de IA\"",
   "settingsScreenV": "{appName} v{version}",
+  "settingsScreenVacationMode": "Modo vacaciones",
   "settingsSearchSettings": "Buscar ajustes",
   "settingsSetProgressionResearch": "Configurar progresión e investigación",
   "settingsSharingExportEmail": "Compartir, exportar, correo electrónico",
@@ -25551,6 +25575,7 @@
   "stackedBannerPanelKeepItUp": "¡Sigue así!",
   "stackedBannerPanelLbs": "{exerciseName}: {weightLbs} lbs",
   "stackedBannerPanelMinExercises": "{missedDescription} · {durationMinutes}min · {exercisesCount} ejercicios",
+  "stackedBannerPanelMissedColon": "No completado: {workoutType}",
   "stackedBannerPanelNewPr": "¡Nuevo PR!",
   "stackedBannerPanelNoCratesAvailableRight": "No hay cajas disponibles en este momento",
   "stackedBannerPanelOpenAll": "Abrir todo",

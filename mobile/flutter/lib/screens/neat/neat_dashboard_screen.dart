@@ -207,9 +207,24 @@ class NeatState {
 class NeatNotifier extends StateNotifier<NeatState> {
   final Ref _ref;
 
+  /// Guards a one-time subscription to the real provider (see
+  /// [loadNeatData]) — attaching it again on every pull-to-refresh would pile
+  /// up duplicate listeners.
+  bool _listeningToRealNeat = false;
+
   NeatNotifier(this._ref) : super(const NeatState());
 
-  /// Load NEAT data from the real API providers
+  /// Load NEAT data from the real API providers.
+  ///
+  /// The real provider (`real_neat.neatProvider`) is disk-cache-first: its
+  /// `loadDashboard()` emits a cached dashboard almost instantly, THEN a
+  /// fresh one once the network call resolves — but that whole call is a
+  /// single `Future`, so a plain `await ... ; read the final state` (the old
+  /// shape here) only ever observes the LAST emission, throwing the fast
+  /// cache paint away and leaving this screen on its skeleton for the full
+  /// round trip regardless. Listening to the real provider directly lets
+  /// this notifier re-map on EVERY emission — cache paint first, network
+  /// refresh behind it — same as `real_neat.neatProvider`'s own consumers.
   Future<void> loadNeatData() async {
     state = state.copyWith(isLoading: true, clearError: true);
 
@@ -224,80 +239,99 @@ class NeatNotifier extends StateNotifier<NeatState> {
 
       final realNotifier = _ref.read(real_neat.neatProvider.notifier);
       realNotifier.setUserId(userId);
-      await realNotifier.loadDashboard();
 
-      final realState = _ref.read(real_neat.neatProvider);
-      final dashboard = realState.dashboard;
-      final now = DateTime.now();
-
-      // Map hourly activity from real provider
-      List<HourlyActivity> hourlyActivity;
-      if (dashboard?.hourlyBreakdown != null) {
-        final breakdown = dashboard!.hourlyBreakdown!;
-        hourlyActivity = List.generate(24, (hour) {
-          final activity = breakdown.getHourActivity(hour);
-          return HourlyActivity(
-            hour: hour,
-            steps: activity?.steps ?? 0,
-          );
-        });
-      } else {
-        // Default empty hours
-        hourlyActivity = List.generate(24, (hour) {
-          return HourlyActivity(hour: hour, steps: 0);
+      if (!_listeningToRealNeat) {
+        _listeningToRealNeat = true;
+        _ref.listen<real_neat.NeatState>(real_neat.neatProvider, (_, next) {
+          _applyRealState(next);
         });
       }
 
-      // Calculate totals from hourly data
-      final backendSteps = realState.currentSteps;
-      final activeHours = hourlyActivity.where((h) => h.isActive).length;
-      final stepGoal = realState.stepGoal;
-      final backendScore = realState.todayScoreValue;
-
-      // Reconcile the STEP COUNT with on-device Health Connect / HealthKit —
-      // the SAME source the Home "MOVE" card reads — so the two surfaces never
-      // disagree (the backend /neat/dashboard row lags the device→backend sync).
-      // The NEAT SCORE stays the backend's honest movement-quality computation;
-      // we deliberately do NOT synthesize a score from the step total alone (a
-      // bare daily total with no synced intraday data isn't a 100/EXCELLENT day).
-      final deviceSteps = _ref.read(dailyActivityProvider).today?.steps ?? 0;
-      final totalSteps = deviceSteps > backendSteps ? deviceSteps : backendSteps;
-
-      final score = NeatScore(
-        score: backendScore.clamp(0, 100),
-        steps: totalSteps,
-        stepGoal: stepGoal,
-        activeHours: activeHours,
-        activeHoursGoal: 10,
-        hourlyActivity: hourlyActivity,
-        isProgressiveGoal: dashboard?.stepGoal?.isProgressive ?? false,
-        aiTip: dashboard?.suggestions.isNotEmpty == true ? dashboard!.suggestions.first : null,
-        date: now,
-      );
-
-      // Map streaks from real provider
-      final stepStreak = dashboard?.stepStreak;
-      final allGoalsStreak = dashboard?.allGoalsStreak;
-      final streaks = NeatStreak(
-        currentStepStreak: stepStreak?.currentStreak ?? 0,
-        currentActiveHoursStreak: 0, // No separate active hours streak in the real model
-        currentNeatScoreStreak: allGoalsStreak?.currentStreak ?? 0,
-        longestStepStreak: stepStreak?.longestStreak ?? 0,
-        longestActiveHoursStreak: 0,
-        longestNeatScoreStreak: allGoalsStreak?.longestStreak ?? 0,
-      );
-
-      state = state.copyWith(
-        score: score,
-        streaks: streaks,
-        isLoading: false,
-      );
+      await realNotifier.loadDashboard();
+      // Covers the case where the real provider already held a value before
+      // this listener attached (e.g. a prior tab warmed it) — the listener
+      // alone only fires on CHANGES from here on.
+      _applyRealState(_ref.read(real_neat.neatProvider));
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load NEAT data: $e',
       );
     }
+  }
+
+  /// Maps the real provider's dashboard state into this screen's [NeatScore]
+  /// / [NeatStreak] shape. Called once per emission of `real_neat.neatProvider`
+  /// (cache hit, then network refresh) so the screen hydrates as data lands
+  /// instead of only after the final network response.
+  void _applyRealState(real_neat.NeatState realState) {
+    if (!mounted) return;
+    final dashboard = realState.dashboard;
+    if (dashboard == null) return;
+    final now = DateTime.now();
+
+    // Map hourly activity from real provider
+    List<HourlyActivity> hourlyActivity;
+    if (dashboard.hourlyBreakdown != null) {
+      final breakdown = dashboard.hourlyBreakdown!;
+      hourlyActivity = List.generate(24, (hour) {
+        final activity = breakdown.getHourActivity(hour);
+        return HourlyActivity(
+          hour: hour,
+          steps: activity?.steps ?? 0,
+        );
+      });
+    } else {
+      // Default empty hours
+      hourlyActivity = List.generate(24, (hour) {
+        return HourlyActivity(hour: hour, steps: 0);
+      });
+    }
+
+    // Calculate totals from hourly data
+    final backendSteps = realState.currentSteps;
+    final activeHours = hourlyActivity.where((h) => h.isActive).length;
+    final stepGoal = realState.stepGoal;
+    final backendScore = realState.todayScoreValue;
+
+    // Reconcile the STEP COUNT with on-device Health Connect / HealthKit —
+    // the SAME source the Home "MOVE" card reads — so the two surfaces never
+    // disagree (the backend /neat/dashboard row lags the device→backend sync).
+    // The NEAT SCORE stays the backend's honest movement-quality computation;
+    // we deliberately do NOT synthesize a score from the step total alone (a
+    // bare daily total with no synced intraday data isn't a 100/EXCELLENT day).
+    final deviceSteps = _ref.read(dailyActivityProvider).today?.steps ?? 0;
+    final totalSteps = deviceSteps > backendSteps ? deviceSteps : backendSteps;
+
+    final score = NeatScore(
+      score: backendScore.clamp(0, 100),
+      steps: totalSteps,
+      stepGoal: stepGoal,
+      activeHours: activeHours,
+      activeHoursGoal: 10,
+      hourlyActivity: hourlyActivity,
+      isProgressiveGoal: dashboard.stepGoal?.isProgressive ?? false,
+      aiTip: dashboard.suggestions.isNotEmpty ? dashboard.suggestions.first : null,
+      date: now,
+    );
+
+    // Map streaks from real provider
+    final stepStreak = dashboard.stepStreak;
+    final allGoalsStreak = dashboard.allGoalsStreak;
+    final streaks = NeatStreak(
+      currentStepStreak: stepStreak?.currentStreak ?? 0,
+      currentActiveHoursStreak: 0, // No separate active hours streak in the real model
+      currentNeatScoreStreak: allGoalsStreak?.currentStreak ?? 0,
+      longestStepStreak: stepStreak?.longestStreak ?? 0,
+      longestActiveHoursStreak: 0,
+      longestNeatScoreStreak: allGoalsStreak?.longestStreak ?? 0,
+    );
+
+    state = state.copyWith(
+      score: score,
+      streaks: streaks,
+      isLoading: false,
+    );
   }
 
   /// Load achievements from real API

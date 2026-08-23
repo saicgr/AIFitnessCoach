@@ -289,10 +289,9 @@ class GlucoseReadingsNotifier extends StateNotifier<GlucoseReadingsState> {
 
     try {
       debugPrint('[GlucoseReadings] Loading today summary for $uid');
-      final response = await _client.get(
-        '/diabetes/glucose/summary/today',
-        queryParameters: {'user_id': uid},
-      );
+      // {user_id} is a path segment, not a query param — the backend never
+      // registered `/glucose/summary/today` at all (client 404'd).
+      final response = await _client.get('/diabetes/glucose/$uid/summary/today');
 
       final summary = DailyGlucoseSummary.fromJson(
         Map<String, dynamic>.from(response.data),
@@ -314,12 +313,11 @@ class GlucoseReadingsNotifier extends StateNotifier<GlucoseReadingsState> {
 
     try {
       debugPrint('[GlucoseReadings] Loading daily summaries for $uid');
+      // {user_id} is a path segment, not a query param — the backend never
+      // registered `/glucose/summary/daily` at all (client 404'd).
       final response = await _client.get(
-        '/diabetes/glucose/summary/daily',
-        queryParameters: {
-          'user_id': uid,
-          'days_back': daysBack,
-        },
+        '/diabetes/glucose/$uid/summary/daily',
+        queryParameters: {'days_back': daysBack},
       );
 
       final List<dynamic> data = response.data['summaries'] ?? [];
@@ -603,10 +601,9 @@ class InsulinDosesNotifier extends StateNotifier<InsulinDosesState> {
 
     try {
       debugPrint('[InsulinDoses] Loading today summary for $uid');
-      final response = await _client.get(
-        '/diabetes/insulin/summary/today',
-        queryParameters: {'user_id': uid},
-      );
+      // {user_id} is a path segment, not a query param — the backend never
+      // registered `/insulin/summary/today` at all (client 404'd).
+      final response = await _client.get('/diabetes/insulin/$uid/summary/today');
 
       final summary = DailyInsulinSummary.fromJson(
         Map<String, dynamic>.from(response.data),
@@ -628,12 +625,11 @@ class InsulinDosesNotifier extends StateNotifier<InsulinDosesState> {
 
     try {
       debugPrint('[InsulinDoses] Loading daily summaries for $uid');
+      // {user_id} is a path segment, not a query param — the backend never
+      // registered `/insulin/summary/daily` at all (client 404'd).
       final response = await _client.get(
-        '/diabetes/insulin/summary/daily',
-        queryParameters: {
-          'user_id': uid,
-          'days_back': daysBack,
-        },
+        '/diabetes/insulin/$uid/summary/daily',
+        queryParameters: {'days_back': daysBack},
       );
 
       final List<dynamic> data = response.data['summaries'] ?? [];

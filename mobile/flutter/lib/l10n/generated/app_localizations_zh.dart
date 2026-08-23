@@ -16142,6 +16142,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeLogMeal => '记录餐食';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => '更多';
 
   @override
@@ -21456,6 +21468,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get milestonesYourRoi => '你的 ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => '更改健身房配置';
 
   @override
@@ -21467,10 +21482,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => '展开周视图';
 
   @override
   String get minimalHeaderHideDayStrip => '隐藏日视图';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => '我的空间';
@@ -31525,6 +31546,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ringLabelWeight => '体重';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => '卡路里';
 
   @override
@@ -33131,9 +33161,24 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return '无法打开 $url';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => '来自 Chetan 的寄语';
@@ -33190,6 +33235,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek 天';
   }
@@ -33205,6 +33253,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => '搜索设置';
@@ -34056,6 +34107,11 @@ class AppLocalizationsZh extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · $durationMinutes 分钟 · $exercisesCount 个动作';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

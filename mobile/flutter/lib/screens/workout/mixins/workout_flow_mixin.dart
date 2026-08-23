@@ -309,7 +309,11 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     // value (and PRs / performance comparison) resolve in the background
     // save; the completion screen renders its calm "Saved" state immediately
     // and silently upgrades these when the `/complete` response lands.
-    final completionCalories = workout.estimatedCalories;
+    // The plan estimate is only meaningful once real work exists — a session
+    // with zero completed sets must show 0, not a fabricated elapsed-time
+    // estimate for work that never happened (finding #151).
+    final completionCalories =
+        totalCompletedSets > 0 ? workout.estimatedCalories : 0;
 
     if (mounted) {
       debugPrint('🏋️ [Complete] Navigating to workout-complete (background save in flight)');

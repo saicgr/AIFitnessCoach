@@ -288,7 +288,7 @@ class PerformanceComparisonService:
             current_total_sets=current_stats.get('total_sets', 0),
             current_total_reps=current_stats.get('total_reps', 0),
             current_exercises=current_stats.get('total_exercises', 0),
-            current_calories=current_stats.get('estimated_calories', 0),
+            current_calories=current_stats.get('calories', current_stats.get('estimated_calories', 0)),
             current_new_prs=current_stats.get('new_prs_count', 0),
             current_performed_at=current_stats.get('performed_at'),
         )

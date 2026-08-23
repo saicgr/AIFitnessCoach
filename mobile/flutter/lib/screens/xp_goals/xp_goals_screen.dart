@@ -485,7 +485,21 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
   ) {
     final currentStreak = streak?.currentStreak ?? 0;
     final hasLoggedInToday = streak?.hasLoggedInToday ?? false;
-    const dailyLoginXP = 5;
+    // E2E #357: this used to be a flat "+5" that never once matched what
+    // process_daily_login actually paid (xp_bonus_templates.daily_login:
+    // base_xp=25, streak-scaled up to a 7x cap -- see migration 2400).
+    // Mirror that same formula here instead of a made-up constant. The
+    // streak day this login counts toward is currentStreak once already
+    // claimed today, else currentStreak + 1 (today would be the next
+    // consecutive day). Known gap: an account's very first-ever login
+    // suppresses this bonus to 0 (folded into the welcome bonus instead;
+    // migration 2400) -- this still advertises the base rate for that one
+    // login, a narrow one-time case far outweighed by the welcome bonus.
+    const dailyLoginBaseXp = 25;
+    const dailyLoginMaxStreakMultiplier = 7;
+    final dailyLoginStreakDay =
+        (hasLoggedInToday ? currentStreak : currentStreak + 1).clamp(1, dailyLoginMaxStreakMultiplier);
+    final dailyLoginXP = dailyLoginBaseXp * dailyLoginStreakDay;
     final tc = ThemeColors.of(context);
 
     // v2 strips the boxed orange/teal hero: the streak reads as a hairline

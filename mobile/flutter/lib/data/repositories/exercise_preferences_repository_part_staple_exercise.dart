@@ -210,6 +210,12 @@ class QueuedExercise {
   final DateTime addedAt;
   final DateTime expiresAt;
   final DateTime? usedAt;
+  // Row 280: only populated for spent items whose destination workout is
+  // still upcoming, so the Queue tab can show where the exercise landed
+  // instead of rendering it as pending.
+  final String? usedInWorkoutId;
+  final String? usedInWorkoutName;
+  final DateTime? usedInWorkoutDate;
 
   const QueuedExercise({
     required this.id,
@@ -220,6 +226,9 @@ class QueuedExercise {
     required this.addedAt,
     required this.expiresAt,
     this.usedAt,
+    this.usedInWorkoutId,
+    this.usedInWorkoutName,
+    this.usedInWorkoutDate,
   });
 
   factory QueuedExercise.fromJson(Map<String, dynamic> json) {
@@ -232,6 +241,11 @@ class QueuedExercise {
       addedAt: DateTime.parse(json['added_at'] as String),
       expiresAt: DateTime.parse(json['expires_at'] as String),
       usedAt: json['used_at'] != null ? DateTime.parse(json['used_at'] as String) : null,
+      usedInWorkoutId: json['used_in_workout_id'] as String?,
+      usedInWorkoutName: json['used_in_workout_name'] as String?,
+      usedInWorkoutDate: json['used_in_workout_date'] != null
+          ? DateTime.parse(json['used_in_workout_date'] as String)
+          : null,
     );
   }
 
@@ -244,10 +258,17 @@ class QueuedExercise {
     'added_at': addedAt.toIso8601String(),
     'expires_at': expiresAt.toIso8601String(),
     'used_at': usedAt?.toIso8601String(),
+    'used_in_workout_id': usedInWorkoutId,
+    'used_in_workout_name': usedInWorkoutName,
+    'used_in_workout_date': usedInWorkoutDate?.toIso8601String(),
   };
 
   /// Check if this queue item is still active (not used, not expired)
   bool get isActive => usedAt == null && expiresAt.isAfter(DateTime.now());
+
+  /// Spent (already injected into a workout) but that destination workout
+  /// hasn't happened yet — the "added to upcoming" bucket (row 280).
+  bool get isAddedToUpcoming => usedAt != null && usedInWorkoutId != null;
 }
 
 

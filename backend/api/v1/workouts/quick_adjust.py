@@ -384,17 +384,41 @@ async def quick_adjust_workout(
         action = "ease"
 
     voice = await get_coach_voice(user_id, supabase=db)
-    coach_message = render_voice(
-        "quick_adjust_summary",
-        voice,
-        {
-            "sets_remaining": total_sets_remaining,
-            "exercises_remaining": len(updated_exercises),
-            "minutes": new_min,
-        },
-        channel="in_app",
-        selection_salt=f"quick_adjust:{workout_id}:{action}",
-    )
+    if action == "none":
+        # Nothing was trimmed or eased — use the honest no-op copy instead of
+        # quick_adjust_summary's "Got it — trimmed to..." / "ADJUSTED." lines,
+        # which contradicted a no-mutation outcome (E2E #146).
+        coach_message = render_voice(
+            "quick_adjust_no_change",
+            voice,
+            {"minutes": new_min},
+            channel="in_app",
+            selection_salt=f"quick_adjust:{workout_id}:{action}",
+        )
+    else:
+        coach_message = render_voice(
+            "quick_adjust_summary",
+            voice,
+            {
+                "sets_remaining": total_sets_remaining,
+                "exercises_remaining": len(updated_exercises),
+                "minutes": new_min,
+            },
+            channel="in_app",
+            selection_salt=f"quick_adjust:{workout_id}:{action}",
+        )
+        # Itemize what actually changed rather than just the resulting totals —
+        # "trimmed to 23 sets" alone didn't say what moved (E2E #146).
+        changes: List[str] = []
+        if exercises_removed:
+            removed_list = ", ".join(exercises_removed[:3])
+            if len(exercises_removed) > 3:
+                removed_list += f" +{len(exercises_removed) - 3} more"
+            changes.append(f"removed {removed_list}")
+        if applied_ease:
+            changes.append("-1 set, -2 reps on remaining exercises")
+        if changes:
+            coach_message = f"{coach_message} ({'; '.join(changes)})"
 
     return QuickAdjustResponse(
         success=True,

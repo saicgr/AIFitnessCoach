@@ -12443,6 +12443,13 @@
       }
     }
   },
+  "@stackedBannerPanelMissedColon": {
+    "placeholders": {
+      "workoutType": {
+        "type": "Object"
+      }
+    }
+  },
   "@stackedBannerPanelRenewsInDaysFor": {
     "placeholders": {
       "days": {
@@ -20298,6 +20305,10 @@
   "homeGreetingMorning_v4": "Up early, {name}?",
   "homeGreetingMorning_v5": "Welcome back, {name}",
   "homeLogMeal": "Log a meal",
+  "homeMetricTileNextSession": "Next session",
+  "homeMetricTileOfHundred": "of 100",
+  "homeMetricTileToGoal": "To goal",
+  "homeMetricTileTodayScore": "Today Score",
   "homeMore": "More",
   "homeMySpaceApply": "Apply",
   "homeMySpaceCurrentLayout": "● Current layout",
@@ -21834,11 +21845,14 @@
   "milestonesTotalWorkouts": "Total Workouts",
   "milestonesYourJourney": "Your Journey",
   "milestonesYourRoi": "Your ROI",
+  "minimalHeaderAfternoon": "Afternoon",
   "minimalHeaderChangeGymProfile": "Change gym profile",
   "minimalHeaderCollapseWeekStrip": "Collapse week strip",
   "minimalHeaderD": "{streakDays}d",
+  "minimalHeaderEvening": "Evening",
   "minimalHeaderExpandWeekStrip": "Expand week strip",
   "minimalHeaderHideDayStrip": "Hide week strip",
+  "minimalHeaderMorning": "Morning",
   "minimalHeaderMySpace": "My Space",
   "minimalHeaderShowDayStrip": "Show week strip",
   "missedWorkoutBannerDoToday": "Do Today",
@@ -24822,6 +24836,9 @@
   "ringLabelStress": "Stress",
   "ringLabelTrain": "Train",
   "ringLabelWeight": "Weight",
+  "ringTileKickerReady": "Ready",
+  "ringTileKickerSteps": "Steps",
+  "ringTileKickerWater": "Water",
   "roiSummaryCardCalories": "Calories",
   "roiSummaryCardCompleteYourFirstWorkout": "Complete your first workout to begin tracking your progress!",
   "roiSummaryCardInvested": "Invested",
@@ -25280,7 +25297,12 @@
   "settingsReplayToursOrReset": "Replay tours or reset inline hints",
   "settingsResearchScience": "Research & Science",
   "settingsScreenAbout": "About {appName}",
+  "settingsScreenAdvancedAllTools": "Advanced · All tools",
+  "settingsScreenAiDecidesSplit": "AI Decides",
+  "settingsScreenAiIntegrations": "AI Integrations",
+  "settingsScreenCoachMemory": "Coach memory",
   "settingsScreenCouldNotOpen": "Could not open {url}",
+  "settingsScreenEasyFullTracking": "Easy · Full tracking",
   "settingsScreenExtANoteFromChetan": "A note from Chetan",
   "settingsScreenExtInlineHints": "INLINE HINTS",
   "settingsScreenExtReplay": "Replay",
@@ -25295,10 +25317,12 @@
   "settingsScreenExtWhyIBuilt": "Why I built {appName}",
   "settingsScreenExtYourAiPoweredPersonal": "Your AI-powered personal fitness coach. Get personalized workout plans, track your progress, and achieve your fitness goals.",
   "settingsScreenMailtoSubjectSupportRequest": "mailto:{supportEmail}?subject={appName} Support Request",
+  "settingsScreenSameAsAppLanguage": "Same as app language",
   "settingsScreenUBDays": "{splitName} · {daysPerWeek} days",
   "settingsScreenUiNoSettingsFound": "No settings found",
   "settingsScreenUiTryDifferentKeywordsLike": "Try different keywords like \"theme\", \"notifications\", or \"AI voice\"",
   "settingsScreenV": "{appName} v{version}",
+  "settingsScreenVacationMode": "Vacation Mode",
   "settingsSearchSettings": "Search settings",
   "settingsSetProgressionResearch": "Set progression & research",
   "settingsSharingExportEmail": "Sharing, export, email",
@@ -25556,6 +25580,7 @@
   "stackedBannerPanelKeepItUp": "Keep it up!",
   "stackedBannerPanelLbs": "{exerciseName}: {weightLbs} lbs",
   "stackedBannerPanelMinExercises": "{missedDescription} · {durationMinutes}min · {exercisesCount} exercises",
+  "stackedBannerPanelMissedColon": "Missed: {workoutType}",
   "stackedBannerPanelNewPr": "New PR!",
   "stackedBannerPanelNoCratesAvailableRight": "No crates available right now",
   "stackedBannerPanelOpenAll": "Open All",

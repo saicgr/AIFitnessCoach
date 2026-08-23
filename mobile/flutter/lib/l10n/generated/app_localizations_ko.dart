@@ -16350,6 +16350,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeLogMeal => '식사 기록';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => '더 보기';
 
   @override
@@ -21752,6 +21764,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get milestonesYourRoi => '나의 ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => '헬스장 프로필 변경';
 
   @override
@@ -21763,10 +21778,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => '주간 스트립 확장';
 
   @override
   String get minimalHeaderHideDayStrip => '일간 스트립 숨기기';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => '마이 스페이스';
@@ -31931,6 +31952,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ringLabelWeight => '체중';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => '칼로리';
 
   @override
@@ -33557,9 +33587,24 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return '$url을(를) 열 수 없습니다';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Chetan의 메시지';
@@ -33616,6 +33661,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek 일';
   }
@@ -33631,6 +33679,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => '설정 검색';
@@ -34492,6 +34543,11 @@ class AppLocalizationsKo extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · $durationMinutes분 · 운동 $exercisesCount개';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

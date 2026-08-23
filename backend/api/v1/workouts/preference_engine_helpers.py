@@ -702,11 +702,14 @@ async def inject_queued_exercise_into_next_workout(db, user_id: str, exercise_na
 
     result = await inject_staple_into_workout(db, next_workout, staple_like, context, user_id)
 
-    # Mark queue item as used
+    # Mark queue item as used, recording which workout it landed in (row 280)
+    # so the Queue tab can show the real destination instead of leaving the
+    # item looking pending.
     if result.get("action") not in ("error", "skipped"):
         try:
             db.client.table("exercise_queue").update({
                 "used_at": datetime.utcnow().isoformat(),
+                "used_in_workout_id": next_workout.get("id"),
             }).eq("id", queue_id).execute()
         except Exception as e:
             logger.warning(f"Could not mark queue item as used: {e}", exc_info=True)

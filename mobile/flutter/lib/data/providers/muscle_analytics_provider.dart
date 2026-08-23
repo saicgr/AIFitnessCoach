@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../models/muscle_analytics.dart';
+import '../repositories/auth_repository.dart';
 import '../repositories/muscle_analytics_repository.dart';
 import 'gym_progress_filter_provider.dart';
 
@@ -38,34 +40,190 @@ final muscleAnalyticsTabProvider = StateProvider<int>((ref) => 0);
 // ============================================================================
 // Data Providers
 // ============================================================================
+//
+// Instant-load standard (Part 2) for the Muscle Trends tabs. These used to be
+// bare `FutureProvider`s — in-memory only, so a cold app launch always sat on
+// the tab's skeleton for the full round trip. Each is now a disk-cache-first
+// `StateNotifier` (see [CacheFirstMixin]): a restart paints the last-seen tab
+// instantly while a fresh copy loads silently behind it. Cache key is scoped
+// per time-range + gym filter (mirrors `DiscoverSnapshotNotifier`'s
+// per-board+scope keying) so switching either never shows a stale scope's data
+// mislabeled as the new one.
 
-/// Provider for muscle heatmap data
-/// Note: Removed autoDispose to prevent refetching on navigation.
-/// Watches the gym filter selection so it refetches when the user picks a gym.
-final muscleHeatmapProvider = FutureProvider<MuscleHeatmapData>((ref) async {
-  final repository = ref.watch(muscleAnalyticsRepositoryProvider);
+/// Cache-first loader for muscle heatmap data. Scoped by time range + gym.
+class MuscleHeatmapNotifier extends StateNotifier<AsyncValue<MuscleHeatmapData>>
+    with CacheFirstMixin {
+  MuscleHeatmapNotifier({
+    required MuscleAnalyticsRepository repository,
+    required String timeRange,
+    required String? gymProfileId,
+    required String userId,
+  })  : _repository = repository,
+        _timeRange = timeRange,
+        _gymProfileId = gymProfileId,
+        _userId = userId,
+        super(const AsyncValue.loading()) {
+    load();
+  }
+
+  final MuscleAnalyticsRepository _repository;
+  final String _timeRange;
+  final String? _gymProfileId;
+  final String _userId;
+
+  static const int _schemaVersion = 1;
+
+  Future<void> load() async {
+    await loadCacheFirst<MuscleHeatmapData>(
+      cacheKey: 'muscle_heatmap::${_timeRange}__${_gymProfileId ?? "_all"}',
+      userId: _userId,
+      ttl: const Duration(hours: 6),
+      schemaVersion: _schemaVersion,
+      fetch: () => _repository.getMuscleHeatmap(
+          timeRange: _timeRange, gymProfileId: _gymProfileId),
+      decode: MuscleHeatmapData.fromJson,
+      encode: (d) => d.toJson(),
+      emit: (data, {required bool fromCache}) {
+        if (!mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (e, st) {
+        if (!mounted) return;
+        try {
+          if (state.valueOrNull == null) state = AsyncValue.error(e, st);
+        } catch (_) {/* disposed between the check and the read */}
+      },
+    );
+  }
+}
+
+/// Provider for muscle heatmap data. Watches the time range + gym filter so it
+/// refetches whenever either changes.
+final muscleHeatmapProvider =
+    StateNotifierProvider<MuscleHeatmapNotifier, AsyncValue<MuscleHeatmapData>>(
+        (ref) {
   final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
   final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
-  return repository.getMuscleHeatmap(
-      timeRange: timeRange, gymProfileId: gymProfileId);
+  final userId = ref.watch(authStateProvider).user?.id ?? '';
+  return MuscleHeatmapNotifier(
+    repository: ref.watch(muscleAnalyticsRepositoryProvider),
+    timeRange: timeRange,
+    gymProfileId: gymProfileId,
+    userId: userId,
+  );
 });
 
-/// Provider for muscle training frequency
-/// Note: Removed autoDispose to prevent refetching on navigation.
-/// Watches the gym filter selection so it refetches when the user picks a gym.
-final muscleFrequencyProvider = FutureProvider<MuscleTrainingFrequency>((ref) async {
-  final repository = ref.watch(muscleAnalyticsRepositoryProvider);
+/// Cache-first loader for muscle training frequency data. Scoped by gym.
+class MuscleFrequencyNotifier
+    extends StateNotifier<AsyncValue<MuscleTrainingFrequency>>
+    with CacheFirstMixin {
+  MuscleFrequencyNotifier({
+    required MuscleAnalyticsRepository repository,
+    required String? gymProfileId,
+    required String userId,
+  })  : _repository = repository,
+        _gymProfileId = gymProfileId,
+        _userId = userId,
+        super(const AsyncValue.loading()) {
+    load();
+  }
+
+  final MuscleAnalyticsRepository _repository;
+  final String? _gymProfileId;
+  final String _userId;
+
+  static const int _schemaVersion = 1;
+
+  Future<void> load() async {
+    await loadCacheFirst<MuscleTrainingFrequency>(
+      cacheKey: 'muscle_frequency::${_gymProfileId ?? "_all"}',
+      userId: _userId,
+      ttl: const Duration(hours: 6),
+      schemaVersion: _schemaVersion,
+      fetch: () => _repository.getMuscleFrequency(gymProfileId: _gymProfileId),
+      decode: MuscleTrainingFrequency.fromJson,
+      encode: (d) => d.toJson(),
+      emit: (data, {required bool fromCache}) {
+        if (!mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (e, st) {
+        if (!mounted) return;
+        try {
+          if (state.valueOrNull == null) state = AsyncValue.error(e, st);
+        } catch (_) {/* disposed between the check and the read */}
+      },
+    );
+  }
+}
+
+/// Provider for muscle training frequency. Watches the gym filter so it
+/// refetches when the user picks a gym.
+final muscleFrequencyProvider = StateNotifierProvider<MuscleFrequencyNotifier,
+    AsyncValue<MuscleTrainingFrequency>>((ref) {
   final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
-  return repository.getMuscleFrequency(gymProfileId: gymProfileId);
+  final userId = ref.watch(authStateProvider).user?.id ?? '';
+  return MuscleFrequencyNotifier(
+    repository: ref.watch(muscleAnalyticsRepositoryProvider),
+    gymProfileId: gymProfileId,
+    userId: userId,
+  );
 });
 
-/// Provider for muscle balance analysis
-/// Note: Removed autoDispose to prevent refetching on navigation.
-/// Watches the gym filter selection so it refetches when the user picks a gym.
-final muscleBalanceProvider = FutureProvider<MuscleBalanceData>((ref) async {
-  final repository = ref.watch(muscleAnalyticsRepositoryProvider);
+/// Cache-first loader for muscle balance data. Scoped by gym.
+class MuscleBalanceNotifier extends StateNotifier<AsyncValue<MuscleBalanceData>>
+    with CacheFirstMixin {
+  MuscleBalanceNotifier({
+    required MuscleAnalyticsRepository repository,
+    required String? gymProfileId,
+    required String userId,
+  })  : _repository = repository,
+        _gymProfileId = gymProfileId,
+        _userId = userId,
+        super(const AsyncValue.loading()) {
+    load();
+  }
+
+  final MuscleAnalyticsRepository _repository;
+  final String? _gymProfileId;
+  final String _userId;
+
+  static const int _schemaVersion = 1;
+
+  Future<void> load() async {
+    await loadCacheFirst<MuscleBalanceData>(
+      cacheKey: 'muscle_balance::${_gymProfileId ?? "_all"}',
+      userId: _userId,
+      ttl: const Duration(hours: 6),
+      schemaVersion: _schemaVersion,
+      fetch: () => _repository.getMuscleBalance(gymProfileId: _gymProfileId),
+      decode: MuscleBalanceData.fromJson,
+      encode: (d) => d.toJson(),
+      emit: (data, {required bool fromCache}) {
+        if (!mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (e, st) {
+        if (!mounted) return;
+        try {
+          if (state.valueOrNull == null) state = AsyncValue.error(e, st);
+        } catch (_) {/* disposed between the check and the read */}
+      },
+    );
+  }
+}
+
+/// Provider for muscle balance analysis. Watches the gym filter so it
+/// refetches when the user picks a gym.
+final muscleBalanceProvider = StateNotifierProvider<MuscleBalanceNotifier,
+    AsyncValue<MuscleBalanceData>>((ref) {
   final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
-  return repository.getMuscleBalance(gymProfileId: gymProfileId);
+  final userId = ref.watch(authStateProvider).user?.id ?? '';
+  return MuscleBalanceNotifier(
+    repository: ref.watch(muscleAnalyticsRepositoryProvider),
+    gymProfileId: gymProfileId,
+    userId: userId,
+  );
 });
 
 /// Provider for exercises targeting a specific muscle (family provider)

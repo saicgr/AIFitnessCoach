@@ -5,7 +5,9 @@ extension SetLoggingMixinUI on SetLoggingMixin {
 
   // ── Helpers to access State<T> members through the mixin ──
   bool get _mounted => (this as dynamic).mounted as bool;
-  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
+  void _setState(VoidCallback fn) {
+    if (_mounted) (this as dynamic).setState(fn);
+  }
 
   /// Convert a display-unit weight back to kg for storage in [SetTarget.targetWeightKg].
   /// Pattern math runs in display units (lbs or kg) for correct snapping, but
@@ -471,7 +473,6 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         increment: effectiveIncrement,
         totalSets: effectiveSetsForTargets,
       );
-      final originalTargetsRef = targets;
       targets = adaptResult.targets;
 
       // The chip's weightDelta and the table's next-set weight MUST agree.
@@ -479,10 +480,14 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       // table later snaps to equipment-real increments via snapToRealIncrement,
       // which can round 17.5 → 15. To prevent drift, recompute the feedback
       // delta from POST-snap values so the chip matches the table.
+      //
+      // Anchored to the just-logged set's actual weight (completedData.last),
+      // not the plan's pre-existing next-set target — same anchor
+      // adaptTargetsWithFeedback now uses, so this realignment can't
+      // reintroduce the mismatch it exists to prevent.
       AdaptationFeedback alignedFeedback = adaptResult.feedback;
       if (alignedFeedback.type != AdaptationFeedbackType.none && completedCount < targets.length) {
-        final origPreSnap = completedCount < originalTargetsRef.length
-            ? originalTargetsRef[completedCount].weight : 0.0;
+        final origPreSnap = completedData.last.weight;
         final newPreSnap = targets[completedCount].weight;
         final origPostSnap = snapToRealIncrement(origPreSnap, exercise.equipment,
             exerciseName: exercise.name, useKg: useKg);

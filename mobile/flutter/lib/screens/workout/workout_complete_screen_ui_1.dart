@@ -136,7 +136,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               '${l.workoutSummaryGeneralSets} · ${l.workoutSummaryGeneralReps}',
           value: '${widget.totalSets ?? 0} · ${widget.totalReps ?? 0}',
         ),
-        _LedgerRow(label: 'Energy', value: '${widget.calories}', unit: 'kcal'),
+        _LedgerRow(label: 'Energy', value: '$_effectiveCalories', unit: 'kcal'),
         _LedgerRow(
           label: 'Median rest',
           value: medianRest != null ? _formatMmSs(medianRest) : '--',
@@ -298,7 +298,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             maxHR: maxHR,
             restingHR: restingHR,
             durationMinutes: durationMinutes,
-            totalCalories: widget.calories,
+            totalCalories: _effectiveCalories,
             showZoneBreakdown: true, // Show zones in compact view
             showTrainingEffect: false,
             showVO2Max: false,
@@ -432,7 +432,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             maxHR: maxHR,
             restingHR: restingHR,
             durationMinutes: durationMinutes,
-            totalCalories: widget.calories,
+            totalCalories: _effectiveCalories,
             showZoneBreakdown: true,
             showTrainingEffect: false,
             showVO2Max: false,

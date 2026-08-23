@@ -6,7 +6,9 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
   // ── Helpers to access State<T> members through the mixin ──
   BuildContext get _ctx => (this as dynamic).context as BuildContext;
   bool get _mounted => (this as dynamic).mounted as bool;
-  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
+  void _setState(VoidCallback fn) {
+    if (_mounted) (this as dynamic).setState(fn);
+  }
 
   /// Remove exercise from workout
   void removeExerciseFromWorkout(int index) {

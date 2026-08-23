@@ -22,30 +22,35 @@ logger = get_logger(__name__)
 
 
 def _resolve_canonical_exercise(db, exercise_name: str, exercise_id):
-    """Resolve a Quick-Add/picker name against `exercise_library`.
+    """Resolve a Quick-Add/picker name against `exercise_library_cleaned`.
 
     The UI displays a title-cased/cleaned name while the library stores
     exercise_name inconsistently cased (e.g. "barbell bench press"), so an
     exact-match write silently persists `exercise_id: null` — the favorite
-    can never be matched back to a real exercise at generation time. `ilike`
-    with no wildcards is a case-insensitive equality check, so this resolves
-    the same row regardless of casing without over-matching. If the caller
-    already supplied an exercise_id (picked from the library, already
-    canonical) it is trusted as-is. Falls back to the name/id as given when
-    no library row matches, so a genuinely-missing name still saves instead
-    of failing the request.
+    can never be matched back to a real exercise at generation time.
+    `exercise_library_cleaned` unions `exercise_library` with
+    `exercise_library_manual` and exposes the already-cleaned display name
+    the Quick-Add chips show (e.g. "Lat Pulldown", "Leg Press" only exist
+    under this cleaned name, sourced from `exercise_library_manual`, not the
+    raw `exercise_library` table). `ilike` with no wildcards is a
+    case-insensitive equality check, so this resolves the same row
+    regardless of casing without over-matching. If the caller already
+    supplied an exercise_id (picked from the library, already canonical) it
+    is trusted as-is. Falls back to the name/id as given when no library row
+    matches, so a genuinely-missing name still saves instead of failing the
+    request.
     """
     if exercise_id:
         return exercise_id, exercise_name
     if not exercise_name:
         return exercise_id, exercise_name
     try:
-        match = db.client.table("exercise_library").select(
-            "id, exercise_name"
-        ).ilike("exercise_name", exercise_name).limit(1).execute()
+        match = db.client.table("exercise_library_cleaned").select(
+            "id, name"
+        ).ilike("name", exercise_name).limit(1).execute()
         if match.data:
             row = match.data[0]
-            return row["id"], row["exercise_name"]
+            return row["id"], row["name"]
     except Exception as e:
         logger.warning(f"Canonical exercise lookup failed for '{exercise_name}': {e}")
     return exercise_id, exercise_name
@@ -213,8 +218,11 @@ async def get_exercise_queue(user_id: str,
 ):
     """Get all queued exercises for a user.
 
-    Only returns active (not expired, not used) exercises.
-    Used by the workout generation system to include queued exercises.
+    Returns active (not expired, not used) exercises, PLUS spent exercises
+    (`used_at` set) whose destination workout hasn't happened yet — the
+    "added to upcoming" set (row 280). An item whose destination workout is
+    already completed (or no longer resolvable) is dropped entirely rather
+    than lingering as history.
     """
     logger.info(f"Getting exercise queue for user: {user_id}")
     try:
@@ -249,6 +257,50 @@ async def get_exercise_queue(user_id: str,
                 expires_at=row["expires_at"],
                 used_at=row.get("used_at"),
             ))
+
+        # "Added to upcoming": spent items whose destination workout hasn't
+        # happened yet, so the tab can show where each one actually landed
+        # instead of either hiding it or leaving it rendered as pending.
+        try:
+            used_result = db.client.table("exercise_queue").select("*").eq(
+                "user_id", user_id
+            ).not_.is_("used_at", "null").not_.is_(
+                "used_in_workout_id", "null"
+            ).order("used_at", desc=True).limit(50).execute()
+            used_rows = used_result.data or []
+        except Exception as ue:
+            logger.warning(f"Could not fetch spent queue items: {ue}")
+            used_rows = []
+
+        if used_rows:
+            workout_ids = list({r["used_in_workout_id"] for r in used_rows})
+            try:
+                workouts_resp = db.client.table("workouts").select(
+                    "id, name, scheduled_date, is_completed"
+                ).in_("id", workout_ids).execute()
+                workouts_by_id = {str(w["id"]): w for w in (workouts_resp.data or [])}
+            except Exception as we:
+                logger.warning(f"Could not resolve destination workouts: {we}")
+                workouts_by_id = {}
+
+            for row in used_rows:
+                workout = workouts_by_id.get(str(row["used_in_workout_id"]))
+                if not workout or workout.get("is_completed"):
+                    continue
+                queue.append(QueuedExercise(
+                    id=row["id"],
+                    user_id=row["user_id"],
+                    exercise_name=row["exercise_name"],
+                    exercise_id=row.get("exercise_id"),
+                    priority=row.get("priority", 0),
+                    target_muscle_group=row.get("target_muscle_group"),
+                    added_at=row["added_at"],
+                    expires_at=row["expires_at"],
+                    used_at=row.get("used_at"),
+                    used_in_workout_id=str(row["used_in_workout_id"]),
+                    used_in_workout_name=workout.get("name"),
+                    used_in_workout_date=workout.get("scheduled_date"),
+                ))
 
         logger.info(f"Found {len(queue)} queued exercises for user {user_id}")
         return queue

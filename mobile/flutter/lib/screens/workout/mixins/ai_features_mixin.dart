@@ -70,6 +70,16 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
   set fatigueAlertCurrentWeightKg(double? value);
   bool get showFatigueAlert;
   set showFatigueAlert(bool value);
+  // The client-side progressive-overload chip's own, independently-computed
+  // weight suggestion for the same set (see `inline_rest_row.dart` /
+  // `set_progression.dart`). It fires from the same set-completion event as
+  // this fatigue check but anchors its delta to the plan's own next-set
+  // target rather than the actual just-logged weight, so once the backend
+  // check below actually detects fatigue, its modal is the single source of
+  // truth for "how much lighter" and the chip's competing number is cleared
+  // rather than shown alongside it.
+  AdaptationFeedback? get inlineRestAdaptationFeedback;
+  set inlineRestAdaptationFeedback(AdaptationFeedback? value);
   bool get showCoachTip;
   set showCoachTip(bool value);
   String? get coachTipMessage;
@@ -475,6 +485,12 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
           // advanced-to-the-next-set) controller.
           fatigueAlertCurrentWeightKg = currentWeight;
           showFatigueAlert = true;
+          // The inline adaptation chip already rendered its own weight
+          // suggestion for this same set from a different anchor (the
+          // plan's next-set target, not the weight just lifted) — showing
+          // both reads as two conflicting numbers for one adjustment. This
+          // modal is now the single recommendation for the set.
+          inlineRestAdaptationFeedback = null;
         });
         HapticFeedback.heavyImpact();
       }

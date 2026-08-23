@@ -13,7 +13,7 @@ class TestCleanExerciseNameForDisplay:
         from services.exercise_rag.utils import clean_exercise_name_for_display
 
         assert clean_exercise_name_for_display("Air Bike_female") == "Air Bike"
-        assert clean_exercise_name_for_display("Push-up_Female") == "Push-up"
+        assert clean_exercise_name_for_display("Push-up_Female") == "Push-Up"
 
     def test_removes_male_suffix(self):
         """Test removing _male suffix."""
@@ -26,7 +26,7 @@ class TestCleanExerciseNameForDisplay:
         """Test removing (version X) suffix."""
         from services.exercise_rag.utils import clean_exercise_name_for_display
 
-        assert clean_exercise_name_for_display("Push-up (version 2)") == "Push-up"
+        assert clean_exercise_name_for_display("Push-up (version 2)") == "Push-Up"
         assert clean_exercise_name_for_display("Squat (Version 3)") == "Squat"
 
     def test_handles_empty_string(self):

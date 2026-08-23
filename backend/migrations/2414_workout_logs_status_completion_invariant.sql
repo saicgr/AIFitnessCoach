@@ -68,3 +68,5 @@ COMMENT ON CONSTRAINT workout_logs_status_completion_check ON workout_logs IS
     'session was simultaneously in_progress and completed_at-populated).';
 
 COMMIT;
+
+-- VERIFY: SELECT count(*) FROM workout_logs WHERE (status = 'completed' AND completed_at IS NULL) OR (status <> 'completed' AND completed_at IS NOT NULL); -- expect 0

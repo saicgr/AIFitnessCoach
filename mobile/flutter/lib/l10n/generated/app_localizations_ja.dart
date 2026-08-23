@@ -16344,6 +16344,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeLogMeal => '食事を記録';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'もっと';
 
   @override
@@ -21737,6 +21749,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get milestonesYourRoi => 'あなたのROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'ジムプロフィールを変更';
 
   @override
@@ -21748,10 +21763,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => '週表示を展開';
 
   @override
   String get minimalHeaderHideDayStrip => '日表示を隠す';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'マイスペース';
@@ -31914,6 +31935,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ringLabelWeight => '体重';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'カロリー';
 
   @override
@@ -33537,9 +33567,24 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return '$urlを開けませんでした';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Chetanからのメッセージ';
@@ -33597,6 +33642,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · 週$daysPerWeek日';
   }
@@ -33612,6 +33660,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => '設定を検索';
@@ -34471,6 +34522,11 @@ class AppLocalizationsJa extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · $durationMinutes分 · $exercisesCount種目';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

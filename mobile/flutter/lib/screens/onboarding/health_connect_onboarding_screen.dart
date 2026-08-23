@@ -456,13 +456,15 @@ class _PermissionSheetWalkthroughState
     super.dispose();
   }
 
-  /// Eased on-fraction for the master toggle: ramps on, holds, ramps off so
-  /// the loop reads as "watch it turn on" without a jarring reset.
+  /// Eased on-fraction for the master toggle: rests off, briefly demonstrates
+  /// the tap-to-turn-on gesture, then resets — off for most of the loop so a
+  /// glance (or a screenshot) at an arbitrary moment reads as "nothing is
+  /// granted yet", matching every real permission sheet's actual default.
   double _toggleOn(double t) {
-    if (t < 0.20) return 0;
-    if (t < 0.45) return Curves.easeInOut.transform((t - 0.20) / 0.25);
-    if (t < 0.85) return 1;
-    return 1 - Curves.easeInOut.transform((t - 0.85) / 0.15);
+    if (t < 0.55) return 0;
+    if (t < 0.68) return Curves.easeInOut.transform((t - 0.55) / 0.13);
+    if (t < 0.80) return 1;
+    return 1 - Curves.easeInOut.transform((t - 0.80) / 0.20);
   }
 
   @override

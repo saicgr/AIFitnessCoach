@@ -325,7 +325,7 @@ async def send_coach_reply_push(
                 # midnight (e.g. 22:00–07:00) — handle both branches.
                 qstart = p.get("quiet_hours_start")
                 qend = p.get("quiet_hours_end")
-                tz_name = p.get("timezone") or "America/New_York"
+                tz_name = p.get("timezone") or "UTC"
                 if qstart and qend:
                     try:
                         from datetime import datetime as _dt, time as _time

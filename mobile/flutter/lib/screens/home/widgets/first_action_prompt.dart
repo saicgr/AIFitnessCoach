@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart'
+    show kFloatCircleDiameter, kFabClusterEdgeInset;
 import '../../../core/services/posthog_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -207,7 +209,18 @@ class _ActionRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        // On a brand-new account Home has almost no other content, so this
+        // card (and whichever of its three rows the viewport happens to end
+        // on) can sit right at the bottom of the screen — directly under
+        // the fixed bottom-right coach + Quick Log FAB cluster, which floats
+        // independent of scroll position. Right-inset each row so its label
+        // and arrow are never covered by it.
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          12,
+          10,
+          12 + kFloatCircleDiameter + kFabClusterEdgeInset,
+          10,
+        ),
         decoration: BoxDecoration(
           color: ThemeColors.of(context)
               .background

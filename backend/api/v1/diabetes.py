@@ -16,7 +16,13 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.timezone_utils import get_user_today, resolve_timezone
+from core.timezone_utils import (
+    get_user_today,
+    resolve_timezone,
+    local_day_bounds,
+    local_range_bounds,
+    utc_to_local_date,
+)
 from pydantic import BaseModel, Field, validator
 import uuid
 
@@ -854,6 +860,107 @@ async def get_glucose_summary(
     )
 
 
+# Standard clinical target range (ADA/AACE consensus) used for the daily
+# time-in-range / low / high counts below. Not the user's personal
+# `diabetes_profiles.target_glucose_low/high` — those drive the coaching
+# targets shown elsewhere; this is the universal TIR band clinicians report.
+_TIR_LOW_MG_DL = 70
+_TIR_HIGH_MG_DL = 180
+
+
+def _daily_glucose_summary(local_date: str, readings: List[int]) -> dict:
+    """Build a `DailyGlucoseSummary`-shaped dict (see glucose_reading.dart)
+    from a list of `value_mg_dl` readings already scoped to one local day."""
+    if not readings:
+        return {
+            "date": local_date,
+            "reading_count": 0,
+            "avg_glucose": 0,
+            "min_glucose": 0,
+            "max_glucose": 0,
+            "time_in_range_percent": 0,
+            "low_count": 0,
+            "high_count": 0,
+        }
+    low_count = sum(1 for v in readings if v < _TIR_LOW_MG_DL)
+    high_count = sum(1 for v in readings if v > _TIR_HIGH_MG_DL)
+    in_range = len(readings) - low_count - high_count
+    return {
+        "date": local_date,
+        "reading_count": len(readings),
+        "avg_glucose": round(sum(readings) / len(readings), 1),
+        "min_glucose": min(readings),
+        "max_glucose": max(readings),
+        "time_in_range_percent": round(in_range / len(readings) * 100, 1),
+        "low_count": low_count,
+        "high_count": high_count,
+    }
+
+
+@router.get("/glucose/{user_id}/summary/today")
+async def get_glucose_summary_today(
+    user_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Today's glucose summary — the shape the Flutter client's
+    `DailyGlucoseSummary.fromJson` expects (see `MicrosDetailScreen`'s sibling,
+    `diabetes_provider_part_diabetes_profile_notifier.dart:loadTodaySummary`).
+    No matching route existed at all before this (client 404'd)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    db = get_supabase_db()
+    tz_str = resolve_timezone(request, db, user_id)
+    today_str = get_user_today(tz_str)
+    start, end = local_day_bounds(today_str, tz_str)
+
+    result = db.client.table("glucose_readings").select("value_mg_dl").eq(
+        "user_id", user_id
+    ).gte("recorded_at", start).lt("recorded_at", end).execute()
+
+    readings = [r["value_mg_dl"] for r in (result.data or [])]
+    return _daily_glucose_summary(today_str, readings)
+
+
+@router.get("/glucose/{user_id}/summary/daily")
+async def get_glucose_summary_daily(
+    user_id: str,
+    request: Request,
+    days_back: int = 7,
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day glucose summaries for the last `days_back` local days — the
+    shape the Flutter client's `loadDailySummaries` expects
+    (`{"summaries": [DailyGlucoseSummary, ...]}`)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    db = get_supabase_db()
+    tz_str = resolve_timezone(request, db, user_id)
+    today_str = get_user_today(tz_str)
+    start_date = (date.fromisoformat(today_str) - timedelta(days=days_back - 1)).isoformat()
+    start, end = local_range_bounds(start_date, today_str, tz_str)
+
+    result = db.client.table("glucose_readings").select("value_mg_dl, recorded_at").eq(
+        "user_id", user_id
+    ).gte("recorded_at", start).lt("recorded_at", end).execute()
+
+    by_day: dict[str, List[int]] = {}
+    for r in (result.data or []):
+        day = utc_to_local_date(r["recorded_at"], tz_str)
+        if not day:
+            continue
+        by_day.setdefault(day, []).append(r["value_mg_dl"])
+
+    # Every day in the window appears, even with zero readings, so the client
+    # renders a continuous strip rather than gaps on days nothing was logged.
+    summaries = []
+    for i in range(days_back):
+        day = (date.fromisoformat(today_str) - timedelta(days=days_back - 1 - i)).isoformat()
+        summaries.append(_daily_glucose_summary(day, by_day.get(day, [])))
+
+    return {"summaries": summaries}
+
+
 @router.get("/glucose/status/{glucose_value}", response_model=GlucoseStatusResponse)
 async def get_glucose_status(glucose_value: float, current_user: dict = Depends(get_current_user)):
     """Get status classification for a glucose value."""
@@ -1018,6 +1125,97 @@ async def get_daily_insulin_total(user_id: str, date: Optional[str] = None, curr
         long_units=long_acting,
         dose_count=len(doses)
     )
+
+
+def _daily_insulin_summary(local_date: str, doses: List[dict]) -> dict:
+    """Build a `DailyInsulinSummary`-shaped dict (see insulin_dose.dart) from
+    `insulin_doses` rows already scoped to one local day. `dose_type` is the
+    free-text column `LogInsulinDoseRequest.dose_type` writes (default
+    "meal" — the client never sends this field yet, see `addDose`), bucketed
+    per its own documented vocabulary: meal, correction, basal, exercise."""
+    if not doses:
+        return {
+            "date": local_date,
+            "total_units": 0,
+            "basal_units": 0,
+            "bolus_units": 0,
+            "correction_units": 0,
+            "dose_count": 0,
+        }
+    basal = sum(d["units"] for d in doses if d.get("dose_type") == "basal")
+    correction = sum(d["units"] for d in doses if d.get("dose_type") == "correction")
+    # "meal", "exercise", or anything else logged is treated as a bolus dose —
+    # the meal-time complement to basal, matching the client's basal/bolus
+    # ratio display.
+    bolus = sum(d["units"] for d in doses) - basal - correction
+    return {
+        "date": local_date,
+        "total_units": round(sum(d["units"] for d in doses), 2),
+        "basal_units": round(basal, 2),
+        "bolus_units": round(bolus, 2),
+        "correction_units": round(correction, 2),
+        "dose_count": len(doses),
+    }
+
+
+@router.get("/insulin/{user_id}/summary/today")
+async def get_insulin_summary_today(
+    user_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Today's insulin summary — the shape the Flutter client's
+    `DailyInsulinSummary.fromJson` expects. No matching route existed at all
+    before this (client 404'd)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    db = get_supabase_db()
+    tz_str = resolve_timezone(request, db, user_id)
+    today_str = get_user_today(tz_str)
+    start, end = local_day_bounds(today_str, tz_str)
+
+    result = db.client.table("insulin_doses").select("units, dose_type").eq(
+        "user_id", user_id
+    ).gte("recorded_at", start).lt("recorded_at", end).execute()
+
+    return _daily_insulin_summary(today_str, result.data or [])
+
+
+@router.get("/insulin/{user_id}/summary/daily")
+async def get_insulin_summary_daily(
+    user_id: str,
+    request: Request,
+    days_back: int = 7,
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day insulin summaries for the last `days_back` local days — the
+    shape the Flutter client's `loadDailySummaries` expects
+    (`{"summaries": [DailyInsulinSummary, ...]}`)."""
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    db = get_supabase_db()
+    tz_str = resolve_timezone(request, db, user_id)
+    today_str = get_user_today(tz_str)
+    start_date = (date.fromisoformat(today_str) - timedelta(days=days_back - 1)).isoformat()
+    start, end = local_range_bounds(start_date, today_str, tz_str)
+
+    result = db.client.table("insulin_doses").select("units, dose_type, recorded_at").eq(
+        "user_id", user_id
+    ).gte("recorded_at", start).lt("recorded_at", end).execute()
+
+    by_day: dict[str, List[dict]] = {}
+    for d in (result.data or []):
+        day = utc_to_local_date(d["recorded_at"], tz_str)
+        if not day:
+            continue
+        by_day.setdefault(day, []).append(d)
+
+    summaries = []
+    for i in range(days_back):
+        day = (date.fromisoformat(today_str) - timedelta(days=days_back - 1 - i)).isoformat()
+        summaries.append(_daily_insulin_summary(day, by_day.get(day, [])))
+
+    return {"summaries": summaries}
 
 
 @router.get("/insulin/{user_id}/history", response_model=InsulinHistoryResponse)

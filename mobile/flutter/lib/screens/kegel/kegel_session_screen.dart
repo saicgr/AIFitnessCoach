@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../data/models/kegel.dart';
 import '../../data/providers/kegel_provider.dart';
+import '../../data/services/live_activity_service.dart';
 import '../../core/providers/user_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -52,6 +53,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
 
   // Selected exercise
   KegelExercise? _selectedExercise;
+  DateTime? _startedAt;
 
   @override
   void initState() {
@@ -81,6 +83,14 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
         debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
       }),
     );
+    // Safety net: normal completion / exit-confirmation already end the Live
+    // Activity, but a route pop that skips both (back gesture, hot restart)
+    // must not orphan it. Safe to call multiple times (see LiveActivityService).
+    // Never touch it for a fromWorkout session — that singleton belongs to
+    // the active workout screen underneath.
+    if (!widget.fromWorkout) {
+      unawaited(LiveActivityService.instance.end());
+    }
     super.dispose();
   }
 
@@ -118,6 +128,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       _restSeconds = exercise.restBetweenRepsSeconds;
       _currentSeconds = _holdSeconds;
       _totalSessionSeconds = 0;
+      _startedAt = DateTime.now();
     });
 
     _pulseController.repeat(reverse: true);
@@ -135,6 +146,51 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
         debugPrint('⚠️ [Kegel] wakelock enable failed: $e');
       }),
     );
+
+    // Same iOS Dynamic Island / Lock Screen surface the workout engine uses —
+    // reps map onto the shared model's "set" slot (currentSet/totalSets) since
+    // a kegel session has no nested exercises, and the fixed native labels
+    // only ever read "Set"/"Ex".
+    final activityState = _buildKegelActivityState();
+    if (activityState != null) {
+      unawaited(LiveActivityService.instance.start(activityState));
+    }
+  }
+
+  /// Snapshot for the Live Activity — mirrors
+  /// `workout_flow_mixin.buildLiveActivityState()`, mapped onto kegel's
+  /// hold/rest phases instead of exercises/sets.
+  WorkoutActivityState? _buildKegelActivityState() {
+    // A kegel exercise launched mid-workout (warmup) sits on top of the
+    // active workout screen, which already owns this same singleton's Live
+    // Activity — never contend for it, or completing the kegel set would end
+    // the workout's own activity for the rest of the session.
+    if (widget.fromWorkout) return null;
+    final started = _startedAt;
+    if (started == null || _selectedExercise == null) return null;
+    return WorkoutActivityState(
+      workoutName: _selectedExercise!.displayName,
+      currentExercise: _isHolding ? 'Hold' : 'Rest',
+      currentExerciseIndex: 1,
+      totalExercises: 1,
+      currentSet: _currentRep,
+      totalSets: _totalReps,
+      isResting: _isResting,
+      restEndsAt: _isResting
+          ? DateTime.now().add(Duration(seconds: _currentSeconds))
+          : null,
+      isPaused: _isPaused,
+      startedAt: started,
+      pausedDurationSeconds: 0,
+    );
+  }
+
+  /// Push the latest phase/rep to the Live Activity. iOS-only surface, so a
+  /// no-op there is harmless; best-effort like the rest of this lifecycle.
+  void _updateLiveActivity() {
+    final state = _buildKegelActivityState();
+    if (state == null) return;
+    unawaited(LiveActivityService.instance.update(state));
   }
 
   void _startTimer() {
@@ -164,6 +220,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       });
       _progressController.duration = Duration(seconds: _restSeconds);
       _progressController.forward(from: 0);
+      _updateLiveActivity();
     } else if (_isResting) {
       // Complete rep, check if more reps
       if (_currentRep >= _totalReps) {
@@ -177,6 +234,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
         });
         _progressController.duration = Duration(seconds: _holdSeconds);
         _progressController.forward(from: 0);
+        _updateLiveActivity();
       }
     }
   }
@@ -190,6 +248,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       _pulseController.repeat(reverse: true);
       _progressController.forward();
     }
+    _updateLiveActivity();
   }
 
   void _completeSession() {
@@ -202,6 +261,9 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
         debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
       }),
     );
+    if (!widget.fromWorkout) {
+      unawaited(LiveActivityService.instance.end());
+    }
 
     setState(() {
       _isActive = false;
@@ -751,6 +813,9 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                     debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
                   }),
                 );
+                if (!widget.fromWorkout) {
+                  unawaited(LiveActivityService.instance.end());
+                }
                 this.context.pop();
               },
               child: Text(AppLocalizations.of(context).kegelSessionEndSession2),

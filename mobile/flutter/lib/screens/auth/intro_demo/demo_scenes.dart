@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
@@ -1084,7 +1085,7 @@ class ShareablesScene extends StatelessWidget {
                           child: SizedBox(
                             width: w,
                             height: h,
-                            child: _beforeAfterCard(context),
+                            child: _beforeAfterCard(context, w, h),
                           ),
                         ),
                       ),
@@ -1099,13 +1100,27 @@ class ShareablesScene extends StatelessWidget {
     );
   }
 
-  Widget _beforeAfterCard(BuildContext context) {
+  Widget _beforeAfterCard(BuildContext context, double w, double h) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset(_beforeAfterAsset, fit: BoxFit.cover),
+          // Obscure the third-party apparel logo visible on the "before" shot.
+          Positioned(
+            left: w * 0.22,
+            top: h * 0.17,
+            width: w * 0.17,
+            height: h * 0.145,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(color: const Color(0x1A000000)),
+              ),
+            ),
+          ),
           // Top + bottom scrims so the tags / delta pill / watermark stay legible.
           const DecoratedBox(
             decoration: BoxDecoration(

@@ -28748,6 +28748,30 @@ abstract class AppLocalizations {
   /// **'Log a meal'**
   String get homeLogMeal;
 
+  /// No description provided for @homeMetricTileNextSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Next session'**
+  String get homeMetricTileNextSession;
+
+  /// No description provided for @homeMetricTileOfHundred.
+  ///
+  /// In en, this message translates to:
+  /// **'of 100'**
+  String get homeMetricTileOfHundred;
+
+  /// No description provided for @homeMetricTileToGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'To goal'**
+  String get homeMetricTileToGoal;
+
+  /// No description provided for @homeMetricTileTodayScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Today Score'**
+  String get homeMetricTileTodayScore;
+
   /// No description provided for @homeMore.
   ///
   /// In en, this message translates to:
@@ -38012,6 +38036,12 @@ abstract class AppLocalizations {
   /// **'Your ROI'**
   String get milestonesYourRoi;
 
+  /// No description provided for @minimalHeaderAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon'**
+  String get minimalHeaderAfternoon;
+
   /// No description provided for @minimalHeaderChangeGymProfile.
   ///
   /// In en, this message translates to:
@@ -38030,6 +38060,12 @@ abstract class AppLocalizations {
   /// **'{streakDays}d'**
   String minimalHeaderD(Object streakDays);
 
+  /// No description provided for @minimalHeaderEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get minimalHeaderEvening;
+
   /// No description provided for @minimalHeaderExpandWeekStrip.
   ///
   /// In en, this message translates to:
@@ -38041,6 +38077,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide week strip'**
   String get minimalHeaderHideDayStrip;
+
+  /// No description provided for @minimalHeaderMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning'**
+  String get minimalHeaderMorning;
 
   /// No description provided for @minimalHeaderMySpace.
   ///
@@ -56019,6 +56061,24 @@ abstract class AppLocalizations {
   /// **'Weight'**
   String get ringLabelWeight;
 
+  /// No description provided for @ringTileKickerReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get ringTileKickerReady;
+
+  /// No description provided for @ringTileKickerSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get ringTileKickerSteps;
+
+  /// No description provided for @ringTileKickerWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get ringTileKickerWater;
+
   /// No description provided for @roiSummaryCardCalories.
   ///
   /// In en, this message translates to:
@@ -58790,11 +58850,41 @@ abstract class AppLocalizations {
   /// **'About {appName}'**
   String settingsScreenAbout(Object appName);
 
+  /// No description provided for @settingsScreenAdvancedAllTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced · All tools'**
+  String get settingsScreenAdvancedAllTools;
+
+  /// No description provided for @settingsScreenAiDecidesSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Decides'**
+  String get settingsScreenAiDecidesSplit;
+
+  /// No description provided for @settingsScreenAiIntegrations.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Integrations'**
+  String get settingsScreenAiIntegrations;
+
+  /// No description provided for @settingsScreenCoachMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach memory'**
+  String get settingsScreenCoachMemory;
+
   /// No description provided for @settingsScreenCouldNotOpen.
   ///
   /// In en, this message translates to:
   /// **'Could not open {url}'**
   String settingsScreenCouldNotOpen(Object url);
+
+  /// No description provided for @settingsScreenEasyFullTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy · Full tracking'**
+  String get settingsScreenEasyFullTracking;
 
   /// No description provided for @settingsScreenExtANoteFromChetan.
   ///
@@ -58883,6 +58973,12 @@ abstract class AppLocalizations {
     Object supportEmail,
   );
 
+  /// No description provided for @settingsScreenSameAsAppLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as app language'**
+  String get settingsScreenSameAsAppLanguage;
+
   /// No description provided for @settingsScreenUBDays.
   ///
   /// In en, this message translates to:
@@ -58906,6 +59002,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{appName} v{version}'**
   String settingsScreenV(Object appName, Object version);
+
+  /// No description provided for @settingsScreenVacationMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Vacation Mode'**
+  String get settingsScreenVacationMode;
 
   /// No description provided for @settingsSearchSettings.
   ///
@@ -60452,6 +60554,12 @@ abstract class AppLocalizations {
     Object exercisesCount,
     Object missedDescription,
   );
+
+  /// No description provided for @stackedBannerPanelMissedColon.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed: {workoutType}'**
+  String stackedBannerPanelMissedColon(Object workoutType);
 
   /// No description provided for @stackedBannerPanelNewPr.
   ///

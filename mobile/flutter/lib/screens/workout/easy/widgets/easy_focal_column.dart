@@ -21,6 +21,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/utils/default_weights.dart';
 import '../../../../core/utils/exercise_tracking_metric.dart';
+import '../../shared/felt_picker.dart';
 import '../../shared/focal_stepper.dart';
 import '../../widgets/timed_exercise_timer.dart';
 import '../easy_active_workout_state_models.dart';
@@ -75,6 +76,11 @@ class EasyFocalColumn extends StatelessWidget {
   /// away instead of one scroll away.
   final Widget? ctaTrailing;
 
+  /// Emits the RIR chosen via the felt picker for the set about to be
+  /// logged. Null hides the picker entirely (e.g. the warm-up screen, which
+  /// never persists to `performance_logs`).
+  final ValueChanged<int?>? onRirChanged;
+
   const EasyFocalColumn({
     super.key,
     required this.state,
@@ -94,6 +100,7 @@ class EasyFocalColumn extends StatelessWidget {
     this.nextExerciseName,
     this.nextDetail,
     this.ctaTrailing,
+    this.onRirChanged,
   });
 
   /// Step granularity for an extra-metric stepper. Coarse for the moves where a
@@ -736,6 +743,14 @@ class EasyFocalColumn extends StatelessWidget {
               ),
               if (helperLine != null) helperLine,
               if (nextLine != null) nextLine,
+              if (onRirChanged != null) ...[
+                SizedBox(height: tight ? 8 : 12),
+                FeltPicker(
+                  currentRir: state.rir,
+                  onChanged: onRirChanged!,
+                  compact: compact,
+                ),
+              ],
               SizedBox(height: tight ? 8 : 12),
               // The rounded accent CTA pill (`.rw-cta`): caption restates the
               // live `weight × reps` ("LOG SET — 60 × 12"), matching the frame.

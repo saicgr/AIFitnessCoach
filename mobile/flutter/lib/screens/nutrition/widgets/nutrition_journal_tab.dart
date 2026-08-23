@@ -568,6 +568,19 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
           .where((l) => _dayKey(l.loggedAt) == _selectedDayKey)
           .toList()
         ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    } else if (_range == _JournalRange.month) {
+      // "Month" shares the Calendar's browsed month instead of always
+      // meaning "since the 1st of the real-world current month" — so paging
+      // Calendar to a past month and switching to Feed shows that same
+      // month, one date model instead of two that silently disagree.
+      final start = DateTime(_calMonth.year, _calMonth.month, 1);
+      final end = DateTime(_calMonth.year, _calMonth.month + 1, 1);
+      filtered = _logs.where((l) {
+        final d = l.loggedAt.isUtc ? l.loggedAt.toLocal() : l.loggedAt;
+        final day = DateTime(d.year, d.month, d.day);
+        return !day.isBefore(start) && day.isBefore(end);
+      }).toList()
+        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
     } else {
       final (fromStr, toStr) = _range.params();
       final from = fromStr != null ? DateTime.tryParse(fromStr) : null;
@@ -601,6 +614,7 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
         else
           _RangeChips(
             range: _range,
+            calMonth: _calMonth,
             onChanged: (r) {
               HapticService.light();
               setState(() {
@@ -1068,8 +1082,25 @@ class _CalendarSkeleton extends StatelessWidget {
 
 class _RangeChips extends StatelessWidget {
   final _JournalRange range;
+  final DateTime calMonth;
   final ValueChanged<_JournalRange> onChanged;
-  const _RangeChips({required this.range, required this.onChanged});
+  const _RangeChips({
+    required this.range,
+    required this.calMonth,
+    required this.onChanged,
+  });
+
+  // "Month" filters by the Calendar's browsed month (see _buildFeed), so once
+  // that differs from the real current month the static "Month" label would
+  // silently lie about what's shown — name the browsed month instead.
+  String _labelFor(_JournalRange r) {
+    if (r != _JournalRange.month) return r.label;
+    final now = DateTime.now();
+    if (calMonth.year == now.year && calMonth.month == now.month) {
+      return r.label;
+    }
+    return DateFormat('MMM').format(calMonth);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1079,7 +1110,7 @@ class _RangeChips extends StatelessWidget {
         children: [
           for (final r in _JournalRange.values) ...[
             ZealovaChip(
-              label: r.label,
+              label: _labelFor(r),
               selected: r == range,
               onTap: () => onChanged(r),
             ),

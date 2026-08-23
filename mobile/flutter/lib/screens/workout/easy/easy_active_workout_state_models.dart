@@ -19,13 +19,21 @@ import '../models/workout_state.dart';
 const double kEasyCompactSafeAreaHeight = 640;
 
 /// Per-exercise mutable state for the Easy screen. Intentionally narrow:
-/// Easy doesn't surface RIR, progression patterns, bar type, L/R mode, or
+/// Easy doesn't surface progression patterns, bar type, L/R mode, or
 /// drop sets — so none of those live here. Those are Advanced-only.
 class EasyExerciseState {
   final List<SetLog> completed;
   double displayWeight; // value shown in the weight stepper (user's unit)
   int reps;
   int targetReps;
+
+  /// Reps-in-reserve for the set about to be logged, chosen via the compact
+  /// [FeltPicker] (Easy/Good/Hard/V.Hard). Null when the user hasn't tapped a
+  /// bucket yet — logged as-is (no RIR) rather than a fabricated value.
+  /// Sticky across sets like [displayWeight]/[reps] so an unchanged effort
+  /// doesn't need re-tapping every set (E2E #168 — Easy previously had no
+  /// path to persist RIR/RPE at all).
+  int? rir;
   double targetWeightKg; // always kg; converted for display only
   int totalSets;
 

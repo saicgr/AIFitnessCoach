@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/stats/state_valence.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/heart_health_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
@@ -17,7 +18,7 @@ import '../common/app_refresh_indicator.dart';
 /// RHR-trend cardio strain + body composition) shown on an animated 360°
 /// gradient gauge with a day-over-day delta chip, a 2x2 component breakdown,
 /// and a grounded coach read. Honest "No data" tiles where a driver is absent.
-class HeartHealthDetailScreen extends ConsumerWidget {
+class HeartHealthDetailScreen extends ConsumerStatefulWidget {
   /// True when composed inside the Health tab's shell rather than pushed as
   /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
   /// back-button row (nothing to pop) and the opaque background; the
@@ -25,6 +26,18 @@ class HeartHealthDetailScreen extends ConsumerWidget {
   final bool embedded;
 
   const HeartHealthDetailScreen({super.key, this.embedded = false});
+
+  @override
+  ConsumerState<HeartHealthDetailScreen> createState() =>
+      _HeartHealthDetailScreenState();
+}
+
+class _HeartHealthDetailScreenState
+    extends ConsumerState<HeartHealthDetailScreen> {
+  // Instant-load standard (Part 1): a true first-ever open shows the layout
+  // skeleton below, never a bare spinner. Every later open renders cached
+  // content instantly (see CacheFirstView / heartHealthProvider).
+  bool _isFirstEver = false;
 
   static const Color _good = Color(0xFF22C55E); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
   static const Color _fair = Color(0xFFF59E0B); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
@@ -34,7 +47,15 @@ class HeartHealthDetailScreen extends ConsumerWidget {
       s >= 75 ? _good : (s >= 50 ? _fair : _poor);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    CacheFirstView.hasBeenSeen('heart_health_detail').then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.background : AppColorsLight.background;
     final textPrimary =
@@ -42,16 +63,16 @@ class HeartHealthDetailScreen extends ConsumerWidget {
     final async = ref.watch(heartHealthProvider);
 
     return Scaffold(
-      backgroundColor: embedded ? Colors.transparent : bg,
+      backgroundColor: widget.embedded ? Colors.transparent : bg,
       body: SafeArea(
-        top: !embedded,
+        top: !widget.embedded,
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(12, embedded ? 0 : 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(12, widget.embedded ? 0 : 8, 16, 4),
               child: Row(
                 children: [
-                  if (!embedded) ...[
+                  if (!widget.embedded) ...[
                     const GlassBackButton(),
                     const SizedBox(width: 12),
                   ],
@@ -74,17 +95,22 @@ class HeartHealthDetailScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: async.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (_, __) => Center(
+              child: CacheFirstView<HeartHealthData>(
+                value: async,
+                isFirstEver: _isFirstEver,
+                traceLabel: 'heart_health_detail',
+                skeletonBuilder: (_) => _buildSkeleton(isDark),
+                errorBuilder: (_, __, ___) => Center(
                   child: Text('Couldn\'t load heart health.',
                       style: TextStyle(
                           color: isDark
                               ? AppColors.textSecondary
                               : AppColorsLight.textSecondary)),
                 ),
-                data: (data) => _buildBody(context, ref, isDark, data),
+                contentBuilder: (context, data) {
+                  CacheFirstView.markSeen('heart_health_detail');
+                  return _buildBody(context, isDark, data);
+                },
               ),
             ),
           ],
@@ -93,8 +119,20 @@ class HeartHealthDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(
-      BuildContext context, WidgetRef ref, bool isDark, HeartHealthData data) {
+  Widget _buildSkeleton(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        Center(child: SkeletonCircle(size: 220)),
+        const SizedBox(height: 16),
+        const SkeletonBox(height: 96, radius: 18),
+        const SizedBox(height: 16),
+        SkeletonGrid(itemCount: 4, crossAxisCount: 2, childAspectRatio: 1.55),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context, bool isDark, HeartHealthData data) {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

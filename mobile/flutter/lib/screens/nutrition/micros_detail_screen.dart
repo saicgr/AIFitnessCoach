@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/widgets/design_system/zealova.dart';
@@ -38,7 +39,8 @@ class MicrosDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<MicrosDetailScreen> createState() => _MicrosDetailScreenState();
 }
 
-class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
+class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen>
+    with CacheFirstMixin {
   bool _loading = true;
   String? _error;
   DailyMicronutrientSummary? _summary;
@@ -49,6 +51,8 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
   int? _foodsWithMicroData;
   int? _totalFoods;
 
+  static const int _schemaVersion = 1;
+
   @override
   void initState() {
     super.initState();
@@ -57,38 +61,60 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
 
   Future<void> _load() async {
     if (mounted) setState(() => _error = null);
-    try {
-      final userId = await ref.read(apiClientProvider).getUserId();
-      if (userId == null) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _error = 'Please sign in to view your nutrients.';
-          });
-        }
-        return;
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'Please sign in to view your nutrients.';
+        });
       }
+      return;
+    }
+    // Instant-load standard (Part 2): a restart used to sit on the skeleton
+    // for the full round trip because this screen's summary lived only in
+    // local widget state. Cache-first paints today's last-seen summary
+    // instantly, then a fresh copy silently replaces it.
+    final repo = ref.read(nutritionRepositoryProvider);
+    await loadCacheFirst<_MicrosSnapshot>(
+      cacheKey: 'daily_micronutrients',
+      userId: userId,
+      ttl: const Duration(hours: 12),
+      schemaVersion: _schemaVersion,
+      localDateScoped: true,
       // ONE request for both halves. This used to call getDailyMicronutrients()
       // and then a raw variant of the SAME endpoint for the additive `coverage`
       // block — two identical GETs to render one screen.
-      final repo = ref.read(nutritionRepositoryProvider);
-      final result = await repo.getDailyMicronutrientsWithCoverage(
-        userId: userId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _summary = result.summary;
-        _foodsWithMicroData = result.foodsWithMicroData;
-        _totalFoods = result.totalFoods;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _error = 'Could not load your nutrients. Pull to retry.';
-      });
-    }
+      fetch: () async {
+        final result =
+            await repo.getDailyMicronutrientsWithCoverage(userId: userId);
+        return _MicrosSnapshot(
+          summary: result.summary,
+          foodsWithMicroData: result.foodsWithMicroData,
+          totalFoods: result.totalFoods,
+        );
+      },
+      decode: _MicrosSnapshot.fromJson,
+      encode: (s) => s.toJson(),
+      emit: (snapshot, {required bool fromCache}) {
+        if (!mounted) return;
+        setState(() {
+          _summary = snapshot.summary;
+          _foodsWithMicroData = snapshot.foodsWithMicroData;
+          _totalFoods = snapshot.totalFoods;
+          _loading = false;
+        });
+      },
+      onError: (e, st) {
+        if (!mounted) return;
+        if (_summary == null) {
+          setState(() {
+            _loading = false;
+            _error = 'Could not load your nutrients. Pull to retry.';
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -303,4 +329,33 @@ class _AntioxidantCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Cache-first payload for [_MicrosDetailScreenState._load] — bundles the
+/// typed summary with the additive coverage ints so [CacheFirstMixin] can
+/// disk-cache the whole screen state as one blob instead of two.
+class _MicrosSnapshot {
+  final DailyMicronutrientSummary summary;
+  final int? foodsWithMicroData;
+  final int? totalFoods;
+
+  const _MicrosSnapshot({
+    required this.summary,
+    required this.foodsWithMicroData,
+    required this.totalFoods,
+  });
+
+  factory _MicrosSnapshot.fromJson(Map<String, dynamic> json) =>
+      _MicrosSnapshot(
+        summary: DailyMicronutrientSummary.fromJson(
+            Map<String, dynamic>.from(json['summary'] as Map)),
+        foodsWithMicroData: (json['foods_with_micro_data'] as num?)?.toInt(),
+        totalFoods: (json['total_foods'] as num?)?.toInt(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'summary': summary.toJson(),
+        'foods_with_micro_data': foodsWithMicroData,
+        'total_foods': totalFoods,
+      };
 }

@@ -17141,6 +17141,18 @@ class AppLocalizationsOr extends AppLocalizations {
   String get homeLogMeal => 'ଖାଦ୍ୟ ଲଗ୍ କରନ୍ତୁ';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'ଅଧିକ';
 
   @override
@@ -22768,6 +22780,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get milestonesYourRoi => 'ଆପଣଙ୍କ ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile =>
       'ଜିମ୍ ପ୍ରୋଫାଇଲ୍ ପରିବର୍ତ୍ତନ କରନ୍ତୁ';
 
@@ -22781,10 +22796,16 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'ସପ୍ତାହ ଷ୍ଟ୍ରିପ୍ ବିସ୍ତାର କରନ୍ତୁ';
 
   @override
   String get minimalHeaderHideDayStrip => 'ଦିନ ଷ୍ଟ୍ରିପ୍ ଲୁଚାନ୍ତୁ';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'ମୋ ସ୍ପେସ୍';
@@ -33442,6 +33463,15 @@ class AppLocalizationsOr extends AppLocalizations {
   String get ringLabelWeight => 'ଓଜନ';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
@@ -35117,9 +35147,24 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return '$url ଖୋଲିପାରିଲା ନାହିଁ';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Chetan ଙ୍କ ପକ୍ଷରୁ ଏକ ନୋଟ୍';
@@ -35179,6 +35224,9 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek ଦିନ';
   }
@@ -35194,6 +35242,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'ସେଟିଂସ୍ ଖୋଜନ୍ତୁ';
@@ -36094,6 +36145,11 @@ class AppLocalizationsOr extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · $durationMinutesମିନିଟ୍ · $exercisesCount ବ୍ୟାୟାମ';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

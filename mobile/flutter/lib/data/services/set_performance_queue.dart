@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../../core/cache/offline_write_queue.dart';
+import '../providers/root_messenger.dart';
 import 'api_client.dart';
 
 /// Single owner of the disk-persisted offline queue for the finish-time bulk
@@ -38,6 +39,12 @@ class SetPerformanceQueue {
   static const String feature = 'set_performances_bulk';
   final OfflineWriteQueue _queue = OfflineWriteQueue(feature: feature);
 
+  /// True once [enqueue] has surfaced the "still syncing" toast, so a
+  /// later successful drain can tell the user their sets landed — and so a
+  /// retry that fails again doesn't re-show the same toast on every
+  /// connectivity blip. Reset after the confirming toast fires.
+  bool _pendingToastShown = false;
+
   /// Replay sender bound to [apiClient]. Returns `true` on a 2xx (drop from
   /// queue — the upsert contract makes re-sending already-inserted rows
   /// safe) or on a poison item (missing/malformed records); `false` on a
@@ -58,6 +65,15 @@ class SetPerformanceQueue {
         if (ok) {
           debugPrint(
               '📤 [SetPerformanceQueue] replayed ${records.length} set(s)');
+          // Only confirm if the user was actually told something was wrong —
+          // the ordinary (never-queued) path stays silent as before.
+          if (_pendingToastShown) {
+            _pendingToastShown = false;
+            rootSnackBar(const SnackBar(
+              content: Text('Your workout sets are all synced now.'),
+              duration: Duration(seconds: 3),
+            ));
+          }
         }
         return ok;
       } catch (_) {
@@ -68,8 +84,13 @@ class SetPerformanceQueue {
 
   /// Enqueue a bulk set-performance write that inserted fewer rows than were
   /// sent (including zero) and arm the connectivity-restored flush. Never
-  /// throws — a persistence failure here is logged, not surfaced, since the
-  /// caller is already on a background/fire-and-forget path.
+  /// throws — a persistence failure here is logged, not surfaced via
+  /// exceptions, since the caller is already on a background/fire-and-forget
+  /// path — but per E2E #169 ("no error was shown at any point") this DOES
+  /// surface a user-facing toast via the root messenger, so a completion
+  /// that silently failed to sync no longer looks identical to one that
+  /// worked. The toast survives navigation (it's on `rootScaffoldMessengerKey`,
+  /// not this screen's own context, which may already be gone/popped).
   Future<void> enqueue({
     required String userId,
     required List<Map<String, dynamic>> records,
@@ -82,6 +103,12 @@ class SetPerformanceQueue {
     };
     await _queue.enqueue(userId: userId, body: body);
     _queue.bindConnectivity(userId: userId, sender: _sender(apiClient));
+    _pendingToastShown = true;
+    rootSnackBar(const SnackBar(
+      content: Text(
+          "Some of your sets didn't save yet — we'll keep retrying in the background."),
+      duration: Duration(seconds: 5),
+    ));
   }
 
   /// Drain any queued bulk writes now. Call on app launch + on

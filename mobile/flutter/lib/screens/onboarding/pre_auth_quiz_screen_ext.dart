@@ -579,6 +579,17 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           }),
           smartDefaults: _showSmartDefaults,
           showHeader: showHeader,
+          gender: ref.read(preAuthQuizProvider).gender,
+          onGenderChanged: (gender) {
+            setState(() => _gender = gender);
+            ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
+                  gender: gender,
+                  heightCm: null,
+                  weightKg: null,
+                  goalWeightKg: null,
+                  useMetric: ref.read(preAuthQuizProvider).useMetricUnits,
+                );
+          },
         );
 
       case 6: // Training Focus (Primary Goal) + Generate Preview

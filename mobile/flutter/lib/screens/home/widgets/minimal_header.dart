@@ -161,11 +161,12 @@ class _Greeting extends ConsumerWidget {
         '${_weekdaysShort[now.weekday - 1]}, ${_monthsShort[now.month - 1]} ${now.day}';
 
     // v2 greeting — short, human, Archivo. "Evening, Chetan · Wed, Aug 5."
+    final l10n = AppLocalizations.of(context);
     final shortGreeting = hour < 12
-        ? 'Morning'
+        ? l10n.minimalHeaderMorning
         : hour < 17
-            ? 'Afternoon'
-            : 'Evening';
+            ? l10n.minimalHeaderAfternoon
+            : l10n.minimalHeaderEvening;
 
     final line =
         firstName != null ? '$shortGreeting, $firstName · $shortDate' : shortDate;

@@ -34,9 +34,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../data/models/today_score.dart' show ContributorKind;
+import '../../../../data/providers/home_metric_tiles_provider.dart'
+    show kTodayScoreTileId, kNextSessionTileId, kToGoalTileId;
 import '../../../../data/providers/metric_layout_provider.dart' show MetricSize;
 import '../../../../data/providers/metric_tile_data_provider.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../ring_catalog.dart' show RingKindX;
 
 /// Tile heights, from the mockup's 6-column grid.
 ///
@@ -310,6 +314,57 @@ class MetricTileCard extends StatelessWidget {
   }
 }
 
+/// Localized tile kicker for [data] — the tracked uppercase label ("STEPS",
+/// "TODAY SCORE", "NEXT SESSION"). [MetricTileData.label] is the English
+/// fallback the catalogue is built from (`home_metric_tiles_provider.dart`
+/// keeps that table as code, not `.arb`, so ids/sizes/routes never drift from
+/// their copy); this resolves the localized string for display, falling back
+/// to the English fallback for any id the switch below doesn't know yet.
+String _localizedTileKicker(BuildContext context, MetricTileData data) {
+  final ring = RingKindX.fromId(data.id);
+  if (ring != null) return ring.localizedTileKickerLabel(context);
+  final l10n = AppLocalizations.of(context);
+  switch (data.id) {
+    case kTodayScoreTileId:
+      return l10n.homeMetricTileTodayScore;
+    case kNextSessionTileId:
+      return l10n.homeMetricTileNextSession;
+    case kToGoalTileId:
+      return l10n.homeMetricTileToGoal;
+    default:
+      return data.label;
+  }
+}
+
+/// Localized denominator for [data] ("of 100" on the Today Score) —
+/// [MetricTileData.valueDenominator] is built English-only in the provider
+/// layer (no BuildContext there); this substitutes the localized string for
+/// the one id that sets it, and passes any other id's value through as-is.
+String? _localizedDenominator(BuildContext context, MetricTileData data) {
+  if (data.id == kTodayScoreTileId && data.valueDenominator != null) {
+    return AppLocalizations.of(context).homeMetricTileOfHundred;
+  }
+  return data.valueDenominator;
+}
+
+/// Localized contributor label for a Today Score segment ("TRAIN 40",
+/// "MOVE 15" in the capacity track). Reuses the same `ringLabel*` keys the
+/// ring catalog's own [RingKindX.localizedLabel] pulls from — the four
+/// contributors share their English word with a ring of the same name.
+String _localizedContributorLabel(BuildContext context, ContributorKind kind) {
+  final l10n = AppLocalizations.of(context);
+  switch (kind) {
+    case ContributorKind.train:
+      return l10n.ringLabelTrain;
+    case ContributorKind.fuel:
+      return l10n.ringLabelNourish;
+    case ContributorKind.move:
+      return l10n.ringLabelMove;
+    case ContributorKind.sleep:
+      return l10n.ringLabelSleep;
+  }
+}
+
 class _TileBody extends StatelessWidget {
   final MetricTileData data;
   final MetricSize size;
@@ -347,7 +402,7 @@ class _TileBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            data.label.toUpperCase(),
+            _localizedTileKicker(context, data).toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: kickerStyle,
@@ -358,7 +413,7 @@ class _TileBody extends StatelessWidget {
           _ShrinkToFit(child: _TileValue(
             value: data.hasData ? data.value : '—',
             unit: data.hasData ? data.unit : '',
-            denominator: data.hasData ? data.valueDenominator : null,
+            denominator: data.hasData ? _localizedDenominator(context, data) : null,
             big: ZType.disp(
               valueSize,
               color: data.hasData ? c.textPrimary : c.textMuted,
@@ -579,7 +634,7 @@ class _ScoreCapacityTrack extends StatelessWidget {
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
-                        '${segments[i].label} ${segments[i].weight}'
+                        '${_localizedContributorLabel(context, segments[i].kind)} ${segments[i].weight}'
                             .toUpperCase(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

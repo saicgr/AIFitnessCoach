@@ -17038,6 +17038,18 @@ class AppLocalizationsCs extends AppLocalizations {
   String get homeLogMeal => 'Zapsat jídlo';
 
   @override
+  String get homeMetricTileNextSession => 'Next session';
+
+  @override
+  String get homeMetricTileOfHundred => 'of 100';
+
+  @override
+  String get homeMetricTileToGoal => 'To goal';
+
+  @override
+  String get homeMetricTileTodayScore => 'Today Score';
+
+  @override
   String get homeMore => 'Více';
 
   @override
@@ -22633,6 +22645,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get milestonesYourRoi => 'Vaše ROI';
 
   @override
+  String get minimalHeaderAfternoon => 'Afternoon';
+
+  @override
   String get minimalHeaderChangeGymProfile => 'Změnit profil posilovny';
 
   @override
@@ -22644,10 +22659,16 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get minimalHeaderEvening => 'Evening';
+
+  @override
   String get minimalHeaderExpandWeekStrip => 'Rozbalit týdenní lištu';
 
   @override
   String get minimalHeaderHideDayStrip => 'Skrýt denní lištu';
+
+  @override
+  String get minimalHeaderMorning => 'Morning';
 
   @override
   String get minimalHeaderMySpace => 'Můj prostor';
@@ -33225,6 +33246,15 @@ class AppLocalizationsCs extends AppLocalizations {
   String get ringLabelWeight => 'Hmotnost';
 
   @override
+  String get ringTileKickerReady => 'Ready';
+
+  @override
+  String get ringTileKickerSteps => 'Steps';
+
+  @override
+  String get ringTileKickerWater => 'Water';
+
+  @override
   String get roiSummaryCardCalories => 'Kalorie';
 
   @override
@@ -34895,9 +34925,24 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenAdvancedAllTools => 'Advanced · All tools';
+
+  @override
+  String get settingsScreenAiDecidesSplit => 'AI Decides';
+
+  @override
+  String get settingsScreenAiIntegrations => 'AI Integrations';
+
+  @override
+  String get settingsScreenCoachMemory => 'Coach memory';
+
+  @override
   String settingsScreenCouldNotOpen(Object url) {
     return 'Nelze otevřít $url';
   }
+
+  @override
+  String get settingsScreenEasyFullTracking => 'Easy · Full tracking';
 
   @override
   String get settingsScreenExtANoteFromChetan => 'Poznámka od Chetana';
@@ -34957,6 +35002,9 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
+  String get settingsScreenSameAsAppLanguage => 'Same as app language';
+
+  @override
   String settingsScreenUBDays(Object daysPerWeek, Object splitName) {
     return '$splitName · $daysPerWeek dní';
   }
@@ -34973,6 +35021,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String settingsScreenV(Object appName, Object version) {
     return '$appName v$version';
   }
+
+  @override
+  String get settingsScreenVacationMode => 'Vacation Mode';
 
   @override
   String get settingsSearchSettings => 'Hledat v nastavení';
@@ -35866,6 +35917,11 @@ class AppLocalizationsCs extends AppLocalizations {
     Object missedDescription,
   ) {
     return '$missedDescription · ${durationMinutes}min · $exercisesCount cviků';
+  }
+
+  @override
+  String stackedBannerPanelMissedColon(Object workoutType) {
+    return 'Missed: $workoutType';
   }
 
   @override

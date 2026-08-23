@@ -933,7 +933,15 @@ async def award_goal_xp(
                     if request.goal_type == "bonus_minigame"
                     else f"Daily goal: {request.goal_type.replace('_', ' ')}"
                 ),
-                "p_is_verified": False
+                "p_is_verified": False,
+                # E2E #357: every daily-goal claim is already dedup-guarded
+                # (one `source` per user per local day, checked above) --
+                # can't be farmed -- so the trust_level anti-fraud halving
+                # only made the advertised goal_xp_amounts diverge from what
+                # actually landed in xp_transactions (e.g. meal_log
+                # advertised 25, paid 12 = FLOOR(25*0.5)). Same bypass as
+                # workout_complete's own award path (crud_completion.py).
+                "p_bypass_trust": True
             }
         ).execute()))
         logger.info(f"[XP] award_xp RPC result: {result.data}")
@@ -1141,7 +1149,13 @@ async def award_first_time_bonus(
                 "p_source": "first_time_bonus",
                 "p_source_id": bonus_type,
                 "p_description": f"First-time bonus: {bonus_type.replace('_', ' ')}",
-                "p_is_verified": False
+                "p_is_verified": False,
+                # Dedup-guarded by the unique (user_id, bonus_type) row in
+                # user_first_time_bonuses -- can't be farmed -- so the
+                # trust_level anti-fraud halving only makes the advertised
+                # FIRST_TIME_BONUSES amount diverge from what's actually paid
+                # (E2E #357). Same bypass already applied to workout_complete.
+                "p_bypass_trust": True
             }
         ).execute()))
 
@@ -1227,7 +1241,9 @@ async def complete_onboarding_challenge(
                 "p_source": "first_time_bonus",
                 "p_source_id": BONUS_TYPE,
                 "p_description": "Completed the Get Started Challenge",
-                "p_is_verified": False
+                "p_is_verified": False,
+                # See the identical bypass in award_first_time_bonus above (E2E #357).
+                "p_bypass_trust": True
             }
         ).execute()))
 
@@ -1291,7 +1307,13 @@ async def _grant_first_time_bonus_backfill(db, user_id: str, bonus_type: str) ->
                 "p_source": "first_time_bonus",
                 "p_source_id": bonus_type,
                 "p_description": f"First-time bonus: {bonus_type.replace('_', ' ')}",
-                "p_is_verified": False
+                "p_is_verified": False,
+                # Dedup-guarded by the unique (user_id, bonus_type) row in
+                # user_first_time_bonuses -- can't be farmed -- so the
+                # trust_level anti-fraud halving only makes the advertised
+                # FIRST_TIME_BONUSES amount diverge from what's actually paid
+                # (E2E #357). Same bypass already applied to workout_complete.
+                "p_bypass_trust": True
             }
         ).execute()))
 

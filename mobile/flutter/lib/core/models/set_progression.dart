@@ -244,10 +244,16 @@ List<ProgressionSetTarget> adaptTargets({
     );
   }
 
-  // Compute weight delta for next set
+  // Compute weight delta for next set — anchored to the weight the user
+  // actually just lifted (lastCompleted.weight), not the plan's own
+  // pre-existing target for the next set. Those can differ (e.g. the lifter
+  // went off-script on the last set), and anchoring to the plan produced a
+  // delta that didn't match "vs what you just did" — the reading the chip's
+  // own copy ("Reducing weight −N") implies, and the one the backend fatigue
+  // alert (a separate system) already anchors to.
   final nextIdx = completedCount;
-  final weightDelta = nextIdx < adjusted.length && nextIdx < originalTargets.length
-      ? adjusted[nextIdx].weight - originalTargets[nextIdx].weight
+  final weightDelta = nextIdx < adjusted.length
+      ? adjusted[nextIdx].weight - lastCompleted.weight
       : incrementAdjust * increment;
 
   return (
