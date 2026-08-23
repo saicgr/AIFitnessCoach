@@ -88,6 +88,18 @@ class WorkoutAdapter {
     final Map<String, List<Map<String, dynamic>>> setsJsonByExercise =
         _parseSetsJson(setsJsonRaw);
 
+    // A session with planned exercises but nothing actually logged must not
+    // produce a card — `_buildExerciseList` falls back to the *planned*
+    // sets/reps per exercise when no logs exist for it, which would publish
+    // a workout the user never did. Gate on real evidence of logged work
+    // across the whole session, not just non-empty planned exercises.
+    final hasLoggedWork = (loggedSets != null && loggedSets.isNotEmpty) ||
+        setsJsonByExercise.values.any((sets) => sets.isNotEmpty) ||
+        (totalSets != null && totalSets > 0) ||
+        (totalReps != null && totalReps > 0) ||
+        (totalVolumeKgFromCaller != null && totalVolumeKgFromCaller > 0);
+    if (!hasLoggedWork) return null;
+
     // Names (lowercased) of exercises that set a PR this session, so each
     // ShareableExercise can carry an isPr flag for templates to badge.
     final prNames = <String>{

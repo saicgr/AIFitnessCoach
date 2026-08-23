@@ -84,7 +84,8 @@ _INJURY_NAME_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "knee":       ("pistol squat", "jump squat", "box jump", "depth jump",
                    "jumping lunge", "jump lunge", "shrimp squat"),
     "shoulder":   ("behind the neck", "behind-the-neck", "upright row",
-                   "snatch", "overhead press", "military press", "push press"),
+                   "snatch", "overhead press", "military press", "push press",
+                   "headstand", "handstand", "shoulder stand"),
     "elbow":      ("skullcrusher", "skull crusher"),
     "wrist":      (),
     "ankle":      ("box jump", "depth jump", "jump rope", "jumping jack",
@@ -108,6 +109,20 @@ _INJURY_TARGET_MUSCLE_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "lower_back": ("lower back", "erector spinae", "erector", "spinae", "lumbar"),
     "neck":       ("neck", "sternocleidomastoid", "cervical"),
 }
+
+
+# Plain daily-activity locomotion — the fallback movement pattern itself, not a
+# risk. The safety index tags these `<joint>_safe = FALSE` because their
+# secondary/incidental muscle involvement overlaps the injured joint (e.g.
+# `Walking` engages quads/hamstrings/calves, so it trips the same knee gate as
+# an actual loaded knee movement) even though ordinary overground walking is
+# routinely the RECOMMENDED activity for a knee/hip/ankle limitation. Exact
+# name match only — deliberately does NOT cover "Walking Lunge"/"Walking Knee
+# Hug"/"Treadmill Walking Lunge" etc., which are genuinely loaded knee work.
+_LOCOMOTION_SAFE_NAMES = frozenset({
+    "walking", "walking fast", "briskly walking",
+    "briskly walking (360 degrees)",
+})
 
 
 _WORD_SPLIT_RE = re.compile(r"[^a-z0-9]+")
@@ -427,6 +442,8 @@ def _violation_reason(
 ) -> Optional[str]:
     """The ONE rule set. Returns a short reason string, or None when the
     exercise is acceptable for this user's injuries/limitations."""
+    if name_lc and name_lc in _LOCOMOTION_SAFE_NAMES:
+        return None
     if name_lc and name_lc in unsafe_names:
         return "safety_index"
     if name_lc and _name_keyword_banned(name_lc, list(injuries)):

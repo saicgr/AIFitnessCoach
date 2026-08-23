@@ -298,7 +298,13 @@ class WorkoutFeedbackRAGService:
             n_results: Number of results
 
         Returns:
-            List of {date, weight_kg, reps} for the exercise
+            List of {date, weight_kg, reps, sets, set_details} for the
+            exercise. `weight_kg`/`reps` are the session's BEST set (highest
+            weight, ties broken by reps) — not the mean weight / total reps
+            across sets, which would make PR detection (max weight seen)
+            mathematically impossible to recover. `set_details` carries the
+            full per-set breakdown when available so callers needing more
+            than the best set (e.g. e1RM per set) don't have to re-derive it.
         """
         sessions = await self.find_similar_exercise_sessions(
             exercise_name, user_id, n_results
@@ -309,11 +315,25 @@ class WorkoutFeedbackRAGService:
             exercises = session["metadata"].get("exercises", [])
             for ex in exercises:
                 if exercise_name.lower() in ex.get("name", "").lower():
+                    set_details = ex.get("set_details") or []
+                    if set_details:
+                        best_set = max(
+                            set_details,
+                            key=lambda s: (s.get("weight_kg", 0) or 0, s.get("reps", 0) or 0),
+                        )
+                        best_weight = best_set.get("weight_kg", 0)
+                        best_reps = best_set.get("reps", 0)
+                    else:
+                        # Legacy sessions indexed before per-set data was
+                        # captured — fall back to the exercise-level fields.
+                        best_weight = ex.get("weight_kg", 0)
+                        best_reps = ex.get("reps", 0)
                     weight_history.append({
                         "date": session["metadata"].get("completed_at"),
-                        "weight_kg": ex.get("weight_kg", 0),
-                        "reps": ex.get("reps", 0),
+                        "weight_kg": best_weight,
+                        "reps": best_reps,
                         "sets": ex.get("sets", 0),
+                        "set_details": set_details,
                         "workout_name": session["metadata"].get("workout_name"),
                     })
 
@@ -340,16 +360,30 @@ class WorkoutFeedbackRAGService:
         """
         context_parts = ["CURRENT WORKOUT SESSION:"]
 
+        # A `0` here is ambiguous between "genuinely zero" and "never
+        # measured / null coerced to zero upstream" — asserting it as a hard
+        # number invites the model to critique a fact that isn't one (e.g.
+        # "0 second rest suggests an inability to maintain intensity" for a
+        # session where rest was simply never captured). Phrase avg-rest and
+        # volume as "not tracked" at zero instead of stating the number.
+        avg_rest = current_session.get('avg_rest_seconds', 0) or 0
+        avg_rest_line = "not tracked" if avg_rest <= 0 else f"{avg_rest:.0f} seconds"
+        total_volume = current_session.get('total_volume_kg', 0) or 0
+        volume_line = (
+            "not tracked (no per-set weights logged)"
+            if total_volume <= 0 else f"{total_volume:.1f} kg"
+        )
+
         # Current session details
         context_parts.append(f"""
 Workout: {current_session.get('workout_name', 'Unknown')}
 Duration: {current_session.get('total_time_seconds', 0) // 60} minutes
 Total Rest: {current_session.get('total_rest_seconds', 0) // 60} minutes
-Average Rest Between Sets: {current_session.get('avg_rest_seconds', 0):.0f} seconds
+Average Rest Between Sets: {avg_rest_line}
 Calories Burned: {current_session.get('calories_burned', 0)} kcal
 Sets Completed: {current_session.get('total_sets', 0)}
 Total Reps: {current_session.get('total_reps', 0)}
-Total Volume: {current_session.get('total_volume_kg', 0):.1f} kg
+Total Volume: {volume_line}
 """)
 
         # Get completed exercises and planned exercises
@@ -1412,6 +1446,52 @@ def derive_actual_session_completion(
         "completed_with_real_work": len(real_work),
         "has_real_logged_work": len(real_work) > 0,
         "all_completed": len(real_work) == total,
+    }
+
+
+def aggregate_session_totals_from_sets_json(
+    sets_json: Optional[List[Dict[str, Any]]],
+) -> Optional[Dict[str, Any]]:
+    """Deterministic (total_volume_kg, total_sets, total_reps) from the durable
+    per-set store — the same ground truth `derive_actual_session_completion`
+    reads. Used to recover the real session aggregates when the client-sent
+    ones are missing/zero (e.g. `workout_logs.total_volume_kg` left NULL),
+    which otherwise reads as "0kg logged" / "0 sets" even when real sets with
+    real weight exist in `performance_logs`.
+
+    Excludes warmups and sets explicitly marked not completed. Returns None
+    when there is no sets_json to derive from.
+    """
+    if not sets_json:
+        return None
+
+    def _num(value: Any) -> float:
+        try:
+            return float(value) if value is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    total_sets = 0
+    total_reps = 0
+    total_volume_kg = 0.0
+    for s in sets_json:
+        if not isinstance(s, dict):
+            continue
+        stype = (s.get("set_type") or s.get("setType") or "working").lower()
+        if stype in ("warmup", "warm_up", "warm-up"):
+            continue
+        if s.get("is_completed") is False:
+            continue
+        reps = int(_num(s.get("reps") if s.get("reps") is not None else s.get("reps_completed")))
+        weight_kg = _num(s.get("weight_kg") if s.get("weight_kg") is not None else s.get("weightKg"))
+        total_sets += 1
+        total_reps += reps
+        total_volume_kg += weight_kg * reps
+
+    return {
+        "total_sets": total_sets,
+        "total_reps": total_reps,
+        "total_volume_kg": total_volume_kg,
     }
 
 

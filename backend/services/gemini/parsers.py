@@ -118,6 +118,64 @@ _NEVER_COUNTABLE_DEFAULT_G: Dict[str, float] = {
     "granola": 30,
 }
 
+# Cooked staples served by the cup/bowl/plate — the prompt already tells
+# Gemini these are NOT COUNTABLE (see nutrition.py's "NOT COUNTABLE" line),
+# but the model still sometimes ships portion_basis="by_count" for them
+# ("1 cup white rice" -> count=1), and unlike the nuts/berries in
+# `_NEVER_COUNTABLE_DEFAULT_G` — where Gemini's own weight_g is usually a
+# believable per-serving number and only needs re-labeling to by_weight — a
+# staple mis-counted this way carries whatever generic weight_g Gemini
+# guessed for "1 piece" (observed: a flat 200g regardless of the actual
+# food), which is never trustworthy. So these are ALWAYS corrected to
+# count * per-cup weight rather than kept when merely "plausible-looking".
+# Maps lower-cased name fragment -> typical per-cup cooked weight (g).
+_NEVER_COUNTABLE_STAPLE_DEFAULT_G: Dict[str, float] = {
+    "biryani": 250,
+    "pulao": 200,
+    "rice": 158,       # 1 cup cooked white rice
+    "oatmeal": 234,    # 1 cup cooked oatmeal
+    "pasta": 220,      # 1 cup cooked pasta
+    "noodle": 220,
+    "kheer": 200,
+    "dal": 200,
+}
+
+
+def _match_never_countable_staple(name: str) -> Optional[tuple]:
+    """Returns (matched_fragment, default_g) or None. Longest-match wins."""
+    if not name:
+        return None
+    nm = name.lower()
+    best: Optional[tuple] = None
+    for frag, default_g in _NEVER_COUNTABLE_STAPLE_DEFAULT_G.items():
+        if frag in nm and (best is None or len(frag) > len(best[0])):
+            best = (frag, default_g)
+    return best
+
+# Whole-unit foods Gemini is told to count (portion_basis="by_count",
+# weight_per_unit_g set) but whose per-unit estimate is worth a hardcoded
+# sanity default — unlike the DB-backed check further down (which only fires
+# when `db_rows` has a matching override row), this applies even when the
+# food isn't in the override DB at all. Maps lower-cased name fragment ->
+# typical per-piece weight (g). Longest-fragment-wins, same as
+# `_match_never_countable`.
+_COMMON_WHOLE_UNIT_DEFAULT_G: Dict[str, float] = {
+    "egg": 50,        # 1 whole large egg, shell removed
+    "banana": 120,
+}
+
+
+def _match_common_whole_unit(name: str) -> Optional[tuple]:
+    """Returns (matched_fragment, default_g) or None. Longest-match wins."""
+    if not name:
+        return None
+    nm = name.lower()
+    best: Optional[tuple] = None
+    for frag, default_g in _COMMON_WHOLE_UNIT_DEFAULT_G.items():
+        if frag in nm and (best is None or len(frag) > len(best[0])):
+            best = (frag, default_g)
+    return best
+
 
 def _match_never_countable(name: str) -> Optional[tuple]:
     """Returns (matched_fragment, default_g) or None.
@@ -160,6 +218,16 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
        _NEVER_COUNTABLE_DEFAULT_G AND claimed weight_per_unit_g > 50g
        (impossible per-cashew weight): rewrite to by_weight, drop count,
        use serving weight.
+
+    4. **Never-countable cooked staple** (rice, biryani, oatmeal, ...) —
+       name matches _NEVER_COUNTABLE_STAPLE_DEFAULT_G AND Gemini shipped a
+       count/by_count for it ("1 cup white rice" -> count=1): rewrite to
+       by_weight using count * per-cup default, unconditionally (unlike mode
+       3, Gemini's own weight_g here is not trusted even when plausible-
+       looking).
+
+    1b. **Whole-unit food with no DB row** (egg, banana, ...) — same
+        correction as mode 1, for names the food-override DB has no row for.
 
     Always sets sanity_clamped=True when any value changes.
     Never silently rewrites without flagging.
@@ -204,6 +272,57 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
             item["weight_per_unit_g"] = None
             item["weight_g"] = new_weight
             item["sanity_clamped"] = True
+            continue
+
+        # ---- Failure mode 4: never-countable cooked staple ----
+        # Also name-based, runs without a DB row. Unlike mode 3 above, the
+        # corrected weight is ALWAYS the per-cup default (scaled by count when
+        # Gemini gave one, e.g. "2 cups rice") — Gemini's own weight_g for a
+        # mis-counted staple is not trustworthy enough to keep even when it
+        # looks plausible (see dict comment: this is where the flat-200g
+        # count-to-grams bug came from for "1 cup white rice").
+        staple_match = _match_never_countable_staple(name)
+        if staple_match and (portion_basis == "by_count" or count):
+            frag, default_g = staple_match
+            new_weight = (count or 1) * default_g
+            try:
+                logger.warning(
+                    f"[L2-Reconcile] '{name}' matched never-countable staple '{frag}'; "
+                    f"forcing by_weight (was count={count}, weight_g={item.get('weight_g')}); "
+                    f"new weight_g={new_weight}"
+                )
+            except Exception:
+                pass
+            item["portion_basis"] = "by_weight"
+            item["count"] = None
+            item["weight_per_unit_g"] = None
+            item["weight_g"] = new_weight
+            item["sanity_clamped"] = True
+            continue
+
+        # ---- Failure mode 1b: whole-unit food with no DB row ----
+        # Same correction as failure mode 1 below, but for common staples
+        # (egg, banana, ...) that the food-override DB doesn't have a row
+        # for — without this, an unmatched name skips DB-dependent
+        # reconciliation entirely and Gemini's raw (sometimes doubled)
+        # per-unit estimate ships uncorrected.
+        if not db and portion_basis == "by_count" and count:
+            whole_match = _match_common_whole_unit(name)
+            if whole_match:
+                _frag, piece_default_g = whole_match
+                expected_weight = count * piece_default_g
+                current_weight = item.get("weight_g") or 0
+                if current_weight <= 0 or abs(current_weight - expected_weight) / expected_weight > 0.4:
+                    try:
+                        logger.warning(
+                            f"[L2-Reconcile] Whole-unit '{name}' (no DB row) count={count}: "
+                            f"weight_g {current_weight}g -> {expected_weight}g (default piece={piece_default_g}g)"
+                        )
+                    except Exception:
+                        pass
+                    item["weight_g"] = expected_weight
+                    item["weight_per_unit_g"] = piece_default_g
+                    item["sanity_clamped"] = True
             continue
 
         if not db:

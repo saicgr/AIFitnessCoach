@@ -772,6 +772,14 @@ async def update_workout_log(
             update_data.setdefault(
                 "completed_at", datetime.now(timezone.utc).isoformat()
             )
+        elif update_data.get("status") in ("in_progress", "abandoned", "paused"):
+            # A session moved back to a non-completed status can't still carry
+            # a completion timestamp (live row: status='in_progress' with
+            # completed_at populated — an impossible state for a reader that
+            # branches on status). Explicit status transitions are the only
+            # writer of completed_at on this row, so clearing it here is the
+            # one place that can keep the two fields honest.
+            update_data["completed_at"] = None
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No updatable fields provided")

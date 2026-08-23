@@ -610,8 +610,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
       final exerciseNames = exercises.map((e) => e.name).toList();
       await ref.read(exerciseProgressionProvider.notifier)
           .preloadPatterns(exerciseNames);
+      if (!mounted) return;
       await ref.read(exerciseBarTypeProvider.notifier)
           .preloadBarTypes(exerciseNames);
+      if (!mounted) return;
 
       // Populate the in-memory maps from the providers
       final providerState = ref.read(exerciseProgressionProvider);

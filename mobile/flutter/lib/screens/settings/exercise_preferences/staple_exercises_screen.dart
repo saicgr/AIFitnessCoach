@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
@@ -357,6 +358,17 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     final exerciseType = _detectExerciseType(staple);
 
+    // `staple.userWeightLbs` is always stored in POUNDS regardless of the
+    // user's display preference (see staples_provider.dart, which always
+    // divides by 2.20462 to get kg) — convert to the user's current workout
+    // weight unit for display, and back to lbs on write (row 288).
+    final weightUnit = ref.read(workoutWeightUnitProvider);
+    final displayWeight = staple.userWeightLbs == null
+        ? null
+        : (weightUnit == 'kg'
+            ? WeightUtils.lbsToKg(staple.userWeightLbs!)
+            : staple.userWeightLbs!);
+
     String selectedSection = staple.section;
     final setsController = TextEditingController(
       text: staple.userSets?.toString() ?? '',
@@ -367,10 +379,11 @@ class StapleExercisesScreen extends ConsumerWidget {
     final restController = TextEditingController(
       text: staple.userRestSeconds?.toString() ?? '',
     );
-    // Weight field (backend field: user_weight_lbs)
+    // Weight field (backend field: user_weight_lbs — displayed in the
+    // user's preferred unit, converted back to lbs on write below).
     final weightController = TextEditingController(
-      text: staple.userWeightLbs?.toStringAsFixed(
-        staple.userWeightLbs! % 1 == 0 ? 0 : 1,
+      text: displayWeight?.toStringAsFixed(
+        displayWeight % 1 == 0 ? 0 : 1,
       ) ?? '',
     );
     // Duration field (for timed/cardio)
@@ -537,7 +550,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                           child: buildField(
                             controller: weightController,
                             label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
-                            suffix: 'lbs',
+                            suffix: weightUnit,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
                         ),
@@ -948,10 +961,14 @@ class StapleExercisesScreen extends ConsumerWidget {
         if (params.isNotEmpty) cardioParams = params;
       }
 
-      // Parse weight for strength exercises
-      final weight = exerciseType == _ExerciseType.strength
+      // Parse weight for strength exercises — typed in `weightUnit`, stored
+      // as lbs (row 288).
+      final typedWeight = exerciseType == _ExerciseType.strength
           ? double.tryParse(weightController.text)
           : null;
+      final weight = typedWeight == null
+          ? null
+          : (weightUnit == 'kg' ? WeightUtils.kgToLbs(typedWeight) : typedWeight);
 
       final success = await ref.read(staplesProvider.notifier).updateStaple(
         staple.id,

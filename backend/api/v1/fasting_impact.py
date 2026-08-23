@@ -418,6 +418,20 @@ async def log_weight_with_fasting(
         if refetch.data:
             row = refetch.data
 
+        # Dual-write to weight_logs: body_measurements is the record of truth
+        # here, but weight_logs is what home_signals, adaptive TDEE and the
+        # weekly digest read. Best effort — must not fail the weight log.
+        try:
+            db.client.table("weight_logs").insert({
+                "user_id": data.user_id,
+                "weight_kg": data.weight_kg,
+                "logged_at": row.get("measured_at") or f"{data.date}T12:00:00Z",
+                "source": "manual",
+                "notes": data.notes,
+            }).execute()
+        except Exception:
+            logger.warning("weight_logs dual-write failed", exc_info=True)
+
         # Log activity
         await log_user_activity(
             user_id=data.user_id,

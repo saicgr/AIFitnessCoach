@@ -415,12 +415,16 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             if gym_profile:
                 gym_profile_id = gym_profile.get("id")
                 equipment = body.equipment or gym_profile.get("equipment") or []
-                # Merge custom equipment from user profile (e.g., "TRX Bands",
-                # "Yoga Wheel") so the FIRST generated workout honors typed-in
-                # gear, not just regenerations. Skip when the request explicitly
-                # sent [] — intentional bodyweight-only (mirrors versioning.py).
+                # Merge only the user's CUSTOM (free-text) equipment — e.g.
+                # "TRX Bands", "Yoga Wheel" — so the FIRST generated workout
+                # honors typed-in gear, not just regenerations. Skip when the
+                # request explicitly sent [] — intentional bodyweight-only
+                # (mirrors versioning.py). Deliberately does NOT merge
+                # `user.get("equipment")` (the STANDARD onboarding checklist)
+                # via get_all_equipment() — that leaked a user's full-gym
+                # equipment into scoped, e.g. bodyweight-only, profiles (row 210).
                 if user and isinstance(equipment, list) and body.equipment != []:
-                    for item in get_all_equipment(user):
+                    for item in parse_json_field(user.get("custom_equipment"), []):
                         if item and item not in equipment:
                             equipment.append(item)
                 training_split = gym_profile.get("training_split")
@@ -1234,6 +1238,11 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
                 focus_areas = body.focus_areas if hasattr(body, 'focus_areas') and body.focus_areas else []
 
+                # True when focus validation found too few focus-matching
+                # exercises to meet MIN_EXERCISES_REQUIRED — the workout must
+                # ship as degraded even if completeness pads it back to target.
+                _stream_focus_validation_critical = False
+
                 if focus_areas and len(focus_areas) > 0 and exercises:
                     primary_focus = focus_areas[0]
                     # #60 — pass the RAG candidate pool so mismatched exercises
@@ -1275,12 +1284,20 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                             )
                             exercises = valid_exercises
                         else:
+                            # Drop to the focus-matching subset (when non-empty)
+                            # instead of silently keeping exercises already known
+                            # to be wrong for this focus, and flag the workout
+                            # degraded so the client can say so honestly.
                             logger.error(
                                 f"[Streaming Focus Validation] CRITICAL: Workout '{workout_name}' has only "
                                 f"{len(valid_exercises)} valid exercises for '{primary_focus}' focus "
                                 f"(minimum required: {MIN_EXERCISES_REQUIRED}). "
-                                f"Keeping all {len(exercises)} exercises to meet minimum."
+                                f"Dropping {focus_validation['mismatch_count']} mismatched exercise(s); "
+                                f"completeness stage will backfill focus-matching candidates."
                             )
+                            if valid_exercises:
+                                exercises = valid_exercises
+                            _stream_focus_validation_critical = True
 
                 # TERMINAL COMPLETENESS STAGE (WORKOUT_COMPLETENESS_V2) — mirror
                 # of the library path. Backfills a thin streaming workout to its
@@ -1325,6 +1342,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         f"[Streaming Exercise Count] Workout '{workout_name}' has only {len(exercises)} exercises "
                         f"(minimum required: {MIN_EXERCISES_REQUIRED})."
                     )
+
+                # A focus-gate failure must ship as degraded even when the
+                # completeness stage above padded the workout back up to its
+                # count target — reaching the target count says nothing about
+                # whether those exercises actually match the focus.
+                if _stream_focus_validation_critical and not _stream_degraded_reason:
+                    _stream_degraded_reason = "focus_mismatch"
 
                 # CRITICAL: Validate set_targets
                 user_context = {

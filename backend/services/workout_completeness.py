@@ -203,6 +203,23 @@ async def ensure_complete_workout(
                         ("name", "movement_pattern", "category", "target_muscle")).lower()
         return "stretch" in blob or "mobility" in blob
 
+    def _is_focus_ok(cand: Dict[str, Any]) -> bool:
+        # A backfilled exercise must still match the workout's own focus —
+        # otherwise a workout that already failed the focus gate (row 41: too
+        # few valid exercises) gets padded with off-focus reserve/cascade moves
+        # and ships silently. Fail open (admit) on any error so a completeness
+        # bug never blocks the workout.
+        try:
+            from api.v1.workouts.focus_validation_utils import validate_exercise_matches_focus
+            validation = validate_exercise_matches_focus(
+                cand.get("name") or cand.get("exercise_name") or "",
+                cand.get("muscle_group") or cand.get("target_muscle") or "",
+                focus_area,
+            )
+            return bool(validation.get("matches", True))
+        except Exception:  # noqa: BLE001 — fail open
+            return True
+
     def _admit(cand: Dict[str, Any], allow_stretch: Optional[bool] = None) -> bool:
         k = _key(cand)
         if not k or k in seen:
@@ -219,6 +236,8 @@ async def ensure_complete_workout(
             return False
         if not _is_equipment_ok(cand, equipment):
             return False
+        if not _is_focus_ok(cand):
+            return False
         return True
 
     def _add(cand: Dict[str, Any]) -> None:
@@ -227,9 +246,30 @@ async def ensure_complete_workout(
         if _lib_key(cand):
             seen_lib.add(_lib_key(cand))
 
+    def _reserve_rank(cand: Dict[str, Any]) -> tuple:
+        # Rank candidates by actual relevance (focus confidence, then real
+        # equipment over an inferred/bodyweight guess) instead of consuming
+        # the reserve pool in whatever incoming order it happens to carry —
+        # a flat pool order otherwise lets an incidental sort (e.g. by name)
+        # upstream dictate which exercises get backfilled first.
+        try:
+            from api.v1.workouts.focus_validation_utils import validate_exercise_matches_focus
+            validation = validate_exercise_matches_focus(
+                cand.get("name") or cand.get("exercise_name") or "",
+                cand.get("muscle_group") or cand.get("target_muscle") or "",
+                focus_area,
+            )
+            focus_confidence = float(validation.get("confidence") or 0.0)
+        except Exception:  # noqa: BLE001 — fail open
+            focus_confidence = 0.0
+        cand_equip = (cand.get("equipment") or "").strip().lower()
+        has_real_equipment = 1 if cand_equip and cand_equip not in ("bodyweight", "body weight", "none") else 0
+        return (focus_confidence, has_real_equipment)
+
     # ---- Step 1: restore from the reserve (the trims' discards) -------------
+    ranked_reserve = sorted(reserve_pool or [], key=_reserve_rank, reverse=True)
     restored = 0
-    for cand in (reserve_pool or []):
+    for cand in ranked_reserve:
         if distinct_count(exercises) >= target:
             break
         if _admit(cand):

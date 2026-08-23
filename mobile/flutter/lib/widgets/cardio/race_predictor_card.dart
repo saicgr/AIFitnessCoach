@@ -155,7 +155,7 @@ class _EmptyBody extends StatelessWidget {
           child: FilledButton.tonalIcon(
             onPressed: () {
               // Cardio logging entry point — log_cardio_screen.dart route.
-              GoRouter.of(context).push('/cardio/log');
+              GoRouter.of(context).push('/log-cardio');
             },
             icon: const Icon(Icons.add_rounded, size: 18),
             label: Text(AppLocalizations.of(context).racePredictorCardLogRun),

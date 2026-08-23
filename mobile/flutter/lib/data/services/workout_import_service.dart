@@ -64,8 +64,8 @@ class WorkoutImportService {
       mediaType: mediaType,
       expectedSizeBytes: size,
     );
-    final url = presign['upload_url'] as String? ?? presign['url'] as String?;
-    final fields = presign['fields'] as Map?;
+    final url = presign['presigned_url'] as String? ?? presign['url'] as String?;
+    final fields = presign['presigned_fields'] as Map?;
     final s3Key = presign['s3_key'] as String?;
     if (url == null || s3Key == null) {
       throw Exception('Malformed presign response');

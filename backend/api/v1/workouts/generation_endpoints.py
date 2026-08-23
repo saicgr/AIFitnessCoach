@@ -97,6 +97,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
     # a workout ships below its floor because the real pool is too small. Bound
     # here so the persistence block always has it defined.
     _degraded_reason: Optional[str] = None
+    # True when focus validation found too few focus-matching exercises to
+    # meet MIN_EXERCISES_REQUIRED — the workout must ship as degraded even if
+    # the completeness stage later pads it back up to its count target.
+    _focus_validation_critical: bool = False
     gym_profile_id = body.gym_profile_id if getattr(body, "gym_profile_id", None) else None
     workout_type_override = getattr(body, "workout_type", None)
 
@@ -342,12 +346,18 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         if gym_profile:
             gym_profile_id = gym_profile.get("id")
             equipment = body.equipment or gym_profile.get("equipment") or []
-            # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga
-            # Wheel") so the FIRST generated workout honors typed-in gear, not
-            # just regenerations. Skip when the request explicitly sent [] —
-            # that's an intentional bodyweight-only choice (mirrors versioning.py).
+            # Merge only the user's CUSTOM (free-text) equipment — e.g. "TRX
+            # Bands", "Yoga Wheel" — so the FIRST generated workout honors
+            # typed-in gear, not just regenerations. Skip when the request
+            # explicitly sent [] — that's an intentional bodyweight-only
+            # choice (mirrors versioning.py). Deliberately does NOT merge
+            # `user.get("equipment")` (the STANDARD onboarding checklist):
+            # that column belongs to whichever profile it was set for, and
+            # blending it into every profile via get_all_equipment() leaked a
+            # user's full-gym equipment into scoped, e.g. bodyweight-only,
+            # profiles (row 210).
             if user and isinstance(equipment, list) and body.equipment != []:
-                for item in get_all_equipment(user):
+                for item in parse_json_field(user.get("custom_equipment"), []):
                     if item and item not in equipment:
                         equipment.append(item)
             equipment_details = gym_profile.get("equipment_details") or []
@@ -1600,15 +1610,24 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                             )
                             exercises = valid_exercises
                         else:
-                            # Not enough valid exercises - this is a critical AI error
-                            # Keep all exercises but log the issue prominently
+                            # Not enough valid exercises - this is a critical AI error.
+                            # Previously this kept ALL exercises (including ones already
+                            # known to be wrong for the focus, e.g. lunges in a
+                            # "Shoulder Focus Push") and shipped with is_degraded=false.
+                            # Drop to the focus-matching subset (when non-empty) so the
+                            # completeness stage backfills from real focus-matching
+                            # candidates instead of padding around known-bad exercises,
+                            # and mark the workout degraded so the client can say so.
                             logger.error(
                                 f"❌ [Focus Validation] CRITICAL: Workout '{workout_name}' has only "
                                 f"{len(valid_exercises)} valid exercises for '{primary_focus}' focus "
                                 f"(minimum required: {MIN_EXERCISES_REQUIRED}). "
-                                f"Keeping all {len(exercises)} exercises to meet minimum. "
-                                f"User may see mismatched exercises (e.g., push-ups in leg workout)."
+                                f"Dropping {focus_validation['mismatch_count']} mismatched exercise(s); "
+                                f"completeness stage will backfill focus-matching candidates."
                             )
+                            if valid_exercises:
+                                exercises = valid_exercises
+                            _focus_validation_critical = True
 
                 # ============================================================
                 # TERMINAL COMPLETENESS STAGE (WORKOUT_COMPLETENESS_V2)
@@ -1662,6 +1681,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                         )
                         _degraded_reason = None
 
+                # A focus-gate failure must ship as degraded even when the
+                # completeness stage above padded the workout back up to its
+                # count target — reaching the target count says nothing about
+                # whether those exercises actually match the focus.
+                if _focus_validation_critical and not _degraded_reason:
+                    _degraded_reason = "focus_mismatch"
+
                 # MINIMUM EXERCISE COUNT VALIDATION
                 # Count distinct exercises, not set entries. Advanced
                 # techniques like "Added failure set to X" can duplicate
@@ -1691,6 +1717,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                             ),
                             "heavy_exclusions": (
                                 "Your exclusion preferences narrowed the pool — showing the best available."
+                            ),
+                            "focus_mismatch": (
+                                f"Limited {focus_areas[0] if focus_areas else 'matching'} exercises were "
+                                f"available — showing the best available for this focus."
                             ),
                         }
                         _truthful = _DEGRADED_NOTES.get(

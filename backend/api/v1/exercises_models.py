@@ -9,7 +9,7 @@ class CustomExerciseCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     primary_muscle: str = Field(..., max_length=100)  # e.g., "chest", "back", "legs"
     equipment: str = Field(default="bodyweight", max_length=200)  # e.g., "dumbbell", "barbell", "none"
-    instructions: str = Field(default="", max_length=5000)  # Optional instructions
+    instructions: Optional[str] = Field(default=None, max_length=5000)  # Optional instructions
     default_sets: int = Field(default=3, ge=1, le=10)
     default_reps: Optional[int] = Field(default=10, ge=1, le=100)
     default_rest_seconds: Optional[int] = Field(default=None, ge=0, le=600)

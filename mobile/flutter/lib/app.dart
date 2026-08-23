@@ -27,6 +27,7 @@ import 'data/services/incoming_share_service.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/pre_auth_quiz_backup_service.dart';
 import 'data/services/workout_completion_queue.dart';
+import 'data/services/set_performance_queue.dart';
 import 'data/services/workout_notification_service.dart';
 // Meal-suggestion widget — staged under Settings → Coming Soon. Re-enable
 // the import when the feature goes live (see main.dart for the checklist).
@@ -84,6 +85,10 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
     // queued — including failures that happened WHILE ONLINE, which the
     // connectivity-only flush would never retry. See WorkoutCompletionQueue.
     unawaited(_flushWorkoutCompletionQueue());
+    // Drain any bulk set-performance write that fell short and was queued
+    // (E2E register row #169 — a silently-failed finish-time write that
+    // used to have no retry at all). See SetPerformanceQueue.
+    unawaited(_flushSetPerformanceQueue());
     // Set up notification storage callback right away
     _setupNotificationStorageCallback();
     // Notification permission is NOT requested here. Cold-prompting on first
@@ -133,6 +138,8 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
       unawaited(_recordAppOpen());
       // Retry any stranded workout-completion `/complete` on foreground.
       unawaited(_flushWorkoutCompletionQueue());
+      // Retry any stranded bulk set-performance write on foreground.
+      unawaited(_flushSetPerformanceQueue());
     }
   }
 
@@ -148,6 +155,21 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
           .flush(userId: userId, apiClient: apiClient);
     } catch (e) {
       debugPrint('⚠️ [AppRoot] completion-queue flush skipped: $e');
+    }
+  }
+
+  /// Drain the bulk set-performance offline queue (launch + every resume).
+  /// Cheap no-op when empty; never throws — guarded for a not-yet-authed
+  /// cold start (no userId) where it simply skips and retries next resume.
+  Future<void> _flushSetPerformanceQueue() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null || userId.isEmpty) return;
+      await SetPerformanceQueue.instance
+          .flush(userId: userId, apiClient: apiClient);
+    } catch (e) {
+      debugPrint('⚠️ [AppRoot] set-performance queue flush skipped: $e');
     }
   }
 

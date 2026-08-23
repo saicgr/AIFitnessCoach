@@ -212,7 +212,17 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
 
   Widget _buildDone(Color accent, Color textPrimary, Color textSecondary) {
     final err = _error;
-    if (err != null) {
+    final result = _result ?? const {};
+    final imported = _asInt(result['imported']);
+    final replaced = _asInt(result['replaced']);
+    final weightImported = _asInt(result['weight_imported']);
+    final failed = _asInt(result['failed']);
+    final totalFailure =
+        err == null && failed > 0 && (imported + replaced + weightImported) == 0;
+    if (err != null || totalFailure) {
+      final message = err ??
+          'Nothing was saved. $failed ${failed == 1 ? 'entry' : 'entries'} '
+              'could not be imported.';
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -230,7 +240,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                err,
+                message,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: textSecondary),
               ),
@@ -239,6 +249,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
                 onPressed: () => setState(() {
                   _phase = _Phase.idle;
                   _error = null;
+                  _result = null;
                 }),
                 style: FilledButton.styleFrom(backgroundColor: accent),
                 child: const Text('Try again'),
@@ -249,7 +260,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       );
     }
 
-    final lines = _summaryLines(_result ?? const {});
+    final lines = _summaryLines(result);
 
     return Center(
       child: Padding(

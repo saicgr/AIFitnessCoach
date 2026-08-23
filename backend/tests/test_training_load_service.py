@@ -153,8 +153,9 @@ def test_history_rolling_correct_over_60_days():
     assert last.daily_trimp == pytest.approx(per_day_trimp, abs=0.05)
     assert last.acute_load == pytest.approx(7 * per_day_trimp, abs=0.5)
     assert last.chronic_load == pytest.approx(28 * per_day_trimp, abs=0.5)
-    # ACWR at saturation = (7T)/(28T) = 0.25 — squarely detraining.
-    assert last.acwr == pytest.approx(0.25, abs=0.005)
+    # ACWR at saturation = acute / (chronic/4) = 7T / 7T = 1.0 — dead centre
+    # of the sweet spot, as steady-state training should be.
+    assert last.acwr == pytest.approx(1.0, abs=0.01)
 
 
 def test_acwr_none_when_chronic_zero():
@@ -168,9 +169,11 @@ def test_acwr_none_when_chronic_zero():
 
 
 def test_acwr_spike_after_rest_block_classified_overreaching():
-    """28d of zero, then 7 hard days in a row → acute high, chronic = just
-    those same 7 days → ACWR = 1.0. Then add 7 more very hard days on top
-    so acute >> chronic baseline."""
+    """28d of zero, then 7 hard days in a row → acute = those 7 days, chronic
+    (28d sum) = the same 7 days' worth of load spread over a 28-day window.
+    Normalizing chronic to a weekly average (chronic/4) before the ratio
+    means those 7 days are 4x a mostly-rested baseline → ACWR = 4.0,
+    correctly flagged as overreaching."""
     today = date(2026, 5, 1)
     sessions = []
     # Days -27..-7: nothing.
@@ -193,9 +196,9 @@ def test_acwr_spike_after_rest_block_classified_overreaching():
     )
     last = history[-1]
     # Same 7 days are both fully inside the acute window AND the chronic
-    # window — but acute=last 7d and chronic=last 28d; since the only
-    # activity is those last 7 days, acute == chronic, ACWR == 1.0.
-    assert last.acwr == pytest.approx(1.0, abs=0.01)
+    # window, so acute == chronic (the raw 28d sum). Normalized to a weekly
+    # average, chronic/4 is a quarter of that — ACWR = acute / (chronic/4) = 4.0.
+    assert last.acwr == pytest.approx(4.0, abs=0.05)
 
 
 # ---------------------------------------------------------------------------

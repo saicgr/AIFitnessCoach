@@ -216,8 +216,16 @@ class WorkoutHistoryImporter:
         rows: list[CanonicalSetRow],
         job_id: UUID,
     ) -> int:
-        """Insert strength rows in chunks, ignoring (user_id, source_row_hash)
-        dedup collisions. Returns the count actually persisted."""
+        """Insert strength rows in chunks, skipping (user_id, source_row_hash)
+        dedup collisions. Returns the count actually persisted.
+
+        Plain INSERT rather than upsert(on_conflict=...): the dedup index
+        (`uq_workout_history_imports_source_hash`) is PARTIAL
+        (`WHERE source_row_hash IS NOT NULL`), and PostgREST's `on_conflict`
+        param can't express that predicate, so Postgres can't infer the
+        index for ON CONFLICT (42P10) even though the index itself enforces
+        fine on a normal insert. Duplicates are caught as 23505 and skipped.
+        """
         if not rows:
             return 0
         total_inserted = 0
@@ -226,38 +234,36 @@ class WorkoutHistoryImporter:
             try:
                 result = (
                     db.client.table("workout_history_imports")
-                    .upsert(
-                        chunk,
-                        on_conflict="user_id,source_row_hash",
-                        ignore_duplicates=True,
-                    )
+                    .insert(chunk)
                     .execute()
                 )
                 total_inserted += len(result.data or [])
             except Exception as e:
-                # Per-row fallback if the batch upsert blows up — one bad row
-                # shouldn't drop the whole 500.
+                # Per-row fallback if the batch insert blows up — one bad or
+                # duplicate row shouldn't drop the whole chunk.
                 logger.warning(
-                    f"[WorkoutImport] bulk strength upsert failed ({e!s}); "
+                    f"[WorkoutImport] bulk strength insert failed ({e!s}); "
                     f"retrying row-by-row for chunk of {len(chunk)}"
                 )
                 for row in chunk:
                     try:
                         result = (
                             db.client.table("workout_history_imports")
-                            .upsert(
-                                row,
-                                on_conflict="user_id,source_row_hash",
-                                ignore_duplicates=True,
-                            )
+                            .insert(row)
                             .execute()
                         )
                         total_inserted += len(result.data or [])
                     except Exception as inner:
-                        logger.error(
-                            f"[WorkoutImport] dropping strength row "
-                            f"({row.get('exercise_name')}, {row.get('performed_at')}): {inner}"
-                        )
+                        if _is_duplicate_key_error(inner):
+                            logger.info(
+                                f"[WorkoutImport] skipping already-imported strength row "
+                                f"({row.get('exercise_name')}, {row.get('performed_at')})"
+                            )
+                        else:
+                            logger.error(
+                                f"[WorkoutImport] dropping strength row "
+                                f"({row.get('exercise_name')}, {row.get('performed_at')}): {inner}"
+                            )
         return total_inserted
 
     def _bulk_insert_cardio(
@@ -339,6 +345,13 @@ class WorkoutHistoryImporter:
 def _chunks(seq, size):
     for i in range(0, len(seq), size):
         yield seq[i:i + size]
+
+
+def _is_duplicate_key_error(e: Exception) -> bool:
+    """True for a Postgres unique-violation (23505), e.g. a row already
+    imported by an earlier run of the same file."""
+    msg = str(e).lower()
+    return "23505" in msg or "duplicate key" in msg or "duplicate" in msg
 
 
 async def _download_s3_bytes(s3_key: str) -> bytes:

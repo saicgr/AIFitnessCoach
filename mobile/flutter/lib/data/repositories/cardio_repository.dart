@@ -34,7 +34,7 @@ class CardioRepository {
     try {
       debugPrint('🏃 [CardioRepository] Logging session: $cardioType at $location');
       final response = await _client.post(
-        '/cardio/log',
+        '/cardio/sessions',
         data: {
           'user_id': userId,
           'cardio_type': cardioType,

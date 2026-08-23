@@ -469,6 +469,13 @@ async def complete_workout(
         # comparison/calorie pipeline raises — the N2 first-workout email
         # below reads this and we must not crash the completion response.
         calories_burned: Optional[int] = None
+        # True when a workout_logs session row exists for this workout but
+        # recorded zero completed sets — i.e. the user tracked the session and
+        # logged nothing before hitting Complete. Gates the plan-derived stats
+        # fallback and the workout_complete XP award below so a zero-effort
+        # tracked session can never out-earn (or even match) a genuinely
+        # logged one. Read further down to skip the XP award.
+        no_sets_tracked = False
 
         try:
             comparison_service = PerformanceComparisonService()
@@ -551,11 +558,22 @@ async def complete_workout(
                     total_reps += ex_reps
                     total_volume += ex_volume
                     exercises_performance.append(entry)
+            elif workout_log_id is not None and isinstance(logged_sets_json, list):
+                # A workout_logs session row exists for this workout, but its
+                # sets_json is an empty list — the user tracked the session
+                # and logged nothing at all (performance_logs gains no rows
+                # either). This is real: totals stay at zero rather than
+                # falling into the planned-exercises fallback below, which
+                # previously credited a fully-planned volume/set count (and,
+                # via _calculate_completion_calories, a fake elapsed-time
+                # energy estimate) for work that never happened.
+                no_sets_tracked = True
             else:
-                # Fallback for older clients that didn't post sets_json: derive
-                # from the planned exercises. Same code path as before, but we
-                # also expand integer `sets` so bodyweight plans (sets=3, reps=10)
-                # don't silently zero out.
+                # Fallback for clients that never created a workout_logs row
+                # at all — e.g. `marked_done`, which is the user's own "I did
+                # this" assertion with no per-set log to disagree with. Derive
+                # from the planned exercises. Also expands integer `sets` so
+                # bodyweight plans (sets=3, reps=10) don't silently zero out.
                 for ex in exercises:
                     sets = ex.get("sets", [])
                     if isinstance(sets, int):
@@ -589,12 +607,17 @@ async def complete_workout(
                         "sets": sets,
                     })
 
-            calories_burned = _calculate_completion_calories(
-                exercises=exercises, duration_seconds=duration_seconds,
-                total_sets=total_sets, total_reps=total_reps,
-                total_volume_kg=total_volume, workout_type=workout.type,
-                difficulty=existing.get("difficulty"), user_id=user_id, supabase=supabase,
-            )
+            if no_sets_tracked:
+                # No logged work to estimate from — 0 kcal, not a fabricated
+                # elapsed-time estimate (see `no_sets_tracked` above).
+                calories_burned = 0
+            else:
+                calories_burned = _calculate_completion_calories(
+                    exercises=exercises, duration_seconds=duration_seconds,
+                    total_sets=total_sets, total_reps=total_reps,
+                    total_volume_kg=total_volume, workout_type=workout.type,
+                    difficulty=existing.get("difficulty"), user_id=user_id, supabase=supabase,
+                )
 
             workout_stats = {
                 "workout_name": workout.name, "workout_type": workout.type,
@@ -877,13 +900,21 @@ async def complete_workout(
         xp_awarded_flag = False
         xp_amount_awarded = 0
         try:
-            xp_awarded_flag, xp_amount_awarded = _award_workout_complete_xp(
-                supabase=supabase,
-                request=request,
-                db=db,
-                user_id=user_id,
-                workout_id=workout_id,
-            )
+            if no_sets_tracked:
+                # Tracked session, zero logged sets — no XP for a workout the
+                # user demonstrably didn't do (see `no_sets_tracked` above).
+                logger.info(
+                    f"[XP] Skipping workout_complete XP for user={user_id} "
+                    f"workout={workout_id}: tracked session logged zero sets"
+                )
+            else:
+                xp_awarded_flag, xp_amount_awarded = _award_workout_complete_xp(
+                    supabase=supabase,
+                    request=request,
+                    db=db,
+                    user_id=user_id,
+                    workout_id=workout_id,
+                )
         except Exception as xp_err:
             # XP award is non-critical to workout completion. Log, don't raise.
             logger.warning(f"[XP] inline workout_complete award failed: {xp_err}", exc_info=True)
@@ -1125,7 +1156,16 @@ def _award_workout_complete_xp(
             logger.info(f"[XP] workout_complete already claimed today for user {user_id}")
             return (False, 0)
 
-        # Call award_xp RPC (trust_level-aware; returns updated user_xp record)
+        # Call award_xp RPC (trust_level-aware; returns updated user_xp record).
+        # p_bypass_trust=True: this award is server-verified (the workout's
+        # is_completed flip already happened server-side above, gated by the
+        # once-per-day dedup check above), so it must not be silently halved
+        # by the trust_level==1 anti-fraud multiplier the way an unverified
+        # client-reported claim would be — award_xp's trust-level branch does
+        # not honor p_is_verified for trust_level==1 accounts, only for
+        # trust_level>=2, so p_is_verified alone left new/low-trust accounts
+        # (the majority) paid 50 XP here against the 100 XP advertised on the
+        # Daily Goals screen (finding #357).
         supabase.rpc(
             "award_xp",
             {
@@ -1135,6 +1175,7 @@ def _award_workout_complete_xp(
                 "p_source_id": workout_id,
                 "p_description": "Daily goal: workout complete",
                 "p_is_verified": True,  # server-awarded = verified
+                "p_bypass_trust": True,
             },
         ).execute()
 

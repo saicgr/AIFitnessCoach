@@ -33,6 +33,13 @@ from core.supabase_client import get_supabase
 
 logger = get_logger(__name__)
 
+# Max simultaneous DB-bound per-day customization calls (injury screen /
+# equipment backfill). Bounds the fan-out for a long multi-week program
+# instead of either serializing every day (row 229 — pushed the Schedule
+# tab's response past the client's timeout) or firing dozens of concurrent
+# requests at once.
+_CUSTOMIZE_CONCURRENCY = 8
+
 
 # ---------------------------------------------------------------------------
 # User context resolution (level / equipment / injuries)
@@ -176,39 +183,61 @@ async def _apply_injury_safety(
     user_id: str,
 ) -> Dict[str, Any]:
     """Route each training day through `enforce_injury_safety`. Returns a small
-    summary {dropped, added}. Mutates `days` in place. Fail-open per day."""
+    summary {dropped, added}. Mutates `days` in place. Fail-open per day.
+
+    Days are screened CONCURRENTLY (bounded `asyncio.gather`) instead of one
+    await at a time — awaiting each day sequentially serialized every day's
+    DB-bound guard call back-to-back, and a multi-week program (dozens of
+    days) pushed the Schedule tab's response time past the client's timeout
+    (row 229). Concurrency is capped so a very long program doesn't fan out
+    an unbounded burst of DB round trips at once.
+    """
     if not injuries:
         return {"dropped": [], "added": []}
+    import asyncio
+
     from services.exercise_rag.injury_guard import enforce_injury_safety
 
-    all_dropped: List[str] = []
-    all_added: List[str] = []
-    for day in days:
+    sem = asyncio.Semaphore(_CUSTOMIZE_CONCURRENCY)
+
+    async def _screen_day(day: Dict[str, Any]):
         if day.get("is_rest"):
-            continue
+            return None
         exercises = day.get("exercises") or []
         if not exercises:
-            continue
+            return None
         try:
             guard_list = [_day_ex_to_guard_ex(ex) for ex in exercises]
             focus = [day.get("workout_type")] if day.get("workout_type") else []
-            safe, dropped, added = await enforce_injury_safety(
-                guard_list,
-                injuries,
-                equipment=equipment or None,
-                focus_areas=focus,
-                difficulty_ceiling="beginner",
-                user_id=user_id,
-            )
-            if dropped:
-                day["exercises"] = [_guard_ex_to_day_ex(g) for g in safe]
-                all_dropped.extend(dropped)
-                all_added.extend(added)
+            async with sem:
+                safe, dropped, added = await enforce_injury_safety(
+                    guard_list,
+                    injuries,
+                    equipment=equipment or None,
+                    focus_areas=focus,
+                    difficulty_ceiling="beginner",
+                    user_id=user_id,
+                )
+            return day, safe, dropped, added
         except Exception as e:  # noqa: BLE001
             logger.warning(
                 "injury customize: day '%s' left untouched: %s",
                 day.get("day_name"), e,
             )
+            return None
+
+    results = await asyncio.gather(*(_screen_day(day) for day in days))
+
+    all_dropped: List[str] = []
+    all_added: List[str] = []
+    for result in results:
+        if result is None:
+            continue
+        day, safe, dropped, added = result
+        if dropped:
+            day["exercises"] = [_guard_ex_to_day_ex(g) for g in safe]
+            all_dropped.extend(dropped)
+            all_added.extend(added)
     return {"dropped": all_dropped, "added": all_added}
 
 
@@ -428,15 +457,24 @@ async def _apply_equipment_fit(
     """Drop exercises whose required equipment the user lacks, replacing via the
     injury-safe candidate fetch (which already filters by equipment). Fail-open:
     unknown equipment keeps the exercise. No-op when we have no equipment list
-    (we can't tell what's missing → never thin the plan)."""
+    (we can't tell what's missing → never thin the plan).
+
+    Phase 1 below is a pure, local, per-exercise equipment check (no DB) that
+    runs for every day. Only days that actually need a backfill exercise reach
+    phase 2, and those DB-bound `fetch_safe_candidates` calls run CONCURRENTLY
+    (bounded `asyncio.gather`) rather than one await at a time — sequential
+    awaiting serialized every gap day's network latency across the whole
+    program, pushing the Schedule tab's response past the client's timeout on
+    longer programs (row 229).
+    """
     if not equipment:
         return {"dropped": [], "added": []}
 
     have = {e.lower() for e in equipment}
     have.update(("bodyweight", "none"))
 
-    all_dropped: List[str] = []
-    all_added: List[str] = []
+    # Phase 1 — local, no DB: figure out what each day is missing.
+    pending: List[Dict[str, Any]] = []
     for day in days:
         if day.get("is_rest"):
             continue
@@ -456,62 +494,96 @@ async def _apply_equipment_fit(
                 kept.append(ex)  # unknown or available → keep
             else:
                 missing_names.append(name)
-        if not missing_names:
+        if missing_names:
+            pending.append({
+                "day": day,
+                "kept": kept,
+                "missing_names": missing_names,
+                "exercises": exercises,
+            })
+
+    if not pending:
+        return {"dropped": [], "added": []}
+
+    # Phase 2 — DB-bound backfill, concurrent across the days that need it.
+    import asyncio
+
+    from services.exercise_rag.service import fetch_safe_candidates
+
+    sem = asyncio.Semaphore(_CUSTOMIZE_CONCURRENCY)
+
+    async def _fetch_for(item: Dict[str, Any]):
+        day = item["day"]
+        try:
+            async with sem:
+                cands = await fetch_safe_candidates(
+                    injuries=injuries or [],
+                    focus_areas=(
+                        [day.get("workout_type")] if day.get("workout_type") else []
+                    ),
+                    equipment=equipment,
+                    difficulty_ceiling="beginner",
+                    k=len(item["missing_names"]) + 15,
+                )
+            return item, cands, None
+        except Exception as e:  # noqa: BLE001
+            return item, None, e
+
+    results = await asyncio.gather(*(_fetch_for(item) for item in pending))
+
+    all_dropped: List[str] = []
+    all_added: List[str] = []
+    for item, cands, err in results:
+        day = item["day"]
+        if err is not None:
+            logger.warning(
+                "equipment customize: day '%s' left untouched: %s",
+                day.get("day_name"), err,
+            )
             continue
+        kept = item["kept"]
+        missing_names = item["missing_names"]
+        exercises = item["exercises"]
         # Backfill replacements equal to the number dropped, equipment-filtered
         # via the same safe-candidate fetch (with no injuries it still respects
         # equipment + difficulty). Reuse the guard's replacement assembly by
         # running enforce_injury_safety on the KEPT list with a phantom drop is
         # overkill — instead fetch candidates directly.
-        try:
-            from services.exercise_rag.service import fetch_safe_candidates
-            cands = await fetch_safe_candidates(
-                injuries=injuries or [],
-                focus_areas=[day.get("workout_type")] if day.get("workout_type") else [],
-                equipment=equipment,
-                difficulty_ceiling="beginner",
-                k=len(missing_names) + 15,
-            )
-            present = {(e.get("name") or "").lower() for e in kept}
-            template = kept[0] if kept else exercises[0]
-            added_here = 0
-            for cand in cands:
-                if added_here >= len(missing_names):
-                    break
-                cn = (cand.get("name") or "").strip()
-                if not cn or cn.lower() in present:
-                    continue
-                present.add(cn.lower())
-                kept.append({
-                    "name": cn,
-                    "original_name": cn,
-                    "exercise_id": (
-                        str(cand["exercise_id"])
-                        if cand.get("exercise_id") is not None else None
-                    ),
-                    "sets": int(template.get("sets") or 3),
-                    "reps": str(template.get("reps") or "10"),
-                    "reps_spec": None,
-                    "per_side": False,
-                    "target_rir": None,
-                    "target_weight_kg": None,
-                    "rest_seconds": int(template.get("rest_seconds") or 60),
-                    "notes": "Swapped for available equipment.",
-                    "set_type": "normal",
-                    "superset_group": None,
-                    "unresolved": cand.get("exercise_id") is None,
-                    "resolution_source": "equipment_fit",
-                    "inferred": False,
-                })
-                added_here += 1
-                all_added.append(cn)
-            day["exercises"] = kept
-            all_dropped.extend(missing_names)
-        except Exception as e:  # noqa: BLE001
-            logger.warning(
-                "equipment customize: day '%s' left untouched: %s",
-                day.get("day_name"), e,
-            )
+        present = {(e.get("name") or "").lower() for e in kept}
+        template = kept[0] if kept else exercises[0]
+        added_here = 0
+        for cand in cands:
+            if added_here >= len(missing_names):
+                break
+            cn = (cand.get("name") or "").strip()
+            if not cn or cn.lower() in present:
+                continue
+            present.add(cn.lower())
+            kept.append({
+                "name": cn,
+                "original_name": cn,
+                "exercise_id": (
+                    str(cand["exercise_id"])
+                    if cand.get("exercise_id") is not None else None
+                ),
+                "sets": int(template.get("sets") or 3),
+                "reps": str(template.get("reps") or "10"),
+                "reps_spec": None,
+                "per_side": False,
+                "target_rir": None,
+                "target_weight_kg": None,
+                "rest_seconds": int(template.get("rest_seconds") or 60),
+                "notes": "Swapped for available equipment.",
+                "set_type": "normal",
+                "superset_group": None,
+                "unresolved": cand.get("exercise_id") is None,
+                "resolution_source": "equipment_fit",
+                "inferred": False,
+            })
+            added_here += 1
+            all_added.append(cn)
+        day["exercises"] = kept
+        all_dropped.extend(missing_names)
     return {"dropped": all_dropped, "added": all_added}
 
 

@@ -10,7 +10,6 @@ import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — confidence slider (commitment elicitation).
 ///
 /// Shown just before the plan preview / paywall. Asking the user to rate
@@ -307,7 +306,7 @@ class _ConfidenceContinueButton extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.onboardingAccent, context.accentColor],
+              colors: [AppColors.onboardingAccent, AppColors.onboardingAccent],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [

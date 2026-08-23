@@ -355,21 +355,30 @@ class GlucoseReadingsNotifier extends StateNotifier<GlucoseReadingsState> {
     try {
       debugPrint('[GlucoseReadings] Adding reading: $glucoseValue mg/dL');
       final response = await _client.post(
-        '/diabetes/glucose/readings',
+        '/diabetes/glucose',
         data: {
           'user_id': uid,
-          'glucose_value': glucoseValue,
+          'glucose_mg_dl': glucoseValue,
           'meal_context': mealContext,
           'reading_type': readingType ?? 'manual',
-          'recorded_at': (recordedAt ?? DateTime.now()).toIso8601String(),
+          'timestamp': (recordedAt ?? DateTime.now()).toIso8601String(),
           if (notes != null) 'notes': notes,
-          if (foodLogId != null) 'food_log_id': foodLogId,
-          if (carbsConsumed != null) 'carbs_consumed': carbsConsumed,
         },
       );
 
-      final reading = GlucoseReading.fromJson(
-        Map<String, dynamic>.from(response.data),
+      final responseData = Map<String, dynamic>.from(response.data);
+      final recordedTimestamp = DateTime.parse(responseData['timestamp'] as String);
+      final reading = GlucoseReading(
+        id: responseData['id'] as String,
+        userId: responseData['user_id'] as String,
+        glucoseValue: (responseData['glucose_mg_dl'] as num).round(),
+        mealContext: responseData['meal_context'] as String? ?? mealContext,
+        readingType: responseData['reading_type'] as String? ?? (readingType ?? 'manual'),
+        recordedAt: recordedTimestamp,
+        notes: responseData['notes'] as String?,
+        foodLogId: foodLogId,
+        carbsConsumed: carbsConsumed,
+        createdAt: recordedTimestamp,
       );
 
       // Add to list and update latest
@@ -664,25 +673,34 @@ class InsulinDosesNotifier extends StateNotifier<InsulinDosesState> {
     try {
       debugPrint('[InsulinDoses] Adding dose: $units units of $insulinName');
       final response = await _client.post(
-        '/diabetes/insulin/doses',
+        '/diabetes/insulin',
         data: {
           'user_id': uid,
           'insulin_name': insulinName,
           'insulin_type': insulinType,
           'units': units,
-          'delivery_method': deliveryMethod ?? 'pen',
-          if (injectionSite != null) 'injection_site': injectionSite,
-          'administered_at':
-              (administeredAt ?? DateTime.now()).toIso8601String(),
+          'timestamp': (administeredAt ?? DateTime.now()).toIso8601String(),
           if (notes != null) 'notes': notes,
-          if (glucoseReadingId != null) 'glucose_reading_id': glucoseReadingId,
           if (carbsCovered != null) 'carbs_covered': carbsCovered,
-          if (correctionUnits != null) 'correction_units': correctionUnits,
+          'correction_included': correctionUnits != null && correctionUnits > 0,
         },
       );
 
-      final dose = InsulinDose.fromJson(
-        Map<String, dynamic>.from(response.data),
+      final responseData = Map<String, dynamic>.from(response.data);
+      final dose = InsulinDose(
+        id: responseData['id'] as String,
+        userId: responseData['user_id'] as String,
+        insulinName: responseData['insulin_name'] as String? ?? insulinName,
+        insulinType: responseData['insulin_type'] as String? ?? insulinType,
+        units: (responseData['units'] as num).toDouble(),
+        deliveryMethod: deliveryMethod ?? 'pen',
+        injectionSite: injectionSite,
+        administeredAt: DateTime.parse(responseData['timestamp'] as String),
+        notes: responseData['notes'] as String?,
+        glucoseReadingId: glucoseReadingId,
+        carbsCovered: carbsCovered,
+        correctionUnits: correctionUnits,
+        createdAt: DateTime.parse(responseData['created_at'] as String),
       );
 
       // Add to list and update latest

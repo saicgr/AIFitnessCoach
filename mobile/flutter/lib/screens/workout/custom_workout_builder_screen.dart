@@ -166,11 +166,11 @@ class _CustomWorkoutBuilderScreenState
     final p = prompt.toLowerCase();
     if (p.trim().isEmpty) return null;
     const map = <String, List<String>>{
-      'Chest': ['chest', 'pec', 'push', 'bench'],
-      'Back': ['back', 'lat', 'pull', 'row'],
-      'Legs': ['leg', 'quad', 'hamstring', 'glute', 'calf', 'squat', 'lower'],
-      'Shoulders': ['shoulder', 'delt', 'overhead'],
-      'Arms': ['arm', 'bicep', 'tricep', 'curl'],
+      'Chest': ['chest', 'pec', 'push', 'bench', 'upper body', 'upper-body'],
+      'Back': ['back', 'lat', 'pull', 'row', 'upper body', 'upper-body'],
+      'Legs': ['leg', 'quad', 'hamstring', 'glute', 'calf', 'squat', 'lower', 'lower body', 'lower-body'],
+      'Shoulders': ['shoulder', 'delt', 'overhead', 'upper body', 'upper-body'],
+      'Arms': ['arm', 'bicep', 'tricep', 'curl', 'upper body', 'upper-body'],
       'Core': ['core', 'ab', 'oblique', 'plank'],
       'Cardio': ['cardio', 'hiit', 'conditioning', 'run'],
       'Full Body': ['full body', 'full-body', 'total body'],
@@ -180,6 +180,33 @@ class _CustomWorkoutBuilderScreenState
       if (kws.any(p.contains)) found.add(focus);
     });
     return found.isEmpty ? null : found;
+  }
+
+  /// Extract an explicit duration budget ("30-min", "30 minutes", "45min")
+  /// from the freeform AI prompt so it overrides the saved program duration.
+  int? _durationFromPrompt(String prompt) {
+    final m = RegExp(r'(\d{1,3})\s*-?\s*(?:min|mins|minute|minutes)\b',
+            caseSensitive: false)
+        .firstMatch(prompt);
+    if (m == null) return null;
+    return int.tryParse(m.group(1)!);
+  }
+
+  /// Extract an explicit equipment constraint ("no equipment", "bodyweight
+  /// only", "without equipment") from the freeform AI prompt so it overrides
+  /// the saved program's equipment list instead of being silently ignored.
+  List<String>? _equipmentFromPrompt(String prompt) {
+    final p = prompt.toLowerCase();
+    const noEquipmentPhrases = [
+      'no equipment',
+      'bodyweight only',
+      'body weight only',
+      'without equipment',
+      'no gym',
+      'nothing but my body',
+    ];
+    if (noEquipmentPhrases.any(p.contains)) return ['bodyweight'];
+    return null;
   }
 
   /// 2c — "✨ Ask AI": generate the exercise list from the user's saved program
@@ -202,6 +229,8 @@ class _CustomWorkoutBuilderScreenState
       final repo = ref.read(workoutRepositoryProvider);
       final prefs = await repo.getProgramPreferences(userId);
       final promptFocus = _focusFromPrompt(_aiPromptController.text);
+      final promptDuration = _durationFromPrompt(_aiPromptController.text);
+      final promptEquipment = _equipmentFromPrompt(_aiPromptController.text);
 
       // Adopt the prompt's workout type if it clearly names one.
       final pl = _aiPromptController.text.toLowerCase();
@@ -214,8 +243,9 @@ class _CustomWorkoutBuilderScreenState
       final stream = repo.generateWorkoutStreaming(
         userId: userId,
         goals: prefs?.focusAreas,
-        equipment: prefs?.equipment.isEmpty ?? true ? null : prefs!.equipment,
-        durationMinutes: prefs?.durationMinutes,
+        equipment: promptEquipment ??
+            (prefs?.equipment.isEmpty ?? true ? null : prefs!.equipment),
+        durationMinutes: promptDuration ?? prefs?.durationMinutes,
         focusAreas: promptFocus ??
             (prefs?.focusAreas.isEmpty ?? true ? null : prefs!.focusAreas),
         scheduledDate: _scheduledDate.toIso8601String().split('T').first,

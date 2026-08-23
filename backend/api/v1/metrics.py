@@ -519,6 +519,21 @@ async def record_simple_metric(input: SimpleMetricInput,
             if refetch.data:
                 row = refetch.data
 
+            # Dual-write to weight_logs: body_measurements is the record of
+            # truth for this endpoint, but weight_logs is what home_signals,
+            # fasting_impact, adaptive TDEE and the weekly digest read. Best
+            # effort — a failure here must not fail the measurement write.
+            try:
+                db.client.table("weight_logs").insert({
+                    "user_id": input.user_id,
+                    "weight_kg": metric_value,
+                    "logged_at": row.get("measured_at") or row.get("created_at"),
+                    "source": "manual",
+                    "notes": input.notes,
+                }).execute()
+            except Exception:
+                logger.warning("weight_logs dual-write failed", exc_info=True)
+
         # Invalidate Timeline cache so the new measurement appears on the
         # home Timeline immediately (added 2026-05-10).
         try:

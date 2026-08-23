@@ -140,7 +140,7 @@ class ImportsApiService {
       if (uploadFile != null) 'file': uploadFile,
     };
     final form = FormData.fromMap(formMap);
-    final resp = await _api.post('/api/v1/share/classify', data: form);
+    final resp = await _api.post('/share/classify', data: form);
     return ClassifyResult.fromJson(
         (resp.data as Map).cast<String, dynamic>());
   }
@@ -175,7 +175,7 @@ class ImportsApiService {
   /// Returns the per-key list and a grouped view.
   Future<Map<String, dynamic>> classifyBatch(List<String> s3Keys) async {
     final resp = await _api.post(
-      '/api/v1/share/classify-batch',
+      '/share/classify-batch',
       data: {'s3_keys': s3Keys},
     );
     return (resp.data as Map).cast<String, dynamic>();
@@ -183,7 +183,7 @@ class ImportsApiService {
 
   /// Quick host-rule URL kind. Cheap (no LLM).
   Future<Map<String, dynamic>> classifyUrl(String url) async {
-    final resp = await _api.post('/api/v1/share/classify-url', data: {'url': url});
+    final resp = await _api.post('/share/classify-url', data: {'url': url});
     return (resp.data as Map).cast<String, dynamic>();
   }
 
@@ -247,7 +247,7 @@ class ImportsApiService {
     String? sourceUrl,
     String? notes,
   }) async {
-    final resp = await _api.post('/api/v1/share/import-workout', data: {
+    final resp = await _api.post('/share/import-workout', data: {
       'title': title,
       'exercises': exercises,
       if (sharedItemId != null) 'shared_item_id': sharedItemId,
@@ -274,7 +274,7 @@ class ImportsApiService {
     int limit = 30,
     String? cursor,
   }) async {
-    final resp = await _api.get('/api/v1/share/history', queryParameters: {
+    final resp = await _api.get('/share/history', queryParameters: {
       if (category != null) 'category': category,
       if (format != null) 'format': format,
       if (origin != null) 'origin': origin,
@@ -292,31 +292,31 @@ class ImportsApiService {
   }
 
   Future<Map<String, dynamic>> historyDetail(String id) async {
-    final resp = await _api.get('/api/v1/share/history/$id');
+    final resp = await _api.get('/share/history/$id');
     return (resp.data as Map).cast<String, dynamic>();
   }
 
   Future<Map<String, dynamic>> retry(String id) async {
-    final resp = await _api.post('/api/v1/share/history/$id/retry');
+    final resp = await _api.post('/share/history/$id/retry');
     return (resp.data as Map).cast<String, dynamic>();
   }
 
   Future<void> deleteOne(String id) async {
-    await _api.delete('/api/v1/share/history/$id');
+    await _api.delete('/share/history/$id');
   }
 
   Future<void> clearAll() async {
-    await _api.delete('/api/v1/share/history');
+    await _api.delete('/share/history');
   }
 
   Future<int> bulkDelete(List<String> ids) async {
-    final resp = await _api.post('/api/v1/share/history/bulk',
+    final resp = await _api.post('/share/history/bulk',
         data: {'action': 'delete', 'ids': ids});
     return ((resp.data as Map)['deleted'] as int?) ?? 0;
   }
 
   Future<int> bulkReclassify(List<String> ids) async {
-    final resp = await _api.post('/api/v1/share/history/bulk',
+    final resp = await _api.post('/share/history/bulk',
         data: {'action': 'reclassify', 'ids': ids});
     return ((resp.data as Map)['reclassified'] as int?) ?? 0;
   }
@@ -333,7 +333,7 @@ class ImportsApiService {
   }) async* {
     try {
       final resp = await _api.post(
-        '/api/v1$path',
+        path,
         data: body,
         options: Options(
           responseType: ResponseType.stream,
@@ -346,7 +346,7 @@ class ImportsApiService {
       yield ShareSseEvent({
         'stage': 'error',
         'http_status': e.response?.statusCode ?? 0,
-        'message': 'Server returned ${e.response?.statusCode ?? 'no response'}',
+        'message': _userFacingErrorMessage(e.response?.statusCode),
       });
     }
   }
@@ -362,7 +362,7 @@ class ImportsApiService {
         'file': await MultipartFile.fromFile(filePath, filename: _basename(filePath)),
       });
       final resp = await _api.post(
-        '/api/v1$path',
+        path,
         data: form,
         options: Options(
           responseType: ResponseType.stream,
@@ -375,7 +375,7 @@ class ImportsApiService {
       yield ShareSseEvent({
         'stage': 'error',
         'http_status': e.response?.statusCode ?? 0,
-        'message': 'Server returned ${e.response?.statusCode ?? 'no response'}',
+        'message': _userFacingErrorMessage(e.response?.statusCode),
       });
     }
   }
@@ -409,6 +409,21 @@ class ImportsApiService {
     final sep = Platform.pathSeparator;
     final i = p.lastIndexOf(sep);
     return i < 0 ? p : p.substring(i + 1);
+  }
+
+  /// Maps a raw HTTP status to something a user can act on — never the
+  /// bare status code.
+  String _userFacingErrorMessage(int? statusCode) {
+    if (statusCode == 429) {
+      return "You've hit today's import limit. Try again tomorrow.";
+    }
+    if (statusCode != null && statusCode >= 500) {
+      return "Something went wrong on our end. Please try again.";
+    }
+    if (statusCode == null) {
+      return 'Unable to connect. Please check your internet connection.';
+    }
+    return 'Something went wrong. Please try again.';
   }
 }
 

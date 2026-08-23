@@ -1084,6 +1084,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Initialize daily goals with login status
       xpNotifier.initializeDailyGoals();
 
+      // Reconcile with the server's xp_transactions truth for today — local
+      // goal flags above only ever flip true from an in-session action
+      // (markWorkoutCompleted etc.), so a goal completed in an earlier
+      // session, on another device, or via a background flow renders
+      // perpetually unchecked with the strip's "XP today" undercounting the
+      // real ledger total (finding #358).
+      await xpNotifier.syncDailyGoalsFromBackend();
+      if (!mounted) return;
+
       final loginStreak = ref.read(xpProvider).loginStreak;
       if (loginStreak != null) {
         // Check for streak milestones (7, 30, 100, 365 days)

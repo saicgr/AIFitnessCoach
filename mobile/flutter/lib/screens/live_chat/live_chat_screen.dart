@@ -39,7 +39,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
       final session = ref.read(liveChatProvider).valueOrNull;
       if (session == null || session.hasEnded) {
         ref.read(liveChatProvider.notifier).startChat(
-              category: 'general',
+              category: 'other',
               initialMessage: 'I need help',
             );
       }
@@ -256,7 +256,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                       ElevatedButton(
                         onPressed: () {
                           ref.read(liveChatProvider.notifier).startChat(
-                                category: 'general',
+                                category: 'other',
                                 initialMessage: 'I need help',
                               );
                         },

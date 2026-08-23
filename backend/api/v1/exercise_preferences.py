@@ -313,6 +313,17 @@ async def add_staple_exercise(http_request: Request, request: StapleExerciseCrea
     try:
         db = get_supabase_db()
 
+        # Resolve to the canonical library row (case-insensitive) so a
+        # Quick-Add staple carries a real library_id instead of a name-only
+        # entry the generator can never match (see rows 187/233) — mirrors
+        # the favorite-exercise resolver.
+        from api.v1.users.exercises import _resolve_canonical_exercise
+        resolved_library_id, resolved_name = _resolve_canonical_exercise(
+            db, request.exercise_name, request.library_id
+        )
+        request.library_id = resolved_library_id
+        request.exercise_name = resolved_name
+
         # Check if already exists for this profile and section
         existing_query = db.client.table("staple_exercises").select("id").eq("user_id", request.user_id).eq("exercise_name", request.exercise_name).eq("section", request.section or "main")
         if request.gym_profile_id:

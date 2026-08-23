@@ -1411,6 +1411,16 @@ def _build_coach_response_prompt(state: CoachAgentState):
     if form_verdict_context:
         context_parts.append(f"\n{form_verdict_context}")
 
+    # === Today's logged sets (read from performance_logs directly) ===
+    # E2E register row #94: the workout_logs session aggregate can sit in a
+    # contradictory state, so "have you logged any sets" must be answered from
+    # this block — the durable per-set store — never from a session summary.
+    # "" when the user has logged nothing today; never claim "no sets" here,
+    # only cite what this block actually shows.
+    todays_sets_context = state.get("todays_sets_context")
+    if todays_sets_context:
+        context_parts.append(f"\n{todays_sets_context}")
+
     # === Cardio activity context (SLICE_COACH) ===
     # Sibling to health_context. Same "cite only what's here" rule applies —
     # never invent pace, distance, VO2max, or training-load numbers.
@@ -1607,6 +1617,16 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     form_verdict_context = state.get("form_verdict_context")
     if form_verdict_context:
         context_parts.append(f"\n{form_verdict_context}")
+
+    # === Today's logged sets (read from performance_logs directly) ===
+    # E2E register row #94: the workout_logs session aggregate can sit in a
+    # contradictory state, so "have you logged any sets" must be answered from
+    # this block — the durable per-set store — never from a session summary.
+    # "" when the user has logged nothing today; never claim "no sets" here,
+    # only cite what this block actually shows.
+    todays_sets_context = state.get("todays_sets_context")
+    if todays_sets_context:
+        context_parts.append(f"\n{todays_sets_context}")
 
     # === Cardio activity context (SLICE_COACH) — mirrors
     # `_build_coach_response_prompt`; edit both together. ===

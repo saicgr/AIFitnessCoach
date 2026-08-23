@@ -23,6 +23,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/workout_completion_prewarmer.dart';
 import '../../../data/services/workout_completion_queue.dart';
+import '../../../data/services/set_performance_queue.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
@@ -771,6 +772,23 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     }
     final inserted = await workoutRepo.logSetPerformancesBulk(records);
     debugPrint('💪 Bulk-logged $inserted / ${records.length} set performances');
+
+    // E2E register row #169 — logSetPerformancesBulk swallows its own
+    // errors and returns 0 rather than throwing, so a network failure here
+    // previously vanished silently: nothing retried it, nothing told the
+    // user, and the completion screen had already shown "Saved". Any
+    // shortfall is durably queued and replayed on reconnect/app-resume;
+    // re-sending the FULL list is safe because the endpoint upserts on
+    // (workout_log_id, exercise_name, set_number).
+    if (inserted < records.length) {
+      debugPrint(
+          '⚠️ [Complete] Bulk set-performances shortfall ($inserted/${records.length}) — enqueueing for retry');
+      unawaited(SetPerformanceQueue.instance.enqueue(
+        userId: userId,
+        records: records,
+        apiClient: ref.read(apiClientProvider),
+      ));
+    }
   }
 
   /// Log superset usage to backend for analytics

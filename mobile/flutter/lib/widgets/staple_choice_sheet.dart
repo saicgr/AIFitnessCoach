@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../core/providers/user_provider.dart';
+import '../core/utils/weight_utils.dart';
 import '../data/providers/gym_profile_provider.dart';
 import '../data/providers/today_workout_provider.dart';
 import '../data/services/haptic_service.dart';
@@ -323,6 +324,21 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     }
   }
 
+  /// The weight field's typed value, converted to POUNDS for storage.
+  ///
+  /// `staple_exercises.user_weight_lbs` is lbs-only (see the read side in
+  /// `staples_provider.dart`, which always divides by 2.20462 to get kg) —
+  /// but the field displays and accepts whatever unit the user's workout
+  /// weight preference is set to. Without this conversion, a kg-preference
+  /// user's typed number was stored unconverted as if it were already
+  /// pounds (row 288).
+  double? _typedWeightAsLbs() {
+    final typed = double.tryParse(_weightController.text);
+    if (typed == null) return null;
+    final unit = ref.read(workoutWeightUnitProvider);
+    return unit == 'kg' ? WeightUtils.kgToLbs(typed) : typed;
+  }
+
   StapleChoiceResult _makeResult({
     required bool addToday,
     String? swapExerciseId,
@@ -341,7 +357,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       userSets: _isStrength && _showStrengthParams ? int.tryParse(_setsController.text) : null,
       userReps: _isStrength && _showStrengthParams ? _repsController.text : null,
       userRestSeconds: _isStrength && _showStrengthParams ? int.tryParse(_restController.text) : null,
-      userWeightLbs: _isStrength && _showStrengthParams ? double.tryParse(_weightController.text) : null,
+      userWeightLbs: _isStrength && _showStrengthParams ? _typedWeightAsLbs() : null,
       targetDays: _dayTargetMode == _DayTargetMode.everyDay
           ? [0, 1, 2, 3, 4, 5, 6]
           : _dayTargetMode == _DayTargetMode.custom && _selectedDays.isNotEmpty
@@ -683,7 +699,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   _buildCardioField(
                     label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                     controller: _weightController,
-                    suffix: 'lbs',
+                    suffix: ref.watch(workoutWeightUnitProvider),
                     textPrimary: textPrimary,
                     textMuted: textMuted,
                   ),

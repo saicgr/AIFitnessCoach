@@ -1471,6 +1471,35 @@ async def get_my_cosmetics(current_user=Depends(get_current_user)):
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
+
+        # Retroactive entitlement backfill (finding #443): `user_cosmetics`
+        # rows are normally granted as a side effect of `grant_level_cosmetics`
+        # firing on the INCREMENTAL level-up transition inside `award_xp`. Any
+        # path that moves `user_xp.current_level` WITHOUT going through that
+        # transition (a direct admin/QA correction, a level-curve recalculation
+        # migration) leaves the row's level ahead of its grants forever — the
+        # gallery's "N levels to go" countdown reads current_level live and
+        # counts down correctly, while the lock icon reads only this stale
+        # ownership table, so a Level 55 account can show every sub-55 badge
+        # still locked. Calling the existing, idempotent (ON CONFLICT DO
+        # NOTHING) grant RPC here catches the account up before we answer,
+        # regardless of how it reached its current level. Best-effort: a
+        # failure here must not break the read.
+        try:
+            level_row = (await run_db(lambda: db.client.table("user_xp")
+                .select("current_level")
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()))
+            current_level = (level_row.data or {}).get("current_level") if level_row else None
+            if current_level:
+                await run_db(lambda: db.client.rpc(
+                    "grant_level_cosmetics",
+                    {"p_user_id": user_id, "p_old_level": 0, "p_new_level": current_level},
+                ).execute())
+        except Exception as backfill_err:
+            logger.warning(f"[Cosmetics] Retroactive grant backfill failed: {backfill_err}")
+
         owned = (
             (await run_db(lambda: db.client.table("user_cosmetics")
             .select("cosmetic_id,unlocked_at,unlocked_at_level,is_equipped")

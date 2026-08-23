@@ -74,6 +74,13 @@ class CoachAgentState(TypedDict):
     # Built by services.coach.form_verdict_context.build_form_verdict_context.
     form_verdict_context: Optional[str]
 
+    # Today's logged sets, read directly from performance_logs (the durable
+    # per-set store) rather than the workout_logs session aggregate, which can
+    # sit in a contradictory state (E2E register row #89/90). "" when the user
+    # has logged nothing today. Built by
+    # services.coach.todays_sets_context.build_todays_sets_context.
+    todays_sets_context: Optional[str]
+
     # Cardio activity context (SLICE_COACH) — compact prompt string of the
     # user's recent cardio picture (sessions, VO2max, training-load ACWR,
     # PRs, and optionally a THIS-session focus line). Pre-fetched by the

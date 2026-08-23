@@ -542,6 +542,25 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
         except Exception as _goal_save_err:
             logger.warning(f"Could not persist nutrition_goals to nutrition_preferences: {_goal_save_err}", exc_info=True)
 
+        # Sync targets to users table for consistency. The RPC above only
+        # writes nutrition_preferences — without this, users.daily_calorie_target
+        # (and the sibling macro columns) stay null forever for any account
+        # onboarded through this endpoint, even though the projection screen
+        # showed the user a specific calorie number they picked their pace on.
+        try:
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: db.client.table("users").update({
+                    "daily_calorie_target": metrics.get("calories"),
+                    "daily_protein_target_g": metrics.get("protein"),
+                    "daily_carbs_target_g": metrics.get("carbs"),
+                    "daily_fat_target_g": metrics.get("fat"),
+                }).eq("id", user_id).execute()
+            )
+            logger.info(f"Synced nutrition targets to users table for user {user_id}")
+        except Exception as _sync_err:
+            logger.warning(f"Failed to sync nutrition targets to users table: {_sync_err}", exc_info=True)
+
         # Index for RAG in background (non-blocking)
         async def _index_rag():
             try:

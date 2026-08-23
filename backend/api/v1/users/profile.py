@@ -1041,6 +1041,38 @@ async def update_user(user_id: str, user: UserUpdate,
                         f"{counts.get('today_deleted', 0)} today + "
                         f"{counts.get('upcoming_deleted', 0)} upcoming workouts"
                     )
+
+                    # Regenerate the upcoming plan under the new injury
+                    # constraints. Invalidation alone left the user with the
+                    # deleted plan and nothing to replace it — the gym-profile
+                    # switch path pre-generates via this same helper, this one
+                    # never did. Mirrors the eager top-up in
+                    # workouts/program.py::regenerate_upcoming.
+                    try:
+                        from api.v1.workouts.today import (
+                            _get_active_gym_profile,
+                            _resolve_workout_days,
+                            enqueue_schedule_top_up,
+                        )
+
+                        topup_user = db.get_user(user_id)
+                        active_profile = _get_active_gym_profile(db, user_id)
+                        workout_days = _resolve_workout_days(topup_user, active_profile)
+                        gym_profile_id = active_profile.get("id") if active_profile else None
+                        background_tasks.add_task(
+                            enqueue_schedule_top_up,
+                            user_id=user_id,
+                            gym_profile_id=gym_profile_id,
+                            workout_days=workout_days,
+                            user_tz=tz,
+                            horizon_days=14,
+                        )
+                    except Exception as topup_err:
+                        logger.warning(
+                            f"[Injury-Change] Regeneration enqueue failed for "
+                            f"user {user_id}: {topup_err}",
+                            exc_info=True,
+                        )
                 except Exception as inval_err:
                     logger.warning(
                         f"[Injury-Change] Invalidation failed for user "

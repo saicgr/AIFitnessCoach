@@ -21,6 +21,36 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _resolve_canonical_exercise(db, exercise_name: str, exercise_id):
+    """Resolve a Quick-Add/picker name against `exercise_library`.
+
+    The UI displays a title-cased/cleaned name while the library stores
+    exercise_name inconsistently cased (e.g. "barbell bench press"), so an
+    exact-match write silently persists `exercise_id: null` — the favorite
+    can never be matched back to a real exercise at generation time. `ilike`
+    with no wildcards is a case-insensitive equality check, so this resolves
+    the same row regardless of casing without over-matching. If the caller
+    already supplied an exercise_id (picked from the library, already
+    canonical) it is trusted as-is. Falls back to the name/id as given when
+    no library row matches, so a genuinely-missing name still saves instead
+    of failing the request.
+    """
+    if exercise_id:
+        return exercise_id, exercise_name
+    if not exercise_name:
+        return exercise_id, exercise_name
+    try:
+        match = db.client.table("exercise_library").select(
+            "id, exercise_name"
+        ).ilike("exercise_name", exercise_name).limit(1).execute()
+        if match.data:
+            row = match.data[0]
+            return row["id"], row["exercise_name"]
+    except Exception as e:
+        logger.warning(f"Canonical exercise lookup failed for '{exercise_name}': {e}")
+    return exercise_id, exercise_name
+
+
 @router.get("/{user_id}/favorite-exercises", response_model=List[FavoriteExercise])
 async def get_favorite_exercises(user_id: str,
     current_user: dict = Depends(get_current_user),
@@ -85,10 +115,17 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Resolve to the canonical library row (case-insensitive) so the
+        # favorite carries a real exercise_id instead of a name-only entry
+        # the generator can never match (see rows 187/233).
+        resolved_id, resolved_name = _resolve_canonical_exercise(
+            db, request.exercise_name, request.exercise_id
+        )
+
         # Check if already favorited
         existing = db.client.table("favorite_exercises").select("id").eq(
             "user_id", user_id
-        ).eq("exercise_name", request.exercise_name).execute()
+        ).eq("exercise_name", resolved_name).execute()
 
         if existing.data:
             raise HTTPException(
@@ -99,8 +136,8 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
         # Add to favorites
         result = db.client.table("favorite_exercises").insert({
             "user_id": user_id,
-            "exercise_name": request.exercise_name,
-            "exercise_id": request.exercise_id,
+            "exercise_name": resolved_name,
+            "exercise_id": resolved_id,
         }).execute()
 
         if not result.data:

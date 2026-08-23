@@ -956,6 +956,55 @@ def _serialize_recap_row(row: dict) -> dict:
     }
 
 
+def _apply_derived_session_totals(
+    current_session: dict,
+    derived_totals: Optional[dict],
+) -> None:
+    """Patch `current_session`'s totals in place with the durable
+    `performance_logs`-derived aggregates when the client-sent ones are
+    missing/zero. A session can log real weighted sets while its
+    `workout_logs.total_volume_kg` (and the client's own locally-computed
+    total) is NULL/0 — without this, the recap prompt asserts "0kg logged"
+    / "0 sets" as fact for a session that had real work, and the LLM
+    critiques the user for a bug in the aggregate rather than reality.
+    """
+    if not derived_totals:
+        return
+    if not (current_session.get("total_volume_kg") or 0) > 0:
+        derived_volume = derived_totals.get("total_volume_kg") or 0
+        if derived_volume > 0:
+            current_session["total_volume_kg"] = derived_volume
+    if not (current_session.get("total_sets") or 0) > 0:
+        derived_sets = derived_totals.get("total_sets") or 0
+        if derived_sets > 0:
+            current_session["total_sets"] = derived_sets
+    if not (current_session.get("total_reps") or 0) > 0:
+        derived_reps = derived_totals.get("total_reps") or 0
+        if derived_reps > 0:
+            current_session["total_reps"] = derived_reps
+
+
+def _apply_derived_rest_seconds(
+    current_session: dict,
+    rest_analysis: Optional[dict],
+) -> None:
+    """Fall back to the per-exercise `rest_intervals` average (already
+    queried for the REST prompt block) when the client-sent
+    `avg_rest_seconds` is missing/zero — e.g. the client's own median-rest
+    computation came back null and got coerced to 0 before the request was
+    sent. A real, non-zero average recorded in `rest_intervals` is better
+    ground truth than a bare 0 the prompt would otherwise assert as fact.
+    """
+    if (current_session.get("avg_rest_seconds") or 0) > 0 or not rest_analysis:
+        return
+    actual_values = [
+        v["avg_actual_s"] for v in rest_analysis.values()
+        if v.get("avg_actual_s") is not None
+    ]
+    if actual_values:
+        current_session["avg_rest_seconds"] = sum(actual_values) / len(actual_values)
+
+
 async def _assemble_recap_enrichment(
     db,
     user_id: str,
@@ -978,6 +1027,7 @@ async def _assemble_recap_enrichment(
         fetch_recent_form_analysis,
     )
     from services.workout_feedback_rag_service import (
+        aggregate_session_totals_from_sets_json,
         derive_actual_session_completion,
         summarize_session_signals,
     )
@@ -1007,6 +1057,26 @@ async def _assemble_recap_enrichment(
                     gym_id = row.get("gym_profile_id")
         except Exception as e:
             logger.warning(f"[recap] workout_logs read failed: {e}")
+
+    # --- fall back to the durable per-set store when sets_json is STILL empty ---
+    # Neither the request nor the workout_logs row is guaranteed to carry a
+    # populated sets_json — the client's finalize PATCH is fire-and-forget and
+    # can be dropped (see workout_log_finalize.py's module docstring). Without
+    # this, `derive_actual_session_completion` below gets None and fails OPEN
+    # (no evidence => no guard), so a session with e.g. 2 of 6 exercises
+    # actually logged can read as "100% completion" with nothing to catch it.
+    # `performance_logs` is the one store that is never empty for a session
+    # that logged real sets, so rebuild from there.
+    if not sets_json and body.workout_log_id:
+        try:
+            from api.v1.workouts.workout_log_finalize import (
+                build_sets_json_from_performance_logs,
+            )
+            rebuilt = build_sets_json_from_performance_logs(db, body.workout_log_id)
+            if rebuilt:
+                sets_json = rebuilt
+        except Exception as e:
+            logger.warning(f"[recap] performance_logs sets_json rebuild failed: {e}")
 
     # --- current session per-exercise working sets (from sets_json) ------------
     current_by_name: dict = {}
@@ -1105,7 +1175,26 @@ async def _assemble_recap_enrichment(
     except Exception as e:
         logger.warning(f"[recap] actual completion derivation failed: {e}")
 
-    return exercise_contexts, injury_context, rest_analysis, session_signals, actual_completion
+    # --- session totals ground truth (NO DB — derived from sets_json) --------
+    # Recovers real total_volume_kg/total_sets/total_reps from the durable
+    # per-set store for callers to fall back on when the client-sent totals
+    # are missing/zero (e.g. a NULL workout_logs.total_volume_kg) so the
+    # prompt never asserts "0kg logged" / "0 sets" when real weighted sets
+    # exist in performance_logs.
+    derived_totals = None
+    try:
+        derived_totals = aggregate_session_totals_from_sets_json(sets_json)
+    except Exception as e:
+        logger.warning(f"[recap] session totals derivation failed: {e}")
+
+    return (
+        exercise_contexts,
+        injury_context,
+        rest_analysis,
+        session_signals,
+        actual_completion,
+        derived_totals,
+    )
 
 
 @router.get("/recap/{workout_id}")
@@ -1222,7 +1311,10 @@ async def generate_recap_endpoint(
             rest_analysis,
             session_signals,
             actual_completion,
+            derived_totals,
         ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
+        _apply_derived_session_totals(current_session, derived_totals)
+        _apply_derived_rest_seconds(current_session, rest_analysis)
 
         recap = await generate_workout_recap(
             gemini_service=gemini_service,
@@ -1861,7 +1953,10 @@ async def generate_detailed_summary_endpoint(
             rest_analysis,
             session_signals,
             actual_completion,
+            derived_totals,
         ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
+        _apply_derived_session_totals(current_session, derived_totals)
+        _apply_derived_rest_seconds(current_session, rest_analysis)
 
         result = await generate_detailed_workout_summary(
             gemini_service=gemini_service,

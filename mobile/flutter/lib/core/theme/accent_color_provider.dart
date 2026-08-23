@@ -203,6 +203,21 @@ class AccentColorNotifier extends StateNotifier<AccentColor> {
     }
   }
 
+  /// Resets the LIVE accent to the default (orange) without touching the
+  /// persisted preference. `accent_color` is a device-wide SharedPreferences
+  /// key with no user scoping, so a brand-new pre-auth onboarding session on
+  /// a device that previously had a different account signed in otherwise
+  /// inherits that account's accent choice — the whole point of the
+  /// pre-auth flow is a single deterministic brand colour (see
+  /// `AppColors.onboardingAccent`), not whatever a stranger last picked.
+  /// Called once from `IntroScreen`, which only ever renders for a signed-out
+  /// visitor, so this can never clobber a genuinely active session.
+  /// Deliberately does NOT persist — a user who backs out to sign in to
+  /// their EXISTING account must still get their own saved preference back.
+  void resetForNewOnboarding() {
+    state = AccentColor.orange;
+  }
+
   /// Set new accent color
   Future<void> setAccent(AccentColor color) async {
     debugPrint('🎨 [AccentColor] Setting accent to: ${color.name}');

@@ -13,6 +13,7 @@ import 'intro_demo/demo_clock.dart';
 import 'intro_demo/demo_scenes.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/gym_profile_provider.dart';
 
 /// Intro Screen — first-run redesign v7 ("V1b full-bleed demo").
 ///
@@ -73,6 +74,14 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
   @override
   void initState() {
     super.initState();
+    // This screen only ever renders for a signed-out visitor starting a
+    // fresh pre-auth flow — reset the device-wide accent + gym-colour
+    // caches to the deterministic onboarding default so a stranger's
+    // previous accent/gym choice on this device can't bleed into personal
+    // info, the date picker, or any other onboarding surface that reads the
+    // live theme rather than the fixed `AppColors.onboardingAccent`.
+    ref.read(accentColorProvider.notifier).resetForNewOnboarding();
+    GymProfilesNotifier.clearCache();
     // Configure the clock for the base count BEFORE creating the controller
     // so its duration matches the loop length; flags may extend it below.
     DemoClock.configure(_scenes.length);

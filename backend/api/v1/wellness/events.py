@@ -396,6 +396,21 @@ async def _write_weight(db, user_id: str, source: str, occurred_at: str, payload
     if not result.data:
         raise HTTPException(status_code=500, detail="body_measurements insert returned empty")
     inserted = result.data[0]
+
+    # Dual-write to weight_logs: body_measurements is the record of truth
+    # here, but weight_logs is what home_signals, adaptive TDEE and the
+    # weekly digest read. Best effort — must not fail the quick-log.
+    try:
+        db.client.table("weight_logs").insert({
+            "user_id": user_id,
+            "weight_kg": float(weight_kg),
+            "logged_at": occurred_at,
+            "source": source,
+            "notes": payload.get("notes"),
+        }).execute()
+    except Exception:
+        logger.warning("weight_logs dual-write failed", exc_info=True)
+
     return {
         "event_id": f"weight:{inserted['id']}",
         "raw_id": inserted["id"],

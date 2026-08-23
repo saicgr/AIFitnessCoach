@@ -2915,6 +2915,32 @@ def _purge_superseded_ghost_workouts(
         logger.warning("supersede ghost purge failed: %s", e)
 
 
+def _correct_total_workouts(db, assignment_id: str, *, fallback: int) -> None:
+    """Set `total_workouts` to the count of workouts ACTUALLY on the calendar
+    for this assignment, never a pre-set expectation the deferred expansion
+    failed to deliver on (row 412: an assignment asserting `total_workouts=56`
+    while only 11 rows exist). Falls back to `fallback` (e.g. week1_created)
+    only if the recount itself can't be read, so the field is never left at a
+    stale, too-high number."""
+    try:
+        actual = (
+            db.client.table("workouts")
+            .select("id", count="exact")
+            .eq("assignment_id", assignment_id)
+            .execute()
+        ).count
+        total = actual if actual is not None else fallback
+    except Exception as e:  # noqa: BLE001
+        logger.debug("total_workouts recount skipped (using fallback): %s", e)
+        total = fallback
+    try:
+        db.client.table("user_program_assignments").update(
+            {"total_workouts": total}
+        ).eq("id", assignment_id).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.debug("total_workouts update skipped: %s", e)
+
+
 async def _finish_program_expansion(
     *,
     user_id: str,
@@ -2986,12 +3012,7 @@ async def _finish_program_expansion(
         _purge_superseded_ghost_workouts(
             db, user_id, assignment_id, superseded_assignment_ids
         )
-        try:
-            db.client.table("user_program_assignments").update(
-                {"total_workouts": week1_created + result["workouts_created"]}
-            ).eq("id", assignment_id).execute()
-        except Exception as e:  # noqa: BLE001
-            logger.debug("deferred total_workouts update skipped: %s", e)
+        _correct_total_workouts(db, assignment_id, fallback=week1_created + result["workouts_created"])
         # Re-clear /today so the freshly-created weeks 2..N surface immediately.
         await _clear_today_cache(user_id)
         logger.info(
@@ -3004,6 +3025,17 @@ async def _finish_program_expansion(
             "(week 1 is live; weeks 2..N missing until re-assign): %s",
             assignment_id, e, exc_info=True,
         )
+        # Row 412: a failed/partial deferred expansion must not leave
+        # total_workouts stuck at the optimistic full-program pre-set (e.g.
+        # "56 workouts are on your calendar" when only week 1's 7 exist) —
+        # correct it down to what actually landed so the assignment row never
+        # asserts more than the calendar truly holds.
+        try:
+            db = get_supabase()
+        except Exception:  # noqa: BLE001
+            db = None
+        if db is not None:
+            _correct_total_workouts(db, assignment_id, fallback=week1_created)
 
 
 async def assign_program_core(

@@ -391,7 +391,14 @@ class _CosmeticRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final locked = !owned;
+    // `owned` reflects the (server-backfilled) user_cosmetics grant table.
+    // The level threshold is checked here too, not just in the "N to go"
+    // countdown below: a grant can lag current_level (e.g. a level-curve
+    // recalculation that bumps current_level without replaying every
+    // level-up transition), and this row must never show locked for a
+    // level the user has already reached (finding #443).
+    final meetsLevel = cosmetic.unlockLevel != null && cosmetic.unlockLevel! <= currentLevel;
+    final locked = !owned && !meetsLevel;
     final levelsToGo = cosmetic.unlockLevel != null
         ? (cosmetic.unlockLevel! - currentLevel).clamp(0, 999)
         : 0;

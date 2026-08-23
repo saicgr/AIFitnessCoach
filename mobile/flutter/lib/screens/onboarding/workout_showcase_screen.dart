@@ -1434,7 +1434,6 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
     });
   }
 
-  static const _accent = Color(0xFF38BDF8);  // accent-allowlist: categorical demo accent used only within this self-contained interactive-set-logging demo widget
   static const _progressGreen = Color(0xFF22C55E);  // accent-allowlist: success/positive state - same value as AppColors.success
 
   /// "Weight auto-increased" flash — set when logging a set auto-raises
@@ -1678,11 +1677,11 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _accent,
+                      color: context.accentColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: _accent.withValues(alpha: 0.45),
+                          color: context.accentColor.withValues(alpha: 0.45),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1703,7 +1702,7 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
                   Icon(
                     Icons.arrow_downward_rounded,
                     size: 18,
-                    color: _accent,
+                    color: context.accentColor,
                   )
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .moveY(begin: 0, end: 4, duration: 800.ms),
@@ -1771,7 +1770,7 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
               width: double.infinity,
               height: 50,
               decoration: BoxDecoration(
-                color: _accent,
+                color: context.accentColor,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
@@ -1994,7 +1993,7 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
         // is widened by HitTestBehavior.opaque above, not by padding.
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? _accent : Colors.transparent,
+          color: selected ? context.accentColor : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Text(
@@ -2016,11 +2015,11 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: _accent.withValues(alpha: 0.15),
+          color: context.accentColor.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _accent.withValues(alpha: 0.4)),
+          border: Border.all(color: context.accentColor.withValues(alpha: 0.4)),
         ),
-        child: Icon(icon, color: _accent, size: 26),
+        child: Icon(icon, color: context.accentColor, size: 26),
       ),
     );
   }

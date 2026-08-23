@@ -310,7 +310,7 @@ def _build_history(
     points: List[TrainingLoadDayPoint] = []
     for i, d in enumerate(date_series):
         chronic = chronic_series[i]
-        acwr = (acute_series[i] / chronic) if chronic > 0 else None
+        acwr = (acute_series[i] / (chronic / 4.0)) if chronic > 0 else None
         points.append(
             TrainingLoadDayPoint(
                 date=d,

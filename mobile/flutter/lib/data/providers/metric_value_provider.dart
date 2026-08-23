@@ -263,7 +263,9 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
             )
             .valueOrNull;
         final pts = s?.points;
-        if (pts == null || pts.isEmpty) return base(empty: true, unit: 'lb');
+        if (pts == null || pts.isEmpty) {
+          return base(empty: true, unit: s?.unit ?? 'lb');
+        }
         final last = pts.last.value;
         String? delta;
         if (pts.length >= 2) {
@@ -273,7 +275,7 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
         return base(
           value: last,
           displayValue: last.toStringAsFixed(1),
-          unit: 'lb',
+          unit: s!.unit,
           deltaLabel: delta,
         );
       }

@@ -395,7 +395,15 @@ extension SetProgressionPatternX on SetProgressionPattern {
         // Set i weight = peak - (totalSets-1-i)*inc
         // → peak = enteredWeight + (totalSets-1-completedSetIndex)*inc
         final stepsFromTop = totalSets - 1 - completedSetIndex;
-        result = _snap(enteredWeight + stepsFromTop * increment, increment);
+        final rawPeak = enteredWeight + stepsFromTop * increment;
+        // Safety cap: the peak must never run away from the actual
+        // prescribed weight as set count grows — this mirrors the
+        // 25%-max-jump convention already used below for intra-workout
+        // adaptation. Without it, a high set count silently doubled the
+        // displayed working weight versus what Easy mode shows for the
+        // exact same exercise/session (E2E register row #131).
+        final maxPeak = enteredWeight > 0 ? enteredWeight * 1.25 : rawPeak;
+        result = _snap(rawPeak > maxPeak ? maxPeak : rawPeak, increment);
       case SetProgressionPattern.myoReps:
         result = _snap(enteredWeight / 0.8, increment);
       default:

@@ -29,10 +29,21 @@ class BrandedErrorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // No BuildContext theme is guaranteed here (errors can surface very early),
     // so colours are raw. LTR is forced so the card lays out even when no
-    // Directionality ancestor survived the failure.
+    // Directionality ancestor survived the failure. A build-phase error at
+    // the root of a routed screen (e.g. a StateNotifier listener throwing
+    // during the screen's first `ref.watch`) substitutes THIS widget before
+    // that screen ever reaches its own Scaffold/Material — leaving Text with
+    // no Material/DefaultTextStyle ancestor, which renders every glyph with
+    // Flutter's debug placeholder (red text, double yellow underline). Material
+    // + DefaultTextStyle here guarantee this card is always themed, regardless
+    // of where in the tree the failure substituted it.
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: LayoutBuilder(
+      child: Material(
+        type: MaterialType.transparency,
+        child: DefaultTextStyle(
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          child: LayoutBuilder(
         builder: (context, c) {
           // In a tiny slot (a small inline widget failed) render a minimal mark
           // so the boundary itself never overflows. Unbounded (infinite) extents
@@ -139,6 +150,8 @@ class BrandedErrorWidget extends StatelessWidget {
             ),
           );
         },
+          ),
+        ),
       ),
     );
   }

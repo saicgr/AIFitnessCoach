@@ -395,7 +395,7 @@ async def classify_single(
     updated with the classifier result so the Imports screen reflects the
     share. The created row id is returned in the response.
     """
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     if not s3_key and not file:
         raise HTTPException(400, "Either `file` or `s3_key` is required")
 
@@ -499,7 +499,7 @@ async def classify_batch(
     Photos multi-select share."""
     import asyncio
 
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     svc = get_vision_service()
 
     # Increment cap once per image.
@@ -595,7 +595,7 @@ async def import_text(
     drives those by navigating to the destination screen with prefilled
     text. This keeps the endpoint fast and the orchestration explicit.
     """
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
 
     text_size_bytes = len(request.text.encode("utf-8"))
     if text_size_bytes > MAX_SIZES["text_inline_bytes"]:
@@ -713,7 +713,7 @@ async def import_workout(
     """Save a reviewed extracted workout into the user's custom-workout
     library. Wraps the existing custom-workout persistence path and tags
     the shared_items row with the resulting workout id."""
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
 
     # Persist as a "saved workout" row using the REAL saved_workouts columns
@@ -817,7 +817,7 @@ async def history_list(
 ):
     """Paginated list of the user's imports, filterable by category /
     format / origin tags + free-text title search."""
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     qb = (
         db.client.table("shared_items")
@@ -889,7 +889,7 @@ async def history_export(
     import io
     from fastapi.responses import StreamingResponse as _StreamingResponse
 
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
 
     def stream():
@@ -958,7 +958,7 @@ async def history_detail(
     item_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     res = (
         db.client.table("shared_items")
@@ -983,7 +983,7 @@ async def history_retry(
     (`/share/import-text`, `/share/fetch-url`, etc.). We do NOT re-run the
     pipeline server-side automatically — that would re-charge the rate
     limiter and pile on hidden cost. The client decides."""
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     res = (
         db.client.table("shared_items")
@@ -1032,7 +1032,7 @@ async def history_bulk(
     request: HistoryBulkRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     if request.action == "delete":
         db.client.table("shared_items").delete().in_("id", request.ids).eq(
@@ -1055,7 +1055,7 @@ async def history_delete_one(
     item_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     db.client.table("shared_items").delete().eq("id", item_id).eq(
         "user_id", user_id
@@ -1070,7 +1070,7 @@ async def history_clear(
     """Privacy → Clear shared history. Hard-delete every row owned by the
     user. Media S3 keys are scheduled for cleanup by the existing media
     cleanup cron."""
-    user_id = current_user["id"]
+    user_id = current_user["auth_id"]
     db = get_supabase_db()
     db.client.table("shared_items").delete().eq("user_id", user_id).execute()
     return {"cleared": True}

@@ -523,6 +523,7 @@ class ProgramTemplateRepository {
   Future<Map<String, dynamic>> _getMapWithRetry(
     String path, {
     Map<String, dynamic>? query,
+    Options? options,
   }) async {
     const maxAttempts = 3;
     for (var attempt = 1;; attempt++) {
@@ -530,6 +531,7 @@ class ProgramTemplateRepository {
         final resp = await _client.get(
           path,
           queryParameters: query == null || query.isEmpty ? null : query,
+          options: options,
         );
         return Map<String, dynamic>.from(resp.data as Map);
       } on DioException catch (e) {
@@ -1027,9 +1029,19 @@ class ProgramTemplateRepository {
     // Retry transient failures (e.g. a backend deploy restart) so the Schedule
     // tab doesn't show "We could not load this program" on a single blip,
     // matching the browse/featured/recommended routes.
+    //
+    // Longer receiveTimeout than the app default (25s connect / 30s receive):
+    // this endpoint builds a full multi-week schedule (injury/equipment
+    // customization + media presigning over every day), which on a long
+    // program can legitimately run well past the default before the first
+    // response byte arrives. Without this override the request was abandoned
+    // client-side while the server was still working — a slow server
+    // response, not a dead connection — and the tab showed the offline-icon
+    // error state for a request that would have succeeded (row 229).
     final data = await _getMapWithRetry(
       '$_base/library/$programId/schedule',
       query: query,
+      options: Options(receiveTimeout: const Duration(seconds: 90)),
     );
     return ProgramScheduleResponse.fromJson(data);
   }

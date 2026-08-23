@@ -1779,6 +1779,7 @@ class LangGraphCoachService:
             )
             from services.coach.self_tracking_context import build_self_tracking_context
             from services.coach.form_verdict_context import build_form_verdict_context
+            from services.coach.todays_sets_context import build_todays_sets_context
             (
                 _health_res,
                 _mem_res,
@@ -1787,6 +1788,7 @@ class LangGraphCoachService:
                 _nutri,
                 _selftrack_res,
                 _formverdict_res,
+                _todayssets_res,
             ) = await asyncio.gather(
                 UserContextService().get_health_context_for_ai(_cuid, days=7),
                 asyncio.to_thread(
@@ -1797,6 +1799,7 @@ class LangGraphCoachService:
                 fetch_daily_nutrition_context(_cuid, user_tz or "UTC"),
                 build_self_tracking_context(_cuid, user_tz),
                 build_form_verdict_context(_cuid),
+                build_todays_sets_context(_cuid, user_tz or "UTC"),
                 return_exceptions=True,
             )
 
@@ -1826,6 +1829,17 @@ class LangGraphCoachService:
                 base_state["form_verdict_context"] = ""
             else:
                 base_state["form_verdict_context"] = _formverdict_res or ""
+
+            # Today's logged sets, read from performance_logs DIRECTLY (E2E
+            # register row #94: the workout_logs session aggregate can sit in a
+            # contradictory state — row 89/90 — so the coach must never rely on
+            # it to answer "have I logged anything". "" on any error so the
+            # coach path is never broken.
+            if isinstance(_todayssets_res, Exception):
+                logger.warning(f"[CoachState] todays_sets_context pre-fetch failed: {_todayssets_res}")
+                base_state["todays_sets_context"] = ""
+            else:
+                base_state["todays_sets_context"] = _todayssets_res or ""
 
             # 2. memory_context / memory_ref_ids (mig 2217) — durable facts the
             # user told the coach (back pain, dietary prefs, goals) + open loops,
