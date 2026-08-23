@@ -149,11 +149,33 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     final workingSets = totalSets - warmupCount;
     final effectiveSetsForTargets = workingSets > 0 ? workingSets : totalSets;
 
-    final workingWeight = pattern.deriveWorkingWeight(
-      enteredWeight: enteredWeight,
-      totalSets: effectiveSetsForTargets,
-      increment: effectiveIncrement,
-    );
+    // How many sets are already logged for this exercise. Needed *before*
+    // deriving the working weight (see below) as well as later for mapping
+    // targets onto set positions.
+    final completedCount = completedSets[exerciseIndex]?.length ?? 0;
+
+    // E2E #131: Easy and Advanced must render the same weight for the same
+    // set of the same exercise from one shared AI prescription. Before
+    // anything has been logged, `enteredWeight` is not "the weight the user
+    // just entered for working set 0" — it is the single flat AI-prescribed
+    // number that Easy mode renders as-is for every set. Calling
+    // deriveWorkingWeight on it (completedSetIndex defaulting to 0) told the
+    // pyramid pattern "set 0 was just completed at this weight", which made
+    // it extrapolate a peak far above the prescription (e.g. 22 lb flat in
+    // Easy vs ramping to ~50 lb in Advanced for the same exercise/session).
+    // So: with nothing logged yet, treat enteredWeight AS the working/peak
+    // weight directly — no extrapolation — so Advanced's pyramid builds up
+    // to the same number Easy shows flat. Once a real set is completed,
+    // updateControlsForNextSet's mid-workout re-derivation (below, ~line 415)
+    // calls deriveWorkingWeight with the actual completed weight + set
+    // index, which is the legitimate use of that extrapolation.
+    final workingWeight = completedCount == 0
+        ? enteredWeight
+        : pattern.deriveWorkingWeight(
+            enteredWeight: enteredWeight,
+            totalSets: effectiveSetsForTargets,
+            increment: effectiveIncrement,
+          );
     exerciseWorkingWeight[exerciseIndex] = workingWeight;
 
     final userGoal = ref.read(authStateProvider).user?.primaryGoal;
@@ -179,8 +201,6 @@ extension SetLoggingMixinUI on SetLoggingMixin {
 
     debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex totalSets=$totalSets, warmups=$warmupCount, '
         'workingSets=$effectiveSetsForTargets, targets=${targets.length}, enteredWeight=$enteredWeight, workingWeight=$workingWeight');
-
-    final completedCount = completedSets[exerciseIndex]?.length ?? 0;
 
     // Map targets (generated for working sets only) to set positions.
     // Warmup sets get 50% of the first working target's weight.
