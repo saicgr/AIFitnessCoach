@@ -1,6 +1,7 @@
 /// Public recipe view (deep-linked /r/{slug}). Read-only; "Save to my recipes" CTA.
 library;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/recipe_share.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../data/services/api_error_messages.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -44,7 +46,13 @@ class PublicRecipeScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(AppLocalizations.of(context).publicRecipeRecipeNotAvailable, style: ZType.disp(22, color: text)),
                 const SizedBox(height: 8),
-                Text(e.toString(), style: TextStyle(color: muted), textAlign: TextAlign.center),
+                Text(
+                  e is DioException && e.response?.statusCode == 404
+                      ? 'This recipe is no longer shared.'
+                      : ApiErrorMessages.forDio(e),
+                  style: TextStyle(color: muted),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),

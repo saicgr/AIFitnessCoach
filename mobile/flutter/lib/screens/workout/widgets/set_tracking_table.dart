@@ -477,15 +477,12 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   }
 
   /// Convert a stored (kg) weight into the display unit the live controllers
-  /// expect (lb unless the user is in kg mode). Mirrors the inverse of
-  /// `_saveEditing`'s kg conversion so values round-trip cleanly.
+  /// expect (lb unless the user is in kg mode). Matches the conversion the
+  /// PREVIOUS column itself renders with (`_PreviousCellWithRir` /
+  /// `_PreviousCell`, both via `WeightUtils.fromKgSnapped`).
   double _toDisplayWeight(double kg) {
     if (widget.useKg) return kg;
-    return kgToDisplayLbs(
-      kg,
-      widget.exercise.equipment,
-      exerciseName: widget.exercise.name,
-    );
+    return WeightUtils.fromKgSnapped(kg, displayInLbs: true);
   }
 
   /// "Same as last time" for ONE set: copy its previous-session weight/reps

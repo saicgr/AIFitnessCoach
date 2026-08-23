@@ -33,6 +33,19 @@ MAX_INSIGHT_USD_PER_USER_PER_DAY = 0.02
 
 _NUMBER_RE = re.compile(r"\b(\d{1,5}(?:,\d{3})*)(?:\.\d+)?\b")
 
+# A trend claim ("remains steady", "improved", "up from last week") asserts a
+# comparison across time. Reject it unless the facts actually carry a
+# comparison basis (a delta/baseline/trend key) — otherwise a single-snapshot
+# metric (e.g. a user's very first Heart Health score) can be narrated as
+# stable or improving with nothing to compare against.
+_TREND_WORDS_RE = re.compile(
+    r"\b(steady|remains steady|stayed steady|improv(?:ed|ing)|declin(?:ed|ing)|"
+    r"dropped|drop(?:ping)?|worsen(?:ed|ing)?|trending|(?:been\s+)?consistent|"
+    r"up from|down from|higher than (?:yesterday|last)|lower than (?:yesterday|last)|"
+    r"compared to (?:yesterday|last)|since (?:yesterday|last))\b",
+    re.IGNORECASE,
+)
+
 
 def _user_cost_today_usd(user_id: str) -> float:
     try:
@@ -85,6 +98,30 @@ def _numbers_grounded(text: str, facts: Dict[str, Any]) -> bool:
     return True
 
 
+def _has_trend_basis(facts: Dict[str, Any]) -> bool:
+    """True when `facts` includes a real comparison basis (delta/baseline/
+    trend) the model could ground a trend claim in."""
+    for k, v in facts.items():
+        if v is None:
+            continue
+        if any(tag in k.lower() for tag in ("delta", "baseline", "trend")):
+            return True
+    return False
+
+
+def _trend_claim_grounded(text: str, facts: Dict[str, Any]) -> bool:
+    if not text or _has_trend_basis(facts):
+        return True
+    m = _TREND_WORDS_RE.search(text)
+    if m:
+        logger.warning(
+            "[health_insight] trend guardrail rejected '%s' — no delta/baseline in facts",
+            m.group(0),
+        )
+        return False
+    return True
+
+
 def _facts_block(facts: Dict[str, Any]) -> str:
     lines: List[str] = []
     for k, v in facts.items():
@@ -132,6 +169,10 @@ async def generate_grounded_insight(
         "HARD RULES:\n"
         "- Only reference the numbers in the facts. Never invent or estimate a "
         "number that is not listed.\n"
+        "- Only describe a trend across time (e.g. \"remains steady\", "
+        "\"improved\", \"up from last week\") if the facts include a delta, "
+        "baseline, or trend value to compare against. Otherwise describe only "
+        "today's snapshot, with no claim about how it changed.\n"
         "- No em dashes or en dashes. Use plain commas/periods.\n"
         "- Plain, human, specific. No hashtags, no emoji, no markdown.\n"
         f"- Be actionable when the facts suggest a clear next step.{vocative}\n"
@@ -169,8 +210,10 @@ async def generate_grounded_insight(
         body = (parsed.get("body") or "").strip()
         if not headline or not body:
             return fallback
-        # Guardrails: numbers grounded + no dashes slipped through.
+        # Guardrails: numbers grounded, no ungrounded trend claim, no dashes.
         if not _numbers_grounded(headline + " " + body, facts):
+            return fallback
+        if not _trend_claim_grounded(headline + " " + body, facts):
             return fallback
         if "—" in body or "–" in body or "—" in headline or "–" in headline:
             body = body.replace("—", ", ").replace("–", ", ")

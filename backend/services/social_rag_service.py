@@ -20,6 +20,29 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _sanitize_metadata(metadata: Dict) -> Dict:
+    """Coerce a metadata dict to Chroma's accepted scalar types (str/int/
+    float/bool). A `None` value — e.g. a user row with no `name` set — is
+    rejected by the `add` endpoint with a 422 for the whole request, so drop
+    it (Chroma's `where` filters treat a missing key the same as an unset
+    one) rather than let it reach the HTTP body."""
+    return {k: v for k, v in metadata.items() if v is not None}
+
+
+def _embed(text: str) -> Optional[List[float]]:
+    """Sync embedding helper. Chroma Cloud's REST API 422s on `add` when no
+    embedding is supplied and the collection has no server-side embedding
+    function configured (which ours doesn't) — so a document must never be
+    added without one. Returns None on failure so the caller can skip the
+    insert instead of sending a request guaranteed to 422."""
+    try:
+        from services.gemini_service import GeminiService
+        return GeminiService().get_embedding(text)
+    except Exception as e:
+        logger.warning(f"[SocialRAG] embed failed: {e}")
+        return None
+
+
 class SocialRAGService:
     """Service for managing social data in ChromaDB."""
 
@@ -64,8 +87,11 @@ class SocialRAGService:
             created_at=created_at,
         )
 
-        # Metadata for filtering
-        metadata = {
+        # Metadata for filtering. Chroma's metadata values must be a plain
+        # str/int/float/bool — a `None` (e.g. a user with no `name` set) 422s
+        # the whole `add` call, so coerce every value before it ever reaches
+        # the request body.
+        metadata = _sanitize_metadata({
             "user_id": user_id,
             "user_name": user_name,
             "activity_type": activity_type,
@@ -73,7 +99,12 @@ class SocialRAGService:
             "created_at": created_at.isoformat(),
             "has_exercises": "exercises_performance" in activity_data,
             "exercise_count": len(activity_data.get("exercises_performance", [])),
-        }
+        })
+
+        embedding = _embed(document_text)
+        if embedding is None:
+            logger.warning(f"[SocialRAG] skipping activity {activity_id} — no embedding")
+            return
 
         # Add to ChromaDB
         collection = self.get_social_collection()
@@ -81,6 +112,7 @@ class SocialRAGService:
             documents=[document_text],
             metadatas=[metadata],
             ids=[f"activity_{activity_id}"],
+            embeddings=[embedding],
         )
 
         logger.info(f"Added activity {activity_id} to social RAG")
@@ -120,11 +152,17 @@ class SocialRAGService:
             "created_at": created_at.isoformat(),
         }
 
+        embedding = _embed(document_text)
+        if embedding is None:
+            logger.warning(f"[SocialRAG] skipping reaction {reaction_id} — no embedding")
+            return
+
         collection = self.get_social_collection()
         collection.add(
             documents=[document_text],
             metadatas=[metadata],
             ids=[f"reaction_{reaction_id}"],
+            embeddings=[embedding],
         )
 
         logger.info(f"Added reaction {reaction_id} to social RAG")

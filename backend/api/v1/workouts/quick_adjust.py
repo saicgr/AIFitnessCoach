@@ -334,11 +334,30 @@ async def quick_adjust_workout(
                         f"workout {workout_id} — reporting no removal"
                     )
 
-    # Branch 3 — ease intensity if sore/tired. Applies AFTER trim so we're
-    # easing the already-shorter list.
+    # The 60%-removal cap in `_picks_to_remove` deliberately never guts the
+    # workout, so trimming exercises alone can still leave the plan longer
+    # than the minutes the user actually has (E2E #146: a 45-min budget
+    # coming back ~48 min). Check what trimming actually bought us before
+    # deciding whether ease is still needed.
+    if removed_indices:
+        post_trim_workout = db.get_workout(workout_id) or {}
+        post_trim_raw = post_trim_workout.get("exercises_json")
+        if isinstance(post_trim_raw, str):
+            post_trim_exercises = json.loads(post_trim_raw) if post_trim_raw else []
+        else:
+            post_trim_exercises = post_trim_raw or exercises
+        post_trim_min = _estimate_minutes(post_trim_exercises)
+    else:
+        post_trim_min = current_min
+    still_over_budget = post_trim_min > request_body.minutes_available
+
+    # Branch 3 — ease intensity if sore/tired, OR the time budget is still
+    # not met after trimming. The minutes the user gave is a ceiling, not a
+    # soft hint — respected even when soreness/energy alone wouldn't have
+    # triggered easing.
     sets_dropped = 0
     applied_ease = False
-    if request_body.soreness >= 5 and request_body.energy <= 3:
+    if (request_body.soreness >= 5 and request_body.energy <= 3) or still_over_budget:
         modifier = WorkoutModifier()
         if modifier.modify_workout_intensity(workout_id, "easier"):
             applied_ease = True

@@ -32,6 +32,29 @@ from .utils import get_supabase_client
 router = APIRouter()
 
 
+def _backfill_current_value(supabase, challenge_type: str, user_id: str) -> float:
+    """Seed a new participant's progress from activity that already
+    qualifies, instead of always starting everyone at zero.
+
+    Only `workout_count` is backed by a query we can trust today (a
+    straight count of the user's completed workouts); other challenge
+    types fall back to 0 rather than guess at a query.
+    """
+    if challenge_type != ChallengeType.WORKOUT_COUNT.value:
+        return 0
+    try:
+        res = (
+            supabase.table("workouts")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("is_completed", True)
+            .execute()
+        )
+        return float(res.count or 0)
+    except Exception:
+        return 0
+
+
 @router.post("/challenges", response_model=Challenge)
 async def create_challenge(
     user_id: str,
@@ -184,12 +207,28 @@ async def join_challenge(
     if existing.data:
         raise HTTPException(status_code=400, detail="Already participating in this challenge")
 
+    challenge_res = supabase.table("challenges").select("challenge_type,goal_value").eq(
+        "id", participation.challenge_id
+    ).execute()
+    if not challenge_res.data:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    challenge_row = challenge_res.data[0]
+
+    current_value = _backfill_current_value(
+        supabase, challenge_row["challenge_type"], user_id
+    )
+    goal_value = challenge_row["goal_value"] or 0
+    progress_percentage = min((current_value / goal_value) * 100, 100) if goal_value else 0
+    status = "completed" if progress_percentage >= 100 else "active"
+    completed_at = datetime.now(timezone.utc).isoformat() if status == "completed" else None
+
     result = supabase.table("challenge_participants").insert({
         "challenge_id": participation.challenge_id,
         "user_id": user_id,
-        "current_value": 0,
-        "progress_percentage": 0,
-        "status": "active",
+        "current_value": current_value,
+        "progress_percentage": progress_percentage,
+        "status": status,
+        "completed_at": completed_at,
     }).execute()
 
     if not result.data:

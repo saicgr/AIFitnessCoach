@@ -195,7 +195,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   // NEW: Phase 2 and Phase 3 tracking
   bool _skipPersonalization = false;  // Track if user skipped Phase 2
   bool? _nutritionEnabled;  // Track nutrition opt-in
-  final Set<String> _selectedLimitations = {'none'};  // Physical limitations (default: none)
+  final Set<String> _selectedLimitations = {};  // Physical limitations (unanswered until the user picks)
   String? _customLimitation;  // Custom limitation text when "Other" is selected
 
   late AnimationController _progressController;

@@ -270,9 +270,21 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
   Future<void> _aiPickAudio() async {
     HapticService.light();
     try {
-      final res = await FilePicker.platform.pickFiles(type: FileType.audio);
+      // FileType.audio routes through the platform's media-library picker,
+      // which on iOS can silently come back with nothing — no picker sheet,
+      // no permission prompt, no thrown exception — indistinguishable from a
+      // user cancel. The document picker with explicit audio extensions
+      // opens the same UIDocumentPicker the PDF chip uses (which works),
+      // so voice memos and other audio files are reachable the same way.
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['m4a', 'mp3', 'wav', 'aac'],
+      );
       final path = res?.files.firstOrNull?.path;
-      if (path == null) return;
+      if (path == null) {
+        debugPrint('⚠️ [Imports] audio pick returned no file (cancel or picker failure)');
+        return;
+      }
       await _runAiImport(SharedPayload(
         kind: SharedPayloadKind.audio,
         localFilePaths: [path],

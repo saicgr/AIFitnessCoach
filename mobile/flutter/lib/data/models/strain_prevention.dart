@@ -11,6 +11,8 @@ enum StrainRiskLevel {
   danger,
   @JsonValue('critical')
   critical,
+  @JsonValue('no_data')
+  noData,
 }
 
 enum StrainActivityType {
@@ -37,6 +39,8 @@ extension StrainRiskLevelExtension on StrainRiskLevel {
         return 'Danger';
       case StrainRiskLevel.critical:
         return 'Critical';
+      case StrainRiskLevel.noData:
+        return 'No Data Yet';
     }
   }
 
@@ -50,6 +54,8 @@ extension StrainRiskLevelExtension on StrainRiskLevel {
         return 0xFFEF4444;
       case StrainRiskLevel.critical:
         return 0xFF7C3AED;
+      case StrainRiskLevel.noData:
+        return 0xFF9CA3AF;
     }
   }
 
@@ -63,6 +69,8 @@ extension StrainRiskLevelExtension on StrainRiskLevel {
         return 'error';
       case StrainRiskLevel.critical:
         return 'dangerous';
+      case StrainRiskLevel.noData:
+        return 'help_outline';
     }
   }
 }
@@ -317,6 +325,8 @@ class StrainDashboardData {
         return StrainRiskLevel.danger;
       case 'critical':
         return StrainRiskLevel.critical;
+      case 'no_data':
+        return StrainRiskLevel.noData;
       default:
         return StrainRiskLevel.safe;
     }

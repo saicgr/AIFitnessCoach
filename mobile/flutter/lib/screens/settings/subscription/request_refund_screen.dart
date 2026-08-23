@@ -158,6 +158,49 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
     final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    // Gate entry on an active, refundable purchase — `/subscription-
+    // management` already reads this correctly ("Inactive · No active
+    // subscription"); this screen previously rendered the full refund form
+    // regardless, offering to refund a placeholder "Your Subscription" at
+    // $0.00. Loading is distinct from genuinely-free so a cold provider read
+    // doesn't flash the empty state before the real tier resolves.
+    final subscriptionState = ref.watch(subscriptionProvider);
+    if (!subscriptionState.isLoading && !subscriptionState.isPremiumOrHigher) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: PillAppBar(
+          title: AppLocalizations.of(context).subscriptionManagementRequestRefund,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.receipt_long_outlined, color: textMuted, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'No purchases to refund',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'You don\'t have an active subscription or purchase eligible for a refund.',
+                  style: TextStyle(fontSize: 14, color: textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
@@ -218,7 +261,9 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                       const SizedBox(width: 8),
                       _InfoChip(
                         icon: Icons.schedule,
-                        label: _billingPeriod == AppLocalizations.of(context).requestRefundOneTime ? AppLocalizations.of(context).requestRefundOneTime2 : AppLocalizations.of(context)!.requestRefundScreenPer(_billingPeriod),
+                        label: _billingPeriod == 'one-time'
+                            ? AppLocalizations.of(context).requestRefundOneTime2
+                            : (_billingPeriod == 'yearly' ? 'Yearly' : 'Monthly'),
                         isDark: isDark,
                       ),
                     ],

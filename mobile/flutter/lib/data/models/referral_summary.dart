@@ -86,19 +86,28 @@ class ReferralTier {
   final String displayName;
   final String emoji;
 
+  /// The XP level that grants this SAME merch type independently (backend
+  /// `MERCH_TYPE_FOR_LEVEL`) — null when a tier is referral-only (the
+  /// shaker bottle has no level equivalent; see migration 1932's "viral
+  /// lever, earned not auto-granted"). Both paths are real, independent
+  /// unlock routes to the same reward, so the UI should say so rather than
+  /// naming only the referral condition.
+  final int? levelEquivalent;
+
   const ReferralTier({
     required this.threshold,
     required this.merchType,
     required this.displayName,
     required this.emoji,
+    this.levelEquivalent,
   });
 
   static const List<ReferralTier> all = [
-    ReferralTier(threshold: 3, merchType: 'sticker_pack', displayName: '${Branding.appName} Sticker Pack', emoji: '✨'),
+    ReferralTier(threshold: 3, merchType: 'sticker_pack', displayName: '${Branding.appName} Sticker Pack', emoji: '✨', levelEquivalent: 50),
     ReferralTier(threshold: 10, merchType: 'shaker_bottle', displayName: '${Branding.appName} Shaker Bottle', emoji: '🥤'),
-    ReferralTier(threshold: 25, merchType: 't_shirt', displayName: '${Branding.appName} T-Shirt', emoji: '👕'),
-    ReferralTier(threshold: 50, merchType: 'hoodie', displayName: '${Branding.appName} Hoodie', emoji: '🧥'),
-    ReferralTier(threshold: 100, merchType: 'full_merch_kit', displayName: 'Full Merch Kit', emoji: '🎁'),
-    ReferralTier(threshold: 250, merchType: 'signed_premium_kit', displayName: 'Signed Premium Kit', emoji: '🏆'),
+    ReferralTier(threshold: 25, merchType: 't_shirt', displayName: '${Branding.appName} T-Shirt', emoji: '👕', levelEquivalent: 100),
+    ReferralTier(threshold: 50, merchType: 'hoodie', displayName: '${Branding.appName} Hoodie', emoji: '🧥', levelEquivalent: 150),
+    ReferralTier(threshold: 100, merchType: 'full_merch_kit', displayName: 'Full Merch Kit', emoji: '🎁', levelEquivalent: 200),
+    ReferralTier(threshold: 250, merchType: 'signed_premium_kit', displayName: 'Signed Premium Kit', emoji: '🏆', levelEquivalent: 250),
   ];
 }

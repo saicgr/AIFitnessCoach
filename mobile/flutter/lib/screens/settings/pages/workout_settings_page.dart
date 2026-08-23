@@ -366,6 +366,15 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                       await ref.read(authStateProvider.notifier).updateUserProfile({
                         'workout_weight_unit': opt['unit'],
                       });
+                      // Row 231 — Weight Increments carries its OWN unit
+                      // (defaults to 'kg', only ever synced from the
+                      // mid-workout unit toggle), so changing the display
+                      // unit here without this left it stepping in kg while
+                      // every weight rendered in lbs. Keep them locked
+                      // together the moment the display unit changes.
+                      await ref
+                          .read(weightIncrementsProvider.notifier)
+                          .setUnit(opt['unit']!);
                       if (mounted) {
                         ScaffoldMessenger.of(this.context).showSnackBar(
                           SnackBar(

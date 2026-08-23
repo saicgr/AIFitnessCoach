@@ -54,12 +54,16 @@ class HeartHealthDetailScreen extends ConsumerWidget {
                   if (!embedded) ...[
                     const GlassBackButton(),
                     const SizedBox(width: 12),
-                    Text('Heart health',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: textPrimary)),
                   ],
+                  // Shown even when embedded in the Health tab's RECOVERY
+                  // chip — the score here is the Heart Health composite, a
+                  // different metric from the Overview tab's Recovery ring,
+                  // and nothing else on screen names it.
+                  Text('Heart health',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary)),
                   const Spacer(),
                   AskCoachButton(
                     contextLabel: 'Heart health · habit score',

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../data/models/kegel.dart';
 import '../../data/providers/kegel_provider.dart';
 import '../../core/providers/user_provider.dart';
@@ -28,7 +29,7 @@ class KegelSessionScreen extends ConsumerStatefulWidget {
 }
 
 class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   // Session state
   bool _isActive = false;
   bool _isPaused = false;
@@ -55,6 +56,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -70,10 +72,37 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _pulseController.dispose();
     _progressController.dispose();
+    unawaited(
+      WakelockPlus.disable().catchError((e) {
+        debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
+      }),
+    );
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!_isActive) return;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        // Unlike the workout engine's timer, this hold/rest countdown has no
+        // wall-clock reconciliation — a Timer.periodic left running while
+        // backgrounded (OS-throttled, no Live Activity to catch it up) would
+        // silently desync the displayed count from real elapsed time. Pause
+        // rather than let it drift; the user resumes explicitly when back.
+        if (!_isPaused) _togglePause();
+        break;
+      case AppLifecycleState.resumed:
+      case AppLifecycleState.detached:
+        break;
+    }
   }
 
   void _startSession(KegelExercise exercise) {
@@ -96,6 +125,16 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     _progressController.forward(from: 0);
     _startTimer();
     HapticFeedback.mediumImpact();
+
+    // Keep the screen on for the session, matching the workout engine — a
+    // held contraction is exactly the kind of hands-off screen where the
+    // device would otherwise auto-lock mid-rep. Ignore failure (plugin
+    // missing on some platform, permission denied) so it never blocks start.
+    unawaited(
+      WakelockPlus.enable().catchError((e) {
+        debugPrint('⚠️ [Kegel] wakelock enable failed: $e');
+      }),
+    );
   }
 
   void _startTimer() {
@@ -158,6 +197,11 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     _pulseController.stop();
     _progressController.stop();
     HapticFeedback.heavyImpact();
+    unawaited(
+      WakelockPlus.disable().catchError((e) {
+        debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
+      }),
+    );
 
     setState(() {
       _isActive = false;
@@ -702,6 +746,11 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
               onPressed: () {
                 Navigator.pop(context);
                 _timer?.cancel();
+                unawaited(
+                  WakelockPlus.disable().catchError((e) {
+                    debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
+                  }),
+                );
                 this.context.pop();
               },
               child: Text(AppLocalizations.of(context).kegelSessionEndSession2),

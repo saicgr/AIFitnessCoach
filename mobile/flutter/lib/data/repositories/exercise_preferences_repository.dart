@@ -194,15 +194,22 @@ class ExercisePreferencesRepository {
     }
   }
 
-  /// Remove an exercise from the queue
-  Future<void> removeFromQueue(String userId, String exerciseName) async {
+  /// Remove an exercise from the queue.
+  ///
+  /// Returns whether the entry had ALREADY been consumed by the workout
+  /// generator (`used_at` was set) before this call deleted it — deleting the
+  /// queue row never pulls the exercise back out of a workout it was already
+  /// written into, so the caller needs this to avoid claiming an outcome the
+  /// backend didn't perform.
+  Future<bool> removeFromQueue(String userId, String exerciseName) async {
     debugPrint('📋 [ExercisePrefs] Removing from queue: $exerciseName for user: $userId');
 
     try {
-      await _apiClient.delete(
+      final response = await _apiClient.delete<Map<String, dynamic>>(
         '${ApiConstants.apiBaseUrl}/users/$userId/exercise-queue/${Uri.encodeComponent(exerciseName)}',
       );
       debugPrint('✅ [ExercisePrefs] Removed from queue: $exerciseName');
+      return response.data?['already_used'] as bool? ?? false;
     } catch (e, stackTrace) {
       debugPrint('❌ [ExercisePrefs] Error removing from queue: $e');
       debugPrint('Stack trace: $stackTrace');

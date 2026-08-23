@@ -64,9 +64,18 @@ async def latest_review(
 
 @router.post("/coach-reviews/{review_id}/request-human-pro", response_model=HumanProRequestResponse)
 async def request_human_pro_review(review_id: str, current_user: dict = Depends(get_current_user)):
-    """Stub — queues for the future human-coach feature.
+    """Queues for the future human-coach feature.
 
-    No human reviewer infra exists yet; we just acknowledge the request so the UI
-    can show a friendly message and track interest for launch.
+    No human reviewer infra exists yet, so this can't route to an actual
+    reviewer — but it persists the request (review_kind -> human_pro_pending)
+    so interest is tracked for launch instead of silently discarded, and
+    acknowledges the caller with a friendly message.
     """
+    user_id = str(current_user.get("id") or current_user.get("sub") or "")
+    try:
+        found = await get_coach_review_service().request_human_pro(review_id, user_id)
+    except Exception as exc:
+        raise safe_internal_error(exc, "nutrition")
+    if not found:
+        raise HTTPException(status_code=404, detail="review not found")
     return HumanProRequestResponse(queued=True)

@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/utils/default_weights.dart';
 import '../../../../core/utils/exercise_tracking_metric.dart';
 import '../../shared/focal_stepper.dart';
 import '../../widgets/timed_exercise_timer.dart';
@@ -340,9 +341,15 @@ class EasyFocalColumn extends StatelessWidget {
       // bodyweight, and adding load is optional, not required.
       return 'Your bodyweight — no extra weight needed.';
     }
+    // Same conversion `state.displayWeight` itself was set from (see
+    // easy_active_workout_state.dart's unit-toggle handler) — the raw
+    // `* 2.20462` math this used to do landed on a different lb value than
+    // the gym-increment-snapped stepper (e.g. 10 kg -> stepper 20 lb via
+    // `kgToDisplayLbs`, but this whisper's target read 22.0), so the hint
+    // compared the stepper against a target it could never actually reach.
     final targetDisplay = useKg
         ? state.targetWeightKg
-        : state.targetWeightKg * 2.20462;
+        : kgToDisplayLbs(state.targetWeightKg, null, exerciseName: exerciseName);
     if (targetDisplay > 0 && state.displayWeight > targetDisplay + 0.01) {
       return 'Above target. Own it.';
     }

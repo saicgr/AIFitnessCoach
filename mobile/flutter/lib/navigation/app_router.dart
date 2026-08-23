@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/observers/modal_route_observer.dart';
+import '../core/observers/snackbar_clearing_route_observer.dart';
 import '../core/services/posthog_service.dart';
 import '../core/services/sentry_service.dart';
 import 'posthog_route_observer.dart';
@@ -761,6 +762,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Hides the workout mini-player pill whenever a modal route (bottom
       // sheet / dialog / popup) is on top, so it doesn't z-float above sheets.
       WorkoutMiniPlayerRouteObserver(ref),
+      // Clears any lingering SnackBar on a full-screen navigation (push/pop/
+      // replace) — generalizes `main_shell.dart`'s `_onItemTapped` toast-clear
+      // (which only fires on a bottom-nav tab switch) to plain in-tab
+      // push/pop, where a toast raised on a pushed screen otherwise followed
+      // the user back to the screen underneath and beyond.
+      SnackBarClearingRouteObserver(),
       // No-op when Sentry is disabled; otherwise adds nav breadcrumbs.
       if (SentryService.isEnabled) SentryService.navigatorObserver(),
       // Pins `screen` + `route` tags onto every Sentry event so framework

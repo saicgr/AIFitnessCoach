@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/providers/current_day_provider.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -146,6 +147,10 @@ class _Greeting extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Watched (not read) so this line rebuilds the instant the local day
+    // rolls over — otherwise a session left open across midnight keeps
+    // showing yesterday's greeting/date from the last paint (register #123).
+    ref.watch(currentLocalDayProvider);
     final now = DateTime.now();
     final hour = now.hour;
     final name = ref.watch(currentUserProvider).valueOrNull?.name;

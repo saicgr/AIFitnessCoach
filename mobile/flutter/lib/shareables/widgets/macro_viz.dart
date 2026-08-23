@@ -204,19 +204,34 @@ class MacroViz extends StatelessWidget {
 
   Widget _appleRings() {
     final hasGoals = nutrition.hasGoals;
+    // Without goals there is nothing to measure progress against, so instead
+    // of filling every ring to 1.0 (which draws three identical circles and
+    // encodes nothing) each ring is scaled to its macro's share of the
+    // largest macro's calorie contribution — the trio then reads as the
+    // actual 3:2:1-style ratio between protein/carbs/fat.
+    final maxKcal = [_pKcal, _cKcal, _fKcal].fold<double>(
+        0.0, (m, v) => v > m ? v : m);
+    double byCalorieShare(double kcal) =>
+        maxKcal <= 0 ? 0.0 : (kcal / maxKcal).clamp(0.0, 1.0);
     // An unknown macro (null) with goals draws an empty (0-progress) ring —
     // no fill, which honestly reads as "no data", not a filled/partial arc.
     final rings = <MacroRing>[
       MacroRing(
-        hasGoals ? (_progress(_proteinG ?? 0, nutrition.proteinGoal) ?? 1.0) : 1.0,
+        hasGoals
+            ? (_progress(_proteinG ?? 0, nutrition.proteinGoal) ?? 1.0)
+            : byCalorieShare(_pKcal),
         _pColor,
       ),
       MacroRing(
-        hasGoals ? (_progress(_carbsG ?? 0, nutrition.carbsGoal) ?? 1.0) : 1.0,
+        hasGoals
+            ? (_progress(_carbsG ?? 0, nutrition.carbsGoal) ?? 1.0)
+            : byCalorieShare(_cKcal),
         _cColor,
       ),
       MacroRing(
-        hasGoals ? (_progress(_fatG ?? 0, nutrition.fatGoal) ?? 1.0) : 1.0,
+        hasGoals
+            ? (_progress(_fatG ?? 0, nutrition.fatGoal) ?? 1.0)
+            : byCalorieShare(_fKcal),
         _fColor,
       ),
     ];

@@ -248,6 +248,7 @@ async def get_avoided_muscles(request: Request, user_id: str, include_expired: b
         result = query.order("created_at", desc=True).execute()
 
         muscles = []
+        seen_muscle_groups = set()
         for row in result.data or []:
             muscles.append(AvoidedMuscleResponse(
                 id=row["id"],
@@ -258,6 +259,37 @@ async def get_avoided_muscles(request: Request, user_id: str, include_expired: b
                 severity=row.get("severity", "avoid"),
                 created_at=row["created_at"],
             ))
+            seen_muscle_groups.add((row["muscle_group"] or "").strip().lower())
+
+        # Row 234 — this table is a separate, manually-curated store from
+        # `users.active_injuries`, and nothing ever wrote to it when an
+        # injury was declared. The GENERATOR already derives avoided muscles
+        # straight from active_injuries (get_active_injuries_with_muscles) —
+        # that path is correct and untouched — but this UI-facing list read
+        # only the empty table, so a user with declared injuries saw a
+        # completely unhighlighted body map. Merge the injury-derived
+        # muscles in here (dedup by muscle_group) so the two surfaces show
+        # the same reality; synthetic entries carry a stable `injury:` id
+        # since they have no row of their own to edit/delete.
+        try:
+            from .workouts.readiness_utils import get_active_injuries_with_muscles
+            injury_ctx = await get_active_injuries_with_muscles(user_id)
+            for muscle in injury_ctx.get("avoided_muscles") or []:
+                key = (muscle or "").strip().lower()
+                if not key or key in seen_muscle_groups:
+                    continue
+                seen_muscle_groups.add(key)
+                muscles.append(AvoidedMuscleResponse(
+                    id=f"injury:{key}",
+                    muscle_group=muscle,
+                    reason="From an active injury",
+                    is_temporary=False,
+                    end_date=None,
+                    severity="avoid",
+                    created_at=datetime.utcnow(),
+                ))
+        except Exception as inj_err:
+            logger.warning(f"Failed to merge injury-derived avoided muscles for {user_id}: {inj_err}", exc_info=True)
 
         return muscles
 

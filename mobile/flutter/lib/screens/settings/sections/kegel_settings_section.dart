@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../data/models/kegel.dart';
 import '../../../data/providers/kegel_provider.dart';
 import '../../../core/providers/user_provider.dart';
@@ -127,6 +128,19 @@ class KegelSettingsSection extends ConsumerWidget {
                   ref.invalidate(kegelPreferencesProvider);
                 },
               ),
+
+              if (prefs?.includeAsStandalone ?? false)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/kegel-session'),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: const Text('Start a session now'),
+                    ),
+                  ),
+                ),
 
               const Divider(),
 

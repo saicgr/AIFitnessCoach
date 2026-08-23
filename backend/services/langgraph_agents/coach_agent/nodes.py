@@ -1343,10 +1343,22 @@ def _build_coach_response_prompt(state: CoachAgentState):
     """
     context_parts = []
 
-    # Add current date/time
-    pacific = pytz.timezone('America/Los_Angeles')
-    now = datetime.now(pacific)
-    context_parts.append(f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} (Pacific Time)")
+    # Add current date/time — the user's own local time, not a hardcoded
+    # zone. E2E register row #95: this used to always read
+    # `America/Los_Angeles` regardless of where the user actually is, so a
+    # user hours away from Pacific got a "CURRENT DATE/TIME" the coach then
+    # reasoned from — describing a workout scheduled for the following local
+    # day as "today's session" near midnight in the user's own timezone.
+    _tz_name = state.get("user_tz") or "UTC"
+    try:
+        _user_tz = pytz.timezone(_tz_name)
+    except Exception:
+        _user_tz = pytz.UTC
+        _tz_name = "UTC"
+    now = datetime.now(_user_tz)
+    context_parts.append(
+        f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} ({_tz_name})"
+    )
 
     if state.get("user_profile"):
         profile = state["user_profile"]
@@ -1551,10 +1563,22 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
 
     context_parts = []
 
-    # Add current date/time
-    pacific = pytz.timezone('America/Los_Angeles')
-    now = datetime.now(pacific)
-    context_parts.append(f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} (Pacific Time)")
+    # Add current date/time — the user's own local time, not a hardcoded
+    # zone. E2E register row #95: this used to always read
+    # `America/Los_Angeles` regardless of where the user actually is, so a
+    # user hours away from Pacific got a "CURRENT DATE/TIME" the coach then
+    # reasoned from — describing a workout scheduled for the following local
+    # day as "today's session" near midnight in the user's own timezone.
+    _tz_name = state.get("user_tz") or "UTC"
+    try:
+        _user_tz = pytz.timezone(_tz_name)
+    except Exception:
+        _user_tz = pytz.UTC
+        _tz_name = "UTC"
+    now = datetime.now(_user_tz)
+    context_parts.append(
+        f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} ({_tz_name})"
+    )
 
     if state.get("user_profile"):
         profile = state["user_profile"]

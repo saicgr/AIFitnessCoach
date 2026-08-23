@@ -1341,11 +1341,12 @@ class _EasyActiveLayout extends ConsumerStatefulWidget {
 }
 
 class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
-  // Default to LB — `_DemoProgression.targetWeights` stores raw pound
-  // values (70 / 80 / 90 lb etc., matching the Advanced table). If we
-  // showed those as kg by default we'd be lying about the load
-  // (70 kg ≈ 154 lb is not what the demo is depicting).
-  bool _useKg = false;
+  // `_DemoProgression.targetWeights` stores raw pound values (70 / 80 / 90 lb
+  // etc., matching the Advanced table); `_targetWeightInCurrentUnit` converts
+  // them for display. Seed the toggle from the same unit preference the quiz
+  // body-metrics step wrote (`useMetricUnits`) so it agrees with the rest of
+  // onboarding.
+  late bool _useKg = ref.read(preAuthQuizProvider).useMetricUnits;
 
   /// Per-set reps pulled from the active progression model. Drops
   /// alongside increasing weight so the user sees real progressive

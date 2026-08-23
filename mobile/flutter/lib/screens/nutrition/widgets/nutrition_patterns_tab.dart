@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart' show kFabClusterHorizontalReserve;
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -1700,7 +1701,17 @@ class _PatternsTeaser extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 12),
-        SizedBox(
+        // Right-inset so this full-width CTA — the empty state's ONLY call
+        // to action — never renders under the bottom-right FAB cluster
+        // (coach circle + Quick Log pill), which floats at a fixed screen
+        // position independent of this section's scroll offset. Vertical
+        // scroll clearance (kQuickLogFabClearance) does not help here: a
+        // short empty state can sit at the cluster's vertical band with no
+        // amount of scrolling moving it clear, so the fix has to be
+        // horizontal.
+        Padding(
+          padding: const EdgeInsets.only(right: kFabClusterHorizontalReserve),
+          child: SizedBox(
           width: double.infinity,
           child: Material(
             color: tc.accent,
@@ -1727,6 +1738,7 @@ class _PatternsTeaser extends StatelessWidget {
                 ),
               ),
             ),
+          ),
           ),
         ),
       ],

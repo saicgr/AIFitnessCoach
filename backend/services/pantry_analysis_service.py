@@ -22,11 +22,36 @@ from models.recipe import (
     PantryDetectedItem,
     PantrySuggestion,
 )
+from core.food_naming import normalize_food_name
 from services.pexels_service import get_dish_photo_url
 from services.recipe_suggestion_service import MealType, RecipeSuggestionService
 from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)
+
+
+def _ingredient_satisfied(ingredient_norm: str, on_hand_norm: set) -> bool:
+    """True if a normalized recipe-ingredient name is satisfied by anything
+    the user has on hand.
+
+    Exact match first; then whole-word containment so a pantry item like
+    "cumin" satisfies a recipe ingredient like "cumin seeds" (and vice versa)
+    instead of requiring byte-identical strings — a plain set intersection on
+    raw lowercased names left the user's own "cumin" chip both ticked as
+    in-use AND listed as a missing "cumin seeds" for the same recipe.
+    """
+    if not ingredient_norm:
+        return False
+    if ingredient_norm in on_hand_norm:
+        return True
+    padded_ingredient = f" {ingredient_norm} "
+    for item in on_hand_norm:
+        if not item:
+            continue
+        padded_item = f" {item} "
+        if padded_item in padded_ingredient or padded_ingredient in padded_item:
+            return True
+    return False
 
 
 # Mood → tone guidance for the generation prompt. Mapped in CODE (never the raw
@@ -197,14 +222,14 @@ class PantryAnalysisService:
         )
 
         suggestions: List[PantrySuggestion] = []
-        on_hand = {n.lower() for n in item_names}
+        on_hand = {normalize_food_name(n) for n in item_names}
         for s in raw_suggestions:
             data = s.to_dict() if hasattr(s, "to_dict") else dict(s)
             ingredient_names = {
-                (ing.get("name") or "").lower() for ing in data.get("ingredients", [])
+                normalize_food_name(ing.get("name")) for ing in data.get("ingredients", [])
             }
-            matched = sorted(on_hand & ingredient_names)
-            missing = sorted(ingredient_names - on_hand)
+            matched = sorted(n for n in ingredient_names if _ingredient_satisfied(n, on_hand))
+            missing = sorted(n for n in ingredient_names if not _ingredient_satisfied(n, on_hand))
             suggestions.append(
                 PantrySuggestion(
                     name=data.get("recipe_name") or data.get("name") or "Untitled",

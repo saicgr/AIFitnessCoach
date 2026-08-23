@@ -46,16 +46,17 @@ class ScienceCitation {
 class ScienceCitations {
   ScienceCitations._();
 
-  /// Self-monitoring (consistent tracking) ~doubles the odds of hitting a
-  /// clinically meaningful (≥5%) weight goal. This is the cited BASIS for the
-  /// derived "N× faster with your plan" multiplier — the multiplier is the
-  /// user's own plan-vs-solo projection; this is why a consistent plan beats
-  /// going solo at all.
+  /// Digital self-monitoring of diet and activity is associated with about
+  /// 2.9 kg more weight loss than not tracking (mean difference −2.87 kg,
+  /// 95% CI −3.78 to −1.96, across 12 RCTs). This is the cited BASIS for
+  /// *why* a consistent, tracked plan beats going solo at all — the "N×
+  /// faster with your plan" multiplier shown alongside it is the user's own
+  /// plan-vs-solo projection, not a number taken from this study.
   static const ScienceCitation selfMonitoring = ScienceCitation(
     id: 'self_monitoring_2021',
     claim:
-        'People who track consistently are about twice as likely to reach a '
-        'meaningful weight goal.',
+        'People who track consistently lose about 2.9 kg (6 lb) more than '
+        'those who don\'t.',
     source: 'Obesity Reviews, 2021',
     url: 'https://pubmed.ncbi.nlm.nih.gov/34192411/',
   );

@@ -29,7 +29,12 @@ logger = logging.getLogger("fitness_index_service")
 
 _AXES = ["body_comp", "cardio", "strength", "endurance", "flexibility"]
 _AXIS_LABELS = {
-    "body_comp": "Body composition",
+    # This axis is a 0-100 score derived from BMI (see _axis_body_comp), not a
+    # measured body-composition value (body fat %, lean mass) — "Body
+    # composition" as a label collided with the BMI-derived number elsewhere
+    # in the app (row 478/481) and implied a measurement that does not exist
+    # for most users.
+    "body_comp": "BMI score",
     "cardio": "Cardio",
     "strength": "Strength",
     "endurance": "Endurance",
@@ -145,9 +150,11 @@ def _axis_flexibility(sb, user_id: str) -> Optional[int]:
             if any(kw in nm for kw in _MOBILITY_KEYWORDS):
                 mob += 1
         if mob == 0:
-            # No mobility work logged in 28 days — honest zero, not "no data",
-            # so the radar shows the gap the user can act on.
-            return 0
+            # No mobility-tagged sets in 28 days: no flexibility assessment
+            # exists for this axis, same as any other axis with no source
+            # data (module contract above) — None, not a fabricated 0, so it
+            # is excluded from `overall` the same way Cardio already is.
+            return None
         # 24 mobility sets / 4wk (~daily) -> 100.
         return _clamp(mob / 24.0 * 100.0)
     except Exception as e:
@@ -265,15 +272,22 @@ async def build_fitness_index_response(
     if scored:
         facts: Dict[str, Any] = {"overall": overall} if overall is not None else {}
         for a in scored:
-            facts[f"{a.key}"] = a.value
+            # Keyed by the axis's own label (e.g. "BMI score"), not the
+            # internal "body_comp" slug, so the model can't expand that slug
+            # into "body composition" — an unmeasured metric for this axis.
+            facts[a.label] = a.value
             if a.percentile is not None:
-                facts[f"{a.key}_percentile"] = a.percentile
+                facts[f"{a.label} percentile"] = a.percentile
         from services.gemini.health_insight import generate_grounded_insight
         ins = await generate_grounded_insight(
             user_id=user_id, kind="fitness_index", first_name=first_name, facts=facts,
             fallback_headline=fb_head, fallback_body=fb_body,
             guidance=(f"Name the strongest and weakest axis and give one targeted "
-                      f"action to lift the weakest. The user's focus is {focus}."),
+                      f"action to lift the weakest. The user's focus is {focus}. "
+                      f"Refer to each axis only by its exact name in the facts "
+                      f"(the BMI-derived axis is 'BMI score', never 'body "
+                      f"composition' — no body composition measurement exists "
+                      f"for this user)."),
         )
         headline, body, delivery = ins["headline"], ins["body"], ins["delivery"]
 

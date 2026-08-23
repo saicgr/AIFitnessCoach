@@ -129,7 +129,15 @@ enum HealthSubTab {
       case HealthSubTab.sleep:
         return l10n.combinedHealthSleep;
       case HealthSubTab.recovery:
-        return l10n.recoveryLabel;
+        // NOT l10n.recoveryLabel ("Recovery") — this chip opens
+        // HeartHealthDetailScreen, whose own heading already reads "Heart
+        // health" because its score is a fused composite (sleep + activity +
+        // cardio strain + body composition), not the Overview tab's actual
+        // recovery ring. Reusing "Recovery" here made the same word show two
+        // different numbers (89 vs 0) for the same account at the same
+        // moment. Matches the destination screen's existing un-localized
+        // literal rather than introducing a new l10n key across 36 locales.
+        return 'Heart Health';
       case HealthSubTab.vitals:
         return l10n.healthTabVitals;
       case HealthSubTab.body:

@@ -15,6 +15,34 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 
+def get_active_gym_profile(db, user_id: str) -> Optional[dict]:
+    """Return the user's active gym profile row (full columns), or None.
+
+    Same null-safety shape as [get_active_gym_profile_id] — `.single()` +
+    try/except collapse the zero-row and SDK-204 cases to `None`, never
+    raises. Callers that need the profile's `equipment` (not just its id) —
+    e.g. to scope a workout generator's candidate pool the same way the
+    Exercise Library screen scopes its own equipment filter — should use
+    this instead of falling back to the user's global `equipment` column,
+    which belongs to no particular gym and can leak a different profile's
+    gear into a scoped one (register #274).
+    """
+    try:
+        result = (
+            db.client.table("gym_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .single()
+            .execute()
+        )
+        if result and result.data:
+            return result.data
+    except Exception as e:
+        logger.debug(f"No active gym profile for user {user_id}: {e}")
+    return None
+
+
 def get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
     """Return the user's active gym profile id, or None if no active profile exists.
 

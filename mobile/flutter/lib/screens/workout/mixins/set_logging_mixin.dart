@@ -95,7 +95,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   // Abstract methods implemented in ui part
   Future<void> fetchAIWeightSuggestion(SetLog setLog);
   Future<void> fetchRestSuggestion();
-  Future<void> checkFatigue();
+  Future<void> checkFatigue({double? justLoggedWeightKg});
   void autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise);
   void markSupersetExerciseDoneInRound(int exerciseIndex, int groupId);
   int? getNextSupersetExerciseIndex(int currentIndex, int groupId);
@@ -107,7 +107,26 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
   /// Complete a set with current weight/reps values
   Future<void> completeSet() async {
-    final weight = double.tryParse(weightController.text) ?? 0;
+    final rawWeight = double.tryParse(weightController.text) ?? 0;
+    // Sane upper bound (~700 kg / 1,543 lb — well past any real single-set
+    // load) so an input glitch (e.g. a concatenated "30120") can never reach
+    // set state, volume totals, or PR/celebration triggers.
+    final maxWeight = useKg ? 700.0 : 1543.0;
+    final weight = rawWeight > maxWeight ? maxWeight : rawWeight;
+    if (weight != rawWeight) {
+      weightController.text = weight.toStringAsFixed(
+        weight == weight.roundToDouble() ? 0 : 1,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'That weight looked too high, so it was capped at '
+            '${weight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'}.',
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
     final exercise = exercises[currentExerciseIndex];
     final currentSetNumber = (completedSets[currentExerciseIndex]?.length ?? 0) + 1;
     final setTarget = exercise.getTargetForSet(currentSetNumber);
@@ -342,7 +361,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           startRest(false);
           fetchAIWeightSuggestion(finalSetLog);
           fetchRestSuggestion();
-          checkFatigue();
+          checkFatigue(justLoggedWeightKg: finalSetLog.weight);
         }
       } else if (patternRest != null && patternRest.inSeconds <= 15) {
         startRest(false, overrideDuration: patternRest);
@@ -350,7 +369,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
         startRest(false);
         fetchAIWeightSuggestion(finalSetLog);
         fetchRestSuggestion();
-        checkFatigue();
+        checkFatigue(justLoggedWeightKg: finalSetLog.weight);
       }
     }
 

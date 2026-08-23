@@ -63,10 +63,14 @@ class ZealovaListRow extends StatelessWidget {
           // intrinsic width and left `Expanded(label)` the remainder. A long
           // value ("View & manage what your AI coach remembers") squeezed the
           // label to a sliver — "Coach memory" wrapped onto THREE lines and
-          // broke mid-word ("memor / y"). Now both are flexible, the label
-          // gets the larger share, and the value ellipsizes first.
+          // broke mid-word ("memor / y"). Now both are flexible and the value
+          // gets the larger share — labels here are short menu nouns ("Coach
+          // memory", "Exercise Prefs") while values are the longer
+          // descriptive sentences, so this is also the split that leaves the
+          // least truncation on real content; label still has `maxLines: 2`
+          // as the safety net for a genuinely long label or locale.
           Expanded(
-            flex: 5,
+            flex: 3,
             child: Text(
               label,
               maxLines: 2,
@@ -80,7 +84,7 @@ class ZealovaListRow extends StatelessWidget {
           ),
           if (value != null)
             Flexible(
-              flex: 4,
+              flex: 6,
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(value!,

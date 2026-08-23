@@ -4,6 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Countries where imperial (lb, ft/in) is the everyday default, not metric.
+const _imperialCountryCodes = {'US', 'LR', 'MM'};
+
+/// Locale-seeded units default so a fresh install opens in the units the
+/// user already thinks in; the in-app toggle remains a full override.
+bool _defaultUseMetricUnits() => !_imperialCountryCodes
+    .contains(PlatformDispatcher.instance.locale.countryCode);
+
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
   final List<String>? goals;
@@ -125,7 +133,7 @@ class PreAuthQuizData {
     this.heightCm,
     this.weightKg,
     this.goalWeightKg,
-    this.useMetricUnits = true,
+    bool? useMetricUnits,
     this.weightDirection,
     this.weightChangeAmount,
     this.weightChangeRate,
@@ -172,7 +180,7 @@ class PreAuthQuizData {
     this.primaryWhys,
     this.pastBlockers,
     this.goalConfidence,
-  });
+  }) : useMetricUnits = useMetricUnits ?? _defaultUseMetricUnits();
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
   String? get motivation => motivations?.isNotEmpty == true ? motivations!.first : null;
@@ -384,7 +392,7 @@ class PreAuthQuizData {
         heightCm: (json['heightCm'] as num?)?.toDouble(),
         weightKg: (json['weightKg'] as num?)?.toDouble(),
         goalWeightKg: (json['goalWeightKg'] as num?)?.toDouble(),
-        useMetricUnits: json['useMetricUnits'] as bool? ?? true,
+        useMetricUnits: json['useMetricUnits'] as bool?,
         weightDirection: json['weightDirection'] as String?,
         weightChangeAmount: (json['weightChangeAmount'] as num?)?.toDouble(),
         weightChangeRate: json['weightChangeRate'] as String?,
@@ -567,7 +575,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final heightCm = prefs.getDouble('preAuth_heightCm');
     final weightKg = prefs.getDouble('preAuth_weightKg');
     final goalWeightKg = prefs.getDouble('preAuth_goalWeightKg');
-    final useMetricUnits = prefs.getBool('preAuth_useMetric') ?? true;
+    final useMetricUnits = prefs.getBool('preAuth_useMetric') ?? _defaultUseMetricUnits();
     final weightDirection = prefs.getString('preAuth_weightDirection');
     final weightChangeAmount = prefs.getDouble('preAuth_weightChangeAmount');
     final weightChangeRate = prefs.getString('preAuth_weightChangeRate');

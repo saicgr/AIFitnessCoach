@@ -1453,6 +1453,9 @@ class _FastingScreenRedesignedState
       final activeFast = ref.read(fastingProvider).activeFast;
       if (activeFast != null) {
         final svc = ref.read(fastingTimerServiceProvider);
+        // Explicit user action (starting a fast) is the right moment to ask
+        // the OS for notification permission — not screen open.
+        unawaitedSafe(svc.requestNotificationPermission());
         svc.startZoneMonitoring(activeFast);
         svc.showFastStartedNotification(_selectedProtocol);
         unawaitedSafe(svc.startLiveSurface(

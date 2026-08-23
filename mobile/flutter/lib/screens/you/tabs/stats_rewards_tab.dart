@@ -407,10 +407,11 @@ class _RecapsPerksGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final workouts = (latestSummary?['workouts_completed'] as num?)?.toInt();
     final prs = (latestSummary?['prs_achieved'] as num?)?.toInt();
-    final weekStart = latestSummary?['week_start'] as String?;
-    final wrappedRoute = (weekStart != null && weekStart.isNotEmpty)
-        ? '/weekly-wrapped?week_start=$weekStart'
-        : '/weekly-wrapped';
+    // "Monthly & weekly recaps" points at the all-wraps hub — the one screen
+    // that lists every monthly Wrapped plus current-month progress — rather
+    // than jumping straight to a single week's recap, which otherwise left
+    // `/my-wrapped` with no in-app entry point at all.
+    const wrappedRoute = '/my-wrapped';
 
     // Unclaimed-crate count now flows from `unclaimedCratesCountProvider`
     // (canonical, repo-backed). The old `/xp/unclaimed-crates` raw call

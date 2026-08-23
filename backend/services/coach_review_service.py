@@ -118,6 +118,34 @@ class CoachReviewService:
                 review.is_stale = True
         return review
 
+    async def request_human_pro(self, review_id: str, user_id: str) -> bool:
+        """Mark a review as wanting human-pro follow-up and record who asked.
+
+        No human reviewer infra exists yet, but this at least persists the
+        request (review_kind -> human_pro_pending) so the interest is
+        tracked for launch instead of discarded. `human_pro_id` is left
+        alone — it's reserved for the assigned pro reviewer once that
+        feature ships, not the requesting user.
+        Returns False when the review doesn't exist or isn't owned by
+        [user_id]; the caller treats that as 404.
+        """
+        res = (
+            self.db.client.table("coach_reviews")
+            .select("id,review_kind")
+            .eq("id", review_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        row = (res.data or [None])[0]
+        if not row:
+            return False
+        if row.get("review_kind") != CoachReviewKind.HUMAN_PRO_COMPLETE.value:
+            self.db.client.table("coach_reviews").update({
+                "review_kind": CoachReviewKind.HUMAN_PRO_PENDING.value,
+            }).eq("id", review_id).execute()
+        return True
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------

@@ -1,8 +1,10 @@
+import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/line_icon.dart';
@@ -346,13 +348,28 @@ class _DiabetesDashboardScreenState
     );
   }
 
-  void _showLogGlucoseSheet(BuildContext context, bool isDark) {
+  // Blood glucose is reported in mg/dL (US) or mmol/L (UK/EU/most of the
+  // world) — the two differ by ~18x, so a bare number is ambiguous (5.5 is
+  // normal in mmol/L, a medical emergency in mg/dL). The unit toggle below
+  // defaults from locale, remembers the user's last choice, and validates
+  // the entered value against the plausible range for whichever unit is
+  // selected before the reading is ever converted to the mg/dL the backend
+  // stores.
+  static const String _glucoseUnitPrefsKey = 'diabetes_glucose_unit';
+
+  Future<void> _showLogGlucoseSheet(BuildContext context, bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final isUsLocale = Localizations.maybeLocaleOf(context)?.countryCode == 'US';
+    String unit = prefs.getString(_glucoseUnitPrefsKey) ?? (isUsLocale ? 'mgdl' : 'mmoll');
+
     final glucoseController = TextEditingController();
     final notesController = TextEditingController();
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    String? errorText;
 
     HapticService.light();
 
@@ -360,7 +377,8 @@ class _DiabetesDashboardScreenState
       context: context,
       useRootNavigator: true,
       builder: (context) => GlassSheet(
-        child: Padding(
+        child: StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
         padding: EdgeInsets.fromLTRB(
           16,
           16,
@@ -394,6 +412,18 @@ class _DiabetesDashboardScreenState
                     color: textPrimary,
                   ),
                 ),
+                const Spacer(),
+                _UnitToggle(
+                  unit: unit,
+                  textMuted: textMuted,
+                  onChanged: (value) {
+                    setSheetState(() {
+                      unit = value;
+                      errorText = null;
+                    });
+                    unawaited(prefs.setString(_glucoseUnitPrefsKey, value));
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -405,8 +435,9 @@ class _DiabetesDashboardScreenState
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context).diabetesDashboardGlucoseLevel,
                 labelStyle: TextStyle(color: textMuted),
-                suffixText: 'mg/dL',
+                suffixText: unit == 'mmoll' ? 'mmol/L' : 'mg/dL',
                 suffixStyle: TextStyle(color: textMuted),
+                errorText: errorText,
                 filled: true,
                 fillColor: elevated,
                 border: OutlineInputBorder(
@@ -414,6 +445,9 @@ class _DiabetesDashboardScreenState
                   borderSide: BorderSide.none,
                 ),
               ),
+              onChanged: (_) {
+                if (errorText != null) setSheetState(() => errorText = null);
+              },
             ),
             const SizedBox(height: 16),
             TextField(
@@ -437,25 +471,39 @@ class _DiabetesDashboardScreenState
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  final value = double.tryParse(glucoseController.text);
-                  if (value != null && value > 0) {
-                    final success =
-                        await ref.read(diabetesProvider.notifier).logGlucose(
-                              valueMgDl: value,
-                              notes: notesController.text.isEmpty
-                                  ? null
-                                  : notesController.text,
-                            );
-                    if (success && mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Glucose logged: ${value.toInt()} mg/dL'), // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
-                          backgroundColor: AppColors.success, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
+                  final raw = double.tryParse(glucoseController.text);
+                  if (raw == null || raw <= 0) {
+                    setSheetState(() => errorText = 'Enter a glucose value');
+                    return;
+                  }
+                  final range = unit == 'mmoll'
+                      ? const _GlucoseRange(1.1, 33.3)
+                      : const _GlucoseRange(20, 600);
+                  if (raw < range.min || raw > range.max) {
+                    setSheetState(() {
+                      errorText =
+                          'Enter a value between ${range.min} and ${range.max} ${unit == 'mmoll' ? 'mmol/L' : 'mg/dL'}';
+                    });
+                    return;
+                  }
+                  final valueMgDl =
+                      unit == 'mmoll' ? raw * 18.0182 : raw;
+                  final success =
+                      await ref.read(diabetesProvider.notifier).logGlucose(
+                            valueMgDl: valueMgDl,
+                            notes: notesController.text.isEmpty
+                                ? null
+                                : notesController.text,
+                          );
+                  if (success && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Glucose logged: ${valueMgDl.round()} mg/dL'), // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                        backgroundColor: AppColors.success, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -477,6 +525,7 @@ class _DiabetesDashboardScreenState
             ),
           ],
         ),
+      ),
       ),
       ),
     );
@@ -659,6 +708,68 @@ class _DiabetesDashboardScreenState
           ),
         ),
       ),
+      ),
+    );
+  }
+}
+
+/// Plausible entry range for a glucose reading, in whichever unit it was
+/// entered — guards against a value that is impossible in the selected unit
+/// (e.g. `110` is nonsensical as mmol/L; `5.5` is nonsensical as mg/dL).
+class _GlucoseRange {
+  final double min;
+  final double max;
+  const _GlucoseRange(this.min, this.max);
+}
+
+/// mg/dL vs mmol/L segmented toggle for the Log Glucose sheet.
+class _UnitToggle extends StatelessWidget {
+  final String unit;
+  final Color textMuted;
+  final ValueChanged<String> onChanged;
+
+  const _UnitToggle({
+    required this.unit,
+    required this.textMuted,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: textMuted.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _unitChip(context, 'mgdl', 'mg/dL'),
+          _unitChip(context, 'mmoll', 'mmol/L'),
+        ],
+      ),
+    );
+  }
+
+  Widget _unitChip(BuildContext context, String value, String label) {
+    final selected = unit == value;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? context.accentColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : textMuted,
+          ),
+        ),
       ),
     );
   }

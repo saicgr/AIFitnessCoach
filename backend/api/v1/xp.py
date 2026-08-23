@@ -1259,12 +1259,124 @@ async def complete_onboarding_challenge(
         raise safe_internal_error(e, "xp")
 
 
+async def _grant_first_time_bonus_backfill(db, user_id: str, bonus_type: str) -> Optional[dict]:
+    """Idempotently grant a first-time bonus whose qualifying action already
+    happened, for the case where the endpoint that normally fires it at the
+    moment of the action never ran (see `_backfill_evidence_based_bonuses`).
+    Mirrors `award_first_time_bonus`'s insert + award_xp steps. Returns the
+    new `user_first_time_bonuses` row dict, or None if it was already
+    recorded (race with a concurrent request) or the grant failed.
+    """
+    xp_amount = FIRST_TIME_BONUSES.get(bonus_type, 0)
+    try:
+        existing = (await run_db(lambda: db.client.table("user_first_time_bonuses").select("id").eq(
+            "user_id", user_id
+        ).eq(
+            "bonus_type", bonus_type
+        ).execute()))
+        if existing.data:
+            return None
+
+        inserted = (await run_db(lambda: db.client.table("user_first_time_bonuses").insert({
+            "user_id": user_id,
+            "bonus_type": bonus_type,
+            "xp_awarded": xp_amount
+        }).execute()))
+
+        (await run_db(lambda: db.client.rpc(
+            "award_xp",
+            {
+                "p_user_id": user_id,
+                "p_xp_amount": xp_amount,
+                "p_source": "first_time_bonus",
+                "p_source_id": bonus_type,
+                "p_description": f"First-time bonus: {bonus_type.replace('_', ' ')}",
+                "p_is_verified": False
+            }
+        ).execute()))
+
+        logger.info(f"[XP] Backfilled first-time bonus {bonus_type} for user {user_id} (action pre-dated the award call)")
+        row = (inserted.data or [None])[0]
+        return row
+    except Exception as e:
+        logger.warning(f"[XP] first-time-bonus backfill grant failed for {bonus_type}/{user_id}: {e}")
+        return None
+
+
+_MEAL_TYPE_TO_FIRST_TIME_BONUS = {
+    "breakfast": "first_breakfast",
+    "lunch": "first_lunch",
+    "dinner": "first_dinner",
+    "snack": "first_snack",
+}
+
+
+async def _backfill_evidence_based_bonuses(db, user_id: str, awarded: set) -> list:
+    """Some first-time bonuses are recorded ONLY by an explicit call at the
+    moment the action happens (the food-logging / weight-logging endpoints
+    calling award_first_time_bonus inline). An action logged before that call
+    site existed, or one where the call silently failed, leaves the row
+    missing from `user_first_time_bonuses` forever — the checklist item never
+    ticks even though the user genuinely already did it. Check the real
+    source tables for the bonus types known to have this gap and grant them
+    now. Returns newly-granted rows (already-awarded ones are skipped).
+    """
+    granted: list = []
+
+    meal_bonuses_pending = {
+        bonus_type for bonus_type in _MEAL_TYPE_TO_FIRST_TIME_BONUS.values()
+        if bonus_type not in awarded
+    }
+    if meal_bonuses_pending:
+        try:
+            logged = (await run_db(lambda: db.client.table("food_logs").select(
+                "meal_type"
+            ).eq("user_id", user_id).limit(500).execute()))
+            logged_meal_types = {r.get("meal_type") for r in (logged.data or [])}
+            for meal_type, bonus_type in _MEAL_TYPE_TO_FIRST_TIME_BONUS.items():
+                if bonus_type in meal_bonuses_pending and meal_type in logged_meal_types:
+                    row = await _grant_first_time_bonus_backfill(db, user_id, bonus_type)
+                    if row:
+                        granted.append(row)
+        except Exception as e:
+            logger.warning(f"[XP] first-time-bonus meal backfill check failed for {user_id}: {e}")
+
+    if "first_weight_log" not in awarded:
+        try:
+            has_weight = False
+            bm = (await run_db(lambda: db.client.table("body_measurements").select("id").eq(
+                "user_id", user_id
+            ).not_.is_("weight_kg", "null").limit(1).execute()))
+            if bm.data:
+                has_weight = True
+            if not has_weight:
+                u = (await run_db(lambda: db.client.table("users").select("weight_kg").eq(
+                    "id", user_id
+                ).maybe_single().execute()))
+                if u and u.data and u.data.get("weight_kg"):
+                    has_weight = True
+            if has_weight:
+                row = await _grant_first_time_bonus_backfill(db, user_id, "first_weight_log")
+                if row:
+                    granted.append(row)
+        except Exception as e:
+            logger.warning(f"[XP] first-time-bonus weight backfill check failed for {user_id}: {e}")
+
+    return granted
+
+
 @router.get("/first-time-bonuses", response_model=List[FirstTimeBonusInfo])
 async def get_first_time_bonuses(
     current_user=Depends(get_current_user)
 ):
     """
     Get all first-time bonuses that have been awarded to the user.
+
+    Also backfills bonuses whose qualifying action already happened (real
+    rows in food_logs / body_measurements / users.weight_kg) but were never
+    recorded because the award call is normally fired at the moment of the
+    action, not derived from the backing data — see
+    `_backfill_evidence_based_bonuses`.
     """
     try:
         db = get_supabase_db()
@@ -1276,13 +1388,18 @@ async def get_first_time_bonuses(
             "user_id", user_id
         ).order("awarded_at", desc=True).execute()))
 
+        rows = list(result.data or [])
+        awarded = {r["bonus_type"] for r in rows}
+        newly_granted = await _backfill_evidence_based_bonuses(db, user_id, awarded)
+        rows.extend(newly_granted)
+
         return [
             FirstTimeBonusInfo(
                 bonus_type=r["bonus_type"],
                 xp_awarded=r["xp_awarded"],
                 awarded_at=r["awarded_at"]
             )
-            for r in (result.data or [])
+            for r in rows
         ]
 
     except Exception as e:

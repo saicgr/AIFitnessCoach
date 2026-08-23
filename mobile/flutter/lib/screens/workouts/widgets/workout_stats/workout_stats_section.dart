@@ -20,6 +20,7 @@ import '../../../../data/providers/training_insight_provider.dart';
 import '../../../../data/providers/trend_series_provider.dart';
 import '../../../../data/providers/workout_volume_trend_provider.dart';
 import '../../../../data/repositories/training_load_repository.dart';
+import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../shareables/widgets/anatomical_figure.dart';
 import '../../../../widgets/activity_heatmap.dart';
@@ -149,7 +150,19 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
     final roi = ref.watch(
       milestonesProvider.select((s) => s.roiMetrics),
     );
-    final bool hasNoSessions = roi == null || roi.totalWorkoutsCompleted == 0;
+    // ROI is a separate, server-cached counter (`user_roi_metrics`) that can
+    // lag behind reality, and treating "still loading" (roi == null) the
+    // same as "confirmed zero" meant a completed-workout account could still
+    // flash this empty state under the very same HISTORY block that already
+    // lists real sessions (register #281) — two cards on one screen
+    // disagreeing about whether any workout exists. `workoutsProvider` is
+    // the same source HISTORY reads from below on this tab, so check it too:
+    // any confirmed-completed workout there overrides a stale/loading ROI.
+    final workoutsList = ref.watch(workoutsProvider).valueOrNull;
+    final hasCompletedWorkoutEvidence =
+        workoutsList != null && workoutsList.any((w) => w.isCompleted == true);
+    final bool hasNoSessions = !hasCompletedWorkoutEvidence &&
+        (roi == null || roi.totalWorkoutsCompleted == 0);
 
     // Curated inline card set (research-backed, progressive disclosure):
     //   A. Compact stat strip (always shown for a user with sessions)

@@ -1073,7 +1073,14 @@ async def _assemble_recap_enrichment(
                 build_sets_json_from_performance_logs,
             )
             rebuilt = build_sets_json_from_performance_logs(db, body.workout_log_id)
-            if rebuilt:
+            # `rebuilt == []` (a real, successful query that found zero logged
+            # sets) must still be treated as ground truth — `if rebuilt:` was
+            # falsy for an empty list, so a genuinely zero-work session left
+            # `sets_json` at None below, which makes the completion guard
+            # fail OPEN exactly for the session it exists to catch (E2E #157:
+            # a 0-volume, 0-rep session still got a "High-Density Circuit
+            # Completed" headline).
+            if rebuilt is not None:
                 sets_json = rebuilt
         except Exception as e:
             logger.warning(f"[recap] performance_logs sets_json rebuild failed: {e}")

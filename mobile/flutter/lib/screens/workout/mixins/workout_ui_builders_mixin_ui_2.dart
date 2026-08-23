@@ -105,7 +105,19 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         // Mid-session injury check-in. Saving regenerates the
                         // UPCOMING plan (Phase-2 invalidation); the in-progress
                         // session is left intact.
-                        onLimitationsTap: () => showInjuryLimitationsSheet(context),
+                        onLimitationsTap: () async {
+                          final saved = await showInjuryLimitationsSheet(context);
+                          if (saved && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Plan updated — your upcoming workouts will reflect these limitations.',
+                                ),
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                          }
+                        },
                       );
                     },
                   ),
@@ -721,7 +733,15 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
               Positioned.fill(
                 child: FatigueAlertModal(
                   alertData: fatigueAlertData!,
-                  currentWeight: double.tryParse(weightController.text) ?? 0,
+                  // The just-logged set's actual weight (snapshotted when
+                  // the alert fired), not a live re-read of the controller —
+                  // by build time it has already advanced to the next set's
+                  // suggested weight.
+                  currentWeight: fatigueAlertCurrentWeightKg != null
+                      ? (useKg
+                          ? fatigueAlertCurrentWeightKg!
+                          : fatigueAlertCurrentWeightKg! / 0.453592)
+                      : (double.tryParse(weightController.text) ?? 0),
                   exerciseName: currentExercise.name,
                   onAcceptSuggestion: handleAcceptFatigueSuggestion,
                   onContinueAsPlanned: handleDismissFatigueAlert,

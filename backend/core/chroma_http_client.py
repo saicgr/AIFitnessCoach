@@ -37,7 +37,21 @@ class ChromaHTTPCollection:
 
     def _post(self, action: str, body: Dict) -> Any:
         resp = self._client._http.post(self._url(action), json=body)
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError:
+            # `str(exc)` on an HTTPStatusError is just "Client error '422 ...'
+            # for url '...'" — it never includes the response BODY, which is
+            # where Chroma names the actual rejected field (malformed
+            # embedding, missing document/id, mismatched array lengths). Log
+            # it here, once, at the single chokepoint every collection call
+            # goes through, so a 4xx is diagnosable instead of a bare status
+            # line in the logs.
+            logger.error(
+                f"[ChromaHTTP] {action} on collection '{self.name}' failed "
+                f"({resp.status_code}): {resp.text}"
+            )
+            raise
         return resp.json()
 
     # ── public API (synchronous, matches chromadb SDK) ────────────────────

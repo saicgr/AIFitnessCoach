@@ -97,14 +97,17 @@ void main() {
       expect(r.code, PatternCode.skipNoRepTarget);
     });
 
-    test('freshLift when the ONE logged session was unremarkable (in-range)',
+    test(
+        'singleSessionSteady when the ONE logged session was unremarkable (in-range)',
         () {
       final r = PreSetInsightEngine.detectPattern(_input(
         history: [_session('2026-04-19', [(80, 10, 7, 3)])],
       ));
-      // Logged once, nothing to say about it → still-early cue, not silence.
-      expect(r.code, PatternCode.freshLift);
-      expect(r.data['sessionCount'], 1);
+      // Logged once, nothing to say about it → reference the real previous
+      // load, not the fresh-lift ("first time") cue — a session exists.
+      expect(r.code, PatternCode.singleSessionSteady);
+      expect(r.data['reps'], 10);
+      expect(r.data['lastWeightKg'], 80);
     });
 
     test('skips when in-range steady across 2+ sessions (no pattern match)',

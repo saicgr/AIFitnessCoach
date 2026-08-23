@@ -44,15 +44,40 @@ _PORTABILITY_TABLES: List[Dict[str, Any]] = [
     {"name": "user_ai_settings", "date_col": None, "limit": 10},
     {"name": "injuries", "date_col": "reported_at", "limit": 500},
     {"name": "habits", "date_col": None, "limit": 500},
-    {"name": "habit_completions", "date_col": "completed_at", "limit": 10000},
-    {"name": "personal_goals", "date_col": None, "limit": 500},
-    {"name": "user_measurements", "date_col": "recorded_at", "limit": 2000},
-    {"name": "hormonal_logs", "date_col": "logged_date", "limit": 2000},
-    {"name": "kegel_logs", "date_col": "logged_at", "limit": 2000},
+    # Output key stays "habit_completions" (category map + export_categories.dart)
+    # but the real table is "habit_logs" — "habit_completions" doesn't exist
+    # and silently exported empty (register #198).
+    {"name": "habit_completions", "table": "habit_logs", "date_col": "completed_at", "limit": 10000},
+    # Output key stays "personal_goals" but the real table is
+    # "weekly_personal_goals" (api/v1/personal_goals.py) — "personal_goals"
+    # doesn't exist and silently exported empty (register #198).
+    {"name": "personal_goals", "table": "weekly_personal_goals", "date_col": "week_start", "limit": 500},
+    # Output key stays "user_measurements" but the real table is
+    # "body_measurements" — the same table body_metrics.csv reads (weight,
+    # waist/hip/neck, AND the tape-measurement columns like bicep/thigh/chest
+    # this file exists for). "user_measurements" was never a real table
+    # (register #198) — deliberately duplicated across both files rather
+    # than left empty, since GDPR completeness prefers a real duplicate to a
+    # fabricated absence.
+    {"name": "user_measurements", "table": "body_measurements", "date_col": "measured_at", "limit": 2000},
+    # Output key stays "hormonal_logs" but the real table is "hormone_logs"
+    # (singular "hormone", not "hormonal") — the plural-adjective form
+    # doesn't exist and silently exported empty (register #198).
+    {"name": "hormonal_logs", "table": "hormone_logs", "date_col": "log_date", "limit": 2000},
+    # Output key stays "kegel_logs" but the real table is "kegel_sessions" —
+    # "kegel_logs" doesn't exist and silently exported empty (register #198).
+    {"name": "kegel_logs", "table": "kegel_sessions", "date_col": "session_date", "limit": 2000},
     {"name": "cardio_logs", "date_col": "logged_at", "limit": 5000},
     {"name": "custom_exercises", "date_col": None, "limit": 500},
-    {"name": "water_intake", "date_col": "logged_at", "limit": 5000},
-    {"name": "mood_logs", "date_col": "logged_at", "limit": 2000},
+    # Output key stays "water_intake" (matches the category map, the CSV
+    # filename users already see, and mobile/lib/data/models/export_categories.dart)
+    # but the real table is "hydration_logs" — "water_intake"/"water_logs"
+    # don't exist (PGRST205), which silently exported an empty water_intake.csv.
+    {"name": "water_intake", "table": "hydration_logs", "date_col": "logged_at", "limit": 5000},
+    # Output key stays "mood_logs" but the real table is "mood_log"
+    # (singular) — the plural form doesn't exist and silently exported empty
+    # (register #198).
+    {"name": "mood_logs", "table": "mood_log", "date_col": "occurred_at", "limit": 2000},
 ]
 
 
@@ -141,8 +166,26 @@ def _fetch_portability_table(
         # Table may not exist in this environment, or RLS denied access.
         # Log and continue so the rest of the export completes.
         msg = str(e)
-        if "42P01" in msg or "does not exist" in msg or "not found" in msg.lower():
-            logger.info(f"portability: table '{table}' not present — skipping")
+        msg_lower = msg.lower()
+        # PGRST205 ("Could not find the table 'public.x' in the schema
+        # cache") is PostgREST's real-world 404 for a missing table and did
+        # NOT match any of the original substrings — it silently fell into
+        # the `warning` branch below and still returned [], which is
+        # indistinguishable from "the user has zero rows" in the exported
+        # counts. Recognize it explicitly so a misconfigured table name
+        # (like this one shipping "water_intake" against a nonexistent
+        # table instead of "hydration_logs") is loud in logs, not a quiet 0.
+        if (
+            "42P01" in msg
+            or "does not exist" in msg_lower
+            or "not found" in msg_lower
+            or "pgrst205" in msg_lower
+            or "schema cache" in msg_lower
+        ):
+            logger.error(
+                f"portability: table '{table}' not present — exporting empty "
+                f"'{table}' for user {user_id}; verify the table name is correct"
+            )
         else:
             logger.warning(f"portability: failed to read '{table}' for user {user_id}: {e}")
         return []
@@ -160,7 +203,7 @@ def _collect_portability_tables(
         rows = _fetch_portability_table(
             db,
             user_id,
-            table=spec["name"],
+            table=spec.get("table") or spec["name"],
             date_col=spec["date_col"],
             start_date=start_date,
             end_date=end_date,
@@ -326,7 +369,11 @@ def export_user_data(
 
         # 4. Workout logs
         if _include("workout_logs"):
-            logs_csv = _export_workout_logs(results["workout_logs"])
+            logs_csv = _export_workout_logs(
+                results["workout_logs"],
+                performance_logs=results["performance_logs"],
+                workouts=results["workouts"],
+            )
             zip_file.writestr("workout_logs.csv", logs_csv)
             export_counts["workout_logs"] = len(results["workout_logs"])
 
@@ -623,15 +670,22 @@ def export_user_data_parquet(
 
 
 def _get_filtered_metrics(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
-    """Get body metrics filtered by date range."""
-    query = db.client.table("user_metrics").select("*").eq("user_id", user_id)
+    """Get body metrics filtered by date range.
+
+    ``user_metrics`` is an unwritten legacy table — every real weight/body
+    entry (Home's weight history, the Nutrition tab's body-fat trend) lives
+    in ``body_measurements``. Querying ``user_metrics`` always produced a
+    header-only ``body_metrics.csv`` even for accounts with a full weight
+    history (register #124/#198).
+    """
+    query = db.client.table("body_measurements").select("*").eq("user_id", user_id)
 
     if start_date:
-        query = query.gte("recorded_at", start_date)
+        query = query.gte("measured_at", start_date)
     if end_date:
-        query = query.lte("recorded_at", end_date + "T23:59:59Z")
+        query = query.lte("measured_at", end_date + "T23:59:59Z")
 
-    result = query.order("recorded_at", desc=True).limit(500).execute()
+    result = query.order("measured_at", desc=True).limit(500).execute()
     return result.data or []
 
 
@@ -770,15 +824,17 @@ def _export_body_metrics(metrics: List[Dict[str, Any]]) -> str:
         "blood_pressure_systolic", "blood_pressure_diastolic"
     ])
 
-    # Data rows
+    # Data rows. Source is `body_measurements` — its date column is
+    # `measured_at` and its body-fat column is `body_fat_percent` (kept
+    # here under the CSV's existing header names for compatibility).
     for m in metrics:
         writer.writerow([
-            m.get("recorded_at", ""),
+            m.get("measured_at", m.get("recorded_at", "")),
             m.get("weight_kg", ""),
             m.get("waist_cm", ""),
             m.get("hip_cm", ""),
             m.get("neck_cm", ""),
-            m.get("body_fat_measured", m.get("body_fat_calculated", "")),
+            m.get("body_fat_percent", m.get("body_fat_measured", "")),
             m.get("resting_heart_rate", ""),
             m.get("blood_pressure_systolic", ""),
             m.get("blood_pressure_diastolic", ""),
@@ -820,10 +876,36 @@ def _export_workouts(workouts: List[Dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-def _export_workout_logs(logs: List[Dict[str, Any]]) -> str:
-    """Export workout logs to CSV string."""
+def _export_workout_logs(
+    logs: List[Dict[str, Any]],
+    performance_logs: Optional[List[Dict[str, Any]]] = None,
+    workouts: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    """Export workout logs to CSV string.
+
+    ``workout_logs`` has no ``workout_name`` or ``exit_reason`` column, and
+    its own ``sets_json`` is only populated once a session finishes — an
+    in-progress row's ``sets_json`` legitimately lags behind the sets
+    already recorded in ``performance_logs`` (which are written per-set in
+    real time). Reading ``log.get("workout_name", "")`` / ``.get("exit_
+    reason", "completed")`` therefore always produced an empty name and a
+    hardcoded "completed" (even for an in-progress row), and totalling
+    ``sets_json`` alone undercounted a still-running session — three
+    self-contradicting fields in the same export (register #124). Aggregate
+    the totals from ``performance_logs`` (the same rows `exercise_sets.csv`
+    exports) and look the name up from ``workouts``, keyed by id — the
+    single source of truth for both, so this CSV can't disagree with either.
+    """
     output = io.StringIO()
     writer = csv.writer(output)
+
+    sets_by_log_id: Dict[str, List[Dict[str, Any]]] = {}
+    for p in (performance_logs or []):
+        sets_by_log_id.setdefault(p.get("workout_log_id"), []).append(p)
+
+    names_by_workout_id: Dict[str, str] = {
+        w.get("id"): (w.get("name") or "") for w in (workouts or [])
+    }
 
     # Header
     writer.writerow([
@@ -833,27 +915,24 @@ def _export_workout_logs(logs: List[Dict[str, Any]]) -> str:
 
     # Data rows
     for log in logs:
-        # Calculate totals from sets_json if available
-        sets_json = log.get("sets_json", [])
-        if isinstance(sets_json, str):
-            try:
-                sets_json = json.loads(sets_json)
-            except Exception as e:
-                logger.debug(f"Failed to parse sets_json during workout log export: {e}")
-                sets_json = []
+        log_id = log.get("id", "")
+        matching_sets = sets_by_log_id.get(log_id, [])
+        total_sets = len(matching_sets)
+        total_reps = sum(s.get("reps_completed", 0) or 0 for s in matching_sets)
 
-        total_sets = len(sets_json) if sets_json else 0
-        total_reps = sum(s.get("reps", 0) for s in sets_json) if sets_json else 0
+        # `status` is the real column ("completed" / "in_progress") —
+        # never a hardcoded "completed" regardless of what actually happened.
+        exit_reason = log.get("status") or "unknown"
 
         writer.writerow([
-            log.get("id", ""),
+            log_id,
             log.get("workout_id", ""),
-            log.get("workout_name", ""),
+            names_by_workout_id.get(log.get("workout_id"), ""),
             log.get("completed_at", ""),
             log.get("total_time_seconds", ""),
             total_sets,
             total_reps,
-            log.get("exit_reason", "completed"),
+            exit_reason,
         ])
 
     return output.getvalue()
@@ -1018,9 +1097,66 @@ def _export_achievements(achievements: List[Dict[str, Any]]) -> str:
 
 
 def _get_user_streaks(db, user_id: str) -> List[Dict[str, Any]]:
-    """Get user streaks."""
-    result = db.client.table("user_streaks").select("*").eq("user_id", user_id).execute()
-    return result.data or []
+    """Get user streaks.
+
+    Streak data is scattered across several purpose-specific tables, not the
+    generic ``user_streaks`` table alone — that table is unwritten for most
+    accounts. A login streak lives in ``user_login_streaks``, a nutrition
+    streak in ``nutrition_streaks``, per-habit streaks in ``habit_streaks``.
+    Querying only ``user_streaks`` produced a header-only ``streaks.csv``
+    even for an account Home showed "LOGIN STREAK · 1 days" / "Food Log ·
+    1-day streak" for (register #124/#198). Normalize every source into the
+    shape ``_export_streaks`` already expects. Each source is best-effort —
+    one flaky table must not blank the others.
+    """
+    streaks: List[Dict[str, Any]] = []
+
+    try:
+        result = db.client.table("user_streaks").select("*").eq("user_id", user_id).execute()
+        streaks.extend(result.data or [])
+    except Exception as e:
+        logger.warning(f"[Export] user_streaks query failed: {e}")
+
+    try:
+        result = db.client.table("user_login_streaks").select("*").eq("user_id", user_id).execute()
+        for row in (result.data or []):
+            streaks.append({
+                "streak_type": "login",
+                "current_streak": row.get("current_streak"),
+                "longest_streak": row.get("longest_streak"),
+                "last_activity_date": row.get("last_login_date"),
+                "streak_start_date": row.get("streak_start_date"),
+            })
+    except Exception as e:
+        logger.warning(f"[Export] user_login_streaks query failed: {e}")
+
+    try:
+        result = db.client.table("nutrition_streaks").select("*").eq("user_id", user_id).execute()
+        for row in (result.data or []):
+            streaks.append({
+                "streak_type": "nutrition",
+                "current_streak": row.get("current_streak_days"),
+                "longest_streak": row.get("longest_streak_ever"),
+                "last_activity_date": row.get("last_logged_date"),
+                "streak_start_date": row.get("streak_start_date"),
+            })
+    except Exception as e:
+        logger.warning(f"[Export] nutrition_streaks query failed: {e}")
+
+    try:
+        result = db.client.table("habit_streaks").select("*").eq("user_id", user_id).execute()
+        for row in (result.data or []):
+            streaks.append({
+                "streak_type": f"habit:{row.get('habit_id', '')}",
+                "current_streak": row.get("current_streak"),
+                "longest_streak": row.get("longest_streak"),
+                "last_activity_date": row.get("last_completed_date"),
+                "streak_start_date": row.get("streak_start_date"),
+            })
+    except Exception as e:
+        logger.warning(f"[Export] habit_streaks query failed: {e}")
+
+    return streaks
 
 
 def _export_streaks(streaks: List[Dict[str, Any]]) -> str:

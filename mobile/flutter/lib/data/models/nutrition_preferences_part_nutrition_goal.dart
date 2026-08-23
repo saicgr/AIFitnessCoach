@@ -34,10 +34,31 @@ enum NutritionGoal {
   );
 
   static NutritionGoal fromString(String value) {
+    final canonical = canonicalIdOrNull(value) ?? value;
     return NutritionGoal.values.firstWhere(
-      (g) => g.value == value || g.name == value,
+      (g) => g.value == canonical || g.name == canonical,
       orElse: () => NutritionGoal.maintain,
     );
+  }
+
+  /// Onboarding's `users.goals`/`primary_goal` quiz vocabulary is broader
+  /// than this enum and doesn't always share spelling (`lose_weight` vs
+  /// `lose_fat`, `muscle_hypertrophy` vs `build_muscle`). Maps the
+  /// unambiguous synonyms onto this enum's ids; returns null (never a
+  /// guessed default) for values with no real nutrition-goal equivalent,
+  /// so callers building a goal *selection* don't silently fabricate one.
+  static String? canonicalIdOrNull(String value) {
+    const legacyAliases = {
+      'lose_weight': 'lose_fat',
+      'weight_loss': 'lose_fat',
+      'muscle_hypertrophy': 'build_muscle',
+      'muscle_gain': 'build_muscle',
+    };
+    final normalized = legacyAliases[value] ?? value;
+    for (final g in NutritionGoal.values) {
+      if (g.value == normalized || g.name == normalized) return g.value;
+    }
+    return null;
   }
 }
 

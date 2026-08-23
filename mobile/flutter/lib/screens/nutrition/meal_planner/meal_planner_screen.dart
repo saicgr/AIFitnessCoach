@@ -79,10 +79,19 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
         ));
         plan = await repo.getMealPlan(plan.id);
       }
+      // Paint the meal-slot cards the moment the plan itself is known —
+      // `_buildBody` already renders fine with `_sim == null` (it just skips
+      // the macro-projection card), so there is no reason to hold the whole
+      // screen on its skeleton for one more round trip. The backend answers
+      // each of these calls in well under a second; it was five of them
+      // chained behind a single `setState` that turned into a multi-second
+      // blank skeleton.
+      if (mounted) setState(() { _plan = plan; _loading = false; });
       // withSwaps: true so the backend returns per-item AI alternates
       // (`swap_suggestions`) — surfaced as a one-tap "↻ swap" on each slot.
+      // Hydrates the macro-projection card in place once it lands.
       final sim = await repo.simulatePlan(plan.id, withSwaps: true);
-      if (mounted) setState(() { _plan = plan; _sim = sim; _loading = false; });
+      if (mounted) setState(() { _sim = sim; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }

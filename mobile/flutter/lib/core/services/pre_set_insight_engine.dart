@@ -110,6 +110,7 @@ enum PatternCode {
   singleSessionShort,
   singleSessionShortBy1,
   singleSessionTop,
+  singleSessionSteady,
   // Per-set signals — surface AFTER Set 1 when the same setIndex in last
   // session carried a specific signal. Keyed by setIndex so set 4's RIR=0
   // doesn't mute set 3's rep-miss hint.
@@ -480,10 +481,11 @@ class PreSetInsightEngine {
           'tmax': i.targetMaxReps,
         });
       }
-      // Logged exactly once and the session was unremarkable (in-range) —
-      // still early on this lift. Give the fresh-lift cue rather than going
-      // silent (old `skipSteadyInRange` returned null copy).
-      return const PatternResult(PatternCode.freshLift, {'sessionCount': 1});
+      // Logged exactly once and the session was unremarkable (in-range).
+      return PatternResult(PatternCode.singleSessionSteady, {
+        'reps': lastTop.reps,
+        'lastWeightKg': lastTop.weightKg,
+      });
     }
 
     return const PatternResult(PatternCode.skipSteadyInRange);
@@ -796,6 +798,12 @@ const Map<PatternCode, List<String>> _weightedPools = {
     '{reps} reps last session — time to add weight.',
     'Last session: {reps} reps, past {tmax}. Progress the weight today.',
     'You blew past target ({reps} reps). Time to go heavier.',
+  ],
+  PatternCode.singleSessionSteady: [
+    'Last time: {lastWeightDisplay} for {reps} reps, right in range. Repeat it, or add a little if it felt easy.',
+    'You logged {lastWeightDisplay} × {reps} last session — on target. Same again today, or nudge the weight up.',
+    '{lastWeightDisplay} for {reps} reps last time. Match it today, or push a touch heavier.',
+    'One session in at {lastWeightDisplay} × {reps}. Repeat for confirmation, or add weight if it felt easy.',
   ],
 };
 

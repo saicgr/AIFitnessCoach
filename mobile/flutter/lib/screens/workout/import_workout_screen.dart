@@ -297,7 +297,16 @@ class _ImportWorkoutScreenState extends ConsumerState<ImportWorkoutScreen> {
                     maxLines: 12,
                     style: TextStyle(color: textPrimary, fontSize: 15, height: 1.4),
                     onChanged: (_) {
-                      if (_error != null) setState(() => _error = null);
+                      // Must setState on every keystroke, not just when
+                      // clearing an error — `_ready` (and therefore the
+                      // submit button's enabled state) is derived from
+                      // `_textCtrl.text` at build time, so without this the
+                      // button silently stayed wired to whatever `_ready`
+                      // was at the last real rebuild (false, on first paint)
+                      // no matter how much text the user typed.
+                      setState(() {
+                        if (_error != null) _error = null;
+                      });
                     },
                     decoration: InputDecoration(
                       hintText:

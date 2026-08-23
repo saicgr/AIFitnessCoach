@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/equipment_calibration_repository.dart';
 import '../../data/services/api_client.dart';
 import 'auth_provider.dart';
+import 'user_provider.dart' show workoutWeightUnitProvider;
 
 /// State for weight increment preferences per equipment type.
 class WeightIncrementsState {
@@ -174,13 +175,27 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
   /// Load preferences from local storage.
   Future<void> _loadFromLocalStorage() async {
     final prefs = await SharedPreferences.getInstance();
+    // Row 231 — a truly fresh install/account has never persisted a unit
+    // here, so it fell back to a hardcoded 'kg' regardless of the account's
+    // actual workout weight unit (which defaults to 'lbs' — see
+    // workoutWeightUnitProvider). That let "Step size: KG" sit next to
+    // "Workout Weight Unit: Pounds (lbs)" from the very first load, before
+    // the user ever touched either setting. Seed from the real display unit
+    // when nothing has been persisted yet; an account that HAS already
+    // customized its increments keeps its saved unit untouched.
+    final hasPersistedUnit = prefs.containsKey(_unitKey);
+    final seededUnit =
+        hasPersistedUnit ? null : _ref.read(workoutWeightUnitProvider);
+    final fallback = seededUnit != null
+        ? WeightIncrementsState.defaultsForUnit(seededUnit)
+        : WeightIncrementsState.defaults;
     state = WeightIncrementsState(
-      dumbbell: prefs.getDouble(_dumbbellKey) ?? 2.5,
-      barbell: prefs.getDouble(_barbellKey) ?? 5.0,
-      machine: prefs.getDouble(_machineKey) ?? 5.0,
-      kettlebell: prefs.getDouble(_kettlebellKey) ?? 4.0,
-      cable: prefs.getDouble(_cableKey) ?? 2.5,
-      unit: prefs.getString(_unitKey) ?? 'kg',
+      dumbbell: prefs.getDouble(_dumbbellKey) ?? fallback.dumbbell,
+      barbell: prefs.getDouble(_barbellKey) ?? fallback.barbell,
+      machine: prefs.getDouble(_machineKey) ?? fallback.machine,
+      kettlebell: prefs.getDouble(_kettlebellKey) ?? fallback.kettlebell,
+      cable: prefs.getDouble(_cableKey) ?? fallback.cable,
+      unit: prefs.getString(_unitKey) ?? fallback.unit,
       barbellPerSide: prefs.getBool(_barbellPerSideKey) ?? false,
       isLoading: false,
     );

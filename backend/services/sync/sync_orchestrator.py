@@ -118,8 +118,8 @@ def run_pull_sync() -> Dict[str, int]:
                 strength_rows = []
             if not account.import_cardio:
                 cardio_rows = []
-            inserted_cardio = importer._bulk_insert_cardio(db, cardio_rows, account.id)
-            inserted_strength = importer._bulk_insert_strength(db, strength_rows, account.id)
+            inserted_cardio, _dup_cardio, _failed_cardio = importer._bulk_insert_cardio(db, cardio_rows, account.id)
+            inserted_strength, _dup_strength, _failed_strength = importer._bulk_insert_strength(db, strength_rows, account.id)
             cardio_written += inserted_cardio
             strength_written += inserted_strength
             _record_success(

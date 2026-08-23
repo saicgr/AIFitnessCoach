@@ -10,6 +10,7 @@ from core.logger import get_logger
 from .filters import (
     pre_filter_by_injuries,
     filter_by_avoided_muscles,
+    is_similar_exercise,
     INJURY_CONTRAINDICATIONS,
 )
 from .difficulty import (
@@ -235,9 +236,32 @@ def apply_capacity_aware_regression(
 def boost_equipment_matches(candidates: List[Dict], equipment: List[str]):
     """Boost exercises matching user's selected (non-bodyweight) equipment."""
     _BW_EQUIPMENT = {"bodyweight", "body weight", "none", ""}
+    equipment_lower = [eq.lower() for eq in (equipment or [])]
+
+    # A "full_gym" preset expands to 80+ raw items mixing snake_case ids
+    # ("cable_machine") and Title-Case display names ("Cable Pulley
+    # Machine") — see search.py's equipment-normalization header comment
+    # for the full inventory. Those forms rarely substring-match the
+    # `exercise_library.equipment` display strings ("Cable Machine"), so
+    # the per-item loop below silently boosted almost nothing for a
+    # full-gym user. Mirror `filters.filter_by_equipment`'s has_full_gym
+    # short-circuit: a full gym stocks every standard implement, so every
+    # equipment-tagged candidate is a match — no per-item string matching
+    # needed.
+    has_full_gym = any(
+        "full_gym" in eq or "full gym" in eq for eq in equipment_lower
+    )
+    if has_full_gym:
+        for candidate in candidates:
+            ex_eq = (candidate.get("equipment", "") or "").lower()
+            if ex_eq not in _BW_EQUIPMENT:
+                candidate["similarity"] *= 1.15
+        candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        return
+
     user_real_equipment = [
-        eq.lower() for eq in (equipment or [])
-        if eq.lower() not in _BW_EQUIPMENT
+        eq for eq in equipment_lower
+        if eq not in _BW_EQUIPMENT
     ]
     if user_real_equipment:
         for candidate in candidates:
@@ -429,10 +453,28 @@ def apply_consistency_mode(
 
     recently_used_lower = [e.lower() for e in recently_used_exercises]
 
+    # E2E register row #45: the exercise library carries the same movement
+    # under several set-style-suffixed catalog rows ("Alternate Arm Leg Plank
+    # Hold" / "... Rest Pause" / the bare name) — a straight `in` lookup on
+    # exact lowercased strings never matches across those, so "vary" mode's
+    # penalty (and "consistent" mode's boost) silently skipped a candidate
+    # that is, for variety purposes, the exact same exercise the user did 5
+    # days ago under a different set-style name. `check_movement_pattern`
+    # stays False here — that broader pattern match (e.g. any squat vs any
+    # squat) is too aggressive for this per-exercise accounting.
+    def _recently_used(name: str) -> bool:
+        name_lower = name.lower()
+        if name_lower in recently_used_lower:
+            return True
+        return any(
+            is_similar_exercise(name, recent, check_movement_pattern=False)
+            for recent in recently_used_exercises
+        )
+
     if consistency_mode == "consistent":
         boosted_count = 0
         for candidate in candidates:
-            if candidate["name"].lower() in recently_used_lower:
+            if _recently_used(candidate["name"]):
                 candidate["similarity"] = min(1.0, candidate["similarity"] * 1.8)
                 candidate["consistency_boosted"] = True
                 if not candidate.get("boost_reason"):
@@ -452,7 +494,7 @@ def apply_consistency_mode(
         penalty_factor = max(0.05, 0.3 - (variation_percentage / 100.0) * 0.25)
         penalized_count = 0
         for candidate in candidates:
-            if candidate["name"].lower() in recently_used_lower:
+            if _recently_used(candidate["name"]):
                 candidate["similarity"] = candidate["similarity"] * penalty_factor
                 candidate["variety_penalized"] = True
                 penalized_count += 1

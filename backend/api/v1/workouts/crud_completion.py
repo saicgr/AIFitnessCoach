@@ -32,6 +32,7 @@ from services.personal_records_service import PersonalRecordsService
 from services.exercise_rag.muscle_balance import bodyweight_proxy_load_kg
 from services.ai_insights_service import ai_insights_service
 from services.performance_comparison_service import PerformanceComparisonService
+from services.workout_summary_metrics import resolve_set_completed
 from services.user_context_service import user_context_service
 
 from .crud_models import (
@@ -277,15 +278,63 @@ async def complete_workout(
                         existing_prs_by_exercise[exercise_key] = []
                     existing_prs_by_exercise[exercise_key].append(pr)
 
+                # E2E register row #138: `exercises_json`'s per-exercise `sets`
+                # field is the PLANNED template — frequently a bare integer
+                # count (e.g. `4`), never real weight/reps — and
+                # `detect_prs_in_workout`'s int-guard correctly (and silently)
+                # skips those, so a session with real logged sets produced
+                # zero PRs however many first-ever movements it contained.
+                # `workout_logs.sets_json` was just rebuilt from
+                # `performance_logs` (finalize_open_logs_for_workout, above) —
+                # the durable per-set store — so pull real sets from there and
+                # prefer them over the template's planned count.
+                logged_sets_by_exercise: Dict[str, List[Dict]] = {}
+                try:
+                    _wl_rows = supabase.table("workout_logs").select("sets_json").eq(
+                        "workout_id", workout_id
+                    ).eq("user_id", user_id).execute()
+                    for _wl in (_wl_rows.data or []):
+                        _sj = _wl.get("sets_json")
+                        if isinstance(_sj, str):
+                            try:
+                                _sj = json.loads(_sj)
+                            except (ValueError, TypeError):
+                                _sj = []
+                        for _s in (_sj or []):
+                            _name = _s.get("exercise_name")
+                            if _name:
+                                logged_sets_by_exercise.setdefault(_name, []).append(_s)
+                except Exception as _pr_log_err:
+                    logger.warning(
+                        f"[PRDetection] logged-sets lookup failed for "
+                        f"workout {workout_id}: {_pr_log_err}"
+                    )
+
                 workout_exercises = []
+                _seen_logged_names = set()
                 for ex in exercises:
-                    sets = ex.get("sets", [])
-                    if sets:
+                    ex_name = ex.get("name", "")
+                    logged = logged_sets_by_exercise.get(ex_name)
+                    sets = logged if logged else ex.get("sets", [])
+                    if logged:
+                        _seen_logged_names.add(ex_name)
+                    if sets and not isinstance(sets, int):
                         workout_exercises.append({
-                            "exercise_name": ex.get("name", ""),
+                            "exercise_name": ex_name,
                             "exercise_id": ex.get("id") or ex.get("exercise_id"),
                             "workout_id": workout_id,
+                            "equipment": ex.get("equipment"),
                             "sets": sets,
+                        })
+                # Exercises logged but not in the template (e.g. swapped in
+                # mid-session) still deserve PR credit.
+                for _name, _sets in logged_sets_by_exercise.items():
+                    if _name not in _seen_logged_names and _sets:
+                        workout_exercises.append({
+                            "exercise_name": _name,
+                            "exercise_id": None,
+                            "workout_id": workout_id,
+                            "sets": _sets,
                         })
 
                 new_prs = pr_service.detect_prs_in_workout(
@@ -382,6 +431,32 @@ async def complete_workout(
                 if pr_records:
                     supabase.table("personal_records").insert(pr_records).execute()
 
+                # Mirror weight/rep PRs into `strength_records` — the table the
+                # summary stat, the "Viral" share templates, and the data
+                # export all actually read (`personal_records` above is a
+                # separate table; nothing wrote to `strength_records`, so
+                # those surfaces always showed RECORDS 0 even on a real PR).
+                # Skip generic per-metric PRs (distance/carry/box-height) —
+                # `strength_records` is weight/1RM-shaped and has no columns
+                # for them.
+                strength_records = [
+                    {
+                        "user_id": user_id,
+                        "exercise_id": pr.exercise_id,
+                        "exercise_name": pr.exercise_name,
+                        "weight_kg": pr.weight_kg,
+                        "reps": pr.reps,
+                        "estimated_1rm": pr.estimated_1rm_kg,
+                        "rpe": pr.rpe,
+                        "is_pr": True,
+                        "achieved_at": now_iso,
+                    }
+                    for pr in new_prs
+                    if not (pr.pr_type or "").startswith("metric_")
+                ]
+                if strength_records:
+                    supabase.table("strength_records").insert(strength_records).execute()
+
                 logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
 
         except Exception as e:
@@ -448,6 +523,11 @@ async def complete_workout(
             user_id=user_id,
             workout_data={"exercises": exercises},
         )
+
+        # Background: refresh the ROI metrics snapshot (Stats → Overview's
+        # TOTAL/WEEK/STREAK/TIME strip) so it reflects THIS completion instead
+        # of staying pinned at whatever it read on its first-ever calculation.
+        background_tasks.add_task(_refresh_roi_metrics, user_id=user_id)
 
         # RAG re-index runs as a background task — keeps the completion
         # response under 1s instead of waiting on embedding API + ChromaDB.
@@ -533,8 +613,13 @@ async def complete_workout(
                     })
                     # Normalize the per-set shape so build_performance_summary
                     # finds reps + weight_kg under the keys it already reads.
+                    # `is_completed` carries the client's OWN signal (buildSetsJson
+                    # tags an unlogged/zero-filled set `is_completed: false`) — it
+                    # must survive here, not be flattened to a blanket True, or
+                    # every zero-filled set_target the "any unlogged sets save as
+                    # zero" dialog created gets counted as real, completed work.
                     bucket["sets"].append({
-                        "completed": True,
+                        "completed": s.get("is_completed"),
                         "reps": s.get("reps") or s.get("reps_completed", 0),
                         "reps_completed": s.get("reps") or s.get("reps_completed", 0),
                         "weight_kg": s.get("weight_kg", 0) or 0,
@@ -543,8 +628,12 @@ async def complete_workout(
                         "duration_seconds": s.get("set_duration_seconds"),
                     })
                 for entry in grouped.values():
-                    set_count = len(entry["sets"])
-                    ex_reps = sum(int(x["reps"] or 0) for x in entry["sets"])
+                    # Only sets with real evidence of work count toward the
+                    # session totals — a zero-filled placeholder must not
+                    # inflate SETS/REPS/volume (and, downstream, calories).
+                    completed = [x for x in entry["sets"] if resolve_set_completed(x)]
+                    set_count = len(completed)
+                    ex_reps = sum(int(x["reps"] or 0) for x in completed)
                     # FEATURE 3A: bodyweight volume. A set with no external load uses a
                     # bodyweight proxy load so unloaded work isn't counted as 0 volume.
                     _ex_name = entry.get("exercise_name") or ""
@@ -552,7 +641,7 @@ async def complete_workout(
                     ex_volume = sum(
                         (int(x["reps"] or 0))
                         * (float(x["weight_kg"] or 0) if float(x["weight_kg"] or 0) > 0 else _proxy)
-                        for x in entry["sets"]
+                        for x in completed
                     )
                     total_sets += set_count
                     total_reps += ex_reps
@@ -952,6 +1041,25 @@ _PROGRAM_FINISHER_TIERS = {
     3: "program_finisher_3",
     5: "program_finisher_5",
 }
+
+
+async def _refresh_roi_metrics(user_id: str) -> None:
+    """Recalculate the ``user_roi_metrics`` snapshot after a workout completes.
+
+    ``GET /roi-metrics`` (Stats → Overview's TOTAL/WEEK/STREAK/TIME strip)
+    only ever ran the ``calculate_user_roi_metrics`` RPC lazily, the very
+    first time a user had no row at all — every completion after that kept
+    reading the same stale row, so Stats stayed pinned at "1 workout / 0m"
+    forever after the first session (register #176). Trophy awarding
+    (`check_workout_completion_trophies`) never touches this table either,
+    so nothing else was refreshing it. Best-effort: a stats snapshot lagging
+    is far less bad than a broken completion response.
+    """
+    try:
+        db = get_supabase_db()
+        db.client.rpc("calculate_user_roi_metrics", {"p_user_id": user_id}).execute()
+    except Exception as e:
+        logger.warning(f"[ROI] Failed to refresh user_roi_metrics for {user_id}: {e}")
 
 
 async def _apply_program_progress(user_id: str, assignment_id: str, delta: int) -> None:

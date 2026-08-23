@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
@@ -35,6 +36,26 @@ class _NotificationsCard extends ConsumerStatefulWidget {
 class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
   String? _expandedSection;
   bool _advancedExpanded = false;
+  // null = not checked yet. iOS only prompts for permission once, so a
+  // "Don't Allow" tap is otherwise invisible to the app's own on/off state —
+  // without this the master switch can render ON while every push it
+  // schedules is silently unable to fire.
+  bool? _osNotificationsGranted;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOsPermission();
+  }
+
+  Future<void> _checkOsPermission() async {
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .isOsNotificationPermissionGranted();
+    if (mounted) {
+      setState(() => _osNotificationsGranted = granted);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +76,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
     final notifPrefs = ref.watch(notificationPreferencesProvider);
     final preset = notifPrefs.frequencyPreset;
     final isBundleMode = preset == 'minimal' || preset == 'balanced';
+    // The OS permission overrides the stored preference for display — a
+    // denied system permission means nothing scheduled here can actually fire.
+    final osDenied = _osNotificationsGranted == false;
+    final pushEffectivelyEnabled = notifPrefs.pushNotificationsEnabled && !osDenied;
 
     return Container(
       decoration: BoxDecoration(
@@ -73,10 +98,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             child: Row(
               children: [
                 Icon(
-                  notifPrefs.pushNotificationsEnabled
+                  pushEffectivelyEnabled
                       ? Icons.notifications_active
                       : Icons.notifications_off_outlined,
-                  color: notifPrefs.pushNotificationsEnabled ? accent : textMuted,
+                  color: pushEffectivelyEnabled ? accent : textMuted,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -86,18 +111,33 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     children: [
                       Text('Push notifications',
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                      Text(
-                        'Master switch for all coach pushes and reminders',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
+                      if (osDenied)
+                        GestureDetector(
+                          onTap: openAppSettings,
+                          child: Text(
+                            'Notifications are off in iOS Settings — tap to enable',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                      else
+                        Text(
+                          'Master switch for all coach pushes and reminders',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                        ),
                     ],
                   ),
                 ),
                 Switch(
-                  value: notifPrefs.pushNotificationsEnabled,
-                  onChanged: (value) => ref
-                      .read(notificationPreferencesProvider.notifier)
-                      .setPushNotificationsEnabled(value),
+                  value: pushEffectivelyEnabled,
+                  onChanged: osDenied
+                      ? (_) => openAppSettings()
+                      : (value) => ref
+                          .read(notificationPreferencesProvider.notifier)
+                          .setPushNotificationsEnabled(value),
                   activeThumbColor: accent,
                   activeTrackColor: activeTrack,
                 ),

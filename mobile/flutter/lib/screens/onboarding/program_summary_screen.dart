@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../data/models/gym_profile.dart';
+import '../../data/providers/gym_profile_provider.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'pre_auth_quiz_screen.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -23,6 +25,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
     final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
     final quizData = ref.watch(preAuthQuizProvider);
+    final activeGymProfile = ref.watch(activeGymProfileProvider);
 
     final l10n = AppLocalizations.of(context)!;
     return _withConfetti(Scaffold(
@@ -92,7 +95,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
                       const SizedBox(height: 28),
 
                       // 2x2 summary grid
-                      _buildSummaryGrid(context, isDark, textPrimary, textSecondary, quizData),
+                      _buildSummaryGrid(context, isDark, textPrimary, textSecondary, quizData, activeGymProfile),
 
                       const SizedBox(height: 28),
 
@@ -120,9 +123,20 @@ class ProgramSummaryScreen extends ConsumerWidget {
     Color textPrimary,
     Color textSecondary,
     PreAuthQuizData quizData,
+    GymProfile? activeGymProfile,
   ) {
     final goalLabel = _formatGoal(context, quizData.primaryGoal ?? quizData.goal);
-    final equipmentLabel = _formatEquipment(context, quizData.equipment);
+    // Prefer the user's ACTIVE gym profile — quizData is a point-in-time
+    // onboarding snapshot that goes stale the moment the user switches gyms
+    // or edits equipment later, while this summary can also be shown on a
+    // program regeneration well after onboarding (see finding #468: it read
+    // "Full gym" from the quiz while the active profile had switched to
+    // Bodyweight, and the You → Profile Training Setup card — which already
+    // reads the active profile — showed the correct value).
+    final equipmentLabel = _formatEquipment(
+      context,
+      activeGymProfile?.equipment ?? quizData.equipment,
+    );
     final levelLabel = _formatLevel(context, quizData.fitnessLevel);
     final daysLabel = '${quizData.daysPerWeek ?? 4}/week';
 

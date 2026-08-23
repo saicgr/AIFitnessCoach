@@ -127,6 +127,7 @@ Future<void> _writeSocialCache({
 /// [base] is the cache slot name; [decode] turns the stored JSON back into [T];
 /// [encode] turns a fresh [T] into a JSON-encodable structure for write-through.
 Future<T> _cacheFirstFuture<T>({
+  required Ref ref,
   required String base,
   required String userId,
   required Future<T> Function() fetch,
@@ -146,6 +147,18 @@ Future<T> _cacheFirstFuture<T>({
       try {
         final fresh = await fetch();
         await _writeSocialCache(base: base, userId: userId, data: encode(fresh));
+        // A plain FutureProvider resolves once — writing the disk cache alone
+        // never reaches whoever already `.watch`ed the stale instant render
+        // above (e.g. joining/creating a challenge invalidates this provider
+        // right after the write, but re-running it would just hit THIS same
+        // "fresh" branch and re-serve the pre-join snapshot again). Only push
+        // an `invalidateSelf` when the content actually changed, so the
+        // re-run reads the just-written cache and resolves to the real value
+        // — and so this doesn't loop (the re-run's own revalidate finds no
+        // further diff and stays quiet).
+        if (jsonEncode(encode(fresh)) != jsonEncode(encode(cached.value as T))) {
+          ref.invalidateSelf();
+        }
       } catch (e) {
         debugPrint('💾 [SocialSWR] background revalidate failed for $base: $e');
       }
@@ -184,6 +197,7 @@ final activityFeedProvider = FutureProvider.family<Map<String, dynamic>, String>
     final socialService = ref.watch(socialServiceProvider);
     final sortBy = ref.watch(feedSortProvider);
     return _cacheFirstFuture<Map<String, dynamic>>(
+      ref: ref,
       base: 'activity_feed::$sortBy',
       userId: userId,
       fetch: () => socialService.getActivityFeed(userId: userId, sortBy: sortBy),
@@ -208,6 +222,7 @@ final friendsListProvider = FutureProvider.family<List<Map<String, dynamic>>, St
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'friends_list',
       userId: userId,
       fetch: () => socialService.getFriends(userId: userId),
@@ -226,6 +241,7 @@ final followersListProvider = FutureProvider.family<List<Map<String, dynamic>>, 
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'followers_list',
       userId: userId,
       fetch: () async {
@@ -247,6 +263,7 @@ final followingListProvider = FutureProvider.family<List<Map<String, dynamic>>, 
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'following_list',
       userId: userId,
       fetch: () async {
@@ -268,6 +285,7 @@ final challengesListProvider = FutureProvider.family<List<Map<String, dynamic>>,
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'challenges_list',
       userId: userId,
       fetch: () => socialService.getChallenges(userId: userId),
@@ -286,6 +304,7 @@ final userActiveChallengesProvider = FutureProvider.family<List<Map<String, dyna
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'active_challenges',
       userId: userId,
       fetch: () async {
@@ -310,6 +329,7 @@ final conversationsProvider = FutureProvider.family<List<Map<String, dynamic>>, 
   (ref, userId) async {
     final socialService = ref.watch(socialServiceProvider);
     return _cacheFirstFuture<List<Map<String, dynamic>>>(
+      ref: ref,
       base: 'conversations',
       userId: userId,
       fetch: () => socialService.getConversations(userId: userId),
@@ -387,6 +407,7 @@ final socialStatsProvider = FutureProvider.family<Map<String, dynamic>, String>(
   (ref, userId) async {
     final socialService = ref.read(socialServiceProvider);
     return _cacheFirstFuture<Map<String, dynamic>>(
+      ref: ref,
       base: 'social_stats',
       userId: userId,
       fetch: () => socialService.getSocialStats(userId: userId),

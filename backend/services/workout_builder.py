@@ -406,6 +406,26 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
     workout_focus = STYLE_TO_FOCUS.get(params.training_style, "hypertrophy")
     staple_exercises = ctx["staples"] if params.prioritize_staples else None
 
+    # Favorites/queue were fetched by the OTHER generation entrypoint
+    # (generation_endpoints.generate_workout) but never threaded through this
+    # shared engine, so any caller routed through here (chat quick-workout,
+    # customize, adapt, Quick Generate) never passed them to the RAG select —
+    # `apply_favorites_boost` always ran with `favorite_exercises=None`, a
+    # silent no-op, despite the UI promising favorites are prioritized.
+    user_id_for_prefs = (user or {}).get("id")
+    favorite_exercises: Optional[List[str]] = None
+    queued_exercises: Optional[List[dict]] = None
+    if user_id_for_prefs:
+        try:
+            from api.v1.workouts.user_preference_utils import (
+                get_user_favorite_exercises,
+                get_user_exercise_queue,
+            )
+            favorite_exercises = await get_user_favorite_exercises(user_id_for_prefs)
+            queued_exercises = await get_user_exercise_queue(user_id_for_prefs, focus_area)
+        except Exception as e:
+            logger.debug(f"Could not fetch favorites/queue for RAG select: {e}")
+
     rag = get_exercise_rag_service()
     avoid_list = list(params.avoid_exercises) + list(params.exclude_current)
 
@@ -421,6 +441,8 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
             dumbbell_count=ctx["dumbbell_count"],
             kettlebell_count=ctx["kettlebell_count"],
             staple_exercises=staple_exercises,
+            favorite_exercises=favorite_exercises,
+            queued_exercises=queued_exercises,
             avoided_muscles=avoided_muscles if avoided_muscles["avoid"] else None,
             consistency_mode="vary",
             workout_type_preference=workout_focus,
@@ -517,6 +539,26 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
         )
     except Exception:
         adaptive_params = {"sets": 3, "reps": 12, "rest_seconds": 60}
+
+    # Surface it when the avoided-muscles filter (services/exercise_rag/filters.py)
+    # had to keep injury-conflicting exercises, down-ranked, to avoid emptying
+    # the pool — previously only visible in the server render log, with
+    # nothing telling the user their declared limitation was relaxed for this
+    # session (E2E #191). `relaxed_constraints` is the existing, already-
+    # rendered channel for exactly this kind of notice (customization_studio_
+    # sheet.dart).
+    downranked_kept = [
+        ex.get("name", "Exercise") for ex in rag_exercises
+        if ex.get("avoided_muscle_downranked")
+    ]
+    if downranked_kept and avoided_muscles.get("avoid"):
+        avoided_label = ", ".join(avoided_muscles["avoid"])
+        plural = "s" if len(downranked_kept) != 1 else ""
+        relaxed.append(
+            f"Kept {len(downranked_kept)} exercise{plural} that load your reported "
+            f"{avoided_label} limitation ({', '.join(downranked_kept)}) — not enough "
+            f"other options matched. Consider swapping."
+        )
 
     main_exercises: List[Dict[str, Any]] = []
     target_muscles: List[str] = []

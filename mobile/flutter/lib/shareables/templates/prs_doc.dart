@@ -50,6 +50,16 @@ CardDoc prsDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.center,
         sizeMode: TextSizeMode.shrinkToFit,
       ),
+      textEl(
+        pos: const Offset(0.5, 0.38),
+        size: const Size(0.84, 0.04),
+        binding: const DataBinding(BindingSource.title),
+        font: 2,
+        fontSize: 32,
+        color: const Color(0xFFFFFFFF),
+        align: TextAlign.center,
+        maxLines: 1,
+      ),
       repeaterEl(
         pos: const Offset(0.5, 0.66),
         size: const Size(0.86, 0.5),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_history_import_file_repository.dart';
@@ -111,10 +112,12 @@ class _WorkoutHistoryImportScreenState
     setState(() => _isLoading = true);
 
     try {
+      final isLbs = ref.read(workoutWeightUnitProvider).toLowerCase() == 'lbs';
+      final enteredWeight = double.parse(_weightController.text);
       final result = await _repository!.importSingleEntry(
         userId: user.id,
         exerciseName: _exerciseController.text.trim(),
-        weightKg: double.parse(_weightController.text),
+        weightKg: WeightUtils.toKg(enteredWeight, isCurrentlyLbs: isLbs),
         reps: int.parse(_repsController.text),
         sets: int.parse(_setsController.text),
       );
@@ -386,7 +389,9 @@ class _WorkoutHistoryImportScreenState
                               child: TextFormField(
                                 controller: _weightController,
                                 decoration: InputDecoration(
-                                  labelText: AppLocalizations.of(context).workoutHistoryImportWeightKg,
+                                  labelText: ref.watch(workoutWeightUnitProvider).toLowerCase() == 'lbs'
+                                      ? AppLocalizations.of(context).setTrackingSheetsWeightLbs
+                                      : AppLocalizations.of(context).setTrackingSheetsWeightKg,
                                   hintText: AppLocalizations.of(context).workoutHistoryImportEG60,
                                   prefixIcon: const Icon(Icons.monitor_weight),
                                 ),

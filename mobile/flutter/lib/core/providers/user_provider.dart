@@ -38,6 +38,15 @@ final useKgProvider = Provider<bool>((ref) {
   return unit == 'kg';
 });
 
+/// Single source of truth for hydration display units. Metric users (kg)
+/// see mL/L; imperial users (lbs) see fluid ounces. Reuses the existing
+/// body-weight unit preference instead of a separate hydration setting so
+/// the Hydration screen, the Home water tile, and the "Stay hydrated"
+/// to-do can no longer disagree on units for the same account.
+final hydrationUseOzProvider = Provider<bool>((ref) {
+  return !ref.watch(useKgProvider);
+});
+
 /// Workout weight unit provider — for exercise weights, sets, lifting.
 /// Separate from body weight unit (user may weigh in kg but lift in lbs).
 /// Falls back to body weight unit if not explicitly set.

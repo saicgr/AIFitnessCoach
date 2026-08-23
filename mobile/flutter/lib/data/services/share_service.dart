@@ -174,7 +174,7 @@ class ShareService {
       // Instagram (post/feed/DM) manually. Report systemShare so the UI label
       // matches reality.
       await Share.shareXFiles(
-        [XFile(imageFile.path)],
+        [XFile(imageFile.path, mimeType: 'image/png')],
         text: 'Check out my workout!',
         sharePositionOrigin: _fallbackSharePositionOrigin(),
       );
@@ -262,7 +262,7 @@ class ShareService {
   static Future<ShareResult> _shareVideoGeneric(String videoPath) async {
     try {
       await Share.shareXFiles(
-        [XFile(videoPath)],
+        [XFile(videoPath, mimeType: 'video/mp4')],
         text: 'Check out my workout!',
         sharePositionOrigin: _fallbackSharePositionOrigin(),
       );
@@ -294,7 +294,7 @@ class ShareService {
       await file.writeAsBytes(imageBytes);
 
       final result = await Share.shareXFiles(
-        [XFile(file.path)],
+        [XFile(file.path, mimeType: 'image/png')],
         text: caption ?? 'Check out my workout!',
         subject: subject ?? 'My Workout Recap',
         sharePositionOrigin:

@@ -676,39 +676,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
-  List<Map<String, dynamic>> _detectNewPRs(Map<String, dynamic> achievements) {
-    // Compare current workout exercises with personal records
-    final prs = achievements['exercise_personal_records'] as List? ?? [];
-    final currentExercises = widget.exercisesPerformance ?? [];
-    final newPRs = <Map<String, dynamic>>[];
-
-    for (final ex in currentExercises) {
-      final exName = ex['name'] ?? ex['exercise_name'] ?? '';
-      final exWeight = (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble();
-
-      // Find matching PR
-      final matchingPR = prs.firstWhere(
-        (pr) =>
-            (pr['exercise_name'] ?? '').toString().toLowerCase() ==
-            exName.toString().toLowerCase(),
-        orElse: () => null,
-      );
-
-      if (matchingPR != null) {
-        final prWeight = (matchingPR['weight_kg'] ?? 0.0).toDouble();
-        // Check if current weight equals PR (meaning this session set the PR)
-        if (exWeight >= prWeight && exWeight > 0) {
-          newPRs.add({
-            'exercise_name': exName,
-            'weight_kg': exWeight,
-            'previous_pr': prWeight < exWeight ? prWeight : null,
-          });
-        }
-      }
-    }
-
-    return newPRs;
-  }
 
   /// Convert difficulty to energy level for backend
   String _getEnergyLevel() {

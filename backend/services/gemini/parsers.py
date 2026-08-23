@@ -226,8 +226,10 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
        3, Gemini's own weight_g here is not trusted even when plausible-
        looking).
 
-    1b. **Whole-unit food with no DB row** (egg, banana, ...) — same
-        correction as mode 1, for names the food-override DB has no row for.
+    1b. **Whole-unit food with no usable DB weight** (egg, banana, ...) —
+        same correction as mode 1, for names where the food-override DB has
+        no row at all, or a row matched but without per-piece/serving data
+        (e.g. a plain USDA hit with no override columns).
 
     Always sets sanity_clamped=True when any value changes.
     Never silently rewrites without flagging.
@@ -300,13 +302,19 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
             item["sanity_clamped"] = True
             continue
 
-        # ---- Failure mode 1b: whole-unit food with no DB row ----
+        piece_w = db.get("default_weight_per_piece_g") if db else None
+        serving_w = (db.get("default_serving_g") or db.get("serving_size_g")) if db else None
+
+        # ---- Failure mode 1b: whole-unit food with no usable DB weight ----
         # Same correction as failure mode 1 below, but for common staples
-        # (egg, banana, ...) that the food-override DB doesn't have a row
-        # for — without this, an unmatched name skips DB-dependent
-        # reconciliation entirely and Gemini's raw (sometimes doubled)
-        # per-unit estimate ships uncorrected.
-        if not db and portion_basis == "by_count" and count:
+        # (egg, banana, ...) when the food-override DB has no row at all, OR
+        # a row matched (e.g. a plain USDA hit) that doesn't carry per-piece
+        # weight data. Gating this on `not db` alone missed the second case —
+        # a matched-but-piece-less row (`db` truthy, `piece_w`/`serving_w`
+        # None) fell through to the DB-dependent block below and was
+        # skipped there too, so a DB "hit" silently disabled this fallback
+        # instead of triggering it.
+        if portion_basis == "by_count" and count and not (piece_w and serving_w):
             whole_match = _match_common_whole_unit(name)
             if whole_match:
                 _frag, piece_default_g = whole_match
@@ -315,7 +323,7 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
                 if current_weight <= 0 or abs(current_weight - expected_weight) / expected_weight > 0.4:
                     try:
                         logger.warning(
-                            f"[L2-Reconcile] Whole-unit '{name}' (no DB row) count={count}: "
+                            f"[L2-Reconcile] Whole-unit '{name}' (no usable DB weight) count={count}: "
                             f"weight_g {current_weight}g -> {expected_weight}g (default piece={piece_default_g}g)"
                         )
                     except Exception:
@@ -327,8 +335,6 @@ def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]
 
         if not db:
             continue
-        piece_w = db.get("default_weight_per_piece_g")
-        serving_w = db.get("default_serving_g") or db.get("serving_size_g")
 
         # ---- Failure modes 1 & 2: need both pieces of DB info ----
         if portion_basis != "by_count" or not count or not piece_w or not serving_w:
@@ -481,6 +487,70 @@ def finalize_food_items(items: List[dict], db_rows: Optional[Dict[str, dict]] = 
     items = reconcile_with_db(items, db_rows or {})
     items = apply_tripwires(items)
     return items
+
+
+# Meal-level inflammation_triggers whose tag names a specific ingredient —
+# Gemini free-associates these from the dish's general reputation rather than
+# the resolved item list (e.g. tagging 'whole_grains' for a meal of white
+# rice, chicken breast, and eggs; white rice is a refined grain, so no whole
+# grain was actually present). Maps tag -> keyword fragments that must appear
+# in at least one resolved food-item name for the tag to survive. Tags not
+# listed here (saturated_fat, added_sugar, omega6_high, ...) aren't tied to a
+# single nameable ingredient and are left unchecked.
+_TRIGGER_REQUIRES_KEYWORD: Dict[str, List[str]] = {
+    "whole_grains": [
+        "whole grain", "whole wheat", "brown rice", "quinoa", "oat",
+        "barley", "farro", "millet", "buckwheat", "multigrain", "rye",
+    ],
+    "leafy_greens": [
+        "spinach", "kale", "lettuce", "arugula", "collard", "chard",
+        "mustard greens",
+    ],
+    "fatty_fish": [
+        "salmon", "mackerel", "sardine", "tuna", "trout", "herring", "anchov",
+    ],
+    "berries": [
+        "berry", "berries", "blueberr", "strawberr", "raspberr", "blackberr",
+    ],
+    "turmeric": ["turmeric", "haldi"],
+    "fermented": [
+        "yogurt", "yoghurt", "kimchi", "kefir", "miso", "sauerkraut", "curd",
+        "kombucha", "tempeh",
+    ],
+    "olive_oil": ["olive oil"],
+    "processed_meat": [
+        "bacon", "sausage", "salami", "pepperoni", "ham", "hot dog",
+        "deli meat", "cold cut",
+    ],
+}
+
+
+def filter_inflammation_triggers(
+    triggers: Optional[List[str]], food_item_names: List[Optional[str]]
+) -> Optional[List[str]]:
+    """Drop meal-level `inflammation_triggers` naming an ingredient absent
+    from the resolved food-item list.
+
+    Only tags in `_TRIGGER_REQUIRES_KEYWORD` are checked; everything else
+    passes through unchanged. Returns `triggers` as-is when falsy.
+    """
+    if not triggers:
+        return triggers
+    haystack = " | ".join((n or "").lower() for n in food_item_names)
+    kept: List[str] = []
+    for tag in triggers:
+        required = _TRIGGER_REQUIRES_KEYWORD.get(tag)
+        if required and not any(kw in haystack for kw in required):
+            try:
+                logger.warning(
+                    f"[InflammationTriggers] Dropping '{tag}' — no matching "
+                    f"ingredient among resolved items: {food_item_names}"
+                )
+            except Exception:
+                pass
+            continue
+        kept.append(tag)
+    return kept
 
 
 # ---------------------------------------------------------------------------

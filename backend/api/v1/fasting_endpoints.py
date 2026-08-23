@@ -165,7 +165,21 @@ async def get_stats(
         )
         longest_hours = longest_minutes / 60
 
-        completion_rate = (completed_fasts / total_fasts * 100) if total_fasts > 0 else 0
+        # Completion rate must reflect how much of each fast's OWN goal was
+        # actually elapsed (`completion_percentage`, set on /end as
+        # actual_minutes/goal_minutes, clamped to 100), not a binary count of
+        # fasts that were merely ended (status=="completed" fires on /end
+        # regardless of duration — a fast abandoned after 1 minute is still
+        # "completed" in that sense). Averaging the binary count produced
+        # completion_rate=100 for a single 1-minute fast against a 16h goal.
+        completion_percentages = [
+            r["completion_percentage"]
+            for r in records
+            if r.get("status") == "completed" and r.get("completion_percentage") is not None
+        ]
+        completion_rate = (
+            sum(completion_percentages) / len(completion_percentages)
+        ) if completion_percentages else 0
 
         # Count protocols
         protocol_counts = {}

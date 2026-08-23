@@ -132,7 +132,11 @@ class AchievementPromptService {
     // Fall through to milestone-based prompts if no timing comparison matched
     if (raw != null) {
       // Timing comparison found — skip milestones
-    } else if (currentWeight >= 100) {
+    } else if (currentWeight >= 100 && currentWeight < 1000) {
+      // "Triple digits" only means what it says for an actual 3-digit
+      // number — a 5-digit entry (data error or an absurd test value) isn't
+      // "100+", it's a different number entirely. Upper-bound the range so
+      // the copy can never fire outside what it describes (register #166).
       raw = _pick(_heavyWeight, style, seed);
     } else if (currentWeight >= 60 && currentWeight % 20 == 0) {
       raw = _pick(_roundWeight, style, seed)

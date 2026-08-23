@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/chrome_constants.dart' show kQuickLogFabClearance;
 import '../../../core/theme/theme_colors.dart';
 
 /// Empty State Widget - Shows when there's no content in a social section
@@ -27,7 +28,11 @@ class SocialEmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        // Bottom-biased so the action button clears the floating
+        // coach/Quick-Log cluster docked over this tab instead of centering
+        // straight into it.
+        padding: const EdgeInsets.fromLTRB(
+            32, 32, 32, 32 + kQuickLogFabClearance),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

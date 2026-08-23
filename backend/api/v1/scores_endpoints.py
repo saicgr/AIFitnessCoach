@@ -685,12 +685,18 @@ async def calculate_fitness_score(
             user_id, readiness_window.unscored_rows, NEUTRAL_READINESS_BASELINE,
         )
 
-    # 5. Get previous fitness score
+    # 5. Get previous fitness score — only a row genuinely from a prior week
+    # (>=7 days back) counts as a week-over-week baseline. Without this gate,
+    # a same-day/same-week recompute becomes its own "previous" score and a
+    # brand-new account reports a fabricated week-over-week delta.
+    one_week_ago = (today - timedelta(days=7)).isoformat()
     try:
         previous_response = (await run_db(lambda: db.client.table("fitness_scores").select(
             "overall_fitness_score"
         ).eq(
             "user_id", user_id
+        ).lte(
+            "calculated_date", one_week_ago
         ).order(
             "calculated_at", desc=True
         ).limit(1).maybe_single().execute()))

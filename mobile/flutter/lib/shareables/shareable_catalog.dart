@@ -697,6 +697,12 @@ class ShareableTemplateSpec {
   /// text log (no photo) never shows a blank-photo card. 0 = no requirement.
   final int requiresPhotoCount;
 
+  /// True for PR-headline templates: requires `data.prCount` to be a real,
+  /// positive PR count. Without this a `workoutComplete`-kind Shareable with
+  /// zero PRs (prCount defaults to 0/null) could still offer a "PERSONAL
+  /// RECORDS" card headlining an unrelated exercise/volume number.
+  final bool requiresPrCount;
+
   /// Legacy widget builder. Null for templates authored directly on the
   /// editable-card engine (which only need [docBuilder]).
   final ShareableTemplateBuilder? builder;
@@ -724,6 +730,7 @@ class ShareableTemplateSpec {
     this.requiresPlanDays = false,
     this.cosmeticGated = false,
     this.requiresPhotoCount = 0,
+    this.requiresPrCount = false,
   });
 
   /// True when this template has been migrated to the editable-card engine.
@@ -773,6 +780,9 @@ class ShareableTemplateSpec {
     if (requiresPhotoCount > 0) {
       final photos = data.foodImageUrls?.length ?? 0;
       if (photos < requiresPhotoCount) return false;
+    }
+    if (requiresPrCount) {
+      if ((data.prCount ?? 0) <= 0) return false;
     }
     return true;
   }
@@ -905,6 +915,10 @@ class ShareableCatalog {
           ShareableKind.workoutComplete,
         },
         minHighlights: 1,
+        // A `workoutComplete`-kind Shareable always has highlights (exercise
+        // stats) even with zero PRs, so `minHighlights` alone can't gate this
+        // headline-PR template — require a real, positive PR count instead.
+        requiresPrCount: true,
         builder: (d, w) => PRsTemplate(data: d, showWatermark: w),
         docBuilder: prsDoc,
       ),

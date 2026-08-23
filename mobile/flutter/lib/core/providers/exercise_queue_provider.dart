@@ -83,6 +83,31 @@ class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
     }
   }
 
+  /// Re-fetch the queue WITHOUT flipping `isLoading` — the retained
+  /// app-scoped provider is deliberately cache-first so re-opening the Queue
+  /// tab renders instantly (no skeleton flash). But that cache can go stale:
+  /// a server-side job (the workout generator) can mark a queued exercise
+  /// `used_at` and inject it into a workout at any time, and the cached copy
+  /// has no way to learn that on its own — it keeps showing the entry as
+  /// pending under the "will be included in your next workout" banner long
+  /// after it's already landed somewhere. Call this on screen appearance to
+  /// reconcile silently; the GET endpoint already excludes anything used or
+  /// expired, so a stale entry simply drops out of the list once this lands.
+  Future<void> silentRefresh() async {
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      final repository = _ref.read(exercisePreferencesRepositoryProvider);
+      final queue = await repository.getExerciseQueue(userId);
+      state = state.copyWith(queue: queue);
+      debugPrint('📋 [QueueProvider] Silently refreshed ${queue.length} queued exercises');
+    } catch (e) {
+      debugPrint('❌ [QueueProvider] Error silently refreshing queue: $e');
+    }
+  }
+
   /// Add an exercise to the queue
   Future<bool> addToQueue(
     String exerciseName, {
@@ -147,8 +172,13 @@ class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
     }
   }
 
-  /// Remove an exercise from the queue
-  Future<bool> removeFromQueue(String exerciseName) async {
+  /// Remove an exercise from the queue.
+  ///
+  /// Returns null on failure, false on success (item had not been used yet),
+  /// or true on success where the item had ALREADY been consumed by the
+  /// workout generator — deleting the queue row does not pull it back out of
+  /// that workout, so the caller must not claim it "won't be included".
+  Future<bool?> removeFromQueue(String exerciseName) async {
     // Find the queued item to remove
     final queued = state.queue.firstWhere(
       (q) => q.exerciseName.toLowerCase() == exerciseName.toLowerCase() && q.isActive,
@@ -170,14 +200,14 @@ class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
           queue: [...state.queue, queued],
           error: 'Not logged in',
         );
-        return false;
+        return null;
       }
 
       final repository = _ref.read(exercisePreferencesRepositoryProvider);
-      await repository.removeFromQueue(userId, exerciseName);
+      final alreadyUsed = await repository.removeFromQueue(userId, exerciseName);
 
       debugPrint('📋 [QueueProvider] Removed from queue: $exerciseName');
-      return true;
+      return alreadyUsed;
     } catch (e) {
       debugPrint('❌ [QueueProvider] Error removing from queue: $e');
       // Rollback
@@ -185,7 +215,7 @@ class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
         queue: [...state.queue, queued],
         error: e.toString(),
       );
-      return false;
+      return null;
     }
   }
 
@@ -196,7 +226,7 @@ class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
     String? targetMuscleGroup,
   }) async {
     if (state.isQueued(exerciseName)) {
-      return await removeFromQueue(exerciseName);
+      return await removeFromQueue(exerciseName) != null;
     } else {
       return await addToQueue(
         exerciseName,

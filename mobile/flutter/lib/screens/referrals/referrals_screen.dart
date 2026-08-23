@@ -359,6 +359,17 @@ class _StatChip extends StatelessWidget {
   }
 }
 
+/// The XP level that unlocks the same `merchType` independently of
+/// referrals, or null when there is no level equivalent (the shaker
+/// bottle is referral-only). See `ReferralTier.levelEquivalent`.
+int? _levelAlternativeFor(String? merchType) {
+  if (merchType == null) return null;
+  for (final tier in ReferralTier.all) {
+    if (tier.merchType == merchType) return tier.levelEquivalent;
+  }
+  return null;
+}
+
 class _NextTierCard extends StatelessWidget {
   final ReferralSummary summary;
   final Color accent, elevated, border, textColor, textMuted;
@@ -439,7 +450,8 @@ class _NextTierCard extends StatelessWidget {
                     ),
                     Text(
                       '${summary.neededForNext} more qualified referral'
-                      "${summary.neededForNext == 1 ? '' : 's'} to unlock",
+                      "${summary.neededForNext == 1 ? '' : 's'} to unlock"
+                      '${_levelAlternativeFor(summary.nextMerchType) != null ? ' — or Level ${_levelAlternativeFor(summary.nextMerchType)}' : ''}',
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ],
@@ -524,7 +536,9 @@ class _TierRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${tier.threshold} qualified referrals',
+                  tier.levelEquivalent != null
+                      ? '${tier.threshold} qualified referrals · or Level ${tier.levelEquivalent}'
+                      : '${tier.threshold} qualified referrals',
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],

@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
+import '../../../core/providers/current_day_provider.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/workout_program_context.dart';
@@ -661,6 +662,11 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     // for each upcoming day. Carousel cards (`inCarousel: true`) that
     // aren't today fall through to the default illustrated layout; global
     // modes (loading / error / vacation / overtraining) still apply.
+    // Watched (not read directly) so this card rebuilds the instant the
+    // local calendar day rolls over — otherwise a session left open across
+    // midnight keeps rendering yesterday's TODAY/TOMORROW badge from the
+    // last paint (see currentLocalDayProvider).
+    ref.watch(currentLocalDayProvider);
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
     final isTodayCard = dateLabel == 'TODAY';
     final smartMode = ref.watch(workoutCardModeProvider);

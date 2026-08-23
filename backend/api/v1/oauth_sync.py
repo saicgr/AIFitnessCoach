@@ -385,8 +385,8 @@ async def manual_sync(
         cardio_rows = []
     if not account.import_strength:
         strength_rows = []
-    inserted_cardio = importer._bulk_insert_cardio(db, cardio_rows, account.id)
-    inserted_strength = importer._bulk_insert_strength(db, strength_rows, account.id)
+    inserted_cardio, _dup_cardio, _failed_cardio = importer._bulk_insert_cardio(db, cardio_rows, account.id)
+    inserted_strength, _dup_strength, _failed_strength = importer._bulk_insert_strength(db, strength_rows, account.id)
 
     db.client.table("oauth_sync_accounts").update({
         "last_sync_at": datetime.now(timezone.utc).isoformat(),
@@ -547,8 +547,8 @@ async def apple_health_push(
     db = get_supabase_db()
     # ``account.id`` is None when Apple Health is a device-only connection —
     # use a NULL sync_account_id for the import helper (it accepts None).
-    inserted_cardio = importer._bulk_insert_cardio(db, cardio_rows, None)
-    inserted_strength = importer._bulk_insert_strength(db, strength_rows, None)
+    inserted_cardio, _dup_cardio, _failed_cardio = importer._bulk_insert_cardio(db, cardio_rows, None)
+    inserted_strength, _dup_strength, _failed_strength = importer._bulk_insert_strength(db, strength_rows, None)
 
     # If there's an apple_health account row, bump its last_sync_at.
     try:

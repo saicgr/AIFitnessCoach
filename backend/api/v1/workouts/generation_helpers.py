@@ -219,7 +219,9 @@ def _fetch_equipment_finisher(db, equipment: str, exclude_names: set):
             db.client.table("exercise_library")
             .select(
                 "id, exercise_name, equipment, body_part, target_muscle, category, "
-                "mechanic_type, default_duration_seconds, instructions, gif_url, image_s3_path"
+                "mechanic_type, default_duration_seconds, is_timed, "
+                "default_rep_range_min, default_rep_range_max, "
+                "instructions, gif_url, image_s3_path"
             )
             .ilike("equipment", f"%{equipment}%")
             .eq("mechanic_type", "compound")
@@ -236,8 +238,17 @@ def _fetch_equipment_finisher(db, equipment: str, exclude_names: set):
             return None
         rows.sort(key=lambda r: (r.get("exercise_name") or ""))
         r = rows[0]
-        dur = r.get("default_duration_seconds") or 300
-        return {
+        # Row 223 — this used to hardcode `is_timed: True` / `duration_seconds`
+        # for EVERY finisher regardless of the movement, so a rep-based
+        # compound lift (e.g. a barbell/smith-machine deadlift or row) landed
+        # as "1 set x 300s Time" instead of sets x reps. Trust the library's
+        # own `is_timed` flag — only a genuinely timed exercise gets a
+        # duration; everything else gets a normal rep prescription.
+        timed = bool(r.get("is_timed"))
+        rep_min = r.get("default_rep_range_min") or 8
+        rep_max = r.get("default_rep_range_max") or rep_min
+        reps = round((rep_min + rep_max) / 2)
+        finisher: Dict[str, Any] = {
             "id": r.get("id"),
             "library_id": r.get("id"),
             "name": r.get("exercise_name"),
@@ -247,13 +258,18 @@ def _fetch_equipment_finisher(db, equipment: str, exclude_names: set):
             "body_part": r.get("body_part"),
             "target_muscle": r.get("target_muscle"),
             "is_finisher": True,
-            "is_timed": True,
-            "duration_seconds": int(dur) if dur else 300,
+            "is_timed": timed,
             "sets": 1,
             "instructions": r.get("instructions") or "",
             "gif_url": r.get("gif_url") or "",
             "image_url": r.get("image_s3_path") or "",
         }
+        if timed:
+            dur = r.get("default_duration_seconds") or 30
+            finisher["duration_seconds"] = int(dur)
+        else:
+            finisher["reps"] = reps
+        return finisher
     except Exception as e:
         logger.warning(f"[finisher] fetch for '{equipment}' failed: {e}")
         return None

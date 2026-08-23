@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../l10n/generated/app_localizations.dart';
 /// Story creation flow (F11)
@@ -30,7 +31,23 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
   final _picker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    // This is a full-screen media composer, not a tab — the persistent
+    // bottom nav + "✦"/"+ Quick Log" FABs are a MainShell-level overlay that
+    // renders on top of any pushed route, so they must be hidden explicitly
+    // or they sit on top of the caption field and post button. Restored on
+    // dispose (mirrors the sheet call sites of this same provider).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     _captionController.dispose();
     super.dispose();
   }
@@ -250,10 +267,28 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Image preview
+          // Image preview — fill the 9:16 story canvas edge-to-edge (matches
+          // every other share/story composer in the app); BoxFit.contain
+          // letterboxed the photo to a small centred strip with large black
+          // bands above and below.
           Image.file(
             _selectedImage!,
-            fit: BoxFit.contain,
+            fit: BoxFit.cover,
+          ),
+
+          // Top scrim so the nav controls never sit directly on the photo.
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              height: 140,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black54, Colors.transparent],
+                ),
+              ),
+            ),
           ),
 
           // Top bar

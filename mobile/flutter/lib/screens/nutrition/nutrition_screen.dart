@@ -845,21 +845,26 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // navigator and adds a meal-logged dot under each day for at-
             // a-glance density.
             // Date strip — user can hide it via the header kebab toggle.
+            // Only shown on Daily (index 0): Journal and Patterns carry
+            // their own date/range navigation.
             // AnimatedSize gives a smooth collapse/expand when toggled.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
-              child: _showDateStrip
-                  ? _tourAnchor(
-                      TooltipAnchors.nutritionDateNav,
-                      DateStrip(
-                        selectedDate: _selectedDate,
-                        loggedDateKeys: _loggedDateKeys,
-                        onDaySelected: _jumpToDate,
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+            AnimatedBuilder(
+              animation: _tabController,
+              builder: (_, __) => AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: (_showDateStrip && _tabController.index == 0)
+                    ? _tourAnchor(
+                        TooltipAnchors.nutritionDateNav,
+                        DateStrip(
+                          selectedDate: _selectedDate,
+                          loggedDateKeys: _loggedDateKeys,
+                          onDaySelected: _jumpToDate,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
             // Sub-tab switcher — top segmented control (chrome consolidation
             // Variant A, 2026-06). Replaces the floating glassmorphic pill

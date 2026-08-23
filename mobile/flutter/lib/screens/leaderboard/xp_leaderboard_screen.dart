@@ -85,10 +85,36 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
   // ======================================================================
 
   void _applyEntries(List<XPLeaderboardEntry> entries) {
-    _entries = entries;
+    // Reconcile the current user's own row against the live `user_xp` state
+    // (xpProvider) that the header renders from — this screen's row comes
+    // from its own SWR cache, which can be a stale snapshot (e.g. taken
+    // before an XP correction) and disagree with the always-current header.
+    // Only self is corrected here; other rows have no better source to
+    // defer to. Re-sort + re-rank since correcting self's total can change
+    // where they actually sit relative to everyone else.
+    var reconciled = entries;
+    final liveXp = ref.read(xpProvider).userXp;
+    if (_currentUserId != null && liveXp != null) {
+      final index = entries.indexWhere((e) => e.userId == _currentUserId);
+      if (index >= 0 && entries[index].totalXp != liveXp.totalXp) {
+        final stale = entries[index];
+        final corrected = XPLeaderboardEntry(
+          userId: stale.userId,
+          fullName: stale.fullName,
+          avatarUrl: stale.avatarUrl,
+          totalXp: liveXp.totalXp,
+          currentLevel: liveXp.currentLevel,
+          title: stale.title,
+          prestigeLevel: stale.prestigeLevel,
+        );
+        reconciled = List.of(entries)..[index] = corrected;
+        reconciled.sort((a, b) => b.totalXp.compareTo(a.totalXp));
+      }
+    }
+    _entries = reconciled;
     _currentUserRank = null;
     if (_currentUserId != null) {
-      final index = entries.indexWhere((e) => e.userId == _currentUserId);
+      final index = reconciled.indexWhere((e) => e.userId == _currentUserId);
       if (index >= 0) _currentUserRank = index + 1;
     }
   }

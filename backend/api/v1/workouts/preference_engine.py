@@ -636,8 +636,36 @@ async def inject_staple_into_workout(
 
     # Update workout
     try:
+        # Register row #275: this endpoint rewrote exercises_json in place
+        # with no audit trail on the `workouts` row itself — only
+        # `workout_changes` (via `_log_workout_change`) saw it, so
+        # `modification_history` stayed `[]`, `is_user_modified` stayed
+        # `false`, and `last_modified_at` stayed `null` even though the row's
+        # content genuinely changed. Stamp both surfaces, same shape as
+        # `reshape_for_readiness` (see reshape.py).
+        existing_history = workout.get("modification_history") or []
+        if isinstance(existing_history, str):
+            try:
+                existing_history = json.loads(existing_history) if existing_history else []
+            except (ValueError, TypeError):
+                existing_history = []
+        now_iso = datetime.utcnow().isoformat()
+        history_entry = {
+            "type": "queue_injection",
+            "staple": staple_name,
+            "replaced": replaced_name,
+            "action": "replaced" if replaced_name else "added",
+            "timestamp": now_iso,
+            "method": "queue_injection",
+        }
+        new_history = list(existing_history) + [history_entry]
+
         db.client.table("workouts").update({
             "exercises_json": exercises,
+            "modification_history": new_history,
+            "is_user_modified": True,
+            "last_modified_at": now_iso,
+            "last_modified_method": "queue_injection",
         }).eq("id", workout_id).execute()
 
         _log_workout_change(db, user_id, workout_id, "staple_inject", {

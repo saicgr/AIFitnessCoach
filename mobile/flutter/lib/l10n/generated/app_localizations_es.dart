@@ -23925,7 +23925,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navProgress => 'Progreso';
 
   @override
-  String get navWorkout => 'Entrenamiento';
+  String get navWorkout => 'Entreno';
 
   @override
   String get navWorkouts => 'Entrenamientos';
@@ -25493,7 +25493,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Inicia sesión para ver tus patrones';
 
   @override
-  String get nutritionJournalTab => 'Diario';
+  String get nutritionJournalTab => 'Historial';
 
   @override
   String get nutritionPatternsTab => 'Patrones';

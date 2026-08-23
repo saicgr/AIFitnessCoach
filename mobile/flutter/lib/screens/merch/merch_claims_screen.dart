@@ -178,9 +178,11 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Reach milestone levels and we ship you real ${Branding.appName} gear. '
-            'Sticker Pack at 50, T-Shirt at 100, Hoodie at 150, Full Kit at 200, '
-            'Signed Premium Kit at 250.',
+            'Reach milestone levels — or refer enough friends — and we ship you '
+            'real ${Branding.appName} gear. Sticker Pack at Level 50 or 3 referrals, '
+            'T-Shirt at Level 100 or 25 referrals, Hoodie at Level 150 or 50 referrals, '
+            'Full Kit at Level 200 or 100 referrals, Signed Premium Kit at Level 250 '
+            'or 250 referrals.',
             style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 10),
@@ -230,7 +232,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Your first physical reward unlocks at Level 50 — a free ${Branding.appName} sticker pack.',
+            'Your first physical reward — a free ${Branding.appName} sticker pack — unlocks at Level 50, or with 3 qualified referrals.',
             style: TextStyle(fontSize: 13, color: textMuted),
             textAlign: TextAlign.center,
           ),

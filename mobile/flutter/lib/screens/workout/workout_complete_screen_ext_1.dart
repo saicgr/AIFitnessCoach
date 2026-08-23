@@ -450,21 +450,21 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         final achievements = await workoutRepo.getUserAchievements(userId: userId);
 
         if (achievements.isNotEmpty && mounted) {
-          // Detect new PRs from this workout
-          final newPRs = _detectNewPRs(achievements);
-
+          // This branch only runs when `widget.personalRecords` (the
+          // authoritative, server-detected PRs for THIS session — same
+          // source as the RECORDS stat) was null/empty. `_detectNewPRs`'s
+          // heuristic — "does today's weight >= a cached record" — can true
+          // even when nothing new was set this session (a re-hit of an old
+          // max, or stale achievements data), which showed "SHARE YOUR PR"
+          // under a RECORDS · 0 stat. Trust the server: no PRs here means
+          // `_newPRs` stays empty, and the Share-PR CTA / trophy stay hidden.
           setState(() {
             _achievements = achievements;
-            _newPRs = newPRs;
             _isLoadingAchievements = false;
           });
 
-          // Award first-time PR bonus (+100 XP) if PRs were detected
-          if (newPRs.isNotEmpty) {
-            ref.read(xpProvider.notifier).checkFirstPRBonus();
-          }
-
           // Show full-screen trophy celebration if there are trophies
+          // (achievements/milestones — not PRs, which are already handled).
           Future.microtask(() {
             _showTrophyCelebration();
           });

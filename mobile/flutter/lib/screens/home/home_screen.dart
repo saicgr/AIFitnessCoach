@@ -12,6 +12,7 @@ import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/providers/current_day_provider.dart';
 import '../../core/providers/subscription_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
@@ -298,6 +299,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
     if (state != AppLifecycleState.resumed) return;
     try {
+      // Recompute "today" immediately on resume — a day rollover that
+      // happened while backgrounded must not wait for the midnight timer
+      // (which was scheduled relative to the pre-background `now`). Fixes
+      // the header greeting/date and the TODAY/TOMORROW workout badge
+      // staying stamped with the previous day (register #123).
+      ref.read(currentLocalDayProvider.notifier).refreshNow();
       // Replay any fasting notification action (Pause/Resume, End Fast) that
       // fired in the background isolate while the app was not foregrounded.
       FastingOngoingNotificationService.instance.drainPendingBackgroundAction();

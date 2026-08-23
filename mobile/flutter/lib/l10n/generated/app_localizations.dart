@@ -28925,7 +28925,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenTourCarouselTitle.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s Workout'**
+  /// **'Your Next Workout'**
   String get homeScreenTourCarouselTitle;
 
   /// No description provided for @homeScreenTourCommunityDesc.
@@ -33636,7 +33636,7 @@ abstract class AppLocalizations {
   /// No description provided for @logMealSheetAllItemsMatchedVerified.
   ///
   /// In en, this message translates to:
-  /// **'All items matched verified nutrition data'**
+  /// **'Nutrition data verified · portions estimated'**
   String get logMealSheetAllItemsMatchedVerified;
 
   /// No description provided for @logMealSheetAnalysisFailed.
@@ -34338,7 +34338,7 @@ abstract class AppLocalizations {
   /// No description provided for @logMealSheetUiOfItemsMatchedVerified.
   ///
   /// In en, this message translates to:
-  /// **'{verifiedCount} of {length} items matched verified nutrition data'**
+  /// **'{verifiedCount} of {length} matched verified nutrition data · portions estimated'**
   String logMealSheetUiOfItemsMatchedVerified(
     Object length,
     Object verifiedCount,

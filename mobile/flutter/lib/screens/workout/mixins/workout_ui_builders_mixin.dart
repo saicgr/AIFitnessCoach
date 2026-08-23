@@ -118,6 +118,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   RestSuggestion? get restSuggestion;
   bool get isLoadingRestSuggestion;
   FatigueAlertData? get fatigueAlertData;
+  double? get fatigueAlertCurrentWeightKg;
   bool get showFatigueAlert;
   bool get showCoachTip;
   set showCoachTip(bool value);

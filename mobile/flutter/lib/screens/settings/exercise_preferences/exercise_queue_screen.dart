@@ -258,9 +258,24 @@ class ExerciseQueueScreen extends ConsumerWidget {
                     isDark,
                   );
                   if (confirmed == true) {
-                    ref
+                    final alreadyUsed = await ref
                         .read(exerciseQueueProvider.notifier)
                         .removeFromQueue(item.exerciseName);
+                    // The queue row is gone either way, but a row that had
+                    // already been picked up by the workout generator is
+                    // still sitting in that workout — say so instead of
+                    // letting the earlier "won't be included" promise stand
+                    // uncorrected.
+                    if (alreadyUsed == true && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '"${item.exerciseName}" had already been added to '
+                            'an upcoming workout — it stays there.',
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
               );
@@ -282,7 +297,8 @@ class ExerciseQueueScreen extends ConsumerWidget {
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(AppLocalizations.of(context).exerciseQueueRemoveFromQueue),
         content: Text(
-          'Remove "$exerciseName" from your queue? It won\'t be included in your next workout.',
+          'Remove "$exerciseName" from your queue? If it hasn\'t been used yet, '
+          'it won\'t be included in your next workout.',
         ),
         actions: [
           TextButton(

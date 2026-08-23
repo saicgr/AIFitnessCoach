@@ -921,6 +921,45 @@ async def get_overload_dashboard(
             loop.run_in_executor(_db_executor, _fetch_last_workout),
         )
 
+        # A user can switch their active gym profile (`users.active_gym_profile_id`)
+        # after already logging strength history under a *different* gym profile.
+        # Scoping every query above to the now-active gym then returns nothing —
+        # not because the account has no data, but because none of it is tagged
+        # to the currently selected gym. Fall back to the un-scoped (all-gym)
+        # data in that case so switching gyms never blanks out real history.
+        if gym_profile_id and not (latest_res.data or vol_res.data or names_res.data):
+            def _fetch_latest_scores_unscoped():
+                return db.client.table("latest_strength_scores").select("*").eq(
+                    "user_id", user_id
+                ).execute()
+
+            def _fetch_score_history_unscoped():
+                return db.client.table("strength_scores").select(
+                    "muscle_group, strength_score, calculated_at"
+                ).eq("user_id", user_id).gte("calculated_at", d365).order(
+                    "calculated_at", desc=False
+                ).is_("gym_profile_id", "null").execute()
+
+            def _fetch_volume_unscoped():
+                return db.client.table("muscle_group_weekly_volume").select(
+                    "muscle_group, week_start, total_volume_kg"
+                ).eq("user_id", user_id).gte("week_start", start_date).order(
+                    "week_start", desc=False
+                ).execute()
+
+            def _fetch_top_names_unscoped():
+                return db.client.from_("exercise_workout_history").select(
+                    "exercise_name, workout_date"
+                ).eq("user_id", user_id).gte("workout_date", start_date).execute()
+
+            latest_res, hist_res, vol_res, names_res = await asyncio.gather(
+                loop.run_in_executor(_db_executor, _fetch_latest_scores_unscoped),
+                loop.run_in_executor(_db_executor, _fetch_score_history_unscoped),
+                loop.run_in_executor(_db_executor, _fetch_volume_unscoped),
+                loop.run_in_executor(_db_executor, _fetch_top_names_unscoped),
+            )
+            gym_profile_id = None
+
         # ── Overall = median of per-muscle current scores (robust to one weak group)
         latest_rows = latest_res.data or []
         by_muscle = {r["muscle_group"]: r for r in latest_rows}

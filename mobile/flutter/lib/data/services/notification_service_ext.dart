@@ -167,6 +167,40 @@ extension NotificationServiceCore on NotificationService {
     return authorized;
   }
 
+  /// Whether the OS has actually authorized notifications for this app right
+  /// now — checks current status WITHOUT prompting (never shows a system
+  /// dialog). Used to reconcile the in-app "Push notifications" switch with a
+  /// denied system permission: iOS only asks once, so a decline is otherwise
+  /// invisible to the app's own on/off state. Returns null when the status
+  /// can't be determined (e.g. Firebase unavailable).
+  Future<bool?> isOsNotificationPermissionGranted() async {
+    if (Platform.isAndroid) {
+      try {
+        final androidPlugin = _localNotifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          return await androidPlugin.areNotificationsEnabled();
+        }
+      } catch (e) {
+        debugPrint('⚠️ [Local] Android notification status check failed: $e');
+      }
+      return null;
+    }
+
+    if (!_firebaseAvailable || messaging == null) {
+      return null;
+    }
+    try {
+      final settings = await messaging!.getNotificationSettings();
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (e) {
+      debugPrint('⚠️ [FCM] getNotificationSettings failed: $e');
+      return null;
+    }
+  }
+
   /// Get FCM token
   Future<String?> _getToken() async {
     if (!_firebaseAvailable || messaging == null) {

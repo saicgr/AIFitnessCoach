@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -15,6 +16,7 @@ import '../../data/models/scheduled_recipe.dart';
 import '../../data/providers/recipe_providers.dart';
 import '../../data/repositories/recipe_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/notification_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 class MealRemindersSettingsScreen extends ConsumerStatefulWidget {
@@ -36,11 +38,27 @@ class _MealRemindersSettingsScreenState
   bool _publicDefault = false;
   bool _autoSnapshot = true;
   String? _userId;
+  // null = not checked yet. iOS only prompts for permission once, so a
+  // "Don't Allow" tap is otherwise invisible to this screen's own on/off
+  // state — without this the toggle can render ON while the OS silently
+  // drops every push it schedules. Same check the main notifications
+  // screen uses (`NotificationsSection`) so both surfaces agree.
+  bool? _osNotificationsGranted;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _checkOsPermission();
+  }
+
+  Future<void> _checkOsPermission() async {
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .isOsNotificationPermissionGranted();
+    if (mounted) {
+      setState(() => _osNotificationsGranted = granted);
+    }
   }
 
   Future<void> _load() async {
@@ -80,15 +98,25 @@ class _MealRemindersSettingsScreenState
         children: [
           SwitchListTile(
             title: Text(AppLocalizations.of(context).mealRemindersSettingsMealReminderNotifications, style: TextStyle(color: text)),
-            subtitle: Text(
-              'Push notifications for scheduled recipes. Tap to confirm and one-tap log.',
-              style: TextStyle(color: muted, fontSize: 12),
-            ),
-            value: _mealReminders,
-            onChanged: (v) {
-              setState(() => _mealReminders = v);
-              _setBool(_prefMealReminders, v);
-            },
+            subtitle: _osNotificationsGranted == false
+                ? GestureDetector(
+                    onTap: openAppSettings,
+                    child: Text(
+                      'Notifications are off in iOS Settings — tap to enable',
+                      style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                : Text(
+                    'Push notifications for scheduled recipes. Tap to confirm and one-tap log.',
+                    style: TextStyle(color: muted, fontSize: 12),
+                  ),
+            value: _mealReminders && _osNotificationsGranted != false,
+            onChanged: _osNotificationsGranted == false
+                ? (_) => openAppSettings()
+                : (v) {
+                    setState(() => _mealReminders = v);
+                    _setBool(_prefMealReminders, v);
+                  },
             activeThumbColor: accent,
           ),
           SwitchListTile(

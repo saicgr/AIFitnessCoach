@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../core/animations/app_animations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/cache/cache_first_mixin.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
@@ -162,6 +161,9 @@ class StrainDashboardNotifier extends StateNotifier<StrainDashboardState>
         case 'critical':
           mappedRiskLevel = 'critical';
           break;
+        case 'no_data':
+          mappedRiskLevel = 'no_data';
+          break;
         default:
           mappedRiskLevel = 'safe';
       }
@@ -259,18 +261,30 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                             const SizedBox(height: 12),
 
                             // Risk cards
-                            ...state.data!.sortedMuscleRisks
-                                .map((risk) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: StrainRiskCard(
-                                        risk: risk,
-                                        onTap: () => _showMuscleDetail(risk),
-                                      ),
-                                    ))
-                                .toList()
-                                .animate(interval: 50.ms)
-                                .fadeIn(duration: 300.ms)
-                                .slideX(begin: 0.05, end: 0),
+                            if (state.data!.muscleRisks.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 24),
+                                child: Text(
+                                  'Complete a workout to see volume risk by muscle group here.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              )
+                            else
+                              ...state.data!.sortedMuscleRisks
+                                  .map((risk) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: StrainRiskCard(
+                                          risk: risk,
+                                          onTap: () => _showMuscleDetail(risk),
+                                        ),
+                                      ))
+                                  .toList()
+                                  .animate(interval: 50.ms)
+                                  .fadeIn(duration: 300.ms)
+                                  .slideX(begin: 0.05, end: 0),
 
                             const SizedBox(height: 80),
                           ],
@@ -647,6 +661,8 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
         return Icons.error;
       case StrainRiskLevel.critical:
         return Icons.dangerous;
+      case StrainRiskLevel.noData:
+        return Icons.help_outline;
     }
   }
 

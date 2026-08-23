@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'quick_log_overlay.dart';
 
 /// Screen that immediately shows the quick log overlay and stays on current screen
@@ -23,11 +24,20 @@ class _WidgetLogTriggerScreenState extends ConsumerState<WidgetLogTriggerScreen>
       if (mounted && !_dialogShown) {
         _dialogShown = true;
 
-        // Pop this route immediately - there's always a screen underneath from the widget
-        Navigator.of(context).pop();
+        if (Navigator.of(context).canPop()) {
+          // Pop this route immediately - there's a screen underneath from
+          // the widget (app was already running in the background).
+          Navigator.of(context).pop();
 
-        // Show the dialog on the previous screen
-        showQuickLogOverlay(context, ref);
+          // Show the dialog on the previous screen
+          showQuickLogOverlay(context, ref);
+        } else {
+          // Cold-start deep link: nothing is underneath to pop back to, so
+          // popping is a no-op and this screen's empty SizedBox would be
+          // left on screen with no nav bar and no way out. Land on Home
+          // instead of stranding the user on a blank screen.
+          context.go('/home');
+        }
       }
     });
   }

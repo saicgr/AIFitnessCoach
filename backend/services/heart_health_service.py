@@ -246,15 +246,24 @@ async def build_heart_health_response(
         if delta is not None:
             facts["delta"] = delta
         for c in scored:
-            facts[f"{c.key}_score"] = c.score
-            facts[f"{c.key}_value"] = c.display
+            # Keyed by the component's own display label (e.g. "BMI"), not the
+            # internal "body_comp" slug — the model otherwise expands that
+            # slug into "body composition" in its narration, which is a
+            # different, unmeasured metric for this user.
+            facts[f"{c.label} score (0-100)"] = c.score
+            facts[c.label] = c.display
         from services.gemini.health_insight import generate_grounded_insight
         ins = await generate_grounded_insight(
             user_id=user_id, kind="heart_health", first_name=first_name, facts=facts,
             fallback_headline=fb_head, fallback_body=fb_body,
             guidance=("Lead with the weakest component and give one specific, "
-                      "encouraging habit to improve it. Nutrition tie-ins are welcome "
-                      "(e.g. potassium-rich foods for cardiovascular load)."),
+                      "encouraging habit to improve it. Refer to each component "
+                      "only by its exact name in the facts (BMI is BMI, never "
+                      "'body composition' — no body composition measurement "
+                      "exists for this user). A potassium-rich-food tie-in is "
+                      "only appropriate when Cardio strain is the component "
+                      "being addressed; never attach it to BMI or any other "
+                      "component."),
         )
         headline, body, delivery = ins["headline"], ins["body"], ins["delivery"]
 

@@ -115,6 +115,13 @@ Future<String?> persistEasySet({
       metrics: log.extraMetrics.isEmpty
           ? null
           : Map<String, num>.from(log.extraMetrics),
+      // Was missing here (unlike persistAdvancedSet's equivalent call) — the
+      // effort/RIR the user logs on a set was captured on `log` but silently
+      // dropped by this progressive write, so a session never reaching
+      // Finish (crash/kill) lost it, and the finalize bulk write only papers
+      // over the gap when it runs at all.
+      rpe: log.rpe?.toDouble(),
+      rir: log.rir,
       loggingMode: 'easy',
       notes: log.notes,
       notesAudioUrl: audioUrl,

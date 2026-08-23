@@ -1384,6 +1384,63 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                             f"unsafe → added {len(_inj_added)} safe for {active_injuries}"
                         )
 
+                # E2E register row #46 — the name above was generated from the
+                # REQUESTED focus_areas[0] before focus validation / completeness
+                # / the injury guard could still change which exercises actually
+                # shipped, so a title like "Balanced Glute Performance" could
+                # ship with zero glute-specific movements. `exercises` is truly
+                # final now — if NONE of them actually match the focus the name
+                # was built from, retitle from the muscle groups the final list
+                # actually trains instead of shipping a mismatched name.
+                if not _explicit_name and exercises and body.focus_areas:
+                    try:
+                        from .focus_validation_utils import validate_exercise_matches_focus
+                        _orig_focus = body.focus_areas[0]
+                        _matches_orig = any(
+                            validate_exercise_matches_focus(
+                                ex.get("name") or ex.get("exercise_name") or "",
+                                ex.get("muscle_group") or ex.get("target_muscle") or "",
+                                _orig_focus,
+                            ).get("matches")
+                            for ex in exercises
+                        )
+                        if not _matches_orig:
+                            from collections import Counter as _Counter
+                            from .focus_validation_utils import FOCUS_AREA_MUSCLES
+                            _muscle_counts: _Counter = _Counter(
+                                (ex.get("muscle_group") or ex.get("target_muscle") or "").lower().strip()
+                                for ex in exercises
+                                if (ex.get("muscle_group") or ex.get("target_muscle"))
+                            )
+                            _actual_focus = None
+                            for _cand_focus, _keywords in FOCUS_AREA_MUSCLES.items():
+                                if any(
+                                    any(kw in m or m in kw for kw in _keywords)
+                                    for m in _muscle_counts
+                                ):
+                                    _actual_focus = _cand_focus
+                                    break
+                            if _actual_focus and _actual_focus != _orig_focus:
+                                _retitled = generate_workout_name(
+                                    goal=(goals[0] if isinstance(goals, list) and goals else None),
+                                    focus=_actual_focus,
+                                    equipment=equipment if isinstance(equipment, list) else None,
+                                    duration_minutes=target_duration,
+                                    difficulty=difficulty,
+                                    workout_type=workout_type,
+                                    user_id=str(body.user_id) if getattr(body, "user_id", None) else None,
+                                    workout_id=str(_name_salt) if _name_salt else None,
+                                )
+                                logger.warning(
+                                    f"[Naming] '{workout_name}' was built from focus "
+                                    f"'{_orig_focus}' but no final exercise matches it — "
+                                    f"retitled from actual muscle coverage "
+                                    f"'{_actual_focus}': '{_retitled}'"
+                                )
+                                workout_name = _retitled
+                    except Exception as _retitle_err:
+                        logger.warning(f"⚠️ [Naming] focus-vs-final-list retitle check failed: {_retitle_err}")
+
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse streaming response: {e}", exc_info=True)
                 logger.error(f"Raw accumulated text ({len(accumulated_text)} chars): {accumulated_text[:1000]}", exc_info=True)

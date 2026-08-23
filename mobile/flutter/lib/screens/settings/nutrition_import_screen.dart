@@ -213,12 +213,9 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
   Widget _buildDone(Color accent, Color textPrimary, Color textSecondary) {
     final err = _error;
     final result = _result ?? const {};
-    final imported = _asInt(result['imported']);
-    final replaced = _asInt(result['replaced']);
-    final weightImported = _asInt(result['weight_imported']);
     final failed = _asInt(result['failed']);
     final totalFailure =
-        err == null && failed > 0 && (imported + replaced + weightImported) == 0;
+        err == null && _isTotalFailure(result);
     if (err != null || totalFailure) {
       final message = err ??
           'Nothing was saved. $failed ${failed == 1 ? 'entry' : 'entries'} '
@@ -324,6 +321,22 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
       return;
     }
 
+    // The CSV sources below show the OS file picker immediately, so the tap
+    // is visibly acknowledged. Apple Health has no such picker — reading up
+    // to a year of HealthKit nutrition samples (plus the on-demand read
+    // authorization check) can take a few seconds with nothing on screen
+    // changing in the meantime, so the row looked completely unresponsive.
+    // Show the working state the instant the tap is handled instead of only
+    // after the read resolves.
+    if (source.isHealth && mounted) {
+      setState(() {
+        _phase = _Phase.working;
+        _statusMessage = 'Reading your ${source.label} data…';
+        _result = null;
+        _error = null;
+      });
+    }
+
     // Build the multipart payload for this source.
     FormData formData;
     try {
@@ -339,10 +352,12 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
         });
       }
     } on _NoHealthDataException {
+      if (mounted && source.isHealth) setState(() => _phase = _Phase.idle);
       _showSnack('No nutrition data found in Apple Health to import.');
       return;
     } catch (e) {
       debugPrint('❌ [NutritionImport] payload build failed: $e');
+      if (mounted && source.isHealth) setState(() => _phase = _Phase.idle);
       _showSnack('Could not read the file. Please try again.');
       return;
     }
@@ -439,7 +454,13 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
         parsed.dateRangeHi,
         weightImported: _asInt(result['weight_imported']) > 0,
       );
-      activity.succeed(_summaryLines(result));
+      if (_isTotalFailure(result)) {
+        final failed = _asInt(result['failed']);
+        activity.fail('Nothing was saved. $failed '
+            '${failed == 1 ? 'entry' : 'entries'} could not be imported.');
+      } else {
+        activity.succeed(_summaryLines(result));
+      }
 
       if (!mounted) return;
       setState(() {
@@ -588,6 +609,19 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
 
   /// Human-readable summary lines for a commit `result` block. Shared by
   /// the in-screen done state and the Imports screen's activity banner.
+  /// A commit that inserted nothing at all — every row failed (e.g. the
+  /// bulk chunk insert 500ed) — is a failure, not a success, even though
+  /// the job itself reached "done" without throwing. Shared by the
+  /// in-screen Done state AND the cross-screen activity banner so neither
+  /// shows a green "All set"/"import complete" over a wholly-failed import.
+  static bool _isTotalFailure(Map<String, dynamic> result) {
+    final imported = _asInt(result['imported']);
+    final replaced = _asInt(result['replaced']);
+    final weightImported = _asInt(result['weight_imported']);
+    final failed = _asInt(result['failed']);
+    return failed > 0 && (imported + replaced + weightImported) == 0;
+  }
+
   static List<String> _summaryLines(Map<String, dynamic> result) {
     final imported = _asInt(result['imported']);
     final skipped = _asInt(result['skipped']);

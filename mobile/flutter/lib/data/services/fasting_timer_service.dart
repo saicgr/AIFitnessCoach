@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show TimeOfDay, DayPeriod;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -59,10 +60,13 @@ class FastingTimerService {
     debugPrint('🔔 [FastingTimer] Initializing notification service');
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Permission request is deferred to requestNotificationPermission(),
+    // called only when the user takes an explicit fasting action (starting
+    // a fast) — plugin init must not itself trigger the OS prompt.
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -89,6 +93,22 @@ class FastingTimerService {
         );
 
     debugPrint('✅ [FastingTimer] Notification service initialized');
+  }
+
+  /// Request the OS notification permission on iOS. Call this only in
+  /// response to an explicit user action (e.g. starting a fast) — never
+  /// from `initialize()`, which must not itself surface the system prompt.
+  Future<void> requestNotificationPermission() async {
+    if (!Platform.isAndroid) {
+      try {
+        await _notifications
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(alert: true, badge: true, sound: true);
+      } catch (e) {
+        debugPrint('⚠️ [FastingTimer] iOS permission request failed: $e');
+      }
+    }
   }
 
   /// Handle notification tap

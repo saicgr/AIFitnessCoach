@@ -99,6 +99,12 @@ class RecordStrainRequest(BaseModel):
     severity: str = Field(default="mild", pattern="^(mild|moderate|severe)$")
     pain_level: Optional[int] = Field(default=None, ge=0, le=10)
     notes: Optional[str] = None
+    # Register #337: the "Request Rest Day" toggle was rendered, toggleable,
+    # and dropped on submit — no field carried it and nothing was persisted.
+    # There is no dedicated rest-day column; `recovery_days` already exists
+    # for exactly this ("how many days off did this strain call for") and is
+    # otherwise always null, so an explicit request sets it from severity.
+    request_rest_day: bool = False
 
 
 class RecordStrainResponse(BaseModel):
@@ -246,13 +252,19 @@ async def get_risk_assessment(user_id: str,
         week_start = today - timedelta(days=today.weekday())
         prev_week_start = week_start - timedelta(days=7)
 
-        # Get current week volume
-        current_result = supabase.client.table("weekly_volume_tracking").select(
-            "muscle_group, total_sets, total_reps, total_volume_kg, strain_risk_score"
+        # Register #336: `weekly_volume_tracking` is written by
+        # `StrainPreventionService.track_workout_volume`, which nothing in
+        # the app ever calls — the table is permanently empty, so this
+        # endpoint always returned a zero-muscle, "safe" assessment even for
+        # accounts with real completed-workout volume. `muscle_group_weekly_
+        # volume` is the same per-muscle weekly aggregate already derived
+        # live from `workout_logs.sets_json` (see progress.py's overload
+        # dashboard, which reads it successfully) — read from there instead.
+        current_result = supabase.client.table("muscle_group_weekly_volume").select(
+            "muscle_group, total_sets, total_reps, total_volume_kg"
         ).eq("user_id", user_id).eq("week_start", week_start.isoformat()).execute()
 
-        # Get previous week volume
-        prev_result = supabase.client.table("weekly_volume_tracking").select(
+        prev_result = supabase.client.table("muscle_group_weekly_volume").select(
             "muscle_group, total_sets, total_reps, total_volume_kg"
         ).eq("user_id", user_id).eq("week_start", prev_week_start.isoformat()).execute()
 
@@ -260,6 +272,23 @@ async def get_risk_assessment(user_id: str,
         prev_volumes = {}
         for row in prev_result.data or []:
             prev_volumes[row["muscle_group"]] = row["total_sets"]
+
+        # Register #337: a recorded strain incident was reflected in no read
+        # path, including this one — a severe report changed nothing about
+        # the affected muscle's risk. Pull recent (14-day) strain reports so
+        # a body part with an active moderate/severe strain is elevated to
+        # Warning/Danger even when its volume alone wouldn't flag it.
+        recent_strain_cutoff = (today - timedelta(days=14)).isoformat()
+        strain_result = supabase.client.table("strain_history").select(
+            "body_part, severity, strain_date"
+        ).eq("user_id", user_id).gte("strain_date", recent_strain_cutoff).execute()
+        strain_floor_by_muscle: Dict[str, float] = {}
+        for row in strain_result.data or []:
+            part = (row.get("body_part") or "").strip().lower()
+            if not part:
+                continue
+            floor = {"mild": 0.35, "moderate": 0.6, "severe": 0.85}.get(row.get("severity"), 0.35)
+            strain_floor_by_muscle[part] = max(strain_floor_by_muscle.get(part, 0.0), floor)
 
         # Calculate muscle volumes
         muscle_volumes = []
@@ -270,9 +299,12 @@ async def get_risk_assessment(user_id: str,
 
         default_caps = get_default_volume_caps()
 
-        for row in current_result.data or []:
-            muscle = row["muscle_group"]
-            current_sets = row["total_sets"]
+        all_muscles = {row["muscle_group"] for row in (current_result.data or [])} | set(strain_floor_by_muscle)
+        current_by_muscle = {row["muscle_group"]: row for row in (current_result.data or [])}
+
+        for muscle in sorted(all_muscles):
+            row = current_by_muscle.get(muscle, {})
+            current_sets = int(row.get("total_sets") or 0)
             prev_sets = prev_volumes.get(muscle, 0)
 
             total_current += current_sets
@@ -284,10 +316,12 @@ async def get_risk_assessment(user_id: str,
             else:
                 increase_pct = 100 if current_sets > 0 else 0
 
-            # Get risk score from DB or calculate
-            risk_score = float(row.get("strain_risk_score", 0))
-            if risk_score == 0 and increase_pct > 10:
+            risk_score = 0.0
+            if increase_pct > 10:
                 risk_score = min(1.0, increase_pct / 50)  # Simple calculation
+            # A recent strain report on this muscle floors its risk score
+            # regardless of volume — a severe strain must show up here.
+            risk_score = max(risk_score, strain_floor_by_muscle.get(muscle, 0.0))
 
             max_risk = max(max_risk, risk_score)
             is_at_risk = risk_score >= 0.5 or increase_pct > 20
@@ -313,8 +347,16 @@ async def get_risk_assessment(user_id: str,
         else:
             total_increase_pct = 0
 
-        risk_level = calculate_risk_level(max_risk)
-        recommendations = get_strain_recommendations(risk_level, high_risk_muscles)
+        # No volume tracked this week and no recent strain reports at all —
+        # genuinely no data, not a clean bill of health. Surfaced as a
+        # distinct level so the client can render "no data yet" instead of
+        # a green all-clear (register #336's self-contradiction).
+        if not muscle_volumes:
+            risk_level = "no_data"
+            recommendations = ["Complete a workout to start tracking strain risk."]
+        else:
+            risk_level = calculate_risk_level(max_risk)
+            recommendations = get_strain_recommendations(risk_level, high_risk_muscles)
 
         return RiskAssessmentResponse(
             user_id=user_id,
@@ -357,9 +399,11 @@ async def get_volume_history(
         today = user_today_date(request, None, user_id)
         start_date = today - timedelta(weeks=weeks)
 
-        # Build query
-        query = supabase.client.table("weekly_volume_tracking").select(
-            "week_start, muscle_group, total_sets, total_reps, total_volume_kg, strain_risk_score"
+        # Register #336: same never-populated `weekly_volume_tracking` table
+        # as risk-assessment above — read the live aggregate instead so
+        # "View History" reflects the account's actual completed workouts.
+        query = supabase.client.table("muscle_group_weekly_volume").select(
+            "week_start, muscle_group, total_sets, total_reps, total_volume_kg"
         ).eq("user_id", user_id).gte("week_start", start_date.isoformat())
 
         if muscle_group:
@@ -375,7 +419,7 @@ async def get_volume_history(
                 total_sets=row["total_sets"],
                 total_reps=row.get("total_reps", 0),
                 total_volume_kg=float(row.get("total_volume_kg", 0)),
-                strain_risk_score=float(row.get("strain_risk_score", 0)),
+                strain_risk_score=0.0,
             ))
 
         return VolumeHistoryResponse(
@@ -422,6 +466,10 @@ async def record_strain(request_body: RecordStrainRequest,
             "strain_date": today.isoformat(),
             "created_at": now,
         }
+        if request_body.request_rest_day:
+            strain_data["recovery_days"] = {
+                "mild": 2, "moderate": 4, "severe": 7,
+            }.get(request_body.severity, 2)
 
         result = supabase.client.table("strain_history").insert(strain_data).execute()
 

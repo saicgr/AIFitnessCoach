@@ -126,17 +126,22 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
     ThemeColors colors,
     FitnessScoreBreakdown? breakdown,
   ) {
-    // `scoreChange` is the week-over-week delta. Null (no prior calc yet) → 0.
+    // `scoreChange` is the week-over-week delta. The backend only fills it
+    // in once a genuine prior-week score exists — null means there is
+    // nothing to compare against yet, not "no change".
+    final hasComparison = breakdown?.scoreChange != null;
     final change = breakdown?.scoreChange ?? 0;
     final isUp = change > 0;
     final isDown = change < 0;
     final isFlat = change == 0;
 
-    final deltaColor = isUp
-        ? colors.success
-        : isDown
-            ? colors.error
-            : colors.textSecondary;
+    final deltaColor = !hasComparison
+        ? colors.textMuted
+        : isUp
+            ? colors.success
+            : isDown
+                ? colors.error
+                : colors.textSecondary;
 
     final arrow = isUp
         ? Icons.arrow_upward_rounded
@@ -144,10 +149,12 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
             ? Icons.arrow_downward_rounded
             : Icons.trending_flat_rounded;
 
-    // Signed display: "+5" / "-3" / "0".
-    final deltaText = isFlat
-        ? '0'
-        : (isUp ? '+$change' : '$change'); // negative already carries its sign
+    // Signed display: "+5" / "-3" / "0" / "—" when there's no comparison yet.
+    final deltaText = !hasComparison
+        ? '—'
+        : (isFlat
+            ? '0'
+            : (isUp ? '+$change' : '$change')); // negative already carries its sign
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -168,14 +175,16 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
                 style: ZType.disp(48, color: deltaColor),
               ),
             ),
-            const SizedBox(width: AppSpacing.xs),
-            Icon(arrow, size: 22, color: deltaColor),
+            if (hasComparison) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Icon(arrow, size: 22, color: deltaColor),
+            ],
           ],
         ),
         const SizedBox(height: 6),
         ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
         Text(
-          'WEEK OVER WEEK',
+          hasComparison ? 'WEEK OVER WEEK' : 'NOT ENOUGH DATA YET',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5),

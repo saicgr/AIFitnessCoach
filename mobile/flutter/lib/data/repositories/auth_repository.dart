@@ -1643,6 +1643,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (quizData.age != null) payload['age'] = quizData.age;
       if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
       if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
+      if (quizData.goalWeightKg != null)
+        payload['goal_weight_kg'] = quizData.goalWeightKg;
       if (quizData.workoutDays != null)
         payload['workout_days'] = quizData.workoutDays;
       if (quizData.activityLevel != null)

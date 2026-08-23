@@ -52,7 +52,13 @@ class PRsTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ShareableHeroNumber(
-              data: data,
+              // A "PERSONAL RECORDS" headline must always show an actual PR
+              // count — `data.heroValue` is volume/exercise-count for a
+              // `workoutComplete`-kind Shareable, not a record count.
+              data: data.copyWith(
+                heroValue: data.prCount ?? data.highlights.length,
+                heroUnitSingular: 'PR',
+              ),
               size: data.aspect == ShareableAspect.story ? 140 : 96,
               unitSize: 18,
               stacked: false,

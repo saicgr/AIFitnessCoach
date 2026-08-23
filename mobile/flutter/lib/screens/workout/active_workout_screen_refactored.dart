@@ -405,6 +405,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
   // Fatigue detection state
   FatigueAlertData? _fatigueAlertData;
+  double? _fatigueAlertCurrentWeightKg;
   bool _showFatigueAlert = false;
 
   // PR detection service
@@ -621,6 +622,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   FatigueAlertData? get fatigueAlertData => _fatigueAlertData;
   @override
   set fatigueAlertData(FatigueAlertData? value) => _fatigueAlertData = value;
+  @override
+  double? get fatigueAlertCurrentWeightKg => _fatigueAlertCurrentWeightKg;
+  @override
+  set fatigueAlertCurrentWeightKg(double? value) =>
+      _fatigueAlertCurrentWeightKg = value;
   @override
   bool get showFatigueAlert => _showFatigueAlert;
   @override
@@ -2461,6 +2467,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     if (workoutId == null) return;
 
     // Compute remaining indices (exercises with sets still not completed).
+    //
+    // The seconds-remaining estimate MUST mirror the server's canonical
+    // formula (`estimate_duration_minutes` in workout_duration_energy.py:
+    // sets * (40 + rest_seconds)) — not a flat 90s/set + 30s guess. A
+    // divergent client estimate made the Adjust sheet's live preview say
+    // "No changes needed" while the server, computing from real per-exercise
+    // rest_seconds, decided to trim anyway (E2E #146).
     final remainingIndices = <int>[];
     int estimatedSecondsRemaining = 0;
     for (int i = 0; i < _exercises.length; i++) {
@@ -2468,8 +2481,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       final completed = _completedSets[i]?.length ?? 0;
       if (completed < totalSets) {
         remainingIndices.add(i);
-        // 90s per set (work+rest) + 30s transition — matches server estimate.
-        estimatedSecondsRemaining += (totalSets - completed) * 90 + 30;
+        final restSeconds = _exercises[i].restSeconds ?? 60;
+        estimatedSecondsRemaining += (totalSets - completed) * (40 + restSeconds);
       }
     }
     final estimatedMinutes = (estimatedSecondsRemaining / 60).ceil().clamp(
@@ -2532,14 +2545,29 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     }
 
     // Non-blocking undo toast.
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          result.coachMessage.isNotEmpty
-              ? result.coachMessage
-              : AppLocalizations.of(context).activeWorkoutScreenWorkoutAdapted,
+        content: Row(
+          children: [
+            Expanded(
+              child: Text(
+                result.coachMessage.isNotEmpty
+                    ? result.coachMessage
+                    : AppLocalizations.of(context).activeWorkoutScreenWorkoutAdapted,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 18),
+              color: Colors.white,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () => messenger.hideCurrentSnackBar(),
+            ),
+          ],
         ),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
@@ -2791,6 +2819,18 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
             : swappedExercise.sets ?? 3;
         _previousSets[exerciseIndex] = [];
       });
+      // Row #136: the swap updated `_exercises[exerciseIndex]` above, but
+      // the weight/reps steppers and the exercise media are separate state
+      // (`weightController` / `repsController` / `imageUrl`) that only get
+      // re-derived from the exercise data via these two calls — normally
+      // fired on exercise navigation, never after a swap. Without them the
+      // stepper kept showing the PREVIOUS exercise's weight/reps against the
+      // new exercise's target, and the media stayed on the old exercise.
+      if (exerciseIndex == _currentExerciseIndex ||
+          exerciseIndex == viewingExerciseIndex) {
+        initControllersForExercise(exerciseIndex);
+      }
+      unawaited(fetchMediaForExercise(_exercises[exerciseIndex]));
       // WF4 — the swap clears the swapped exercise's completed sets; mirror
       // the map into the session so the crash-safe checkpoint doesn't keep
       // the pre-swap sets and mis-attribute them on a kill+restore.

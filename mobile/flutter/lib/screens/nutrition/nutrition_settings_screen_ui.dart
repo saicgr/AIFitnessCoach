@@ -498,20 +498,18 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
       },
     ];
 
-    Color primaryGoalColor(List<String> goals) {
-      if (goals.isEmpty) return AppColors.purple;  // accent-allowlist: goal-type categorical legend default
-      final first = goals.first;
-      return (allGoals.firstWhere(
-        (g) => g['id'] == first,
-        orElse: () => <String, dynamic>{'color': AppColors.purple},  // accent-allowlist: goal-type categorical legend default
-      )['color']) as Color;
-    }
-
     // Rate of change options
     final rateOptions = ['slow', 'moderate', 'fast', 'aggressive'];
 
-    // Local state for selections
-    List<String> selectedGoals = List.from(preferences.nutritionGoals);
+    // Local state for selections. Normalize onboarding's broader goal
+    // vocabulary (`lose_weight`, `muscle_hypertrophy`, ...) onto this
+    // sheet's canonical ids so a goal the user actually has isn't shown
+    // unchecked just because it was spelled differently upstream.
+    List<String> selectedGoals = preferences.nutritionGoals
+        .map((g) => NutritionGoal.canonicalIdOrNull(g))
+        .whereType<String>()
+        .toSet()
+        .toList();
     String selectedRate = preferences.rateOfChange ?? 'moderate';
     bool isSaving = false;
 
@@ -660,7 +658,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 ),
                 const SizedBox(height: 8),
                 Builder(builder: (context) {
-                  final themeColor = primaryGoalColor(selectedGoals);
+                  final themeColor = context.accentColor;
                   return Row(
                     children: rateOptions.map((rate) {
                       final isSelected = selectedRate == rate;
@@ -747,8 +745,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                                   SnackBar(
                                     content: Text(
                                         AppLocalizations.of(context).nutritionSettingsScreenGoalsUpdatedAndTargets),
-                                    backgroundColor:
-                                        primaryGoalColor(selectedGoals),
+                                    backgroundColor: context.accentColor,
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -768,10 +765,9 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                             }
                           },
                     style: FilledButton.styleFrom(
-                      // Use the primary goal's color as the save-button fill
-                      // so the CTA is tied to the user's chosen direction
-                      // (orange for Lose Fat, purple for Build Muscle, …).
-                      backgroundColor: primaryGoalColor(selectedGoals),
+                      // Single reserved app accent for the primary CTA —
+                      // matches Nutrition Settings' edit/refresh buttons.
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(

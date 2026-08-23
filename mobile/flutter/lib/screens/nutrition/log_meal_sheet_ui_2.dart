@@ -706,26 +706,27 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  suffixIcon: _descriptionController.text.trim().length >= 3
+                  suffixIcon: _isListening
                       ? IconButton(
-                          icon: Icon(Icons.search, color: textMuted, size: 22),
-                          onPressed: _triggerImmediateSearch,
-                          tooltip: AppLocalizations.of(context).logMealSheetSearchFoods,
-                        )
-                      : IconButton(
-                          icon: Icon(
-                            _isListening
-                                ? Icons.stop_circle_outlined
-                                : Icons.mic_none_rounded,
-                            color: _isListening
-                                ? const Color(0xFFEF4444) // accent-allowlist: recording indicator, matches AppColors.error value
-                                : textMuted,
+                          icon: const Icon(
+                            Icons.stop_circle_outlined,
+                            color: Color(0xFFEF4444), // accent-allowlist: recording indicator, matches AppColors.error value
                             size: 22,
                           ),
                           onPressed: _toggleVoiceInput,
-                          tooltip:
-                              _isListening ? AppLocalizations.of(context).logMealSheetStopListening : AppLocalizations.of(context).logMealSheetVoiceInput,
-                        ),
+                          tooltip: AppLocalizations.of(context).logMealSheetStopListening,
+                        )
+                      : _descriptionController.text.trim().length >= 3
+                          ? IconButton(
+                              icon: Icon(Icons.search, color: textMuted, size: 22),
+                              onPressed: _triggerImmediateSearch,
+                              tooltip: AppLocalizations.of(context).logMealSheetSearchFoods,
+                            )
+                          : IconButton(
+                              icon: Icon(Icons.mic_none_rounded, color: textMuted, size: 22),
+                              onPressed: _toggleVoiceInput,
+                              tooltip: AppLocalizations.of(context).logMealSheetVoiceInput,
+                            ),
                 ),
               ),
               if (_isListening)

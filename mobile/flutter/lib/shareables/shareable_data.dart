@@ -517,13 +517,15 @@ class Shareable {
     bool clearCustomPhotoSecondary = false,
     String? caption,
     bool clearCaption = false,
+    num? heroValue,
+    String? heroUnitSingular,
   }) {
     return Shareable(
       kind: kind,
       title: title,
       periodLabel: periodLabel,
-      heroValue: heroValue,
-      heroUnitSingular: heroUnitSingular,
+      heroValue: heroValue ?? this.heroValue,
+      heroUnitSingular: heroUnitSingular ?? this.heroUnitSingular,
       heroPrefix: heroPrefix,
       heroSuffix: heroSuffix,
       highlights: highlights,

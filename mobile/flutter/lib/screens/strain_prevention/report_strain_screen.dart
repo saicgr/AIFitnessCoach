@@ -57,6 +57,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
             'muscle_group': muscle.toLowerCase(),
             'severity': severity,
             'pain_level': _sorenessLevel,
+            'request_rest_day': _needsRest,
             if (_notesController.text.isNotEmpty) 'notes': _notesController.text,
           },
         );

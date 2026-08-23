@@ -7,6 +7,7 @@ import '../../../data/models/user_program_assignment.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -560,7 +561,120 @@ class _ProgramBlock extends ConsumerWidget {
             ],
           ),
         ),
+        // Row 212 — this section used to end at the tool-tile row with
+        // nothing binding it to the active profile's actual schedule, so it
+        // read as empty (a heading + EDIT PROGRAM + the tile row) no matter
+        // how many workouts were scheduled. Surfaces the next few upcoming
+        // sessions here; collapses to nothing when there genuinely are none.
+        const _UpcomingScheduleBlock(),
       ],
+    );
+  }
+}
+
+/// The active profile's next few scheduled (not yet completed) sessions,
+/// shown under the tool-tile row so "MY PROGRAM" reflects the real schedule
+/// instead of always looking empty. Scoped to the active gym profile once one
+/// exists, so a session from a profile the user has since switched away from
+/// doesn't linger here (row 208).
+class _UpcomingScheduleBlock extends ConsumerWidget {
+  const _UpcomingScheduleBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final workouts =
+        ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
+    final profiles = ref.watch(gymProfilesProvider).valueOrNull ?? const [];
+    final activeProfileId = ref.watch(activeGymProfileIdProvider);
+
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+
+    final upcoming = workouts.where((w) {
+      if (w.isCompleted == true) return false;
+      final day = scheduledLocalDay(w.scheduledDate);
+      if (day == null) return false;
+      if (DateTime(day.year, day.month, day.day).isBefore(todayKey)) {
+        return false;
+      }
+      // Only scope by profile once the user actually has gym profiles —
+      // otherwise every workout (which predates profiles entirely) would
+      // vanish.
+      if (profiles.isNotEmpty && w.gymProfileId != activeProfileId) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) {
+        final da = scheduledLocalDay(a.scheduledDate) ?? DateTime(9999);
+        final db = scheduledLocalDay(b.scheduledDate) ?? DateTime(9999);
+        return da.compareTo(db);
+      });
+
+    if (upcoming.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('UPCOMING',
+              style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 2.4)),
+          const SizedBox(height: 6),
+          for (final w in upcoming.take(4)) _UpcomingScheduleRow(workout: w),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingScheduleRow extends StatelessWidget {
+  final Workout workout;
+  const _UpcomingScheduleRow({required this.workout});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final day = scheduledLocalDay(workout.scheduledDate);
+    const names = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final weekday = day == null ? '' : names[(day.weekday - 1).clamp(0, 6)];
+
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        context.push('/workout/${workout.id}', extra: workout);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: tc.cardBorder)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 42,
+              child: Text(
+                weekday,
+                style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.2),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                workout.name ?? 'Workout',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  color: tc.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, size: 18, color: tc.textMuted),
+          ],
+        ),
+      ),
     );
   }
 }

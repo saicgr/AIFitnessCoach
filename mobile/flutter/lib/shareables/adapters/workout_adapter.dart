@@ -186,6 +186,10 @@ class WorkoutAdapter {
       heroUnitSingular: volumeKg != null ? unit : 'exercise',
       highlights: highlights,
       subMetrics: const [],
+      // Real PR count for this session, independent of `heroValue` (which is
+      // volume/exercise count here) — the "PRs" template must never present
+      // an exercise/volume figure under a "PERSONAL RECORDS" headline.
+      prCount: newPRs?.length ?? 0,
       exercises: exercises,
       // Fall back to muscles derived from the exercises' primary-muscle
       // tags when the caller didn't supply a count map — without this the

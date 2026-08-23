@@ -429,8 +429,21 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
           // Tap to open the same edit sheet. We always render it so users
           // have a one-tap entry into their goal — no more separate card.
           _GoalPill(
-            primaryGoal: preferences.nutritionGoal,
-            allGoals: preferences.nutritionGoals,
+            primaryGoal: () {
+              final normalized = preferences.nutritionGoals
+                  .map((g) => NutritionGoal.canonicalIdOrNull(g))
+                  .whereType<String>()
+                  .toSet()
+                  .toList();
+              return normalized.isNotEmpty
+                  ? normalized.first
+                  : NutritionGoal.fromString(preferences.nutritionGoal).value;
+            }(),
+            allGoals: preferences.nutritionGoals
+                .map((g) => NutritionGoal.canonicalIdOrNull(g))
+                .whereType<String>()
+                .toSet()
+                .toList(),
             onEdit: () => _showEditGoalsSheet(
               context,
               isDark,

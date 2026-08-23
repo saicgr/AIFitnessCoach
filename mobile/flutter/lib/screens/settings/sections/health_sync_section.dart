@@ -165,8 +165,47 @@ class HealthSyncSection extends StatelessWidget {
         if (Platform.isAndroid) ...[
           const SizedBox(height: 8),
           const _SamsungHealthHelpRow(),
+        ] else ...[
+          // This screen (Health & Devices) has no in-app device pairing —
+          // pairing a watch/ring happens in the Apple Health app itself.
+          // Name that real path instead of leaving the toggle above as the
+          // only control, with nothing explaining how to add a device.
+          const SizedBox(height: 8),
+          const _PairWearableHelpRow(),
         ],
       ],
+    );
+  }
+}
+
+/// Helper row for iOS users: this screen only controls what syncs into
+/// Zealova once Apple Health already has a device paired — pairing a watch
+/// or ring is done in the Apple Health app, not here.
+class _PairWearableHelpRow extends StatelessWidget {
+  const _PairWearableHelpRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.help_outline, size: 14, color: textMuted),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Pairing a watch or ring? Pair it in the Apple Health app, then '
+              'turn on sync above — its data flows into ${Branding.appName} '
+              'automatically.',
+              style: TextStyle(fontSize: 12, color: textMuted, height: 1.35),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -132,11 +132,13 @@ final recoveryProvider =
         totalWeight += 25;
       }
 
-      int finalScore = 0;
-      if (totalWeight > 0) {
-        finalScore =
-            ((totalPoints / totalWeight) * 100).round().clamp(0, 100);
-      }
+      // No resting HR AND no sleep data at all: nothing to score. Returning
+      // null (not a fabricated 0) lets the UI show its honest "needs a
+      // resting heart rate or a tracked night" empty state instead of a red
+      // "Poor recovery" ring for an account with zero inputs.
+      if (totalWeight == 0) return null;
+      final finalScore =
+          ((totalPoints / totalWeight) * 100).round().clamp(0, 100);
       return ObjectiveRecoveryScore(
         score: finalScore,
         restingHR: restingHR,
@@ -180,11 +182,15 @@ final recoveryProvider =
       totalWeight += 25;
     }
 
+    // No resting HR AND no sleep data at all: nothing to score. Returning
+    // null (not a fabricated 0) lets the UI show its honest "needs a resting
+    // heart rate or a tracked night" empty state instead of a red "Poor
+    // recovery" ring for an account with zero inputs.
+    if (totalWeight == 0) return null;
+
     // Compute weighted average normalized to 100
-    int finalScore = 0;
-    if (totalWeight > 0) {
-      finalScore = ((totalPoints / totalWeight) * 100).round().clamp(0, 100);
-    }
+    final finalScore =
+        ((totalPoints / totalWeight) * 100).round().clamp(0, 100);
 
     return ObjectiveRecoveryScore(
       score: finalScore,

@@ -54,9 +54,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
   // Persist the swap going forward: future AI generations replace the old
   // exercise with the new one, and progressive-overload history follows it.
-  // Defaults ON — directly answers "I want to swap once, not every week."
+  // Defaults OFF — several of the reason chips right above this toggle
+  // ("Equipment unavailable", "Injury/pain") describe a ONE-OFF reason for
+  // today, not a standing program change, so defaulting this on silently
+  // rewrote the plan for a temporary swap. The user opts in when they
+  // actually want it to stick.
   // Hidden on the preview-swap path (previews aren't committed).
-  bool _applyToFuture = true;
+  bool _applyToFuture = false;
 
   /// When non-null, the row whose name (case-insensitive) matches this
   /// gets a brief cyan pulse highlight on first paint after the targeted
@@ -964,7 +968,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                   ),
                                 ),
                                 Text(
-                                  'Future plans use this exercise and keep your progress',
+                                  'Future plans use the exercise you pick below instead of '
+                                  '${widget.exercise.name}, and keep its progress',
                                   style: TextStyle(fontSize: 11, color: textMuted),
                                 ),
                               ],

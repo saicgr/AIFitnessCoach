@@ -247,11 +247,12 @@ class GlucoseReadingsNotifier extends StateNotifier<GlucoseReadingsState> {
     try {
       debugPrint('[GlucoseReadings] Loading readings for $uid');
       final response = await _client.get(
-        '/diabetes/glucose/readings',
+        '/diabetes/glucose/$uid/history',
         queryParameters: {
-          'user_id': uid,
-          if (startDate != null) 'start_date': startDate.toIso8601String(),
-          if (endDate != null) 'end_date': endDate.toIso8601String(),
+          if (startDate != null)
+            'from_date': startDate.toIso8601String().substring(0, 10),
+          if (endDate != null)
+            'to_date': endDate.toIso8601String().substring(0, 10),
           'limit': limit,
         },
       );
@@ -409,8 +410,7 @@ class GlucoseReadingsNotifier extends StateNotifier<GlucoseReadingsState> {
     try {
       debugPrint('[GlucoseReadings] Deleting reading: $readingId');
       await _client.delete(
-        '/diabetes/glucose/readings/$readingId',
-        queryParameters: {'user_id': uid},
+        '/diabetes/glucose/$uid/$readingId',
       );
 
       // Remove from list

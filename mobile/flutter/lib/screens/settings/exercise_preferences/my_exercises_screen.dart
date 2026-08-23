@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
@@ -47,6 +48,12 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'my_exercises_viewed');
+      // Queue tab reconciliation: the queue provider is app-scoped and
+      // cache-first, so a queued exercise the server already marked used (and
+      // injected into a workout) can keep rendering as pending until this
+      // screen is opened again. Refresh silently on every visit so the tab
+      // still opens instantly but self-corrects when it's stale.
+      ref.read(exerciseQueueProvider.notifier).silentRefresh();
     });
   }
 

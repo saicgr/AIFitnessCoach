@@ -55,7 +55,11 @@ class WeightProjectionCalculator {
     );
 
     final weeksNeeded = (weightDiff / weeklyRate).ceil();
-    return DateTime.now().add(Duration(days: weeksNeeded * 7));
+    // UTC calendar-date anchor, matching `date.today()` on the
+    // `/onboarding/computed-goal-date` backend (server runs UTC).
+    final todayUtc = DateTime.now().toUtc();
+    final anchor = DateTime.utc(todayUtc.year, todayUtc.month, todayUtc.day);
+    return anchor.add(Duration(days: weeksNeeded * 7));
   }
 
   /// Generate smooth curve with data points for chart

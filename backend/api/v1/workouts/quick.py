@@ -63,7 +63,7 @@ from .scheduled_date_anchor import (
     anchor_today,
     scheduled_local_date,
 )
-from ._gym_profile_helpers import get_active_gym_profile_id
+from ._gym_profile_helpers import get_active_gym_profile_id, get_active_gym_profile
 from core.timezone_utils import get_user_today, local_day_bounds, resolve_timezone
 
 router = APIRouter()
@@ -123,6 +123,11 @@ class QuickWorkoutResponse(BaseModel):
     focus: Optional[str] = None
     exercises_count: int
     source: QuickWorkoutSource = "button"
+    # Set only when the final exercise list didn't match the requested
+    # `focus` and the type/name were relabeled from what actually shipped —
+    # explains an injury-driven (or filter-driven) focus switch instead of
+    # silently discarding the user's selection (register #189).
+    focus_switch_note: Optional[str] = None
 
 
 class QuickWorkoutSaveRequest(BaseModel):
@@ -375,7 +380,21 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
 
         # Use request overrides or fall back to user profile
         fitness_level = body.difficulty or user.get("fitness_level", "intermediate")
-        equipment = body.equipment if body.equipment is not None else user.get("equipment", [])
+        # Equipment must come from the ACTIVE GYM PROFILE first, not the
+        # user's global `equipment` column — that column belongs to no
+        # particular gym, so a user whose active profile is "QA Home Gym"
+        # (bodyweight only) still got barbell/machine exercises because this
+        # endpoint never looked at the profile at all. The Exercise Library
+        # screen already scopes its own filter to the active profile's
+        # equipment (109 bodyweight-appropriate results); Quick Generate's
+        # candidate pool must use the same source (register #274).
+        _active_gym_profile = get_active_gym_profile(db, body.user_id)
+        if body.equipment is not None:
+            equipment = body.equipment
+        elif _active_gym_profile is not None:
+            equipment = _active_gym_profile.get("equipment") or []
+        else:
+            equipment = user.get("equipment", [])
 
         # Get user preferences
         avoided_exercises = await get_user_avoided_exercises(body.user_id)
@@ -610,6 +629,69 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                         f"→ added {len(_inj_added)} safe for {active_injuries}"
                     )
 
+            # `exercises` is truly final now — the injury guard above (and the
+            # focus/muscle filters before it) can change what actually shipped
+            # since `workout_type` was read from Gemini's raw output. Without
+            # this check the card kept stamping "TYPE: UPPER_BODY" / "Biceps &
+            # Glutes" even when the final list was mostly posterior-chain work
+            # picked to route around a shoulder/knee limitation — the user's
+            # explicit focus was silently discarded with no explanation
+            # (register #189). If NONE of the final exercises actually match
+            # the requested focus, relabel from what was actually shipped and
+            # say why when an injury forced the change.
+            focus_switch_note = None
+            if exercises and body.focus:
+                try:
+                    from .focus_validation_utils import (
+                        validate_exercise_matches_focus,
+                        FOCUS_AREA_MUSCLES,
+                    )
+                    _orig_focus = body.focus
+                    _matches_orig = any(
+                        validate_exercise_matches_focus(
+                            ex.get("name") or ex.get("exercise_name") or "",
+                            ex.get("muscle_group") or ex.get("target_muscle") or "",
+                            _orig_focus,
+                        ).get("matches")
+                        for ex in exercises
+                    )
+                    if not _matches_orig:
+                        from collections import Counter as _Counter
+                        _muscle_counts: _Counter = _Counter(
+                            (ex.get("muscle_group") or ex.get("target_muscle") or "").lower().strip()
+                            for ex in exercises
+                            if (ex.get("muscle_group") or ex.get("target_muscle"))
+                        )
+                        _actual_focus = None
+                        for _cand_focus, _keywords in FOCUS_AREA_MUSCLES.items():
+                            if any(
+                                any(kw in m or m in kw for kw in _keywords)
+                                for m in _muscle_counts
+                            ):
+                                _actual_focus = _cand_focus
+                                break
+                        if _actual_focus and _actual_focus != _orig_focus:
+                            workout_type = _actual_focus
+                            if active_injuries:
+                                focus_switch_note = (
+                                    f"Switched from {_orig_focus.replace('_', ' ')} to "
+                                    f"{_actual_focus.replace('_', ' ')} — kept clear of "
+                                    f"movements that stress your {', '.join(active_injuries)}."
+                                )
+                            else:
+                                focus_switch_note = (
+                                    f"Shipped as {_actual_focus.replace('_', ' ')} — the "
+                                    f"final exercise list didn't match the requested "
+                                    f"{_orig_focus.replace('_', ' ')} focus."
+                                )
+                            logger.warning(
+                                f"[Quick] focus '{_orig_focus}' requested but final "
+                                f"exercises train '{_actual_focus}' — relabeled type "
+                                f"and {'attached' if focus_switch_note else 'skipped'} explanation"
+                            )
+                except Exception as _focus_check_err:
+                    logger.warning(f"⚠️ [Quick] focus-vs-final-list check failed: {_focus_check_err}")
+
             if not exercises:
                 raise safe_internal_error(ValueError("No valid exercises generated"), "workouts")
 
@@ -651,6 +733,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 "duration": body.duration,
                 "quick_workout": True,
                 "source": body.source,
+                "focus_switch_note": focus_switch_note,
             }),
             "is_current": False,
             # Scope this session to the user's active gym profile (row 208) —
@@ -716,6 +799,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             focus=body.focus,
             exercises_count=len(exercises),
             source=body.source,
+            focus_switch_note=focus_switch_note,
         )
 
     except HTTPException:

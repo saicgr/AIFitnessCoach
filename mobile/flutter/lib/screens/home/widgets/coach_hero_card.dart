@@ -35,6 +35,7 @@ import '../../../data/providers/sleep_score_provider.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
+import '../../../core/providers/user_provider.dart' show hydrationUseOzProvider;
 import '../../nutrition/log_meal_sheet.dart';
 import '../../workout/widgets/hydration_dialog.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -55,6 +56,9 @@ import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/providers/root_messenger.dart';
+
+const double _mlPerOz = 29.5735;
+
 class CoachHeroCard extends ConsumerStatefulWidget {
   const CoachHeroCard({super.key});
 
@@ -403,13 +407,24 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final waterMl = water.summary?.totalMl ?? 0;
     final waterGoalMl = water.summary?.goalMl ?? water.dailyGoalMl;
     final waterDone = waterLoaded && waterGoalMl > 0 && waterMl >= waterGoalMl;
+    // Single source of truth (hydrationUseOzProvider) so this to-do never
+    // disagrees with the Hydration screen or the Home water tile.
+    final waterUseOz = ref.watch(hydrationUseOzProvider);
+    final waterUnit = waterUseOz ? 'oz' : 'L';
+    final waterValue = waterUseOz ? waterMl / _mlPerOz : waterMl / 1000;
+    final waterGoalValue = waterUseOz ? waterGoalMl / _mlPerOz : waterGoalMl / 1000;
+    final waterValueLabel =
+        waterUseOz ? waterValue.round().toString() : waterValue.toStringAsFixed(1);
+    final waterGoalLabel = waterUseOz
+        ? waterGoalValue.round().toString()
+        : waterGoalValue.toStringAsFixed(1);
     tasks.add(_TodoTask(
       icon: Icons.local_drink_rounded,
       done: waterDone,
       label: 'Stay hydrated',
-      trailing: waterLoaded ? '${(waterMl / 1000).toStringAsFixed(1)}L' : '···',
+      trailing: waterLoaded ? '$waterValueLabel$waterUnit' : '···',
       detail: waterLoaded
-          ? '${(waterMl / 1000).toStringAsFixed(1)} / ${(waterGoalMl / 1000).toStringAsFixed(1)} L'
+          ? '$waterValueLabel / $waterGoalLabel $waterUnit'
           : 'Loading…',
       actionLabel: 'Log water',
       onTap: () async {

@@ -703,6 +703,7 @@ def generate_quick_workout(
     intensity: str = "moderate",
     constraints_text: str = None,
     focus: str = None,
+    force_regenerate: bool = False,
 ) -> Dict[str, Any]:
     """
     Generate a quick workout for the user using the Exercise Library.
@@ -721,6 +722,16 @@ def generate_quick_workout(
             honor those constraints (pain/injury is a HARD avoidance).
         focus: Optional muscle/area focus (e.g. "legs", "upper", "core") to bias
             the workout toward when the user names one.
+        force_regenerate: Set True ONLY when the user explicitly asks for a
+            DIFFERENT/new workout ("give me a new one", "regenerate this",
+            "I don't like this, try again", "make it harder/easier" — a
+            change to duration/type/intensity/focus/constraints also implies
+            this). Leave False (default) for a plain "what's my workout
+            today?" / "generate my workout for today" ask — when today's
+            session already exists and nothing about the request asks to
+            change it, the existing workout is returned as-is instead of
+            spending a full generation pass to rebuild the identical thing
+            and re-describing it as freshly made.
 
     Returns:
         Result dict with the new quick workout details
@@ -927,6 +938,36 @@ def generate_quick_workout(
                 if isinstance(old_exercises, str):
                     old_exercises = json.loads(old_exercises) if old_exercises else []
                 old_exercise_names = [e.get("name", "Unknown") for e in old_exercises] if old_exercises else []
+
+                # E2E row #277: "generate my workout for today" always fell
+                # through to the full generation pipeline below (~15s), which
+                # then UPDATED this same row in place with the identical
+                # inputs → an identical exercise list, framed by the chat
+                # reply as freshly made, with no new `workouts` row and no
+                # `created_at` change. Answer instantly with what already
+                # exists instead — only an explicit ask for something
+                # different (`force_regenerate=True`) should pay the
+                # generation cost.
+                if not force_regenerate:
+                    return {
+                        "success": True,
+                        "action": "get_existing_workout",
+                        "workout_id": workout_id,
+                        "workout_name": workout.get("name"),
+                        "duration_minutes": workout.get("duration_minutes"),
+                        "workout_type": workout.get("type") or workout_type,
+                        "intensity": workout.get("difficulty"),
+                        "exercises_removed": [],
+                        "exercises_added": [],
+                        "exercise_count": len(old_exercises),
+                        "is_new_workout": False,
+                        "created_at": workout.get("created_at"),
+                        "message": (
+                            f"Here's today's session, \"{workout.get('name')}\" — "
+                            f"already set up with {len(old_exercises)} exercises. "
+                            "Say the word if you'd like a different one."
+                        ),
+                    }
             else:
                 is_new_workout = True
 

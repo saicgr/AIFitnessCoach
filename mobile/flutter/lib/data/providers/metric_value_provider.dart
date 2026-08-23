@@ -12,6 +12,7 @@ import '../models/metric_value.dart';
 import '../models/today_score.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/nutrition_repository.dart';
+import '../../core/providers/user_provider.dart' show hydrationUseOzProvider;
 import '../services/health_service.dart';
 import '../../screens/home/widgets/cards/readiness_score_card.dart'
     show readinessScoreSignalProvider;
@@ -226,16 +227,24 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
     case RingKind.hydration:
       {
         final s = ref.watch(hydrationProvider).todaySummary;
-        if (s == null) return base(empty: true, unit: 'oz');
-        final oz = s.totalMl / _mlPerOz;
-        final goalOz = s.goalMl / _mlPerOz;
+        // Single source of truth (hydrationUseOzProvider) so this tile never
+        // disagrees with the Hydration screen or the "Stay hydrated" to-do.
+        final useOz = ref.watch(hydrationUseOzProvider);
+        final unit = useOz ? 'oz' : 'L';
+        if (s == null) return base(empty: true, unit: unit);
+        final value = useOz ? s.totalMl / _mlPerOz : s.totalMl / 1000;
+        final goalValue = useOz ? s.goalMl / _mlPerOz : s.goalMl / 1000;
+        final displayValue =
+            useOz ? value.round().toString() : value.toStringAsFixed(1);
+        final goalLabel =
+            useOz ? goalValue.round().toString() : goalValue.toStringAsFixed(1);
         return base(
-          value: oz,
-          displayValue: oz.round().toString(),
-          unit: 'oz',
-          goal: goalOz,
+          value: value,
+          displayValue: displayValue,
+          unit: unit,
+          goal: goalValue,
           pct: (s.goalPercentage / 100).clamp(0.0, 1.0),
-          deltaLabel: s.goalMl > 0 ? 'of ${goalOz.round()} oz' : null,
+          deltaLabel: s.goalMl > 0 ? 'of $goalLabel $unit' : null,
         );
       }
     case RingKind.heartRate:

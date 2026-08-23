@@ -473,10 +473,25 @@ async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
             .execute()
         )
 
-    wrapped_result, logs_result, prs_result = await asyncio.gather(
+    def _query_current_month_perf_logs():
+        # Volume source of truth (matches GET /scores/volume-trend, the same
+        # figure the Home streak card shows) — `workout_logs.exercises_completed`
+        # is a legacy denormalized blob that isn't always populated, which is
+        # why this screen could show 0 lbs for a month with real logged sets.
+        return (
+            db.client.table("performance_logs")
+            .select("reps_completed, weight_kg, is_completed, recorded_at")
+            .eq("user_id", user_id)
+            .gte("recorded_at", month_start_str)
+            .lt("recorded_at", month_end_str)
+            .execute()
+        )
+
+    wrapped_result, logs_result, prs_result, perf_logs_result = await asyncio.gather(
         loop.run_in_executor(_db_executor, _query_all_wrapped),
         loop.run_in_executor(_db_executor, _query_current_month_logs),
         loop.run_in_executor(_db_executor, _query_current_month_prs),
+        loop.run_in_executor(_db_executor, _query_current_month_perf_logs),
     )
 
     # --- Build "available" list from fitness_wrapped rows ---
@@ -522,23 +537,24 @@ async def get_wrapped_summary(user_id: str, auth_id: str) -> Dict[str, Any]:
     current_logs = logs_result.data or []
     workouts_so_far = len(current_logs)
 
-    # Calculate volume using same parsing logic as _aggregate_stats
-    volume_so_far = 0
-    for log in current_logs:
-        exercises_json = log.get("exercises_completed") or "[]"
-        try:
-            exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
-        except (json.JSONDecodeError, TypeError):
-            exercises = []
-
-        if isinstance(exercises, list):
-            for ex in exercises:
-                sets_data = ex.get("sets") or ex.get("sets_completed") or []
-                if isinstance(sets_data, list):
-                    for s in sets_data:
-                        reps = s.get("reps") or s.get("actual_reps") or 0
-                        weight = s.get("weight") or s.get("actual_weight") or 0
-                        volume_so_far += (int(reps) if reps else 0) * (float(weight) if weight else 0)
+    # Volume from `performance_logs` (KG, the storage unit) — NOT
+    # `workout_logs.exercises_completed`, a legacy denormalized blob that
+    # isn't always populated (register #377: a month with 3,152 kg / 6,950 lb
+    # of real logged sets rendered "0 lbs VOLUME" here because this blob was
+    # empty for those sessions, even though performance_logs had every set).
+    # Converted to lbs to match this field's existing unit (see
+    # `total_volume_lbs` above / `_formatVolume` on the Flutter side).
+    volume_so_far_kg = 0.0
+    for row in (perf_logs_result.data or []):
+        if row.get("is_completed") is False:
+            continue
+        reps = row.get("reps_completed")
+        if not isinstance(reps, (int, float)) or reps <= 0:
+            continue
+        weight = row.get("weight_kg")
+        weight_kg = float(weight) if isinstance(weight, (int, float)) and weight > 0 else 0.0
+        volume_so_far_kg += weight_kg * float(reps)
+    volume_so_far = volume_so_far_kg * 2.20462
 
     prs_so_far = len(prs_result.data or [])
     days_until_drop = (month_end - now).days

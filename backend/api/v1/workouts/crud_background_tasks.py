@@ -346,11 +346,18 @@ async def recalculate_user_fitness_score(user_id: str, supabase, timezone_str: s
                 f"uses the neutral baseline {NEUTRAL_READINESS_BASELINE}"
             )
 
-        # 5. Get previous fitness score
+        # 5. Get previous fitness score — only a row genuinely from a prior
+        # week (>=7 days back) counts as a week-over-week baseline. Without
+        # this gate, a same-day/same-week recompute becomes its own
+        # "previous" score and a brand-new account reports a fabricated
+        # week-over-week delta.
+        one_week_ago = (date.fromisoformat(get_user_today(timezone_str)) - timedelta(days=7)).isoformat()
         previous_response = supabase.table("fitness_scores").select(
             "overall_fitness_score"
         ).eq(
             "user_id", user_id
+        ).lte(
+            "calculated_date", one_week_ago
         ).order(
             "calculated_at", desc=True
         ).limit(1).execute()

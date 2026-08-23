@@ -13,6 +13,7 @@
 //     and the chat-rename crash all land here.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:fitwiz/widgets/branded_error_widget.dart';
 
@@ -98,13 +99,36 @@ void main() {
           reason: 'tapping Go back must actually pop the route');
     });
 
-    testWidgets('hides the control when there is nothing to pop to',
+    testWidgets(
+        'offers a Go to Home control (not Go back) when there is nothing to pop to',
         (tester) async {
-      // This widget also replaces small inline widgets mid-screen and can
-      // surface before any Navigator exists. A dead button is worse than none.
-      await tester.pumpWidget(_inSlot(slot: const Size(360, 300)));
+      // Reached via a deep link (no back stack) — the boundary must not
+      // strand the user until they relaunch the app.
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => Scaffold(
+              body: BrandedErrorWidget(details: _details()),
+            ),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const Scaffold(body: Text('home')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pump();
+
       expect(find.text('Go back'), findsNothing);
+      expect(find.text('Go to Home'), findsOneWidget);
+
+      await tester.tap(find.text('Go to Home'));
+      await tester.pumpAndSettle();
+      expect(find.text('home'), findsOneWidget,
+          reason: 'tapping Go to Home must actually navigate there');
     });
 
     testWidgets('a tiny slot still renders the minimal mark, not a crash',

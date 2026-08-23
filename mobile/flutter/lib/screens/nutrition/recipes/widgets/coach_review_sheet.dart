@@ -33,6 +33,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
   CoachReview? _review;
   bool _loading = false;
   String? _error;
+  bool _humanProRequested = false;
 
   @override
   void initState() {
@@ -96,12 +97,15 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
             ),
             const SizedBox(height: 12),
             ZealovaButton(
-              label: AppLocalizations.of(context).coachReviewRequestHumanProReview,
+              label: _humanProRequested
+                  ? AppLocalizations.of(context).coachReviewWeLlNotifyYou
+                  : AppLocalizations.of(context).coachReviewRequestHumanProReview,
               variant: ZealovaButtonVariant.ghost,
-              onTap: _review == null ? null : () async {
+              onTap: _review == null || _humanProRequested ? null : () async {
                 try {
                   await ref.read(recipeRepositoryProvider).requestHumanProReview(_review!.id);
                   if (mounted) {
+                    setState(() => _humanProRequested = true);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(AppLocalizations.of(context).coachReviewWeLlNotifyYou)),
                     );

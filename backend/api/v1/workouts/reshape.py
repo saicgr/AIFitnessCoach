@@ -154,6 +154,42 @@ def _priority_rank(ex: Dict[str, Any]) -> int:
     return 3  # compound / primary work — kept
 
 
+def _reshape_set_targets(
+    set_targets: Any, new_sets: Optional[int], new_reps: Optional[int]
+) -> Any:
+    """Rewrite an exercise's per-set `set_targets` array to match its just-
+    scaled `sets`/`reps` scalars.
+
+    Row #? (this fix): reshape used to rewrite ONLY the scalar `sets`/`reps`/
+    `rest_seconds` fields — the Advanced session UI reads `set_targets`
+    instead, so the accepted trim (e.g. 4 sets -> 3) never reached the
+    per-set header ("Set 1 of 4") or the per-set rep targets shown during the
+    session. Truncates to `new_sets` entries (never pads — reshape only ever
+    reduces or holds steady), scales `target_reps` on WORKING sets to the new
+    rep scalar, and deliberately leaves warmup/drop/failure/amrap entries'
+    own typing (reps, weight, rpe) untouched so a warmup set doesn't suddenly
+    read as a working set. Renumbers `set_number` so it stays 1..N contiguous
+    after truncation.
+    """
+    if not isinstance(set_targets, list) or not set_targets:
+        return set_targets
+    if not isinstance(new_sets, int) or new_sets <= 0:
+        return set_targets
+
+    truncated = set_targets[:new_sets] if new_sets < len(set_targets) else list(set_targets)
+    out: List[Any] = []
+    for i, st in enumerate(truncated):
+        if not isinstance(st, dict):
+            out.append(st)
+            continue
+        new_st = dict(st)
+        if new_reps is not None and (new_st.get("set_type") or "working") == "working":
+            new_st["target_reps"] = new_reps
+        new_st["set_number"] = i + 1
+        out.append(new_st)
+    return out
+
+
 def _apply_readiness_scaling(
     exercises: List[Dict[str, Any]], readiness_100: int
 ) -> List[Dict[str, Any]]:
@@ -176,6 +212,13 @@ def _apply_readiness_scaling(
             new_ex["reps"] = adj["reps"]
         if adj.get("rest_seconds") is not None:
             new_ex["rest_seconds"] = adj["rest_seconds"]
+        # Keep set_targets — the Advanced session's actual source of truth —
+        # in lockstep with the scalars rewritten above. Without this the
+        # session UI still reads the pre-reshape set count/reps.
+        if "set_targets" in new_ex:
+            new_ex["set_targets"] = _reshape_set_targets(
+                new_ex.get("set_targets"), new_ex.get("sets"), new_ex.get("reps")
+            )
         out.append(new_ex)
     return out
 
@@ -347,6 +390,28 @@ async def reshape_for_readiness(
 
     did_reshape = bool(reasons) and reshaped != original
     applied = False
+    if did_reshape:
+        # Consistency check (non-fatal, log-only — this endpoint is
+        # deliberately fail-open): `sets` and `set_targets` must not drift
+        # apart again the way they did before this fix. A warmup/drop/failure
+        # entry can legitimately push set_targets one longer than the working
+        # `sets` count, so this only flags a WORKING-set shortfall.
+        for ex in reshaped:
+            if not isinstance(ex, dict):
+                continue
+            targets = ex.get("set_targets")
+            n_sets = ex.get("sets")
+            if isinstance(targets, list) and targets and isinstance(n_sets, int):
+                working = sum(
+                    1 for t in targets
+                    if isinstance(t, dict) and (t.get("set_type") or "working") == "working"
+                )
+                if working < n_sets:
+                    logger.warning(
+                        "[reshape] set_targets/sets mismatch after reshape: "
+                        f"exercise={ex.get('name')!r} sets={n_sets} "
+                        f"working_set_targets={working} total_set_targets={len(targets)}"
+                    )
     if did_reshape and req.apply:
         try:
             new_minutes = round(_estimate_minutes(reshaped))

@@ -162,7 +162,15 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
               Positioned.fill(
                 child: FatigueAlertModal(
                   alertData: fatigueAlertData!,
-                  currentWeight: double.tryParse(weightController.text) ?? 0,
+                  // The just-logged set's actual weight (snapshotted when
+                  // the alert fired), not a live re-read of the controller —
+                  // by build time it has already advanced to the next set's
+                  // suggested weight.
+                  currentWeight: fatigueAlertCurrentWeightKg != null
+                      ? (useKg
+                          ? fatigueAlertCurrentWeightKg!
+                          : fatigueAlertCurrentWeightKg! / 0.453592)
+                      : (double.tryParse(weightController.text) ?? 0),
                   exerciseName: currentExercise.name,
                   onAcceptSuggestion: handleAcceptFatigueSuggestion,
                   onContinueAsPlanned: handleDismissFatigueAlert,
@@ -372,9 +380,16 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
               ),
 
             // Floating AI Coach FAB (visible when not resting, not hidden for session, and enabled in settings)
+            //
+            // `bottom: 90` used to match the SetTrackingOverlay's own
+            // `bottom: 90` anchor above — but that overlay's Complete Set
+            // button sits at its OWN bottom (margin bottom:4, height 56), i.e.
+            // screen-bottom range ~[94, 150], which the 56pt avatar at [90,
+            // 146] sat directly on top of, clipping the button's label. Clear
+            // above that button instead of matching its anchor.
             if (!isResting && !hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
               Positioned(
-                bottom: MediaQuery.of(_ctx).padding.bottom + 90,
+                bottom: MediaQuery.of(_ctx).padding.bottom + 160,
                 right: 20,
                 child: buildFloatingAICoachButton(currentExercise),
               ),

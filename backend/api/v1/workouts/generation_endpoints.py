@@ -1321,7 +1321,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             has_gym_equipment = any(eq not in _bw_aliases for eq in equipment_lower)
 
             if has_gym_equipment and exercises:
-                bw_keywords = {"bodyweight", "body weight", ""}
+                bw_keywords = {"bodyweight", "body weight", "none", ""}
                 bw_exercises = [ex for ex in exercises if (ex.get("equipment", "") or "").lower() in bw_keywords]
                 equip_exercises = [ex for ex in exercises if (ex.get("equipment", "") or "").lower() not in bw_keywords]
                 bodyweight_count = len(bw_exercises)
@@ -1791,6 +1791,63 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 status_code=500,
                 detail=f"Failed to generate workout: {str(ai_error)}"
             )
+
+        # E2E register row #46 — `workout_name` above is still Gemini's raw
+        # title, generated before every equipment/variety/completeness filter
+        # ran, so it describes the exercises Gemini FIRST proposed, not the
+        # ones that survived to this point (e.g. "Balanced Glute Performance"
+        # shipping with zero glute-specific movements). `exercises` is truly
+        # final now — if none of them actually match the focus the title
+        # implies, replace it with an honest, deterministic title built from
+        # the muscle groups the final list actually trains.
+        if exercises and focus_areas:
+            try:
+                from .focus_validation_utils import validate_exercise_matches_focus, FOCUS_AREA_MUSCLES
+                _orig_focus = focus_areas[0]
+                _matches_orig = any(
+                    validate_exercise_matches_focus(
+                        ex.get("name") or ex.get("exercise_name") or "",
+                        ex.get("muscle_group") or ex.get("target_muscle") or "",
+                        _orig_focus,
+                    ).get("matches")
+                    for ex in exercises
+                )
+                if not _matches_orig:
+                    from collections import Counter as _Counter
+                    _muscle_counts: _Counter = _Counter(
+                        (ex.get("muscle_group") or ex.get("target_muscle") or "").lower().strip()
+                        for ex in exercises
+                        if (ex.get("muscle_group") or ex.get("target_muscle"))
+                    )
+                    _actual_focus = None
+                    for _cand_focus, _keywords in FOCUS_AREA_MUSCLES.items():
+                        if any(
+                            any(kw in m or m in kw for kw in _keywords)
+                            for m in _muscle_counts
+                        ):
+                            _actual_focus = _cand_focus
+                            break
+                    if _actual_focus and _actual_focus != _orig_focus:
+                        from services.workout_naming import generate_workout_name
+                        _retitled = generate_workout_name(
+                            goal=(goals[0] if isinstance(goals, list) and goals else None),
+                            focus=_actual_focus,
+                            equipment=equipment if isinstance(equipment, list) else None,
+                            duration_minutes=target_duration,
+                            difficulty=difficulty,
+                            workout_type=workout_type,
+                            user_id=str(body.user_id) if getattr(body, "user_id", None) else None,
+                            workout_id=str(body.scheduled_date) if body.scheduled_date else None,
+                        )
+                        logger.warning(
+                            f"[Naming] '{workout_name}' was built from focus "
+                            f"'{_orig_focus}' but no final exercise matches it — "
+                            f"retitled from actual muscle coverage "
+                            f"'{_actual_focus}': '{_retitled}'"
+                        )
+                        workout_name = _retitled
+            except Exception as _retitle_err:
+                logger.warning(f"⚠️ [Naming] focus-vs-final-list retitle check failed: {_retitle_err}")
 
         # Compute estimated calories using MET-based formula
         _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0

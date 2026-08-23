@@ -102,9 +102,30 @@ async def build_todays_sets_context(user_id: str, user_tz: str = "UTC") -> str:
                 order.append(name)
             by_exercise[name].append(r)
 
+        # E2E register row #90/#127: the session-level aggregate (total_sets /
+        # total_volume_kg) only ever gets written at workout completion, so a
+        # user mid-session asking "how many sets so far, at what weight" has
+        # no server-computed answer to fall back on — the coach either reads
+        # that not-yet-populated aggregate or invents one. Compute it here,
+        # on demand, from the same ground-truth rows, so it's always answered
+        # even while the workout is still in progress.
+        total_sets = len(rows)
+        total_volume_kg = sum(
+            (r.get("weight_kg") or 0) * (r.get("reps_completed") or 0) for r in rows
+        )
+        vol_str = (
+            f", ~{int(total_volume_kg)} kg total volume"
+            if total_volume_kg > 0
+            else ""
+        )
+
         lines = [
-            "TODAY'S LOGGED SETS (from performance_logs — ground truth; if a "
-            "session summary elsewhere disagrees, trust THIS):"
+            "TODAY'S LOGGED SETS (from performance_logs — ground truth: "
+            f"{total_sets} set(s) logged today{vol_str}. This is TRUE even if "
+            "another part of your context calls today's workout "
+            "'not started'/'scheduled'/incomplete — a workout can be actively "
+            "in progress with real logged sets. If a session summary "
+            "elsewhere disagrees, trust THIS):"
         ]
         for name in order[:_MAX_EXERCISES_SHOWN]:
             sets = by_exercise[name]

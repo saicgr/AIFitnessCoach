@@ -406,6 +406,17 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str,
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Check whether this queue entry was already consumed by the workout
+        # generator BEFORE deleting — the client's "won't be included in your
+        # next workout" confirmation can only be true for a row that hasn't
+        # been used yet. Once `used_at` is set, the exercise has already been
+        # written into a real workout and deleting this bookkeeping row does
+        # not pull it back out, so the caller needs to know that happened.
+        existing = db.client.table("exercise_queue").select(
+            "used_at"
+        ).eq("user_id", user_id).eq("exercise_name", decoded_name).execute()
+        already_used = any(row.get("used_at") for row in (existing.data or []))
+
         # Delete from queue
         result = db.client.table("exercise_queue").delete().eq(
             "user_id", user_id
@@ -416,7 +427,11 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str,
 
         logger.info(f"Removed from queue: {decoded_name} for user {user_id}")
 
-        return {"message": "Removed from queue successfully", "exercise_name": decoded_name}
+        return {
+            "message": "Removed from queue successfully",
+            "exercise_name": decoded_name,
+            "already_used": already_used,
+        }
 
     except HTTPException:
         raise

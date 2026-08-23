@@ -147,6 +147,17 @@ const double kQuickLogFabBottomOffset =
 const double kQuickLogFabClearance =
     kQuickLogFabBottomOffset + kFloatCircleDiameter + kFloatShadowBleed;
 
+/// Horizontal space a right-anchored CTA/row must reserve so the FAB cluster
+/// (coach circle + expanded Quick Log pill, see [CoachQuickLogCluster]) never
+/// clips its trailing edge. [kQuickLogFabClearance] only reserves VERTICAL
+/// scroll room at the end of a list — it does nothing for a primary CTA that
+/// happens to render at the cluster's fixed on-screen vertical band (e.g. an
+/// empty state near the top of a short tab), where the fix is horizontal, not
+/// scroll position. Sized for two [kFloatCircleDiameter] circles + the gap
+/// between them + a generous expanded-pill label allowance + the edge inset.
+const double kFabClusterHorizontalReserve =
+    kFloatCircleDiameter * 2 + kFloatClusterGap + 90 + kFabClusterEdgeInset;
+
 /// Bottom inset a floating `SnackBar` must use.
 ///
 /// E2E row 125: this was the literal `80`, which put the toast band squarely

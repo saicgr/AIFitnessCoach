@@ -261,7 +261,7 @@ List<ContextualNudge> phaseBcdeNudges(Ref ref, DateTime now) {
         ctaLabel: 'Start walk',
         action: const ContextualNudgeAction(
           kind: ContextualNudgeActionKind.navigateRoute,
-          args: {'route': '/cardio'},
+          args: {'route': '/log-cardio'},
         ),
         priorityTier: NudgePriorityTier.streakRisk,
         category: NudgeCategory.streak,

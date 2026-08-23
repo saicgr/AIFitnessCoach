@@ -339,6 +339,7 @@ class SettingsCard extends ConsumerWidget {
 
           Widget? trailing;
           VoidCallback? onTap = item.onTap;
+          String? subtitle = item.subtitle;
 
           if (item.isThemeSelector) {
             // Inline theme selector buttons for better UX - one tap to change
@@ -642,6 +643,14 @@ class SettingsCard extends ConsumerWidget {
             );
             onTap = () => _navigateToMyOneRMs(context);
           } else if (item.isTrainingIntensitySelector) {
+            // Row 227 — this used to always read "Work at a percentage of
+            // your max" next to the My 1RMs tile reading "0 lifts", i.e. the
+            // app presented intensity as a % of a max it had never recorded.
+            // State the real prerequisite instead until at least one 1RM
+            // exists to apply the percentage against.
+            if (oneRMsState.oneRMs.isEmpty) {
+              subtitle = 'Log a few sets to derive your max — intensity has nothing to apply against yet';
+            }
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -925,7 +934,7 @@ class SettingsCard extends ConsumerWidget {
               SettingTile(
                 icon: item.icon,
                 title: item.title,
-                subtitle: item.subtitle,
+                subtitle: subtitle,
                 onTap: onTap,
                 trailing: trailing,
                 iconColor: item.iconColor,

@@ -127,11 +127,11 @@ class WorkoutHistoryImporter:
         job_id = UUID(job["id"])
         db = get_supabase_db()
 
-        inserted_strength = self._bulk_insert_strength(
-            db, parse_result.strength_rows, job_id
+        inserted_strength, duplicate_strength, failed_strength = (
+            self._bulk_insert_strength(db, parse_result.strength_rows, job_id)
         )
-        inserted_cardio = self._bulk_insert_cardio(
-            db, parse_result.cardio_rows, job_id
+        inserted_cardio, duplicate_cardio, failed_cardio = (
+            self._bulk_insert_cardio(db, parse_result.cardio_rows, job_id)
         )
         inserted_template_id: Optional[str] = None
         if parse_result.template is not None:
@@ -142,18 +142,21 @@ class WorkoutHistoryImporter:
         # 7. Index to RAG (best-effort — don't fail the job if Chroma flakes).
         user_first_name = await self._fetch_first_name(db, user_id)
         rag_strength = rag_cardio = 0
+        rag_warnings: list[str] = []
         try:
             rag_strength = index_strength_sessions(
                 parse_result.strength_rows, user_first_name=user_first_name
             )
         except Exception as e:
             logger.warning(f"[WorkoutImport] RAG strength index failed: {e}")
+            rag_warnings.append(f"RAG strength index failed: {e}")
         try:
             rag_cardio = index_cardio_sessions(
                 parse_result.cardio_rows, user_first_name=user_first_name
             )
         except Exception as e:
             logger.warning(f"[WorkoutImport] RAG cardio index failed: {e}")
+            rag_warnings.append(f"RAG cardio index failed: {e}")
 
         summary = {
             "dry_run": False,
@@ -161,16 +164,39 @@ class WorkoutHistoryImporter:
             "mode": parse_result.mode.value if hasattr(parse_result.mode, "value") else parse_result.mode,
             "confidence": detection.confidence,
             "inserted_strength_rows": inserted_strength,
-            "duplicate_strength_rows": len(parse_result.strength_rows) - inserted_strength,
+            "duplicate_strength_rows": duplicate_strength,
+            # Real, non-dedup row failures (bad payload, unrelated constraint
+            # violation, …) — previously invisible, folded into
+            # duplicate_strength_rows by a `total - inserted` subtraction
+            # that couldn't tell a 23505 from a 42P10 (register #322).
+            "failed_strength_rows": failed_strength,
             "inserted_cardio_rows": inserted_cardio,
-            "duplicate_cardio_rows": len(parse_result.cardio_rows) - inserted_cardio,
+            "duplicate_cardio_rows": duplicate_cardio,
+            "failed_cardio_rows": failed_cardio,
             "template_id": inserted_template_id,
             "unresolved_exercises": sorted(set(unresolved)),
             "rag_strength_sessions": rag_strength,
             "rag_cardio_sessions": rag_cardio,
-            "warnings": detection.warnings + parse_result.warnings,
+            "warnings": detection.warnings + parse_result.warnings + rag_warnings,
         }
         logger.info(f"✅ [WorkoutImport] job={job['id']} complete: {summary}")
+
+        # A row that failed for a reason OTHER than dedup is data loss, not a
+        # "duplicate" — the job must not report bare success while pretending
+        # otherwise. Surface it as a real failure so the client can branch
+        # honestly instead of reading a clean-looking summary next to
+        # silently dropped rows. The summary above is already computed and
+        # logged, so this failure carries the real counts for diagnosis
+        # (media_job_runner persists it as the job's `error` on catch).
+        total_failed = failed_strength + failed_cardio
+        if total_failed > 0:
+            raise RuntimeError(
+                f"workout_history_import job={job['id']} dropped {total_failed} "
+                f"row(s) that were NOT duplicates (failed_strength_rows="
+                f"{failed_strength}, failed_cardio_rows={failed_cardio}); "
+                f"summary={summary}"
+            )
+
         return summary
 
     # ──────────────────────────────── Dispatch ────────────────────────────────
@@ -215,9 +241,9 @@ class WorkoutHistoryImporter:
         db,
         rows: list[CanonicalSetRow],
         job_id: UUID,
-    ) -> int:
+    ) -> tuple[int, int, int]:
         """Insert strength rows in chunks, skipping (user_id, source_row_hash)
-        dedup collisions. Returns the count actually persisted.
+        dedup collisions. Returns (inserted, duplicate, failed) counts.
 
         Plain INSERT rather than upsert(on_conflict=...): the dedup index
         (`uq_workout_history_imports_source_hash`) is PARTIAL
@@ -225,10 +251,22 @@ class WorkoutHistoryImporter:
         param can't express that predicate, so Postgres can't infer the
         index for ON CONFLICT (42P10) even though the index itself enforces
         fine on a normal insert. Duplicates are caught as 23505 and skipped.
+
+        `duplicate` and `failed` are tracked SEPARATELY, not derived as
+        `total - inserted` — that subtraction previously counted every
+        per-row exception as a "duplicate" regardless of cause. A hard
+        failure (a `42P10` planner error, a constraint violation unrelated
+        to dedup, a malformed payload, …) was silently reclassified as a
+        dedup hit: the job summary read `duplicate_strength_rows: 10` for
+        ten rows that actually errored out, and the job still reported
+        success (register #322). Only an actual SQLSTATE 23505 counts as a
+        duplicate here; anything else counts as failed.
         """
         if not rows:
-            return 0
+            return 0, 0, 0
         total_inserted = 0
+        total_duplicate = 0
+        total_failed = 0
         payloads = [r.to_supabase_row(job_id) for r in rows]
         for chunk in _chunks(payloads, BULK_INSERT_CHUNK):
             try:
@@ -255,26 +293,41 @@ class WorkoutHistoryImporter:
                         total_inserted += len(result.data or [])
                     except Exception as inner:
                         if _is_duplicate_key_error(inner):
+                            total_duplicate += 1
                             logger.info(
                                 f"[WorkoutImport] skipping already-imported strength row "
                                 f"({row.get('exercise_name')}, {row.get('performed_at')})"
                             )
                         else:
+                            total_failed += 1
                             logger.error(
                                 f"[WorkoutImport] dropping strength row "
                                 f"({row.get('exercise_name')}, {row.get('performed_at')}): {inner}"
                             )
-        return total_inserted
+        return total_inserted, total_duplicate, total_failed
 
     def _bulk_insert_cardio(
         self,
         db,
         rows: list[CanonicalCardioRow],
         job_id: UUID,
-    ) -> int:
+    ) -> tuple[int, int, int]:
+        """Upsert cardio rows in chunks. Returns (inserted, duplicate, failed).
+
+        `ignore_duplicates=True` means Postgres silently drops a conflicting
+        row without raising — a real duplicate never reaches the per-row
+        `except` branch, so a bulk chunk's shortfall (`len(chunk) -
+        len(result.data)`) IS the duplicate count, not an unknown. Anything
+        that DOES raise in the per-row fallback is therefore a genuine
+        failure, never a dedup hit — the old code lumped both into
+        "duplicate" via `total - inserted` (register #322, same class of
+        bug as the strength path).
+        """
         if not rows:
-            return 0
+            return 0, 0, 0
         total_inserted = 0
+        total_duplicate = 0
+        total_failed = 0
         payloads = [r.to_supabase_row(job_id) for r in rows]
         for chunk in _chunks(payloads, BULK_INSERT_CHUNK):
             try:
@@ -287,7 +340,11 @@ class WorkoutHistoryImporter:
                     )
                     .execute()
                 )
-                total_inserted += len(result.data or [])
+                inserted_here = len(result.data or [])
+                total_inserted += inserted_here
+                # Silently-ignored conflicts, not failures — ignore_duplicates
+                # means Postgres never raised for these.
+                total_duplicate += len(chunk) - inserted_here
             except Exception as e:
                 logger.warning(
                     f"[WorkoutImport] bulk cardio upsert failed ({e!s}); "
@@ -301,13 +358,19 @@ class WorkoutHistoryImporter:
                                     ignore_duplicates=True)
                             .execute()
                         )
-                        total_inserted += len(result.data or [])
+                        if result.data:
+                            total_inserted += len(result.data)
+                        else:
+                            # No exception, no row back → Postgres silently
+                            # ignored a conflicting duplicate.
+                            total_duplicate += 1
                     except Exception as inner:
+                        total_failed += 1
                         logger.error(
                             f"[WorkoutImport] dropping cardio row "
                             f"({row.get('activity_type')}, {row.get('performed_at')}): {inner}"
                         )
-        return total_inserted
+        return total_inserted, total_duplicate, total_failed
 
     def _insert_template(self, db, template, job_id: UUID) -> Optional[str]:
         try:

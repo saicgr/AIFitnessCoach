@@ -74,7 +74,7 @@ CardDoc workoutDetailsDoc(Shareable data, ShareableAspect aspect) {
           size: const Size(0.78, 0.20),
           tiles: statTiles,
           columns: 2,
-          tileColor: const Color(0x1FFFFFFF),
+          tileColor: const Color(0x66000000),
           valueColor: white,
           labelColor: white70,
           valueFont: CardFontIx.display,

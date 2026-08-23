@@ -815,6 +815,12 @@ extension NutritionRepositoryExt on NutritionRepository {
     // Scores
     int? healthScore,
     int? overallMealScore,
+    // Inflammation / ultra-processed tracking — the values shown to the user
+    // during analysis (including the late `coach_tips` refinement) must be
+    // the values persisted, or the row falls back to a separately-computed
+    // backfill score that can disagree with what was on screen.
+    int? inflammationScore,
+    bool? isUltraProcessed,
     // Per-field edits made in the Log Meal sheet before saving (audit trail)
     List<FoodItemEdit> itemEdits = const [],
     /// Client-generated idempotency key (A11). Rides on the request body so a
@@ -853,6 +859,8 @@ extension NutritionRepositoryExt on NutritionRepository {
           if (userQuery != null) 'user_query': userQuery,
           if (healthScore != null) 'health_score': healthScore,
           if (overallMealScore != null) 'overall_meal_score': overallMealScore,
+          if (inflammationScore != null) 'inflammation_score': inflammationScore,
+          if (isUltraProcessed != null) 'is_ultra_processed': isUltraProcessed,
           if (itemEdits.isNotEmpty)
             'item_edits': itemEdits.map((e) => e.toJson()).toList(),
           // Micronutrients
@@ -928,6 +936,8 @@ extension NutritionRepositoryExt on NutritionRepository {
         if (aiFeedback != null) 'ai_suggestion': aiFeedback,
         if (healthScore != null) 'health_score': healthScore,
         if (overallMealScore != null) 'overall_meal_score': overallMealScore,
+        if (inflammationScore != null) 'inflammation_score': inflammationScore,
+        if (isUltraProcessed != null) 'is_ultra_processed': isUltraProcessed,
         if (imageUrl != null) 'image_url': imageUrl,
         if (sodiumMg != null) 'sodium_mg': sodiumMg,
         if (sugarG != null) 'sugar_g': sugarG,
@@ -1095,6 +1105,8 @@ extension NutritionRepositoryExt on NutritionRepository {
       aiFeedback: analyzedFood.aiSuggestion,
       healthScore: analyzedFood.healthScore,
       overallMealScore: analyzedFood.overallMealScore,
+      inflammationScore: analyzedFood.inflammationScore,
+      isUltraProcessed: analyzedFood.isUltraProcessed,
       itemEdits: itemEdits,
       idempotencyKey: idempotencyKey,
     );

@@ -17040,7 +17040,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Swipe to see your workout plan. Tap to start!';
 
   @override
-  String get homeScreenTourCarouselTitle => 'Today\'s Workout';
+  String get homeScreenTourCarouselTitle => 'Your Next Workout';
 
   @override
   String get homeScreenTourCommunityDesc =>
@@ -19865,7 +19865,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logMealSheetAllItemsMatchedVerified =>
-      'All items matched verified nutrition data';
+      'Nutrition data verified · portions estimated';
 
   @override
   String get logMealSheetAnalysisFailed => 'Analysis failed. Please try again.';
@@ -20320,7 +20320,7 @@ class AppLocalizationsEn extends AppLocalizations {
     Object length,
     Object verifiedCount,
   ) {
-    return '$verifiedCount of $length items matched verified nutrition data';
+    return '$verifiedCount of $length matched verified nutrition data · portions estimated';
   }
 
   @override

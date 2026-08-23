@@ -13,7 +13,7 @@ belonging to the currently active gym profile.
 """
 from core.db import get_supabase_db
 from datetime import datetime, date, timedelta, timezone
-from typing import Any, Optional, List, Set
+from typing import Any, Optional, List, Set, Dict
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json
@@ -28,7 +28,7 @@ import hashlib
 from fastapi.responses import JSONResponse, Response
 
 from core.logger import get_logger
-from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
+from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range, local_day_bounds
 from services.user_context_service import user_context_service
 from core.redis_cache import RedisCache
 from core.db_executor import run_db, gather_db
@@ -1058,6 +1058,65 @@ async def _sequential_generate_workouts(
     except Exception as e:
         logger.debug(f"[BG-GEN] Could not seed avoid list: {e}")
 
+    # Row 211 — the concurrent calls WITHIN one `asyncio.gather` batch all see
+    # the same avoid-list snapshot (they run in parallel, so none of them can
+    # know what a sibling picked), and a small equipment-constrained candidate
+    # pool (e.g. right after a gym switch to bodyweight-only) lets the
+    # `batch_offset` RAG window collapse onto the same top candidates anyway.
+    # Two different days in the SAME top-up run then ship byte-identical or
+    # near-identical exercise sets. Track every exercise-name-set hash seen
+    # in THIS run and force one regeneration — hard-avoiding the colliding
+    # names plus a far `batch_offset` — for any later date that collides.
+    seen_exercise_sets: Dict[frozenset, date] = {}
+
+    def _set_key(names: List[str]) -> Optional[frozenset]:
+        cleaned = frozenset(n.strip().lower() for n in names if n and n.strip())
+        return cleaned or None
+
+    async def _dedupe_if_collision(gen_date: date, result: Optional[Any], idx: int, avoid_list: List[str]) -> Optional[Any]:
+        if not result or not getattr(result, "exercises", None):
+            return result
+        names = [ex.name for ex in result.exercises if getattr(ex, "name", None)]
+        key = _set_key(names)
+        if key is None:
+            return result
+        prior_date = seen_exercise_sets.get(key)
+        if prior_date is None:
+            seen_exercise_sets[key] = gen_date
+            return result
+        logger.warning(
+            f"[BG-GEN] Exercise-set collision: {gen_date.isoformat()} matches "
+            f"{prior_date.isoformat()} exactly ({len(names)} exercises) — forcing one regeneration"
+        )
+        try:
+            wid = getattr(result, "id", None)
+            if wid:
+                get_supabase_db().client.table("workouts").delete().eq("id", wid).execute()
+            forced_avoid = list(dict.fromkeys(list(avoid_list) + names))
+            retried = await auto_generate_workout(
+                user_id=user_id,
+                target_date=gen_date,
+                gym_profile_id=gym_profile_id,
+                selected_days=selected_days,
+                adjacent_day_exercises=forced_avoid,
+                batch_offset=idx + 25,
+                user_tz=user_tz,
+            )
+            retried_names = [
+                ex.name for ex in getattr(retried, "exercises", None) or []
+                if getattr(ex, "name", None)
+            ]
+            retried_key = _set_key(retried_names) or key
+            seen_exercise_sets.setdefault(retried_key, gen_date)
+            return retried or result
+        except Exception as dedupe_err:
+            logger.warning(
+                f"[BG-GEN] Dedup regeneration failed for {gen_date}: {dedupe_err}",
+                exc_info=True,
+            )
+            seen_exercise_sets.setdefault(key, gen_date)
+            return result
+
     async def _gen_one(idx: int, gen_date: date, avoid_list: List[str]) -> Optional[Any]:
         logger.info(
             f"[BG-GEN] Generating workout {idx+1}/{len(sorted_dates)} for "
@@ -1085,6 +1144,7 @@ async def _sequential_generate_workouts(
     today_done = 0
     if sorted_dates and sorted_dates[0].isoformat() == today_str:
         result = await _gen_one(0, sorted_dates[0], list(all_batch_exercises))
+        result = await _dedupe_if_collision(sorted_dates[0], result, 0, list(all_batch_exercises))
         if result and hasattr(result, "exercises") and result.exercises:
             new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
             all_batch_exercises.extend(new_ex)
@@ -1100,7 +1160,12 @@ async def _sequential_generate_workouts(
             *[_gen_one(today_done + batch_start + i, d, avoid_snapshot) for i, d in enumerate(batch)],
             return_exceptions=False,
         )
-        for d, result in zip(batch, results):
+        # Collision check runs AFTER the whole parallel batch lands (that's
+        # the only point at which every sibling's picks are actually known),
+        # sequentially so an offset bumped for one collision can't itself
+        # collide with a sibling still being checked.
+        for i, (d, result) in enumerate(zip(batch, results)):
+            result = await _dedupe_if_collision(d, result, today_done + batch_start + i, avoid_snapshot)
             if result and hasattr(result, "exercises") and result.exercises:
                 new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
                 all_batch_exercises.extend(new_ex)
@@ -1371,6 +1436,37 @@ async def get_today_workout(
                 gym_profile_id=active_profile_id,
                 degraded_reason="db_timeout",
             )
+
+        # `completed_today_rows` filters on scheduled_date, which reflects
+        # when the workout was PLANNED, not when it was actually finished. A
+        # workout scheduled for a prior day but completed today (caught up
+        # late, or finished after midnight) is invisible to that query even
+        # though the user genuinely trained today — which showed up as the
+        # Train pillar reporting "not active today" / 0 / Low on a day with a
+        # real completed session. Fall back to a completed_at window check.
+        if not completed_today_rows:
+            try:
+                _completed_start, _completed_end = local_day_bounds(today_str, user_tz)
+                _completed_today_check = db.client.table("workouts").select(
+                    "id, user_id, name, type, difficulty, scheduled_date, is_completed, "
+                    "exercises_json, duration_minutes, generation_method, is_current, "
+                    "version_number, parent_workout_id, gym_profile_id, created_at, "
+                    "estimated_duration_minutes, warmup_json, stretch_json, is_favorite, "
+                    "template_id, template_week, assignment_id, program_slot, display_order"
+                ).eq("user_id", user_id).eq("is_completed", True).gte(
+                    "completed_at", _completed_start
+                ).lt("completed_at", _completed_end).order(
+                    "completed_at", desc=True
+                ).limit(1)
+                _completed_today_result = await asyncio.to_thread(_completed_today_check.execute)
+                if _completed_today_result.data:
+                    completed_today_rows = _completed_today_result.data
+                    logger.debug(
+                        f"[TODAY DEBUG] Found a workout completed today by completed_at "
+                        f"(scheduled_date is a different day) for user {user_id}"
+                    )
+            except Exception as e:
+                logger.warning(f"[TODAY DEBUG] completed_at fallback check failed: {e}")
 
         if not today_rows:
             logger.debug(f"[TODAY DEBUG] No workout found for today ({today_str}), profile={active_profile_id}")

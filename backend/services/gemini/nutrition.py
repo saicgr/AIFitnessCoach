@@ -17,7 +17,7 @@ from services.gemini.constants import (
     _food_text_cache, settings, gemini_generate_with_retry,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
-from services.gemini.parsers import enforce_macro_integrity
+from services.gemini.parsers import enforce_macro_integrity, filter_inflammation_triggers
 
 logger = logging.getLogger("gemini")
 
@@ -121,6 +121,13 @@ class NutritionMixin:
                 f"[NUTRITION] inflammation_score null after analysis; "
                 f"desc={desc_preview!r} items={len(items)}"
             )
+        # Derive triggers from the resolved item list rather than trusting
+        # Gemini's free association — drops a tag like 'whole_grains' when no
+        # item actually matches it (e.g. a meal of white rice/chicken/eggs).
+        result["inflammation_triggers"] = filter_inflammation_triggers(
+            result.get("inflammation_triggers"),
+            [it.get("name") for it in items],
+        )
 
     # ============================================
     # Food Analysis Methods

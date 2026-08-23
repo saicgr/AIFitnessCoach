@@ -9,6 +9,7 @@ import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
+import '../../../core/providers/user_provider.dart' show hydrationUseOzProvider;
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../widgets/liquid_body_hydration.dart';
@@ -101,6 +102,14 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
   void initState() {
     super.initState();
     _loadCustomBottles();
+    // Seed from the shared hydration-unit source of truth (the user's
+    // body-weight unit preference) instead of always defaulting to ml —
+    // that default disagreed with the Home water tile (oz) and the "Stay
+    // hydrated" to-do (L) for imperial-unit users. Still a session-local
+    // choice: the popup menu below can still switch it.
+    if (ref.read(hydrationUseOzProvider)) {
+      _selectedUnit = HydrationUnit.oz;
+    }
   }
 
   Future<void> _loadCustomBottles() async {

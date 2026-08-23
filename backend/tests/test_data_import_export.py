@@ -303,9 +303,15 @@ class TestExportWorkouts:
 class TestExportWorkoutLogs:
     """Test workout logs export."""
 
-    def test_export_workout_logs_basic(self, sample_workout_logs):
+    def test_export_workout_logs_basic(
+        self, sample_workout_logs, sample_performance_logs, sample_workouts
+    ):
         """Test exporting workout logs."""
-        csv_content = _export_workout_logs(sample_workout_logs)
+        csv_content = _export_workout_logs(
+            sample_workout_logs,
+            performance_logs=sample_performance_logs,
+            workouts=sample_workouts,
+        )
 
         reader = csv.DictReader(io.StringIO(csv_content))
         rows = list(reader)
@@ -314,9 +320,17 @@ class TestExportWorkoutLogs:
         assert rows[0]["workout_name"] == "Push Day"
         assert rows[0]["total_time_seconds"] == "3600"
 
-    def test_export_workout_logs_calculates_totals(self, sample_workout_logs):
-        """Test totals are calculated from sets_json."""
-        csv_content = _export_workout_logs(sample_workout_logs)
+    def test_export_workout_logs_calculates_totals(
+        self, sample_workout_logs, sample_performance_logs, sample_workouts
+    ):
+        """Test totals are aggregated from performance_logs (the same rows
+        exercise_sets.csv exports), not workout_logs' own (completion-only)
+        sets_json — see register #124."""
+        csv_content = _export_workout_logs(
+            sample_workout_logs,
+            performance_logs=sample_performance_logs,
+            workouts=sample_workouts,
+        )
 
         reader = csv.DictReader(io.StringIO(csv_content))
         row = list(reader)[0]

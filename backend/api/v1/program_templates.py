@@ -1054,6 +1054,21 @@ _library_detail_cache = ResponseCache(
     prefix="program_library_detail_v1", ttl_seconds=6 * 3600, max_size=512
 )
 
+# Per-(variant, user, injury/equipment/level) customize-preview cache. Row
+# 407: an 8-week x 7/week program ran `enforce_injury_safety` +
+# `fetch_safe_candidates` for every one of its 56 sessions on EVERY Schedule
+# tab open — bounded concurrency (row 229) parallelized the DB-bound RAG
+# calls but still took ~2 minutes wall-clock on a long program, well past
+# the client's 90s timeout. The customization inputs (the user's injuries,
+# equipment, fitness level) rarely change between opens, so the key includes
+# them plus a session fingerprint (day names + exercise names) — a stale
+# authored-content edit or a genuine profile change busts the cache instead
+# of serving a mismatched result. Value is (customized exercises per session,
+# summary), both plain JSON so RedisCache can serialize them.
+_customize_preview_cache = ResponseCache(
+    prefix="program_customize_preview_v1", ttl_seconds=3600, max_size=1024
+)
+
 # Data-driven cache invalidation. The library content caches key on this token,
 # which is `cache_versions.version` for the `programs` table — bumped by a
 # statement-level trigger on ANY write to `programs` (API write OR raw
@@ -1722,6 +1737,7 @@ async def _customize_preview_weeks(
     from services.program_customizer import (
         customize_status,
         customize_template_days,
+        resolve_user_context,
     )
     sessions = [
         s
@@ -1731,9 +1747,42 @@ async def _customize_preview_weeks(
     ]
     if not sessions:
         return None
+
+    # `resolve_user_context` is two fast, indexed reads (users + gym_profiles)
+    # — nowhere near the RAG cost below — so paying for it up front to build
+    # the cache key doesn't undercut the point of caching.
+    ctx = resolve_user_context(user_id)
+    fingerprint = [
+        (
+            s.get("day_name"),
+            [
+                (e.get("name") or e.get("original_name"))
+                for e in (s.get("exercises") or [])
+                if isinstance(e, dict)
+            ],
+        )
+        for s in sessions
+    ]
+    cache_key = _customize_preview_cache.make_key(
+        sorted(ctx.get("injuries") or []),
+        sorted(ctx.get("equipment") or []),
+        ctx.get("fitness_level"),
+        fingerprint,
+    )
+    cached = await _customize_preview_cache.get(cache_key)
+    if cached is not None:
+        cached_exercises, summary = cached
+        for day, exercises in zip(sessions, cached_exercises):
+            day["exercises"] = exercises
+        return summary
+
     try:
-        summary = await customize_template_days(sessions, user_id=user_id)
+        summary = await customize_template_days(sessions, user_id=user_id, context=ctx)
         summary["status"] = customize_status(summary)
+        await _customize_preview_cache.set(
+            cache_key,
+            ([s.get("exercises") for s in sessions], summary),
+        )
         return summary
     except Exception as e:  # noqa: BLE001
         logger.warning("schedule preview customize failed: %s", e)
@@ -2040,11 +2089,21 @@ async def library_program_schedule(
                             (_gif_by_id.get(json_ex_id) if json_ex_id else None)
                         )
 
+                        # Row 230: these used to be `str(...)` unconditionally,
+                        # so a client reading this payload got `"sets": "2"`
+                        # even though the authored data is a real JSON number
+                        # (100% of `sets` values in program_variant_weeks are
+                        # numeric). `reps` genuinely mixes numbers with
+                        # descriptive text ("10 each side", "1 minute easy
+                        # jog"), so it keeps its stored type rather than being
+                        # force-cast either way.
+                        _raw_sets = ex.get("sets")
+                        _raw_reps = ex.get("reps")
                         exercises_out.append({
                             "exercise_id": exercise_id,
                             "name": ex_name or canon_name,
-                            "sets": str(ex.get("sets") or "") or None,
-                            "reps": str(ex.get("reps") or "") or None,
+                            "sets": int(_raw_sets) if isinstance(_raw_sets, (int, float)) else (str(_raw_sets) if _raw_sets else None),
+                            "reps": _raw_reps if isinstance(_raw_reps, (int, float, str)) and _raw_reps != "" else None,
                             "duration": str(ex.get("duration") or "") or None,
                             "rest_seconds": ex.get("rest_seconds"),
                             "duration_seconds": ex.get("duration_seconds"),

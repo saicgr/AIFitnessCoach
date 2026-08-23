@@ -192,6 +192,27 @@ def main():
         if args.apply and fixed:
             exit_code = 0  # re-run --check to confirm
 
+    # 4. gif_url coverage (row 221) — this check only ever HEAD-checks a path
+    # that IS referenced. Several client surfaces read `exercise_library.
+    # gif_url` directly instead of resolving `image_s3_path` through
+    # static_url()/resolve_image_url(), so a row can have real, live S3 media
+    # and still render a placeholder because the column those surfaces read
+    # was never backfilled. Fails the gate on any such row so "media
+    # coverage passes" can't mean "gif_url is silently empty everywhere".
+    if not args.table or args.table == "exercise_library":
+        gif_gap = (
+            db.client.table("exercise_library")
+            .select("id", count="exact")
+            .not_.is_("image_s3_path", "null")
+            .is_("gif_url", "null")
+            .execute()
+        )
+        missing_gif = gif_gap.count or 0
+        status = "OK" if not missing_gif else f"{missing_gif} MISSING gif_url"
+        print(f"exercise_library.gif_url (has image_s3_path, no gif_url): -> {status}")
+        if missing_gif:
+            exit_code = 1
+
     if args.check and dead:
         print(f"\nFAIL: {len(dead)} dead media paths")
     sys.exit(exit_code if args.check else 0)

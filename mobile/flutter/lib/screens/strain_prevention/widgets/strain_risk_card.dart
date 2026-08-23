@@ -293,6 +293,8 @@ class StrainRiskCard extends StatelessWidget {
         return Icons.error;
       case StrainRiskLevel.critical:
         return Icons.dangerous;
+      case StrainRiskLevel.noData:
+        return Icons.remove;
     }
   }
 }

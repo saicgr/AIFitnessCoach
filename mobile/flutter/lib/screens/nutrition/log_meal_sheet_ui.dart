@@ -1697,7 +1697,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     child: Text(
                       verifiedCount == items.length
                           ? AppLocalizations.of(context).logMealSheetAllItemsMatchedVerified
-                          : '$verifiedCount of ${items.length} items matched verified nutrition data',
+                          : '$verifiedCount of ${items.length} matched verified nutrition data · portions estimated',
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,

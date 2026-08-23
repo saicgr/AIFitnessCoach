@@ -22,9 +22,16 @@ logger = get_logger(__name__)
 FOCUS_AREA_MUSCLES = {
     'legs': ['quads', 'quadriceps', 'hamstrings', 'glutes', 'calves', 'leg', 'thigh', 'hip'],
     'lower': ['quads', 'quadriceps', 'hamstrings', 'glutes', 'calves', 'leg', 'thigh', 'hip'],
+    # 'lower_body' is the Quick Generate chip's literal value ("legs" / "lower"
+    # are the only forms this dict recognized) — without this alias the
+    # lookup silently fell into "unknown focus area, allowing exercise" and
+    # a genuine focus/exercise mismatch could never be detected (register #189).
+    'lower_body': ['quads', 'quadriceps', 'hamstrings', 'glutes', 'calves', 'leg', 'thigh', 'hip'],
     'push': ['chest', 'shoulders', 'triceps', 'pec', 'delt', 'shoulder'],
     'pull': ['back', 'biceps', 'lats', 'traps', 'rear delt', 'rhomboids'],
     'upper': ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'pec', 'delt', 'lats', 'arm'],
+    # 'upper_body' — same rationale as 'lower_body' above.
+    'upper_body': ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'pec', 'delt', 'lats', 'arm'],
     'chest': ['chest', 'pec', 'pectorals'],
     'back': ['back', 'lats', 'traps', 'rhomboids', 'erector'],
     'shoulders': ['shoulders', 'delts', 'deltoids', 'delt'],

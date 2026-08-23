@@ -636,8 +636,10 @@ async def log_food_from_image(
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        from api.v1.timeline_cache import invalidate_timeline_cache
         await invalidate_daily_summary_cache(user_id)
         await invalidate_bootstrap_cache(user_id)
+        await invalidate_timeline_cache(user_id, get_user_today(user_tz))
 
         # Background: update nutrition streak (tz reused from above; the
         # streak is credited to the LOG's own local day, not server-now).
@@ -1031,8 +1033,10 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        from api.v1.timeline_cache import invalidate_timeline_cache
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
+        await invalidate_timeline_cache(body.user_id, get_user_today(user_tz))
 
         # Background: update nutrition streak (reuses the tz resolved above;
         # credited to the LOG's own local day, not server-now)
@@ -1439,8 +1443,10 @@ async def log_food_direct(
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        from api.v1.timeline_cache import invalidate_timeline_cache
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
+        await invalidate_timeline_cache(body.user_id, get_user_today(user_tz))
 
         # Background: update nutrition streak (reuses the tz resolved above).
         # Passing the log's OWN timestamp is what keeps a past-date backfill
@@ -1737,8 +1743,10 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
             # Invalidate daily summary cache so the next fetch returns fresh data
             from api.v1.nutrition.summaries import invalidate_daily_summary_cache
             from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            from api.v1.timeline_cache import invalidate_timeline_cache
             await invalidate_daily_summary_cache(body.user_id)
             await invalidate_bootstrap_cache(body.user_id)
+            await invalidate_timeline_cache(body.user_id, get_user_today(stream_user_tz))
 
             # Send the completed food log
             cache_hit = food_analysis.get("cache_hit", False) if food_analysis else False

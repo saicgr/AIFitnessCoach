@@ -233,19 +233,28 @@ class _ScoreHero extends StatelessWidget {
       );
     }
 
+    // The backend only fills `scoreChange` in once a genuine prior-week
+    // score exists — null means there's nothing to compare against yet,
+    // not "same as last week".
+    final hasComparison = scoreChange != null;
     final change = scoreChange ?? 0;
-    final isUp = change > 0 || trend == 'improving';
-    final isDown = change < 0 || trend == 'declining';
-    final deltaColor =
-        isUp ? tc.success : (isDown ? tc.error : tc.textMuted);
+    final isUp = hasComparison && (change > 0 || trend == 'improving');
+    final isDown = hasComparison && (change < 0 || trend == 'declining');
+    final deltaColor = !hasComparison
+        ? tc.textMuted
+        : isUp
+            ? tc.success
+            : (isDown ? tc.error : tc.textMuted);
     final deltaIcon = isUp
         ? Icons.arrow_upward_rounded
         : (isDown ? Icons.arrow_downward_rounded : Icons.trending_flat_rounded);
-    final deltaLabel = change == 0
-        ? 'SAME AS LAST WEEK'
-        : (change > 0
-            ? '+$change WEEK OVER WEEK'
-            : '$change WEEK OVER WEEK');
+    final deltaLabel = !hasComparison
+        ? 'NOT ENOUGH DATA YET'
+        : (change == 0
+            ? 'SAME AS LAST WEEK'
+            : (change > 0
+                ? '+$change WEEK OVER WEEK'
+                : '$change WEEK OVER WEEK'));
 
     return ZealovaCard(
       variant: ZealovaCardVariant.hero,

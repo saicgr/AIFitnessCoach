@@ -392,11 +392,24 @@ class PRDetectionService {
     required double totalVolume,
     String? gymProfileId,
   }) {
-    final cache = _resolveCache(exerciseName, gymProfileId);
-    if (cache == null) {
-      // No cache - can't detect PR (but may still be one)
-      return [];
-    }
+    // A missing cache entry means this exercise was never preloaded (e.g. it
+    // was added mid-workout via "quick add" after `preloadExerciseHistory`
+    // already ran for the original plan) — NOT that it has no history. Bailing
+    // out here used to silently drop every PR for such an exercise, including
+    // a genuine first-ever performance (register #166). Treat "unknown" the
+    // same as "confirmed no history": a zero baseline, so any real
+    // performance still gets evaluated as a potential PR instead of being
+    // dropped on the floor.
+    final cache = _resolveCache(exerciseName, gymProfileId) ??
+        _ExerciseCache(
+          exerciseName: exerciseName,
+          maxWeight: 0,
+          maxRepsAtWeight: 0,
+          maxVolume: 0,
+          max1RM: 0,
+          cachedAt: DateTime.now(),
+          maxRepsAtBodyweight: 0,
+        );
 
     final detectedPRs = <DetectedPR>[];
     final now = DateTime.now();

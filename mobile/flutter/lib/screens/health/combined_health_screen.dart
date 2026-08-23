@@ -65,6 +65,21 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     super.initState();
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+
+    // This screen only ever READS the backend's synced `/activity/history` —
+    // it never itself triggers a HealthKit read + sync. A user who connects
+    // Health and comes straight here (rather than via Home/You, which DO
+    // call this) sees an empty Overview no matter how many steps HealthKit
+    // reports, because `daily_activity` never got a row written for today
+    // (register #249). Kick off today's sync here too, then refresh the
+    // history read so the just-synced steps appear without a manual pull.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (!ref.read(healthSyncProvider).isConnected) return;
+      await ref.read(dailyActivityProvider.notifier).loadTodayActivity();
+      if (!mounted) return;
+      ref.invalidate(combinedHealthHistoryProvider);
+    });
   }
 
   /// Gap 5 — "you can edit anything." Correct the SELECTED day's reading for a

@@ -62,6 +62,12 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
   set isLoadingWeightSuggestion(bool value);
   FatigueAlertData? get fatigueAlertData;
   set fatigueAlertData(FatigueAlertData? value);
+  // The actual weight (kg) the just-logged set that triggered [fatigueAlertData]
+  // was performed at. The modal must display THIS, not a live re-read of
+  // `weightController.text` — by the time the modal builds, the controller has
+  // already been advanced to the next set's suggested weight.
+  double? get fatigueAlertCurrentWeightKg;
+  set fatigueAlertCurrentWeightKg(double? value);
   bool get showFatigueAlert;
   set showFatigueAlert(bool value);
   bool get showCoachTip;
@@ -376,8 +382,19 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  /// Check for fatigue after completing a set
-  Future<void> checkFatigue() async {
+  /// Check for fatigue after completing a set.
+  ///
+  /// [justLoggedWeightKg] is the actual weight (already in kg) of the set
+  /// that was just logged, from `SetLog.weight`. It MUST be used instead of
+  /// re-reading `weightController.text` here: by the time this fires, the
+  /// caller has already called `updateControlsForNextSet` (and possibly
+  /// `autoAdjustWeightIfNeeded`), which rewrite the controller to the NEXT
+  /// set's suggested weight — so a plain re-read judged fatigue against a
+  /// set that was never actually performed, while the alert's own prose
+  /// (built server-side from the sets history) still described the real
+  /// logged weights. Falls back to the controller only for legacy callers
+  /// that don't pass it.
+  Future<void> checkFatigue({double? justLoggedWeightKg}) async {
     if (!ref.read(fatigueAlertsEnabledProvider)) return;
 
     final exercise = exercises[currentExerciseIndex];
@@ -397,12 +414,20 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      // The weight controller is in DISPLAY units (lb when useKg=false). The
-      // backend API contract treats `current_weight` as kg, so convert here
-      // before sending. Without this, a 100 lb input would be sent as 100 kg
-      // and inflate the suggested reduction.
-      final displayWeight = double.tryParse(weightController.text) ?? 0;
-      final currentWeight = useKg ? displayWeight : displayWeight * 0.453592;
+      double currentWeight;
+      if (justLoggedWeightKg != null) {
+        // Already in kg (SetLog.weight) — the actual weight this set was
+        // performed at, not whatever the controller shows now.
+        currentWeight = justLoggedWeightKg;
+      } else {
+        // Legacy fallback path. The weight controller is in DISPLAY units
+        // (lb when useKg=false). The backend API contract treats
+        // `current_weight` as kg, so convert here before sending. Without
+        // this, a 100 lb input would be sent as 100 kg and inflate the
+        // suggested reduction.
+        final displayWeight = double.tryParse(weightController.text) ?? 0;
+        currentWeight = useKg ? displayWeight : displayWeight * 0.453592;
+      }
 
       final pattern = exerciseProgressionPattern[currentExerciseIndex]
           ?? SetProgressionPattern.pyramidUp;
@@ -445,6 +470,10 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
         fatigueAlertsTriggered++;
         setState(() {
           fatigueAlertData = alertData;
+          // Snapshot the SAME weight the check was actually run against, in
+          // kg, so the modal displays it instead of re-reading the (by then
+          // advanced-to-the-next-set) controller.
+          fatigueAlertCurrentWeightKg = currentWeight;
           showFatigueAlert = true;
         });
         HapticFeedback.heavyImpact();
