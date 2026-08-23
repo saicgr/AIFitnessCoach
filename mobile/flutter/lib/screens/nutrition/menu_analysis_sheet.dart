@@ -889,7 +889,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
     if (presets.contains('gut_friendly') &&
         !hasAny((i) => i.fodmapRating != null)) {
-      return 'Gemini didn’t tag this menu with FODMAP data, so the Gut-friendly filter has nothing to keep.';
+      return 'No FODMAP data on this menu, so the Gut-friendly filter has nothing to keep.';
     }
     if (presets.contains('blood_sugar') &&
         !hasAny((i) => i.glycemicLoad != null)) {

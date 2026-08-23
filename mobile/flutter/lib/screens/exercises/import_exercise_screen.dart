@@ -516,7 +516,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             icon: Icons.edit_note_outlined,
             title: AppLocalizations.of(context).importExerciseDescribeTheExercise,
             body:
-                'Type a one-sentence description. Gemini will infer muscles, '
+                'Type a one-sentence description. AI will infer muscles, '
                 'equipment, difficulty, and step-by-step instructions.',
           ),
           const SizedBox(height: 16),

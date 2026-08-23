@@ -11,7 +11,7 @@ from .xp_endpoints import router as _endpoints_router
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from datetime import date, datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Dict
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
@@ -1033,7 +1033,7 @@ async def get_daily_goals_status(
         today_str = get_user_today(user_tz)
         today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
 
-        result = (await run_db(lambda: db.client.table("xp_transactions").select("source").eq(
+        result = (await run_db(lambda: db.client.table("xp_transactions").select("source, xp_amount").eq(
             "user_id", user_id
         ).gte(
             "created_at", today_start_iso
@@ -1041,7 +1041,16 @@ async def get_daily_goals_status(
             "created_at", today_end_iso
         ).execute()))
 
-        sources = [r.get("source", "") for r in (result.data or [])]
+        rows = result.data or []
+        sources = [r.get("source", "") for r in rows]
+        # Finding #358: surface the REAL per-goal XP the ledger paid (not a
+        # client-side constant). Sum in case a source somehow posted twice
+        # in one day — the daily-goal unique index should prevent that, but
+        # summing is still honest if it ever doesn't.
+        xp_by_source: Dict[str, int] = {}
+        for r in rows:
+            source = r.get("source", "")
+            xp_by_source[source] = xp_by_source.get(source, 0) + (r.get("xp_amount") or 0)
 
         return DailyGoalsStatusResponse(
             weight_log="daily_goal_weight_log" in sources,
@@ -1052,6 +1061,15 @@ async def get_daily_goals_status(
             steps_goal="daily_goal_steps_goal" in sources,
             hydration_goal="daily_goal_hydration_goal" in sources,
             calorie_goal="daily_goal_calorie_goal" in sources,
+            weight_log_xp=xp_by_source.get("daily_goal_weight_log", 0),
+            meal_log_xp=xp_by_source.get("daily_goal_meal_log", 0),
+            workout_complete_xp=xp_by_source.get("daily_goal_workout_complete", 0),
+            protein_goal_xp=xp_by_source.get("daily_goal_protein_goal", 0),
+            body_measurements_xp=xp_by_source.get("daily_goal_body_measurements", 0),
+            steps_goal_xp=xp_by_source.get("daily_goal_steps_goal", 0),
+            hydration_goal_xp=xp_by_source.get("daily_goal_hydration_goal", 0),
+            calorie_goal_xp=xp_by_source.get("daily_goal_calorie_goal", 0),
+            daily_login_xp=xp_by_source.get("daily_login", 0),
         )
 
     except Exception as e:

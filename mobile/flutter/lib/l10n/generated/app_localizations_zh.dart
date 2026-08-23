@@ -588,8 +588,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addGymProfileTrainingSplit => '训练计划';
 
   @override
-  String get addGymProfileUnlocksBenchPressIncline =>
-      '解锁：卧推、上斜推举、仰卧屈臂上拉、胸部支撑划船';
+  String get addGymProfileUnlocksBenchPressIncline => '解锁：卧推、上斜推举、仰卧屈臂上拉、胸部支撑划船';
 
   @override
   String get addGymProfileUnlocksChestSupportedKb => '解锁：胸部支撑壶铃划船、壶铃地板推举替代动作';
@@ -719,8 +718,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addGymSheetPickAtLeastOneDay => '请至少选择一个训练日';
 
   @override
-  String get addGymSheetPickDaysDesc =>
-      '选择你在此健身房的训练日期。当你切换到此配置时，我们将为你预生成 14 天的训练计划。';
+  String get addGymSheetPickDaysDesc => '选择你在此健身房的训练日期。当你切换到此配置时，我们将为你预生成 14 天的训练计划。';
 
   @override
   String addGymSheetSameAs(Object name) {
@@ -996,10 +994,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiCoachMealStressedWhatHelps => '压力大 — 什么有帮助？';
 
   @override
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal) {
     return '亚洲风味 $meal ——一个选择（盖饭、面条、寿司、炒菜），宏量营养素及准备建议。$budgetTail';
   }
 
@@ -1049,10 +1044,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetGotALaterToday(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType) {
     return '今天晚些时候有 $workoutType 训练。有什么适合作为练前餐的 $meal 吗？请提供宏量营养素和进食时间建议。';
   }
 
@@ -1067,10 +1059,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetHighProteinPickOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal) {
     return '高蛋白 $meal 选择。一个单品，完整宏量营养素，简短准备建议。$budgetTail';
   }
 
@@ -1105,26 +1094,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal) {
     return '印度风味 $meal ——一个地道选择（北印度或南印度），宏量营养素，以及为了保持目标应避开/包含的配菜。$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal) {
     return '意式或慰藉类 $meal ——一个真实选择，宏量营养素，以及如有必要可提供的更轻盈的替代方案。$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType) {
     return '刚结束 $workoutType 训练。有什么适合恢复的 $meal，且能与我今天已摄入的食物搭配？';
   }
 
@@ -1139,10 +1119,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal) {
     return '正在记录我的 $meal。给我推荐一个符合我今日目标的健康实物选择——宏量营养素，简短直接。$budgetTail';
   }
 
@@ -1152,10 +1129,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal) {
     return '地中海风味 $meal ——一个选择（碗装、拼盘、卷饼），宏量营养素，以及推荐理由。$budgetTail';
   }
 
@@ -1165,10 +1139,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal) {
     return '墨西哥风味 $meal ——一个真实选择（碗装、塔可等），宏量营养素，以及如何搭配以保持目标。$budgetTail';
   }
 
@@ -1183,10 +1154,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal) {
     return '没有炉灶和烤箱——一个 5 分钟内能搞定的 $meal。宏量营养素 + 采购建议。$budgetTail';
   }
 
@@ -1347,12 +1315,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiDataUsageYourControls => '您的控制选项';
 
   @override
-  String aiFeaturesMixinValue(
-    Object displayCurrent,
-    Object message,
-    Object snappedDisplay,
-    Object unit,
-  ) {
+  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit) {
     return '$message：$displayCurrent → $snappedDisplay $unit';
   }
 
@@ -1506,8 +1469,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiModelDownloadBasic => '基础';
 
   @override
-  String get aiModelDownloadBatteryWarning =>
-      '设备端 AI 模型会在您的手机上运行密集计算。这可能会增加电池消耗，并导致设备在生成锻炼计划时发热。更大的模型会占用更多资源。';
+  String get aiModelDownloadBatteryWarning => '设备端 AI 模型会在您的手机上运行密集计算。这可能会增加电池消耗，并导致设备在生成锻炼计划时发热。更大的模型会占用更多资源。';
 
   @override
   String get aiModelDownloadBestQuality => '最佳质量';
@@ -1540,8 +1502,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadGetYourTokenAt =>
-      '在 huggingface.co/settings/tokens 获取您的令牌';
+  String get aiModelDownloadGetYourTokenAt => '在 huggingface.co/settings/tokens 获取您的令牌';
 
   @override
   String get aiModelDownloadHf => 'hf_...';
@@ -1586,8 +1547,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiModelDownloadRemove => '移除';
 
   @override
-  String get aiModelDownloadRequiredToDownload =>
-      '下载 HuggingFace 模型所需。请在 huggingface.co/settings/tokens 获取您的免费令牌';
+  String get aiModelDownloadRequiredToDownload => '下载 HuggingFace 模型所需。请在 huggingface.co/settings/tokens 获取您的免费令牌';
 
   @override
   String aiModelDownloadRequiresRam(Object ramLabel) {
@@ -1629,8 +1589,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiModelsCouldNotDetectDevice => '无法检测设备功能';
 
   @override
-  String get aiModelsGetTokenAtHuggingface =>
-      '在 huggingface.co/settings/tokens 获取令牌';
+  String get aiModelsGetTokenAtHuggingface => '在 huggingface.co/settings/tokens 获取令牌';
 
   @override
   String get aiModelsHf => 'hf_...';
@@ -1742,8 +1701,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiSettingsPersonalityTone => '个性和语气';
 
   @override
-  String get aiSettingsPickTheWeeklyStructure =>
-      '选择 AI 应围绕其进行规划的每周结构。更改将应用于您的下一次生成，当前周不受影响。';
+  String get aiSettingsPickTheWeeklyStructure => '选择 AI 应围绕其进行规划的每周结构。更改将应用于您的下一次生成，当前周不受影响。';
 
   @override
   String get aiSettingsPrivacyData => '隐私与数据';
@@ -1872,8 +1830,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiSettingsScreenThisWillDeleteAll => '这将删除您所有的聊天记录';
 
   @override
-  String get aiSettingsScreenThisWillPermanentlyDelete =>
-      '这将永久删除您与 AI 教练的所有对话。此操作无法撤销。';
+  String get aiSettingsScreenThisWillPermanentlyDelete => '这将永久删除您与 AI 教练的所有对话。此操作无法撤销。';
 
   @override
   String get aiSettingsScreenUseEmojis => '使用表情符号';
@@ -1913,10 +1870,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
-    Object scheduleSuffix,
-    Object splitDisplayName,
-  ) {
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName) {
     return '已切换至 $splitDisplayName$scheduleSuffix。正在生成新的锻炼计划...';
   }
 
@@ -1960,8 +1914,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiTextInputGotIt => '知道了';
 
   @override
-  String get aiTextInputLogSets1358 =>
-      '记录组数：135*8, 145*6, +10...\n添加动作：3x10 硬拉，重量 135';
+  String get aiTextInputLogSets1358 => '记录组数：135*8, 145*6, +10...\n添加动作：3x10 硬拉，重量 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => '记录组数 / 添加动作';
@@ -2091,8 +2044,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get avoidedExercisesExercisesToAvoid => '规避动作';
 
   @override
-  String get avoidedExercisesExercisesYouAddHere =>
-      '您在此处添加的动作将从 AI 生成的训练计划中排除。';
+  String get avoidedExercisesExercisesYouAddHere => '您在此处添加的动作将从 AI 生成的训练计划中排除。';
 
   @override
   String get avoidedExercisesNoExercisesToAvoid => '没有需要规避的动作';
@@ -2101,8 +2053,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get avoidedExercisesPleaseLogIn => '请登录';
 
   @override
-  String get avoidedExercisesReasonAndTemporarySettings =>
-      '原因和临时设置将应用于每个动作。您可以稍后编辑单个条目。';
+  String get avoidedExercisesReasonAndTemporarySettings => '原因和临时设置将应用于每个动作。您可以稍后编辑单个条目。';
 
   @override
   String get avoidedExercisesReasonOptional => '原因（可选）';
@@ -2146,18 +2097,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get avoidedExercisesScreenNoSpecificAlternativesFound => '未找到特定的替代动作';
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
-    Object exerciseName,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName) {
     return '代替 $exerciseName';
   }
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
-    Object day,
-    Object month,
-    Object year,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year) {
     return '直到 $year年$month月$day日';
   }
 
@@ -2301,8 +2246,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get badgeHubInProgress2 => '进行中';
 
   @override
-  String get badgeHubLevelledBadgesThatKeep =>
-      '随着您记录更多的步数、卡路里、训练次数或距离，徽章等级会不断提升。';
+  String get badgeHubLevelledBadgesThatKeep => '随着您记录更多的步数、卡路里、训练次数或距离，徽章等级会不断提升。';
 
   @override
   String get badgeHubMasteries => '精通';
@@ -2331,12 +2275,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get badgeHubWeeklyOrDailyChallenges =>
-      '您可以参与的每周或每日挑战。它们会按计划重置，因此您可以随时重新赢取。';
+  String get badgeHubWeeklyOrDailyChallenges => '您可以参与的每周或每日挑战。它们会按计划重置，因此您可以随时重新赢取。';
 
   @override
-  String get badgeHubYourHighestLiftsLongest =>
-      '您最高的举重重量、最长的训练时长、最大的训练量。打破它们来升级奖牌。';
+  String get badgeHubYourHighestLiftsLongest => '您最高的举重重量、最长的训练时长、最大的训练量。打破它们来升级奖牌。';
 
   @override
   String get barcodeScannerOverlayPointYourCameraAt => '将摄像头对准产品条形码';
@@ -2513,8 +2455,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bodyAnalyzerCaptureAnalyzing => '正在分析…';
 
   @override
-  String get bodyAnalyzerCaptureFusesHeightWeightBody =>
-      '将身高、体重、体脂和卷尺测量值融合到分析中。';
+  String get bodyAnalyzerCaptureFusesHeightWeightBody => '将身高、体重、体脂和卷尺测量值融合到分析中。';
 
   @override
   String get bodyAnalyzerCapturePickAtLeastOne => '至少选择一张照片。';
@@ -2834,8 +2775,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cardioHistoryHike => '徒步';
 
   @override
-  String get cardioHistoryImportFromStravaPeloton =>
-      '从 Strava、Peloton、Garmin、Apple Health 或 Fitbit 导入，即可在此处查看您的历史记录。';
+  String get cardioHistoryImportFromStravaPeloton => '从 Strava、Peloton、Garmin、Apple Health 或 Fitbit 导入，即可在此处查看您的历史记录。';
 
   @override
   String get cardioHistoryIndoorCycle => '室内骑行';
@@ -3302,8 +3242,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeEquipmentHelperEquipment => '器械';
 
   @override
-  String get changeEquipmentHelperNoActiveGymProfile =>
-      '没有激活的健身房配置 — 请先打开“设置”→“健身房”。';
+  String get changeEquipmentHelperNoActiveGymProfile => '没有激活的健身房配置 — 请先打开“设置”→“健身房”。';
 
   @override
   String get chatActionConfirmApplied => '已应用';
@@ -3648,8 +3587,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatThisWillDeleteAll => '这将删除您与 AI 教练的所有对话记录。此操作无法撤销。';
 
   @override
-  String get chatYourPersonalAiPowered =>
-      '您的专属 AI 健身教练。您可以询问有关训练、营养、恢复或任何健身相关的问题。AI 会根据您的进度学习，为您提供个性化建议。';
+  String get chatYourPersonalAiPowered => '您的专属 AI 健身教练。您可以询问有关训练、营养、恢复或任何健身相关的问题。AI 会根据您的进度学习，为您提供个性化建议。';
 
   @override
   String get classicStatsTemplateCalories => '卡路里';
@@ -3825,8 +3763,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coachSelectionGender => '性别';
 
   @override
-  String get coachSelectionLetSGoooTime =>
-      '冲鸭！是时候去突破自我了！您已经连续坚持 5 天了，我可不会让你中断记录。准备好创造奇迹了吗？';
+  String get coachSelectionLetSGoooTime => '冲鸭！是时候去突破自我了！您已经连续坚持 5 天了，我可不会让你中断记录。准备好创造奇迹了吗？';
 
   @override
   String get coachSelectionLook => '形象';
@@ -3944,8 +3881,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get combinedHealthConnectHealth => '连接健康数据';
 
   @override
-  String get combinedHealthConnectHealthBody =>
-      '步数、心率、睡眠等数据通过 Android 的 Health Connect 和 iOS 的健康 App 同步。';
+  String get combinedHealthConnectHealthBody => '步数、心率、睡眠等数据通过 Android 的 Health Connect 和 iOS 的健康 App 同步。';
 
   @override
   String get combinedHealthConnectHealthToSee => '连接健康数据以查看您的活动';
@@ -4004,8 +3940,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get combinedHealthWater => '饮水';
 
   @override
-  String get comebackModeComebackModeReducesSets =>
-      '恢复模式会减少组数和强度，以帮助您在休息后避免受伤。';
+  String get comebackModeComebackModeReducesSets => '恢复模式会减少组数和强度，以帮助您在休息后避免受伤。';
 
   @override
   String get comebackModeEaseMeBackIn => '让我循序渐进地恢复';
@@ -4040,10 +3975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get comingSoonBottomGotIt => '知道了！';
 
   @override
-  String comingSoonBottomSheetWeeksSessionsPerWeek(
-    Object durationWeeks,
-    Object sessionsPerWeek,
-  ) {
+  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek) {
     return '$durationWeeks 周 • 每周 $sessionsPerWeek 次训练';
   }
 
@@ -4114,8 +4046,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get comingSoonMyJourney => '我的旅程';
 
   @override
-  String get comingSoonOneTapOnYour =>
-      '在主屏幕或锁屏点击一次，即可获取包含卡路里和宏量营养素的 AI 饮食建议，并附带“记录”按钮';
+  String get comingSoonOneTapOnYour => '在主屏幕或锁屏点击一次，即可获取包含卡路里和宏量营养素的 AI 饮食建议，并附带“记录”按钮';
 
   @override
   String get comingSoonOneTapToStart => '一键开始今日训练';
@@ -4315,10 +4246,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get communityRecipeSearchSaveToMyRecipes => '保存到我的食谱';
 
   @override
-  String communityRecipeSearchScreenKcalLogs(
-    Object summary,
-    Object timesLogged,
-  ) {
+  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged) {
     return '$summary kcal · $timesLogged次记录';
   }
 
@@ -4337,10 +4265,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get compactWorkoutRow => ' • ';
 
   @override
-  String compactWorkoutRowMinExercises(
-    Object bestDurationMinutes,
-    Object exerciseCount,
-  ) {
+  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount) {
     return '$bestDurationMinutes 分钟 • $exerciseCount 个动作';
   }
 
@@ -4443,8 +4368,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get comparisonGallerySavedComparisons => '已保存的对比';
 
   @override
-  String get comparisonGalleryThisWillPermanentlyRemove =>
-      '这将永久删除此对比。原始照片不会被删除。';
+  String get comparisonGalleryThisWillPermanentlyRemove => '这将永久删除此对比。原始照片不会被删除。';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4507,11 +4431,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String comparisonViewExtSelectedPhotos(
-    Object length,
-    Object maxPhotos,
-    Object minPhotos,
-  ) {
+  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos) {
     return '已选 $length 张（$minPhotos-$maxPhotos 张照片）';
   }
 
@@ -5268,8 +5188,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customContentSectionCreateCustomComboExercise => '创建自定义及组合动作';
 
   @override
-  String get customContentSectionCreateExercisesThatCan =>
-      '创建可包含在 AI 生成训练中的动作。';
+  String get customContentSectionCreateExercisesThatCan => '创建可包含在 AI 生成训练中的动作。';
 
   @override
   String get customContentSectionDeleteExercise => '删除动作？';
@@ -5308,9 +5227,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customContentSectionNoCustomExercisesYet => '暂无自定义动作';
 
   @override
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed) {
     return '已将“$trimmed”添加到您的器械中';
   }
 
@@ -5330,9 +5247,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed) {
     return '$trimmed 已在您的列表中';
   }
 
@@ -5393,10 +5308,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenExercisesUses(
-    Object totalCustomExercises,
-    Object totalUses,
-  ) {
+  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses) {
     return '$totalCustomExercises 个动作，$totalUses 次使用';
   }
 
@@ -5425,8 +5337,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customFoodBuilderCreateNewAnyway => '仍然创建新食物';
 
   @override
-  String get customFoodBuilderFillItInYourself =>
-      '你可以自行填写，或让 AI 根据名称或标签照片进行建议。所有数值均可编辑。';
+  String get customFoodBuilderFillItInYourself => '你可以自行填写，或让 AI 根据名称或标签照片进行建议。所有数值均可编辑。';
 
   @override
   String get customFoodBuilderLabelFromPhotos => '从照片获取标签';
@@ -5457,8 +5368,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customFoodBuilderUseExisting => '使用现有';
 
   @override
-  String get customGoalsAddSpecificSkillsOr =>
-      '添加你想要提升的具体技能或目标。\nAI 将帮助找到合适的动作。';
+  String get customGoalsAddSpecificSkillsOr => '添加你想要提升的具体技能或目标。\nAI 将帮助找到合适的动作。';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI 生成的关键词';
@@ -5537,10 +5447,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String customTrendScreenSharedDays(
-    Object kMinCorrelationPairs,
-    Object pairedPoints,
-  ) {
+  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints) {
     return '$pairedPoints/$kMinCorrelationPairs 个共同记录日';
   }
 
@@ -5693,8 +5600,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get cycleMonthlySummaryThisRecapStaysPrivate =>
-      '此回顾仅您可见 — 周期数据绝不会被共享。';
+  String get cycleMonthlySummaryThisRecapStaysPrivate => '此回顾仅您可见 — 周期数据绝不会被共享。';
 
   @override
   String get cycleMonthlySummaryYourMonthInReview => '月度回顾';
@@ -5791,8 +5697,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiPredictionsAreEstimates =>
-      '预测结果基于你的记录数据，仅供参考，并非避孕方法，也不构成医疗建议。如有健康顾虑，请咨询医生。';
+  String get cycleScreenUiPredictionsAreEstimates => '预测结果基于你的记录数据，仅供参考，并非避孕方法，也不构成医疗建议。如有健康顾虑，请咨询医生。';
 
   @override
   String get cycleScreenUiPregnancyModeIsOn => '孕期模式已开启';
@@ -6229,8 +6134,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataManagementExportMyWorkouts => '导出我的训练';
 
   @override
-  String get dataManagementHevyStrongFitbodPdf =>
-      'Hevy / Strong / Fitbod / PDF / GPX — 随身携带';
+  String get dataManagementHevyStrongFitbodPdf => 'Hevy / Strong / Fitbod / PDF / GPX — 随身携带';
 
   @override
   String get dataManagementLifetimeAccess => '终身访问权限';
@@ -6380,8 +6284,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteAccountFlowThisWillPermanentlyDelete => '这将永久删除：';
 
   @override
-  String get deleteAccountFlowWeCouldNotVerify =>
-      '我们无法验证您的密码。请先重置密码，然后再尝试删除您的账户。';
+  String get deleteAccountFlowWeCouldNotVerify => '我们无法验证您的密码。请先重置密码，然后再尝试删除您的账户。';
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
@@ -6422,8 +6325,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get demoActiveWorkoutExitWorkout => '退出训练？';
 
   @override
-  String get demoActiveWorkoutGetAiGeneratedWorkout =>
-      '获取 AI 生成的训练计划，追踪您的进度，更快达成健身目标。';
+  String get demoActiveWorkoutGetAiGeneratedWorkout => '获取 AI 生成的训练计划，追踪您的进度，更快达成健身目标。';
 
   @override
   String get demoActiveWorkoutGetPersonalizedWorkouts => '获取个性化训练';
@@ -6451,16 +6353,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String demoActiveWorkoutScreenUi1SetOf(
-    Object _currentExerciseSets,
-    Object _currentSet,
-  ) {
+  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet) {
     return '第 $_currentSet 组，共 $_currentExerciseSets 组';
   }
 
   @override
-  String get demoActiveWorkoutSignUpToGet =>
-      '注册以获取个性化 AI 指导、详细的进度追踪以及为您量身定制的训练计划。';
+  String get demoActiveWorkoutSignUpToGet => '注册以获取个性化 AI 指导、详细的进度追踪以及为您量身定制的训练计划。';
 
   @override
   String get demoActiveWorkoutSkipAll => '全部跳过';
@@ -6573,38 +6471,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get demoWorkoutVideoUnavailable => '视频不可用';
 
   @override
-  String get derivedMetricDetailABmiBetween18 =>
-      'BMI 在 18.5 到 24.9 之间被认为是健康的体重范围。继续保持！';
+  String get derivedMetricDetailABmiBetween18 => 'BMI 在 18.5 到 24.9 之间被认为是健康的体重范围。继续保持！';
 
   @override
-  String get derivedMetricDetailABmiBetween25 =>
-      'BMI在25到29.9之间被视为超重。注意：BMI无法区分肌肉和脂肪。';
+  String get derivedMetricDetailABmiBetween25 => 'BMI在25到29.9之间被视为超重。注意：BMI无法区分肌肉和脂肪。';
 
   @override
   String get derivedMetricDetailABmiOf30 => 'BMI达到30或以上被归类为肥胖。建议咨询医疗专业人士以获取指导。';
 
   @override
-  String get derivedMetricDetailAChestToWaist =>
-      '胸腰比低于1.1表示相对于腰部，胸部较窄。建议专注于胸部和背部训练。';
+  String get derivedMetricDetailAChestToWaist => '胸腰比低于1.1表示相对于腰部，胸部较窄。建议专注于胸部和背部训练。';
 
   @override
-  String get derivedMetricDetailAChestToWaist2 =>
-      '胸腰比在1.1-1.3之间属于平均水平。胸部和腰部的比例健康。';
+  String get derivedMetricDetailAChestToWaist2 => '胸腰比在1.1-1.3之间属于平均水平。胸部和腰部的比例健康。';
 
   @override
-  String get derivedMetricDetailAChestToWaist3 =>
-      '胸腰比高于1.3表示相对于腰部，胸部发育良好。比例非常棒！';
+  String get derivedMetricDetailAChestToWaist3 => '胸腰比高于1.3表示相对于腰部，胸部发育良好。比例非常棒！';
 
   @override
   String get derivedMetricDetailAWhtrAbove0 => 'WHtR高于0.6表示腹部脂肪较多，健康风险增加。';
 
   @override
-  String get derivedMetricDetailAWhtrBetween0 =>
-      'WHtR在0.4到0.5之间被视为健康。你的腰围小于身高的一半。';
+  String get derivedMetricDetailAWhtrBetween0 => 'WHtR在0.4到0.5之间被视为健康。你的腰围小于身高的一半。';
 
   @override
-  String get derivedMetricDetailAWhtrBetween02 =>
-      'WHtR在0.5到0.6之间表示腹部脂肪增加。建议专注于减小腰围。';
+  String get derivedMetricDetailAWhtrBetween02 => 'WHtR在0.5到0.6之间表示腹部脂肪增加。建议专注于减小腰围。';
 
   @override
   String get derivedMetricDetailAboveAverage => '高于平均水平';
@@ -6643,8 +6534,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get derivedMetricDetailGood => '良好';
 
   @override
-  String get derivedMetricDetailGoodSymmetry9397 =>
-      '对称性良好（93-97%）。差异较小，处于正常范围内。';
+  String get derivedMetricDetailGoodSymmetry9397 => '对称性良好（93-97%）。差异较小，处于正常范围内。';
 
   @override
   String get derivedMetricDetailHealthy => '健康';
@@ -6683,8 +6573,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get derivedMetricDetailModerate => '中等';
 
   @override
-  String get derivedMetricDetailModerateAsymmetry8893 =>
-      '对称性中等（88-93%）。考虑增加单侧训练以改善不平衡。';
+  String get derivedMetricDetailModerateAsymmetry8893 => '对称性中等（88-93%）。考虑增加单侧训练以改善不平衡。';
 
   @override
   String get derivedMetricDetailModerateRisk => '中等风险';
@@ -6696,8 +6585,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get derivedMetricDetailNarrow => '窄';
 
   @override
-  String get derivedMetricDetailNearPerfectSymmetry97 =>
-      '对称性近乎完美（97%+）。两侧非常平衡。';
+  String get derivedMetricDetailNearPerfectSymmetry97 => '对称性近乎完美（97%+）。两侧非常平衡。';
 
   @override
   String get derivedMetricDetailNoHistoryYet => '暂无历史记录';
@@ -6730,8 +6618,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get derivedMetricDetailShoulders => '肩部';
 
   @override
-  String get derivedMetricDetailSignificantAsymmetryBelow8 =>
-      '对称性显著不足（低于88%）。请专注于弱侧的单侧训练。';
+  String get derivedMetricDetailSignificantAsymmetryBelow8 => '对称性显著不足（低于88%）。请专注于弱侧的单侧训练。';
 
   @override
   String get derivedMetricDetailSuperior => '卓越';
@@ -6856,9 +6743,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
-    Object daysIncluded,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded) {
     return '过去 $daysIncluded 天';
   }
 
@@ -6873,16 +6758,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
-    Object totalRapidUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits) {
     return '${totalRapidUnits}U';
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU3(
-    Object totalLongUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits) {
     return '${totalLongUnits}U';
   }
 
@@ -7170,8 +7051,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoverTourFindYourPeers => '寻找同伴';
 
   @override
-  String get discoverTourOpenTheir6Axis =>
-      '打开他们的 6 轴健身雷达，看看您在 XP、容量、连续记录等方面的表现如何。';
+  String get discoverTourOpenTheir6Axis => '打开他们的 6 轴健身雷达，看看您在 XP、容量、连续记录等方面的表现如何。';
 
   @override
   String get discoverTourSwitchBoards => '切换榜单';
@@ -7180,8 +7060,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoverTourTapAnyUser => '点击任意用户';
 
   @override
-  String get discoverTourXpVolumeStreaksEach =>
-      'XP / 容量 / 连续记录分别代表不同的游戏维度——尝试全部，找到您最强的领域。';
+  String get discoverTourXpVolumeStreaksEach => 'XP / 容量 / 连续记录分别代表不同的游戏维度——尝试全部，找到您最强的领域。';
 
   @override
   String get discoverTrainingPlans => '训练计划';
@@ -7256,8 +7135,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadedVideosNoDownloadsYet => '暂无下载';
 
   @override
-  String get downloadedVideosSaveExerciseVideosFor =>
-      '保存训练视频以供离线观看 — 非常适合健身房 WiFi 信号不佳时使用。';
+  String get downloadedVideosSaveExerciseVideosFor => '保存训练视频以供离线观看 — 非常适合健身房 WiFi 信号不佳时使用。';
 
   @override
   String downloadedVideosScreenDeleted(Object exerciseName) {
@@ -7281,8 +7159,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadedVideosStorageUsed => '已用存储空间';
 
   @override
-  String get downloadedVideosThisWillDeleteAll =>
-      '这将从您的设备中删除所有已下载的训练视频。您可以随时重新下载。';
+  String get downloadedVideosThisWillDeleteAll => '这将从您的设备中删除所有已下载的训练视频。您可以随时重新下载。';
 
   @override
   String get durationRangeSliderDuration => '时长';
@@ -7542,8 +7419,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editGymProfileIcon => '图标';
 
   @override
-  String get editGymProfileLeaveOnAutoFor =>
-      '保持“自动”让 AI 决定，或将重点固定在特定日期（例如：周二 → 上肢）。';
+  String get editGymProfileLeaveOnAutoFor => '保持“自动”让 AI 决定，或将重点固定在特定日期（例如：周二 → 上肢）。';
 
   @override
   String get editGymProfileLocationOptional => '位置（可选）';
@@ -7677,8 +7553,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProgramSheetBack => '返回';
 
   @override
-  String get editProgramSheetChangeYourWeeklySchedule =>
-      '更改你的每周计划、器械或难度。你的锻炼计划将根据新设置重新生成。';
+  String get editProgramSheetChangeYourWeeklySchedule => '更改你的每周计划、器械或难度。你的锻炼计划将根据新设置重新生成。';
 
   @override
   String get editProgramSheetChooseATrainingSplit => '选择适合你日程和目标的训练拆分';
@@ -7760,10 +7635,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProgramSheetNoProgramHistoryFound => '未找到计划历史';
 
   @override
-  String editProgramSheetPartEditProgramSheetStateOf(
-    Object _generatingWorkout,
-    Object _totalWorkoutsToGenerate,
-  ) {
+  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate) {
     return '$_generatingWorkout / $_totalWorkoutsToGenerate';
   }
 
@@ -7780,8 +7652,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProgramSheetProgramHistory => '计划历史';
 
   @override
-  String get editProgramSheetProgramRestoredRegenerateW =>
-      '计划已恢复！请重新生成锻炼以应用更改。';
+  String get editProgramSheetProgramRestoredRegenerateW => '计划已恢复！请重新生成锻炼以应用更改。';
 
   @override
   String get editProgramSheetRestoreAPreviousProgram => '恢复之前的计划配置';
@@ -7920,12 +7791,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String editTargetsSheetUWks(
-    Object dateStr,
-    Object deficitInfo,
-    Object goalLabel,
-    Object weeks,
-  ) {
+  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks) {
     return '$goalLabel → ~$weeks 周 ($dateStr)$deficitInfo';
   }
 
@@ -8095,10 +7961,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String editWorkoutEquipmentSheetValue(
-    Object length,
-    Object selectedInCategory,
-  ) {
+  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory) {
     return '($selectedInCategory/$length)';
   }
 
@@ -8156,8 +8019,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editableFitnessCardFitnessLevel => '健身水平';
 
   @override
-  String get editableFitnessCardFitnessSettingsUpdatedWor =>
-      '健身设置已更新 - 训练计划将重新生成';
+  String get editableFitnessCardFitnessSettingsUpdatedWor => '健身设置已更新 - 训练计划将重新生成';
 
   @override
   String get editableFitnessCardGoal => '目标';
@@ -8186,24 +8048,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editableFitnessCardNotSet => '未设置';
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(
-    Object _selectedStretchDuration,
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration+$_selectedStretchDuration 分钟';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin(
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration 分钟';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin2(
-    Object _selectedStretchDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration) {
     return '$_selectedStretchDuration 分钟';
   }
 
@@ -8387,8 +8242,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get embeddedCameraPanelTryAgain => '重试';
 
   @override
-  String get emptyCustomExercisesBuildCustomExercisesTailore =>
-      '创建符合你需求的自定义动作，或将多个动作组合成强大的训练组合。';
+  String get emptyCustomExercisesBuildCustomExercisesTailore => '创建符合你需求的自定义动作，或将多个动作组合成强大的训练组合。';
 
   @override
   String get emptyCustomExercisesCreateYourFirstExercise => '创建你的第一个动作';
@@ -8612,8 +8466,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get environmentListSelectYourWorkoutEnvironmen =>
-      '选择您的锻炼环境，以自定义可用的器械。';
+  String get environmentListSelectYourWorkoutEnvironmen => '选择您的锻炼环境，以自定义可用的器械。';
 
   @override
   String get environmentListUseThis => '使用此环境';
@@ -8622,15 +8475,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get environmentListWorkoutEnvironment => '锻炼环境';
 
   @override
-  String get equipmentCalibration15x220x225x230x2 =>
-      '15x2, 20x2, 25x2, 30x2, 35x2';
+  String get equipmentCalibration15x220x225x230x2 => '15x2, 20x2, 25x2, 30x2, 35x2';
 
   @override
   String get equipmentCalibration175ForEz => 'EZ杆 17.5，奥林匹克杆 45';
 
   @override
-  String get equipmentCalibration45x435x225x410x2 =>
-      '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
+  String get equipmentCalibration45x435x225x410x2 => '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
 
   @override
   String get equipmentCalibration794ForEz => 'EZ杆 7.94，奥林匹克杆 20';
@@ -8654,8 +8505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get equipmentCalibrationEditEquipment => '编辑器械';
 
   @override
-  String get equipmentCalibrationIntroBody =>
-      '杠片建议和重量推荐将匹配您实际拥有的器材。设置杠铃重量、器械底盘重量、绳索机重量步进,以及杠片/哑铃库存。';
+  String get equipmentCalibrationIntroBody => '杠片建议和重量推荐将匹配您实际拥有的器材。设置杠铃重量、器械底盘重量、绳索机重量步进,以及杠片/哑铃库存。';
 
   @override
   String get equipmentCalibrationIntroTitle => '告诉我们您的真实器材';
@@ -8771,8 +8621,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get equipmentSelectorEnterCustomEquipmentE =>
-      '输入自定义器械（例如：\"TRX 弹力带\"）';
+  String get equipmentSelectorEnterCustomEquipmentE => '输入自定义器械（例如：\"TRX 弹力带\"）';
 
   @override
   String get equipmentSelectorEquipmentAvailable => '可用器械';
@@ -8905,8 +8754,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseAddSheetAll => '全部';
 
   @override
-  String get exerciseAddSheetCreateCustomExercisesOr =>
-      '在“库 → 我的”中创建自定义动作或标记收藏';
+  String get exerciseAddSheetCreateCustomExercisesOr => '在“库 → 我的”中创建自定义动作或标记收藏';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => '添加动作失败';
@@ -9237,40 +9085,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseDetailSheetNoExercisesInCurrent => '当前训练中没有可替换的动作';
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
-    Object e,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e) {
     return '固定失败：$e';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
-    Object exerciseName,
-    Object selected,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected) {
     return '已将“$selected”替换为“$exerciseName”';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
-    Object exerciseName,
-    Object section,
-    Object timing,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing) {
     return '已将“$exerciseName”固定到 $section ($timing)';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName) {
     return '已取消固定“$exerciseName”';
   }
 
   @override
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName) {
     return '移除“$exerciseName”的离线视频吗？你可以随时重新下载。';
   }
 
@@ -9451,8 +9286,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseHistoryFailedToLoadExercises => '动作加载失败';
 
   @override
-  String get exerciseHistoryKeepTrainingAndPushing =>
-      '继续训练，突破极限。当您变得更强时，个人纪录将显示在此处。';
+  String get exerciseHistoryKeepTrainingAndPushing => '继续训练，突破极限。当您变得更强时，个人纪录将显示在此处。';
 
   @override
   String get exerciseHistoryLast30Days => '最近 30 天';
@@ -9714,45 +9548,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseOptionsInfoLinkAsSuperset => '设为超级组';
 
   @override
-  String get exerciseOptionsInfoMarkAsACore =>
-      '标记为核心动作，该动作将不会被轮换。AI 会始终将核心动作包含在您的训练计划中，非常适合您想要持续进行渐进式超负荷的复合动作。';
+  String get exerciseOptionsInfoMarkAsACore => '标记为核心动作，该动作将不会被轮换。AI 会始终将核心动作包含在您的训练计划中，非常适合您想要持续进行渐进式超负荷的复合动作。';
 
   @override
   String get exerciseOptionsInfoNeverRecommend => '不再推荐';
 
   @override
-  String get exerciseOptionsInfoPairWithAnotherExercise =>
-      '与其他动作配对，以极短的休息时间连续进行。非常适合提升训练效率和肌肉泵感。';
+  String get exerciseOptionsInfoPairWithAnotherExercise => '与其他动作配对，以极短的休息时间连续进行。非常适合提升训练效率和肌肉泵感。';
 
   @override
-  String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
-      '永久屏蔽此动作，不再出现在AI推荐中。适用于你不喜欢或因伤无法进行的动作。';
+  String get exerciseOptionsInfoPermanentlyBlockThisExercis => '永久屏蔽此动作，不再出现在AI推荐中。适用于你不喜欢或因伤无法进行的动作。';
 
   @override
-  String get exerciseOptionsInfoQueueThisExerciseTo =>
-      '将此动作加入下一次训练计划。适合你想重点强化的动作。加入队列的动作若7天内未进行，将会过期。';
+  String get exerciseOptionsInfoQueueThisExerciseTo => '将此动作加入下一次训练计划。适合你想重点强化的动作。加入队列的动作若7天内未进行，将会过期。';
 
   @override
   String get exerciseOptionsInfoRemoveFromWorkout => '从训练中移除';
 
   @override
-  String get exerciseOptionsInfoRemoveThisExerciseFrom =>
-      '仅从本次训练中移除该动作。该动作未来仍可能出现在训练计划中。';
+  String get exerciseOptionsInfoRemoveThisExerciseFrom => '仅从本次训练中移除该动作。该动作未来仍可能出现在训练计划中。';
 
   @override
   String get exerciseOptionsInfoRepeatNextTime => '下次重复';
 
   @override
-  String get exerciseOptionsInfoReplaceWithASimilar =>
-      '替换为针对相同肌肉群的类似动作。可从AI建议、近期替换记录中选择，或浏览完整动作库。';
+  String get exerciseOptionsInfoReplaceWithASimilar => '替换为针对相同肌肉群的类似动作。可从AI建议、近期替换记录中选择，或浏览完整动作库。';
 
   @override
-  String get exerciseOptionsInfoSaveExercisesYouLove =>
-      '收藏你喜爱的动作以便快速访问。收藏的动作会显示在动作库的筛选视图中，并在AI推荐中获得优先考虑。';
+  String get exerciseOptionsInfoSaveExercisesYouLove => '收藏你喜爱的动作以便快速访问。收藏的动作会显示在动作库的筛选视图中，并在AI推荐中获得优先考虑。';
 
   @override
-  String get exerciseOptionsInfoSeeYourPerformanceHistory =>
-      '查看该动作随时间变化的表现历史和进度图表。';
+  String get exerciseOptionsInfoSeeYourPerformanceHistory => '查看该动作随时间变化的表现历史和进度图表。';
 
   @override
   String get exerciseOptionsInfoStapleExercise => '固定动作';
@@ -9834,25 +9660,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exercisePickerSheetOrTypeAboveTo => '或在上方输入以搜索完整动作库';
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
-    Object length,
-    Object length1,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1) {
     return '显示 $length / $length1';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue(
-    Object customCount,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount) {
     return '($customCount)';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(
-    Object count,
-    Object name,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name) {
     return '$name ($count)';
   }
 
@@ -9874,8 +9692,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exercisePickerSheetSearchForExercisesToAdd => '搜索要添加到收藏的动作';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToInclude =>
-      '搜索要包含在下一次训练中的动作';
+  String get exercisePickerSheetSearchForExercisesToInclude => '搜索要包含在下一次训练中的动作';
 
   @override
   String get exercisePickerSheetSearchForExercisesToSkip => '搜索要跳过的动作';
@@ -9925,8 +9742,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exercisePreferencesCardCustomizeStepPerEquipme => '自定义每种器械的增重幅度';
 
   @override
-  String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
-      '自定义训练中出现的动作';
+  String get exercisePreferencesCardCustomizeWhichExercisesAppe => '自定义训练中出现的动作';
 
   @override
   String get exercisePreferencesCardDynamicWarmupBeforeWorkouts => '训练前动态热身';
@@ -10003,8 +9819,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exercisePreferencesCardWarmupPhase => '热身阶段';
 
   @override
-  String get exercisePreferencesCardWarnBeforeFinishingWith =>
-      '结束前若有未记录的组数进行警告';
+  String get exercisePreferencesCardWarnBeforeFinishingWith => '结束前若有未记录的组数进行警告';
 
   @override
   String get exercisePreferencesCardWeightIncrements => '重量增幅';
@@ -10126,10 +9941,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenEasySessions(
-    Object _target,
-    Object consecutiveEasy,
-  ) {
+  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy) {
     return '$consecutiveEasy / $_target 次轻松训练';
   }
 
@@ -10149,10 +9961,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenYouWillMoveFrom(
-    Object exerciseName,
-    Object suggestedExercise,
-  ) {
+  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise) {
     return '你将从 $exerciseName 进阶至 $suggestedExercise。';
   }
 
@@ -10181,8 +9990,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseQueueNoExercisesQueued => '暂无队列中的训练';
 
   @override
-  String get exerciseQueueQueuedExercisesWillBe =>
-      '队列中的训练将包含在你的下一次锻炼中。项目将在7天后过期。';
+  String get exerciseQueueQueuedExercisesWillBe => '队列中的训练将包含在你的下一次锻炼中。项目将在7天后过期。';
 
   @override
   String get exerciseQueueRemove => '移除';
@@ -10206,8 +10014,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get exerciseQueueTheseExercisesWillBe =>
-      '这些训练将包含在你的下一次锻炼中。队列项目将在7天后过期。';
+  String get exerciseQueueTheseExercisesWillBe => '这些训练将包含在你的下一次锻炼中。队列项目将在7天后过期。';
 
   @override
   String get exerciseSafetyAuditAllExercisesTagged => '所有训练已标记！';
@@ -10231,8 +10038,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseSafetyAuditNoPattern => '无模式';
 
   @override
-  String get exerciseSafetyAuditOptionalCiteSourceExplain =>
-      '可选：引用来源、解释边缘情况、标记歧义...';
+  String get exerciseSafetyAuditOptionalCiteSourceExplain => '可选：引用来源、解释边缘情况、标记歧义...';
 
   @override
   String get exerciseSafetyAuditRefresh => '刷新';
@@ -10267,34 +10073,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseSafetyAuditTryAgain => '重试';
 
   @override
-  String get exerciseScienceResearchAllTrainingParametersAre =>
-      '所有训练参数均源自同行评审的运动科学文献。个人结果可能有所不同。';
+  String get exerciseScienceResearchAllTrainingParametersAre => '所有训练参数均源自同行评审的运动科学文献。个人结果可能有所不同。';
 
   @override
   String get exerciseScienceResearchAmericanCollegeOfSports => '美国运动医学会 (ACSM)';
 
   @override
-  String get exerciseScienceResearchAndroulakisKorakakisPFis =>
-      'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
+  String get exerciseScienceResearchAndroulakisKorakakisPFis => 'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
 
   @override
   String get exerciseScienceResearchBarbaRuizCEt => 'Barba-Ruiz, C. 等';
 
   @override
-  String get exerciseScienceResearchEffectsOfSupersetConfigurat =>
-      '超级组配置对杠铃卧推中动力学、运动学和感知用力程度的影响';
+  String get exerciseScienceResearchEffectsOfSupersetConfigurat => '超级组配置对杠铃卧推中动力学、运动学和感知用力程度的影响';
 
   @override
-  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms =>
-      'Epley, Brzycki, Mayhew / Helms, E. R. 等';
+  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms => 'Epley, Brzycki, Mayhew / Helms, E. R. 等';
 
   @override
-  String get exerciseScienceResearchEssentialsOfStrengthTrainin =>
-      '力量训练与体能调节基础';
+  String get exerciseScienceResearchEssentialsOfStrengthTrainin => '力量训练与体能调节基础';
 
   @override
-  String get exerciseScienceResearchEverySubmittedSourceIs =>
-      '每一份提交的来源在加入知识库之前，都会经过人工审核和验证。';
+  String get exerciseScienceResearchEverySubmittedSourceIs => '每一份提交的来源在加入知识库之前，都会经过人工审核和验证。';
 
   @override
   String get exerciseScienceResearchEvidenceBasedTraining => '循证训练';
@@ -10303,22 +10103,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseScienceResearchFeedDataToRag => '输入数据至 RAG';
 
   @override
-  String get exerciseScienceResearchFeedYourOwnResearch =>
-      '将你自己的研究论文、训练数据库和训练方法输入到我们的 RAG（检索增强生成）系统中。这使得 AI 教练在生成个性化训练计划时能够参考更多高质量来源，从而使建议更智能，并更贴合前沿科学。';
+  String get exerciseScienceResearchFeedYourOwnResearch => '将你自己的研究论文、训练数据库和训练方法输入到我们的 RAG（检索增强生成）系统中。这使得 AI 教练在生成个性化训练计划时能够参考更多高质量来源，从而使建议更智能，并更贴合前沿科学。';
 
   @override
   String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. 等';
 
   @override
-  String get exerciseScienceResearchGoldsteinANLeung =>
-      'Goldstein, A. N. & Leung, E.';
+  String get exerciseScienceResearchGoldsteinANLeung => 'Goldstein, A. N. & Leung, E.';
 
   @override
   String get exerciseScienceResearchGuidelinesForExerciseTestin => '运动测试与处方指南';
 
   @override
-  String get exerciseScienceResearchHaffGGTriplett =>
-      'Haff, G. G. & Triplett, N. T.';
+  String get exerciseScienceResearchHaffGGTriplett => 'Haff, G. G. & Triplett, N. T.';
 
   @override
   String get exerciseScienceResearchHowItWorks => '工作原理';
@@ -10327,8 +10124,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseScienceResearchImportantGuidelines => '重要指南';
 
   @override
-  String get exerciseScienceResearchIsraetelMRpStrength =>
-      'Israetel, M. / RP Strength';
+  String get exerciseScienceResearchIsraetelMRpStrength => 'Israetel, M. / RP Strength';
 
   @override
   String get exerciseScienceResearchKeyFindings => '关键发现';
@@ -10355,8 +10151,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseScienceResearchUploadData => '上传数据';
 
   @override
-  String get exerciseScienceResearchUploadPdfsArticlesOr =>
-      '上传包含运动科学研究的 PDF、文章或文本文件。我们的系统会处理并索引这些内容，使其在 AI 生成你的训练计划时作为背景知识使用。';
+  String get exerciseScienceResearchUploadPdfsArticlesOr => '上传包含运动科学研究的 PDF、文章或文本文件。我们的系统会处理并索引这些内容，使其在 AI 生成你的训练计划时作为背景知识使用。';
 
   @override
   String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. 等';
@@ -10394,10 +10189,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String exerciseSearchResultsWorkoutsFound(
-    Object exerciseName,
-    Object totalResults,
-  ) {
+  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults) {
     return '\"$exerciseName\" - 找到 $totalResults 次训练';
   }
 
@@ -10597,9 +10389,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseSwapSheetNoRecentSwaps => '暂无最近替换记录';
 
   @override
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
-    Object newExerciseName,
-  ) {
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName) {
     return '已替换为 $newExerciseName';
   }
 
@@ -10658,8 +10448,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseSwapSheetTryAiSuggestions => '尝试 AI 建议';
 
   @override
-  String get exerciseSwapSheetTryRephrasingYourRequest =>
-      '请尝试重新表述您的要求，选择不同的原因，或查看“动作库”标签页。';
+  String get exerciseSwapSheetTryRephrasingYourRequest => '请尝试重新表述您的要求，选择不同的原因，或查看“动作库”标签页。';
 
   @override
   String get exerciseSwapSheetYourSwapHistoryWill => '您的替换历史将显示在此处';
@@ -10932,12 +10721,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportWorkoutButtonGarminWahooNative => 'Garmin / Wahoo 原生格式';
 
   @override
-  String get exportWorkoutButtonMyfitnesspalSportstracks =>
-      'MyFitnessPal / Sportstracks';
+  String get exportWorkoutButtonMyfitnesspalSportstracks => 'MyFitnessPal / Sportstracks';
 
   @override
-  String get exportWorkoutButtonStravaGarminConnectKomo =>
-      'Strava / Garmin Connect / Komoot';
+  String get exportWorkoutButtonStravaGarminConnectKomo => 'Strava / Garmin Connect / Komoot';
 
   @override
   String get fastingAiInsightAiInsight => 'AI 洞察';
@@ -11035,10 +10822,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fastingCalendarWeight => '体重';
 
   @override
-  String fastingCalendarWidgetCompleted(
-    Object goalsCompleted,
-    Object goalsTotal,
-  ) {
+  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal) {
     return '已完成 $goalsCompleted/$goalsTotal';
   }
 
@@ -11123,8 +10907,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fastingGuideIsItSafeFor => '我适合断食吗？';
 
   @override
-  String get fastingGuideSafetyBody =>
-      '如果你感到头晕、昏厥、颤抖或不适，请停止断食并进食。超过 24 小时的断食需要额外注意电解质补充，超过 72 小时的断食应仅在医疗监督下进行。断食不能替代医疗护理——本指南仅供教育参考，不构成医疗建议。';
+  String get fastingGuideSafetyBody => '如果你感到头晕、昏厥、颤抖或不适，请停止断食并进食。超过 24 小时的断食需要额外注意电解质补充，超过 72 小时的断食应仅在医疗监督下进行。断食不能替代医疗护理——本指南仅供教育参考，不构成医疗建议。';
 
   @override
   String get fastingGuideStaySafe => '安全须知';
@@ -11190,8 +10973,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get fastingImpactCompleteMoreFastsTo =>
-      '完成更多断食以获取准确的影响分析。我们建议至少记录 7 天断食。';
+  String get fastingImpactCompleteMoreFastsTo => '完成更多断食以获取准确的影响分析。我们建议至少记录 7 天断食。';
 
   @override
   String get fastingImpactCompleteSomeFastsAnd => '完成一些断食并记录体重，查看断食如何影响您的目标。';
@@ -11383,10 +11165,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String fastingScheduleEditorSheetValue(
-    Object difficulty,
-    Object displayName,
-  ) {
+  String fastingScheduleEditorSheetValue(Object difficulty, Object displayName) {
     return '$displayName  ·  $difficulty';
   }
 
@@ -11628,8 +11407,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fastingStage_fat_burning_name => '脂肪燃烧';
 
   @override
-  String get fastingStage_glycogen_depletion_desc =>
-      '身体优先使用储存的葡萄糖。12-14 小时后，肝糖原储备降低，代谢开始转变。';
+  String get fastingStage_glycogen_depletion_desc => '身体优先使用储存的葡萄糖。12-14 小时后，肝糖原储备降低，代谢开始转变。';
 
   @override
   String get fastingStage_glycogen_depletion_name => '糖原耗尽';
@@ -11777,19 +11555,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fastingTip_coffee_ok => '黑咖啡不会打破禁食状态，实际上还能抑制饥饿感。';
 
   @override
-  String get fastingTip_exercise_fasted_ok_intermediate =>
-      '一旦适应，空腹进行轻度到中度的有氧运动是可以的。请倾听身体的反馈。';
+  String get fastingTip_exercise_fasted_ok_intermediate => '一旦适应，空腹进行轻度到中度的有氧运动是可以的。请倾听身体的反馈。';
 
   @override
-  String get fastingTip_exercise_high_intensity_eat_first =>
-      '对于大重量训练或高强度间歇运动，提前进食能保护运动表现。';
+  String get fastingTip_exercise_high_intensity_eat_first => '对于大重量训练或高强度间歇运动，提前进食能保护运动表现。';
 
   @override
   String get fastingTip_ramp_up_gradually => '从12小时开始，每周增加30分钟——不要第一天就尝试OMAD。';
 
   @override
-  String get fastingTip_refeed_carbs_carefully =>
-      '在禁食36小时以上后，请逐渐摄入碳水化合物，以避免复食不适。';
+  String get fastingTip_refeed_carbs_carefully => '在禁食36小时以上后，请逐渐摄入碳水化合物，以避免复食不适。';
 
   @override
   String get fastingTip_sleep_helps_extended => '将禁食时间安排在睡眠期间，会让长时间禁食变得容易得多。';
@@ -11798,15 +11573,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fastingTip_stay_hydrated => '禁食期间可以喝水、黑咖啡和纯茶。';
 
   @override
-  String get fastingTip_track_hunger_separate_from_appetite =>
-      '饥饿感和食欲是两回事。饥饿感会阵阵消退；食欲则是一种习惯。';
+  String get fastingTip_track_hunger_separate_from_appetite => '饥饿感和食欲是两回事。饥饿感会阵阵消退；食欲则是一种习惯。';
 
   @override
   String get fastingTotalFasts => '断食总次数';
 
   @override
-  String get fastingTrackYourIntermittentFastin =>
-      '通过智能区域通知、进度洞察和详细历史记录来追踪您的间歇性断食。';
+  String get fastingTrackYourIntermittentFastin => '通过智能区域通知、进度洞察和详细历史记录来追踪您的间歇性断食。';
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
@@ -11850,8 +11623,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertModalBodyweightExerciseDropThe =>
-      '自重训练 — 降低目标次数，而不是重量。';
+  String get fatigueAlertModalBodyweightExerciseDropThe => '自重训练 — 降低目标次数，而不是重量。';
 
   @override
   String get fatigueAlertModalContinueAsPlanned => '按计划继续';
@@ -12044,10 +11816,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String feelResultsScreenYouFeltStrongerAfter(
-    Object feelingStrongerCount,
-    Object totalWorkouts,
-  ) {
+  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts) {
     return '在 $totalWorkouts 次锻炼中，您有 $feelingStrongerCount 次感觉更强了！';
   }
 
@@ -12116,9 +11885,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firstWorkoutForecastProjectedStrengthGainOn => '主要动作的预计力量增长';
 
   @override
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(
-    Object effectiveSessions,
-  ) {
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions) {
     return '基于每周 $effectiveSessions 次训练的估算';
   }
 
@@ -12168,8 +11935,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fitnessAssessmentHowManyCanYou => '您可以连续做多少个？';
 
   @override
-  String get fitnessAssessmentHowManyConsecutivePush =>
-      '动作标准的情况下，您可以连续做多少个俯卧撑？';
+  String get fitnessAssessmentHowManyConsecutivePush => '动作标准的情况下，您可以连续做多少个俯卧撑？';
 
   @override
   String get fitnessAssessmentHowManyPullUps => '您可以做多少个引体向上？';
@@ -12199,8 +11965,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fitnessAssessmentWhyThisMatters => '为什么这很重要';
 
   @override
-  String get fitnessAssessmentYourAnswersHelpThe =>
-      '您的回答有助于 AI 将训练调整至最适合您的体能水平，无需猜测。';
+  String get fitnessAssessmentYourAnswersHelpThe => '您的回答有助于 AI 将训练调整至最适合您的体能水平，无需猜测。';
 
   @override
   String get fitnessCrateCollect => '领取';
@@ -12248,8 +12013,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flexibilityAssessmentAllTests => '所有测试';
 
   @override
-  String get flexibilityAssessmentCompleteSomeFlexibilityAsse =>
-      '完成一些柔韧性评估，以获取个性化的拉伸建议';
+  String get flexibilityAssessmentCompleteSomeFlexibilityAsse => '完成一些柔韧性评估，以获取个性化的拉伸建议';
 
   @override
   String get flexibilityAssessmentCompleteTheseTestsTo => '完成这些测试以获取完整的柔韧性档案';
@@ -12307,8 +12071,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get flexibilityHistoryAssessmentHistory => '评估历史';
 
   @override
-  String get flexibilityHistoryCompleteSomeFlexibilityTest =>
-      '完成一些柔韧性测试以在此查看您的历史记录';
+  String get flexibilityHistoryCompleteSomeFlexibilityTest => '完成一些柔韧性测试以在此查看您的历史记录';
 
   @override
   String get flexibilityHistoryDeleteAssessment => '删除评估';
@@ -12482,8 +12245,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get focusAreasSelectorTargetAreas => '目标区域';
 
   @override
-  String get focusAreasSelectorWhichBodyRegionsTo =>
-      '选择要锻炼的身体部位。可与上方的训练风格结合使用。';
+  String get focusAreasSelectorWhichBodyRegionsTo => '选择要锻炼的身体部位。可与上方的训练风格结合使用。';
 
   @override
   String get foldableWarmupLayoutPause => '暂停';
@@ -12562,18 +12324,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodAnalysisInlineU00b7 => '·';
 
   @override
-  String foodAnalysisLoadingElapsed(
-    Object _elapsedSeconds,
-    Object _stillWorkingIndex,
-  ) {
+  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex) {
     return '已过去-$_elapsedSeconds-$_stillWorkingIndex';
   }
 
   @override
-  String foodAnalysisLoadingS(
-    Object _elapsedSeconds,
-    Object analysisLoadingCopy,
-  ) {
+  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy) {
     return '$analysisLoadingCopy… $_elapsedSeconds秒';
   }
 
@@ -12588,8 +12344,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get foodAnalysisResultAiNutritionAnalysisIs =>
-      'AI营养分析仅供参考。如需个性化饮食建议，请咨询营养师。';
+  String get foodAnalysisResultAiNutritionAnalysisIs => 'AI营养分析仅供参考。如需个性化饮食建议，请咨询营养师。';
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
@@ -12612,10 +12367,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String foodAnalysisResultCardLeavesYouCalFor(
-    Object mealLabel,
-    Object remaining,
-  ) {
+  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining) {
     return '剩余 $remaining 大卡用于 $mealLabel';
   }
 
@@ -12753,11 +12505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodBrowserPanelOnlyMatchFound => '找到唯一匹配项';
 
   @override
-  String foodBrowserPanelPartExpandableSearchCardStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12777,11 +12525,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String foodBrowserPanelPartNLItemSectionStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12797,8 +12541,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelSearch528000Foods =>
-      '搜索来自USDA、加拿大、印度等数据库的528,000多种食物';
+  String get foodBrowserPanelSearch528000Foods => '搜索来自USDA、加拿大、印度等数据库的528,000多种食物';
 
   @override
   String get foodBrowserPanelSearchAlternatives => '搜索替代品...';
@@ -12928,20 +12671,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String foodHistoryScreenPartDateRangeValue(
-    Object _dateLabel,
-    Object _mealLabel,
-    Object _sourceLabel,
-  ) {
+  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel) {
     return '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel';
   }
 
   @override
-  String foodHistoryScreenPartFrequentFoodChipPCF(
-    Object carbsG,
-    Object fatG,
-    Object proteinG,
-  ) {
+  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG) {
     return '${proteinG}P · ${carbsG}C · ${fatG}F';
   }
 
@@ -13403,8 +13138,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get formCheckResultTempo => '节奏';
 
   @override
-  String get formComparisonResultAiFormAnalysisIs =>
-      'AI动作分析仅供教育参考。请咨询专业教练以获取个性化指导。';
+  String get formComparisonResultAiFormAnalysisIs => 'AI动作分析仅供教育参考。请咨询专业教练以获取个性化指导。';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -13454,8 +13188,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get founderNoteFounderSoloStillOn => '创始人，单枪匹马，仍在第一版。';
 
   @override
-  String get founderNoteIUsedToLog =>
-      '我曾经连续两周记录每一顿饭，为自己感到自豪，然后走进一家看不懂菜单的泰国餐厅，吃看起来最安全的东西，然后默默地不再打开那个应用。三周后，我会重新安装另一个应用，发誓这次一定能坚持，然后再次陷入同样的循环。每个应用都记录了我的数据，但没有一个在我沉默时注意到我——它们只是账本，而不是教练。';
+  String get founderNoteIUsedToLog => '我曾经连续两周记录每一顿饭，为自己感到自豪，然后走进一家看不懂菜单的泰国餐厅，吃看起来最安全的东西，然后默默地不再打开那个应用。三周后，我会重新安装另一个应用，发誓这次一定能坚持，然后再次陷入同样的循环。每个应用都记录了我的数据，但没有一个在我沉默时注意到我——它们只是账本，而不是教练。';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -13471,16 +13204,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get founderNoteSoIBuiltThe =>
-      '所以我建立的是人，而不是账本。拍下任何菜单——无论是在国内还是国外——教练都会以宏的方式将其读给你听。跳过周二，周三早上你就会回到过去，而不会感到内疚。它可以了解您的食物、您的健身情况、您的滑倒模式——每月只需不到一次的 PT 疗程。';
+  String get founderNoteSoIBuiltThe => '所以我建立的是人，而不是账本。拍下任何菜单——无论是在国内还是国外——教练都会以宏的方式将其读给你听。跳过周二，周三早上你就会回到过去，而不会感到内疚。它可以了解您的食物、您的健身情况、您的滑倒模式——每月只需不到一次的 PT 疗程。';
 
   @override
-  String get founderNoteTheFriendsWhoActually =>
-      '那些真正瘦下来的朋友都有一个随时发信息给他们的人。真正的监督每月大约需要两百美元，这正是我们大多数人从未拥有它的原因，也正是“记录”与“改变”之间的鸿沟多年来无法弥合的原因。';
+  String get founderNoteTheFriendsWhoActually => '那些真正瘦下来的朋友都有一个随时发信息给他们的人。真正的监督每月大约需要两百美元，这正是我们大多数人从未拥有它的原因，也正是“记录”与“改变”之间的鸿沟多年来无法弥合的原因。';
 
   @override
-  String get freshnessDecayCardControlsHowQuicklyExercise =>
-      '控制运动新鲜度衰减的速度：e^(-k * 会话数)';
+  String get freshnessDecayCardControlsHowQuicklyExercise => '控制运动新鲜度衰减的速度：e^(-k * 会话数)';
 
   @override
   String get freshnessDecayCardFreshnessDecayTuner => '新鲜度衰减调节器';
@@ -13746,8 +13476,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generatePlanWeeklyPlanGenerated => '周计划已生成！';
 
   @override
-  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo =>
-      '每次锻炼都会自动调整，助您安全进步！';
+  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo => '每次锻炼都会自动调整，助您安全进步！';
 
   @override
   String get generateWorkoutPlaceholderGenerateWorkout => '生成锻炼';
@@ -13759,8 +13488,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generateWorkoutPlaceholderGenerationFailed => '生成失败';
 
   @override
-  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou =>
-      '根据您的锻炼历史进行个性化定制';
+  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou => '根据您的锻炼历史进行个性化定制';
 
   @override
   String get generateWorkoutPlaceholderTapBelowToTry => '点击下方重试';
@@ -13772,8 +13500,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get generateWorkoutPlaceholderWhatPowersYourWorkout => '是什么驱动您的锻炼？';
 
   @override
-  String get generateWorkoutPlaceholderYourAiCoachCreates =>
-      '您的 AI 教练会根据以下内容创建锻炼：';
+  String get generateWorkoutPlaceholderYourAiCoachCreates => '您的 AI 教练会根据以下内容创建锻炼：';
 
   @override
   String get glassDragToResize => '拖动以调整大小';
@@ -13911,19 +13638,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get googleCalendarConnectDisconnect => '断开连接';
 
   @override
-  String get googleCalendarConnectFailedToConnectGoogle =>
-      '无法连接 Google Calendar';
+  String get googleCalendarConnectFailedToConnectGoogle => '无法连接 Google Calendar';
 
   @override
   String get googleCalendarConnectGoogleCalendar => 'Google Calendar';
 
   @override
-  String get googleCalendarConnectGoogleCalendarConnected =>
-      'Google Calendar 已连接！';
+  String get googleCalendarConnectGoogleCalendarConnected => 'Google Calendar 已连接！';
 
   @override
-  String get googleCalendarConnectGoogleCalendarDisconnected =>
-      'Google Calendar 已断开连接';
+  String get googleCalendarConnectGoogleCalendarDisconnected => 'Google Calendar 已断开连接';
 
   @override
   String googleCalendarConnectSheetConnectYourGoogleCalendar(Object appName) {
@@ -13994,10 +13718,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groceryListsIndexNoListsYet => '暂无清单';
 
   @override
-  String groceryListsIndexScreenOfChecked(
-    Object checkedCount,
-    Object itemCount,
-  ) {
+  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount) {
     return '已勾选 $checkedCount / $itemCount 项';
   }
 
@@ -14218,9 +13939,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get guestLibraryPreview => '预览';
 
   @override
-  String guestLibraryScreenShowingSampleExercisesSign(
-    Object guestExerciseLimit,
-  ) {
+  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit) {
     return '展示 $guestExerciseLimit 个示例练习。免费注册即可访问 2300+ 个练习！';
   }
 
@@ -14270,8 +13989,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get guestSampleWorkoutSignUpFree => '免费注册';
 
   @override
-  String get guestSampleWorkoutSignUpFreeTo =>
-      '免费注册，获取根据您的目标、器械和日程量身定制的AI健身计划。';
+  String get guestSampleWorkoutSignUpFreeTo => '免费注册，获取根据您的目标、器械和日程量身定制的AI健身计划。';
 
   @override
   String get guestSampleWorkoutTapToSeeWorkout => '点击查看健身演示';
@@ -14358,8 +14076,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gymLocationPickerGymLocation => '健身房位置';
 
   @override
-  String get gymLocationPickerMapBasedLocationPicker =>
-      '基于地图的位置选择器暂不可用。\n目前，请在个人资料中设置您的健身房名称。';
+  String get gymLocationPickerMapBasedLocationPicker => '基于地图的位置选择器暂不可用。\n目前，请在个人资料中设置您的健身房名称。';
 
   @override
   String get gymProfileSwitcherActive => '当前';
@@ -14398,10 +14115,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gymProfileSwitcherEnterANameFor => '输入复制的健身房名称：';
 
   @override
-  String gymProfileSwitcherEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '$equipmentCount 件器械 • $environmentDisplayName';
   }
 
@@ -14493,9 +14207,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get habitDetailScreenNotEnoughDataYet => '数据不足';
 
   @override
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
-    Object daysUntilBestStreak,
-  ) {
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak) {
     return '再过 $daysUntilBestStreak 天即可打破你的个人最佳纪录！';
   }
 
@@ -14804,15 +14516,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthBreakdownBloodSugar => '血糖';
 
   @override
-  String get healthBreakdownChronicLowGradeInflammation =>
-      '慢性低度炎症会影响关节舒适度、能量和恢复。';
+  String get healthBreakdownChronicLowGradeInflammation => '慢性低度炎症会影响关节舒适度、能量和恢复。';
 
   @override
   String get healthBreakdownFodmap => 'FODMAP';
 
   @override
-  String get healthBreakdownGlycemicLoadGiCarbs =>
-      '血糖负荷 = GI × 碳水化合物 ÷ 100。数值越低，能量越平稳，血糖波动越小。';
+  String get healthBreakdownGlycemicLoadGiCarbs => '血糖负荷 = GI × 碳水化合物 ÷ 100。数值越低，能量越平稳，血糖波动越小。';
 
   @override
   String get healthBreakdownHealthBreakdown => '健康分析';
@@ -14833,8 +14543,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthBreakdownNotComputedLikelyNo => '未计算 — 此菜肴中可能没有添加糖。';
 
   @override
-  String get healthBreakdownNovaGroup4Industrial =>
-      'NOVA 第 4 组 — 含有乳化剂、高果糖玉米糖浆、人工甜味剂等的工业配方食品。';
+  String get healthBreakdownNovaGroup4Industrial => 'NOVA 第 4 组 — 含有乳化剂、高果糖玉米糖浆、人工甜味剂等的工业配方食品。';
 
   @override
   String healthBreakdownSheetGl(Object gl) {
@@ -14873,8 +14582,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthConnectOnboardingACoachThatSees => '一位洞察一切的教练';
 
   @override
-  String get healthConnectOnboardingHealthConnectIsnT =>
-      '未安装 Health Connect — 可稍后在设置中连接。';
+  String get healthConnectOnboardingHealthConnectIsnT => '未安装 Health Connect — 可稍后在设置中连接。';
 
   @override
   String get healthConnectOnboardingRecoveryAwareWorkouts => '基于恢复情况的锻炼建议';
@@ -14885,9 +14593,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String healthConnectOnboardingScreenConnectSoZealovaCan(
-    Object _platformName,
-  ) {
+  String healthConnectOnboardingScreenConnectSoZealovaCan(Object _platformName) {
     return '连接 $_platformName，以便 Zealova 可以转换您的 ';
   }
 
@@ -14925,12 +14631,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthMetricsCardBloodGlucoseReadingsWill => '血糖读数将显示在此处';
 
   @override
-  String get healthMetricsCardConnectAGlucoseMonitor =>
-      '通过 Health Connect 连接血糖监测仪';
+  String get healthMetricsCardConnectAGlucoseMonitor => '通过 Health Connect 连接血糖监测仪';
 
   @override
-  String get healthMetricsCardConnectHealthConnectTo =>
-      '连接 Health Connect 以查看您的血糖';
+  String get healthMetricsCardConnectHealthConnectTo => '连接 Health Connect 以查看您的血糖';
 
   @override
   String get healthMetricsCardHealthMetrics => '健康指标';
@@ -15186,18 +14890,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get heartRateChartNoHeartRateData => '无心率数据';
 
   @override
-  String heartRateChartPartZoneLegendItemHeartRateOfMax(
-    Object percentageRange,
-  ) {
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange) {
     return '心率：最大心率的 $percentageRange';
   }
 
   @override
-  String heartRateChartPartZoneLegendItemM(
-    Object minutes,
-    Object percent,
-    Object shortLabel,
-  ) {
+  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel) {
     return '$shortLabel $minutes分钟 ($percent%)';
   }
 
@@ -15498,10 +15196,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String heroWorkoutCardExtExercises(
-    Object exerciseCount,
-    Object formattedDurationShort,
-  ) {
+  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort) {
     return '$formattedDurationShort • $exerciseCount 个动作';
   }
 
@@ -15554,16 +15249,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get heroWorkoutCardNothingToShareYet => '暂无内容可分享 — 请先记录一次训练';
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
-    Object exerciseCount,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount) {
     return '$exerciseCount 个动作';
   }
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
-    Object bestDurationMinutes,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes) {
     return '$bestDurationMinutes 分钟';
   }
 
@@ -16256,15 +15947,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeScreenTourCarouselTitle => '今日训练';
 
   @override
-  String get homeScreenTourCommunityDesc =>
-      'See the feed, challenges, ranks, and friends';
+  String get homeScreenTourCommunityDesc => 'See the feed, challenges, ranks, and friends';
 
   @override
   String get homeScreenTourCommunityTitle => 'Community Tab';
 
   @override
-  String get homeScreenTourHealthDesc =>
-      'Check your sleep, recovery, and body data';
+  String get homeScreenTourHealthDesc => 'Check your sleep, recovery, and body data';
 
   @override
   String get homeScreenTourHealthTitle => 'Health Tab';
@@ -16472,8 +16161,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTip_compound_lifts => '深蹲、铰链、推、拉、负重行走。掌握这五个动作，你就涵盖了 80% 的训练。';
 
   @override
-  String get homeTip_consistency_beats_perfection =>
-      '以 70% 的状态坚持训练，胜过因为无法达到 100% 而直接放弃。';
+  String get homeTip_consistency_beats_perfection => '以 70% 的状态坚持训练，胜过因为无法达到 100% 而直接放弃。';
 
   @override
   String get homeTip_core_in_every_lift => '核心在每个复合动作中都在发力。您不需要专门做 20 分钟的卷腹。';
@@ -16485,8 +16173,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTip_deload_week => '每 4–6 周将训练量减少 40%。您的身体会以更强的状态回归。';
 
   @override
-  String get homeTip_eat_before_training =>
-      '空腹训练可行，但大多数人在训练前 60–90 分钟进食少量餐点表现更好。';
+  String get homeTip_eat_before_training => '空腹训练可行，但大多数人在训练前 60–90 分钟进食少量餐点表现更好。';
 
   @override
   String get homeTip_eccentric_focus => '离心阶段（下放过程）是肌肉损伤（及生长）发生最多的阶段。控制好它。';
@@ -16528,12 +16215,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTip_protein_per_meal => '目标是每餐摄入 30–40g 蛋白质。分散摄入比一次性大量摄入效果更好。';
 
   @override
-  String get homeTip_protein_sources_vary =>
-      '混合蛋白质来源——鸡肉、鸡蛋、希腊酸奶、豆类。多样化摄入可涵盖所有氨基酸。';
+  String get homeTip_protein_sources_vary => '混合蛋白质来源——鸡肉、鸡蛋、希腊酸奶、豆类。多样化摄入可涵盖所有氨基酸。';
 
   @override
-  String get homeTip_rate_of_perceived_exertion =>
-      '给您的努力程度打分 1–10。大多数训练保持在 7–8 分是最佳区间。';
+  String get homeTip_rate_of_perceived_exertion => '给您的努力程度打分 1–10。大多数训练保持在 7–8 分是最佳区间。';
 
   @override
   String get homeTip_rest_days_grow_muscle => '休息日不是偷懒，而是身体真正发生适应性改变的时候。';
@@ -16542,8 +16227,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTip_scale_not_everything => '体重会因水分和食物摄入每天波动 2–4 磅。请以周平均值为准。';
 
   @override
-  String get homeTip_set_rep_ranges =>
-      '1–5 次重复增加力量，6–12 次增加维度，12–20 次增加耐力。都很重要。';
+  String get homeTip_set_rep_ranges => '1–5 次重复增加力量，6–12 次增加维度，12–20 次增加耐力。都很重要。';
 
   @override
   String get homeTip_sleep_for_recovery => '肌肉不是在训练时生长的，而是在睡眠时生长的。';
@@ -16558,8 +16242,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeTip_stress_and_recovery => '高压力等于高皮质醇，会导致恢复变慢。请从整体上管理压力。';
 
   @override
-  String get homeTip_tempo_training =>
-      '尝试 3-0-1 的节奏（下放 3 秒，停顿 0 秒，上举 1 秒），感受不一样的训练效果。';
+  String get homeTip_tempo_training => '尝试 3-0-1 的节奏（下放 3 秒，停顿 0 秒，上举 1 秒），感受不一样的训练效果。';
 
   @override
   String get homeTip_track_to_progress => '如果不追踪，就无法管理。记录您的训练组数。';
@@ -16601,8 +16284,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeYourProgress => '你的进度';
 
   @override
-  String get homescreenCustomizationChangesAreSavedAutomaticall =>
-      '更改将自动保存并立即生效。';
+  String get homescreenCustomizationChangesAreSavedAutomaticall => '更改将自动保存并立即生效。';
 
   @override
   String get homescreenCustomizationChooseWhichCardsTo => '选择要在主屏幕上显示的卡片';
@@ -16703,8 +16385,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hormonalHealthSettingsAddHormoneGoal => '添加荷尔蒙目标';
 
   @override
-  String get hormonalHealthSettingsAdjustWorkoutIntensityBased =>
-      '根据你的周期阶段调整训练强度';
+  String get hormonalHealthSettingsAdjustWorkoutIntensityBased => '根据你的周期阶段调整训练强度';
 
   @override
   String get hormonalHealthSettingsBirthSex => '生理性别';
@@ -16749,8 +16430,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hormonalHealthSettingsPeriodDuration => '经期持续时间';
 
   @override
-  String get hormonalHealthSettingsPrioritizeExercisesThatSupp =>
-      '优先选择支持你目标的训练';
+  String get hormonalHealthSettingsPrioritizeExercisesThatSupp => '优先选择支持你目标的训练';
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
@@ -17112,12 +16792,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importEquipmentAnyPublicWebpageListing => '任何列出健身器材的公开网页。';
 
   @override
-  String get importEquipmentEGNdumbbells5 =>
-      '例如：\n5-100磅哑铃\n2个深蹲架\n腿举机（挂片式）\n4台跑步机\n综合训练器...';
+  String get importEquipmentEGNdumbbells5 => '例如：\n5-100磅哑铃\n2个深蹲架\n腿举机（挂片式）\n4台跑步机\n综合训练器...';
 
   @override
-  String get importEquipmentEverythingImportedGoesTo =>
-      '所有导入的内容都会进入审核界面——未经您的确认，我们绝不会覆盖您的现有器材。';
+  String get importEquipmentEverythingImportedGoesTo => '所有导入的内容都会进入审核界面——未经您的确认，我们绝不会覆盖您的现有器材。';
 
   @override
   String get importEquipmentImportEquipment => '导入器材';
@@ -17158,10 +16836,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String importEquipmentResultSheetMatched(
-    Object matchedKeptCount,
-    Object totalMatched,
-  ) {
+  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched) {
     return '已匹配 ($matchedKeptCount/$totalMatched)';
   }
 
@@ -17181,8 +16856,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentResultWeCouldnTMatch =>
-      '我们无法将这些内容与已知器材匹配。您可以跳过或保留为自定义项。';
+  String get importEquipmentResultWeCouldnTMatch => '我们无法将这些内容与已知器材匹配。您可以跳过或保留为自定义项。';
 
   @override
   String get importEquipmentResultWorkoutEnvironment => '锻炼环境';
@@ -17333,8 +17007,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inflammationTagsContainsUltraProcessedItems => '含有超加工食品';
 
   @override
-  String get inflammationTagsExamplesSoftDrinksInstant =>
-      '例如：软饮、方便面、包装零食、鸡块、大多数早餐麦片。';
+  String get inflammationTagsExamplesSoftDrinksInstant => '例如：软饮、方便面、包装零食、鸡块、大多数早餐麦片。';
 
   @override
   String get inflammationTagsHowTheScoreIs => '评分计算方式';
@@ -17343,23 +17016,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inflammationTagsInflammationScore => '炎症评分';
 
   @override
-  String get inflammationTagsLowerScoresReduceSystemic =>
-      '较低的评分有助于减少全身性炎症、肠道刺激和餐后能量崩溃。';
+  String get inflammationTagsLowerScoresReduceSystemic => '较低的评分有助于减少全身性炎症、肠道刺激和餐后能量崩溃。';
 
   @override
-  String get inflammationTagsNovaProcessingLevelOmega =>
-      '基于NOVA加工等级、Omega-6与Omega-3脂肪酸比例、精制糖含量、纤维和多酚密度、血糖负荷以及植物油含量。参考同行评审的膳食炎症指数 (DII) 标准进行校准。';
+  String get inflammationTagsNovaProcessingLevelOmega => '基于NOVA加工等级、Omega-6与Omega-3脂肪酸比例、精制糖含量、纤维和多酚密度、血糖负荷以及植物油含量。参考同行评审的膳食炎症指数 (DII) 标准进行校准。';
 
   @override
-  String get inflammationTagsResearchLinksRegularConsump =>
-      '研究表明，经常食用此类食品与炎症、肥胖、心脏病和消化系统问题增加有关。';
+  String get inflammationTagsResearchLinksRegularConsump => '研究表明，经常食用此类食品与炎症、肥胖、心脏病和消化系统问题增加有关。';
 
   @override
   String get inflammationTagsUltraProcessedFoods => '超加工食品';
 
   @override
-  String get inflammationTagsUltraProcessedFoodsNova =>
-      '超加工食品 (NOVA 第4组) 含有工业添加剂，如乳化剂、氢化油、人工甜味剂和蛋白质分离物——这些物质在家庭烹饪中并不常见。';
+  String get inflammationTagsUltraProcessedFoodsNova => '超加工食品 (NOVA 第4组) 含有工业添加剂，如乳化剂、氢化油、人工甜味剂和蛋白质分离物——这些物质在家庭烹饪中并不常见。';
 
   @override
   String get injuriesActive => '进行中';
@@ -17531,9 +17200,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get injuryDetailScreenLogCheckIn => '记录打卡';
 
   @override
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
-    Object bodyPartDisplay,
-  ) {
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay) {
     return '您今天的 $bodyPartDisplay 感觉如何？';
   }
 
@@ -17558,11 +17225,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get injuryDetailYesHealed => '是的，已痊愈';
 
   @override
-  String inlineEditPillEditSetByReps(
-    Object _weightText,
-    Object reps,
-    Object unit,
-  ) {
+  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit) {
     return '编辑组，$_weightText $unit，$reps 次';
   }
 
@@ -17655,8 +17318,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get inlineWorkoutChatIntentIdentifyEquipmentWh =>
-      '[intent:identify_equipment] 这是什么器械？';
+  String get inlineWorkoutChatIntentIdentifyEquipmentWh => '[intent:identify_equipment] 这是什么器械？';
 
   @override
   String get inlineWorkoutChatRest => '休息';
@@ -17712,10 +17374,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String insightsDetailScreenOfWorkouts(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled) {
     return '已完成 $workoutsCompleted/$workoutsScheduled 次训练';
   }
 
@@ -17746,8 +17405,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get insightsNarrativeTemplateYourConsistencyIsCompoundin =>
-      '你的坚持正在产生复利效应。继续保持训练量。';
+  String get insightsNarrativeTemplateYourConsistencyIsCompoundin => '你的坚持正在产生复利效应。继续保持训练量。';
 
   @override
   String get insightsPastReports => '往期报告';
@@ -17840,12 +17498,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String insightsScreenPartBodyCardWorkoutsMinKcal(
-    Object caloriesBurnedEstimate,
-    Object totalTimeMinutes,
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsCompleted/$workoutsScheduled 次训练  |  $totalTimeMinutes分钟  |  $caloriesBurnedEstimate kcal';
   }
 
@@ -17859,8 +17512,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get insightsScreenPartGenerateAiInsight => '生成 AI 洞察';
 
   @override
-  String get insightsScreenPartGetPersonalizedAiAnalysis =>
-      '获取针对你本周期训练数据的个性化 AI 分析。';
+  String get insightsScreenPartGetPersonalizedAiAnalysis => '获取针对你本周期训练数据的个性化 AI 分析。';
 
   @override
   String get insightsScreenPartLogYourMeasurementsTo => '记录你的身体测量数据以追踪体成分变化';
@@ -18168,10 +17820,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String kegelSessionScreenRepsXSHold(
-    Object defaultHoldSeconds,
-    Object defaultReps,
-  ) {
+  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps) {
     return '$defaultReps 次 x $defaultHoldSeconds 秒保持';
   }
 
@@ -18481,10 +18130,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String levelUpCatchUpBannerYouGainedLevelsUp(
-    Object count,
-    Object highestLevel,
-  ) {
+  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel) {
     return '你获得了 $count 个等级（最高至 L$highestLevel）';
   }
 
@@ -18582,10 +18228,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get librarySearchExercises => '搜索动作...';
 
   @override
-  String lifetimeMemberBadgeDaysUntil(
-    Object daysRemaining,
-    Object nextTierName,
-  ) {
+  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName) {
     return '距离 $nextTierName 还有 $daysRemaining 天';
   }
 
@@ -18625,8 +18268,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveChatAreYouSureYou => '确定要结束本次对话吗？你可以稍后开启新对话。';
 
   @override
-  String get liveChatConnectWithOurSupport =>
-      '联系我们的支持团队获取实时帮助。我们的客服在工作时间内随时为你解答疑问或处理问题。';
+  String get liveChatConnectWithOurSupport => '联系我们的支持团队获取实时帮助。我们的客服在工作时间内随时为你解答疑问或处理问题。';
 
   @override
   String get liveChatEndChat => '结束对话？';
@@ -18662,12 +18304,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get livePrSnackbarNewPr => '新的 PR！';
 
   @override
-  String livePrSnackbarRm(
-    Object oneRmStr,
-    Object reps,
-    Object unitLabel,
-    Object weightStr,
-  ) {
+  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr) {
     return '$weightStr$unitLabel×$reps  →  $oneRmStr $unitLabel 1RM, ';
   }
 
@@ -18682,15 +18319,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsAddALocationTo =>
-      '将位置添加到你的健身房配置中以启用自动切换。编辑配置并点击“添加位置”。';
+  String get locationSettingsAddALocationTo => '将位置添加到你的健身房配置中以启用自动切换。编辑配置并点击“添加位置”。';
 
   @override
   String get locationSettingsAutoSwitchGymProfiles => '自动切换健身房配置';
 
   @override
-  String get locationSettingsAutoSwitchNeedsAlways =>
-      '自动切换功能需要“始终”允许位置访问权限，以便检测你何时到达健身房。';
+  String get locationSettingsAutoSwitchNeedsAlways => '自动切换功能需要“始终”允许位置访问权限，以便检测你何时到达健身房。';
 
   @override
   String get locationSettingsAutoSwitchProfiles => '自动切换配置';
@@ -18715,8 +18350,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsSetAPreferredWorkout =>
-      '在健身房配置中设置首选训练时间，以启用基于时间的切换。';
+  String get locationSettingsSetAPreferredWorkout => '在健身房配置中设置首选训练时间，以启用基于时间的切换。';
 
   @override
   String get locationSettingsTapToGrantPermission => '点击以授予权限';
@@ -19006,8 +18640,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logMealSheetEGGrilledChicken => '例如“烤鸡肉碗，我吃了一半”';
 
   @override
-  String get logMealSheetEnableMicrophoneAccessIn =>
-      '请在设置中启用麦克风权限，或在搜索中输入餐食名称。';
+  String get logMealSheetEnableMicrophoneAccessIn => '请在设置中启用麦克风权限，或在搜索中输入餐食名称。';
 
   @override
   String get logMealSheetEstimatedNutrition => '预估营养';
@@ -19059,8 +18692,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetHandsFreeLoggingSpeak =>
-      '免提记录 — 自然说话，检查文字，然后确认。烹饪时非常方便。';
+  String get logMealSheetHandsFreeLoggingSpeak => '免提记录 — 自然说话，检查文字，然后确认。烹饪时非常方便。';
 
   @override
   String get logMealSheetHeardEditIfNeeded => '已识别 — 如有需要请编辑，然后确认';
@@ -19304,8 +18936,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logMealSheetThisPhotoWasHard => '这张照片难以识别';
 
   @override
-  String get logMealSheetTipAddBrandPortion =>
-      '提示：添加品牌和份量以获得更准确的结果（例如：“Chipotle 鸡肉碗”或“2 片 Domino’s”）。';
+  String get logMealSheetTipAddBrandPortion => '提示：添加品牌和份量以获得更准确的结果（例如：“Chipotle 鸡肉碗”或“2 片 Domino’s”）。';
 
   @override
   String get logMealSheetTryAgain => '重试';
@@ -19354,10 +18985,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String logMealSheetUiOfItemsMatchedVerified(
-    Object length,
-    Object verifiedCount,
-  ) {
+  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount) {
     return '$length 个项目中，有 $verifiedCount 个匹配了已验证的营养数据';
   }
 
@@ -19538,11 +19166,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValidRange(
-    Object label,
-    Object maxValue,
-    Object minValue,
-  ) {
+  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue) {
     return '有效范围：$minValue-$maxValue $label';
   }
 
@@ -19673,8 +19297,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggedMealsEnergyLevel => '能量水平';
 
   @override
-  String get loggedMealsExamplesSoftDrinksInstant =>
-      '示例：软饮料、方便面、包装零食、鸡块、大多数早餐麦片。';
+  String get loggedMealsExamplesSoftDrinksInstant => '示例：软饮料、方便面、包装零食、鸡块、大多数早餐麦片。';
 
   @override
   String get loggedMealsFG => '脂肪 (g)';
@@ -19749,8 +19372,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggedMealsQuantity => '数量';
 
   @override
-  String get loggedMealsRatesHowInflammatoryA =>
-      '根据加工水平、脂肪构成、含糖量、纤维和抗氧化特性，评估食物的致炎性。';
+  String get loggedMealsRatesHowInflammatoryA => '根据加工水平、脂肪构成、含糖量、纤维和抗氧化特性，评估食物的致炎性。';
 
   @override
   String get loggedMealsRemove => '移除';
@@ -19767,8 +19389,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggedMealsReportIncorrectData => '报告错误数据';
 
   @override
-  String get loggedMealsResearchLinksRegularConsump =>
-      '研究表明，经常食用此类食物与炎症、肥胖、心脏病和消化系统问题增加有关。';
+  String get loggedMealsResearchLinksRegularConsump => '研究表明，经常食用此类食物与炎症、肥胖、心脏病和消化系统问题增加有关。';
 
   @override
   String get loggedMealsSaveAsRecipe => '保存为食谱';
@@ -19948,8 +19569,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loggedMealsUltraProcessedFoods => '超加工食品';
 
   @override
-  String get loggedMealsUltraProcessedFoodsNova =>
-      '超加工食品（NOVA第4组）含有工业添加剂，如乳化剂、氢化油、人工甜味剂和蛋白质分离物——这些物质在家庭烹饪中并不常见。';
+  String get loggedMealsUltraProcessedFoodsNova => '超加工食品（NOVA第4组）含有工业添加剂，如乳化剂、氢化油、人工甜味剂和蛋白质分离物——这些物质在家庭烹饪中并不常见。';
 
   @override
   String get loggedMealsUndo => '撤销';
@@ -20071,10 +19691,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String manageGymProfilesSheetEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '$equipmentCount 件器械 • $environmentDisplayName';
   }
 
@@ -20130,8 +19747,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get masteriesGridYourMasteriesWillLevel =>
-      '随着您记录锻炼、步数和有氧运动，您的精通等级将会提升。';
+  String get masteriesGridYourMasteriesWillLevel => '随着您记录锻炼、步数和有氧运动，您的精通等级将会提升。';
 
   @override
   String get mealPlannerAddARecipe => '添加食谱';
@@ -20403,10 +20019,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get measurementsScreenPartAddAnyNotes => '添加备注...';
 
   @override
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
-    Object _selectedFormat,
-    Object length,
-  ) {
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length) {
     return '导出 (length)\") 测量类型为 .(_selectedFormat)';
   }
 
@@ -20476,12 +20089,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get measurementsScreenPartSelectAll => '全选';
 
   @override
-  String get measurementsScreenPartWeightBodyFatChest =>
-      '体重, 体脂, 胸围, 腰围, 臀围, 颈围, 肩宽, 左二头肌, 右二头肌, 左前臂, 右前臂, 左大腿, 右大腿, 左小腿, 右小腿';
+  String get measurementsScreenPartWeightBodyFatChest => '体重, 体脂, 胸围, 腰围, 臀围, 颈围, 肩宽, 左二头肌, 右二头肌, 左前臂, 右前臂, 左大腿, 右大腿, 左小腿, 右小腿';
 
   @override
-  String get measurementsScreenPartWorkoutsNutritionMeasureme =>
-      '训练、营养、测量数据及更多';
+  String get measurementsScreenPartWorkoutsNutritionMeasureme => '训练、营养、测量数据及更多';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -20610,8 +20221,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get medicalDisclaimerAiRecommendations => 'AI 建议';
 
   @override
-  String get medicalDisclaimerAlwaysSeekTheAdvice =>
-      '在开始任何新的锻炼计划之前，请务必咨询您的医生或其他合格的医疗保健提供者，特别是如果您有任何既往病史、受伤或健康问题。切勿因为在此应用中阅读的内容而忽视专业的医疗建议或延迟就医。';
+  String get medicalDisclaimerAlwaysSeekTheAdvice => '在开始任何新的锻炼计划之前，请务必咨询您的医生或其他合格的医疗保健提供者，特别是如果您有任何既往病史、受伤或健康问题。切勿因为在此应用中阅读的内容而忽视专业的医疗建议或延迟就医。';
 
   @override
   String get medicalDisclaimerAssumptionOfRisk => '风险承担';
@@ -20640,9 +20250,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
-    Object appName,
-  ) {
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName) {
     return '体育锻炼存在固有风险。使用 $appName 即表示您承认您是自愿参加体育活动，并承担与此类活动相关的所有风险，包括但不限于受伤、疾病或死亡。';
   }
 
@@ -20657,12 +20265,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get medicalDisclaimerStopExercisingImmediatelyIf =>
-      '如果您感到疼痛、头晕、气短、恶心或任何超出正常运动强度的不适，请立即停止锻炼。AI 无法实时评估您的身体状况，因此您有责任在自身能力范围内进行锻炼。';
+  String get medicalDisclaimerStopExercisingImmediatelyIf => '如果您感到疼痛、头晕、气短、恶心或任何超出正常运动强度的不适，请立即停止锻炼。AI 无法实时评估您的身体状况，因此您有责任在自身能力范围内进行锻炼。';
 
   @override
-  String get medicalDisclaimerWorkoutRecommendationsAreGe =>
-      '锻炼建议是根据您提供的信息（健身水平、目标、设备等）生成的。虽然 AI 力求准确，但无法考虑所有个人因素。建议可能并不适合所有人。';
+  String get medicalDisclaimerWorkoutRecommendationsAreGe => '锻炼建议是根据您提供的信息（健身水平、目标、设备等）生成的。虽然 AI 力求准确，但无法考虑所有个人因素。建议可能并不适合所有人。';
 
   @override
   String get menuAnalysisAddFood => '添加食物';
@@ -20756,8 +20362,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuAnalysisHistorySearchByNameRestaurant => '按名称、餐厅或地址搜索';
 
   @override
-  String get menuAnalysisHistoryTapTheBookmarkButton =>
-      '扫描菜单后点击书签按钮，即可将其保存至此处。';
+  String get menuAnalysisHistoryTapTheBookmarkButton => '扫描菜单后点击书签按钮，即可将其保存至此处。';
 
   @override
   String get menuAnalysisHistoryTryADifferentSearch => '请尝试其他搜索词。';
@@ -20937,15 +20542,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuAnalysisSort2 => '排序';
 
   @override
-  String get menuAnalysisTourAiPicksTheBest =>
-      'AI 会根据您剩余的宏量营养素、过敏原和炎症耐受度，为您挑选出最合适的三个菜品。';
+  String get menuAnalysisTourAiPicksTheBest => 'AI 会根据您剩余的宏量营养素、过敏原和炎症耐受度，为您挑选出最合适的三个菜品。';
 
   @override
   String get menuAnalysisTourFilterByDietAllergens => '按饮食习惯和过敏原筛选';
 
   @override
-  String get menuAnalysisTourHideDishesThatDon =>
-      '隐藏不符合您饮食习惯或包含过敏原的菜品 — 您的偏好将从“设置”中同步。';
+  String get menuAnalysisTourHideDishesThatDon => '隐藏不符合您饮食习惯或包含过敏原的菜品 — 您的偏好将从“设置”中同步。';
 
   @override
   String get menuAnalysisTourRecommendedForYou => '为您推荐';
@@ -20957,12 +20560,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuAnalysisTourSortTheWholeMenu => '对整个菜单进行排序';
 
   @override
-  String get menuAnalysisTourTapProteinCarbsFat =>
-      '点击“蛋白质”、“碳水”、“脂肪”或“炎症”即可立即重新排列所有菜品。“更多…”可开启高级排序。';
+  String get menuAnalysisTourTapProteinCarbsFat => '点击“蛋白质”、“碳水”、“脂肪”或“炎症”即可立即重新排列所有菜品。“更多…”可开启高级排序。';
 
   @override
-  String get menuAnalysisTourTickTheDishesYou =>
-      '勾选您实际点的菜品，然后点击“记录”将其发送到您的每日总量中。';
+  String get menuAnalysisTourTickTheDishesYou => '勾选您实际点的菜品，然后点击“记录”将其发送到您的每日总量中。';
 
   @override
   String get menuAnalysisUpdateExisting => '更新现有菜单';
@@ -20992,8 +20593,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get menuDishAdjustHowMuchDidYou => '您吃了多少？';
 
   @override
-  String get menuDishAdjustMenuMacrosAreAs =>
-      '菜单宏量营养素为“按份供应”数值 — 请告诉我们您实际吃了多少。';
+  String get menuDishAdjustMenuMacrosAreAs => '菜单宏量营养素为“按份供应”数值 — 请告诉我们您实际吃了多少。';
 
   @override
   String get menuDishAdjustOrDescribeIt => '或进行描述';
@@ -21223,8 +20823,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get merchClaimsTapAcceptToClaim =>
-      '点击“接受”即可领取。准备发货时，我们将通过电子邮件联系您收集尺码和收货地址。';
+  String get merchClaimsTapAcceptToClaim => '点击“接受”即可领取。准备发货时，我们将通过电子邮件联系您收集尺码和收货地址。';
 
   @override
   String get merchClaimsTracking => '追踪单号';
@@ -21428,9 +21027,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String milestonesScreenUiAverageMinWorkout(
-    Object averageWorkoutDurationMinutes,
-  ) {
+  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes) {
     return '平均: $averageWorkoutDurationMinutes 分钟/次';
   }
 
@@ -21671,8 +21268,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get moodHistoryStartTrackingYourMood =>
-      '开始追踪你的情绪，以获取个性化的训练建议并查看你的长期趋势。';
+  String get moodHistoryStartTrackingYourMood => '开始追踪你的情绪，以获取个性化的训练建议并查看你的长期趋势。';
 
   @override
   String get moodHistoryYourMoodInsights => '你的情绪洞察';
@@ -22099,11 +21695,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardKg(
-    Object derivedWeight,
-    Object multiplierDisplay,
-    Object relationshipDisplay,
-  ) {
+  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay) {
     return '$multiplierDisplay = $derivedWeight kg • $relationshipDisplay';
   }
 
@@ -22118,17 +21710,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardLinkedTo(
-    Object primaryExerciseName,
-    Object text,
-  ) {
+  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text) {
     return '已将 $text 关联至 $primaryExerciseName';
   }
 
   @override
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
-    Object linkedExerciseName,
-  ) {
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName) {
     return '将 $linkedExerciseName 从关联动作中移除？';
   }
 
@@ -22264,12 +21851,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String myFoodsSheetKcalUBP(
-    Object food,
-    Object food1,
-    Object food2,
-    Object food3,
-  ) {
+  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3) {
     return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
@@ -22416,10 +21998,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardBestKgX(
-    Object item,
-    Object maxReps,
-  ) {
+  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps) {
     return '最佳: ${item}kg x $maxReps';
   }
 
@@ -22430,11 +22009,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get myLibraryTabViewAll => '查看全部';
 
   @override
-  String myProgramSummaryCardValue(
-    Object experience,
-    Object goal,
-    Object workoutDays,
-  ) {
+  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays) {
     return '$workoutDays  •  $experience  •  $goal';
   }
 
@@ -22496,10 +22071,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String myWrappedScreenWrappedDropsInDays(
-    Object daysUntilDrop,
-    Object monthName,
-  ) {
+  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName) {
     return '$monthName 年度总结将在 $daysUntilDrop 天后发布';
   }
 
@@ -22679,10 +22251,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String neatDashboardScreenPartStreaksCardQuietHours(
-    Object endTime,
-    Object startTime,
-  ) {
+  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime) {
     return '静默时段: $startTime - $endTime';
   }
 
@@ -22915,10 +22484,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get netflixExercisesTabNoExercisesFound => '未找到相关动作';
 
   @override
-  String netflixExercisesTabPartExerciseListCardDaysWeek(
-    Object daysPerWeek,
-    Object duration,
-  ) {
+  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration) {
     return '$daysPerWeek 天/周 • $duration';
   }
 
@@ -22942,10 +22508,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get newTilesAmazingStreakKeepGoing => '连胜太棒了！继续保持！';
 
   @override
-  String newTilesPartActiveChallengeCardDayOf(
-    Object currentDay,
-    Object totalDays,
-  ) {
+  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays) {
     return '第 $currentDay 天，共 $totalDays 天';
   }
 
@@ -22955,10 +22518,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String newTilesPartActiveChallengeCardTodayReps(
-    Object targetReps,
-    Object todayReps,
-  ) {
+  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps) {
     return '今日: $todayReps / $targetReps 次';
   }
 
@@ -23263,12 +22823,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationTestTestsScheduledNotificationD => '测试定时通知发送';
 
   @override
-  String get notificationTestTheseAreLocalNotifications =>
-      '这些是本地通知（非Firebase）。使用这些来测试定时通知在您的设备上是否正常工作。';
+  String get notificationTestTheseAreLocalNotifications => '这些是本地通知（非Firebase）。使用这些来测试定时通知在您的设备上是否正常工作。';
 
   @override
-  String get notificationTestTheseNotificationsAreSent =>
-      '这些通知是通过后端Firebase Cloud Messaging发送的。';
+  String get notificationTestTheseNotificationsAreSent => '这些通知是通过后端Firebase Cloud Messaging发送的。';
 
   @override
   String get notificationTestTimeToLogYour => '\"该记录早餐了！📸\"';
@@ -23451,8 +23009,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationsScreenPartWhatToExpect => '你会收到什么';
 
   @override
-  String get notificationsScreenPartYourAiCoachWill =>
-      '你的AI教练会在这里向你发送训练提醒、激励信息和进度更新。';
+  String get notificationsScreenPartYourAiCoachWill => '你的AI教练会在这里向你发送训练提醒、激励信息和进度更新。';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -23558,10 +23115,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutrientExplorerPartNutrientScore => '营养评分';
 
   @override
-  String nutrientExplorerPartNutrientScoreCardCurrent(
-    Object currentValue,
-    Object unit,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit) {
     return '当前: $currentValue$unit';
   }
 
@@ -23571,10 +23125,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String nutrientExplorerPartNutrientScoreCardOptimal(
-    Object optimalCount,
-    Object totalCount,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount) {
     return '$optimalCount/$totalCount 项达标';
   }
 
@@ -23821,20 +23372,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionGoalsCardMetabolismSlowsWithAge => '新陈代谢随年龄增长而减慢';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula =>
-      'Mifflin-St Jeor 公式 · 点击查看详情';
+  String get nutritionGoalsCardMifflinStJeorFormula => 'Mifflin-St Jeor 公式 · 点击查看详情';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula2 =>
-      'Mifflin-St Jeor 公式（个人资料数据不足，无法进行细分）';
+  String get nutritionGoalsCardMifflinStJeorFormula2 => 'Mifflin-St Jeor 公式（个人资料数据不足，无法进行细分）';
 
   @override
   String get nutritionGoalsCardMoreMassMoreEnergy => '质量越大 = 静息时消耗的能量越多';
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
-    Object activityMultiplier,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier) {
     return '活动系数 (×$activityMultiplier)';
   }
 
@@ -23864,12 +23411,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
-    Object carbPct,
-    Object displayName,
-    Object fatPct,
-    Object proteinPct,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct) {
     return '宏量营养素比例 ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
@@ -23957,8 +23499,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionPatternsFoodsThatEnergizeYou => '让你充满活力的食物';
 
   @override
-  String get nutritionPatternsLog3MealsWith =>
-      '记录3顿以上餐食并进行打卡，即可查看哪些食物为你供能，哪些让你状态变差。';
+  String get nutritionPatternsLog3MealsWith => '记录3顿以上餐食并进行打卡，即可查看哪些食物为你供能，哪些让你状态变差。';
 
   @override
   String get nutritionPatternsLogAFewMeals => '记录几顿餐食以查看你的宏量营养素趋势。';
@@ -24091,8 +23632,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionPreferencesOtherAllergens => '其他过敏原';
 
   @override
-  String get nutritionPreferencesOutsideTheFdaBig =>
-      'FDA“九大”过敏原之外（例如：芒果、茄科植物、玉米）';
+  String get nutritionPreferencesOutsideTheFdaBig => 'FDA“九大”过敏原之外（例如：芒果、茄科植物、玉米）';
 
   @override
   String get nutritionRecipesTab => '食谱';
@@ -24244,8 +23784,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionSettingsScreenSaveRecalculate => '保存并重新计算';
 
   @override
-  String get nutritionSettingsScreenSelectYourGoalsFirst =>
-      '选择你的目标（第一个选中的为主要目标）';
+  String get nutritionSettingsScreenSelectYourGoalsFirst => '选择你的目标（第一个选中的为主要目标）';
 
   @override
   String get nutritionSettingsScreenTrainingDay => '训练日';
@@ -24286,8 +23825,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionSettingsShowMacrosOnLog => '在记录中显示宏量营养素';
 
   @override
-  String get nutritionSettingsStandingRulesZealovaApplies =>
-      'Zealova 应用于每次食物分析的固定规则';
+  String get nutritionSettingsStandingRulesZealovaApplies => 'Zealova 应用于每次食物分析的固定规则';
 
   @override
   String get nutritionSettingsStreakFreezeUsedYour => '已使用连续打卡冻结！你的连续记录已受保护。';
@@ -24338,8 +23876,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionShowcaseGrilledSalmonBowl => '香煎三文鱼碗';
 
   @override
-  String get nutritionShowcaseIntroSubtitle =>
-      '扫描任意餐厅菜单 — Zealova 根据你的目标为每道菜排名 🍽️';
+  String get nutritionShowcaseIntroSubtitle => '扫描任意餐厅菜单 — Zealova 根据你的目标为每道菜排名 🍽️';
 
   @override
   String get nutritionShowcaseIntroTitle => '点菜不再靠猜';
@@ -24472,8 +24009,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionStreakCardLogAMealTo => '记录一餐以开启你的连续打卡';
 
   @override
-  String get nutritionStreakCardStreakFreezeUsedYour =>
-      '已使用连续打卡冻结 — 你的连续记录很安全。';
+  String get nutritionStreakCardStreakFreezeUsedYour => '已使用连续打卡冻结 — 你的连续记录很安全。';
 
   @override
   String get nutritionStreakCardThisWeek => '本周';
@@ -24635,15 +24171,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionTourSwipeThroughDates => '滑动切换日期';
 
   @override
-  String get nutritionTourTapTheCameraBarcode =>
-      '点击相机、条形码或+按钮——视觉OCR会自动填充卡路里和宏量营养素。';
+  String get nutritionTourTapTheCameraBarcode => '点击相机、条形码或+按钮——视觉OCR会自动填充卡路里和宏量营养素。';
 
   @override
   String get nutritionTourUseTheDateArrows => '使用日期箭头或点击“历史记录”查看过去的日子。';
 
   @override
-  String get nutritionTourYourSavedRecipesFoods =>
-      '你保存的食谱、食物和扫描过的菜单都在这里——一键即可再次记录。';
+  String get nutritionTourYourSavedRecipesFoods => '你保存的食谱、食物和扫描过的菜单都在这里——一键即可再次记录。';
 
   @override
   String get nutritionUndo => '撤销';
@@ -24655,8 +24189,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get offlineModeOfflineMode => '离线模式';
 
   @override
-  String get offlineModeWorkOutWithoutInternet =>
-      '无需网络即可锻炼。支持设备端AI、预缓存锻炼、锻炼视频下载及后台同步。';
+  String get offlineModeWorkOutWithoutInternet => '无需网络即可锻炼。支持设备端AI、预缓存锻炼、锻炼视频下载及后台同步。';
 
   @override
   String get onboardingAlreadyHaveAccount => '我已有账号';
@@ -24665,8 +24198,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingBlockerLetSDoIt => '开始吧';
 
   @override
-  String get onboardingBlockerNoJudgmentKnowingThe =>
-      '无需评判。了解障碍所在，我们才能制定绕过它的计划。';
+  String get onboardingBlockerNoJudgmentKnowingThe => '无需评判。了解障碍所在，我们才能制定绕过它的计划。';
 
   @override
   String get onboardingBlockerThatMakesSense => '有道理。';
@@ -24885,8 +24417,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get overviewPersonalRecords => '个人纪录';
 
   @override
-  String get overviewPersonalRecordsAreTracked =>
-      '当你完成锻炼时，个人纪录会被自动追踪。开始训练以在此查看你的进步！';
+  String get overviewPersonalRecordsAreTracked => '当你完成锻炼时，个人纪录会被自动追踪。开始训练以在此查看你的进步！';
 
   @override
   String get overviewQuickAccess => '快速访问';
@@ -24964,10 +24495,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String parsedExercisesPreviewSheetValue(
-    Object exercise,
-    Object formattedSetsReps,
-  ) {
+  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps) {
     return '$formattedSetsReps @ $exercise';
   }
 
@@ -25283,8 +24811,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paywallPricingToday => '今天';
 
   @override
-  String get paywallPricingUnlockUnlimitedAiWorkouts =>
-      '解锁无限 AI 训练、食物扫描与宏量营养素分析、动作分析及全面的进度追踪。';
+  String get paywallPricingUnlockUnlimitedAiWorkouts => '解锁无限 AI 训练、食物扫描与宏量营养素分析、动作分析及全面的进度追踪。';
 
   @override
   String get paywallPricingWeLlSendYou => '我们会在试用期结束前提醒您';
@@ -25305,8 +24832,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paywallPricingYourAiCoach => '您的 AI 教练';
 
   @override
-  String get paywallTimelineCancelAnytimeDuringOr =>
-      '在试用期间或之后随时取消。试用期结束前不会扣费，您可以通过 Google Play 管理订阅。';
+  String get paywallTimelineCancelAnytimeDuringOr => '在试用期间或之后随时取消。试用期结束前不会扣费，您可以通过 Google Play 管理订阅。';
 
   @override
   String get paywallTimelineHowYourFree => '免费试用';
@@ -25337,8 +24863,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paywallTimelineTrialWorks => '运作方式';
 
   @override
-  String get paywallTimelineUnlimitedWorkoutsFoodScann =>
-      '无限训练、食物扫描、伤病追踪、技能进阶等';
+  String get paywallTimelineUnlimitedWorkoutsFoodScann => '无限训练、食物扫描、伤病追踪、技能进阶等';
 
   @override
   String get paywallTimelineWeLlRemindYou => '我们会在试用结束前提醒您，绝无意外扣费';
@@ -25364,8 +24889,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get permissionsPrimerGrantPermissions => '授予权限';
 
   @override
-  String get permissionsPrimerGrantingTheseNowMeans =>
-      '现在授予权限意味着功能可以直接使用，不会在训练中途弹出提示。';
+  String get permissionsPrimerGrantingTheseNowMeans => '现在授予权限意味着功能可以直接使用，不会在训练中途弹出提示。';
 
   @override
   String get permissionsPrimerMicrophone => '麦克风';
@@ -25989,8 +25513,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planPreviewRestRecovery => '休息与恢复';
 
   @override
-  String get planPreviewScreenAnalyzingYourGoalsFitness =>
-      '正在分析您的目标、健身水平和设备，以打造完美的计划';
+  String get planPreviewScreenAnalyzingYourGoalsFitness => '正在分析您的目标、健身水平和设备，以打造完美的计划';
 
   @override
   String get planPreviewScreenBuildStrengthFoundation => '建立力量基础';
@@ -26058,8 +25581,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planTodaySPlan => '今日计划';
 
   @override
-  String get plateauDashboardCompleteMoreWorkoutsAnd =>
-      '完成更多训练并记录体重，以查看平台期检测分析。';
+  String get plateauDashboardCompleteMoreWorkoutsAnd => '完成更多训练并记录体重，以查看平台期检测分析。';
 
   @override
   String get plateauDashboardCurrentWeight => '当前体重';
@@ -26156,11 +25678,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get postMealReviewSaveCheckIn => '保存打卡';
 
   @override
-  String postMealReviewSheetKcal(
-    Object extraCount,
-    Object foodSummary,
-    Object totalCalories,
-  ) {
+  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories) {
     return '$foodSummary$extraCount · $totalCalories kcal';
   }
 
@@ -26190,8 +25708,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get postWorkoutHrMin => '最小值';
 
   @override
-  String get postWorkoutHrNoHeartRateData =>
-      '未捕获心率数据。请佩戴心率带（如 Amazfit Helios）并授予健康权限，以查看实时心率和训练后图表。';
+  String get postWorkoutHrNoHeartRateData => '未捕获心率数据。请佩戴心率带（如 Amazfit Helios）并授予健康权限，以查看实时心率和训练后图表。';
 
   @override
   String get postWorkoutHrPeak => '峰值';
@@ -26433,8 +25950,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preAuthQuizFineTuningYourPlan => '正在微调您的计划';
 
   @override
-  String get preAuthQuizFitnessLevelHelpsSet =>
-      '健身水平有助于设定合适的起点——包括合适的重量、次数范围和动作复杂度。';
+  String get preAuthQuizFitnessLevelHelpsSet => '健身水平有助于设定合适的起点——包括合适的重量、次数范围和动作复杂度。';
 
   @override
   String get preAuthQuizFuelYourTraining => '为您的训练补充能量';
@@ -26449,8 +25965,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preAuthQuizMatchedToYourSetup => '匹配您的器械配置';
 
   @override
-  String get preAuthQuizNutritionTrackingIsOptional =>
-      '营养追踪是可选的，但功能强大。AI 会根据您的目标和活动水平计算宏量营养素。';
+  String get preAuthQuizNutritionTrackingIsOptional => '营养追踪是可选的，但功能强大。AI 会根据您的目标和活动水平计算宏量营养素。';
 
   @override
   String get preAuthQuizSafetyFirst => '安全第一';
@@ -26465,16 +25980,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preAuthQuizSomethingWentWrongPlease => '出错了。请重试。';
 
   @override
-  String get preAuthQuizTellingUsAboutInjuries =>
-      '告知我们伤病情况，确保我们避开可能导致疼痛或阻碍训练的动作。';
+  String get preAuthQuizTellingUsAboutInjuries => '告知我们伤病情况，确保我们避开可能导致疼痛或阻碍训练的动作。';
 
   @override
-  String get preAuthQuizTheseOptionalDetailsMake =>
-      '这些可选细节能让您的训练更加个性化。如果您偏好 AI 默认设置，可以跳过。';
+  String get preAuthQuizTheseOptionalDetailsMake => '这些可选细节能让您的训练更加个性化。如果您偏好 AI 默认设置，可以跳过。';
 
   @override
-  String get preAuthQuizWeLlBuildThe =>
-      '我们将根据您的日程安排构建最佳训练计划。天数多并不总是更好——恢复同样重要。';
+  String get preAuthQuizWeLlBuildThe => '我们将根据您的日程安排构建最佳训练计划。天数多并不总是更好——恢复同样重要。';
 
   @override
   String get preAuthQuizWeUseYourGoals => '我们使用您的目标来确定训练计划、动作选择以及您的进步速度。';
@@ -26888,8 +26400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get programMenuButtonCustomizeProgram => '自定义计划';
 
   @override
-  String get programMenuButtonCustomizeYourWorkoutProgram =>
-      '自定义你的健身计划或使用当前设置重新生成。';
+  String get programMenuButtonCustomizeYourWorkoutProgram => '自定义你的健身计划或使用当前设置重新生成。';
 
   @override
   String get programMenuButtonFailedToClearWorkouts => '无法清除训练';
@@ -26924,8 +26435,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get programMenuButtonSeeYourWorkoutDays => '查看你的训练日、经验等级和目标';
 
   @override
-  String get programMenuButtonThisWillDeleteYour =>
-      '这将删除你即将进行的未完成训练，并使用当前的计划设置生成新的训练。\n\n已完成的训练将不受影响。';
+  String get programMenuButtonThisWillDeleteYour => '这将删除你即将进行的未完成训练，并使用当前的计划设置生成新的训练。\n\n已完成的训练将不受影响。';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport => '尝试明星健身、运动训练等';
@@ -27120,15 +26630,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String programTemplateBuilderScreenWeeksWhenScheduled(
-    Object repeatWeeksHint,
-  ) {
+  String programTemplateBuilderScreenWeeksWhenScheduled(Object repeatWeeksHint) {
     return '计划周期为 $repeatWeeksHint 周。';
   }
 
   @override
-  String get programTemplateBuilderStartFromAStructured =>
-      '从结构化计划开始，并打造属于你自己的计划。';
+  String get programTemplateBuilderStartFromAStructured => '从结构化计划开始，并打造属于你自己的计划。';
 
   @override
   String get programsAll => '全部';
@@ -27283,8 +26790,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressScores => '评分';
 
   @override
-  String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      '完成针对该肌群的训练\n以查看你的力量进度。';
+  String get progressScreenExtCompleteWorkoutsTargetingTh => '完成针对该肌群的训练\n以查看你的力量进度。';
 
   @override
   String get progressScreenExtDetails => '详情';
@@ -27361,8 +26867,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressScreenUiTakePhotosFromDifferent => '从不同角度拍摄照片，以追踪你的视觉进度。';
 
   @override
-  String get progressScreenUiTrackYourBodyMeasurements =>
-      '追踪你的身体测量数据，查看体重秤之外的详细进度。';
+  String get progressScreenUiTrackYourBodyMeasurements => '追踪你的身体测量数据，查看体重秤之外的详细进度。';
 
   @override
   String get progressScreenUiTrainingVolumeBalance => '训练量与平衡';
@@ -27423,10 +26928,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressShareTemplatesInTheBooks => '已记录在案';
 
   @override
-  String progressShareTemplatesLocalLegendShedsIn(
-    Object durationText,
-    Object weightLostText,
-  ) {
+  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText) {
     return '本地传奇在 $durationText 内减重 $weightLostText';
   }
 
@@ -27464,8 +26966,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressShareTemplatesReportedBy => '报道：';
 
   @override
-  String get progressShareTemplatesSourcesCloseToThe =>
-      '据接近当事人的消息来源证实，这一转变归功于持续的训练、诚实的饮食以及从不跳过练腿日。专家称之为“前所未有的奉献”。';
+  String get progressShareTemplatesSourcesCloseToThe => '据接近当事人的消息来源证实，这一转变归功于持续的训练、诚实的饮食以及从不跳过练腿日。专家称之为“前所未有的奉献”。';
 
   @override
   String get progressShareTemplatesTheDailyGains => '每日增肌';
@@ -27526,10 +27027,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String progressShareTemplatesWorkoutsDayStreak(
-    Object currentStreak,
-    Object totalWorkouts,
-  ) {
+  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts) {
     return '$totalWorkouts 次锻炼 · $currentStreak 天连续记录';
   }
 
@@ -27567,8 +27065,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressThisActionCannotBe => '此操作无法撤销。';
 
   @override
-  String get progressTrackYourFitnessJourney =>
-      '通过进度照片、身体测量和力量评分来追踪你的健身之旅。看看你已经走了多远！';
+  String get progressTrackYourFitnessJourney => '通过进度照片、身体测量和力量评分来追踪你的健身之旅。看看你已经走了多远！';
 
   @override
   String get progressUploadFailed => '上传失败';
@@ -27601,8 +27098,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressionPaceAutoDeloadWeeks => '自动减载周';
 
   @override
-  String get progressionPaceControlHowQuicklyThe =>
-      '控制 AI 增加训练重量的速度。较慢的进度对初学者更安全，而较快的进度适合有经验的举重者。';
+  String get progressionPaceControlHowQuicklyThe => '控制 AI 增加训练重量的速度。较慢的进度对初学者更安全，而较快的进度适合有经验的举重者。';
 
   @override
   String get progressionPaceDeloadFrequency => '减载频率';
@@ -27718,10 +27214,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String progressionSuggestionCardValue2(
-    Object currentExercise,
-    Object suggestedExercise,
-  ) {
+  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise) {
     return '$currentExercise -> $suggestedExercise';
   }
 
@@ -27808,11 +27301,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get publicRecipeSaveToMyRecipes => '保存到我的食谱';
 
   @override
-  String publicRecipeScreenByViewsSaves(
-    Object authorDisplayName,
-    Object saveCount,
-    Object viewCount,
-  ) {
+  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount) {
     return '作者：$authorDisplayName · $viewCount 次浏览 · $saveCount 次保存';
   }
 
@@ -28261,8 +27750,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickStatsCardActiveFeatures => '已启用的功能';
 
   @override
-  String get quickStatsCardConfigureYourHormonalHealth =>
-      '配置你的荷尔蒙健康偏好以获取个性化见解。';
+  String get quickStatsCardConfigureYourHormonalHealth => '配置你的荷尔蒙健康偏好以获取个性化见解。';
 
   @override
   String get quickStatsCardCycleSyncedNutrition => '周期同步营养';
@@ -28401,31 +27889,22 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration) {
     return '生成 $_selectedDuration 分钟训练';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
-    Object phaseDisplayName,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName) {
     return '周期：$phaseDisplayName';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration) {
     return '$_selectedDuration 分钟';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
-    Object totalWeeks,
-    Object weekNumber,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber) {
     return '第 $weekNumber/$totalWeeks 周';
   }
 
@@ -28481,10 +27960,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quitWorkoutAddANoteOptional => '添加备注（可选）...';
 
   @override
-  String quitWorkoutDialogCompleteSetsDone(
-    Object progressPercent,
-    Object totalCompletedSets,
-  ) {
+  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets) {
     return '$progressPercent% 完成 • 已完成 $totalCompletedSets 组';
   }
 
@@ -28805,8 +28281,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizEquipmentSelectAllThatApply => '选择所有适用的项 - 我们将根据您拥有的器械设计训练';
 
   @override
-  String get quizEquipmentSelectingYourWorkoutEnviron =>
-      '选择您的训练环境有助于我们为您推荐合适的动作和器械。';
+  String get quizEquipmentSelectingYourWorkoutEnviron => '选择您的训练环境有助于我们为您推荐合适的动作和器械。';
 
   @override
   String get quizEquipmentSquatRack => '深蹲架';
@@ -28859,8 +28334,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizEquipmentYesAddIt => '是的，添加它';
 
   @override
-  String get quizEquipmentYouCanCustomizeEquipment =>
-      '您可以在选择环境后自定义器械，或跳过此步骤手动选择。';
+  String get quizEquipmentYouCanCustomizeEquipment => '您可以在选择环境后自定义器械，或跳过此步骤手动选择。';
 
   @override
   String get quizFastingApplyCustomProtocol => '应用自定义方案';
@@ -28869,10 +28343,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizFastingChooseAFastingProtocol => '选择一种轻断食方案';
 
   @override
-  String quizFastingCustomProtocol(
-    Object _customEatingHours,
-    Object _customFastingHours,
-  ) {
+  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours) {
     return '自定义 $_customFastingHours:$_customEatingHours 方案';
   }
 
@@ -28929,10 +28400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String quizFastingUiMealsSpacedHoursApart(
-    Object hoursBetweenMeals,
-    Object meals,
-  ) {
+  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals) {
     return '$meals 餐，每餐间隔 ~$hoursBetweenMeals 小时';
   }
 
@@ -29081,10 +28549,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizMotivationWhatSDrivingYou => '是什么驱动您去锻炼？';
 
   @override
-  String quizMuscleFocusAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints) {
     return '$availablePoints/$maxTotalPoints 可用点数';
   }
 
@@ -29107,8 +28572,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizNutritionGateDietaryPreferences => '饮食偏好';
 
   @override
-  String get quizNutritionGateGetPersonalizedCalorieAnd =>
-      '获取个性化的热量与宏量营养素目标，以支持您的健身目标';
+  String get quizNutritionGateGetPersonalizedCalorieAnd => '获取个性化的热量与宏量营养素目标，以支持您的健身目标';
 
   @override
   String get quizNutritionGateMealTimingGuidance => '进餐时间指导';
@@ -29162,10 +28626,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizNutritionGoalsIncludeAllMealsAnd => '包含所有正餐和零食';
 
   @override
-  String quizNutritionGoalsKcalGProteinPer(
-    Object calPerMeal,
-    Object proteinPerMeal,
-  ) {
+  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal) {
     return '每餐 $calPerMeal kcal 和 ${proteinPerMeal}g 蛋白质';
   }
 
@@ -29212,12 +28673,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizPersonalizationGateUsedToPersonalizeYour => '用于个性化您的计划和预测';
 
   @override
-  String get quizPrimaryGoalAdjustsRestPeriodsExercise =>
-      '根据您的侧重点调整休息时间、练习难度和整体训练量。';
+  String get quizPrimaryGoalAdjustsRestPeriodsExercise => '根据您的侧重点调整休息时间、练习难度和整体训练量。';
 
   @override
-  String get quizPrimaryGoalAiPicksExercisesThat =>
-      'AI 会挑选最符合您目标的练习——力量训练选择复合动作，增肌训练选择孤立动作。';
+  String get quizPrimaryGoalAiPicksExercisesThat => 'AI 会挑选最符合您目标的练习——力量训练选择复合动作，增肌训练选择孤立动作。';
 
   @override
   String get quizPrimaryGoalCanChangeAnytime => '可随时更改';
@@ -29235,8 +28694,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizPrimaryGoalRepRanges => '次数范围';
 
   @override
-  String get quizPrimaryGoalSetsTheNumberOf =>
-      '设置每个练习的重复次数。增肌通常为 8-12 次，力量训练为 3-6 次，耐力训练为 12 次以上。';
+  String get quizPrimaryGoalSetsTheNumberOf => '设置每个练习的重复次数。增肌通常为 8-12 次，力量训练为 3-6 次，耐力训练为 12 次以上。';
 
   @override
   String get quizPrimaryGoalWorkoutIntensity => '训练强度';
@@ -29248,8 +28706,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizProgressionConstraintsBalanced => '均衡';
 
   @override
-  String get quizProgressionConstraintsBuildStrengthGraduallyLowe =>
-      '循序渐进地增强力量，降低受伤风险';
+  String get quizProgressionConstraintsBuildStrengthGraduallyLowe => '循序渐进地增强力量，降低受伤风险';
 
   @override
   String get quizProgressionConstraintsFastAggressive => '快速且激进';
@@ -29261,15 +28718,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizProgressionConstraintsProgressionPace => '进步节奏';
 
   @override
-  String get quizProgressionConstraintsPushHardFasterGains =>
-      '高强度推进，更快获得收益（进阶）';
+  String get quizProgressionConstraintsPushHardFasterGains => '高强度推进，更快获得收益（进阶）';
 
   @override
   String get quizProgressionConstraintsSlowSteady => '缓慢且稳健';
 
   @override
-  String get quizProgressionConstraintsSteadyProgressWithManageabl =>
-      '在可控的挑战下稳步前进';
+  String get quizProgressionConstraintsSteadyProgressWithManageabl => '在可控的挑战下稳步前进';
 
   @override
   String get quizTrainingPreferencesAllOptional => '均为可选';
@@ -29284,8 +28739,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizTrainingPreferencesProgressionPace => '进步节奏';
 
   @override
-  String get quizTrainingPreferencesProgressiveOverloadRirInt =>
-      '整合了渐进式超负荷与 RIR';
+  String get quizTrainingPreferencesProgressiveOverloadRirInt => '整合了渐进式超负荷与 RIR';
 
   @override
   String get quizTrainingPreferencesTrainingPreferences => '训练偏好';
@@ -29335,8 +28789,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quizTrainingStyleOneMuscleGroupPer => '每天一个肌群（5 天以上）';
 
   @override
-  String get quizTrainingStylePowerHypertrophyAdaptiveTra =>
-      '力量与肥大自适应训练 (PHAT)（5 天）';
+  String get quizTrainingStylePowerHypertrophyAdaptiveTra => '力量与肥大自适应训练 (PHAT)（5 天）';
 
   @override
   String get quizTrainingStylePowerHypertrophyUpperL => '力量 + 肥大，上肢 + 下肢（4 天）';
@@ -29389,8 +28842,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get racePredictorDetailHowPredictionsAreCalculated => '预测是如何计算的';
 
   @override
-  String get racePredictorDetailLogAtLeastThree =>
-      '至少记录三次跑步（包括一次测量距离的公里数），即可显示预测结果。';
+  String get racePredictorDetailLogAtLeastThree => '至少记录三次跑步（包括一次测量距离的公里数），即可显示预测结果。';
 
   @override
   String get racePredictorDetailNeedMoreData => '需要更多数据';
@@ -29413,8 +28865,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ratingPromptBannerGot30Seconds => '有 30 秒时间吗？';
 
   @override
-  String get ratingPromptBannerHelpUsOutRate =>
-      '帮个忙，在 App Store 给 Zealova 评分吧。';
+  String get ratingPromptBannerHelpUsOutRate => '帮个忙，在 App Store 给 Zealova 评分吧。';
 
   @override
   String get ratingPromptDonTAskAgain => '不再询问';
@@ -29575,10 +29026,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String recipeBuilderSheetLoggedServingSOf(
-    Object portionEaten,
-    Object recipeName,
-  ) {
+  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName) {
     return '已记录 $portionEaten 份“$recipeName”：';
   }
 
@@ -30086,8 +29534,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionsAnySpecificRequirementsE =>
-      '有特殊要求吗？(例如：低于400卡路里，高纤维)';
+  String get recipeSuggestionsAnySpecificRequirementsE => '有特殊要求吗？(例如：低于400卡路里，高纤维)';
 
   @override
   String get recipeSuggestionsGenerateSuggestions => '生成建议';
@@ -30122,8 +29569,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recipeSuggestionsSuggestions => '建议';
 
   @override
-  String get recipeSuggestionsTapGenerateSuggestionsTo =>
-      '点击“生成建议”，获取基于您偏好的AI食谱灵感';
+  String get recipeSuggestionsTapGenerateSuggestionsTo => '点击“生成建议”，获取基于您偏好的AI食谱灵感';
 
   @override
   String get recipeSuggestionsWhatMealAreYou => '您打算吃哪一餐？';
@@ -30671,8 +30117,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateWithNewContinueCurrent => '继续当前';
 
   @override
-  String get regenerateWithNewEitherWayFutureWorkouts =>
-      '无论如何，未来的训练都将使用你更新后的设备。';
+  String get regenerateWithNewEitherWayFutureWorkouts => '无论如何，未来的训练都将使用你更新后的设备。';
 
   @override
   String get regenerateWithNewEquipmentUpdated => '设备已更新';
@@ -30681,8 +30126,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateWithNewRegenerateThisWorkout => '重新生成此训练';
 
   @override
-  String get regenerateWorkoutSheetAiGenerationTypicallyTakes =>
-      'AI 生成通常需要 15-30 秒';
+  String get regenerateWorkoutSheetAiGenerationTypicallyTakes => 'AI 生成通常需要 15-30 秒';
 
   @override
   String get regenerateWorkoutSheetAiSuggestions => 'AI 建议';
@@ -30700,8 +30144,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateWorkoutSheetCustomizeOrLetAi => '自定义或让 AI 提供建议';
 
   @override
-  String get regenerateWorkoutSheetDefaultedToReplaceYour =>
-      '已默认替换 — 你之前的训练已被覆盖。';
+  String get regenerateWorkoutSheetDefaultedToReplaceYour => '已默认替换 — 你之前的训练已被覆盖。';
 
   @override
   String get regenerateWorkoutSheetDescribeYourIdealWorkout => '描述你理想的训练';
@@ -30713,8 +30156,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateWorkoutSheetEGAQuick => '例如：“无需器械的快速上肢训练”';
 
   @override
-  String get regenerateWorkoutSheetEnterAPromptAbove =>
-      '在上方输入提示词或点击刷新以获取 AI 驱动的训练建议';
+  String get regenerateWorkoutSheetEnterAPromptAbove => '在上方输入提示词或点击刷新以获取 AI 驱动的训练建议';
 
   @override
   String get regenerateWorkoutSheetGeneratingSuggestions => '正在生成建议...';
@@ -30726,40 +30168,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get regenerateWorkoutSheetNoSuggestionsYet => '暂无建议';
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message) {
     return '应用建议失败：$message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e) {
     return '应用建议失败：$e';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message) {
     return '重新生成失败：$message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e) {
     return '重新生成失败：$e';
   }
 
   @override
-  String get regenerateWorkoutSheetPreviewNotSupportedBy =>
-      '服务器不支持预览。请更新应用或联系支持团队。';
+  String get regenerateWorkoutSheetPreviewNotSupportedBy => '服务器不支持预览。请更新应用或联系支持团队。';
 
   @override
   String get regenerateWorkoutSheetRegenerateCurrentWorkout => '重新生成当前训练';
@@ -30862,16 +30291,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repPreferencesSectionMinimumSetsToEnsure => '确保足够容量的最少组数';
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
-    Object maxSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets) {
     return '最多组数：$maxSets';
   }
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
-    Object minSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets) {
     return '最少组数：$minSets';
   }
 
@@ -30894,12 +30319,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repPreferencesSectionStrength15 => '力量 (1-5)';
 
   @override
-  String get repPreferencesSectionTheAiWillGenerate =>
-      'AI 将根据此次数范围生成训练计划。组数越多 = 训练量越大 = 肌肉刺激越强。';
+  String get repPreferencesSectionTheAiWillGenerate => 'AI 将根据此次数范围生成训练计划。组数越多 = 训练量越大 = 肌肉刺激越强。';
 
   @override
-  String get repPreferencesSectionTheAiWillTry =>
-      'AI 将通过调整重量或建议进阶动作，尽量将练习保持在此范围内。';
+  String get repPreferencesSectionTheAiWillTry => 'AI 将通过调整重量或建议进阶动作，尽量将练习保持在此范围内。';
 
   @override
   String get repPreferencesSetsPerExercise => '每项练习组数';
@@ -30920,10 +30343,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get repProgressionCardRepProgression => '次数与进阶';
 
   @override
-  String repProgressionCardReps(
-    Object preferredMaxReps,
-    Object preferredMinReps,
-  ) {
+  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps) {
     return '$preferredMinReps-$preferredMaxReps 次';
   }
 
@@ -30966,8 +30386,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportInjurySeverity => '严重性';
 
   @override
-  String get reportInjuryThisIsForTracking =>
-      '这仅用于跟踪目的。请咨询医疗保健专业人士以进行正确的诊断和治疗。';
+  String get reportInjuryThisIsForTracking => '这仅用于跟踪目的。请咨询医疗保健专业人士以进行正确的诊断和治疗。';
 
   @override
   String get reportInjuryWhenDidItOccur => '什么时候发生的？';
@@ -31172,8 +30591,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportsHubWeightBodyFatCircumferenc => '体重、体脂、围度趋势';
 
   @override
-  String get reportsHubWorkoutsTimeCaloriesBy =>
-      '按 1周 / 1月 / 3月 / 6月 / 1年 / 年初至今 / 自定义查看训练、时长、卡路里';
+  String get reportsHubWorkoutsTimeCaloriesBy => '按 1周 / 1月 / 3月 / 6月 / 1年 / 年初至今 / 自定义查看训练、时长、卡路里';
 
   @override
   String get requestRefundAdditionalCommentsOptional => '其他评论（可选）';
@@ -31200,8 +30618,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestRefundRefundRequestSubmitted => '退款请求已提交';
 
   @override
-  String get requestRefundRefundRequestsAreTypically =>
-      '退款请求通常在 5-7 个工作日内处理。请求审核通过后，您将收到电子邮件确认。';
+  String get requestRefundRefundRequestsAreTypically => '退款请求通常在 5-7 个工作日内处理。请求审核通过后，您将收到电子邮件确认。';
 
   @override
   String get requestRefundRequestId => '请求 ID';
@@ -31232,8 +30649,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestRefundTellUsMoreAbout => '告诉我们更多关于您的体验...';
 
   @override
-  String get requestRefundWeWillSendYou =>
-      '我们将向您发送一封包含退款请求详情的电子邮件确认。处理通常需要 5-7 个工作日。';
+  String get requestRefundWeWillSendYou => '我们将向您发送一封包含退款请求详情的电子邮件确认。处理通常需要 5-7 个工作日。';
 
   @override
   String get rescheduleFailedToLoadSuggestions => '无法加载建议';
@@ -31768,11 +31184,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String scheduleMismatchDialogRequiresDaysPerWeek(
-    Object currentDayCount,
-    Object requiredDays,
-    Object splitName,
-  ) {
+  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName) {
     return '$splitName 需要每周 $requiredDays 天，但你目前选择了 $currentDayCount 天。';
   }
 
@@ -31820,10 +31232,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String scheduleScreenGenerating(
-    Object _generatedCount,
-    Object _totalToGenerate,
-  ) {
+  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate) {
     return '正在生成 $_generatedCount/$_totalToGenerate...';
   }
 
@@ -31961,16 +31370,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainAiPicksATrafficLight => 'AI 会根据您的个人健康目标为每顿饭选择一个红绿灯等级。';
 
   @override
-  String get scoreExplainAimForADailyAverage =>
-      '目标日均分低于 4。抗炎食物得分为 1–3 分；高炎症食物得分为 7–10 分。';
+  String get scoreExplainAimForADailyAverage => '目标日均分低于 4。抗炎食物得分为 1–3 分；高炎症食物得分为 7–10 分。';
 
   @override
-  String get scoreExplainCertainPortionsOfAvocado =>
-      '牛油果、红薯、杏仁的特定份量——小份没问题，大份则较难消化。';
+  String get scoreExplainCertainPortionsOfAvocado => '牛油果、红薯、杏仁的特定份量——小份没问题，大份则较难消化。';
 
   @override
-  String get scoreExplainChronicLowGradeInflammation =>
-      '饮食引起的慢性低度炎症与代谢疾病、关节疼痛和认知能力下降有关。';
+  String get scoreExplainChronicLowGradeInflammation => '饮食引起的慢性低度炎症与代谢疾病、关节疼痛和认知能力下降有关。';
 
   @override
   String get scoreExplainCurrentLabelAntiInfl => '抗炎';
@@ -32012,31 +31418,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainDailyAverageAbove6 => '日均分高于 6 分与更好的长期代谢健康相关。';
 
   @override
-  String get scoreExplainDessertsSugaryDrinksCandy =>
-      '甜点、含糖饮料、糖果、许多早餐麦片。会导致胰岛素飙升，能量骤降。';
+  String get scoreExplainDessertsSugaryDrinksCandy => '甜点、含糖饮料、糖果、许多早餐麦片。会导致胰岛素飙升，能量骤降。';
 
   @override
-  String get scoreExplainEachMealGets =>
-      '每顿饭都会根据营养密度、加工水平以及与您目标的契合度获得 1–10 分的健康评分。';
+  String get scoreExplainEachMealGets => '每顿饭都会根据营养密度、加工水平以及与您目标的契合度获得 1–10 分的健康评分。';
 
   @override
-  String get scoreExplainEngineeredFoodProductsChip =>
-      '工程食品：薯片、苏打水、方便面、包装甜食、大多数快餐。';
+  String get scoreExplainEngineeredFoodProductsChip => '工程食品：薯片、苏打水、方便面、包装甜食、大多数快餐。';
 
   @override
   String get scoreExplainFodmapRating => 'FODMAP 评分';
 
   @override
-  String get scoreExplainFodmapsAreShortChain =>
-      'FODMAP 是短链碳水化合物，难以被肠道细菌吸收和发酵。';
+  String get scoreExplainFodmapsAreShortChain => 'FODMAP 是短链碳水化合物，难以被肠道细菌吸收和发酵。';
 
   @override
-  String get scoreExplainFriedFoodsProcessedMeats =>
-      '油炸食品、加工肉类、含糖饮料、精炼种子油、包装零食。';
+  String get scoreExplainFriedFoodsProcessedMeats => '油炸食品、加工肉类、含糖饮料、精炼种子油、包装零食。';
 
   @override
-  String get scoreExplainGlycemicLoadCombines =>
-      '血糖负荷结合了碳水化合物的数量和质量。它可以预测一顿饭会使血糖升高多少。';
+  String get scoreExplainGlycemicLoadCombines => '血糖负荷结合了碳水化合物的数量和质量。它可以预测一顿饭会使血糖升高多少。';
 
   @override
   String scoreExplainGlycemicLoadValue(Object v) {
@@ -32064,22 +31464,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainHigh20 => '高 (20+)';
 
   @override
-  String get scoreExplainHighInflammationUltraProce =>
-      '高炎症、超加工或严重偏离您的宏量营养素目标。如果可能，请换成“良好”选项。';
+  String get scoreExplainHighInflammationUltraProce => '高炎症、超加工或严重偏离您的宏量营养素目标。如果可能，请换成“良好”选项。';
 
   @override
   String get scoreExplainHighProteinOrFiber => '高蛋白质或纤维、天然食物、低添加糖、抗炎成分。';
 
   @override
-  String get scoreExplainHitsYourGoalMacros =>
-      '符合您的宏量营养素目标，主要是天然食物，炎症水平低至中等。可放心选择。';
+  String get scoreExplainHitsYourGoalMacros => '符合您的宏量营养素目标，主要是天然食物，炎症水平低至中等。可放心选择。';
 
   @override
   String get scoreExplainHowThisDishRates => '此菜品对您的评分影响';
 
   @override
-  String get scoreExplainImportantIfYouHaveDiabetes =>
-      '如果您患有糖尿病、胰岛素抵抗或正在管理能量水平，这一点很重要。';
+  String get scoreExplainImportantIfYouHaveDiabetes => '如果您患有糖尿病、胰岛素抵抗或正在管理能量水平，这一点很重要。';
 
   @override
   String scoreExplainInflammationScoreValue(Object v) {
@@ -32087,12 +31484,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainLargePopulationStudies =>
-      '大型人群研究将超加工食品的摄入与癌症、心血管疾病和早期死亡联系起来。';
+  String get scoreExplainLargePopulationStudies => '大型人群研究将超加工食品的摄入与癌症、心血管疾病和早期死亡联系起来。';
 
   @override
-  String get scoreExplainLeafyGreensBerriesWild =>
-      '绿叶蔬菜、浆果、野生三文鱼、姜黄、特级初榨橄榄油、坚果、豆类。';
+  String get scoreExplainLeafyGreensBerriesWild => '绿叶蔬菜、浆果、野生三文鱼、姜黄、特级初榨橄榄油、坚果、豆类。';
 
   @override
   String get scoreExplainLow => '低';
@@ -32104,8 +31499,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainLowUnder5G => '低 (低于 5 克)';
 
   @override
-  String get scoreExplainMeatEggsRiceOats =>
-      '肉类、鸡蛋、米饭、燕麦、无乳糖乳制品、胡萝卜、西葫芦、菠菜、浆果、橙子。';
+  String get scoreExplainMeatEggsRiceOats => '肉类、鸡蛋、米饭、燕麦、无乳糖乳制品、胡萝卜、西葫芦、菠菜、浆果、橙子。';
 
   @override
   String get scoreExplainMedium => '中等';
@@ -32114,8 +31508,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainMedium1019 => '中等 (10 – 19)';
 
   @override
-  String get scoreExplainMinimalBloodSugarSpike =>
-      '血糖波动极小。非淀粉类蔬菜、鸡蛋、肉类、浆果、大多数乳制品。';
+  String get scoreExplainMinimalBloodSugarSpike => '血糖波动极小。非淀粉类蔬菜、鸡蛋、肉类、浆果、大多数乳制品。';
 
   @override
   String get scoreExplainModerate => '适中';
@@ -32127,27 +31520,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainModerateSpikeOatsWhole => '波动适中。燕麦、全麦面包、香蕉、红薯、巴斯马蒂香米。';
 
   @override
-  String get scoreExplainMostSavouryDishesPlain =>
-      '大多数咸味菜肴、纯乳制品、完整水果。对血糖没有明显影响。';
+  String get scoreExplainMostSavouryDishesPlain => '大多数咸味菜肴、纯乳制品、完整水果。对血糖没有明显影响。';
 
   @override
-  String get scoreExplainOnionGarlicWheatRye =>
-      '洋葱、大蒜、小麦、黑麦、牛奶/冰淇淋、苹果、梨、蜂蜜、豆类、花椰菜。';
+  String get scoreExplainOnionGarlicWheatRye => '洋葱、大蒜、小麦、黑麦、牛奶/冰淇淋、苹果、梨、蜂蜜、豆类、花椰菜。';
 
   @override
-  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
-      '仅在您患有 IBS 或确诊肠道疾病时相关。否则可以忽略。';
+  String get scoreExplainOnlyRelevantIfYouHaveIbs => '仅在您患有 IBS 或确诊肠道疾病时相关。否则可以忽略。';
 
   @override
-  String get scoreExplainRatingsArePersonalised =>
-      '评分是根据您的目标、过敏原和饮食记录进行个性化定制的。';
+  String get scoreExplainRatingsArePersonalised => '评分是根据您的目标、过敏原和饮食记录进行个性化定制的。';
 
   @override
   String get scoreExplainRawOrBasicCooked => '生食或基础烹饪食物：肉类、鸡蛋、蔬菜、原味酸奶、奶酪、全谷物。';
 
   @override
-  String get scoreExplainReasonableChoiceCouldBe =>
-      '合理的选择——可以在一两个方面进行改进（增加纤维，减少加工）。';
+  String get scoreExplainReasonableChoiceCouldBe => '合理的选择——可以在一两个方面进行改进（增加纤维，减少加工）。';
 
   @override
   String get scoreExplainReasonableChoiceWithA => '有权衡的合理选择——注意份量或搭配更健康的配菜。';
@@ -32162,8 +31550,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainSteepSpikeCrashWhite => '剧烈波动 + 骤降。白米饭碗、含糖饮料、糕点、大份意面。';
 
   @override
-  String get scoreExplainSweetenedYogurtASmall =>
-      '加糖酸奶、小份糕点、半瓶运动饮料。合理的零食——不建议每天食用。';
+  String get scoreExplainSweetenedYogurtASmall => '加糖酸奶、小份糕点、半瓶运动饮料。合理的零食——不建议每天食用。';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -32180,15 +31567,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scoreExplainUltraProcessedNova4 => '超加工 (NOVA 4)';
 
   @override
-  String get scoreExplainWeUseTheNovaClassification =>
-      '我们使用圣保罗大学开发的 NOVA 分类系统。';
+  String get scoreExplainWeUseTheNovaClassification => '我们使用圣保罗大学开发的 NOVA 分类系统。';
 
   @override
   String get scoreExplainWhiteRicePlainEggs => '白米饭、纯鸡蛋、硬奶酪、小份瘦红肉。';
 
   @override
-  String get scoreExplainWhoRecommendsAdults =>
-      'WHO 建议成年人将添加糖摄入量限制在 < 25 克/天（占总能量的 5%）。';
+  String get scoreExplainWhoRecommendsAdults => 'WHO 建议成年人将添加糖摄入量限制在 < 25 克/天（占总能量的 5%）。';
 
   @override
   String get scoreExplainWholeMinimallyProcessed => '天然 / 最低限度加工';
@@ -32300,8 +31685,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get seniorFitnessSettingsSaved => '设置已保存';
 
   @override
-  String get seniorFitnessTheseSettingsHelpCustomize =>
-      '这些设置有助于根据银发族的健身需求定制训练，包括更长的恢复时间和对关节更友好的动作。';
+  String get seniorFitnessTheseSettingsHelpCustomize => '这些设置有助于根据银发族的健身需求定制训练，包括更长的恢复时间和对关节更友好的动作。';
 
   @override
   String get seniorNavFood => '饮食';
@@ -32359,30 +31743,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setAdjustmentSheetEditSets => '编辑组数';
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
-    Object originalSetCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount) {
     return '已添加 +$originalSetCount 组';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
-    Object completedCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount) {
     return '已完成 $completedCount 组';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
-    Object remainingCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount) {
     return '剩余 $remainingCount 组';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
-    Object length,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length) {
     return '已移除 $length 组';
   }
 
@@ -32392,9 +31768,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
-    Object completedSets,
-  ) {
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets) {
     return '已完成 $completedSets 组';
   }
 
@@ -32612,10 +31986,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String setTrackingSectionSetTapToExpand(
-    Object currentSetNumber,
-    Object totalSets,
-  ) {
+  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets) {
     return '第 $currentSetNumber/$totalSets 组 • 点击展开';
   }
 
@@ -32642,8 +32013,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingSheetsGotIt => '知道了';
 
   @override
-  String get setTrackingSheetsImmediatelyReduceWeightAfte =>
-      '力竭后立即减轻重量并继续训练。非常适合肌肉增长！';
+  String get setTrackingSheetsImmediatelyReduceWeightAfte => '力竭后立即减轻重量并继续训练。非常适合肌肉增长！';
 
   @override
   String get setTrackingSheetsLastSession => '上次训练';
@@ -32658,8 +32028,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingSheetsPersonalRecord => '个人纪录';
 
   @override
-  String get setTrackingSheetsRateOfPerceivedExertion =>
-      'RPE (主观用力程度) 用于衡量一组动作的吃力程度：';
+  String get setTrackingSheetsRateOfPerceivedExertion => 'RPE (主观用力程度) 用于衡量一组动作的吃力程度：';
 
   @override
   String get setTrackingSheetsReps => '次数';
@@ -32692,23 +32061,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingSheetsWhatIsRpe => '什么是 RPE？';
 
   @override
-  String get setTrackingTableALowerRir0 =>
-      '较低的 RIR (0–1) 意味着你已达到极限。较高的 RIR (如 4–6+) 意味着这组动作感觉较轻松，你还有很大余力。';
+  String get setTrackingTableALowerRir0 => '较低的 RIR (0–1) 意味着你已达到极限。较高的 RIR (如 4–6+) 意味着这组动作感觉较轻松，你还有很大余力。';
 
   @override
-  String get setTrackingTableALowerRir02 =>
-      '较低的 RIR (0–1) 意味着你已接近极限。较高的 RIR (如 3–4) 意味着你还有余力完成更多次数。';
+  String get setTrackingTableALowerRir02 => '较低的 RIR (0–1) 意味着你已接近极限。较高的 RIR (如 3–4) 意味着你还有余力完成更多次数。';
 
   @override
   String get setTrackingTableAddSet => '添加组';
 
   @override
-  String get setTrackingTableBeginnersGetExtraBuffer =>
-      '初学者会有额外的缓冲空间以学习动作规范。进阶训练者可以更安全地接近力竭。';
+  String get setTrackingTableBeginnersGetExtraBuffer => '初学者会有额外的缓冲空间以学习动作规范。进阶训练者可以更安全地接近力竭。';
 
   @override
-  String get setTrackingTableCompoundLiftsSquatsPresse =>
-      '复合动作（深蹲、推举）比孤立动作（弯举、侧平举）更保守。肌肥大训练比力量训练更接近力竭。';
+  String get setTrackingTableCompoundLiftsSquatsPresse => '复合动作（深蹲、推举）比孤立动作（弯举、侧平举）更保守。肌肥大训练比力量训练更接近力竭。';
 
   @override
   String get setTrackingTableEasiest => '最轻松';
@@ -32726,8 +32091,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingTableLeft => '左';
 
   @override
-  String get setTrackingTableMachinesCablesAreSafer =>
-      '器械和绳索训练更安全，可以尝试高强度。杠铃和壶铃由于受伤风险，需要保留更多余力。';
+  String get setTrackingTableMachinesCablesAreSafer => '器械和绳索训练更安全，可以尝试高强度。杠铃和壶铃由于受伤风险，需要保留更多余力。';
 
   @override
   String get setTrackingTableManyRepsInReserve => '余力充足';
@@ -32752,12 +32116,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingTableRight => '右';
 
   @override
-  String get setTrackingTableRirDecreasesAcrossSets =>
-      'RIR 会随着组数增加而降低——最后一组强度最大，前面的组数作为铺垫。';
+  String get setTrackingTableRirDecreasesAcrossSets => 'RIR 会随着组数增加而降低——最后一组强度最大，前面的组数作为铺垫。';
 
   @override
-  String get setTrackingTableRirStandsForReps =>
-      'RIR 代表 Reps in Reserve（保留次数），这是一种描述一组动作难度感的简单方式。';
+  String get setTrackingTableRirStandsForReps => 'RIR 代表 Reps in Reserve（保留次数），这是一种描述一组动作难度感的简单方式。';
 
   @override
   String get setTrackingTableSet => '组';
@@ -32775,8 +32137,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setTrackingTableWhatYouSeeAbove => '上方显示的是 RIR 量表';
 
   @override
-  String get setTrackingTableYouAreNotRequired =>
-      '你不必强制记录 RIR，但我们强烈建议这样做。了解你距离力竭的程度，将有助于 App 更好地适应你当前的体能水平和疲劳程度。';
+  String get setTrackingTableYouAreNotRequired => '你不必强制记录 RIR，但我们强烈建议这样做。了解你距离力竭的程度，将有助于 App 更好地适应你当前的体能水平和疲劳程度。';
 
   @override
   String get setTrackingTableYourFitnessLevel => '你的健身水平';
@@ -32875,16 +32236,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String settingsCardPartAccentColorGridValue(
-    Object currentOffset,
-    Object region,
-  ) {
+  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region) {
     return '$region • $currentOffset';
   }
 
   @override
-  String get settingsCardPartChangingDaysWillReschedule =>
-      '更改日期将自动重新安排你接下来的训练计划。';
+  String get settingsCardPartChangingDaysWillReschedule => '更改日期将自动重新安排你接下来的训练计划。';
 
   @override
   String get settingsCardPartClearAll => '全部清除';
@@ -33093,6 +32450,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsEquipment => '器械';
 
   @override
+  String settingsEquipmentItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsExercisePrefs => '锻炼偏好';
 
   @override
@@ -33196,8 +32564,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsScreenExtReplayOnboardingWalkthrough => '重播新手引导';
 
   @override
-  String get settingsScreenExtReplayTheOnboardingWalkthro =>
-      '重播新手引导、单个屏幕导览，或重置内联提示。';
+  String get settingsScreenExtReplayTheOnboardingWalkthro => '重播新手引导、单个屏幕导览，或重置内联提示。';
 
   @override
   String get settingsScreenExtResetInlineHints => '重置内联提示';
@@ -33206,8 +32573,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsScreenExtSearchSettings => '搜索设置...';
 
   @override
-  String get settingsScreenExtSmallEmptyStateHints =>
-      '散布在应用各处的空状态小提示。重置它们以再次查看帮助文本。';
+  String get settingsScreenExtSmallEmptyStateHints => '散布在应用各处的空状态小提示。重置它们以再次查看帮助文本。';
 
   @override
   String get settingsScreenExtTutorialsHints => '教程与提示';
@@ -33223,14 +32589,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsScreenExtYourAiPoweredPersonal =>
-      '你的 AI 驱动个人健身教练。获取个性化锻炼计划，追踪进度，并实现你的健身目标。';
+  String get settingsScreenExtYourAiPoweredPersonal => '你的 AI 驱动个人健身教练。获取个性化锻炼计划，追踪进度，并实现你的健身目标。';
 
   @override
-  String settingsScreenMailtoSubjectSupportRequest(
-    Object appName,
-    Object supportEmail,
-  ) {
+  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail) {
     return 'mailto:$supportEmail?subject=$appName 支持请求';
   }
 
@@ -33246,8 +32608,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsScreenUiNoSettingsFound => '未找到相关设置';
 
   @override
-  String get settingsScreenUiTryDifferentKeywordsLike =>
-      '试试其他关键词，如\"主题\"、\"通知\"或\"AI 语音\"';
+  String get settingsScreenUiTryDifferentKeywordsLike => '试试其他关键词，如\"主题\"、\"通知\"或\"AI 语音\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -34086,8 +33447,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stackedBannerPanelFollowUsOnInstagram => '在 Instagram 上关注我们';
 
   @override
-  String get stackedBannerPanelGetHelpShareWins =>
-      '在 Discord 上获取帮助、分享成就并提出功能建议';
+  String get stackedBannerPanelGetHelpShareWins => '在 Discord 上获取帮助、分享成就并提出功能建议';
 
   @override
   String get stackedBannerPanelJoinTheCommunity => '加入社区';
@@ -34101,11 +33461,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelMinExercises(
-    Object durationMinutes,
-    Object exercisesCount,
-    Object missedDescription,
-  ) {
+  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription) {
     return '$missedDescription · $durationMinutes 分钟 · $exercisesCount 个动作';
   }
 
@@ -34130,11 +33486,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stackedBannerPanelOpeningCrate => '正在开启宝箱...';
 
   @override
-  String stackedBannerPanelRenewsInDaysFor(
-    Object days,
-    Object formattedAmount,
-    Object tierLabel,
-  ) {
+  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel) {
     return '$tierLabel 将在 $days 天后以 $formattedAmount 续订';
   }
 
@@ -34155,10 +33507,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelWorkoutsLifted(
-    Object totalWorkouts,
-    Object volumeStr,
-  ) {
+  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr) {
     return '$totalWorkouts 次训练 · 举起 $volumeStr';
   }
 
@@ -34433,8 +33782,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stapleExercisesTargetDays => '目标日期';
 
   @override
-  String get stapleExercisesTheseCoreLiftsWill =>
-      '无论你的多样性设置如何，这些核心动作将永远不会从你的训练中被替换。';
+  String get stapleExercisesTheseCoreLiftsWill => '无论你的多样性设置如何，这些核心动作将永远不会从你的训练中被替换。';
 
   @override
   String get stapleExercisesTreadmillSettings => '跑步机设置';
@@ -34664,11 +34012,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stepGoalCardGoalReachedGreatJob => '目标已达成！做得好！';
 
   @override
-  String stepGoalCardStepGoalProgressOf(
-    Object currentSteps,
-    Object goalSteps,
-    Object percentage,
-  ) {
+  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage) {
     return '步数目标进度：已完成 $currentSteps/$goalSteps 步，完成 $percentage%';
   }
 
@@ -34703,10 +34047,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetStepGoalSliderFrom(
-    Object _maxGoal,
-    Object _minGoal,
-  ) {
+  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal) {
     return '步数目标滑块，从 $_minGoal 到 $_maxGoal 步';
   }
 
@@ -34722,8 +34063,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stepGoalEditorUseProgressiveGoal => '使用进阶目标';
 
   @override
-  String get stepGoalEditorWhenYouHitYour =>
-      '当你连续5天达成目标时，我们会将目标增加500步。若错过3天，目标将重置为基础目标。';
+  String get stepGoalEditorWhenYouHitYour => '当你连续5天达成目标时，我们会将目标增加500步。若错过3天，目标将重置为基础目标。';
 
   @override
   String stepsCounterCardConnect(Object sourceLabel) {
@@ -34930,8 +34270,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get strengthOverviewCardCheckIn => '签到';
 
   @override
-  String get strengthOverviewCardCompleteWorkoutsWithResista =>
-      '完成抗阻训练\n以追踪你的力量进度。';
+  String get strengthOverviewCardCompleteWorkoutsWithResista => '完成抗阻训练\n以追踪你的力量进度。';
 
   @override
   String get strengthOverviewCardDragU2630ToReorder => '拖动 ☰ 以重新排序 · 点击图钉以置顶';
@@ -34973,19 +34312,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get strengthOverviewCardRecalculate => '重新计算';
 
   @override
-  String get strengthOverviewCardScoreIsCalculatedFrom =>
-      '评分基于你过去 90 天内每个肌群的最佳训练组（重量 x 次数）计算得出。体重比越高，评分越高。';
+  String get strengthOverviewCardScoreIsCalculatedFrom => '评分基于你过去 90 天内每个肌群的最佳训练组（重量 x 次数）计算得出。体重比越高，评分越高。';
 
   @override
-  String get strengthOverviewCardScoresUpdateAutomaticallyAf =>
-      '评分会在每次训练后自动更新。仅计入抗阻训练动作，导入的有氧运动不会影响评分。';
+  String get strengthOverviewCardScoresUpdateAutomaticallyAf => '评分会在每次训练后自动更新。仅计入抗阻训练动作，导入的有氧运动不会影响评分。';
 
   @override
   String get strengthOverviewCardStrengthScore => '力量评分';
 
   @override
-  String get strengthOverviewCardTheRingDisplaysA =>
-      '圆环显示了你所有肌群评分的加权平均值。1RM 是根据你过去 90 天内记录的最佳训练组，通过 Brzycki/Epley/Lombardi 公式平均值估算的。';
+  String get strengthOverviewCardTheRingDisplaysA => '圆环显示了你所有肌群评分的加权平均值。1RM 是根据你过去 90 天内记录的最佳训练组，通过 Brzycki/Epley/Lombardi 公式平均值估算的。';
 
   @override
   String get strengthOverviewCardTrainingStatus => '训练状态';
@@ -34996,19 +34332,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get strengthOverviewCardValuesAreForIntermediate =>
-      '数值适用于中级训练者，并会根据你的训练水平自动调整。状态也会参考你的准备状态签到。';
+  String get strengthOverviewCardValuesAreForIntermediate => '数值适用于中级训练者，并会根据你的训练水平自动调整。状态也会参考你的准备状态签到。';
 
   @override
   String get strengthOverviewCardVolumeGuidelinesSetsWeek => '训练量指南（组数/周）';
 
   @override
-  String get strengthOverviewCardYourOverallFitnessScore =>
-      '你的综合健身评分加权如下：\n力量 40% + 持续性 30% + 营养 20% + 准备状态 10%';
+  String get strengthOverviewCardYourOverallFitnessScore => '你的综合健身评分加权如下：\n力量 40% + 持续性 30% + 营养 20% + 准备状态 10%';
 
   @override
-  String get strengthOverviewCardYourStrengthScore0 =>
-      '你的力量评分 (0-100) 用于衡量你相对于体重的举重能力，并与既定标准进行对比。';
+  String get strengthOverviewCardYourStrengthScore0 => '你的力量评分 (0-100) 用于衡量你相对于体重的举重能力，并与既定标准进行对比。';
 
   @override
   String get strengthRecentPersonalRecords => '近期个人纪录';
@@ -35070,8 +34403,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionManagementFailedToLoadSubscription => '无法加载订阅';
 
   @override
-  String get subscriptionManagementGetUnlimitedWorkoutsAi =>
-      '获取无限训练、AI 教练及更多功能';
+  String get subscriptionManagementGetUnlimitedWorkoutsAi => '获取无限训练、AI 教练及更多功能';
 
   @override
   String get subscriptionManagementManageSubscription => '管理订阅';
@@ -35126,9 +34458,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionManagementScreenStartBillingAgain => '重新开始计费';
 
   @override
-  String subscriptionManagementScreenSubscriptionPausedForDays(
-    Object durationDays,
-  ) {
+  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays) {
     return '订阅已暂停 $durationDays 天';
   }
 
@@ -35148,8 +34478,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionManagementSubscriptionResumedSuccessfu => '订阅已成功恢复';
 
   @override
-  String get subscriptionManagementSyncWithAppStore =>
-      '与 App Store / Play Store 同步';
+  String get subscriptionManagementSyncWithAppStore => '与 App Store / Play Store 同步';
 
   @override
   String get subscriptionManagementUnknownError => '未知错误';
@@ -35748,10 +35077,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supersetPairSheetPairTwoExercisesFor => '组合两个动作以提高训练效率';
 
   @override
-  String supersetPairSheetPartSupersetPairSheetStateValue(
-    Object name,
-    Object name1,
-  ) {
+  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1) {
     return '$name + $name1';
   }
 
@@ -35810,10 +35136,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get supersetReorderReset => '重置';
 
   @override
-  String supersetReorderSheetEdit(
-    Object _originalTypeLabel,
-    Object groupNumber,
-  ) {
+  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber) {
     return '编辑 $_originalTypeLabel $groupNumber';
   }
 
@@ -35995,8 +35318,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncedWorkoutDetailDistance => '距离';
 
   @override
-  String get syncedWorkoutDetailDuplicateOfAnotherImport =>
-      '与其他导入重复 — 优先保留主要来源。';
+  String get syncedWorkoutDetailDuplicateOfAnotherImport => '与其他导入重复 — 优先保留主要来源。';
 
   @override
   String get syncedWorkoutDetailDuration => '时长';
@@ -36023,8 +35345,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncedWorkoutDetailHrvPre => 'HRV（训练前）';
 
   @override
-  String get syncedWorkoutDetailItWillReAppear =>
-      '下次与 Health Connect 同步时它会重新出现。';
+  String get syncedWorkoutDetailItWillReAppear => '下次与 Health Connect 同步时它会重新出现。';
 
   @override
   String get syncedWorkoutDetailManage => '管理';
@@ -36045,8 +35366,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncedWorkoutDetailPeak => '峰值';
 
   @override
-  String get syncedWorkoutDetailPullingRicherDataFrom =>
-      '正在从 Health Connect 获取更丰富的数据...';
+  String get syncedWorkoutDetailPullingRicherDataFrom => '正在从 Health Connect 获取更丰富的数据...';
 
   @override
   String get syncedWorkoutDetailRestingHr => '静息心率';
@@ -36532,8 +35852,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timelineLoadEarlierDays => '加载更早的记录';
 
   @override
-  String get timelineLogYourFirstWorkout =>
-      '在聊天中或通过“+”按钮记录你的第一次训练、饮食或饮水 — 它会显示在这里。';
+  String get timelineLogYourFirstWorkout => '在聊天中或通过“+”按钮记录你的第一次训练、饮食或饮水 — 它会显示在这里。';
 
   @override
   String get timelineNothingLogged => '暂无记录。';
@@ -36786,10 +36105,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trainingFocusPrimaryTrainingGoal => '主要训练目标';
 
   @override
-  String trainingFocusScreenAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints) {
     return '可用 $availablePoints/$maxTotalPoints 点';
   }
 
@@ -36819,8 +36135,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get trainingLoadChartNoCardioActivityYet =>
-      '暂无有氧运动记录 — 记录一次跑步、骑行或划船以开始建立你的基准。';
+  String get trainingLoadChartNoCardioActivityYet => '暂无有氧运动记录 — 记录一次跑步、骑行或划船以开始建立你的基准。';
 
   @override
   String get trainingLoadChronic28d => '慢性负荷 (28天)';
@@ -36962,8 +36277,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trainingProgramSelectorCustomProgram => '自定义计划';
 
   @override
-  String get trainingProgramSelectorDescribeWhatYouWant =>
-      '描述你的训练目标，AI 将为你创建个性化计划。';
+  String get trainingProgramSelectorDescribeWhatYouWant => '描述你的训练目标，AI 将为你创建个性化计划。';
 
   @override
   String get trainingProgramSelectorEGTrainFor => '例如：“为 HYROX 比赛训练”';
@@ -37470,10 +36784,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String unresolvedExercisesBulkSheetMappedRowsTo(
-    Object canonicalName,
-    Object rowsAffected,
-  ) {
+  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected) {
     return '已将 $rowsAffected 行映射至“$canonicalName”。';
   }
 
@@ -37729,10 +37040,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get volumeAlertCardAcknowledge => '确认';
 
   @override
-  String volumeAlertCardIncrease(
-    Object formattedIncrease,
-    Object muscleGroupDisplay,
-  ) {
+  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay) {
     return '$muscleGroupDisplay: 增加 $formattedIncrease';
   }
 
@@ -37824,8 +37132,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get volumeHistoryVolumeHistory => '训练量历史';
 
   @override
-  String get volumeProgressionCardDefineCustomProgressionVia =>
-      '通过 JSON 定义自定义进度（高级）';
+  String get volumeProgressionCardDefineCustomProgressionVia => '通过 JSON 定义自定义进度（高级）';
 
   @override
   String get volumeProgressionCardHowTrainingVolumeIncreases => '训练量随时间增加的方式';
@@ -38076,8 +37383,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklyCheckinApplyChanges => '应用更改';
 
   @override
-  String get weeklyCheckinConservativeModerateOrAgg =>
-      '保守、适中或激进——每种方案都有不同的热量目标和预期的每周变化。';
+  String get weeklyCheckinConservativeModerateOrAgg => '保守、适中或激进——每种方案都有不同的热量目标和预期的每周变化。';
 
   @override
   String get weeklyCheckinDisable => '禁用';
@@ -38169,8 +37475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklyCheckinSheetKeepLogging => '继续记录！';
 
   @override
-  String get weeklyCheckinSheetKeepLoggingYourMeals =>
-      '继续记录您的饮食和体重，以解锁个性化的TDEE计算。';
+  String get weeklyCheckinSheetKeepLoggingYourMeals => '继续记录您的饮食和体重，以解锁个性化的TDEE计算。';
 
   @override
   String get weeklyCheckinSheetLogMealsConsistentlyFor => '持续记录饮食以获得最佳结果';
@@ -38190,10 +37495,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(
-    Object current,
-    Object target,
-  ) {
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target) {
     return '$current / $target 天';
   }
 
@@ -38223,9 +37525,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
-    Object dataQualityPercent,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent) {
     return '$dataQualityPercent%';
   }
 
@@ -38235,9 +37535,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
-    Object formattedWeeklyRate,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate) {
     return '体重趋势：$formattedWeeklyRate';
   }
 
@@ -38333,8 +37631,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklyCheckinYouSee23 => '您会看到2-3个计划选项';
 
   @override
-  String get weeklyCheckinYourLoggedMealsAnd =>
-      '您记录的饮食和体重数据用于计算您的真实TDEE——比任何公式都更准确。';
+  String get weeklyCheckinYourLoggedMealsAnd => '您记录的饮食和体重数据用于计算您的真实TDEE——比任何公式都更准确。';
 
   @override
   String weeklyGoalsCardNewPr(Object prsThisWeek) {
@@ -38357,10 +37654,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklyHighlightsTemplateThisWeek => '本周';
 
   @override
-  String weeklyPercentileHeroOfActiveUsersTap(
-    Object totalActive,
-    Object yourRank,
-  ) {
+  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank) {
     return '在 $totalActive 名活跃用户中排名第 #$yourRank · 点击发现更多';
   }
 
@@ -38504,10 +37798,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String weeklyReportCardOfWorkoutsThisWeek(
-    Object completed,
-    Object scheduled,
-  ) {
+  String weeklyReportCardOfWorkoutsThisWeek(Object completed, Object scheduled) {
     return '本周已完成 $completed/$scheduled 次训练';
   }
 
@@ -38529,8 +37820,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklySummaryGenerateSummary => '生成总结';
 
   @override
-  String get weeklySummaryGenerateYourFirstWeekly =>
-      '生成您的第一个周总结，通过 AI 驱动的洞察查看您的进度';
+  String get weeklySummaryGenerateYourFirstWeekly => '生成您的第一个周总结，通过 AI 驱动的洞察查看您的进度';
 
   @override
   String get weeklySummaryHighlights => '亮点';
@@ -38554,10 +37844,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String weeklySummaryScreenWorkoutsCompleted(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled) {
     return '已完成 $workoutsCompleted/$workoutsScheduled 次训练';
   }
 
@@ -38647,8 +37934,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get weightIncrementsSourcesRogueLifeFitness =>
-      '来源：Rogue, Life Fitness, Eleiko';
+  String get weightIncrementsSourcesRogueLifeFitness => '来源：Rogue, Life Fitness, Eleiko';
 
   @override
   String get weightIncrementsUseDefaults => '使用默认值';
@@ -38677,8 +37963,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get weightProjectionScreenLetSKeepYou =>
-      '让我们保持现状！我们将专注于维持您当前的体格，同时提升您的整体健康、力量和能量水平。';
+  String get weightProjectionScreenLetSKeepYou => '让我们保持现状！我们将专注于维持您当前的体格，同时提升您的整体健康、力量和能量水平。';
 
   @override
   String get weightProjectionScreenYouReAtYour => '您已达到理想体重！';
@@ -38928,11 +38213,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutActionsSheetValue(
-    Object _regenerateMessage,
-    Object _regenerateStep,
-    Object _regenerateTotalSteps,
-  ) {
+  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps) {
     return '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)';
   }
 
@@ -38945,8 +38226,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutActionsThisActionCannotBe => '此操作无法撤销。';
 
   @override
-  String get workoutActionsThisWillCreateA =>
-      '这将为当天创建一个新的训练计划。当前的训练将保存在版本历史记录中。';
+  String get workoutActionsThisWillCreateA => '这将为当天创建一个新的训练计划。当前的训练将保存在版本历史记录中。';
 
   @override
   String get workoutActionsThisWorkoutCannotBe => '此训练暂无法分享';
@@ -39083,9 +38363,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenExt1GreatWillBeIncluded(
-    Object suggestedNextVariant,
-  ) {
+  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant) {
     return '太棒了！$suggestedNextVariant 将被包含在未来的锻炼中。';
   }
 
@@ -39132,10 +38410,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenMinSaunaCal(
-    Object _saunaCalories,
-    Object _saunaMinutes,
-  ) {
+  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes) {
     return '$_saunaMinutes 分钟桑拿 · ~$_saunaCalories 卡路里';
   }
 
@@ -39164,8 +38439,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutCompleteScreenRateIndividualExercises => '评价单个动作';
 
   @override
-  String get workoutCompleteScreenRatingsHelpOurAi =>
-      '评分有助于我们的AI制定更好的训练计划。确定要跳过吗？';
+  String get workoutCompleteScreenRatingsHelpOurAi => '评分有助于我们的AI制定更好的训练计划。确定要跳过吗？';
 
   @override
   String get workoutCompleteScreenReadyToLevelUp => '准备好升级了！';
@@ -39204,17 +38478,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutCompleteScreenU1f4aa => '💪';
 
   @override
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
-    Object streak,
-    Object totalWorkouts,
-  ) {
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts) {
     return '连续 $streak 天，总计 $totalWorkouts 次训练';
   }
 
   @override
-  String workoutCompleteScreenUi1MarkedAsTooEasy(
-    Object consecutiveEasySessions,
-  ) {
+  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions) {
     return '连续 $consecutiveEasySessions 次被标记为“太简单”';
   }
 
@@ -39234,10 +38503,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2SetsReps(
-    Object currentReps,
-    Object currentSets,
-  ) {
+  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets) {
     return '$currentSets 组，$currentReps 次';
   }
 
@@ -39344,8 +38610,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutDayDetailWorkoutMissed => '错过训练';
 
   @override
-  String get workoutDaysChangingWorkoutDaysWill =>
-      '更改训练日将更新你的日程安排。未来的训练计划将被重新生成。';
+  String get workoutDaysChangingWorkoutDaysWill => '更改训练日将更新你的日程安排。未来的训练计划将被重新生成。';
 
   @override
   String get workoutDaysSelectWhichDaysYou => '选择你想训练的日子';
@@ -39415,8 +38680,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutDetailAiTapToSeeAi => '点击查看 AI 选择动作的理由';
 
   @override
-  String get workoutDetailAiTheseParametersWereUsed =>
-      'AI 使用这些参数来生成符合你健身水平、目标和可用器械的个性化动作。';
+  String get workoutDetailAiTheseParametersWereUsed => 'AI 使用这些参数来生成符合你健身水平、目标和可用器械的个性化动作。';
 
   @override
   String get workoutDetailAiUserProfile => '用户资料';
@@ -39501,8 +38765,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutDetailScreenFailedToUpdateFavorite => '无法更新收藏';
 
   @override
-  String get workoutDetailScreenKeepThisSessionUnchanged =>
-      '保持本次训练不变。新设备将应用于未来的训练。';
+  String get workoutDetailScreenKeepThisSessionUnchanged => '保持本次训练不变。新设备将应用于未来的训练。';
 
   @override
   String get workoutDetailScreenLetSGo => '开始吧';
@@ -39542,8 +38805,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutDetailScreenSupersetCreated => '超级组已创建！';
 
   @override
-  String get workoutDetailScreenSwapThoseExercisesIn =>
-      '替换本次训练中的练习。你已完成的组数将保留记录。';
+  String get workoutDetailScreenSwapThoseExercisesIn => '替换本次训练中的练习。你已完成的组数将保留记录。';
 
   @override
   String get workoutDetailScreenTapAnotherExerciseTo => '点击另一个练习以关联为超级组';
@@ -39707,12 +38969,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutHistoryImportAddToHistory => '添加到历史记录';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout =>
-      '添加你过去的训练数据，以便 AI 能生成与你力量水平相匹配的训练重量。';
+  String get workoutHistoryImportAddYourPastWorkout => '添加你过去的训练数据，以便 AI 能生成与你力量水平相匹配的训练重量。';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout2 =>
-      '在上方添加你过去的训练数据，以帮助 AI 为你生成更好的训练计划。';
+  String get workoutHistoryImportAddYourPastWorkout2 => '在上方添加你过去的训练数据，以帮助 AI 为你生成更好的训练计划。';
 
   @override
   String get workoutHistoryImportAppleHealth => 'Apple Health';
@@ -39756,8 +39016,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutHistoryImportExerciseName => '练习名称';
 
   @override
-  String get workoutHistoryImportExportFromHevy =>
-      '从 Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton 等平台导出。';
+  String get workoutHistoryImportExportFromHevy => '从 Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton 等平台导出。';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -39834,8 +39093,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get workoutHistoryImportRenaissancePeriodization =>
-      'Renaissance Periodization';
+  String get workoutHistoryImportRenaissancePeriodization => 'Renaissance Periodization';
 
   @override
   String get workoutHistoryImportReps => '次数';
@@ -39849,11 +39107,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutHistoryImportScreenSetsRepsKg(
-    Object reps,
-    Object sets,
-    Object weightKg,
-  ) {
+  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg) {
     return '$sets 组 × $reps 次 @ $weightKg kg';
   }
 
@@ -39876,8 +39130,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutHistoryImportStronglifts => 'StrongLifts';
 
   @override
-  String get workoutHistoryImportSupportsCsvXlsxXlsm =>
-      '支持 CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP。';
+  String get workoutHistoryImportSupportsCsvXlsxXlsm => '支持 CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP。';
 
   @override
   String get workoutHistoryImportTheAiUsesThis => 'AI 将使用此数据来设置合适的重量';
@@ -39895,8 +39148,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutHistoryImportWendler531 => 'Wendler 5/3/1';
 
   @override
-  String get workoutHistoryImportWhichUnitIsThe =>
-      '重量列使用的是什么单位？如果你知道来源应用，请选择它——这有助于区分相似的格式（例如 Hevy 与 Strong 的 CSV）。';
+  String get workoutHistoryImportWhichUnitIsThe => '重量列使用的是什么单位？如果你知道来源应用，请选择它——这有助于区分相似的格式（例如 Hevy 与 Strong 的 CSV）。';
 
   @override
   String get workoutHistoryImportYourStrengthData => '你的力量训练数据';
@@ -39991,8 +39243,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutImportPreviewTemplate => '模板';
 
   @override
-  String get workoutImportPreviewTheseWillStillImport =>
-      '这些仍会被导入 — 你可以在任务完成后将它们映射到标准名称。';
+  String get workoutImportPreviewTheseWillStillImport => '这些仍会被导入 — 你可以在任务完成后将它们映射到标准名称。';
 
   @override
   String get workoutImportPreviewUnmatchedExercises => '未匹配的动作';
@@ -40073,8 +39324,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutImportSummaryStrengthSetsAdded => '已添加力量训练组';
 
   @override
-  String get workoutImportSummaryTheseRowsWereImported =>
-      '这些行已导入，但尚未匹配到库中的动作。映射它们可以改善重量建议和图表分析。';
+  String get workoutImportSummaryTheseRowsWereImported => '这些行已导入，但尚未匹配到库中的动作。映射它们可以改善重量建议和图表分析。';
 
   @override
   String get workoutImportSummaryUnknownErrorPleaseTry => '未知错误 — 请重试或联系支持团队。';
@@ -40086,12 +39336,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutImportSummaryWeCouldnTFinish => '我们无法完成你的导入。';
 
   @override
-  String get workoutImportSummaryWeParsedAMulti =>
-      '我们解析了一个多周计划模板。激活它将从下周一开始安排训练。';
+  String get workoutImportSummaryWeParsedAMulti => '我们解析了一个多周计划模板。激活它将从下周一开始安排训练。';
 
   @override
-  String get workoutImportSummaryWeightSuggestionsAcrossThe =>
-      '应用内的重量建议将在 1 分钟内开始反映此历史数据。';
+  String get workoutImportSummaryWeightSuggestionsAcrossThe => '应用内的重量建议将在 1 分钟内开始反映此历史数据。';
 
   @override
   String get workoutImportSwimming => '游泳';
@@ -40194,8 +39442,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutPermissionsPrimeGotItLetU2019s => '明白了，开始吧';
 
   @override
-  String get workoutPermissionsPrimeLetsUsAutoConnect =>
-      '允许我们在附近有 BLE 心率带时自动连接。';
+  String get workoutPermissionsPrimeLetsUsAutoConnect => '允许我们在附近有 BLE 心率带时自动连接。';
 
   @override
   String get workoutPermissionsPrimeMicrophone => '麦克风';
@@ -40210,8 +39457,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutPermissionsPrimeTwoQuickHeadsUps => '两个快速提示';
 
   @override
-  String get workoutPermissionsPrimeYouMaySeeThese =>
-      '你在训练期间可能会看到这些系统提示。两者都是可选的 — 跳过任何一个，训练仍可正常进行。';
+  String get workoutPermissionsPrimeYouMaySeeThese => '你在训练期间可能会看到这些系统提示。两者都是可选的 — 跳过任何一个，训练仍可正常进行。';
 
   @override
   String get workoutPlanDrawerAddExercise => '添加动作';
@@ -40515,8 +39761,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSheetsMixinSupersetRemoved => '超级组已移除';
 
   @override
-  String get workoutSheetsMixinSupersetsHelpYouSave =>
-      '超级组通过交替进行动作并缩短休息时间，助你节省训练时间。';
+  String get workoutSheetsMixinSupersetsHelpYouSave => '超级组通过交替进行动作并缩短休息时间，助你节省训练时间。';
 
   @override
   String get workoutSheetsMixinTheAiCoachWill => 'AI教练将在本次训练中隐藏。你仍可在设置中重新开启。';
@@ -40538,8 +39783,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSheetsMixinWarmUp => '热身';
 
   @override
-  String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      '热身有助于预防受伤并提升表现。\n\n建议：在正式组前进行 1-2 组轻重量热身。';
+  String get workoutSheetsMixinWarmingUpHelpsPrevent => '热身有助于预防受伤并提升表现。\n\n建议：在正式组前进行 1-2 组轻重量热身。';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';
@@ -40720,11 +39964,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutShowcaseNewPr => '新 PR';
 
   @override
-  String workoutShowcaseNextTargetRaised(
-    Object delta,
-    Object set,
-    Object weight,
-  ) {
+  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight) {
     return '第 $set 组已记录 — 下个目标自动提升至 $weight lb（+$delta lb）';
   }
 
@@ -40735,8 +39975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutShowcasePlan => '计划';
 
   @override
-  String get workoutShowcasePlanAutoAdjustsNext =>
-      '计划将自动调整下一次训练 — 根据你的实际表现重新校准重量与次数。';
+  String get workoutShowcasePlanAutoAdjustsNext => '计划将自动调整下一次训练 — 根据你的实际表现重新校准重量与次数。';
 
   @override
   String get workoutShowcasePoweredByZealova => '由 Zealova 提供支持';
@@ -40777,11 +40016,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutShowcaseScreenTotalPrs(
-    Object duration,
-    Object prs,
-    Object volume,
-  ) {
+  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume) {
     return '总计 $duration · $volume · $prs PR';
   }
 
@@ -40968,10 +40203,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSummaryAdvancedExerciseOrderTime => '动作顺序与时间';
 
   @override
-  String workoutSummaryAdvancedExercises(
-    Object completedCount,
-    Object totalPlanned,
-  ) {
+  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned) {
     return '$completedCount / $totalPlanned 个动作';
   }
 
@@ -41227,11 +40459,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => '心率';
 
   @override
-  String workoutSummaryGeneralLbXReps(
-    Object reps,
-    String unit,
-    Object weightLbs,
-  ) {
+  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs) {
     return '$weightLbs $unit x $reps 次';
   }
 
@@ -41311,10 +40539,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSummaryScreenPleaseCheckYourConnection => '请检查网络连接后重试。';
 
   @override
-  String workoutSummaryScreenRepsAcrossSets(
-    Object totalReps,
-    Object totalSets,
-  ) {
+  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets) {
     return '$totalSets 组，共 $totalReps 次';
   }
 
@@ -41332,11 +40557,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutSummaryScreenUiKgXRepsEst(
-    Object estimated1rmKg,
-    Object reps,
-    Object weightKg,
-  ) {
+  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg) {
     return '$weightKg kg x $reps 次  |  预估 1RM: $estimated1rmKg kg';
   }
 
@@ -41370,8 +40591,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutTopOverlayPaused => '已暂停';
 
   @override
-  String get workoutTypeSelectorEnterCustomWorkoutType =>
-      '输入自定义训练类型（例如“灵活性训练”）';
+  String get workoutTypeSelectorEnterCustomWorkoutType => '输入自定义训练类型（例如“灵活性训练”）';
 
   @override
   String get workoutTypeSelectorHowYouWantTo => '选择您的训练方式。在下方的“目标区域”中选择身体部位。';
@@ -41403,10 +40623,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workoutUiBuildersMixinUi2LoggedReps(
-    Object reps,
-    Object weightDisplay,
-  ) {
+  String workoutUiBuildersMixinUi2LoggedReps(Object reps, Object weightDisplay) {
     return '已记录 $weightDisplay × $reps 次';
   }
 
@@ -41445,19 +40662,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutUiModeAdvanced => '进阶模式';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchLb =>
-      '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±5 lb增量、杠铃片计算表。';
+  String get workoutUiModeEverythingWarmupStretchLb => '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±5 lb增量、杠铃片计算表。';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchPh =>
-      '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±2.5 kg增量、杠铃片计算表。';
+  String get workoutUiModeEverythingWarmupStretchPh => '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±2.5 kg增量、杠铃片计算表。';
 
   @override
   String get workoutUiModePickTheLevelOf => '选择您在记录组数时所需的详细程度。您可以随时更改此设置。';
 
   @override
-  String get workoutUiModePolishedDefaultSteppersAi =>
-      '精简默认模式。包含步进器、AI教练、休息计时器、语音+照片备注、点击编辑过往组数。适合大多数训练。';
+  String get workoutUiModePolishedDefaultSteppersAi => '精简默认模式。包含步进器、AI教练、休息计时器、语音+照片备注、点击编辑过往组数。适合大多数训练。';
 
   @override
   String get workoutUiModeSelected => '已选择';
@@ -41501,12 +40715,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutsGym => '健身房';
 
   @override
-  String get workoutsHealthConnectAppleHealth =>
-      'Health Connect / Apple Health';
+  String get workoutsHealthConnectAppleHealth => 'Health Connect / Apple Health';
 
   @override
-  String get workoutsHevyStrongLiftinFitbod =>
-      'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, 自定义 CSV';
+  String get workoutsHevyStrongLiftinFitbod => 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, 自定义 CSV';
 
   @override
   String get workoutsImportWorkouts => '导入训练';
@@ -41538,15 +40750,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutsSyncSessionsFromYour => '从您的手表同步训练（已在后台同步）';
 
   @override
-  String get workoutsTourHitStartOnToday =>
-      '点击“今日训练”的“开始”按钮，即可在休息计时器的辅助下记录组数、次数和重量。';
+  String get workoutsTourHitStartOnToday => '点击“今日训练”的“开始”按钮，即可在休息计时器的辅助下记录组数、次数和重量。';
 
   @override
   String get workoutsTourMakeItYours => '打造专属体验';
 
   @override
-  String get workoutsTourPinFavoritesHideExercises =>
-      '置顶收藏、隐藏不想做的动作，或将想做的动作加入队列。';
+  String get workoutsTourPinFavoritesHideExercises => '置顶收藏、隐藏不想做的动作，或将想做的动作加入队列。';
 
   @override
   String get workoutsTourSetYourPreferences => '设置您的偏好';
@@ -41667,8 +40877,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get xpGoalsDialogFirstChatWithAiCoachXp => '首次与 AI 教练对话：+15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      '首次记录餐食/体重/身体数据：各 +50 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp => '首次记录餐食/体重/身体数据：各 +50 XP';
 
   @override
   String get xpGoalsDialogFirstPrXp => '首个 PR：+100 XP';
@@ -41808,10 +41017,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get xpGoalsScreenSetFirstPersonalRecord => '创下首个个人纪录';
 
   @override
-  String xpGoalsScreenUi1CheckpointsComplete(
-    Object completedCount,
-    Object length,
-  ) {
+  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length) {
     return '已完成 $completedCount/$length 个检查点';
   }
 
@@ -42198,8 +41404,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importsEmptyTitle => '尚未分享任何内容';
 
   @override
-  String get importsEmptyBody =>
-      '点击“在任何地方共享”——照片、YouTube、ChatGPT、语音备忘录——它就会自动降落到此处。';
+  String get importsEmptyBody => '点击“在任何地方共享”——照片、YouTube、ChatGPT、语音备忘录——它就会自动降落到此处。';
 
   @override
   String get importsActionOpen => '打开';
@@ -42225,8 +41430,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody =>
-      '这些记录将从您的导入历史记录中删除。导入的锻炼/食谱/食物日志本身会保留。';
+  String get importsDeleteConfirmBody => '这些记录将从您的导入历史记录中删除。导入的锻炼/食谱/食物日志本身会保留。';
 
   @override
   String get importsActionCancel => '取消';
@@ -42295,15 +41499,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importsPrivacyClearHistoryTitle => '清除共享历史记录';
 
   @override
-  String get importsPrivacyClearHistorySubtitle =>
-      '从导入列表中删除每条记录。导入的锻炼、食谱和食物日志本身会保留下来。';
+  String get importsPrivacyClearHistorySubtitle => '从导入列表中删除每条记录。导入的锻炼、食谱和食物日志本身会保留下来。';
 
   @override
   String get importsPrivacyClearConfirmTitle => '清除共享历史记录？';
 
   @override
-  String get importsPrivacyClearConfirmBody =>
-      '导入列表中的每一行都将被删除。您导入的锻炼、食谱和饮食日志保留在原处。';
+  String get importsPrivacyClearConfirmBody => '导入列表中的每一行都将被删除。您导入的锻炼、食谱和饮食日志保留在原处。';
 
   @override
   String get importsPrivacyClearAction => '清除';
@@ -42351,8 +41553,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get heroModesPillSlowConnection => 'TAKING A WHILE';
 
   @override
-  String get heroModesBodySlowConnection =>
-      'Taking longer than usual to load — retrying automatically.';
+  String get heroModesBodySlowConnection => 'Taking longer than usual to load — retrying automatically.';
 
   @override
   String get heroModesPillLive => '进行中';
@@ -42493,8 +41694,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get metricsDashboardHrHigh => 'High';
 
   @override
-  String get metricsDashboardHrDisclaimer =>
-      'Informational only, not medical advice. Talk to a clinician about any concerns.';
+  String get metricsDashboardHrDisclaimer => 'Informational only, not medical advice. Talk to a clinician about any concerns.';
 
   @override
   String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
@@ -42519,8 +41719,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get metricsDashboardGetStartedTitle => 'Start tracking';
 
   @override
-  String get metricsDashboardGetStartedCta =>
-      'Connect a wearable or log a meal to see your metrics.';
+  String get metricsDashboardGetStartedCta => 'Connect a wearable or log a meal to see your metrics.';
 
   @override
   String quizMinutesLeft(int minutes) {
@@ -42691,8 +41890,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paywallFounderHeadline => '我打造了那个我请不起的教练。';
 
   @override
-  String get paywallFounderQuote =>
-      '“一位好的私人教练每月要 \$400。我实在负担不起，于是花了两年时间自己做了一个：2,300 个动作、真实的渐进负荷逻辑、一个真正会查看你这一周的教练。我自己每天都在用。”';
+  String get paywallFounderQuote => '“一位好的私人教练每月要 \$400。我实在负担不起，于是花了两年时间自己做了一个：2,300 个动作、真实的渐进负荷逻辑、一个真正会查看你这一周的教练。我自己每天都在用。”';
 
   @override
   String get paywallFounderName => 'Chetan · 创始人';
@@ -42707,8 +41905,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get paywallTesterName => 'Keertan · 早期测试者';
 
   @override
-  String get paywallTesterQuote2 =>
-      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
+  String get paywallTesterQuote2 => '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
   String get paywallTesterName2 => 'Toby · macro tracker';

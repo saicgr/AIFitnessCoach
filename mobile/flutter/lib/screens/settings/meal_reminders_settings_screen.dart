@@ -19,6 +19,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../nutrition/recipes/discover_screen.dart';
 import '../../widgets/design_system/zealova.dart';
+import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 class MealRemindersSettingsScreen extends ConsumerStatefulWidget {
@@ -90,8 +91,10 @@ class _MealRemindersSettingsScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: ZealovaAppBar(
-        kicker: 'SETTINGS',
+      // Finding #420: matches the majority PillAppBar convention used by
+      // other settings sub-screens (ZealovaAppBar's kicker has no PillAppBar
+      // equivalent, so it's dropped rather than faked).
+      appBar: PillAppBar(
         title: AppLocalizations.of(context).settingsMealReminders,
       ),
       body: ListView(

@@ -74,12 +74,17 @@ async def test_full_run_writes_rows(fake_db, fake_chroma, fake_user_id, fixtures
         result = await importer.run(job)
 
     assert result["dry_run"] is False
-    # At least one row upserted into workout_history_imports.
-    upserts = fake_db.client._stores.get("workout_history_imports", {}).get("upserts", [])
-    assert len(upserts) > 0
+    # At least one row inserted into workout_history_imports.
+    # NOTE: findings #321/#322 — strength writes switched from
+    # upsert(on_conflict=...) to a plain INSERT (the dedup index is
+    # PARTIAL, so PostgREST can't infer it for ON CONFLICT / 42P10);
+    # duplicates are now caught as per-row 23505s instead. Assert on the
+    # "inserts" store, not the old "upserts" one.
+    inserts = fake_db.client._stores.get("workout_history_imports", {}).get("inserts", [])
+    assert len(inserts) > 0
     assert result["inserted_strength_rows"] > 0
     # Every row has the import_job_id set for provenance.
-    assert all(r.get("import_job_id") == job["id"] for r in upserts)
+    assert all(r.get("import_job_id") == job["id"] for r in inserts)
 
 
 @pytest.mark.asyncio

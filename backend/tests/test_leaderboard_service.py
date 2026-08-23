@@ -122,12 +122,15 @@ class TestViewMappings:
 # ============================================================
 
 def _mock_completed_workout_count(mock_supabase, count):
-    """Point the `workouts` count query used by check_unlock_status at `count`.
+    """Point the `workout_logs` count query used by check_unlock_status at `count`.
 
-    check_unlock_status runs:
-        supabase.table("workouts").select("id", count="exact")
-                .eq("user_id", …).eq("is_completed", True).execute()
-    so the count lives on the *response*, not in `.data`.
+    Finding #241: check_unlock_status runs:
+        supabase.table("workout_logs").select("id", count="exact")
+                .eq("user_id", …).eq("status", "completed").execute()
+    (moved off `workouts`, which undercounts once a plan regeneration
+    deletes/replaces that table's rows — `workout_logs` is the append-only
+    record of finished sessions), so the count lives on the *response*, not
+    in `.data`.
     """
     resp = MagicMock()
     resp.count = count
@@ -152,7 +155,10 @@ class TestCheckUnlockStatus:
     The guarantee these tests protect is unchanged and still asserted verbatim:
     the unlock payload's is_unlocked / workouts_completed / workouts_needed must
     reflect the user's real completed-workout count against the scope threshold.
-    Only the mocked data source moved (RPC → `workouts` count query).
+    Only the mocked data source moved (RPC → completed-workouts count
+    query), and finding #241 later moved that query off `workouts` onto
+    `workout_logs` (status="completed") for the same append-only-record
+    reason described above.
     """
 
     def test_check_unlock_status_unlocked(self, leaderboard_service, mock_supabase, sample_user_id):
@@ -164,11 +170,12 @@ class TestCheckUnlockStatus:
         assert result["is_unlocked"] is True
         assert result["workouts_completed"] == 15
         assert result["workouts_needed"] == 0
-        # The count must come from the user's COMPLETED workouts, not all workouts.
-        mock_supabase.table.assert_called_with("workouts")
+        # Finding #241: count comes from workout_logs (status="completed"),
+        # the append-only record of finished sessions, not the workouts table.
+        mock_supabase.table.assert_called_with("workout_logs")
         mock_supabase.table.return_value.select.assert_called_with("id", count="exact")
         mock_supabase.table.return_value.select.return_value.eq.assert_called_with("user_id", sample_user_id)
-        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.assert_called_with("is_completed", True)
+        mock_supabase.table.return_value.select.return_value.eq.return_value.eq.assert_called_with("status", "completed")
 
     def test_check_unlock_status_locked(self, leaderboard_service, mock_supabase, sample_user_id):
         """Test checking unlock status for locked user."""

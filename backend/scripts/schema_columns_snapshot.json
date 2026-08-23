@@ -2284,6 +2284,7 @@
   "priority",
   "target_muscle_group",
   "used_at",
+  "used_in_workout_id",
   "user_id"
  ],
  "exercise_relationships": [

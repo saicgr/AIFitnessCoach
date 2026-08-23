@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
-import '../../widgets/design_system/zealova_app_bar.dart';
+import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -27,7 +27,7 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: ZealovaAppBar(
+      appBar: PillAppBar(
         title: AppLocalizations.of(context).trainingMethodsTrainingMethods,
       ),
       body: ListView(

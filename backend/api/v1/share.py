@@ -395,12 +395,17 @@ async def classify_single(
     updated with the classifier result so the Imports screen reflects the
     share. The created row id is returned in the response.
     """
+    # shared_items.user_id -> auth.users(id): use auth_id.
+    # share_rate_counters.user_id -> public.users(id) (migration 2412): the
+    # RPC inserts p_user_id as-is, so the cap check needs the OTHER id.
+    # See E2E #262 — passing auth_id here 500s on the FK.
     user_id = current_user["auth_id"]
+    cap_user_id = current_user["id"]
     if not s3_key and not file:
         raise HTTPException(400, "Either `file` or `s3_key` is required")
 
     try:
-        await _check_and_increment_cap(user_id, "image")
+        await _check_and_increment_cap(cap_user_id, "image")
 
         # Create the shared_items row up-front so it shows in Imports even
         # if classification fails.
@@ -499,12 +504,16 @@ async def classify_batch(
     Photos multi-select share."""
     import asyncio
 
-    user_id = current_user["auth_id"]
+    # See E2E #262 — the two tables have different FK targets, so this
+    # endpoint needs both ids: auth_id is unused here (no shared_items row
+    # is created for classify-batch) but the cap check must use public
+    # users.id since share_rate_counters.user_id -> public.users(id).
+    cap_user_id = current_user["id"]
     svc = get_vision_service()
 
     # Increment cap once per image.
     for _ in request.s3_keys:
-        await _check_and_increment_cap(user_id, "image")
+        await _check_and_increment_cap(cap_user_id, "image")
 
     async def _one(k: str) -> dict[str, Any]:
         try:
@@ -595,7 +604,12 @@ async def import_text(
     drives those by navigating to the destination screen with prefilled
     text. This keeps the endpoint fast and the orchestration explicit.
     """
+    # shared_items.user_id -> auth.users(id); share_rate_counters.user_id ->
+    # public.users(id) (migration 2412). These are DIFFERENT ids for the
+    # same person (core/auth.py) — passing auth_id to the cap RPC 500s on
+    # the FK. This was the exact /share/import-text repro in E2E #262.
     user_id = current_user["auth_id"]
+    cap_user_id = current_user["id"]
 
     text_size_bytes = len(request.text.encode("utf-8"))
     if text_size_bytes > MAX_SIZES["text_inline_bytes"]:
@@ -617,7 +631,7 @@ async def import_text(
             })
         return StreamingResponse(_existing_stream(), media_type="text/event-stream")
 
-    await _check_and_increment_cap(user_id, "text")
+    await _check_and_increment_cap(cap_user_id, "text")
 
     item_id = _new_shared_item(
         user_id=user_id,

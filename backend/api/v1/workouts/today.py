@@ -1092,7 +1092,7 @@ async def _sequential_generate_workouts(
         try:
             wid = getattr(result, "id", None)
             if wid:
-                get_supabase_db().client.table("workouts").delete().eq("id", wid).execute()
+                await run_db(lambda wid=wid: get_supabase_db().client.table("workouts").delete().eq("id", wid).execute())
             forced_avoid = list(dict.fromkeys(list(avoid_list) + names))
             retried = await auto_generate_workout(
                 user_id=user_id,
@@ -1177,9 +1177,9 @@ async def _sequential_generate_workouts(
             if new_name and new_key != key:
                 wid = getattr(result, "id", None)
                 if wid:
-                    get_supabase_db().client.table("workouts").update(
+                    await run_db(lambda wid=wid: get_supabase_db().client.table("workouts").update(
                         {"name": new_name}
-                    ).eq("id", wid).execute()
+                    ).eq("id", wid).execute())
                 result.name = new_name
                 seen_names[new_key] = gen_date
             else:

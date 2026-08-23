@@ -151,7 +151,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
       );
 
       if (!mounted) return;
-      setState(() => _working = 'Analyzing your gym equipment (Gemini is reading your PDF)...');
+      setState(() => _working = 'Analyzing your gym equipment (AI is reading your PDF)...');
 
       final job = await gymRepo.importEquipment(
         gymProfileId: widget.gymProfileId,
@@ -211,7 +211,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
           presigned.map((e) => e['s3_key'] as String).toList(growable: false);
 
       if (!mounted) return;
-      setState(() => _working = 'Analyzing your gym equipment (Gemini is reading your photos)...');
+      setState(() => _working = 'Analyzing your gym equipment (AI is reading your photos)...');
 
       final job = await gymRepo.importEquipment(
         gymProfileId: widget.gymProfileId,
@@ -234,7 +234,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
     }
     setState(() {
       _phase = _Phase.working;
-      _working = 'Analyzing your gym equipment (Gemini is reading your text)...';
+      _working = 'Analyzing your gym equipment (AI is reading your text)...';
       _errorMessage = null;
     });
     try {
@@ -261,7 +261,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
     }
     setState(() {
       _phase = _Phase.working;
-      _working = 'Analyzing your gym equipment (Gemini is reading the page)...';
+      _working = 'Analyzing your gym equipment (AI is reading the page)...';
       _errorMessage = null;
     });
     try {
@@ -287,7 +287,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
     _pollStart = DateTime.now();
     setState(() {
       _phase = _Phase.working;
-      _working = 'Analyzing your gym (Gemini is reading your $sourceLabel)...';
+      _working = 'Analyzing your gym (AI is reading your $sourceLabel)...';
     });
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(_kPollInterval, (_) => _pollOnce());

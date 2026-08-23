@@ -47,6 +47,29 @@ def real_user_id() -> str:
         conn.close()
 
 
+@pytest.fixture
+def real_public_user_id() -> str:
+    """Pick any real user id from public.users — the id
+    share_rate_counters.user_id actually references (migration 2412; see
+    E2E #262). This is DELIBERATELY a different id family than
+    `real_user_id` (auth.users): the two tables have different FK
+    targets, and a caller must pick the right one per table."""
+    import psycopg2
+    url = (os.environ.get("DATABASE_URL_DIRECT") or os.environ["DATABASE_URL"]).replace(
+        "postgresql+asyncpg://", "postgresql://"
+    )
+    conn = psycopg2.connect(url)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM public.users LIMIT 1")
+        row = cur.fetchone()
+        if not row:
+            pytest.skip("public.users is empty")
+        return str(row[0])
+    finally:
+        conn.close()
+
+
 def test_shared_items_insert_and_select(db, real_user_id: str) -> None:
     row = {
         "user_id": real_user_id,
@@ -82,18 +105,23 @@ def test_shared_items_insert_and_select(db, real_user_id: str) -> None:
         db.client.table("shared_items").delete().eq("id", item_id).execute()
 
 
-def test_share_rate_increment_counts_and_returns_new_value(db, real_user_id: str) -> None:
+def test_share_rate_increment_counts_and_returns_new_value(db, real_public_user_id: str) -> None:
+    # Regression test for E2E #262: share_rate_counters.user_id ->
+    # public.users(id) (migration 2412), NOT auth.users(id) like
+    # shared_items. This used to reuse `real_user_id` (an auth.users id),
+    # which 23503s against share_rate_counters_user_id_fkey — the exact
+    # FK violation the /share/import-text repro hit in production.
     today = "2099-01-01"  # far-future day so we don't pollute today's counters
     bucket = "smoke"
     try:
         for expected in range(1, 4):
             res = db.client.rpc(
                 "share_rate_increment",
-                {"p_user_id": real_user_id, "p_day": today, "p_bucket": bucket},
+                {"p_user_id": real_public_user_id, "p_day": today, "p_bucket": bucket},
             ).execute()
             count = (res.data[0]["count"] if isinstance(res.data, list) and res.data else None)
             assert count == expected, (count, expected, res.data)
     finally:
         db.client.table("share_rate_counters").delete().eq(
-            "user_id", real_user_id
+            "user_id", real_public_user_id
         ).eq("day_local", today).execute()

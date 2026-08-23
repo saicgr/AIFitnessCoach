@@ -638,6 +638,16 @@ class XPNotifier extends StateNotifier<XPState> {
         hitStepsGoal: status.stepsGoal,
         hitHydrationGoal: status.hydrationGoal,
         hitCalorieGoal: status.calorieGoal,
+        // Finding #358: real ledger amounts, not static constants.
+        loggedInXp: status.dailyLoginXp,
+        completedWorkoutXp: status.workoutCompleteXp,
+        loggedMealXp: status.mealLogXp,
+        loggedWeightXp: status.weightLogXp,
+        hitProteinGoalXp: status.proteinGoalXp,
+        loggedBodyMeasurementsXp: status.bodyMeasurementsXp,
+        hitStepsGoalXp: status.stepsGoalXp,
+        hitHydrationGoalXp: status.hydrationGoalXp,
+        hitCalorieGoalXp: status.calorieGoalXp,
       );
 
       state = state.copyWith(dailyGoals: goals);
@@ -665,6 +675,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.workoutComplete,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(completedWorkoutXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -710,6 +722,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.mealLog,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(loggedMealXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -748,6 +762,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.weightLog,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(loggedWeightXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -784,6 +800,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.proteinGoal,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(hitProteinGoalXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -820,6 +838,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.bodyMeasurements,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(loggedBodyMeasurementsXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -868,6 +888,8 @@ class XPNotifier extends StateNotifier<XPState> {
             value: steps,
             xpAwarded: xpAwarded,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(hitStepsGoalXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -904,6 +926,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.hydrationGoal,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(hitHydrationGoalXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',
@@ -936,6 +960,8 @@ class XPNotifier extends StateNotifier<XPState> {
             xpAmount: xpAwarded,
             goalType: XPGoalType.calorieGoal,
           ),
+          // Finding #358: store the REAL ledger amount, not a static constant.
+          dailyGoals: state.dailyGoals?.copyWith(hitCalorieGoalXp: xpAwarded),
         );
         _posthog.capture(
           eventName: 'xp_earned',

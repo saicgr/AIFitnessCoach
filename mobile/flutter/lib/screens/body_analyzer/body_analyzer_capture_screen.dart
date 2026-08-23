@@ -134,7 +134,7 @@ class _BodyAnalyzerCaptureScreenState
                     padding: const EdgeInsets.all(16),
                     children: [
                       Text(
-                        'Pick one photo per view. Gemini fuses them with your '
+                        'Pick one photo per view. AI fuses them with your '
                         'latest body measurements for the most accurate read.',
                         style: TextStyle(
                           fontSize: 13,

@@ -48,6 +48,21 @@ XPTitle _titleForLevel(int level) {
   return XPTitle.transcendent;
 }
 
+/// Looks up the backend `merch_type` for [level] from `allLevelsProvider`
+/// (`/xp/all-levels`, cached for the session) — the single source of truth
+/// for the merch unlock ladder (E2E #371). Returns null if the data isn't
+/// loaded yet or the level isn't a merch level.
+String? _merchTypeForLevel(WidgetRef ref, int level) {
+  final levels = ref.read(allLevelsProvider).valueOrNull;
+  if (levels == null) return null;
+  for (final entry in levels) {
+    if (entry['level'] == level) {
+      return entry['merch_type'] as String?;
+    }
+  }
+  return null;
+}
+
 // =============================================================================
 // Fitness & Diet tips per level tier
 // =============================================================================
@@ -182,7 +197,13 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     final accentColor = ref.read(accentColorProvider).getColor(true);
 
     // 1. Level reward
-    final reward = LevelRewards.getRewardForLevel(level);
+    // merchType comes from the backend (`/xp/all-levels`, cached in
+    // allLevelsProvider) — the single source of truth for which levels
+    // unlock physical merch (E2E #371). Null only if that fetch hasn't
+    // resolved yet; getRewardForLevel then falls back to local flavor
+    // copy rather than guessing a merch level.
+    final merchType = _merchTypeForLevel(ref, level);
+    final reward = LevelRewards.getRewardForLevel(level, merchType: merchType);
     items.add(_Accomplishment(
       icon: reward.icon ?? '🎁',
       title: reward.name,

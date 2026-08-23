@@ -23,6 +23,10 @@ extension XPNotifierExt on XPNotifier {
             hasLoggedInToday: true,
           ),
           activeEvents: result.activeEvents ?? state.activeEvents,
+          // Finding #358: store the REAL ledger amount (daily_xp, already
+          // streak-scaled and trust-bypassed per #357), not a static constant.
+          dailyGoals: (state.dailyGoals ?? DailyGoals.today())
+              .copyWith(loggedIn: true, loggedInXp: result.dailyXp),
         );
 
         // If XP was awarded, reload from server for accurate total

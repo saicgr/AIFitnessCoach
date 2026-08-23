@@ -117,7 +117,7 @@ dependencies:
   receive_sharing_intent: ^1.8.0
 
   # In-App Purchases
-  purchases_flutter: ^8.1.0
+  purchases_flutter: ^10.9.1
 
   # Analytics & Device Info
   posthog_flutter: ^4.0.0

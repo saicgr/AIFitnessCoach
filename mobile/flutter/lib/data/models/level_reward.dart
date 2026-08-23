@@ -304,10 +304,22 @@ class StreakMilestone {
   }
 }
 
+/// Display metadata for a `merch_type` string as returned by the backend
+/// `/xp/all-levels` endpoint (`merch_type_for_level()` SQL function,
+/// migration 2424). Purely cosmetic (name/icon) — the LEVEL -> TYPE
+/// mapping itself is never guessed client-side; see E2E #371.
+const Map<String, ({String label, String icon})> _merchTypeDisplay = {
+  'sticker_pack': (label: 'Sticker Pack', icon: '✨'),
+  't_shirt': (label: 'T-Shirt', icon: '👕'),
+  'hoodie': (label: 'Hoodie', icon: '🧥'),
+  'full_merch_kit': (label: 'Full Merch Kit', icon: '🎁'),
+  'signed_premium_kit': (label: 'Signed Premium Kit', icon: '🏆'),
+};
+
 /// Helper class to get rewards for any level
 class LevelRewards {
   /// Milestone levels that have special cosmetic/merch rewards.
-  /// Must stay in sync with backend `MAJOR_MILESTONE_LEVELS` / `MERCH_TYPE_FOR_LEVEL`.
+  /// Must stay in sync with backend `MAJOR_MILESTONE_LEVELS`.
   static const milestones = [5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 
   /// Levels that give fitness crates (non-milestone, every 5 levels offset by 3)
@@ -317,8 +329,19 @@ class LevelRewards {
     return (level - 3) % 5 == 0 && !milestones.contains(level);
   }
 
-  /// Get the reward for a specific level
-  static LevelReward getRewardForLevel(int level) {
+  /// Get the reward for a specific level.
+  ///
+  /// [merchType] is the backend's `merch_type` value for this level, read
+  /// from `/xp/all-levels` (see `allLevelsProvider`) — the single source
+  /// of truth for which levels unlock physical merch (E2E #371: this used
+  /// to be a hardcoded Level 50/100/150/200/250 ladder here that silently
+  /// drifted out of sync with the DB's rescaled 20/40/60/80/100 ladder,
+  /// migration 2424). When non-null it always wins over the local
+  /// milestone-flavor switch below. Pass null only when the backend data
+  /// genuinely isn't available yet (e.g. `allLevelsProvider` still
+  /// loading) — the switch's per-level cosmetic copy is then used as a
+  /// degraded-mode fallback, never as an alternate source of truth.
+  static LevelReward getRewardForLevel(int level, {String? merchType}) {
     // Level 1 has no reward (starting point)
     if (level <= 1) {
       return const LevelReward(
@@ -326,6 +349,17 @@ class LevelRewards {
         name: 'Welcome!',
         description: 'Your fitness journey begins',
         icon: '🌟',
+      );
+    }
+
+    // Backend-confirmed merch unlock — always takes priority.
+    if (merchType != null) {
+      final display = _merchTypeDisplay[merchType];
+      final label = display?.label ?? merchType;
+      return LevelReward.merch(
+        name: 'FREE ${Branding.appName} $label',
+        description: 'Real ${Branding.appName} $label shipped to you for reaching Level $level.',
+        icon: display?.icon,
       );
     }
 
@@ -354,7 +388,9 @@ class LevelRewards {
   }
 
   /// Get milestone reward for specific levels.
-  /// Mirrors backend `MILESTONE_REWARDS_DISPLAY` / `MERCH_TYPE_FOR_LEVEL`.
+  /// Mirrors backend `MILESTONE_REWARDS_DISPLAY` (crate/token/badge flavor
+  /// only). Does NOT decide merch — that comes from the backend `merchType`
+  /// argument on `getRewardForLevel` (E2E #371).
   static LevelReward? _getMilestoneReward(int level) {
     switch (level) {
       case 5:
@@ -408,11 +444,13 @@ class LevelRewards {
           icon: '🛡️',
         );
       case 50:
-        return LevelReward.merch(
-          name: 'FREE Sticker Pack + Veteran Milestone',
-          description: 'Your first real merch — ${Branding.appName} sticker pack shipped to you. '
-              'Plus 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield. '
-              'Silver frame + "Veteran" chat title + alt coach voice unlocked.',
+        // NOTE: this used to claim a free merch shipment at this level.
+        // The merch unlock ladder moved (E2E #371) — the real answer for
+        // "does level 50 unlock merch" now comes from the backend
+        // `merchType` argument above, not from a level literal here.
+        return LevelReward.cosmetic(
+          name: 'Veteran Milestone',
+          description: '6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield.',
           icon: '✨',
         );
       case 60:
@@ -430,9 +468,11 @@ class LevelRewards {
           cosmeticId: 'frame_gold_holographic',
         );
       case 100:
-        return LevelReward.merch(
-          name: 'Elite Badge + FREE ${Branding.appName} T-Shirt',
-          description: 'Real ${Branding.appName} t-shirt shipped to you, plus Elite status + premium crate bundle.',
+        // See the level-50 note above — merch is now backend-decided, not
+        // hardcoded to this level literal (E2E #371).
+        return LevelReward.cosmetic(
+          name: 'Elite Badge Milestone',
+          description: 'Elite status + premium crate bundle.',
           icon: '👕',
         );
       case 125:
@@ -442,9 +482,11 @@ class LevelRewards {
           icon: '🎖️',
         );
       case 150:
-        return LevelReward.merch(
-          name: 'Champion Badge + FREE ${Branding.appName} Hoodie',
-          description: 'Real ${Branding.appName} hoodie shipped to you, plus Champion status.',
+        // See the level-50 note above — merch is now backend-decided, not
+        // hardcoded to this level literal (E2E #371).
+        return LevelReward.cosmetic(
+          name: 'Champion Badge Milestone',
+          description: 'Champion status unlocked.',
           icon: '🧥',
         );
       case 175:
@@ -454,9 +496,11 @@ class LevelRewards {
           icon: '🎖️',
         );
       case 200:
-        return LevelReward.merch(
-          name: 'Mythic Badge + FREE Full Merch Kit',
-          description: 'Tee + hoodie + shaker, shipped. Plus Mythic status.',
+        // See the level-50 note above — merch is now backend-decided, not
+        // hardcoded to this level literal (E2E #371).
+        return LevelReward.cosmetic(
+          name: 'Mythic Badge Milestone',
+          description: 'Mythic status unlocked.',
           icon: '🎁',
         );
       case 225:
@@ -466,9 +510,11 @@ class LevelRewards {
           icon: '🎖️',
         );
       case 250:
-        return LevelReward.merch(
-          name: 'Transcendent Badge + FREE Signed Premium Kit',
-          description: 'The ultimate — signed by the team, hand-packed, shipped.',
+        // See the level-50 note above — merch is now backend-decided, not
+        // hardcoded to this level literal (E2E #371).
+        return LevelReward.cosmetic(
+          name: 'Transcendent Badge Milestone',
+          description: 'The ultimate status badge.',
           icon: '🏆',
         );
       default:

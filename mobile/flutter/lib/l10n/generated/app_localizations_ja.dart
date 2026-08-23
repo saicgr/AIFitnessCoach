@@ -91,8 +91,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get achievementsCardCompleteWorkoutsToUnlock =>
-      'ワークアウトを完了してバッジをアンロックしよう！';
+  String get achievementsCardCompleteWorkoutsToUnlock => 'ワークアウトを完了してバッジをアンロックしよう！';
 
   @override
   String get achievementsCardLoadingAchievements => '実績を読み込み中...';
@@ -370,8 +369,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get activityCardReportPost => '投稿を報告';
 
   @override
-  String get activityCardReportSubmittedThankYou =>
-      'レポートを送信しました。コミュニティの安全維持にご協力いただきありがとうございます。';
+  String get activityCardReportSubmittedThankYou => 'レポートを送信しました。コミュニティの安全維持にご協力いただきありがとうございます。';
 
   @override
   String get activityCardSubmit => '送信';
@@ -383,8 +381,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get activityCardUiEarnedAnAchievement => '実績を獲得しました';
 
   @override
-  String get activityCardUiKeepTrainingEveryAttempt =>
-      'トレーニングを続けましょう！挑戦するたびに強くなれます';
+  String get activityCardUiKeepTrainingEveryAttempt => 'トレーニングを続けましょう！挑戦するたびに強くなれます';
 
   @override
   String activityCardUiLbs(Object yourVolume) {
@@ -522,8 +519,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get addGymProfileCreateGym => 'ジムを作成';
 
   @override
-  String get addGymProfileCustomizeTheEquipmentAvaila =>
-      '重量範囲を含め、このジムで利用可能な器具をカスタマイズします';
+  String get addGymProfileCustomizeTheEquipmentAvaila => '重量範囲を含め、このジムで利用可能な器具をカスタマイズします';
 
   @override
   String get addGymProfileDoYouHaveA => 'ウェイトベンチはありますか？';
@@ -553,8 +549,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get addGymProfileMatchAppTheme => 'アプリのテーマに合わせる';
 
   @override
-  String get addGymProfileOptionalLeaveOnLet =>
-      '任意 — 不明な場合は「AIに任せる」のままにしてください。';
+  String get addGymProfileOptionalLeaveOnLet => '任意 — 不明な場合は「AIに任せる」のままにしてください。';
 
   @override
   String get addGymProfilePickAtLeastOne => 'このジムでのワークアウト日を少なくとも1つ選択してください。';
@@ -563,8 +558,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get addGymProfilePleaseEnterAName => 'ジム名を入力してください';
 
   @override
-  String get addGymProfileRequiredForBarbellSquat =>
-      '対象: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
+  String get addGymProfileRequiredForBarbellSquat => '対象: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
 
   @override
   String get addGymProfileResetAll => 'すべてリセット';
@@ -594,12 +588,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get addGymProfileTrainingSplit => 'トレーニング分割';
 
   @override
-  String get addGymProfileUnlocksBenchPressIncline =>
-      '対象: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
+  String get addGymProfileUnlocksBenchPressIncline => '対象: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
 
   @override
-  String get addGymProfileUnlocksChestSupportedKb =>
-      '対象: チェストサポートKBロウ、KBフロアプレスの代替種目';
+  String get addGymProfileUnlocksChestSupportedKb => '対象: チェストサポートKBロウ、KBフロアプレスの代替種目';
 
   @override
   String get addGymProfileWorkoutEnvironment => 'ワークアウト環境';
@@ -673,15 +665,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get addGymSheetFollowUpBenchSubtitle =>
-      '利用可能になる種目: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
+  String get addGymSheetFollowUpBenchSubtitle => '利用可能になる種目: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
 
   @override
   String get addGymSheetFollowUpBenchTitle => 'トレーニングベンチはありますか？';
 
   @override
-  String get addGymSheetFollowUpSquatRackSubtitle =>
-      '必要な種目: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
+  String get addGymSheetFollowUpSquatRackSubtitle => '必要な種目: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
 
   @override
   String get addGymSheetFollowUpSquatRackTitle => 'スクワットラックはありますか？';
@@ -728,8 +718,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get addGymSheetPickAtLeastOneDay => 'トレーニングする日を少なくとも1日選択してください';
 
   @override
-  String get addGymSheetPickDaysDesc =>
-      'このジムでトレーニングする日を選択してください。このプロフィールに切り替えた時点で、選択した日のワークアウトを14日分先取りして生成します。';
+  String get addGymSheetPickDaysDesc => 'このジムでトレーニングする日を選択してください。このプロフィールに切り替えた時点で、選択した日のワークアウトを14日分先取りして生成します。';
 
   @override
   String addGymSheetSameAs(Object name) {
@@ -1005,10 +994,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiCoachMealStressedWhatHelps => 'ストレス — 何が助けになりますか?';
 
   @override
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal) {
     return 'アジア風の$meal — おすすめの1品（ライスボウル、麺類、寿司、炒め物）、マクロ栄養素と調理法.$budgetTail';
   }
 
@@ -1058,10 +1044,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetGotALaterToday(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType) {
     return '今日この後$workoutTypeがあります。エネルギーを補給できる最適な$mealは？マクロ栄養素とタイミングも教えてください。';
   }
 
@@ -1076,10 +1059,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetHighProteinPickOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal) {
     return '高タンパクな$mealを1つ選んでください。メニュー1つ、完全なマクロ栄養素、簡単な準備方法。$budgetTail';
   }
 
@@ -1114,26 +1094,17 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal) {
     return 'インド料理の$mealを1つ、本格的なメニューで提案してください。マクロ栄養素と、目標達成のために避けるべき/含めるべきサイドメニュー。$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal) {
     return 'イタリアンまたはコンフォートフードの$meal — おすすめの1品、マクロ栄養素、必要に応じたヘルシーな代替案.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType) {
     return '$workoutTypeが終わりました。これまでの食事とバランスが取れる回復のための$mealを教えてください。';
   }
 
@@ -1148,10 +1119,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal) {
     return '$mealを記録します。今日の日程に合う、健康的でリアルな食事を1つ提案してください。マクロ栄養素付きで、短く直接的に。$budgetTail';
   }
 
@@ -1161,10 +1129,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal) {
     return '地中海風の$meal — おすすめの1品（ボウル、プレート、ラップ）、マクロ栄養素、適している理由.$budgetTail';
   }
 
@@ -1174,10 +1139,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal) {
     return 'メキシカンな$meal — おすすめの1品（ボウル、タコスなど）、マクロ栄養素、目標達成のための組み合わせ.$budgetTail';
   }
 
@@ -1192,10 +1154,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal) {
     return 'コンロもオーブンも使いません。5分で作れる$mealを1つ教えてください。マクロ栄養素と買うべきもの。$budgetTail';
   }
 
@@ -1250,8 +1209,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiCoachMealWhatCanIEat => '今は何を食べられますか？';
 
   @override
-  String get aiCoachMealWorkingFromPartialData =>
-      '部分データから作業する - 答えは一般的なものになる可能性があります。';
+  String get aiCoachMealWorkingFromPartialData => '部分データから作業する - 答えは一般的なものになる可能性があります。';
 
   @override
   String get aiCoachMissedWorkoutNudge => 'ワークアウトナッジを逃した';
@@ -1313,12 +1271,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiCoachReportVsLast => '対ラスト';
 
   @override
-  String get aiCoachShowFloatingBubbleFor =>
-      'AI Coachに素早くアクセスするためのフローティングバブルを表示';
+  String get aiCoachShowFloatingBubbleFor => 'AI Coachに素早くアクセスするためのフローティングバブルを表示';
 
   @override
-  String get aiCoachShowFloatingChatBubble =>
-      'フローティングチャットバブル、ニッチな通知、プライバシー設定を表示';
+  String get aiCoachShowFloatingChatBubble => 'フローティングチャットバブル、ニッチな通知、プライバシー設定を表示';
 
   @override
   String get aiCoachStreakCelebrations => '連続記録のお祝い';
@@ -1359,12 +1315,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiDataUsageYourControls => 'あなたのコントロール';
 
   @override
-  String aiFeaturesMixinValue(
-    Object displayCurrent,
-    Object message,
-    Object snappedDisplay,
-    Object unit,
-  ) {
+  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit) {
     return '$message: $displayCurrent → $snappedDisplay $unit';
   }
 
@@ -1518,8 +1469,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiModelDownloadBasic => 'ベーシック';
 
   @override
-  String get aiModelDownloadBatteryWarning =>
-      'オンデバイスAIモデルはスマホで集中的な計算を実行します。ワークアウト生成中にバッテリー消費が増加したり、デバイスが熱くなる可能性があります。モデルサイズが大きいほどリソースを多く消費します。';
+  String get aiModelDownloadBatteryWarning => 'オンデバイスAIモデルはスマホで集中的な計算を実行します。ワークアウト生成中にバッテリー消費が増加したり、デバイスが熱くなる可能性があります。モデルサイズが大きいほどリソースを多く消費します。';
 
   @override
   String get aiModelDownloadBestQuality => '最高品質';
@@ -1552,8 +1502,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadGetYourTokenAt =>
-      'ハグフェイス.co/settings/tokens でトークンを取得します。';
+  String get aiModelDownloadGetYourTokenAt => 'ハグフェイス.co/settings/tokens でトークンを取得します。';
 
   @override
   String get aiModelDownloadHf => 'ふ_...';
@@ -1598,8 +1547,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiModelDownloadRemove => '取り除く';
 
   @override
-  String get aiModelDownloadRequiredToDownload =>
-      'HuggingFaceからモデルをダウンロードする必要があります。huggingface.co/settings/tokens で無料トークンを取得してください。';
+  String get aiModelDownloadRequiredToDownload => 'HuggingFaceからモデルをダウンロードする必要があります。huggingface.co/settings/tokens で無料トークンを取得してください。';
 
   @override
   String aiModelDownloadRequiresRam(Object ramLabel) {
@@ -1641,8 +1589,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiModelsCouldNotDetectDevice => 'デバイスの機能を検出できませんでした';
 
   @override
-  String get aiModelsGetTokenAtHuggingface =>
-      'ハグフェイス.co/settings/tokens でトークンを取得します。';
+  String get aiModelsGetTokenAtHuggingface => 'ハグフェイス.co/settings/tokens でトークンを取得します。';
 
   @override
   String get aiModelsHf => 'ふ_...';
@@ -1666,8 +1613,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiModelsRemove => '取り除く';
 
   @override
-  String get aiModelsRequiredToDownloadGated =>
-      'HuggingFace からゲート付きモデルをダウンロードするために必要です。';
+  String get aiModelsRequiredToDownloadGated => 'HuggingFace からゲート付きモデルをダウンロードするために必要です。';
 
   @override
   String get aiModelsSaveToken => 'トークンの保存';
@@ -1734,8 +1680,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiPrivacySeeWhatDataIs => 'どのデータがどのように処理されるかを確認する';
 
   @override
-  String get aiPrivacyYourCoachPersonalizesWorkou =>
-      'コーチがワークアウトとチャットをパーソナライズします';
+  String get aiPrivacyYourCoachPersonalizesWorkou => 'コーチがワークアウトとチャットをパーソナライズします';
 
   @override
   String get aiSettingsAdvancedSettings => '詳細設定';
@@ -1756,8 +1701,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsPersonalityTone => '性格と口調';
 
   @override
-  String get aiSettingsPickTheWeeklyStructure =>
-      'AI が計画する週の構成を選択します。変更はあなたの次の世代に適用されます。あなたの今週はそのまま残ります。';
+  String get aiSettingsPickTheWeeklyStructure => 'AI が計画する週の構成を選択します。変更はあなたの次の世代に適用されます。あなたの今週はそのまま残ります。';
 
   @override
   String get aiSettingsPrivacyData => 'PRプライバシーとデータ';
@@ -1822,8 +1766,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsScreenDefaultAgent => 'デフォルトのエージェント';
 
   @override
-  String get aiSettingsScreenEnableOrDisableAgents =>
-      '@メンションできるエージェントを有効または無効にする';
+  String get aiSettingsScreenEnableOrDisableAgents => '@メンションできるエージェントを有効または無効にする';
 
   @override
   String get aiSettingsScreenEncouragementLevel => '励ましレベル';
@@ -1832,15 +1775,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsScreenFormReminders => 'フォームリマインダー';
 
   @override
-  String get aiSettingsScreenGetRemindersAboutProper =>
-      '正しい運動フォームに関するリマインダーを受け取る';
+  String get aiSettingsScreenGetRemindersAboutProper => '正しい運動フォームに関するリマインダーを受け取る';
 
   @override
   String get aiSettingsScreenGetSuggestionsForRest => '休息と回復に関する提案を受け取る';
 
   @override
-  String get aiSettingsScreenIncludeNutritionAdviceIn =>
-      'ワークアウトの議論に栄養アドバイスを含める';
+  String get aiSettingsScreenIncludeNutritionAdviceIn => 'ワークアウトの議論に栄養アドバイスを含める';
 
   @override
   String get aiSettingsScreenIncludeTips => 'ヒントを含める';
@@ -1883,15 +1824,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsScreenStoreConversationsForContex => '文脈のために会話を保存する';
 
   @override
-  String get aiSettingsScreenThisAgentRespondsWhen =>
-      '特定のAgentを@メンションしない場合にこのAgentが応答します';
+  String get aiSettingsScreenThisAgentRespondsWhen => '特定のAgentを@メンションしない場合にこのAgentが応答します';
 
   @override
   String get aiSettingsScreenThisWillDeleteAll => 'すべてのチャット履歴が削除されます';
 
   @override
-  String get aiSettingsScreenThisWillPermanentlyDelete =>
-      'これにより、AI コーチとのすべての会話が完全に削除されます。この操作は元に戻すことができません。';
+  String get aiSettingsScreenThisWillPermanentlyDelete => 'これにより、AI コーチとのすべての会話が完全に削除されます。この操作は元に戻すことができません。';
 
   @override
   String get aiSettingsScreenUseEmojis => '絵文字を使用';
@@ -1900,15 +1839,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiSettingsScreenUsePreviousConversations => '過去の会話を使用';
 
   @override
-  String get aiSettingsShowAiAgentsFitness =>
-      'AI Agent、フィットネスコーチングの切り替え、プライバシー設定を表示';
+  String get aiSettingsShowAiAgentsFitness => 'AI Agent、フィットネスコーチングの切り替え、プライバシー設定を表示';
 
   @override
   String get aiSettingsSuggestions => '提案';
 
   @override
-  String get aiSettingsTellTheAiWhat =>
-      'このブロックで最も重要なことをAIに伝えてください。最大5つまで、それぞれ1〜5で重み付けします。';
+  String get aiSettingsTellTheAiWhat => 'このブロックで最も重要なことをAIに伝えてください。最大5つまで、それぞれ1〜5で重み付けします。';
 
   @override
   String get aiSettingsTrainingSplit => 'トレーニングスプリット';
@@ -1933,10 +1870,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
-    Object scheduleSuffix,
-    Object splitDisplayName,
-  ) {
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName) {
     return '$splitDisplayName$scheduleSuffixに切り替えました。新しいワークアウトを生成中...';
   }
 
@@ -1980,8 +1914,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiTextInputGotIt => '了解';
 
   @override
-  String get aiTextInputLogSets1358 =>
-      'セットを記録: 135*8, 145*6, +10...\nエクササイズを追加: 3x10 デッドリフト 135';
+  String get aiTextInputLogSets1358 => 'セットを記録: 135*8, 145*6, +10...\nエクササイズを追加: 3x10 デッドリフト 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'セットを記録 / エクササイズを追加';
@@ -2025,8 +1958,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get audioCoachCardAudioSynthesisDisabledSho =>
-      '音声合成が無効です。テキストのみ表示しています。';
+  String get audioCoachCardAudioSynthesisDisabledSho => '音声合成が無効です。テキストのみ表示しています。';
 
   @override
   String get audioCoachCardTodaySCoachBrief => '今日のコーチからのブリーフィング';
@@ -2038,8 +1970,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get audioSettingsBackgroundMusic => 'バックグラウンドミュージック';
 
   @override
-  String get audioSettingsKeepSpotifyMusicPlaying =>
-      'ワークアウト中もSpotify/音楽を再生し続ける';
+  String get audioSettingsKeepSpotifyMusicPlaying => 'ワークアウト中もSpotify/音楽を再生し続ける';
 
   @override
   String get audioSettingsLowerMusicDuringVoice => '音声案内の間、音楽の音量を下げる';
@@ -2113,8 +2044,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get avoidedExercisesExercisesToAvoid => '除外する種目';
 
   @override
-  String get avoidedExercisesExercisesYouAddHere =>
-      'ここに追加した種目は、AIが生成するワークアウトプランから除外されます。';
+  String get avoidedExercisesExercisesYouAddHere => 'ここに追加した種目は、AIが生成するワークアウトプランから除外されます。';
 
   @override
   String get avoidedExercisesNoExercisesToAvoid => '除外する種目はありません';
@@ -2123,8 +2053,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get avoidedExercisesPleaseLogIn => 'ログインしてください';
 
   @override
-  String get avoidedExercisesReasonAndTemporarySettings =>
-      '理由と一時的な設定はすべての種目に適用されます。個別のエントリーは後から編集できます。';
+  String get avoidedExercisesReasonAndTemporarySettings => '理由と一時的な設定はすべての種目に適用されます。個別のエントリーは後から編集できます。';
 
   @override
   String get avoidedExercisesReasonOptional => '理由（任意）';
@@ -2165,22 +2094,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get avoidedExercisesScreenErrorLoadingAlternatives => '代替種目の読み込みエラー';
 
   @override
-  String get avoidedExercisesScreenNoSpecificAlternativesFound =>
-      '代替種目が見つかりませんでした';
+  String get avoidedExercisesScreenNoSpecificAlternativesFound => '代替種目が見つかりませんでした';
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
-    Object exerciseName,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName) {
     return '$exerciseName の代わりに';
   }
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
-    Object day,
-    Object month,
-    Object year,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year) {
     return '$year年$month月$day日まで';
   }
 
@@ -2250,8 +2172,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get avoidedMusclesErrorLoadingMuscles => '筋肉の読み込みエラー';
 
   @override
-  String get avoidedMusclesExercisesTargetingThisMuscl =>
-      'この筋肉をターゲットにした種目は完全に除外されます';
+  String get avoidedMusclesExercisesTargetingThisMuscl => 'この筋肉をターゲットにした種目は完全に除外されます';
 
   @override
   String get avoidedMusclesMusclesToAvoid => '除外する筋肉';
@@ -2269,8 +2190,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get avoidedMusclesRemoveFromAvoidList => '除外リストから削除';
 
   @override
-  String get avoidedMusclesReplacedExercisesTargetingT =>
-      '今後のワークアウトで、この筋肉をターゲットにした種目を置き換えました';
+  String get avoidedMusclesReplacedExercisesTargetingT => '今後のワークアウトで、この筋肉をターゲットにした種目を置き換えました';
 
   @override
   String get avoidedMusclesSaveChanges => '変更を保存';
@@ -2326,8 +2246,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get badgeHubInProgress2 => '進行中';
 
   @override
-  String get badgeHubLevelledBadgesThatKeep =>
-      'ステップ数、消費カロリー、セッション数、距離を記録するたびにレベルアップするバッジです。';
+  String get badgeHubLevelledBadgesThatKeep => 'ステップ数、消費カロリー、セッション数、距離を記録するたびにレベルアップするバッジです。';
 
   @override
   String get badgeHubMasteries => 'マスタリー';
@@ -2339,8 +2258,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get badgeHubMyBadges => 'マイバッジ';
 
   @override
-  String get badgeHubOneTimeTrophiesFor =>
-      '時間目標、継続記録、大きなPRなど、マイルストーン達成時に獲得できる一度限りのトロフィーです。';
+  String get badgeHubOneTimeTrophiesFor => '時間目標、継続記録、大きなPRなど、マイルストーン達成時に獲得できる一度限りのトロフィーです。';
 
   @override
   String get badgeHubPersonalBests => '自己ベスト';
@@ -2357,12 +2275,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get badgeHubWeeklyOrDailyChallenges =>
-      '毎週または毎日のチャレンジに挑戦しましょう。スケジュール通りにリセットされるため、いつでも再獲得可能です。';
+  String get badgeHubWeeklyOrDailyChallenges => '毎週または毎日のチャレンジに挑戦しましょう。スケジュール通りにリセットされるため、いつでも再獲得可能です。';
 
   @override
-  String get badgeHubYourHighestLiftsLongest =>
-      '最高重量、最長セッション、最大のワークアウト。記録を更新してメダルをアップグレードしましょう。';
+  String get badgeHubYourHighestLiftsLongest => '最高重量、最長セッション、最大のワークアウト。記録を更新してメダルをアップグレードしましょう。';
 
   @override
   String get barcodeScannerOverlayPointYourCameraAt => 'カメラを商品のバーコードに向けてください';
@@ -2461,8 +2377,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get beastModeUnlockUnlocked => 'アンロック済み';
 
   @override
-  String get beastModeUnlockYouVeUnlockedThe =>
-      'パワーユーザーツールキットがアンロックされました。ワークアウトの背後にあるアルゴリズムを確認しましょう。';
+  String get beastModeUnlockYouVeUnlockedThe => 'パワーユーザーツールキットがアンロックされました。ワークアウトの背後にあるアルゴリズムを確認しましょう。';
 
   @override
   String get beastModeWorkoutAlgorithm => 'ワークアウトアルゴリズム';
@@ -2534,15 +2449,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bodyAnalyzerBodyFat => '体脂肪率';
 
   @override
-  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement =>
-      '写真からメジャー測定値も推定する';
+  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement => '写真からメジャー測定値も推定する';
 
   @override
   String get bodyAnalyzerCaptureAnalyzing => '分析中...';
 
   @override
-  String get bodyAnalyzerCaptureFusesHeightWeightBody =>
-      '身長、体重、体脂肪率、メジャー測定値を統合して分析します。';
+  String get bodyAnalyzerCaptureFusesHeightWeightBody => '身長、体重、体脂肪率、メジャー測定値を統合して分析します。';
 
   @override
   String get bodyAnalyzerCapturePickAtLeastOne => '写真を少なくとも1枚選択してください。';
@@ -2671,8 +2584,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get caloriesBurnedCaloriesBurnedToday => '今日の消費カロリー';
 
   @override
-  String get caloriesBurnedCompleteAWorkoutOr =>
-      'ワークアウトを完了するか、ヘルスケアアプリから同期してください';
+  String get caloriesBurnedCompleteAWorkoutOr => 'ワークアウトを完了するか、ヘルスケアアプリから同期してください';
 
   @override
   String get caloriesBurnedInApp => 'アプリ内';
@@ -2809,8 +2721,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get capabilityAndCommunityReachUsAnytime => 'いつでもお問い合わせください';
 
   @override
-  String get capabilityAndCommunityRealNumbersRealPeople =>
-      'リアルな数字。その裏にはリアルな人々。';
+  String get capabilityAndCommunityRealNumbersRealPeople => 'リアルな数字。その裏にはリアルな人々。';
 
   @override
   String get cardioHistoryAll => 'すべて';
@@ -2864,8 +2775,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cardioHistoryHike => 'ハイキング';
 
   @override
-  String get cardioHistoryImportFromStravaPeloton =>
-      'Strava、Peloton、Garmin、Apple Health、またはFitbitからインポートして、履歴を表示しましょう。';
+  String get cardioHistoryImportFromStravaPeloton => 'Strava、Peloton、Garmin、Apple Health、またはFitbitからインポートして、履歴を表示しましょう。';
 
   @override
   String get cardioHistoryIndoorCycle => 'インドアサイクリング';
@@ -2978,8 +2888,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cardioPrHistoryFirstTime => '初記録！';
 
   @override
-  String get cardioPrHistoryLogACardioSession =>
-      '有酸素運動セッションを記録して、PRの追跡を始めましょう。';
+  String get cardioPrHistoryLogACardioSession => '有酸素運動セッションを記録して、PRの追跡を始めましょう。';
 
   @override
   String get cardioPrHistoryNoCardioPrsYet => '有酸素運動のPRはまだありません';
@@ -3008,8 +2917,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chainDetailProgressionPath => 'プログレッションパス';
 
   @override
-  String get chainDetailProgressionStartedGoodLuck =>
-      'プログレッションを開始しました！頑張ってください！';
+  String get chainDetailProgressionStartedGoodLuck => 'プログレッションを開始しました！頑張ってください！';
 
   @override
   String chainDetailScreenAttemptsAtCurrentStep(Object attemptsAtCurrent) {
@@ -3250,8 +3158,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get challengeHistoryRetryChallenge2 => '再挑戦しますか？';
 
   @override
-  String get challengeHistoryRetryChallengeSentTime =>
-      '🔥 再挑戦を送信しました！リベンジの時です！';
+  String get challengeHistoryRetryChallengeSentTime => '🔥 再挑戦を送信しました！リベンジの時です！';
 
   @override
   String challengeHistoryScreenFailedToSendRetry(Object e) {
@@ -3283,8 +3190,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get challengesChallenge => 'チャレンジ';
 
   @override
-  String get challengesCouldNotLoadChallenges =>
-      'チャレンジを読み込めませんでした。\nもう一度お試しください。';
+  String get challengesCouldNotLoadChallenges => 'チャレンジを読み込めませんでした。\nもう一度お試しください。';
 
   @override
   String get challengesCouldNotLoadYour => 'チャレンジを読み込めませんでした。\nもう一度お試しください。';
@@ -3296,8 +3202,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get challengesFailedToLoadChallenges => 'チャレンジの読み込みに失敗しました';
 
   @override
-  String get challengesJoinAChallengeTo =>
-      'チャレンジに参加して友達と競い合い、\nフィットネス目標を達成しましょう！';
+  String get challengesJoinAChallengeTo => 'チャレンジに参加して友達と競い合い、\nフィットネス目標を達成しましょう！';
 
   @override
   String get challengesMyChallenges => 'マイチャレンジ';
@@ -3335,8 +3240,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get changeEquipmentHelperEquipment => '器具';
 
   @override
-  String get changeEquipmentHelperNoActiveGymProfile =>
-      'アクティブなジムプロフィールがありません。先に「設定」→「ジム」を開いてください。';
+  String get changeEquipmentHelperNoActiveGymProfile => 'アクティブなジムプロフィールがありません。先に「設定」→「ジム」を開いてください。';
 
   @override
   String get chatActionConfirmApplied => '適用済み';
@@ -3354,19 +3258,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatClearChatHistory => 'チャット履歴を消去しますか？';
 
   @override
-  String get chatFeaturesInfoLongPressActionPills =>
-      'アクションボタンを長押ししてショートカットをカスタマイズ';
+  String get chatFeaturesInfoLongPressActionPills => 'アクションボタンを長押ししてショートカットをカスタマイズ';
 
   @override
-  String get chatFeaturesInfoTryAskingWhatCan =>
-      '「何ができる？」と聞いて、機能の全リストを確認してみてください';
+  String get chatFeaturesInfoTryAskingWhatCan => '「何ができる？」と聞いて、機能の全リストを確認してみてください';
 
   @override
   String get chatFeaturesInfoWhatCanIDo => '何ができる？';
 
   @override
-  String get chatFeaturesInfoYourAiCoachCan =>
-      'AIコーチはメディアの分析、ワークアウトの生成、栄養アドバイスなどを行います。';
+  String get chatFeaturesInfoYourAiCoachCan => 'AIコーチはメディアの分析、ワークアウトの生成、栄養アドバイスなどを行います。';
 
   @override
   String get chatGotIt => '了解';
@@ -3583,8 +3484,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get chatScreenMultiAgentHangTight =>
-      'マルチエージェントの回答には最大2分かかる場合があります。そのままお待ちいただくか、再試行してください。';
+  String get chatScreenMultiAgentHangTight => 'マルチエージェントの回答には最大2分かかる場合があります。そのままお待ちいただくか、再試行してください。';
 
   @override
   String get chatScreenPartAddAMessage => 'メッセージを追加...';
@@ -3685,8 +3585,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatThisWillDeleteAll => 'AIコーチとの会話履歴がすべて削除されます。この操作は取り消せません。';
 
   @override
-  String get chatYourPersonalAiPowered =>
-      'あなた専属のAIフィットネスコーチ。ワークアウト、栄養、リカバリーなど、フィットネスに関するあらゆる質問にお答えします。AIがあなたの進捗を学習し、パーソナライズされたアドバイスを提供します。';
+  String get chatYourPersonalAiPowered => 'あなた専属のAIフィットネスコーチ。ワークアウト、栄養、リカバリーなど、フィットネスに関するあらゆる質問にお答えします。AIがあなたの進捗を学習し、パーソナライズされたアドバイスを提供します。';
 
   @override
   String get classicStatsTemplateCalories => '消費カロリー';
@@ -3862,8 +3761,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coachSelectionGender => '性別';
 
   @override
-  String get coachSelectionLetSGoooTime =>
-      '最高！今日も頑張って成果を出そう！5日間連続達成中だから、ここで途切れさせないよ。魔法を起こす準備はいい？';
+  String get coachSelectionLetSGoooTime => '最高！今日も頑張って成果を出そう！5日間連続達成中だから、ここで途切れさせないよ。魔法を起こす準備はいい？';
 
   @override
   String get coachSelectionLook => '見た目';
@@ -3933,8 +3831,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get coachVoicePickerPlaysDuringWorkoutAnnouncem =>
-      'ワークアウトのアナウンス中に再生されます';
+  String get coachVoicePickerPlaysDuringWorkoutAnnouncem => 'ワークアウトのアナウンス中に再生されます';
 
   @override
   String get coachVoicePickerUnlocksAtLevel50 => 'レベル50でアンロック — レベルを上げ続けましょう！';
@@ -3982,15 +3879,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get combinedHealthConnectHealth => 'ヘルスケアを接続';
 
   @override
-  String get combinedHealthConnectHealthBody =>
-      '歩数、心拍数、睡眠などのデータは、AndroidのHealth ConnectやiOSのヘルスケアアプリから同期されます。';
+  String get combinedHealthConnectHealthBody => '歩数、心拍数、睡眠などのデータは、AndroidのHealth ConnectやiOSのヘルスケアアプリから同期されます。';
 
   @override
   String get combinedHealthConnectHealthToSee => 'ヘルスケアを接続してアクティビティを表示';
 
   @override
-  String get combinedHealthCouldNotLoadYour =>
-      '健康データを読み込めませんでした。下にスワイプして再試行してください。';
+  String get combinedHealthCouldNotLoadYour => '健康データを読み込めませんでした。下にスワイプして再試行してください。';
 
   @override
   String get combinedHealthCouldNotSaveGoal => '目標を保存できませんでした。';
@@ -4043,8 +3938,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get combinedHealthWater => '水分補給';
 
   @override
-  String get comebackModeComebackModeReducesSets =>
-      'カムバックモードでは、休息後の怪我を防ぐためにセット数と強度を軽減します。';
+  String get comebackModeComebackModeReducesSets => 'カムバックモードでは、休息後の怪我を防ぐためにセット数と強度を軽減します。';
 
   @override
   String get comebackModeEaseMeBackIn => '徐々に再開する';
@@ -4079,10 +3973,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comingSoonBottomGotIt => '了解しました';
 
   @override
-  String comingSoonBottomSheetWeeksSessionsPerWeek(
-    Object durationWeeks,
-    Object sessionsPerWeek,
-  ) {
+  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek) {
     return '$durationWeeks週間 • 週$sessionsPerWeek回';
   }
 
@@ -4090,8 +3981,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comingSoonBottomWhatYouCanExpect => '今後の予定:';
 
   @override
-  String get comingSoonBrowseLikeAndRemix =>
-      'コミュニティで共有されたレシピを閲覧、いいね、リミックス。ソーシャルタブで近日公開予定。';
+  String get comingSoonBrowseLikeAndRemix => 'コミュニティで共有されたレシピを閲覧、いいね、リミックス。ソーシャルタブで近日公開予定。';
 
   @override
   String get comingSoonCaloriesSummary => 'カロリー概要';
@@ -4154,8 +4044,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comingSoonMyJourney => 'マイジャーニー';
 
   @override
-  String get comingSoonOneTapOnYour =>
-      'ホーム画面やロック画面をワンタップで、カロリーとマクロ栄養素付きのAI食事アイデアを表示 — 「記録する」ボタン付き';
+  String get comingSoonOneTapOnYour => 'ホーム画面やロック画面をワンタップで、カロリーとマクロ栄養素付きのAI食事アイデアを表示 — 「記録する」ボタン付き';
 
   @override
   String get comingSoonOneTapToStart => 'ワンタップで今日のワークアウトを開始';
@@ -4167,8 +4056,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comingSoonOverlayComingSoon => '近日公開';
 
   @override
-  String get comingSoonPairBleChestStraps =>
-      'BLEチェストストラップや心拍計をペアリングして、ワークアウト中のBPMをリアルタイム表示';
+  String get comingSoonPairBleChestStraps => 'BLEチェストストラップや心拍計をペアリングして、ワークアウト中のBPMをリアルタイム表示';
 
   @override
   String get comingSoonPhotoCompare => '写真比較';
@@ -4213,8 +4101,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comingSoonStrengthAndVolumeCharts => '筋力とボリュームの推移チャート';
 
   @override
-  String get comingSoonTheseFeaturesAreIn =>
-      'これらの機能は現在開発中で、ホーム画面のウィジェットとして近日公開予定です。';
+  String get comingSoonTheseFeaturesAreIn => 'これらの機能は現在開発中で、ホーム画面のウィジェットとして近日公開予定です。';
 
   @override
   String get comingSoonTitle => '近日公開';
@@ -4348,8 +4235,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityRecipeSearchCommunityRecipes => 'コミュニティレシピ';
 
   @override
-  String get communityRecipeSearchNothingFoundInCommunity =>
-      'コミュニティレシピに該当するものはありませんでした。';
+  String get communityRecipeSearchNothingFoundInCommunity => 'コミュニティレシピに該当するものはありませんでした。';
 
   @override
   String get communityRecipeSearchOpenTheRecipeTo => 'レシピを開いてライブラリに保存';
@@ -4358,10 +4244,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityRecipeSearchSaveToMyRecipes => 'マイレシピに保存';
 
   @override
-  String communityRecipeSearchScreenKcalLogs(
-    Object summary,
-    Object timesLogged,
-  ) {
+  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged) {
     return '$summary kcal · $timesLogged件のログ';
   }
 
@@ -4369,8 +4252,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityRecipeSearchSearchPublicRecipes => '公開レシピを検索...';
 
   @override
-  String get communityRecipeSearchSearchPublicRecipesShared =>
-      '他のユーザーが共有した公開レシピを検索します。';
+  String get communityRecipeSearchSearchPublicRecipesShared => '他のユーザーが共有した公開レシピを検索します。';
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
@@ -4381,10 +4263,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get compactWorkoutRow => ' • ';
 
   @override
-  String compactWorkoutRowMinExercises(
-    Object bestDurationMinutes,
-    Object exerciseCount,
-  ) {
+  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount) {
     return '$bestDurationMinutes分 • $exerciseCount種目';
   }
 
@@ -4392,8 +4271,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get companionPickerAddAll => 'すべて追加';
 
   @override
-  String get companionPickerLastTimeYouLogged =>
-      '前回一緒に記録した項目です。今日該当するものだけを選択してください。';
+  String get companionPickerLastTimeYouLogged => '前回一緒に記録した項目です。今日該当するものだけを選択してください。';
 
   @override
   String get companionPickerLogSelected => '選択した項目を記録';
@@ -4458,8 +4336,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comparisonGalleryComparisonDeleted => '比較を削除しました';
 
   @override
-  String get comparisonGalleryCreateABeforeAfter =>
-      '写真タブからビフォーアフター比較を作成して、時間の経過による進捗を確認しましょう。';
+  String get comparisonGalleryCreateABeforeAfter => '写真タブからビフォーアフター比較を作成して、時間の経過による進捗を確認しましょう。';
 
   @override
   String get comparisonGalleryDeleteComparison => '比較を削除しますか？';
@@ -4477,8 +4354,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comparisonGalleryOpenInComparisonEditor => '比較エディターで開く';
 
   @override
-  String get comparisonGalleryOpenTheComparisonIn =>
-      'エクスポートして共有するには、まず比較をエディターで開いてください。';
+  String get comparisonGalleryOpenTheComparisonIn => 'エクスポートして共有するには、まず比較をエディターで開いてください。';
 
   @override
   String get comparisonGalleryReEdit => '再編集';
@@ -4490,8 +4366,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get comparisonGallerySavedComparisons => '保存された比較';
 
   @override
-  String get comparisonGalleryThisWillPermanentlyRemove =>
-      'この比較は完全に削除されます。元の写真は削除されません。';
+  String get comparisonGalleryThisWillPermanentlyRemove => 'この比較は完全に削除されます。元の写真は削除されません。';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4554,11 +4429,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String comparisonViewExtSelectedPhotos(
-    Object length,
-    Object maxPhotos,
-    Object minPhotos,
-  ) {
+  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos) {
     return '$length枚選択 ($minPhotos-$maxPhotos枚)';
   }
 
@@ -4899,8 +4770,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get conversationSendTheFirstMessage => '最初のメッセージを送りましょう！';
 
   @override
-  String get conversationSomeMessagesWereEncrypted =>
-      '一部のメッセージは他のデバイスで暗号化されており、ここでは表示できません。';
+  String get conversationSomeMessagesWereEncrypted => '一部のメッセージは他のデバイスで暗号化されており、ここでは表示できません。';
 
   @override
   String get conversationTypeAMessage => 'メッセージを入力...';
@@ -5025,8 +4895,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get createExerciseAdvancedOptional => '詳細設定（任意）';
 
   @override
-  String get createExerciseAiFilledExerciseDetails =>
-      'AIがエクササイズ詳細を入力しました。確認して保存してください';
+  String get createExerciseAiFilledExerciseDetails => 'AIがエクササイズ詳細を入力しました。確認して保存してください';
 
   @override
   String get createExerciseAnalyzeWithAi => 'AIで解析';
@@ -5305,8 +5174,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customContentSectionAddEquipmentNotIn => '標準リストにない器具を追加';
 
   @override
-  String get customContentSectionAddEquipmentThatWill =>
-      'ワークアウト生成時に使用する器具を追加します。';
+  String get customContentSectionAddEquipmentThatWill => 'ワークアウト生成時に使用する器具を追加します。';
 
   @override
   String get customContentSectionAddExercise => 'エクササイズを追加';
@@ -5315,12 +5183,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customContentSectionCompoundExercise => 'コンパウンドエクササイズ';
 
   @override
-  String get customContentSectionCreateCustomComboExercise =>
-      'カスタム＆コンボエクササイズを作成';
+  String get customContentSectionCreateCustomComboExercise => 'カスタム＆コンボエクササイズを作成';
 
   @override
-  String get customContentSectionCreateExercisesThatCan =>
-      'AI生成ワークアウトに含められるエクササイズを作成します。';
+  String get customContentSectionCreateExercisesThatCan => 'AI生成ワークアウトに含められるエクササイズを作成します。';
 
   @override
   String get customContentSectionDeleteExercise => 'エクササイズを削除しますか？';
@@ -5359,9 +5225,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customContentSectionNoCustomExercisesYet => 'カスタムエクササイズはまだありません';
 
   @override
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed) {
     return '\"$trimmed\"を機器リストに追加しました';
   }
 
@@ -5381,9 +5245,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed) {
     return '$trimmedはすでにリストにあります';
   }
 
@@ -5444,10 +5306,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenExercisesUses(
-    Object totalCustomExercises,
-    Object totalUses,
-  ) {
+  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses) {
     return '$totalCustomExercises種目、$totalUses回使用';
   }
 
@@ -5476,8 +5335,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customFoodBuilderCreateNewAnyway => 'とにかく新規作成';
 
   @override
-  String get customFoodBuilderFillItInYourself =>
-      '自分で入力するか、名前やラベル写真からAIに提案させます。すべての値は編集可能です。';
+  String get customFoodBuilderFillItInYourself => '自分で入力するか、名前やラベル写真からAIに提案させます。すべての値は編集可能です。';
 
   @override
   String get customFoodBuilderLabelFromPhotos => '写真からラベルを読み取り';
@@ -5508,8 +5366,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customFoodBuilderUseExisting => '既存のものを使用';
 
   @override
-  String get customGoalsAddSpecificSkillsOr =>
-      '改善したい特定のスキルや目標を追加してください。\nAIが適切なエクササイズを見つけるお手伝いをします。';
+  String get customGoalsAddSpecificSkillsOr => '改善したい特定のスキルや目標を追加してください。\nAIが適切なエクササイズを見つけるお手伝いをします。';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI生成キーワード';
@@ -5541,8 +5398,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customGoalsSomethingWentWrong => '問題が発生しました';
 
   @override
-  String get customGoalsTheseKeywordsWillHelp =>
-      'これらのキーワードは、目標に関連するエクササイズを見つけるのに役立ちます。';
+  String get customGoalsTheseKeywordsWillHelp => 'これらのキーワードは、目標に関連するエクササイズを見つけるのに役立ちます。';
 
   @override
   String get customTrendAddMetric => '指標を追加';
@@ -5589,10 +5445,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String customTrendScreenSharedDays(
-    Object kMinCorrelationPairs,
-    Object pairedPoints,
-  ) {
+  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints) {
     return '$pairedPoints/$kMinCorrelationPairs 共通日';
   }
 
@@ -5646,8 +5499,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customWorkoutBuilderSets => 'セット数';
 
   @override
-  String get customWorkoutBuilderTapTheButtonBelow =>
-      '下のボタンをタップしてエクササイズを追加してください';
+  String get customWorkoutBuilderTapTheButtonBelow => '下のボタンをタップしてエクササイズを追加してください';
 
   @override
   String get customWorkoutBuilderWeightKg => '重量 (kg)';
@@ -5746,8 +5598,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get cycleMonthlySummaryThisRecapStaysPrivate =>
-      'このまとめは非公開です。サイクルデータが共有されることはありません。';
+  String get cycleMonthlySummaryThisRecapStaysPrivate => 'このまとめは非公開です。サイクルデータが共有されることはありません。';
 
   @override
   String get cycleMonthlySummaryYourMonthInReview => '今月の振り返り';
@@ -5844,8 +5695,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiPredictionsAreEstimates =>
-      '予測は記録されたデータに基づく推定値であり、避妊法や医療アドバイスではありません。健康上の懸念がある場合は医師にご相談ください。';
+  String get cycleScreenUiPredictionsAreEstimates => '予測は記録されたデータに基づく推定値であり、避妊法や医療アドバイスではありません。健康上の懸念がある場合は医師にご相談ください。';
 
   @override
   String get cycleScreenUiPregnancyModeIsOn => '妊娠モードがオンです';
@@ -5977,8 +5827,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cycleTemperatureChartDragAcrossTheChart => 'チャートをドラッグして日付を確認';
 
   @override
-  String get cycleTemperatureChartLogBasalTemperatureTo =>
-      '基礎体温を記録してチャートを埋めましょう';
+  String get cycleTemperatureChartLogBasalTemperatureTo => '基礎体温を記録してチャートを埋めましょう';
 
   @override
   String get cycleToday => '今日';
@@ -6283,8 +6132,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dataManagementExportMyWorkouts => 'ワークアウトをエクスポート';
 
   @override
-  String get dataManagementHevyStrongFitbodPdf =>
-      'Hevy / Strong / Fitbod / PDF / GPX — どこへでも持ち出し可能';
+  String get dataManagementHevyStrongFitbodPdf => 'Hevy / Strong / Fitbod / PDF / GPX — どこへでも持ち出し可能';
 
   @override
   String get dataManagementLifetimeAccess => '生涯アクセス';
@@ -6299,19 +6147,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dataManagementNoExercisesFoundIn => 'プラン内にエクササイズが見つかりません。';
 
   @override
-  String get dataManagementNoUpcomingChargesYou =>
-      '今後の請求はありません - 永久アクセス権をお持ちです';
+  String get dataManagementNoUpcomingChargesYou => '今後の請求はありません - 永久アクセス権をお持ちです';
 
   @override
   String get dataManagementNoVideoUrlsAvailable => 'プランで利用可能な動画URLはありません。';
 
   @override
-  String get dataManagementPreCacheAllExercises =>
-      'プラン内の全エクササイズをオフライン用に事前キャッシュ';
+  String get dataManagementPreCacheAllExercises => 'プラン内の全エクササイズをオフライン用に事前キャッシュ';
 
   @override
-  String get dataManagementRePickThePrimary =>
-      '同じワークアウトが2回同期された場合、プライマリソースを再選択';
+  String get dataManagementRePickThePrimary => '同じワークアウトが2回同期された場合、プライマリソースを再選択';
 
   @override
   String get dataManagementRequestRefund => '返金をリクエスト';
@@ -6437,8 +6282,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deleteAccountFlowThisWillPermanentlyDelete => '以下が完全に削除されます：';
 
   @override
-  String get deleteAccountFlowWeCouldNotVerify =>
-      'パスワードを確認できませんでした。先にパスワードをリセットしてから、再度アカウント削除を試してください。';
+  String get deleteAccountFlowWeCouldNotVerify => 'パスワードを確認できませんでした。先にパスワードをリセットしてから、再度アカウント削除を試してください。';
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
@@ -6479,8 +6323,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoActiveWorkoutExitWorkout => 'ワークアウトを終了しますか？';
 
   @override
-  String get demoActiveWorkoutGetAiGeneratedWorkout =>
-      'AI生成のワークアウトプランを取得し、進捗を記録して、フィットネス目標をより早く達成しましょう。';
+  String get demoActiveWorkoutGetAiGeneratedWorkout => 'AI生成のワークアウトプランを取得し、進捗を記録して、フィットネス目標をより早く達成しましょう。';
 
   @override
   String get demoActiveWorkoutGetPersonalizedWorkouts => 'パーソナライズされたワークアウトを取得';
@@ -6508,16 +6351,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String demoActiveWorkoutScreenUi1SetOf(
-    Object _currentExerciseSets,
-    Object _currentSet,
-  ) {
+  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet) {
     return 'セット $_currentSet/$_currentExerciseSets';
   }
 
   @override
-  String get demoActiveWorkoutSignUpToGet =>
-      'サインアップして、パーソナライズされたAIコーチング、詳細な進捗記録、目標に合わせたワークアウトを手に入れましょう。';
+  String get demoActiveWorkoutSignUpToGet => 'サインアップして、パーソナライズされたAIコーチング、詳細な進捗記録、目標に合わせたワークアウトを手に入れましょう。';
 
   @override
   String get demoActiveWorkoutSkipAll => 'すべてスキップ';
@@ -6535,8 +6374,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoActiveWorkoutWorkoutComplete => 'ワークアウト完了！';
 
   @override
-  String get demoActiveWorkoutYourProgressInThis =>
-      'このデモワークアウトの進捗は保存されません。本当に終了しますか？';
+  String get demoActiveWorkoutYourProgressInThis => 'このデモワークアウトの進捗は保存されません。本当に終了しますか？';
 
   @override
   String get demoDayBanner24HoursOfFull => '24時間のフルアクセス';
@@ -6545,8 +6383,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoDayBannerDemoDay => 'デモデー';
 
   @override
-  String get demoDayBannerExploreAllPremiumFeatures =>
-      'すべてのプレミアム機能を体験 - 義務はありません';
+  String get demoDayBannerExploreAllPremiumFeatures => 'すべてのプレミアム機能を体験 - 義務はありません';
 
   @override
   String get demoDayBannerTimeRemaining => '残り時間: ';
@@ -6564,8 +6401,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoTasksTryOneOrBoth => 'どちらか、または両方を試してください。不要ならスキップできます。';
 
   @override
-  String get demoWorkoutCreatingYourPersonalizedWor =>
-      'パーソナライズされたワークアウトを作成中...';
+  String get demoWorkoutCreatingYourPersonalizedWor => 'パーソナライズされたワークアウトを作成中...';
 
   @override
   String get demoWorkoutExercises => 'エクササイズ';
@@ -6604,8 +6440,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoWorkoutScreenSampleWorkoutPreview => 'サンプルワークアウトのプレビュー';
 
   @override
-  String get demoWorkoutScreenSignUpToGet =>
-      'サインアップして、目標、フィットネスレベル、利用可能な機器に合わせたワークアウトを手に入れましょう。';
+  String get demoWorkoutScreenSignUpToGet => 'サインアップして、目標、フィットネスレベル、利用可能な機器に合わせたワークアウトを手に入れましょう。';
 
   @override
   String get demoWorkoutScreenStartWorkout => 'ワークアウトを開始';
@@ -6634,40 +6469,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get demoWorkoutVideoUnavailable => '動画を利用できません';
 
   @override
-  String get derivedMetricDetailABmiBetween18 =>
-      'BMI 18.5〜24.9は健康的な体重範囲とされています。この調子で頑張りましょう！';
+  String get derivedMetricDetailABmiBetween18 => 'BMI 18.5〜24.9は健康的な体重範囲とされています。この調子で頑張りましょう！';
 
   @override
-  String get derivedMetricDetailABmiBetween25 =>
-      'BMI 25〜29.9は過体重とされています。注意：BMIは筋肉と脂肪を区別しません。';
+  String get derivedMetricDetailABmiBetween25 => 'BMI 25〜29.9は過体重とされています。注意：BMIは筋肉と脂肪を区別しません。';
 
   @override
-  String get derivedMetricDetailABmiOf30 =>
-      'BMI 30以上は肥満に分類されます。専門家への相談を検討してください。';
+  String get derivedMetricDetailABmiOf30 => 'BMI 30以上は肥満に分類されます。専門家への相談を検討してください。';
 
   @override
-  String get derivedMetricDetailAChestToWaist =>
-      '胸囲とウエスト比が1.1未満の場合、ウエストに対して胸が狭いことを示します。胸と背中のエクササイズに注力しましょう。';
+  String get derivedMetricDetailAChestToWaist => '胸囲とウエスト比が1.1未満の場合、ウエストに対して胸が狭いことを示します。胸と背中のエクササイズに注力しましょう。';
 
   @override
-  String get derivedMetricDetailAChestToWaist2 =>
-      '胸囲とウエスト比が1.1〜1.3は平均的です。胸とウエストのバランスが取れています。';
+  String get derivedMetricDetailAChestToWaist2 => '胸囲とウエスト比が1.1〜1.3は平均的です。胸とウエストのバランスが取れています。';
 
   @override
-  String get derivedMetricDetailAChestToWaist3 =>
-      '胸囲とウエスト比が1.3を超える場合、ウエストに対して胸がよく発達していることを示します。素晴らしいプロポーションです！';
+  String get derivedMetricDetailAChestToWaist3 => '胸囲とウエスト比が1.3を超える場合、ウエストに対して胸がよく発達していることを示します。素晴らしいプロポーションです！';
 
   @override
-  String get derivedMetricDetailAWhtrAbove0 =>
-      'WHtRが0.6を超えると、腹部脂肪が多く健康リスクが高まる可能性があります。';
+  String get derivedMetricDetailAWhtrAbove0 => 'WHtRが0.6を超えると、腹部脂肪が多く健康リスクが高まる可能性があります。';
 
   @override
-  String get derivedMetricDetailAWhtrBetween0 =>
-      'WHtRが0.4〜0.5は健康的とされています。ウエストが身長の半分未満の状態です。';
+  String get derivedMetricDetailAWhtrBetween0 => 'WHtRが0.4〜0.5は健康的とされています。ウエストが身長の半分未満の状態です。';
 
   @override
-  String get derivedMetricDetailAWhtrBetween02 =>
-      'WHtRが0.5〜0.6は腹部脂肪の増加を示します。ウエスト周りの引き締めに注力しましょう。';
+  String get derivedMetricDetailAWhtrBetween02 => 'WHtRが0.5〜0.6は腹部脂肪の増加を示します。ウエスト周りの引き締めに注力しましょう。';
 
   @override
   String get derivedMetricDetailAboveAverage => '平均以上';
@@ -6706,8 +6532,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get derivedMetricDetailGood => '良好';
 
   @override
-  String get derivedMetricDetailGoodSymmetry9397 =>
-      '良好な左右対称性（93-97%）。正常範囲内のわずかな差です。';
+  String get derivedMetricDetailGoodSymmetry9397 => '良好な左右対称性（93-97%）。正常範囲内のわずかな差です。';
 
   @override
   String get derivedMetricDetailHealthy => '健康的';
@@ -6746,8 +6571,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get derivedMetricDetailModerate => '中程度';
 
   @override
-  String get derivedMetricDetailModerateAsymmetry8893 =>
-      '中程度の左右非対称（88-93%）。不均衡を解消するために片側エクササイズの追加を検討してください。';
+  String get derivedMetricDetailModerateAsymmetry8893 => '中程度の左右非対称（88-93%）。不均衡を解消するために片側エクササイズの追加を検討してください。';
 
   @override
   String get derivedMetricDetailModerateRisk => '中リスク';
@@ -6759,8 +6583,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get derivedMetricDetailNarrow => '狭い';
 
   @override
-  String get derivedMetricDetailNearPerfectSymmetry97 =>
-      'ほぼ完璧な左右対称（97%+）。両側が非常によくバランスが取れています。';
+  String get derivedMetricDetailNearPerfectSymmetry97 => 'ほぼ完璧な左右対称（97%+）。両側が非常によくバランスが取れています。';
 
   @override
   String get derivedMetricDetailNoHistoryYet => '履歴がありません';
@@ -6793,8 +6616,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get derivedMetricDetailShoulders => '肩幅';
 
   @override
-  String get derivedMetricDetailSignificantAsymmetryBelow8 =>
-      '顕著な左右非対称（88%未満）。弱い側の片側トレーニングに注力してください。';
+  String get derivedMetricDetailSignificantAsymmetryBelow8 => '顕著な左右非対称（88%未満）。弱い側の片側トレーニングに注力してください。';
 
   @override
   String get derivedMetricDetailSuperior => '優良';
@@ -6874,8 +6696,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get diabetesDashboardScreenGreatYouReMeeting =>
-      '素晴らしい！目標範囲内（70%+）を維持できています。';
+  String get diabetesDashboardScreenGreatYouReMeeting => '素晴らしい！目標範囲内（70%+）を維持できています。';
 
   @override
   String get diabetesDashboardScreenHealthConnect => 'Health Connect';
@@ -6907,8 +6728,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diabetesDashboardScreenMgDl => 'mg/dL';
 
   @override
-  String get diabetesDashboardScreenNoAdditionalReadingsAvailab =>
-      '追加の測定値はありません';
+  String get diabetesDashboardScreenNoAdditionalReadingsAvailab => '追加の測定値はありません';
 
   @override
   String diabetesDashboardScreenPartA1CCardDaysAgo(Object daysSinceMeasured) {
@@ -6921,9 +6741,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
-    Object daysIncluded,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded) {
     return '過去 $daysIncluded 日間';
   }
 
@@ -6938,16 +6756,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
-    Object totalRapidUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits) {
     return '${totalRapidUnits}U';
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU3(
-    Object totalLongUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits) {
     return '${totalLongUnits}U';
   }
 
@@ -7083,8 +6897,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get difficultySelectorChooseDifferent => '別を選択';
 
   @override
-  String get difficultySelectorConsiderChallengingForA =>
-      'より安全で高強度な「Challenging」を検討してください';
+  String get difficultySelectorConsiderChallengingForA => 'より安全で高強度な「Challenging」を検討してください';
 
   @override
   String get difficultySelectorContinueAnyway => 'そのまま続行';
@@ -7136,8 +6949,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverCheckYourConnectionAnd => '接続を確認して再試行してください。';
 
   @override
-  String get discoverComplete3WorkoutsTo =>
-      'ワークアウトを3回完了してフィットネスプロフィールを解放しましょう。';
+  String get discoverComplete3WorkoutsTo => 'ワークアウトを3回完了してフィットネスプロフィールを解放しましょう。';
 
   @override
   String get discoverCompleteAWorkoutThis => '今週ワークアウトを完了する';
@@ -7231,15 +7043,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverTopOfTheWeek => '今週のトップ';
 
   @override
-  String get discoverTourBrowseRisingStarsAnd =>
-      '「Rising Stars」や「Near You」を見て、同じレベルのユーザーを探しましょう。';
+  String get discoverTourBrowseRisingStarsAnd => '「Rising Stars」や「Near You」を見て、同じレベルのユーザーを探しましょう。';
 
   @override
   String get discoverTourFindYourPeers => '仲間を見つける';
 
   @override
-  String get discoverTourOpenTheir6Axis =>
-      '6軸フィットネスレーダーを開いて、XPやボリューム、継続日数などを比較しましょう。';
+  String get discoverTourOpenTheir6Axis => '6軸フィットネスレーダーを開いて、XPやボリューム、継続日数などを比較しましょう。';
 
   @override
   String get discoverTourSwitchBoards => 'ボードを切り替える';
@@ -7248,8 +7058,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverTourTapAnyUser => 'ユーザーをタップ';
 
   @override
-  String get discoverTourXpVolumeStreaksEach =>
-      'XP、ボリューム、継続日数はそれぞれ異なるゲームです。すべて試して自分の強みを見つけましょう。';
+  String get discoverTourXpVolumeStreaksEach => 'XP、ボリューム、継続日数はそれぞれ異なるゲームです。すべて試して自分の強みを見つけましょう。';
 
   @override
   String get discoverTrainingPlans => 'トレーニングプラン';
@@ -7270,8 +7079,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverYou => 'あなた · ';
 
   @override
-  String get discoverYourRankPercentileAppears =>
-      'ランキングに参加すると順位とパーセンタイルが表示されます';
+  String get discoverYourRankPercentileAppears => 'ランキングに参加すると順位とパーセンタイルが表示されます';
 
   @override
   String get dismissedBannersDailyXpGoals => '毎日のXP目標';
@@ -7280,8 +7088,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dismissedBannersDismissedBanners => '非表示にしたバナー';
 
   @override
-  String get dismissedBannersDismissedBannersResetAutoma =>
-      '非表示にしたバナーは深夜に自動的にリセットされます。';
+  String get dismissedBannersDismissedBannersResetAutoma => '非表示にしたバナーは深夜に自動的にリセットされます。';
 
   @override
   String get dismissedBannersRestore => '復元';
@@ -7326,8 +7133,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get downloadedVideosNoDownloadsYet => 'ダウンロードはまだありません';
 
   @override
-  String get downloadedVideosSaveExerciseVideosFor =>
-      'エクササイズ動画を保存してオフラインで視聴しましょう。WiFi環境が不安定なジムで便利です。';
+  String get downloadedVideosSaveExerciseVideosFor => 'エクササイズ動画を保存してオフラインで視聴しましょう。WiFi環境が不安定なジムで便利です。';
 
   @override
   String downloadedVideosScreenDeleted(Object exerciseName) {
@@ -7345,15 +7151,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get downloadedVideosStorageAlmostFullOldest =>
-      'ストレージの空き容量が少なくなっています。古い動画から自動的に削除されます。';
+  String get downloadedVideosStorageAlmostFullOldest => 'ストレージの空き容量が少なくなっています。古い動画から自動的に削除されます。';
 
   @override
   String get downloadedVideosStorageUsed => '使用済みストレージ';
 
   @override
-  String get downloadedVideosThisWillDeleteAll =>
-      'デバイスからダウンロードしたすべてのエクササイズ動画が削除されます。いつでも再ダウンロード可能です。';
+  String get downloadedVideosThisWillDeleteAll => 'デバイスからダウンロードしたすべてのエクササイズ動画が削除されます。いつでも再ダウンロード可能です。';
 
   @override
   String get durationRangeSliderDuration => '期間';
@@ -7429,8 +7233,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get easyExerciseActionsShowVideo => '動画を表示';
 
   @override
-  String get easyExerciseActionsSkipThisExerciseAvoid =>
-      'このエクササイズをスキップしてしばらく除外する';
+  String get easyExerciseActionsSkipThisExerciseAvoid => 'このエクササイズをスキップしてしばらく除外する';
 
   @override
   String get easyExerciseActionsSkipToNextExercise => '次のエクササイズへスキップ';
@@ -7468,8 +7271,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get easyFocalColumnWeight => '重量';
 
   @override
-  String get easyHelpAdjustWeightAndReps =>
-      '−と+で重量と回数を調整します。数値を長押しすると直接入力できます。';
+  String get easyHelpAdjustWeightAndReps => '−と+で重量と回数を調整します。数値を長押しすると直接入力できます。';
 
   @override
   String get easyHelpGotIt => '了解';
@@ -7487,12 +7289,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get easyHelpSwitchToAdvanced => '上級者モードに切り替え';
 
   @override
-  String get easyHelpTapTheBigWhen =>
-      'セットが終わったら大きな ✓ をタップしてください。あとはすべてお任せください。';
+  String get easyHelpTapTheBigWhen => 'セットが終わったら大きな ✓ をタップしてください。あとはすべてお任せください。';
 
   @override
-  String get easyHelpThisIsTodayS =>
-      '本日のエクササイズです。フォームを確認したいときはいつでも ▶ 動画を表示 をタップしてください。';
+  String get easyHelpThisIsTodayS => '本日のエクササイズです。フォームを確認したいときはいつでも ▶ 動画を表示 をタップしてください。';
 
   @override
   String get easyHelpTodaySExercise => '本日のエクササイズ';
@@ -7617,8 +7417,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editGymProfileIcon => 'アイコン';
 
   @override
-  String get editGymProfileLeaveOnAutoFor =>
-      '「自動」に設定するとAIが判断します。または、特定の曜日（例：火 → 上半身）に重点エリアを固定できます。';
+  String get editGymProfileLeaveOnAutoFor => '「自動」に設定するとAIが判断します。または、特定の曜日（例：火 → 上半身）に重点エリアを固定できます。';
 
   @override
   String get editGymProfileLocationOptional => '場所（任意）';
@@ -7752,12 +7551,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editProgramSheetBack => '戻る';
 
   @override
-  String get editProgramSheetChangeYourWeeklySchedule =>
-      '週のスケジュール、器具、難易度を変更します。新しい設定に基づいてワークアウトが再生成されます。';
+  String get editProgramSheetChangeYourWeeklySchedule => '週のスケジュール、器具、難易度を変更します。新しい設定に基づいてワークアウトが再生成されます。';
 
   @override
-  String get editProgramSheetChooseATrainingSplit =>
-      'スケジュールと目標に合ったトレーニング分割を選択してください';
+  String get editProgramSheetChooseATrainingSplit => 'スケジュールと目標に合ったトレーニング分割を選択してください';
 
   @override
   String get editProgramSheetContinue => '続ける';
@@ -7790,8 +7587,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get editProgramSheetDescribeWhatYouWant =>
-      'トレーニングの目的を入力すると、AIがパーソナライズされたプログラムを作成します。';
+  String get editProgramSheetDescribeWhatYouWant => 'トレーニングの目的を入力すると、AIがパーソナライズされたプログラムを作成します。';
 
   @override
   String get editProgramSheetDifficulty => '難易度';
@@ -7837,10 +7633,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editProgramSheetNoProgramHistoryFound => 'プログラム履歴が見つかりません';
 
   @override
-  String editProgramSheetPartEditProgramSheetStateOf(
-    Object _generatingWorkout,
-    Object _totalWorkoutsToGenerate,
-  ) {
+  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate) {
     return '$_generatingWorkout / $_totalWorkoutsToGenerate';
   }
 
@@ -7857,8 +7650,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editProgramSheetProgramHistory => 'プログラム履歴';
 
   @override
-  String get editProgramSheetProgramRestoredRegenerateW =>
-      'プログラムを復元しました！ワークアウトを再生成して変更を適用してください。';
+  String get editProgramSheetProgramRestoredRegenerateW => 'プログラムを復元しました！ワークアウトを再生成して変更を適用してください。';
 
   @override
   String get editProgramSheetRestoreAPreviousProgram => '以前のプログラム設定を復元';
@@ -7879,8 +7671,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editProgramSheetSummary => '概要';
 
   @override
-  String get editProgramSheetThisStepIsOptional =>
-      'このステップは任意です。報告する怪我がなければスキップできます。';
+  String get editProgramSheetThisStepIsOptional => 'このステップは任意です。報告する怪我がなければスキップできます。';
 
   @override
   String get editProgramSheetToday => '今日';
@@ -7939,8 +7730,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editTargetsRecalculateFromProfile => 'プロフィールから再計算';
 
   @override
-  String get editTargetsRecommendationUnavailableR =>
-      '推奨値を利用できません — まずプロフィールから再計算してください';
+  String get editTargetsRecommendationUnavailableR => '推奨値を利用できません — まずプロフィールから再計算してください';
 
   @override
   String get editTargetsReset => 'リセット';
@@ -7999,12 +7789,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String editTargetsSheetUWks(
-    Object dateStr,
-    Object deficitInfo,
-    Object goalLabel,
-    Object weeks,
-  ) {
+  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks) {
     return '$goalLabel → ~$weeks 週間 ($dateStr)$deficitInfo';
   }
 
@@ -8128,8 +7913,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editWeightsMin => '最小';
 
   @override
-  String get editWeightsNoWeightsYetPick =>
-      '重量が未設定です。最小/最大/ステップを選択して「生成」をタップしてください。';
+  String get editWeightsNoWeightsYetPick => '重量が未設定です。最小/最大/ステップを選択して「生成」をタップしてください。';
 
   @override
   String get editWeightsPreset => 'プリセット';
@@ -8175,10 +7959,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String editWorkoutEquipmentSheetValue(
-    Object length,
-    Object selectedInCategory,
-  ) {
+  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory) {
     return '($selectedInCategory/$length)';
   }
 
@@ -8201,8 +7982,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editableFitnessCardActiveInjuries => '現在の怪我';
 
   @override
-  String get editableFitnessCardChangesAffectYourWorkout =>
-      '変更はワークアウトプログラムに反映されます';
+  String get editableFitnessCardChangesAffectYourWorkout => '変更はワークアウトプログラムに反映されます';
 
   @override
   String get editableFitnessCardCustom => 'カスタム';
@@ -8237,8 +8017,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editableFitnessCardFitnessLevel => 'フィットネスレベル';
 
   @override
-  String get editableFitnessCardFitnessSettingsUpdatedWor =>
-      'フィットネス設定を更新しました。ワークアウトが再生成されます';
+  String get editableFitnessCardFitnessSettingsUpdatedWor => 'フィットネス設定を更新しました。ワークアウトが再生成されます';
 
   @override
   String get editableFitnessCardGoal => '目標';
@@ -8267,24 +8046,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get editableFitnessCardNotSet => '未設定';
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(
-    Object _selectedStretchDuration,
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration+$_selectedStretchDuration分';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin(
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration 分';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin2(
-    Object _selectedStretchDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration) {
     return '$_selectedStretchDuration 分';
   }
 
@@ -8345,12 +8117,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailPreferencesBillingAccount => '請求とアカウント';
 
   @override
-  String get emailPreferencesCheckInsFromYour =>
-      'コーチからのチェックイン（アクティベーション、復帰、優しい催促）';
+  String get emailPreferencesCheckInsFromYour => 'コーチからのチェックイン（アクティベーション、復帰、優しい催促）';
 
   @override
-  String get emailPreferencesDailyRemindersAboutYour =>
-      '予定されているワークアウトの毎日のリマインダー';
+  String get emailPreferencesDailyRemindersAboutYour => '予定されているワークアウトの毎日のリマインダー';
 
   @override
   String get emailPreferencesEmailPreferences => 'メール設定';
@@ -8391,8 +8161,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailPreferencesStreakAlerts => 'ストリークアラート';
 
   @override
-  String get emailPreferencesSundayRecapWithWorkouts =>
-      '日曜日のまとめ（ワークアウト、栄養、ストリーク、XP）';
+  String get emailPreferencesSundayRecapWithWorkouts => '日曜日のまとめ（ワークアウト、栄養、ストリーク、XP）';
 
   @override
   String get emailPreferencesThisWillTurnOff => '以下のマーケティングメールがすべてオフになります：';
@@ -8404,12 +8173,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailPreferencesUnsubscribe => '登録解除';
 
   @override
-  String get emailPreferencesUnsubscribeFromAllMarketing =>
-      'すべてのマーケティングメールの登録を解除';
+  String get emailPreferencesUnsubscribeFromAllMarketing => 'すべてのマーケティングメールの登録を解除';
 
   @override
-  String get emailPreferencesUnsubscribedFromMarketingEm =>
-      'マーケティングメールの登録を解除しました';
+  String get emailPreferencesUnsubscribedFromMarketingEm => 'マーケティングメールの登録を解除しました';
 
   @override
   String get emailPreferencesWeeklySummary => '週間まとめ';
@@ -8421,8 +8188,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailPreferencesWorkoutReminders => 'ワークアウトのリマインダー';
 
   @override
-  String get emailPreferencesYouWillStillReceive =>
-      '重要なワークアウトのリマインダーは引き続き送信されます。';
+  String get emailPreferencesYouWillStillReceive => '重要なワークアウトのリマインダーは引き続き送信されます。';
 
   @override
   String get emailSignInAlreadyHaveAnAccount => 'すでにアカウントをお持ちですか？';
@@ -8440,8 +8206,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailSignInForgotPassword => 'パスワードをお忘れですか？';
 
   @override
-  String get emailSignInIfAnAccountExists =>
-      'このメールアドレスでアカウントが存在する場合、パスワードリセットリンクを送信しました。';
+  String get emailSignInIfAnAccountExists => 'このメールアドレスでアカウントが存在する場合、パスワードリセットリンクを送信しました。';
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
@@ -8466,8 +8231,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emailVerificationBannerResend => '再送';
 
   @override
-  String get emailVerificationBannerVerifyYourEmailTo =>
-      'アカウントを保護するためにメールアドレスを認証してください。';
+  String get emailVerificationBannerVerifyYourEmailTo => 'アカウントを保護するためにメールアドレスを認証してください。';
 
   @override
   String get embeddedCameraPanelFromGallery => 'ギャラリーから選択';
@@ -8476,8 +8240,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get embeddedCameraPanelTryAgain => '再試行';
 
   @override
-  String get emptyCustomExercisesBuildCustomExercisesTailore =>
-      'ニーズに合わせてカスタムエクササイズを作成したり、複数の動作を組み合わせて強力なコンボを作成したりできます。';
+  String get emptyCustomExercisesBuildCustomExercisesTailore => 'ニーズに合わせてカスタムエクササイズを作成したり、複数の動作を組み合わせて強力なコンボを作成したりできます。';
 
   @override
   String get emptyCustomExercisesCreateYourFirstExercise => '最初のエクササイズを作成';
@@ -8489,8 +8252,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emptyStateClearFilters => 'フィルターをクリア';
 
   @override
-  String get emptyStateCompleteYourFirstWorkout =>
-      '最初のワークアウトを完了して\n進捗の記録を始めましょう！';
+  String get emptyStateCompleteYourFirstWorkout => '最初のワークアウトを完了して\n進捗の記録を始めましょう！';
 
   @override
   String get emptyStateCreateProgram => 'プログラムを作成';
@@ -8511,22 +8273,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get emptyStateNoWorkoutsYet => 'ワークアウトはまだありません';
 
   @override
-  String get emptyStatePleaseCheckYourInternet =>
-      'インターネット接続を確認して\nもう一度お試しください。';
+  String get emptyStatePleaseCheckYourInternet => 'インターネット接続を確認して\nもう一度お試しください。';
 
   @override
   String get emptyStateTipGotIt => '了解';
 
   @override
-  String get emptyStateTryAdjustingYourFilters =>
-      'フィルターを調整するか\n別のキーワードで検索してください。';
+  String get emptyStateTryAdjustingYourFilters => 'フィルターを調整するか\n別のキーワードで検索してください。';
 
   @override
   String get emptyStateWeCouldnTFind => 'お探しのものが見つかりませんでした。\n別のキーワードを試してください。';
 
   @override
-  String get emptyStateYourWorkoutScheduleIs =>
-      'ワークアウトスケジュールが空です。\nプログラムを作成して始めましょう！';
+  String get emptyStateYourWorkoutScheduleIs => 'ワークアウトスケジュールが空です。\nプログラムを作成して始めましょう！';
 
   @override
   String get enhancedEmptyStateTryAsking => '質問してみる...';
@@ -8537,8 +8296,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get enhancedEmptyStateYourPersonalFitnessAssistan =>
-      'あなたのパーソナルフィットネスアシスタント';
+  String get enhancedEmptyStateYourPersonalFitnessAssistan => 'あなたのパーソナルフィットネスアシスタント';
 
   @override
   String get enhancedNotesAddNotesAboutForm => 'フォーム、キュー、または修正に関するメモを追加...';
@@ -8652,8 +8410,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get environmentDetailSearchEquipment => '器具を検索...';
 
   @override
-  String get environmentDetailSeparateMultipleWeightsWith =>
-      '複数の重量はカンマで区切ってください';
+  String get environmentDetailSeparateMultipleWeightsWith => '複数の重量はカンマで区切ってください';
 
   @override
   String get environmentDetailTapAddEquipmentTo => '「器具を追加」をタップして開始';
@@ -8671,8 +8428,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get environmentDetailUseThis => 'これを使用';
 
   @override
-  String get environmentDetailYouHaveUnsavedChanges =>
-      '未保存の変更があります。離れる前に保存しますか？';
+  String get environmentDetailYouHaveUnsavedChanges => '未保存の変更があります。離れる前に保存しますか？';
 
   @override
   String get environmentListActive => 'アクティブ';
@@ -8708,8 +8464,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get environmentListSelectYourWorkoutEnvironmen =>
-      'ワークアウト環境を選択して、利用可能な器具をカスタマイズしましょう。';
+  String get environmentListSelectYourWorkoutEnvironmen => 'ワークアウト環境を選択して、利用可能な器具をカスタマイズしましょう。';
 
   @override
   String get environmentListUseThis => 'これを使用';
@@ -8718,22 +8473,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get environmentListWorkoutEnvironment => 'ワークアウト環境';
 
   @override
-  String get equipmentCalibration15x220x225x230x2 =>
-      '15x2, 20x2, 25x2, 30x2, 35x2';
+  String get equipmentCalibration15x220x225x230x2 => '15x2, 20x2, 25x2, 30x2, 35x2';
 
   @override
   String get equipmentCalibration175ForEz => 'EZバー用17.5、オリンピックバー用45';
 
   @override
-  String get equipmentCalibration45x435x225x410x2 =>
-      '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
+  String get equipmentCalibration45x435x225x410x2 => '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
 
   @override
   String get equipmentCalibration794ForEz => 'EZバー用7.94、オリンピックバー用20';
 
   @override
-  String get equipmentCalibrationAddABarbellMachine =>
-      'バーベル、マシン、またはケーブルを追加してデフォルトを上書きします。';
+  String get equipmentCalibrationAddABarbellMachine => 'バーベル、マシン、またはケーブルを追加してデフォルトを上書きします。';
 
   @override
   String get equipmentCalibrationAddEquipment => '器具を追加';
@@ -8742,8 +8494,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get equipmentCalibrationCalibration => 'キャリブレーション';
 
   @override
-  String get equipmentCalibrationCouldNotLoadCalibrations =>
-      'キャリブレーションを読み込めませんでした';
+  String get equipmentCalibrationCouldNotLoadCalibrations => 'キャリブレーションを読み込めませんでした';
 
   @override
   String get equipmentCalibrationEGHomeRack => '例：ホームラック EZバー';
@@ -8752,8 +8503,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get equipmentCalibrationEditEquipment => '器具を編集';
 
   @override
-  String get equipmentCalibrationIntroBody =>
-      'プレート提案と重量推奨は、あなたが実際に持っているものに合わせます。バーの重さ、マシンのソリ重量、ケーブルピンの増分、プレート/ダンベル在庫を設定してください。';
+  String get equipmentCalibrationIntroBody => 'プレート提案と重量推奨は、あなたが実際に持っているものに合わせます。バーの重さ、マシンのソリ重量、ケーブルピンの増分、プレート/ダンベル在庫を設定してください。';
 
   @override
   String get equipmentCalibrationIntroTitle => '実際の器具を教えてください';
@@ -8771,8 +8521,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get equipmentCalibrationLegPress45 => 'レッグプレス：45';
 
   @override
-  String get equipmentCalibrationNoCalibratedEquipmentYet =>
-      'キャリブレーション済みの器具はまだありません';
+  String get equipmentCalibrationNoCalibratedEquipmentYet => 'キャリブレーション済みの器具はまだありません';
 
   @override
   String get equipmentCalibrationPlateMathWillFall => 'プレート計算は標準のデフォルトに戻ります。';
@@ -8804,8 +8553,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get equipmentCalibrationSetBarSledCable =>
-      'バー / スレッド / ケーブル / プレートの在庫を設定';
+  String get equipmentCalibrationSetBarSledCable => 'バー / スレッド / ケーブル / プレートの在庫を設定';
 
   @override
   String get equipmentCalibrationTitle => '器具のキャリブレーション';
@@ -9004,15 +8752,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseAddSheetAll => '全て';
 
   @override
-  String get exerciseAddSheetCreateCustomExercisesOr =>
-      'カスタム演習を作成するか、お気に入りにマークを付けます\n [ライブラリ] → [鉱山]';
+  String get exerciseAddSheetCreateCustomExercisesOr => 'カスタム演習を作成するか、お気に入りにマークを付けます\n [ライブラリ] → [鉱山]';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'エクササイズの追加に失敗しました';
 
   @override
-  String get exerciseAddSheetFindThePerfectExercise =>
-      'ワークアウトに追加する最適なエクササイズを見つけましょう';
+  String get exerciseAddSheetFindThePerfectExercise => 'ワークアウトに追加する最適なエクササイズを見つけましょう';
 
   @override
   String get exerciseAddSheetGettingAiSuggestions => 'AI による提案を取得しています...';
@@ -9024,8 +8770,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseAddSheetMine => '私の';
 
   @override
-  String get exerciseAddSheetNoCustomExercisesFavorites =>
-      'カスタムエクササイズ、お気に入り、\nまたは定番のエクササイズはまだありません';
+  String get exerciseAddSheetNoCustomExercisesFavorites => 'カスタムエクササイズ、お気に入り、\nまたは定番のエクササイズはまだありません';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable => '提案はありません';
@@ -9069,8 +8814,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseAnalyticsCompareWithFriends => '友達と比較する';
 
   @override
-  String get exerciseAnalyticsCompleteMoreSessionsTo =>
-      'セッションを完了してトレンドを確認しましょう';
+  String get exerciseAnalyticsCompleteMoreSessionsTo => 'セッションを完了してトレンドを確認しましょう';
 
   @override
   String get exerciseAnalyticsDrop => '落とす';
@@ -9336,44 +9080,30 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailSheetNoExercisesInCurrent =>
-      '現在のワークアウトに置き換えるエクササイズがありません';
+  String get exerciseDetailSheetNoExercisesInCurrent => '現在のワークアウトに置き換えるエクササイズがありません';
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
-    Object e,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e) {
     return '固定に失敗しました: $e';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
-    Object exerciseName,
-    Object selected,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected) {
     return '\"$selected\"を\"$exerciseName\"に置き換えました';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
-    Object exerciseName,
-    Object section,
-    Object timing,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing) {
     return '\"$exerciseName\"を$sectionに固定しました ($timing)';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName) {
     return '\"$exerciseName\"の固定を解除しました';
   }
 
   @override
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName) {
     return '\"$exerciseName\"のオフライン動画を削除しますか？いつでも再ダウンロード可能です。';
   }
 
@@ -9542,8 +9272,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseHistoryAllTime => 'オールタイム';
 
   @override
-  String get exerciseHistoryCompleteSomeWorkoutsTo =>
-      'いくつかのワークアウトを完了すると、エクササイズ履歴を確認し、時間の経過とともに進捗状況を追跡できます。';
+  String get exerciseHistoryCompleteSomeWorkoutsTo => 'いくつかのワークアウトを完了すると、エクササイズ履歴を確認し、時間の経過とともに進捗状況を追跡できます。';
 
   @override
   String get exerciseHistoryExerciseHistory => '運動履歴';
@@ -9555,8 +9284,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseHistoryFailedToLoadExercises => 'エクササイズの読み込みに失敗しました';
 
   @override
-  String get exerciseHistoryKeepTrainingAndPushing =>
-      'トレーニングを続けて自分の限界に挑戦してください。強くなるにつれて、あなたの個人記録がここに表示されます。';
+  String get exerciseHistoryKeepTrainingAndPushing => 'トレーニングを続けて自分の限界に挑戦してください。強くなるにつれて、あなたの個人記録がここに表示されます。';
 
   @override
   String get exerciseHistoryLast30Days => '過去 30 日間';
@@ -9621,8 +9349,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseManagementMixinMakeThisTheActive => 'これをアクティブなエクササイズにする';
 
   @override
-  String get exerciseManagementMixinNoAvailableExercisesTo =>
-      'ペアにできるエクササイズがありません';
+  String get exerciseManagementMixinNoAvailableExercisesTo => 'ペアにできるエクササイズがありません';
 
   @override
   String get exerciseManagementMixinPairWithNextExercise => '次のエクササイズと組み合わせる';
@@ -9700,8 +9427,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseMiniChartNotEnoughHistory => '履歴が不足しています';
 
   @override
-  String get exerciseNavigationMixinApplyToAllLinked =>
-      'リンクされているすべての演習に適用しますか?';
+  String get exerciseNavigationMixinApplyToAllLinked => 'リンクされているすべての演習に適用しますか?';
 
   @override
   String get exerciseNavigationMixinBarType => 'バータイプ';
@@ -9769,8 +9495,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinSomeExercisesHaveMissing =>
-      '一部の演習ではログが欠落しています。';
+  String get exerciseNavigationMixinSomeExercisesHaveMissing => '一部の演習ではログが欠落しています。';
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
@@ -9821,45 +9546,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseOptionsInfoLinkAsSuperset => 'スーパーセットとしてリンクする';
 
   @override
-  String get exerciseOptionsInfoMarkAsACore =>
-      '決して回転させられないコアリフトとしてマークします。 AI はワークアウトに常に定番のエクササイズを組み込みます。これは、一貫して段階的な負荷をかけたい複合動作に最適です。';
+  String get exerciseOptionsInfoMarkAsACore => '決して回転させられないコアリフトとしてマークします。 AI はワークアウトに常に定番のエクササイズを組み込みます。これは、一貫して段階的な負荷をかけたい複合動作に最適です。';
 
   @override
   String get exerciseOptionsInfoNeverRecommend => '決してお勧めしません';
 
   @override
-  String get exerciseOptionsInfoPairWithAnotherExercise =>
-      '別のエクササイズと組み合わせて、最小限の休憩で連続して実行します。時間効率と筋肉のポンプアップに最適です。';
+  String get exerciseOptionsInfoPairWithAnotherExercise => '別のエクササイズと組み合わせて、最小限の休憩で連続して実行します。時間効率と筋肉のポンプアップに最適です。';
 
   @override
-  String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
-      '今後の AI 推奨からこの演習を永久にブロックします。嫌いな運動や怪我でできない運動に使用してください。';
+  String get exerciseOptionsInfoPermanentlyBlockThisExercis => '今後の AI 推奨からこの演習を永久にブロックします。嫌いな運動や怪我でできない運動に使用してください。';
 
   @override
-  String get exerciseOptionsInfoQueueThisExerciseTo =>
-      'このエクササイズをキューに入れて、次のワークアウトに表示します。集中して行いたいエクササイズに最適です。キューに登録された演習は、使用されない場合、7 日後に期限切れになります。';
+  String get exerciseOptionsInfoQueueThisExerciseTo => 'このエクササイズをキューに入れて、次のワークアウトに表示します。集中して行いたいエクササイズに最適です。キューに登録された演習は、使用されない場合、7 日後に期限切れになります。';
 
   @override
   String get exerciseOptionsInfoRemoveFromWorkout => 'ワークアウトから削除';
 
   @override
-  String get exerciseOptionsInfoRemoveThisExerciseFrom =>
-      'このエクササイズを現在のワークアウトからのみ削除してください。このエクササイズは今後のワークアウトで再び登場する可能性があります。';
+  String get exerciseOptionsInfoRemoveThisExerciseFrom => 'このエクササイズを現在のワークアウトからのみ削除してください。このエクササイズは今後のワークアウトで再び登場する可能性があります。';
 
   @override
   String get exerciseOptionsInfoRepeatNextTime => '次回も繰り返す';
 
   @override
-  String get exerciseOptionsInfoReplaceWithASimilar =>
-      '同じ筋肉を対象とした同様のエクササイズに置き換えてください。 AI の提案、最近のスワップから選択するか、完全なライブラリを参照します。';
+  String get exerciseOptionsInfoReplaceWithASimilar => '同じ筋肉を対象とした同様のエクササイズに置き換えてください。 AI の提案、最近のスワップから選択するか、完全なライブラリを参照します。';
 
   @override
-  String get exerciseOptionsInfoSaveExercisesYouLove =>
-      'お気に入りのエクササイズを保存して、すぐにアクセスできるようにします。お気に入りはエクササイズ ライブラリのフィルタリングされたビューに表示され、AI の推奨事項で優先されます。';
+  String get exerciseOptionsInfoSaveExercisesYouLove => 'お気に入りのエクササイズを保存して、すぐにアクセスできるようにします。お気に入りはエクササイズ ライブラリのフィルタリングされたビューに表示され、AI の推奨事項で優先されます。';
 
   @override
-  String get exerciseOptionsInfoSeeYourPerformanceHistory =>
-      'この演習のパフォーマンス履歴と進行状況グラフを時間の経過とともに確認します。';
+  String get exerciseOptionsInfoSeeYourPerformanceHistory => 'この演習のパフォーマンス履歴と進行状況グラフを時間の経過とともに確認します。';
 
   @override
   String get exerciseOptionsInfoStapleExercise => '定番のエクササイズ';
@@ -9912,8 +9629,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePickerSheetBodyPart => '部位';
 
   @override
-  String get exercisePickerSheetCanTFindYour =>
-      'エクササイズが見つかりませんか？カスタムとして追加してください';
+  String get exercisePickerSheetCanTFindYour => 'エクササイズが見つかりませんか？カスタムとして追加してください';
 
   @override
   String get exercisePickerSheetClearAll => 'すべてクリア';
@@ -9942,25 +9658,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePickerSheetOrTypeAboveTo => 'または上部に入力して全ライブラリを検索';
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
-    Object length,
-    Object length1,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1) {
     return '$length1件中$length件を表示';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue(
-    Object customCount,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount) {
     return '($customCount)';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(
-    Object count,
-    Object name,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name) {
     return '$name ($count)';
   }
 
@@ -9982,15 +9690,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePickerSheetSearchForExercisesToAdd => 'お気に入りに追加する種目を検索';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToInclude =>
-      '次のワークアウトに含める種目を検索';
+  String get exercisePickerSheetSearchForExercisesToInclude => '次のワークアウトに含める種目を検索';
 
   @override
   String get exercisePickerSheetSearchForExercisesToSkip => 'スキップしたい種目を検索';
 
   @override
-  String get exercisePickerSheetSearchTryPushRow =>
-      '検索 — 「押す」、「列」、「しゃがむ」を試してください';
+  String get exercisePickerSheetSearchTryPushRow => '検索 — 「押す」、「列」、「しゃがむ」を試してください';
 
   @override
   String get exercisePickerSheetSearching => '検索中...';
@@ -10031,20 +9737,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePreferencesCardCustomExercises => 'カスタム演習';
 
   @override
-  String get exercisePreferencesCardCustomizeStepPerEquipme =>
-      '器具ごとの増減ステップをカスタマイズ';
+  String get exercisePreferencesCardCustomizeStepPerEquipme => '器具ごとの増減ステップをカスタマイズ';
 
   @override
-  String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
-      'ワークアウトに表示するエクササイズをカスタマイズ';
+  String get exercisePreferencesCardCustomizeWhichExercisesAppe => 'ワークアウトに表示するエクササイズをカスタマイズ';
 
   @override
-  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts =>
-      'ワークアウト前の動的ストレッチ';
+  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts => 'ワークアウト前の動的ストレッチ';
 
   @override
-  String get exercisePreferencesCardEnableOrDisableWorkout =>
-      'ワークアウトフェーズの有効/無効を切り替え';
+  String get exercisePreferencesCardEnableOrDisableWorkout => 'ワークアウトフェーズの有効/無効を切り替え';
 
   @override
   String get exercisePreferencesCardExercisePreferences => '運動の好み';
@@ -10089,8 +9791,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePreferencesCardMusclesToAvoid => '避ける筋肉部位';
 
   @override
-  String get exercisePreferencesCardQueueExercisesForNext =>
-      '次回のワークアウト用にエクササイズをキューに入れる';
+  String get exercisePreferencesCardQueueExercisesForNext => '次回のワークアウト用にエクササイズをキューに入れる';
 
   @override
   String exercisePreferencesCardQueued(Object queueCount) {
@@ -10116,8 +9817,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePreferencesCardWarmupPhase => 'ウォーミングアップフェーズ';
 
   @override
-  String get exercisePreferencesCardWarnBeforeFinishingWith =>
-      '未記録のセットがある場合に終了前に警告';
+  String get exercisePreferencesCardWarnBeforeFinishingWith => '未記録のセットがある場合に終了前に警告';
 
   @override
   String get exercisePreferencesCardWeightIncrements => '重量の増分';
@@ -10129,8 +9829,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exercisePreferencesCardWorkoutMode => 'ワークアウトモード';
 
   @override
-  String get exercisePreferencesCardYourPersonalExerciseLibrary =>
-      'パーソナルエクササイズライブラリ';
+  String get exercisePreferencesCardYourPersonalExerciseLibrary => 'パーソナルエクササイズライブラリ';
 
   @override
   String get exercisePreviewOverlayFormDemo => 'フォームデモ';
@@ -10194,8 +9893,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseProgressionsNotYet => 'まだ';
 
   @override
-  String get exerciseProgressionsOneMoreTooEasy =>
-      '「簡単すぎる」セッションがあと1回で次のバリエーションが解放されます。';
+  String get exerciseProgressionsOneMoreTooEasy => '「簡単すぎる」セッションがあと1回で次のバリエーションが解放されます。';
 
   @override
   String get exerciseProgressionsOtherTrackedExercises => 'その他の記録済みエクササイズ';
@@ -10241,10 +9939,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenEasySessions(
-    Object _target,
-    Object consecutiveEasy,
-  ) {
+  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy) {
     return '$consecutiveEasy / $_target 回の簡単なセッション';
   }
 
@@ -10264,10 +9959,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenYouWillMoveFrom(
-    Object exerciseName,
-    Object suggestedExercise,
-  ) {
+  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise) {
     return '$exerciseName から $suggestedExercise に移行します。';
   }
 
@@ -10296,8 +9988,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseQueueNoExercisesQueued => 'キューにエクササイズはありません';
 
   @override
-  String get exerciseQueueQueuedExercisesWillBe =>
-      'キューに入れたエクササイズは次回のワークアウトに含まれます。アイテムは7日後に期限切れとなります。';
+  String get exerciseQueueQueuedExercisesWillBe => 'キューに入れたエクササイズは次回のワークアウトに含まれます。アイテムは7日後に期限切れとなります。';
 
   @override
   String get exerciseQueueRemove => '削除';
@@ -10321,8 +10012,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get exerciseQueueTheseExercisesWillBe =>
-      'これらのエクササイズは次回のワークアウトに含まれます。キューのアイテムは7日後に期限切れとなります。';
+  String get exerciseQueueTheseExercisesWillBe => 'これらのエクササイズは次回のワークアウトに含まれます。キューのアイテムは7日後に期限切れとなります。';
 
   @override
   String get exerciseSafetyAuditAllExercisesTagged => 'すべてのエクササイズにタグ付け完了！';
@@ -10340,15 +10030,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseSafetyAuditNoDifficulty => '難易度なし';
 
   @override
-  String get exerciseSafetyAuditNoExercisesPendingManual =>
-      '手動監査待ちのエクササイズはありません。';
+  String get exerciseSafetyAuditNoExercisesPendingManual => '手動監査待ちのエクササイズはありません。';
 
   @override
   String get exerciseSafetyAuditNoPattern => 'パターンなし';
 
   @override
-  String get exerciseSafetyAuditOptionalCiteSourceExplain =>
-      '任意：ソースの引用、例外ケースの説明、曖昧な点の指摘など...';
+  String get exerciseSafetyAuditOptionalCiteSourceExplain => '任意：ソースの引用、例外ケースの説明、曖昧な点の指摘など...';
 
   @override
   String get exerciseSafetyAuditRefresh => '更新';
@@ -10383,35 +10071,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseSafetyAuditTryAgain => '再試行';
 
   @override
-  String get exerciseScienceResearchAllTrainingParametersAre =>
-      'すべてのトレーニングパラメータは、査読済みの運動科学文献に基づいています。結果には個人差があります。';
+  String get exerciseScienceResearchAllTrainingParametersAre => 'すべてのトレーニングパラメータは、査読済みの運動科学文献に基づいています。結果には個人差があります。';
 
   @override
-  String get exerciseScienceResearchAmericanCollegeOfSports =>
-      '米国スポーツ医学会 (ACSM)';
+  String get exerciseScienceResearchAmericanCollegeOfSports => '米国スポーツ医学会 (ACSM)';
 
   @override
-  String get exerciseScienceResearchAndroulakisKorakakisPFis =>
-      'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
+  String get exerciseScienceResearchAndroulakisKorakakisPFis => 'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
 
   @override
   String get exerciseScienceResearchBarbaRuizCEt => 'Barba-Ruiz, C. et al.';
 
   @override
-  String get exerciseScienceResearchEffectsOfSupersetConfigurat =>
-      'バーベルベンチプレスにおけるスーパーセット構成が運動学的および自覚的運動強度に与える影響';
+  String get exerciseScienceResearchEffectsOfSupersetConfigurat => 'バーベルベンチプレスにおけるスーパーセット構成が運動学的および自覚的運動強度に与える影響';
 
   @override
-  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms =>
-      'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
+  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms => 'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
 
   @override
-  String get exerciseScienceResearchEssentialsOfStrengthTrainin =>
-      'ストレングストレーニングとコンディショニングの基礎';
+  String get exerciseScienceResearchEssentialsOfStrengthTrainin => 'ストレングストレーニングとコンディショニングの基礎';
 
   @override
-  String get exerciseScienceResearchEverySubmittedSourceIs =>
-      '提出されたすべてのソースは、知識ベースに追加される前に人間によってレビューおよび検証されます。';
+  String get exerciseScienceResearchEverySubmittedSourceIs => '提出されたすべてのソースは、知識ベースに追加される前に人間によってレビューおよび検証されます。';
 
   @override
   String get exerciseScienceResearchEvidenceBasedTraining => '科学的根拠に基づくトレーニング';
@@ -10420,23 +10101,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseScienceResearchFeedDataToRag => 'RAGにデータを供給';
 
   @override
-  String get exerciseScienceResearchFeedYourOwnResearch =>
-      '独自の調査論文、エクササイズデータベース、トレーニング手法を当社のRAG（検索拡張生成）システムに供給してください。これにより、AIコーチはパーソナライズされたワークアウトプランを作成する際、より高品質なソースを参照できるようになり、最先端の科学に基づいたスマートで適切な提案が可能になります。';
+  String get exerciseScienceResearchFeedYourOwnResearch => '独自の調査論文、エクササイズデータベース、トレーニング手法を当社のRAG（検索拡張生成）システムに供給してください。これにより、AIコーチはパーソナライズされたワークアウトプランを作成する際、より高品質なソースを参照できるようになり、最先端の科学に基づいたスマートで適切な提案が可能になります。';
 
   @override
   String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. et al.';
 
   @override
-  String get exerciseScienceResearchGoldsteinANLeung =>
-      'Goldstein, A. N. & Leung, E.';
+  String get exerciseScienceResearchGoldsteinANLeung => 'Goldstein, A. N. & Leung, E.';
 
   @override
-  String get exerciseScienceResearchGuidelinesForExerciseTestin =>
-      '運動テストと処方のガイドライン';
+  String get exerciseScienceResearchGuidelinesForExerciseTestin => '運動テストと処方のガイドライン';
 
   @override
-  String get exerciseScienceResearchHaffGGTriplett =>
-      'Haff, G. G. & Triplett, N. T.';
+  String get exerciseScienceResearchHaffGGTriplett => 'Haff, G. G. & Triplett, N. T.';
 
   @override
   String get exerciseScienceResearchHowItWorks => '仕組み';
@@ -10445,8 +10122,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseScienceResearchImportantGuidelines => '重要なガイドライン';
 
   @override
-  String get exerciseScienceResearchIsraetelMRpStrength =>
-      'Israetel, M. / RP Strength';
+  String get exerciseScienceResearchIsraetelMRpStrength => 'Israetel, M. / RP Strength';
 
   @override
   String get exerciseScienceResearchKeyFindings => '主な調査結果';
@@ -10473,8 +10149,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseScienceResearchUploadData => 'データをアップロード';
 
   @override
-  String get exerciseScienceResearchUploadPdfsArticlesOr =>
-      '運動科学研究を含むPDF、記事、またはテキストファイルをアップロードしてください。システムがコンテンツを処理およびインデックス化し、AIがワークアウトを作成する際のコンテキストとして利用できるようにします。';
+  String get exerciseScienceResearchUploadPdfsArticlesOr => '運動科学研究を含むPDF、記事、またはテキストファイルをアップロードしてください。システムがコンテンツを処理およびインデックス化し、AIがワークアウトを作成する際のコンテキストとして利用できるようにします。';
 
   @override
   String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. et al.';
@@ -10512,10 +10187,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String exerciseSearchResultsWorkoutsFound(
-    Object exerciseName,
-    Object totalResults,
-  ) {
+  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults) {
     return '\"$exerciseName\" - $totalResults 件のワークアウトが見つかりました';
   }
 
@@ -10679,8 +10351,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseSwapSheetFailedToSwapExercise => '種目の入れ替えに失敗しました';
 
   @override
-  String get exerciseSwapSheetFindingMuscleMatchedAlterna =>
-      '筋肉が一致する代替種目を検索中...';
+  String get exerciseSwapSheetFindingMuscleMatchedAlterna => '筋肉が一致する代替種目を検索中...';
 
   @override
   String get exerciseSwapSheetFindingSimilarExercises => '類似種目を検索中...';
@@ -10716,9 +10387,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseSwapSheetNoRecentSwaps => '最近の入れ替えはありません';
 
   @override
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
-    Object newExerciseName,
-  ) {
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName) {
     return '$newExerciseNameに変更しました';
   }
 
@@ -10777,8 +10446,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseSwapSheetTryAiSuggestions => 'AIの提案を試す';
 
   @override
-  String get exerciseSwapSheetTryRephrasingYourRequest =>
-      'リクエストを言い換えるか、別の理由を選択するか、ライブラリタブを確認してください。';
+  String get exerciseSwapSheetTryRephrasingYourRequest => 'リクエストを言い換えるか、別の理由を選択するか、ライブラリタブを確認してください。';
 
   @override
   String get exerciseSwapSheetYourSwapHistoryWill => '入れ替え履歴がここに表示されます';
@@ -10997,8 +10665,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exportDialogPartTimeRange => '期間';
 
   @override
-  String get exportDialogPartYourDataWillBe =>
-      'データはCSVファイルを含むZIPファイルとしてエクスポートされます。';
+  String get exportDialogPartYourDataWillBe => 'データはCSVファイルを含むZIPファイルとしてエクスポートされます。';
 
   @override
   String get exportExportingYourData => 'データをエクスポート中...';
@@ -11016,8 +10683,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exportStatsExportStats => '統計をエクスポート';
 
   @override
-  String get exportStatsFullDataExportWith =>
-      'すべてのワークアウト、PR、測定値を含む完全なデータエクスポート';
+  String get exportStatsFullDataExportWith => 'すべてのワークアウト、PR、測定値を含む完全なデータエクスポート';
 
   @override
   String get exportStatsPdfReport => 'PDFレポート';
@@ -11053,12 +10719,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exportWorkoutButtonGarminWahooNative => 'Garmin / Wahooネイティブ';
 
   @override
-  String get exportWorkoutButtonMyfitnesspalSportstracks =>
-      'MyFitnessPal / Sportstracks';
+  String get exportWorkoutButtonMyfitnesspalSportstracks => 'MyFitnessPal / Sportstracks';
 
   @override
-  String get exportWorkoutButtonStravaGarminConnectKomo =>
-      'Strava / Garmin Connect / Komoot';
+  String get exportWorkoutButtonStravaGarminConnectKomo => 'Strava / Garmin Connect / Komoot';
 
   @override
   String get fastingAiInsightAiInsight => 'AIインサイト';
@@ -11073,12 +10737,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingAvgDuration => '平均時間';
 
   @override
-  String get fastingBenefit_appetite =>
-      '食欲に関するホルモンが時間をかけてリセットされ、食事量を抑えやすくなります。';
+  String get fastingBenefit_appetite => '食欲に関するホルモンが時間をかけてリセットされ、食事量を抑えやすくなります。';
 
   @override
-  String get fastingBenefit_autophagy =>
-      '細胞のオートファジーが損傷したタンパク質を除去し、老化の抑制に関連しています。';
+  String get fastingBenefit_autophagy => '細胞のオートファジーが損傷したタンパク質を除去し、老化の抑制に関連しています。';
 
   @override
   String get fastingBenefit_bs_control => '血糖値がより安定し、食欲やエネルギーの低下を抑えます。';
@@ -11093,20 +10755,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingBenefit_gut_rest => '消化器系が休息することで、腸内細菌叢の健康をサポートします。';
 
   @override
-  String get fastingBenefit_insulin_sensitivity =>
-      'インスリン感受性の向上により、2型糖尿病のリスクが軽減されます。';
+  String get fastingBenefit_insulin_sensitivity => 'インスリン感受性の向上により、2型糖尿病のリスクが軽減されます。';
 
   @override
-  String get fastingBenefit_longevity =>
-      '動物実験では、断食が健康寿命の延長と疾患マーカーの減少に関連していることが示されています。';
+  String get fastingBenefit_longevity => '動物実験では、断食が健康寿命の延長と疾患マーカーの減少に関連していることが示されています。';
 
   @override
-  String get fastingBenefit_mental_clarity =>
-      'ケトン体は、ブドウ糖の急上昇よりも安定して脳にエネルギーを供給します。';
+  String get fastingBenefit_mental_clarity => 'ケトン体は、ブドウ糖の急上昇よりも安定して脳にエネルギーを供給します。';
 
   @override
-  String get fastingBenefit_weight_loss =>
-      '除脂肪組織ではなく蓄積された脂肪をターゲットにすることで、持続可能な減量が可能になります。';
+  String get fastingBenefit_weight_loss => '除脂肪組織ではなく蓄積された脂肪をターゲットにすることで、持続可能な減量が可能になります。';
 
   @override
   String get fastingBodyStatusBeyondGoal => '目標を超過';
@@ -11162,10 +10820,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingCalendarWeight => '体重';
 
   @override
-  String fastingCalendarWidgetCompleted(
-    Object goalsCompleted,
-    Object goalsTotal,
-  ) {
+  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal) {
     return '$goalsCompleted/$goalsTotal 完了';
   }
 
@@ -11250,8 +10905,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingGuideIsItSafeFor => '安全ですか？';
 
   @override
-  String get fastingGuideSafetyBody =>
-      'めまい、失神、震え、体調不良を感じた場合は、断食を中止して食事を摂ってください。24時間を超える断食には電解質の補給に注意が必要であり、72時間を超える断食は医師の監督下でのみ行ってください。断食は医療の代わりにはなりません。このガイドは教育目的であり、医学的助言ではありません。';
+  String get fastingGuideSafetyBody => 'めまい、失神、震え、体調不良を感じた場合は、断食を中止して食事を摂ってください。24時間を超える断食には電解質の補給に注意が必要であり、72時間を超える断食は医師の監督下でのみ行ってください。断食は医療の代わりにはなりません。このガイドは教育目的であり、医学的助言ではありません。';
 
   @override
   String get fastingGuideStaySafe => '安全のために';
@@ -11300,12 +10954,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get fastingHydrationRowSyncedVisibleOnHome =>
-      '同期済み — ホームと栄養管理にも表示されます。';
+  String get fastingHydrationRowSyncedVisibleOnHome => '同期済み — ホームと栄養管理にも表示されます。';
 
   @override
-  String get fastingHydrationRowWaterKeepsYouEnergized =>
-      '断食中は水分補給でエネルギーを維持しましょう';
+  String get fastingHydrationRowWaterKeepsYouEnergized => '断食中は水分補給でエネルギーを維持しましょう';
 
   @override
   String get fastingImpactActivityCalendar => 'アクティビティカレンダー';
@@ -11319,12 +10971,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get fastingImpactCompleteMoreFastsTo =>
-      '正確な分析のために、さらに断食を完了しましょう。少なくとも7日間の断食をおすすめします。';
+  String get fastingImpactCompleteMoreFastsTo => '正確な分析のために、さらに断食を完了しましょう。少なくとも7日間の断食をおすすめします。';
 
   @override
-  String get fastingImpactCompleteSomeFastsAnd =>
-      '断食を完了して体重を記録し、断食が目標に与える影響を確認しましょう。';
+  String get fastingImpactCompleteSomeFastsAnd => '断食を完了して体重を記録し、断食が目標に与える影響を確認しましょう。';
 
   @override
   String get fastingImpactFailedToLoadData => 'データの読み込みに失敗しました';
@@ -11513,16 +11163,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String fastingScheduleEditorSheetValue(
-    Object difficulty,
-    Object displayName,
-  ) {
+  String fastingScheduleEditorSheetValue(Object difficulty, Object displayName) {
     return '$displayName  ·  $difficulty';
   }
 
   @override
-  String get fastingScheduleEditorWeeklyFastingScheduleSaved =>
-      '週間断食スケジュールを保存しました';
+  String get fastingScheduleEditorWeeklyFastingScheduleSaved => '週間断食スケジュールを保存しました';
 
   @override
   String get fastingScheduleEditorWeeklySchedule => '週間スケジュール';
@@ -11595,8 +11241,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingScreenRedesignedFastPaused => '断食を一時停止しました';
 
   @override
-  String get fastingScreenRedesignedFastResumedYourTimer =>
-      '断食を再開しました — タイマーが戻りました。';
+  String get fastingScreenRedesignedFastResumedYourTimer => '断食を再開しました — タイマーが戻りました。';
 
   @override
   String get fastingScreenRedesignedFasting => '断食';
@@ -11748,50 +11393,43 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingStageTimerReadyToFast => '断食開始準備完了';
 
   @override
-  String get fastingStage_autophagy_desc =>
-      '細胞が損傷したタンパク質や小器官を分解・再利用し始めます。細胞レベルでの徹底的な浄化作用です。';
+  String get fastingStage_autophagy_desc => '細胞が損傷したタンパク質や小器官を分解・再利用し始めます。細胞レベルでの徹底的な浄化作用です。';
 
   @override
   String get fastingStage_autophagy_name => 'オートファジー';
 
   @override
-  String get fastingStage_fat_burning_desc =>
-      'グリコーゲンが少なくなると、脂肪細胞がエネルギー源として脂肪酸を血流に放出します。';
+  String get fastingStage_fat_burning_desc => 'グリコーゲンが少なくなると、脂肪細胞がエネルギー源として脂肪酸を血流に放出します。';
 
   @override
   String get fastingStage_fat_burning_name => '脂肪燃焼';
 
   @override
-  String get fastingStage_glycogen_depletion_desc =>
-      '体はまず蓄えられたブドウ糖を使用します。12〜14時間経過すると肝臓のグリコーゲンが減少し、代謝の切り替えが始まります。';
+  String get fastingStage_glycogen_depletion_desc => '体はまず蓄えられたブドウ糖を使用します。12〜14時間経過すると肝臓のグリコーゲンが減少し、代謝の切り替えが始まります。';
 
   @override
   String get fastingStage_glycogen_depletion_name => 'グリコーゲン枯渇';
 
   @override
-  String get fastingStage_growth_hormone_desc =>
-      '成長ホルモン（HGH）のレベルが急上昇し、除脂肪筋肉量を保護しながら脂肪代謝を促進します。';
+  String get fastingStage_growth_hormone_desc => '成長ホルモン（HGH）のレベルが急上昇し、除脂肪筋肉量を保護しながら脂肪代謝を促進します。';
 
   @override
   String get fastingStage_growth_hormone_name => '成長ホルモン分泌';
 
   @override
-  String get fastingStage_inflammation_drop_desc =>
-      '腸が休息し免疫細胞が再生されることで、炎症マーカーが減少します。';
+  String get fastingStage_inflammation_drop_desc => '腸が休息し免疫細胞が再生されることで、炎症マーカーが減少します。';
 
   @override
   String get fastingStage_inflammation_drop_name => '炎症の抑制';
 
   @override
-  String get fastingStage_insulin_low_desc =>
-      'インスリンがベースライン付近に保たれることで、脂肪の蓄積が解放され、インスリン感受性が向上します。';
+  String get fastingStage_insulin_low_desc => 'インスリンがベースライン付近に保たれることで、脂肪の蓄積が解放され、インスリン感受性が向上します。';
 
   @override
   String get fastingStage_insulin_low_name => 'インスリン低下';
 
   @override
-  String get fastingStage_ketosis_desc =>
-      '肝臓が脂肪酸をケトン体に変換します。これは脳にとってクリーンで効率的なエネルギー源です。';
+  String get fastingStage_ketosis_desc => '肝臓が脂肪酸をケトン体に変換します。これは脳にとってクリーンで効率的なエネルギー源です。';
 
   @override
   String get fastingStage_ketosis_name => 'ケトーシス';
@@ -11909,45 +11547,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fastingTip_bcaa_avoid => 'BCAAやカロリー・アミノ酸を含むほとんどのサプリメントは断食を中断させます。';
 
   @override
-  String get fastingTip_break_with_protein =>
-      '断食明けはタンパク質が豊富な食事を摂り、筋肉を維持し満腹感を長持ちさせましょう。';
+  String get fastingTip_break_with_protein => '断食明けはタンパク質が豊富な食事を摂り、筋肉を維持し満腹感を長持ちさせましょう。';
 
   @override
   String get fastingTip_coffee_ok => 'ブラックコーヒーは断食を中断させず、空腹感を抑える効果も期待できます。';
 
   @override
-  String get fastingTip_exercise_fasted_ok_intermediate =>
-      '体が慣れていれば、空腹時の軽度から中程度の有酸素運動は問題ありません。体の声に耳を傾けましょう。';
+  String get fastingTip_exercise_fasted_ok_intermediate => '体が慣れていれば、空腹時の軽度から中程度の有酸素運動は問題ありません。体の声に耳を傾けましょう。';
 
   @override
-  String get fastingTip_exercise_high_intensity_eat_first =>
-      '高重量のトレーニングや強度の高いインターバルを行う場合は、事前に食事を摂ることでパフォーマンスが保護されます。';
+  String get fastingTip_exercise_high_intensity_eat_first => '高重量のトレーニングや強度の高いインターバルを行う場合は、事前に食事を摂ることでパフォーマンスが保護されます。';
 
   @override
-  String get fastingTip_ramp_up_gradually =>
-      'まずは12時間から始め、毎週30分ずつ時間を延ばしましょう。最初からOMADに挑戦するのは避けましょう。';
+  String get fastingTip_ramp_up_gradually => 'まずは12時間から始め、毎週30分ずつ時間を延ばしましょう。最初からOMADに挑戦するのは避けましょう。';
 
   @override
-  String get fastingTip_refeed_carbs_carefully =>
-      '36時間以上の断食後は、不快感を避けるために炭水化物を少しずつ再導入してください。';
+  String get fastingTip_refeed_carbs_carefully => '36時間以上の断食後は、不快感を避けるために炭水化物を少しずつ再導入してください。';
 
   @override
-  String get fastingTip_sleep_helps_extended =>
-      '睡眠時間と断食時間を重ねることで、より長い断食もずっと楽になります。';
+  String get fastingTip_sleep_helps_extended => '睡眠時間と断食時間を重ねることで、より長い断食もずっと楽になります。';
 
   @override
   String get fastingTip_stay_hydrated => '断食中は水、ブラックコーヒー、無糖のお茶を飲んでも問題ありません。';
 
   @override
-  String get fastingTip_track_hunger_separate_from_appetite =>
-      '空腹感と食欲は別物です。空腹感は波のように消えますが、食欲は習慣的なものです。';
+  String get fastingTip_track_hunger_separate_from_appetite => '空腹感と食欲は別物です。空腹感は波のように消えますが、食欲は習慣的なものです。';
 
   @override
   String get fastingTotalFasts => '合計断食回数';
 
   @override
-  String get fastingTrackYourIntermittentFastin =>
-      'スマートゾーン通知、進捗インサイト、詳細な履歴で断食を記録しましょう。';
+  String get fastingTrackYourIntermittentFastin => 'スマートゾーン通知、進捗インサイト、詳細な履歴で断食を記録しましょう。';
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
@@ -11991,8 +11621,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertModalBodyweightExerciseDropThe =>
-      '自重エクササイズ — 重量ではなくレップ数の目標を下げてください。';
+  String get fatigueAlertModalBodyweightExerciseDropThe => '自重エクササイズ — 重量ではなくレップ数の目標を下げてください。';
 
   @override
   String get fatigueAlertModalContinueAsPlanned => '計画通りに進める';
@@ -12060,8 +11689,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get favoriteExercisesTheAiWillPrioritize =>
-      'AIはワークアウト生成時にこれらのお気に入りエクササイズを優先します。';
+  String get favoriteExercisesTheAiWillPrioritize => 'AIはワークアウト生成時にこれらのお気に入りエクササイズを優先します。';
 
   @override
   String get favoriteWorkoutsFavoriteWorkouts => 'お気に入りワークアウト';
@@ -12104,8 +11732,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get favoritesNoFavoritesYet => 'お気に入りはまだありません';
 
   @override
-  String get favoritesTapU2665OnAny =>
-      'Discoverまたはライブラリのレシピにある♥をタップして、ここにお気に入りを保存しましょう。';
+  String get favoritesTapU2665OnAny => 'Discoverまたはライブラリのレシピにある♥をタップして、ここにお気に入りを保存しましょう。';
 
   @override
   String get favoritesTryAgain => '再試行';
@@ -12126,8 +11753,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get featureVotingVoting => '投票';
 
   @override
-  String get feedCompleteWorkoutsToSee =>
-      'ワークアウトを完了してここにシェアしましょう！\n友達をフォローして彼らのワークアウトもチェック。';
+  String get feedCompleteWorkoutsToSee => 'ワークアウトを完了してここにシェアしましょう！\n友達をフォローして彼らのワークアウトもチェック。';
 
   @override
   String get feedCouldNotLoadYour => 'アクティビティフィードを読み込めませんでした。\n後でもう一度お試しください。';
@@ -12156,8 +11782,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get feelResultsCompleteWorkoutsWithMood =>
-      '気分チェックインを伴うワークアウトを完了して、運動が気分をどう改善するかを確認しましょう。';
+  String get feelResultsCompleteWorkoutsWithMood => '気分チェックインを伴うワークアウトを完了して、運動が気分をどう改善するかを確認しましょう。';
 
   @override
   String get feelResultsFeelResults => '気分の結果';
@@ -12189,10 +11814,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String feelResultsScreenYouFeltStrongerAfter(
-    Object feelingStrongerCount,
-    Object totalWorkouts,
-  ) {
+  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts) {
     return '$totalWorkouts回のワークアウト中、$feelingStrongerCount回で強さを実感しました！';
   }
 
@@ -12261,9 +11883,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firstWorkoutForecastProjectedStrengthGainOn => '主要リフトの予測筋力向上';
 
   @override
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(
-    Object effectiveSessions,
-  ) {
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions) {
     return '週 $effectiveSessions 回のセッションに基づく推定';
   }
 
@@ -12298,8 +11918,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fitnessAssessmentCardioCapacity => '心肺機能';
 
   @override
-  String get fitnessAssessmentHelpUsPersonalizeYour =>
-      'ワークアウトをパーソナライズしましょう（約2分）';
+  String get fitnessAssessmentHelpUsPersonalizeYour => 'ワークアウトをパーソナライズしましょう（約2分）';
 
   @override
   String get fitnessAssessmentHowLongCanYou => 'プランクは何秒間保持できますか？';
@@ -12314,8 +11933,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fitnessAssessmentHowManyCanYou => '連続で何回できますか？';
 
   @override
-  String get fitnessAssessmentHowManyConsecutivePush =>
-      '正しいフォームで連続何回プッシュアップができますか？';
+  String get fitnessAssessmentHowManyConsecutivePush => '正しいフォームで連続何回プッシュアップができますか？';
 
   @override
   String get fitnessAssessmentHowManyPullUps => '懸垂は何回できますか？';
@@ -12345,8 +11963,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fitnessAssessmentWhyThisMatters => 'これが重要な理由';
 
   @override
-  String get fitnessAssessmentYourAnswersHelpThe =>
-      '回答に基づき、AIがあなたの体力レベルに合わせてワークアウトを調整します。推測は不要です。';
+  String get fitnessAssessmentYourAnswersHelpThe => '回答に基づき、AIがあなたの体力レベルに合わせてワークアウトを調整します。推測は不要です。';
 
   @override
   String get fitnessCrateCollect => '受け取る';
@@ -12394,12 +12011,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flexibilityAssessmentAllTests => 'すべてのテスト';
 
   @override
-  String get flexibilityAssessmentCompleteSomeFlexibilityAsse =>
-      '柔軟性評価を完了して、パーソナライズされたストレッチの提案を受け取りましょう';
+  String get flexibilityAssessmentCompleteSomeFlexibilityAsse => '柔軟性評価を完了して、パーソナライズされたストレッチの提案を受け取りましょう';
 
   @override
-  String get flexibilityAssessmentCompleteTheseTestsTo =>
-      'これらのテストを完了して、柔軟性の詳細なプロフィールを取得しましょう';
+  String get flexibilityAssessmentCompleteTheseTestsTo => 'これらのテストを完了して、柔軟性の詳細なプロフィールを取得しましょう';
 
   @override
   String get flexibilityAssessmentFailedToLoadData => 'データの読み込みに失敗しました';
@@ -12408,15 +12023,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flexibilityAssessmentFlexibilityAssessment => '柔軟性評価';
 
   @override
-  String get flexibilityAssessmentFocusOnTheseAreas =>
-      '柔軟性全体を向上させるために、これらの部位に注目しましょう';
+  String get flexibilityAssessmentFocusOnTheseAreas => '柔軟性全体を向上させるために、これらの部位に注目しましょう';
 
   @override
   String get flexibilityAssessmentMyPlans => 'マイプラン';
 
   @override
-  String get flexibilityAssessmentNoFlexibilityTestsAvailable =>
-      '利用可能な柔軟性テストはありません';
+  String get flexibilityAssessmentNoFlexibilityTestsAvailable => '利用可能な柔軟性テストはありません';
 
   @override
   String get flexibilityAssessmentNoStretchPlansYet => 'ストレッチプランはまだありません';
@@ -12456,8 +12069,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flexibilityHistoryAssessmentHistory => '評価履歴';
 
   @override
-  String get flexibilityHistoryCompleteSomeFlexibilityTest =>
-      '柔軟性テストを完了すると、ここに履歴が表示されます';
+  String get flexibilityHistoryCompleteSomeFlexibilityTest => '柔軟性テストを完了すると、ここに履歴が表示されます';
 
   @override
   String get flexibilityHistoryDeleteAssessment => '評価を削除';
@@ -12547,8 +12159,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get flexibilityTestDetailTakeTest => 'テストを受ける';
 
   @override
-  String get flexibilityTestDetailTakeThisTestTo =>
-      'このテストを受けて、柔軟性の評価とパーソナライズされた推奨事項を確認しましょう';
+  String get flexibilityTestDetailTakeThisTestTo => 'このテストを受けて、柔軟性の評価とパーソナライズされた推奨事項を確認しましょう';
 
   @override
   String get flexibilityTestDetailTargetMuscles => 'ターゲット筋肉';
@@ -12590,8 +12201,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get floatingChatOverlayAskYourAiCoach => 'AIコーチに質問する...';
 
   @override
-  String get floatingChatOverlayErrorLoadingMessages =>
-      'メッセージの読み込み中にエラーが発生しました';
+  String get floatingChatOverlayErrorLoadingMessages => 'メッセージの読み込み中にエラーが発生しました';
 
   @override
   String floatingChatOverlayGoTo(Object workoutName) {
@@ -12602,8 +12212,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get floatingChatOverlayHowCanIHelp => '今日はどのようなお手伝いをしましょうか？';
 
   @override
-  String get floatingChatOverlayMediaAttachmentsAvailableIn =>
-      'メディアの添付ファイルはフルチャットで利用可能です';
+  String get floatingChatOverlayMediaAttachmentsAvailableIn => 'メディアの添付ファイルはフルチャットで利用可能です';
 
   @override
   String get floatingChatOverlayOnline => 'オンライン';
@@ -12623,8 +12232,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get focalStepperValue => '値';
 
   @override
-  String get focusAreasSelectorEnterCustomFocusArea =>
-      'カスタムの重点部位を入力 (例: \"回旋筋腱板\")';
+  String get focusAreasSelectorEnterCustomFocusArea => 'カスタムの重点部位を入力 (例: \"回旋筋腱板\")';
 
   @override
   String focusAreasSelectorSelected(Object selectedCount) {
@@ -12635,8 +12243,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get focusAreasSelectorTargetAreas => 'ターゲット部位';
 
   @override
-  String get focusAreasSelectorWhichBodyRegionsTo =>
-      '鍛える部位を選択してください。上記のトレーニングスタイルと組み合わせてください。';
+  String get focusAreasSelectorWhichBodyRegionsTo => '鍛える部位を選択してください。上記のトレーニングスタイルと組み合わせてください。';
 
   @override
   String get foldableWarmupLayoutPause => '一時停止';
@@ -12715,18 +12322,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodAnalysisInlineU00b7 => '·';
 
   @override
-  String foodAnalysisLoadingElapsed(
-    Object _elapsedSeconds,
-    Object _stillWorkingIndex,
-  ) {
+  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex) {
     return 'elapsed-$_elapsedSeconds-$_stillWorkingIndex';
   }
 
   @override
-  String foodAnalysisLoadingS(
-    Object _elapsedSeconds,
-    Object analysisLoadingCopy,
-  ) {
+  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy) {
     return '$analysisLoadingCopy… $_elapsedSeconds秒';
   }
 
@@ -12741,8 +12342,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get foodAnalysisResultAiNutritionAnalysisIs =>
-      'AIによる栄養分析は推定値です。個別の食事アドバイスについては栄養士にご相談ください。';
+  String get foodAnalysisResultAiNutritionAnalysisIs => 'AIによる栄養分析は推定値です。個別の食事アドバイスについては栄養士にご相談ください。';
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
@@ -12765,10 +12365,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String foodAnalysisResultCardLeavesYouCalFor(
-    Object mealLabel,
-    Object remaining,
-  ) {
+  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining) {
     return '$mealLabel用に残り$remaining cal';
   }
 
@@ -12906,11 +12503,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodBrowserPanelOnlyMatchFound => '唯一の一致';
 
   @override
-  String foodBrowserPanelPartExpandableSearchCardStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12930,11 +12523,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String foodBrowserPanelPartNLItemSectionStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12950,8 +12539,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelSearch528000Foods =>
-      'USDA、カナダ、インドなどのデータベースから528,000以上の食品を検索';
+  String get foodBrowserPanelSearch528000Foods => 'USDA、カナダ、インドなどのデータベースから528,000以上の食品を検索';
 
   @override
   String get foodBrowserPanelSearchAlternatives => '代替品を検索...';
@@ -13081,20 +12669,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String foodHistoryScreenPartDateRangeValue(
-    Object _dateLabel,
-    Object _mealLabel,
-    Object _sourceLabel,
-  ) {
+  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel) {
     return '$_dateLabel · $_mealLabel · $_sourceLabel';
   }
 
   @override
-  String foodHistoryScreenPartFrequentFoodChipPCF(
-    Object carbsG,
-    Object fatG,
-    Object proteinG,
-  ) {
+  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG) {
     return '${proteinG}P · ${carbsG}C · ${fatG}F';
   }
 
@@ -13389,8 +12969,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodMoodAnalyticsStartTrackingMood => '気分を記録し始める';
 
   @override
-  String get foodMoodAnalyticsTrackYourMoodWhen =>
-      '食事を記録する際に気分を追跡して、\nパターンやインサイトを確認しましょう';
+  String get foodMoodAnalyticsTrackYourMoodWhen => '食事を記録する際に気分を追跡して、\nパターンやインサイトを確認しましょう';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => '記録された食事';
@@ -13442,8 +13021,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodReportSubmitReport => '報告を送信';
 
   @override
-  String get foodReportWeLlReviewAnd =>
-      '48時間以内に確認・更新いたします。\nデータ改善へのご協力ありがとうございます！';
+  String get foodReportWeLlReviewAnd => '48時間以内に確認・更新いたします。\nデータ改善へのご協力ありがとうございます！';
 
   @override
   String get foodReportWhatFoodDidYou => '実際にはどの食品を指していましたか？';
@@ -13503,12 +13081,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodSearchResultsSomethingWentWrong => 'エラーが発生しました';
 
   @override
-  String get foodSearchResultsTypeToSearchYour =>
-      '入力して、保存済み食品、最近の食事、またはデータベースを検索します。';
+  String get foodSearchResultsTypeToSearchYour => '入力して、保存済み食品、最近の食事、またはデータベースを検索します。';
 
   @override
-  String get formCheckResultAiFormAnalysisIs =>
-      'AIフォーム分析は教育目的のみのものです。個別の指導については資格のあるトレーナーにご相談ください。';
+  String get formCheckResultAiFormAnalysisIs => 'AIフォーム分析は教育目的のみのものです。個別の指導については資格のあるトレーナーにご相談ください。';
 
   @override
   String get formCheckResultAreasToImprove => '改善点';
@@ -13554,15 +13130,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get formCheckResultNeedsWork => '改善が必要';
 
   @override
-  String get formCheckResultSendAVideoOf =>
-      'エクササイズの動画を送っていただければ、フォームのチェック、レップ数のカウント、修正点のアドバイスを行います。';
+  String get formCheckResultSendAVideoOf => 'エクササイズの動画を送っていただければ、フォームのチェック、レップ数のカウント、修正点のアドバイスを行います。';
 
   @override
   String get formCheckResultTempo => 'テンポ';
 
   @override
-  String get formComparisonResultAiFormAnalysisIs =>
-      'AIフォーム分析は教育目的のみのものです。個別の指導については資格のあるトレーナーにご相談ください。';
+  String get formComparisonResultAiFormAnalysisIs => 'AIフォーム分析は教育目的のみのものです。個別の指導については資格のあるトレーナーにご相談ください。';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -13612,8 +13186,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get founderNoteFounderSoloStillOn => '創業者、ソロ、まだバージョン1。';
 
   @override
-  String get founderNoteIUsedToLog =>
-      '私は2週間連続ですべての食事を記録し、自分を誇らしく思っていましたが、読めないタイ料理店に入って無難そうなものを食べ、静かにアプリを開くのをやめてしまうということを繰り返していました。3週間後には別のアプリを再インストールして「今度こそは」と誓い、また同じループを繰り返すのです。どのアプリも私のデータを記録してくれましたが、私が沈黙したことに気づくものはありませんでした。それらはコーチではなく、単なる台帳だったのです。';
+  String get founderNoteIUsedToLog => '私は2週間連続ですべての食事を記録し、自分を誇らしく思っていましたが、読めないタイ料理店に入って無難そうなものを食べ、静かにアプリを開くのをやめてしまうということを繰り返していました。3週間後には別のアプリを再インストールして「今度こそは」と誓い、また同じループを繰り返すのです。どのアプリも私のデータを記録してくれましたが、私が沈黙したことに気づくものはありませんでした。それらはコーチではなく、単なる台帳だったのです。';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -13629,16 +13202,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get founderNoteSoIBuiltThe =>
-      'そこで私は台帳ではなく人間を構築しました。国内外を問わず、どんなメニューでも撮影すると、コーチがそれをマクロで読み上げます。火曜日をスキップすれば、罪悪感を感じることなく水曜日の朝に戻れます。月に 1 回未満の PT セッションで、あなたの食事、ジム、滑りパターンを学習します。';
+  String get founderNoteSoIBuiltThe => 'そこで私は台帳ではなく人間を構築しました。国内外を問わず、どんなメニューでも撮影すると、コーチがそれをマクロで読み上げます。火曜日をスキップすれば、罪悪感を感じることなく水曜日の朝に戻れます。月に 1 回未満の PT セッションで、あなたの食事、ジム、滑りパターンを学習します。';
 
   @override
-  String get founderNoteTheFriendsWhoActually =>
-      '実際に引き締まった体を手に入れた友人たちは、メッセージをくれる「人」がいました。本物の説明責任には月額約200ドルかかります。それが、私たちのほとんどがそれを持てない理由であり、「記録」と「変化」の間の溝が何年も埋まらない理由そのものです。';
+  String get founderNoteTheFriendsWhoActually => '実際に引き締まった体を手に入れた友人たちは、メッセージをくれる「人」がいました。本物の説明責任には月額約200ドルかかります。それが、私たちのほとんどがそれを持てない理由であり、「記録」と「変化」の間の溝が何年も埋まらない理由そのものです。';
 
   @override
-  String get freshnessDecayCardControlsHowQuicklyExercise =>
-      'エクササイズの鮮度の減衰速度を制御します: e^(-k * セッション数)';
+  String get freshnessDecayCardControlsHowQuicklyExercise => 'エクササイズの鮮度の減衰速度を制御します: e^(-k * セッション数)';
 
   @override
   String get freshnessDecayCardFreshnessDecayTuner => '鮮度減衰チューナー';
@@ -13733,15 +13303,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get friendProfileMoreDetailsComingSoon => '詳細は近日公開予定';
 
   @override
-  String get friendProfileThisUserWillNot =>
-      'このユーザーはあなたのコンテンツを見たり、メッセージを送ったりできなくなります。後でブロックを解除することも可能です。';
+  String get friendProfileThisUserWillNot => 'このユーザーはあなたのコンテンツを見たり、メッセージを送ったりできなくなります。後でブロックを解除することも可能です。';
 
   @override
   String get friendProfileUserBlocked => 'ユーザーをブロックしました';
 
   @override
-  String get friendProfileWorkoutHistoryPrsAnd =>
-      'ワークアウト履歴、PR、トロフィーが\nここに表示されます。';
+  String get friendProfileWorkoutHistoryPrsAnd => 'ワークアウト履歴、PR、トロフィーが\nここに表示されます。';
 
   @override
   String get friendSearchFindFriends => '友達を探す';
@@ -13774,8 +13342,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get friendSearchTypeANameOr => '名前またはユーザー名を入力してユーザーを探す';
 
   @override
-  String get friendsAddFriendsToSee =>
-      '友達を追加して、ワークアウトを確認したり\n一緒にチャレンジで競い合いましょう！';
+  String get friendsAddFriendsToSee => '友達を追加して、ワークアウトを確認したり\n一緒にチャレンジで競い合いましょう！';
 
   @override
   String get friendsCouldNotLoadUsers => 'フォロー中のユーザーを読み込めませんでした。\nもう一度お試しください。';
@@ -13796,8 +13363,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get friendsFailedToLoadFriends => '友達の読み込みに失敗しました';
 
   @override
-  String get friendsFollowFriendsToSee =>
-      '友達をフォローしてワークアウトを確認し、\n一緒にモチベーションを高めましょう！';
+  String get friendsFollowFriendsToSee => '友達をフォローしてワークアウトを確認し、\n一緒にモチベーションを高めましょう！';
 
   @override
   String get friendsFollowers => 'フォロワー';
@@ -13809,8 +13375,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get friendsFriendRequests => '友達リクエスト';
 
   @override
-  String get friendsKeepCrushingYourWorkouts =>
-      'ワークアウトを頑張りましょう！\n友達があなたの進捗をフォローしたくなるはずです。';
+  String get friendsKeepCrushingYourWorkouts => 'ワークアウトを頑張りましょう！\n友達があなたの進捗をフォローしたくなるはずです。';
 
   @override
   String get friendsNoFollowersYet => 'まだフォロワーがいません';
@@ -13882,8 +13447,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get futuristicSetCardSkipExercise => '種目をスキップ';
 
   @override
-  String get generatePlanCreateAHolisticPlan =>
-      'ワークアウト、栄養、ファスティングを調整した総合的なプランを作成します。';
+  String get generatePlanCreateAHolisticPlan => 'ワークアウト、栄養、ファスティングを調整した総合的なプランを作成します。';
 
   @override
   String get generatePlanFastingProtocol => 'ファスティングプロトコル';
@@ -13910,8 +13474,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get generatePlanWeeklyPlanGenerated => '週間プランが作成されました！';
 
   @override
-  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo =>
-      '各ワークアウトは、安全に進歩できるよう調整されます！';
+  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo => '各ワークアウトは、安全に進歩できるよう調整されます！';
 
   @override
   String get generateWorkoutPlaceholderGenerateWorkout => 'ワークアウトを作成';
@@ -13923,8 +13486,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get generateWorkoutPlaceholderGenerationFailed => '作成に失敗しました';
 
   @override
-  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou =>
-      'ワークアウト履歴を使用してパーソナライズ';
+  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou => 'ワークアウト履歴を使用してパーソナライズ';
 
   @override
   String get generateWorkoutPlaceholderTapBelowToTry => '以下をタップして再試行してください';
@@ -13933,12 +13495,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get generateWorkoutPlaceholderTapToRetry => 'タップして再試行';
 
   @override
-  String get generateWorkoutPlaceholderWhatPowersYourWorkout =>
-      'ワークアウトの原動力は何ですか？';
+  String get generateWorkoutPlaceholderWhatPowersYourWorkout => 'ワークアウトの原動力は何ですか？';
 
   @override
-  String get generateWorkoutPlaceholderYourAiCoachCreates =>
-      'AIコーチが以下に基づいてワークアウトを作成します：';
+  String get generateWorkoutPlaceholderYourAiCoachCreates => 'AIコーチが以下に基づいてワークアウトを作成します：';
 
   @override
   String get glassDragToResize => 'ドラッグしてサイズ変更';
@@ -14076,19 +13636,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get googleCalendarConnectDisconnect => '接続解除';
 
   @override
-  String get googleCalendarConnectFailedToConnectGoogle =>
-      'Google Calendarの接続に失敗しました';
+  String get googleCalendarConnectFailedToConnectGoogle => 'Google Calendarの接続に失敗しました';
 
   @override
   String get googleCalendarConnectGoogleCalendar => 'Google Calendar';
 
   @override
-  String get googleCalendarConnectGoogleCalendarConnected =>
-      'Google Calendarを接続しました';
+  String get googleCalendarConnectGoogleCalendarConnected => 'Google Calendarを接続しました';
 
   @override
-  String get googleCalendarConnectGoogleCalendarDisconnected =>
-      'Google Calendarの接続を解除しました';
+  String get googleCalendarConnectGoogleCalendarDisconnected => 'Google Calendarの接続を解除しました';
 
   @override
   String googleCalendarConnectSheetConnectYourGoogleCalendar(Object appName) {
@@ -14096,8 +13653,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectWeOnlyAccessCalendar =>
-      '許可されたカレンダーデータのみにアクセスします';
+  String get googleCalendarConnectWeOnlyAccessCalendar => '許可されたカレンダーデータのみにアクセスします';
 
   @override
   String get groceryListAdd => '追加';
@@ -14160,10 +13716,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groceryListsIndexNoListsYet => 'リストはまだありません';
 
   @override
-  String groceryListsIndexScreenOfChecked(
-    Object checkedCount,
-    Object itemCount,
-  ) {
+  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount) {
     return '$itemCount件中$checkedCount件完了';
   }
 
@@ -14223,8 +13776,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get groupSettingsAllYourFriendsAre => 'すべての友達がすでにこのグループに参加しています';
 
   @override
-  String get groupSettingsAreYouSureYou =>
-      'このグループから退出しますか？退出すると、この会話のメッセージは受信できなくなります';
+  String get groupSettingsAreYouSureYou => 'このグループから退出しますか？退出すると、この会話のメッセージは受信できなくなります';
 
   @override
   String get groupSettingsGroupNameUpdated => 'グループ名を更新しました';
@@ -14343,8 +13895,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestHomeSignUpFreeTo2 => '無料で登録して、すべての機能をアンロックし、フィットネスの旅を始めましょう！';
 
   @override
-  String get guestHomeSignUpFreeTo3 =>
-      '無料で登録して、フィットネスに関する質問をして、24時間年中無休でパーソナライズされたアドバイスを受けましょう';
+  String get guestHomeSignUpFreeTo3 => '無料で登録して、フィットネスに関する質問をして、24時間年中無休でパーソナライズされたアドバイスを受けましょう';
 
   @override
   String get guestHomeTapAQuestionTo => '質問をタップしてAIの回答を見る';
@@ -14386,9 +13937,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestLibraryPreview => 'プレビュー';
 
   @override
-  String guestLibraryScreenShowingSampleExercisesSign(
-    Object guestExerciseLimit,
-  ) {
+  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit) {
     return 'サンプル種目$guestExerciseLimit件を表示中。無料登録で2300以上の種目にアクセス！';
   }
 
@@ -14402,12 +13951,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestLibrarySignUpFree => '無料で登録';
 
   @override
-  String get guestLibrarySignUpFreeTo =>
-      '無料で登録して、動画ガイドや手順を含むすべてのエクササイズライブラリにアクセスしましょう。';
+  String get guestLibrarySignUpFreeTo => '無料で登録して、動画ガイドや手順を含むすべてのエクササイズライブラリにアクセスしましょう。';
 
   @override
-  String get guestLibrarySignUpFreeTo2 =>
-      '無料で登録して、すべてのエクササイズのHD動画ガイドにアクセスしましょう。';
+  String get guestLibrarySignUpFreeTo2 => '無料で登録して、すべてのエクササイズのHD動画ガイドにアクセスしましょう。';
 
   @override
   String get guestLibrarySignUpToView => '登録して、このエクササイズの詳細な手順を表示しましょう。';
@@ -14440,8 +13987,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestSampleWorkoutSignUpFree => '無料で登録';
 
   @override
-  String get guestSampleWorkoutSignUpFreeTo =>
-      '無料で登録して、目標、機器、スケジュールに合わせたAI生成ワークアウトを入手しましょう。';
+  String get guestSampleWorkoutSignUpFreeTo => '無料で登録して、目標、機器、スケジュールに合わせたAI生成ワークアウトを入手しましょう。';
 
   @override
   String get guestSampleWorkoutTapToSeeWorkout => 'タップしてワークアウトのデモを見る';
@@ -14462,8 +14008,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestSignUpGetYourPersonalPlan => 'パーソナルプランを入手';
 
   @override
-  String get guestSignUpSeeYourFullWorkout =>
-      '支払い前にワークアウトプラン全体を確認できます。クレジットカードは不要です！';
+  String get guestSignUpSeeYourFullWorkout => '支払い前にワークアウトプラン全体を確認できます。クレジットカードは不要です！';
 
   @override
   String get guestSignUpSignUp => '登録';
@@ -14529,8 +14074,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gymLocationPickerGymLocation => 'ジムの場所';
 
   @override
-  String get gymLocationPickerMapBasedLocationPicker =>
-      '地図ベースの場所選択はまだ利用できません。\n現在はプロフィールでジム名を設定してください。';
+  String get gymLocationPickerMapBasedLocationPicker => '地図ベースの場所選択はまだ利用できません。\n現在はプロフィールでジム名を設定してください。';
 
   @override
   String get gymProfileSwitcherActive => 'アクティブ';
@@ -14569,10 +14113,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gymProfileSwitcherEnterANameFor => '複製するジムの名前を入力してください:';
 
   @override
-  String gymProfileSwitcherEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '器具$equipmentCount点 • $environmentDisplayName';
   }
 
@@ -14664,9 +14205,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get habitDetailScreenNotEnoughDataYet => 'データが不足しています';
 
   @override
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
-    Object daysUntilBestStreak,
-  ) {
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak) {
     return '自己ベスト更新まであと $daysUntilBestStreak 日！';
   }
 
@@ -14770,8 +14309,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get habitsCardQuickStart => 'クイックスタート:';
 
   @override
-  String get habitsCardStartTrackingDailyHabits =>
-      '毎日の習慣を記録して、一貫性を高め目標を達成しましょう。';
+  String get habitsCardStartTrackingDailyHabits => '毎日の習慣を記録して、一貫性を高め目標を達成しましょう。';
 
   @override
   String get habitsCardTodaySHabits => '今日の習慣';
@@ -14954,8 +14492,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hardPaywallYourAiCoachRemembers => 'あなたのAIコーチはすべてを記憶しています';
 
   @override
-  String get hardPaywallYourProgressIsStill =>
-      'あなたの進捗はここにあります。登録して続きから再開しましょう。';
+  String get hardPaywallYourProgressIsStill => 'あなたの進捗はここにあります。登録して続きから再開しましょう。';
 
   @override
   String get hardPaywallYourTrialHasEnded => 'トライアルが終了しました';
@@ -14977,15 +14514,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthBreakdownBloodSugar => '血糖値';
 
   @override
-  String get healthBreakdownChronicLowGradeInflammation =>
-      '慢性的な軽度の炎症は、関節の快適さ、エネルギー、回復に影響を与えます。';
+  String get healthBreakdownChronicLowGradeInflammation => '慢性的な軽度の炎症は、関節の快適さ、エネルギー、回復に影響を与えます。';
 
   @override
   String get healthBreakdownFodmap => 'FODMAP';
 
   @override
-  String get healthBreakdownGlycemicLoadGiCarbs =>
-      'グリセミック負荷 = GI値 × 炭水化物 ÷ 100。低いほどエネルギーが安定し、急上昇を抑えられます。';
+  String get healthBreakdownGlycemicLoadGiCarbs => 'グリセミック負荷 = GI値 × 炭水化物 ÷ 100。低いほどエネルギーが安定し、急上昇を抑えられます。';
 
   @override
   String get healthBreakdownHealthBreakdown => '健康分析';
@@ -14994,8 +14529,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthBreakdownInflammation => '炎症';
 
   @override
-  String get healthBreakdownNoGlycemicLoadComputed =>
-      'グリセミック負荷は計算されていません（炭水化物を含まない料理の可能性があります）。';
+  String get healthBreakdownNoGlycemicLoadComputed => 'グリセミック負荷は計算されていません（炭水化物を含まない料理の可能性があります）。';
 
   @override
   String get healthBreakdownNotClassifiedForThis => 'この料理には分類されていません。';
@@ -15004,12 +14538,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthBreakdownNotComputedForThis => 'この料理には計算されていません。';
 
   @override
-  String get healthBreakdownNotComputedLikelyNo =>
-      '計算されていません — この料理には添加糖が含まれていない可能性があります。';
+  String get healthBreakdownNotComputedLikelyNo => '計算されていません — この料理には添加糖が含まれていない可能性があります。';
 
   @override
-  String get healthBreakdownNovaGroup4Industrial =>
-      'NOVAグループ4 — 乳化剤、果糖ブドウ糖液糖、人工甘味料などを含む工業的レシピ。';
+  String get healthBreakdownNovaGroup4Industrial => 'NOVAグループ4 — 乳化剤、果糖ブドウ糖液糖、人工甘味料などを含む工業的レシピ。';
 
   @override
   String healthBreakdownSheetGl(Object gl) {
@@ -15048,8 +14580,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthConnectOnboardingACoachThatSees => 'すべてを把握するコーチ';
 
   @override
-  String get healthConnectOnboardingHealthConnectIsnT =>
-      'Health Connectがインストールされていません。設定から後で接続してください。';
+  String get healthConnectOnboardingHealthConnectIsnT => 'Health Connectがインストールされていません。設定から後で接続してください。';
 
   @override
   String get healthConnectOnboardingRecoveryAwareWorkouts => '回復を考慮したワークアウト';
@@ -15060,9 +14591,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String healthConnectOnboardingScreenConnectSoZealovaCan(
-    Object _platformName,
-  ) {
+  String healthConnectOnboardingScreenConnectSoZealovaCan(Object _platformName) {
     return '$_platformNameを連携して、Zealovaでデータを活用しましょう';
   }
 
@@ -15073,8 +14602,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthConnectOnboardingUnlockYourAiHealth => 'AIヘルスコーチを解放';
 
   @override
-  String get healthConnectSyncYourHealthData =>
-      '健康データを同期して、パーソナライズされたフィットネスの洞察を得ましょう';
+  String get healthConnectSyncYourHealthData => '健康データを同期して、パーソナライズされたフィットネスの洞察を得ましょう';
 
   @override
   String get healthDevicesHealthDevices => 'ヘルスケアとデバイス';
@@ -15101,12 +14629,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthMetricsCardBloodGlucoseReadingsWill => '血糖値の測定データがここに表示されます';
 
   @override
-  String get healthMetricsCardConnectAGlucoseMonitor =>
-      'Health Connect経由で血糖値モニターを接続してください';
+  String get healthMetricsCardConnectAGlucoseMonitor => 'Health Connect経由で血糖値モニターを接続してください';
 
   @override
-  String get healthMetricsCardConnectHealthConnectTo =>
-      'Health Connectを接続して血糖値を確認しましょう';
+  String get healthMetricsCardConnectHealthConnectTo => 'Health Connectを接続して血糖値を確認しましょう';
 
   @override
   String get healthMetricsCardHealthMetrics => '健康指標';
@@ -15118,8 +14644,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthMetricsCardInsulinDelivery => 'インスリン投与量';
 
   @override
-  String get healthMetricsCardInsulinDeliveryData =>
-      '接続されたデバイスからのインスリン投与データがここに表示されます';
+  String get healthMetricsCardInsulinDeliveryData => '接続されたデバイスからのインスリン投与データがここに表示されます';
 
   @override
   String get healthMetricsCardLoadingHealthData => '健康データを読み込み中...';
@@ -15187,8 +14712,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthSyncEnableAiHealthCoaching => 'AIヘルスコーチングを有効にしますか？';
 
   @override
-  String get healthSyncEnableAllDataYou =>
-      '同期したいすべてのデータ（歩数、心拍数、睡眠など）を有効にしてください';
+  String get healthSyncEnableAllDataYou => '同期したいすべてのデータ（歩数、心拍数、睡眠など）を有効にしてください';
 
   @override
   String get healthSyncEnableSync => '同期を有効にする';
@@ -15206,8 +14730,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthSyncGrantPermissions => '権限を許可';
 
   @override
-  String get healthSyncHealthConnectIsNot =>
-      'Health Connectが利用できません。Playストアからインストールしてください。';
+  String get healthSyncHealthConnectIsNot => 'Health Connectが利用できません。Playストアからインストールしてください。';
 
   @override
   String get healthSyncHealthSync => 'ヘルス同期';
@@ -15240,8 +14763,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthSyncOpenSamsungHealth => 'Samsung Healthを開く';
 
   @override
-  String get healthSyncReturnHereAndToggle =>
-      'ここに戻ってHealth Connectをオンに切り替えてください';
+  String get healthSyncReturnHereAndToggle => 'ここに戻ってHealth Connectをオンに切り替えてください';
 
   @override
   String get healthSyncScrollDownAndTap => '下にスクロールして「Health Connect」をタップ';
@@ -15314,8 +14836,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get healthSyncWriteToHealthApp => 'ヘルスケアアプリに書き込む';
 
   @override
-  String get hearInsightButtonNoAudioOutputAvailable =>
-      'オーディオ出力が利用できません。ヘッドフォンを接続するか、ミュートを解除してください。';
+  String get hearInsightButtonNoAudioOutputAvailable => 'オーディオ出力が利用できません。ヘッドフォンを接続するか、ミュートを解除してください。';
 
   @override
   String get hearInsightButtonStop => '停止';
@@ -15367,18 +14888,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heartRateChartNoHeartRateData => '心拍数データなし';
 
   @override
-  String heartRateChartPartZoneLegendItemHeartRateOfMax(
-    Object percentageRange,
-  ) {
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange) {
     return '心拍数: 最大の$percentageRange';
   }
 
   @override
-  String heartRateChartPartZoneLegendItemM(
-    Object minutes,
-    Object percent,
-    Object shortLabel,
-  ) {
+  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel) {
     return '$shortLabel $minutes分 ($percent%)';
   }
 
@@ -15421,8 +14936,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get heartRateChartWearYourWatchDuring =>
-      'ワークアウト中にウォッチを装着して心拍数を記録しましょう';
+  String get heartRateChartWearYourWatchDuring => 'ワークアウト中にウォッチを装着して心拍数を記録しましょう';
 
   @override
   String get heartRateChartZoneBreakdown => 'ゾーンの内訳';
@@ -15654,8 +15168,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroWorkoutCardCouldNotUndoCompletion => '完了を取り消せませんでした';
 
   @override
-  String get heroWorkoutCardCouldnTRegenerateWorkout =>
-      'ワークアウトを再生成できませんでした。もう一度お試しください。';
+  String get heroWorkoutCardCouldnTRegenerateWorkout => 'ワークアウトを再生成できませんでした。もう一度お試しください。';
 
   @override
   String get heroWorkoutCardDelayUntilFastEnds => 'ファスティング終了まで待機';
@@ -15667,8 +15180,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroWorkoutCardDismissQuickWorkout => 'クイックワークアウトを破棄しますか？';
 
   @override
-  String get heroWorkoutCardDismissedOfflineWillSync =>
-      'オフラインで破棄されました — オンライン時に同期されます';
+  String get heroWorkoutCardDismissedOfflineWillSync => 'オフラインで破棄されました — オンライン時に同期されます';
 
   @override
   String get heroWorkoutCardDoToday => '今日行う';
@@ -15682,10 +15194,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String heroWorkoutCardExtExercises(
-    Object exerciseCount,
-    Object formattedDurationShort,
-  ) {
+  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort) {
     return '$formattedDurationShort • $exerciseCount種目';
   }
 
@@ -15735,20 +15244,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroWorkoutCardMoveToToday => '今日に移動';
 
   @override
-  String get heroWorkoutCardNothingToShareYet =>
-      'まだ共有するものはありません — ワークアウトを記録しましょう';
+  String get heroWorkoutCardNothingToShareYet => 'まだ共有するものはありません — ワークアウトを記録しましょう';
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
-    Object exerciseCount,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount) {
     return '$exerciseCount種目';
   }
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
-    Object bestDurationMinutes,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes) {
     return '$bestDurationMinutes分';
   }
 
@@ -15862,8 +15366,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get heroWorkoutCardWorkoutIsNotReady =>
-      'ワークアウトの準備ができていません。再生成をお試しください。';
+  String get heroWorkoutCardWorkoutIsNotReady => 'ワークアウトの準備ができていません。再生成をお試しください。';
 
   @override
   String get heroWorkoutCardWorkoutMarkedAsDone => 'ワークアウトを完了としてマークしました！';
@@ -15878,8 +15381,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroWorkoutCardWorkoutUnmarked => 'ワークアウトのマークを解除しました';
 
   @override
-  String get heroWorkoutCardYouLlLoseThis =>
-      'このクイックは失われます。記録済みのセットも破棄されます。続行しますか？';
+  String get heroWorkoutCardYouLlLoseThis => 'このクイックは失われます。記録済みのセットも破棄されます。続行しますか？';
 
   @override
   String get heroWorkoutCarouselAllDoneForThis => '今週分はすべて完了です！';
@@ -15917,8 +15419,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeApply => '適用';
 
   @override
-  String get homeCustomizeYourHomeLayout =>
-      'ホームレイアウトのカスタマイズ、ジムプロファイルの切り替え、レベルの確認がここからすべて行えます。';
+  String get homeCustomizeYourHomeLayout => 'ホームレイアウトのカスタマイズ、ジムプロファイルの切り替え、レベルの確認がここからすべて行えます。';
 
   @override
   String get homeDailyStepsGoal => '1日の歩数目標';
@@ -15963,16 +15464,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyChat_v4 => 'ここから会話が始まります。まずは挨拶してみましょう。';
 
   @override
-  String get homeEmptyCustomExercises_v1 =>
-      'カスタムエクササイズはまだありません。自分だけのメニューを作成して追加しましょう。';
+  String get homeEmptyCustomExercises_v1 => 'カスタムエクササイズはまだありません。自分だけのメニューを作成して追加しましょう。';
 
   @override
-  String get homeEmptyCustomExercises_v2 =>
-      'カスタムエクササイズライブラリが空です。最初の種目を作成しましょう。';
+  String get homeEmptyCustomExercises_v2 => 'カスタムエクササイズライブラリが空です。最初の種目を作成しましょう。';
 
   @override
-  String get homeEmptyCustomExercises_v3 =>
-      'まだ何もありません。メインライブラリにないエクササイズを追加しましょう。';
+  String get homeEmptyCustomExercises_v3 => 'まだ何もありません。メインライブラリにないエクササイズを追加しましょう。';
 
   @override
   String get homeEmptyCustomExercises_v4 => 'カスタムエクササイズはありません。作成すれば検索に表示されます。';
@@ -15990,8 +15488,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyFasting_v4 => '断食データがありません。タップして最初のセッションを開始しましょう。';
 
   @override
-  String get homeEmptyFavorites_v1 =>
-      'お気に入りはまだありません。ワークアウトやエクササイズにハートをつけて保存しましょう。';
+  String get homeEmptyFavorites_v1 => 'お気に入りはまだありません。ワークアウトやエクササイズにハートをつけて保存しましょう。';
 
   @override
   String get homeEmptyFavorites_v2 => '保存されたものはありません。お気に入りを見つけてキープしましょう。';
@@ -16012,19 +15509,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyFriends_v3 => 'まだ誰もいません。リンクをシェアして輪を広げましょう。';
 
   @override
-  String get homeEmptyFriends_v4 =>
-      '友達がまだ追加されていません。誰かと一緒にトレーニングするとモチベーションが上がります。ぜひ追加してみましょう。';
+  String get homeEmptyFriends_v4 => '友達がまだ追加されていません。誰かと一緒にトレーニングするとモチベーションが上がります。ぜひ追加してみましょう。';
 
   @override
-  String get homeEmptyGymProfiles_v1 =>
-      'ジムプロフィールがありません。設備を追加して、自分に合ったワークアウトを見つけましょう。';
+  String get homeEmptyGymProfiles_v1 => 'ジムプロフィールがありません。設備を追加して、自分に合ったワークアウトを見つけましょう。';
 
   @override
   String get homeEmptyGymProfiles_v2 => 'ジムのプロフィールが空です。一度設備を教えていただければ、毎回活用します。';
 
   @override
-  String get homeEmptyGymProfiles_v3 =>
-      '設定が保存されていません。ジムのプロフィールを追加して、最適なワークアウトを受け取りましょう。';
+  String get homeEmptyGymProfiles_v3 => '設定が保存されていません。ジムのプロフィールを追加して、最適なワークアウトを受け取りましょう。';
 
   @override
   String get homeEmptyGymProfiles_v4 => 'プロフィールが空です。設備を設定すれば、あとはAIにお任せください。';
@@ -16057,8 +15551,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyJournal_v1 => 'ジャーナルの記録がありません。今日の小さな成果でも書き留めてみましょう。';
 
   @override
-  String get homeEmptyJournal_v2 =>
-      'ジャーナルが空です。あなたの歩みを記録しましょう。きっと後で振り返るのが楽しくなります。';
+  String get homeEmptyJournal_v2 => 'ジャーナルが空です。あなたの歩みを記録しましょう。きっと後で振り返るのが楽しくなります。';
 
   @override
   String get homeEmptyJournal_v3 => 'まだ何も書かれていません。最初の1ページをここから始めましょう。';
@@ -16127,15 +15620,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyPlans_v4 => 'アクティブなプランがありません。プランを開始して、毎日の迷いをなくしましょう。';
 
   @override
-  String get homeEmptyPrograms_v1 =>
-      'アクティブなプログラムがありません。プログラムを閲覧して、次の目標を見つけましょう。';
+  String get homeEmptyPrograms_v1 => 'アクティブなプログラムがありません。プログラムを閲覧して、次の目標を見つけましょう。';
 
   @override
   String get homeEmptyPrograms_v2 => 'プログラムはトレーニングに構造を与えます。1つ選んで始めましょう。';
 
   @override
-  String get homeEmptyPrograms_v3 =>
-      'まだ何も実行していません。プログラムを開始して、週ごとのプランをアンロックしましょう。';
+  String get homeEmptyPrograms_v3 => 'まだ何も実行していません。プログラムを開始して、週ごとのプランをアンロックしましょう。';
 
   @override
   String get homeEmptyPrograms_v4 => 'アクティブなプログラムがありません。現在のレベルに合ったものを選びましょう。';
@@ -16147,15 +15638,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyRecipes_v2 => 'レシピコレクションが空です。お気に入りの食事を追加しましょう。';
 
   @override
-  String get homeEmptyRecipes_v3 =>
-      'ここに保存されたものはありません。レシピを探索して、気に入ったものを保存しましょう。';
+  String get homeEmptyRecipes_v3 => 'ここに保存されたものはありません。レシピを探索して、気に入ったものを保存しましょう。';
 
   @override
   String get homeEmptyRecipes_v4 => 'レシピライブラリが空です。タップして新しい食事を見つけましょう。';
 
   @override
-  String get homeEmptyRecovery_v1 =>
-      '回復データがありません。睡眠、HRV、または筋肉痛を記録してスコアを取得しましょう。';
+  String get homeEmptyRecovery_v1 => '回復データがありません。睡眠、HRV、または筋肉痛を記録してスコアを取得しましょう。';
 
   @override
   String get homeEmptyRecovery_v2 => '回復の追跡が空です。ウェアラブルを接続するか、手動で記録してください。';
@@ -16167,8 +15656,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyRecovery_v4 => '回復データが空です。今日のデータを追加して、次のセッションに備えましょう。';
 
   @override
-  String get homeEmptyScores_v1 =>
-      'スコアがまだありません。ワークアウトを記録して、最初のレディネススコアを生成しましょう。';
+  String get homeEmptyScores_v1 => 'スコアがまだありません。ワークアウトを記録して、最初のレディネススコアを生成しましょう。';
 
   @override
   String get homeEmptyScores_v2 => 'スコアはデータの記録後に表示されます。継続しましょう。';
@@ -16204,8 +15692,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyTrends_v4 => '傾向ビューが空です。継続することで表示されます。毎日記録を始めましょう。';
 
   @override
-  String get homeEmptyVitals_v1 =>
-      'バイタルデータが記録されていません。ウェアラブル端末を接続するか、手動で入力してください。';
+  String get homeEmptyVitals_v1 => 'バイタルデータが記録されていません。ウェアラブル端末を接続するか、手動で入力してください。';
 
   @override
   String get homeEmptyVitals_v2 => 'バイタル追跡データがありません。まずはデータを1つ追加してみましょう。';
@@ -16458,15 +15945,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeScreenTourCarouselTitle => '今日のワークアウト';
 
   @override
-  String get homeScreenTourCommunityDesc =>
-      'See the feed, challenges, ranks, and friends';
+  String get homeScreenTourCommunityDesc => 'See the feed, challenges, ranks, and friends';
 
   @override
   String get homeScreenTourCommunityTitle => 'Community Tab';
 
   @override
-  String get homeScreenTourHealthDesc =>
-      'Check your sleep, recovery, and body data';
+  String get homeScreenTourHealthDesc => 'Check your sleep, recovery, and body data';
 
   @override
   String get homeScreenTourHealthTitle => 'Health Tab';
@@ -16525,8 +16010,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeScreenUiAddTile => 'タイルを追加';
 
   @override
-  String get homeScreenUiChooseAPresetLayout =>
-      '目的に合わせたプリセットレイアウトを選択してください。適用後にカスタマイズも可能です。';
+  String get homeScreenUiChooseAPresetLayout => '目的に合わせたプリセットレイアウトを選択してください。適用後にカスタマイズも可能です。';
 
   @override
   String get homeScreenUiCustomizeYourDashboard => 'ダッシュボードをカスタマイズ';
@@ -16535,8 +16019,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeScreenUiDiscoverLayouts => 'レイアウトを探す';
 
   @override
-  String get homeScreenUiDragToReorderTap =>
-      'ドラッグで並べ替え • タップでサイズ変更 • 目アイコンで非表示';
+  String get homeScreenUiDragToReorderTap => 'ドラッグで並べ替え • タップでサイズ変更 • 目アイコンで非表示';
 
   @override
   String get homeScreenUiGotIt => '了解！';
@@ -16613,8 +16096,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeSwipeToSeeThis => 'スワイプして今週のプランを確認。タップして今日のワークアウトを開始。';
 
   @override
-  String get homeThisWillRestoreThe =>
-      'ミニマリストレイアウト（アプリのデフォルト）に戻ります。現在のカスタマイズは上書きされます。';
+  String get homeThisWillRestoreThe => 'ミニマリストレイアウト（アプリのデフォルト）に戻ります。現在のカスタマイズは上書きされます。';
 
   @override
   String get homeTimelineCouldnTLoadYour => 'タイムラインを読み込めませんでした';
@@ -16656,139 +16138,109 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get homeTip_ankle_mobility =>
-      '足首の可動域が狭いとスクワットで代償動作が生じます。毎日ストレッチとドリルを行いましょう。';
+  String get homeTip_ankle_mobility => '足首の可動域が狭いとスクワットで代償動作が生じます。毎日ストレッチとドリルを行いましょう。';
 
   @override
-  String get homeTip_breathing_during_lifts =>
-      'きつい時に吐き、楽な時に吸いましょう。常に体幹を固めてください。';
+  String get homeTip_breathing_during_lifts => 'きつい時に吐き、楽な時に吸いましょう。常に体幹を固めてください。';
 
   @override
-  String get homeTip_caffeine_timing =>
-      'カフェインは摂取後45〜60分でピークに達します。トレーニング前に合わせて摂取しましょう。';
+  String get homeTip_caffeine_timing => 'カフェインは摂取後45〜60分でピークに達します。トレーニング前に合わせて摂取しましょう。';
 
   @override
-  String get homeTip_cardio_and_strength =>
-      '十分な栄養を摂り、過度でなければ、有酸素運動が筋トレの成果を損なうことはありません。';
+  String get homeTip_cardio_and_strength => '十分な栄養を摂り、過度でなければ、有酸素運動が筋トレの成果を損なうことはありません。';
 
   @override
-  String get homeTip_cold_exposure =>
-      '冷水シャワーや氷風呂はトレーニング後の炎症を抑える可能性があります。トレーニング前ではなく後にしましょう。';
+  String get homeTip_cold_exposure => '冷水シャワーや氷風呂はトレーニング後の炎症を抑える可能性があります。トレーニング前ではなく後にしましょう。';
 
   @override
-  String get homeTip_compound_before_isolation =>
-      '体力が十分なうちに大きな種目から行いましょう。アイソレーション種目は最後にします。';
+  String get homeTip_compound_before_isolation => '体力が十分なうちに大きな種目から行いましょう。アイソレーション種目は最後にします。';
 
   @override
-  String get homeTip_compound_lifts =>
-      'スクワット、ヒンジ、プッシュ、プル、キャリー。この5つをマスターすれば、全体の80%をカバーできます。';
+  String get homeTip_compound_lifts => 'スクワット、ヒンジ、プッシュ、プル、キャリー。この5つをマスターすれば、全体の80%をカバーできます。';
 
   @override
-  String get homeTip_consistency_beats_perfection =>
-      '100%できないからと休むより、70%の力でも継続する方がはるかに重要です。';
+  String get homeTip_consistency_beats_perfection => '100%できないからと休むより、70%の力でも継続する方がはるかに重要です。';
 
   @override
-  String get homeTip_core_in_every_lift =>
-      '体幹はすべてのコンパウンド種目で使われています。20分も腹筋運動をする必要はありません。';
+  String get homeTip_core_in_every_lift => '体幹はすべてのコンパウンド種目で使われています。20分も腹筋運動をする必要はありません。';
 
   @override
-  String get homeTip_creatine_basics =>
-      'クレアチン・モノハイドレートはスポーツ科学で最も研究されているサプリメントです。毎日3〜5gが効果的です。';
+  String get homeTip_creatine_basics => 'クレアチン・モノハイドレートはスポーツ科学で最も研究されているサプリメントです。毎日3〜5gが効果的です。';
 
   @override
   String get homeTip_deload_week => '4〜6週間ごとにトレーニング量を40%減らしましょう。体がより強く回復します。';
 
   @override
-  String get homeTip_eat_before_training =>
-      '空腹時のトレーニングも有効ですが、60〜90分前に軽く食事を摂る方がパフォーマンスが向上します。';
+  String get homeTip_eat_before_training => '空腹時のトレーニングも有効ですが、60〜90分前に軽く食事を摂る方がパフォーマンスが向上します。';
 
   @override
-  String get homeTip_eccentric_focus =>
-      '筋肉の損傷（および成長）の多くは、重りを下ろす局面で起こります。コントロールしましょう。';
+  String get homeTip_eccentric_focus => '筋肉の損傷（および成長）の多くは、重りを下ろす局面で起こります。コントロールしましょう。';
 
   @override
-  String get homeTip_fiber_and_gut =>
-      '1日30gの食物繊維はエネルギーを安定させ、食欲を抑えます。多くの人は15gしか摂れていません。';
+  String get homeTip_fiber_and_gut => '1日30gの食物繊維はエネルギーを安定させ、食欲を抑えます。多くの人は15gしか摂れていません。';
 
   @override
-  String get homeTip_form_over_weight =>
-      'フォームを崩して重量を追うのは怪我の元です。まずは正しい動作を身につけましょう。';
+  String get homeTip_form_over_weight => 'フォームを崩して重量を追うのは怪我の元です。まずは正しい動作を身につけましょう。';
 
   @override
   String get homeTip_grip_strength => '握力は他のどの指標よりも長寿を予測します。鍛えましょう。';
 
   @override
-  String get homeTip_hydration_basics =>
-      '体重の半分（オンス換算）の水分を毎日摂取しましょう。トレーニング日はさらに追加してください。';
+  String get homeTip_hydration_basics => '体重の半分（オンス換算）の水分を毎日摂取しましょう。トレーニング日はさらに追加してください。';
 
   @override
-  String get homeTip_meal_timing_simple =>
-      '自然食品を中心に食べ、タンパク質を確保し、十分な睡眠をとる。それ以外は些細なことです。';
+  String get homeTip_meal_timing_simple => '自然食品を中心に食べ、タンパク質を確保し、十分な睡眠をとる。それ以外は些細なことです。';
 
   @override
-  String get homeTip_mind_muscle_connection =>
-      '動作をゆっくり行い、筋肉の動きを感じましょう。ただ重りを動かすだけではありません。';
+  String get homeTip_mind_muscle_connection => '動作をゆっくり行い、筋肉の動きを感じましょう。ただ重りを動かすだけではありません。';
 
   @override
-  String get homeTip_mobility_daily =>
-      '週に一度の60分セッションより、毎日の10分間のモビリティワークの方が効果的です。';
+  String get homeTip_mobility_daily => '週に一度の60分セッションより、毎日の10分間のモビリティワークの方が効果的です。';
 
   @override
-  String get homeTip_no_junk_volume =>
-      '中途半端な20セットより、集中した10セットの方が効果的です。量より質を重視しましょう。';
+  String get homeTip_no_junk_volume => '中途半端な20セットより、集中した10セットの方が効果的です。量より質を重視しましょう。';
 
   @override
   String get homeTip_omega3_basics => '1日1〜2gのEPA+DHAは炎症を抑え、関節の健康をサポートします。';
 
   @override
-  String get homeTip_periodization =>
-      'レップ数や強度を時間とともに変化させましょう。線形的な進歩は永遠には続きません。';
+  String get homeTip_periodization => 'レップ数や強度を時間とともに変化させましょう。線形的な進歩は永遠には続きません。';
 
   @override
-  String get homeTip_progressive_overload =>
-      '毎週、少しずつ重量を増やすか、レップ数を1回増やしましょう。それが成長の秘訣です。';
+  String get homeTip_progressive_overload => '毎週、少しずつ重量を増やすか、レップ数を1回増やしましょう。それが成長の秘訣です。';
 
   @override
-  String get homeTip_protein_per_meal =>
-      '1食あたり30〜40gのタンパク質を目指しましょう。一度に摂るより、分けて摂る方が効果的です。';
+  String get homeTip_protein_per_meal => '1食あたり30〜40gのタンパク質を目指しましょう。一度に摂るより、分けて摂る方が効果的です。';
 
   @override
-  String get homeTip_protein_sources_vary =>
-      '鶏肉、卵、ギリシャヨーグルト、豆類など、タンパク源を混ぜましょう。多様性がすべてのアミノ酸をカバーします。';
+  String get homeTip_protein_sources_vary => '鶏肉、卵、ギリシャヨーグルト、豆類など、タンパク源を混ぜましょう。多様性がすべてのアミノ酸をカバーします。';
 
   @override
-  String get homeTip_rate_of_perceived_exertion =>
-      '努力レベルを1〜10で評価しましょう。多くのセッションで7〜8を維持するのが理想です。';
+  String get homeTip_rate_of_perceived_exertion => '努力レベルを1〜10で評価しましょう。多くのセッションで7〜8を維持するのが理想です。';
 
   @override
   String get homeTip_rest_days_grow_muscle => '休息日は怠けではありません。適応が実際に起こる重要な時間です。';
 
   @override
-  String get homeTip_scale_not_everything =>
-      '体重は水分や食事で毎日1〜2kg変動します。週単位の平均で判断しましょう。';
+  String get homeTip_scale_not_everything => '体重は水分や食事で毎日1〜2kg変動します。週単位の平均で判断しましょう。';
 
   @override
-  String get homeTip_set_rep_ranges =>
-      '1〜5レップは筋力、6〜12レップは筋肥大、12〜20レップは持久力を高めます。すべて重要です。';
+  String get homeTip_set_rep_ranges => '1〜5レップは筋力、6〜12レップは筋肥大、12〜20レップは持久力を高めます。すべて重要です。';
 
   @override
   String get homeTip_sleep_for_recovery => '筋肉はトレーニング中ではなく、睡眠中に成長します。';
 
   @override
-  String get homeTip_sodium_and_water =>
-      '塩分は敵ではありません。水分補給とパフォーマンスを助けます。恐れずに摂りましょう。';
+  String get homeTip_sodium_and_water => '塩分は敵ではありません。水分補給とパフォーマンスを助けます。恐れずに摂りましょう。';
 
   @override
-  String get homeTip_split_options =>
-      'プッシュ/プル/レッグ、上半身/下半身、全身3回など、継続できるならどれも効果的です。';
+  String get homeTip_split_options => 'プッシュ/プル/レッグ、上半身/下半身、全身3回など、継続できるならどれも効果的です。';
 
   @override
-  String get homeTip_stress_and_recovery =>
-      '高いストレスはコルチゾールを増やし、回復を遅らせます。全体的な管理を心がけましょう。';
+  String get homeTip_stress_and_recovery => '高いストレスはコルチゾールを増やし、回復を遅らせます。全体的な管理を心がけましょう。';
 
   @override
-  String get homeTip_tempo_training =>
-      '3-0-1テンポ（3秒で下ろし、0秒停止、1秒で上げる）を試し、筋肉への刺激を変えてみましょう。';
+  String get homeTip_tempo_training => '3-0-1テンポ（3秒で下ろし、0秒停止、1秒で上げる）を試し、筋肉への刺激を変えてみましょう。';
 
   @override
   String get homeTip_track_to_progress => '記録しなければ管理はできません。セットをしっかり記録しましょう。';
@@ -16803,8 +16255,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeTip_warm_up_matters => '5分間の準備運動で、すべてのセットがより安全かつ強力になります。';
 
   @override
-  String get homeTip_zone2_cardio =>
-      'Zone 2有酸素運動（会話できるペース）は、あらゆる運動の基礎となる有酸素ベースを構築します。';
+  String get homeTip_zone2_cardio => 'Zone 2有酸素運動（会話できるペース）は、あらゆる運動の基礎となる有酸素ベースを構築します。';
 
   @override
   String get homeTodaysNutrition => '今日の栄養';
@@ -16831,8 +16282,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeYourProgress => '進捗状況';
 
   @override
-  String get homescreenCustomizationChangesAreSavedAutomaticall =>
-      '変更は自動的に保存され、すぐに適用されます。';
+  String get homescreenCustomizationChangesAreSavedAutomaticall => '変更は自動的に保存され、すぐに適用されます。';
 
   @override
   String get homescreenCustomizationChooseWhichCardsTo => 'ホーム画面に表示するカードを選択';
@@ -16844,12 +16294,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homescreenCustomizationDailyActivity => '毎日のアクティビティ';
 
   @override
-  String get homescreenCustomizationExerciseVariationThisWeek =>
-      '今週のエクササイズのバリエーション';
+  String get homescreenCustomizationExerciseVariationThisWeek => '今週のエクササイズのバリエーション';
 
   @override
-  String get homescreenCustomizationFeatureVotingAndRoadmap =>
-      '機能への投票とロードマップのプレビュー';
+  String get homescreenCustomizationFeatureVotingAndRoadmap => '機能への投票とロードマップのプレビュー';
 
   @override
   String get homescreenCustomizationFitnessScore => 'フィットネススコア';
@@ -16858,8 +16306,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homescreenCustomizationGoalsAndMilestonesFor => '今週の目標とマイルストーン';
 
   @override
-  String get homescreenCustomizationHealthDeviceActivitySummary =>
-      'ヘルスデバイスのアクティビティ概要';
+  String get homescreenCustomizationHealthDeviceActivitySummary => 'ヘルスデバイスのアクティビティ概要';
 
   @override
   String get homescreenCustomizationLogFoodStatsShare => '食事、統計、共有、水分補給ボタン';
@@ -16868,15 +16315,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homescreenCustomizationMoodCheckIn => '気分のチェックイン';
 
   @override
-  String get homescreenCustomizationOverallFitnessStrengthNu =>
-      '全体的なフィットネス、筋力、栄養スコア';
+  String get homescreenCustomizationOverallFitnessStrengthNu => '全体的なフィットネス、筋力、栄養スコア';
 
   @override
   String get homescreenCustomizationQuickActions => 'クイックアクション';
 
   @override
-  String get homescreenCustomizationQuickMoodPickerFor =>
-      '即座にワークアウトを開始するためのクイック気分選択';
+  String get homescreenCustomizationQuickMoodPickerFor => '即座にワークアウトを開始するためのクイック気分選択';
 
   @override
   String get homescreenCustomizationResetToDefaults => 'デフォルトにリセット';
@@ -16894,8 +16339,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homescreenCustomizationWeeklyProgress => '週間の進捗';
 
   @override
-  String get homescreenCustomizationWorkoutCompletionProgressRi =>
-      'ワークアウト完了進捗リング';
+  String get homescreenCustomizationWorkoutCompletionProgressRi => 'ワークアウト完了進捗リング';
 
   @override
   String get hormonalHealthFailedToLoadHormonal => 'ホルモン健康データを読み込めませんでした';
@@ -16939,8 +16383,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hormonalHealthSettingsAddHormoneGoal => 'ホルモン目標を追加';
 
   @override
-  String get hormonalHealthSettingsAdjustWorkoutIntensityBased =>
-      '周期に合わせてワークアウト強度を調整';
+  String get hormonalHealthSettingsAdjustWorkoutIntensityBased => '周期に合わせてワークアウト強度を調整';
 
   @override
   String get hormonalHealthSettingsBirthSex => '出生時の性別';
@@ -16961,22 +16404,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hormonalHealthSettingsGenderIdentity => '性自認';
 
   @override
-  String get hormonalHealthSettingsGetNutritionTipsBased =>
-      '周期フェーズに基づいた栄養アドバイスを取得';
+  String get hormonalHealthSettingsGetNutritionTipsBased => '周期フェーズに基づいた栄養アドバイスを取得';
 
   @override
   String get hormonalHealthSettingsHormonalHealthSettings => 'ホルモンバランス設定';
 
   @override
-  String get hormonalHealthSettingsHormoneSupportiveExercises =>
-      'ホルモンをサポートするエクササイズ';
+  String get hormonalHealthSettingsHormoneSupportiveExercises => 'ホルモンをサポートするエクササイズ';
 
   @override
   String get hormonalHealthSettingsHormoneSupportiveFoods => 'ホルモンをサポートする食品';
 
   @override
-  String get hormonalHealthSettingsIncludeHormoneFriendlyFood =>
-      'ホルモンに優しい食品の提案を含める';
+  String get hormonalHealthSettingsIncludeHormoneFriendlyFood => 'ホルモンに優しい食品の提案を含める';
 
   @override
   String get hormonalHealthSettingsLastPeriodStart => '前回の生理開始日';
@@ -16988,8 +16428,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hormonalHealthSettingsPeriodDuration => '生理期間';
 
   @override
-  String get hormonalHealthSettingsPrioritizeExercisesThatSupp =>
-      '目標をサポートするエクササイズを優先する';
+  String get hormonalHealthSettingsPrioritizeExercisesThatSupp => '目標をサポートするエクササイズを優先する';
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
@@ -17015,8 +16454,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get hormonalHealthSettingsSelectHormoneGoals => 'ホルモン目標を選択';
 
   @override
-  String get hormonalHealthSettingsTrackYourMenstrualCycle =>
-      '月経周期を記録してワークアウトを最適化する';
+  String get hormonalHealthSettingsTrackYourMenstrualCycle => '月経周期を記録してワークアウトを最適化する';
 
   @override
   String get hormonalHealthTodaySCheckIn => '今日のチェックイン';
@@ -17352,12 +16790,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importEquipmentAnyPublicWebpageListing => 'ジムの設備が記載された公開ウェブページ。';
 
   @override
-  String get importEquipmentEGNdumbbells5 =>
-      '例：\nダンベル 5-100ポンド\nスクワットラック 2台\nレッグプレス（プレートロード式）\nトレッドミル 4台\nケーブルステーション...';
+  String get importEquipmentEGNdumbbells5 => '例：\nダンベル 5-100ポンド\nスクワットラック 2台\nレッグプレス（プレートロード式）\nトレッドミル 4台\nケーブルステーション...';
 
   @override
-  String get importEquipmentEverythingImportedGoesTo =>
-      'インポートされたすべてのデータは確認画面に表示されます。確認なしで設備が上書きされることはありません。';
+  String get importEquipmentEverythingImportedGoesTo => 'インポートされたすべてのデータは確認画面に表示されます。確認なしで設備が上書きされることはありません。';
 
   @override
   String get importEquipmentImportEquipment => '設備をインポート';
@@ -17381,16 +16817,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importEquipmentResultCustom => 'カスタム ✓';
 
   @override
-  String get importEquipmentResultInferredFromImportedContent =>
-      'インポートされたコンテンツから推測';
+  String get importEquipmentResultInferredFromImportedContent => 'インポートされたコンテンツから推測';
 
   @override
-  String get importEquipmentResultNoEquipmentCouldBe =>
-      'インポートから一致する機器が見つかりませんでした。';
+  String get importEquipmentResultNoEquipmentCouldBe => 'インポートから一致する機器が見つかりませんでした。';
 
   @override
-  String get importEquipmentResultReviewBeforeSavingTap =>
-      '保存前に確認してください。チップをタップすると削除できます。';
+  String get importEquipmentResultReviewBeforeSavingTap => '保存前に確認してください。チップをタップすると削除できます。';
 
   @override
   String get importEquipmentResultSaving => '保存中...';
@@ -17401,10 +16834,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String importEquipmentResultSheetMatched(
-    Object matchedKeptCount,
-    Object totalMatched,
-  ) {
+  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched) {
     return '一致 ($matchedKeptCount/$totalMatched)';
   }
 
@@ -17424,8 +16854,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentResultWeCouldnTMatch =>
-      'これらは既知の機器と一致しませんでした。スキップするか、カスタムとして保持してください。';
+  String get importEquipmentResultWeCouldnTMatch => 'これらは既知の機器と一致しませんでした。スキップするか、カスタムとして保持してください。';
 
   @override
   String get importEquipmentResultWorkoutEnvironment => 'ワークアウト環境';
@@ -17451,8 +16880,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importExerciseDescribeTheExercise => 'エクササイズの説明';
 
   @override
-  String get importExerciseEGSeatedCable =>
-      '例: 「ニュートラルグリップのシーテッドケーブルロー、背中中央とリアデルトをターゲット」';
+  String get importExerciseEGSeatedCable => '例: 「ニュートラルグリップのシーテッドケーブルロー、背中中央とリアデルトをターゲット」';
 
   @override
   String get importExerciseExerciseNameHintOptional => 'エクササイズ名のヒント（任意）';
@@ -17482,8 +16910,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importExercisePreviewDiscard => '破棄';
 
   @override
-  String get importExercisePreviewDiscardImportedExercise =>
-      'インポートしたエクササイズを破棄しますか？';
+  String get importExercisePreviewDiscardImportedExercise => 'インポートしたエクササイズを破棄しますか？';
 
   @override
   String get importExercisePreviewSaveExercise => 'エクササイズを保存';
@@ -17540,8 +16967,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importThisWillImport => '以下がインポートされます:';
 
   @override
-  String get inProgressStripLogAWorkoutTo =>
-      'ワークアウトを記録して、進行中の最初のバッジをアンロックしましょう。';
+  String get inProgressStripLogAWorkoutTo => 'ワークアウトを記録して、進行中の最初のバッジをアンロックしましょう。';
 
   @override
   String get inflammationAnalysisAiIsCheckingFor => 'AIが炎症性化合物をチェックしています';
@@ -17579,8 +17005,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inflammationTagsContainsUltraProcessedItems => '超加工食品が含まれています';
 
   @override
-  String get inflammationTagsExamplesSoftDrinksInstant =>
-      '例: 清涼飲料水、インスタントラーメン、包装されたスナック、チキンナゲット、ほとんどの朝食用シリアル。';
+  String get inflammationTagsExamplesSoftDrinksInstant => '例: 清涼飲料水、インスタントラーメン、包装されたスナック、チキンナゲット、ほとんどの朝食用シリアル。';
 
   @override
   String get inflammationTagsHowTheScoreIs => 'スコアの算出方法';
@@ -17589,23 +17014,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inflammationTagsInflammationScore => '炎症スコア';
 
   @override
-  String get inflammationTagsLowerScoresReduceSystemic =>
-      'スコアが低いほど、全身の炎症、腸への刺激、食後のエネルギー低下を抑えることができます。';
+  String get inflammationTagsLowerScoresReduceSystemic => 'スコアが低いほど、全身の炎症、腸への刺激、食後のエネルギー低下を抑えることができます。';
 
   @override
-  String get inflammationTagsNovaProcessingLevelOmega =>
-      'NOVA加工レベル、オメガ6:オメガ3脂肪酸比、精製糖負荷、食物繊維とポリフェノールの密度、グリセミック負荷、および種子油含有量。査読済みの食事炎症指数（DII）バケットに合わせて調整されています。';
+  String get inflammationTagsNovaProcessingLevelOmega => 'NOVA加工レベル、オメガ6:オメガ3脂肪酸比、精製糖負荷、食物繊維とポリフェノールの密度、グリセミック負荷、および種子油含有量。査読済みの食事炎症指数（DII）バケットに合わせて調整されています。';
 
   @override
-  String get inflammationTagsResearchLinksRegularConsump =>
-      '研究によると、定期的な摂取は炎症、肥満、心臓病、消化器系の問題の増加に関連しています。';
+  String get inflammationTagsResearchLinksRegularConsump => '研究によると、定期的な摂取は炎症、肥満、心臓病、消化器系の問題の増加に関連しています。';
 
   @override
   String get inflammationTagsUltraProcessedFoods => '超加工食品';
 
   @override
-  String get inflammationTagsUltraProcessedFoodsNova =>
-      '超加工食品（NOVAグループ4）には、乳化剤、硬化油、人工甘味料、タンパク質分離物など、家庭料理には含まれない工業用添加物が含まれています。';
+  String get inflammationTagsUltraProcessedFoodsNova => '超加工食品（NOVAグループ4）には、乳化剤、硬化油、人工甘味料、タンパク質分離物など、家庭料理には含まれない工業用添加物が含まれています。';
 
   @override
   String get injuriesActive => 'アクティブ';
@@ -17656,8 +17077,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get injuriesSelectorAiWillAvoidExercises =>
-      'AIはこれらの部位に負担をかける可能性のあるエクササイズを回避します';
+  String get injuriesSelectorAiWillAvoidExercises => 'AIはこれらの部位に負担をかける可能性のあるエクササイズを回避します';
 
   @override
   String get injuriesSelectorEnterCustomInjuryE => 'カスタムの怪我を入力（例: 「テニス肘」）';
@@ -17778,9 +17198,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get injuryDetailScreenLogCheckIn => 'チェックインを記録';
 
   @override
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
-    Object bodyPartDisplay,
-  ) {
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay) {
     return '今日の$bodyPartDisplayの調子はどうですか？';
   }
 
@@ -17805,11 +17223,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get injuryDetailYesHealed => 'はい、完治しました';
 
   @override
-  String inlineEditPillEditSetByReps(
-    Object _weightText,
-    Object reps,
-    Object unit,
-  ) {
+  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit) {
     return 'セットを編集: $_weightText $unit × $reps回';
   }
 
@@ -17902,8 +17316,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get inlineWorkoutChatIntentIdentifyEquipmentWh =>
-      '[intent:identify_equipment] このマシンは何ですか？';
+  String get inlineWorkoutChatIntentIdentifyEquipmentWh => '[intent:identify_equipment] このマシンは何ですか？';
 
   @override
   String get inlineWorkoutChatRest => '休憩';
@@ -17959,10 +17372,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String insightsDetailScreenOfWorkouts(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsScheduled回中$workoutsCompleted回のワークアウト';
   }
 
@@ -17993,8 +17403,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get insightsNarrativeTemplateYourConsistencyIsCompoundin =>
-      '継続は力なり。レップを積み重ねましょう。';
+  String get insightsNarrativeTemplateYourConsistencyIsCompoundin => '継続は力なり。レップを積み重ねましょう。';
 
   @override
   String get insightsPastReports => '過去のレポート';
@@ -18042,8 +17451,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get insightsPrsTemplateShowingUpIsThe =>
-      '継続することこそが真の勝利です。レップを積み重ねましょう。';
+  String get insightsPrsTemplateShowingUpIsThe => '継続することこそが真の勝利です。レップを積み重ねましょう。';
 
   @override
   String get insightsReportCardCalories => '消費カロリー';
@@ -18088,12 +17496,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String insightsScreenPartBodyCardWorkoutsMinKcal(
-    Object caloriesBurnedEstimate,
-    Object totalTimeMinutes,
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsCompleted/$workoutsScheduledワークアウト  |  $totalTimeMinutes分  |  $caloriesBurnedEstimate kcal';
   }
 
@@ -18107,16 +17510,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get insightsScreenPartGenerateAiInsight => 'AIインサイトを生成';
 
   @override
-  String get insightsScreenPartGetPersonalizedAiAnalysis =>
-      'この期間のトレーニングデータに基づいたパーソナライズされたAI分析を取得します。';
+  String get insightsScreenPartGetPersonalizedAiAnalysis => 'この期間のトレーニングデータに基づいたパーソナライズされたAI分析を取得します。';
 
   @override
-  String get insightsScreenPartLogYourMeasurementsTo =>
-      '身体組成の変化を追跡するために測定値を記録しましょう';
+  String get insightsScreenPartLogYourMeasurementsTo => '身体組成の変化を追跡するために測定値を記録しましょう';
 
   @override
-  String get insightsScreenPartLogYourReadinessAnd =>
-      '準備状況と気分を記録して、回復に関するインサイトを確認しましょう';
+  String get insightsScreenPartLogYourReadinessAnd => '準備状況と気分を記録して、回復に関するインサイトを確認しましょう';
 
   @override
   String get insightsScreenPartMoodDistribution => '気分の分布';
@@ -18138,8 +17538,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get insightsScreenPartPleaseCheckYourConnection =>
-      '接続を確認して、もう一度お試しください。';
+  String get insightsScreenPartPleaseCheckYourConnection => '接続を確認して、もう一度お試しください。';
 
   @override
   String get insightsScreenPartPrs => 'PRs';
@@ -18148,15 +17547,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get insightsScreenPartShareThisReport => 'このレポートを共有';
 
   @override
-  String get insightsScreenPartStartTrackingNutritionTo =>
-      '栄養管理を始めて、ここにインサイトを表示しましょう';
+  String get insightsScreenPartStartTrackingNutritionTo => '栄養管理を始めて、ここにインサイトを表示しましょう';
 
   @override
   String get insightsScreenPartTips => 'ヒント';
 
   @override
-  String get insightsScreenPartWeeklyReportsWillAppear =>
-      '週次レポートは生成され次第、ここに表示されます。';
+  String get insightsScreenPartWeeklyReportsWillAppear => '週次レポートは生成され次第、ここに表示されます。';
 
   @override
   String get insightsScreenPartWeight => '体重';
@@ -18241,8 +17638,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inventory2xXpActive => '⚡ XP 2倍有効中';
 
   @override
-  String get inventory3RefsSticker10 =>
-      '3人紹介 → ステッカー · 10人 → シェイカー · 25人 → Tシャツ';
+  String get inventory3RefsSticker10 => '3人紹介 → ステッカー · 10人 → シェイカー · 25人 → Tシャツ';
 
   @override
   String get inventory730100Day => '7日、30日、100日継続';
@@ -18352,8 +17748,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get inventoryTapToBrowseOr => 'タップして閲覧または変更';
 
   @override
-  String get inventoryTrustLevelAffectsXp =>
-      '信頼レベルは、ワークアウトやアクティビティで獲得できるXPに影響します。';
+  String get inventoryTrustLevelAffectsXp => '信頼レベルは、ワークアウトやアクティビティで獲得できるXPに影響します。';
 
   @override
   String get inventoryTrustLevels => '信頼レベル';
@@ -18423,10 +17818,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String kegelSessionScreenRepsXSHold(
-    Object defaultHoldSeconds,
-    Object defaultReps,
-  ) {
+  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps) {
     return '$defaultReps回 x $defaultHoldSeconds秒ホールド';
   }
 
@@ -18485,8 +17877,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get kegelSettingsIncludeIn => '含める項目';
 
   @override
-  String get kegelSettingsIncludePelvicFloorExercises =>
-      'トレーニングに骨盤底筋エクササイズを含める';
+  String get kegelSettingsIncludePelvicFloorExercises => 'トレーニングに骨盤底筋エクササイズを含める';
 
   @override
   String get kegelSettingsPelvicFloorTraining => '骨盤底筋トレーニング';
@@ -18501,8 +17892,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get kegelSettingsStandaloneSessions => '単独セッション';
 
   @override
-  String get kegelSettingsStrengthenYourPelvicFloor =>
-      'ワークアウトにケーゲルエクササイズを取り入れて、骨盤底筋を強化しましょう。';
+  String get kegelSettingsStrengthenYourPelvicFloor => 'ワークアウトにケーゲルエクササイズを取り入れて、骨盤底筋を強化しましょう。';
 
   @override
   String get kegelSettingsWarmup => 'ウォーミングアップ';
@@ -18620,12 +18010,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get leaderboardLockedStateCompleteMoreWorkoutsTo =>
-      'ワークアウトを完了してロックを解除しましょう！';
+  String get leaderboardLockedStateCompleteMoreWorkoutsTo => 'ワークアウトを完了してロックを解除しましょう！';
 
   @override
-  String get leaderboardLockedStateGlobalLeaderboardLocked =>
-      'グローバルリーダーボードはロックされています';
+  String get leaderboardLockedStateGlobalLeaderboardLocked => 'グローバルリーダーボードはロックされています';
 
   @override
   String get leaderboardLockedStateViewFriendsLeaderboard => '友達のリーダーボードを表示';
@@ -18645,8 +18033,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get leaderboardPrivacyAnonymousMode => '匿名モード';
 
   @override
-  String get leaderboardPrivacyCouldnTLoadPrivacy =>
-      'プライバシー設定を読み込めませんでした。下にスワイプして再試行してください。';
+  String get leaderboardPrivacyCouldnTLoadPrivacy => 'プライバシー設定を読み込めませんでした。下にスワイプして再試行してください。';
 
   @override
   String get leaderboardPrivacyLeaderboardPrivacy => 'リーダーボードのプライバシー';
@@ -18717,8 +18104,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get levelUpCatchAwesomeGotIt => '素晴らしい、了解しました';
 
   @override
-  String get levelUpCatchIncludesAFreePhysical =>
-      '無料の物理報酬が含まれています。Merch Rewardsで受け取ってください';
+  String get levelUpCatchIncludesAFreePhysical => '無料の物理報酬が含まれています。Merch Rewardsで受け取ってください';
 
   @override
   String get levelUpCatchReveal => '公開';
@@ -18742,10 +18128,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String levelUpCatchUpBannerYouGainedLevelsUp(
-    Object count,
-    Object highestLevel,
-  ) {
+  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel) {
     return '$countレベルアップしました（最大L$highestLevel）';
   }
 
@@ -18834,8 +18217,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get libraryLibrary => 'ライブラリ';
 
   @override
-  String get libraryQuickAccessBrowseExercisesProgramsW =>
-      'エクササイズ、プログラム、ワークアウト履歴を閲覧';
+  String get libraryQuickAccessBrowseExercisesProgramsW => 'エクササイズ、プログラム、ワークアウト履歴を閲覧';
 
   @override
   String get libraryQuickAccessExerciseLibrary => 'エクササイズライブラリ';
@@ -18844,10 +18226,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get librarySearchExercises => 'エクササイズを検索...';
 
   @override
-  String lifetimeMemberBadgeDaysUntil(
-    Object daysRemaining,
-    Object nextTierName,
-  ) {
+  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName) {
     return '$nextTierNameまであと$daysRemaining日';
   }
 
@@ -18887,8 +18266,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get liveChatAreYouSureYou => 'この会話を終了しますか？後で新しいチャットを開始できます。';
 
   @override
-  String get liveChatConnectWithOurSupport =>
-      'サポートチームに接続してリアルタイムで相談できます。営業時間内にエージェントが質問や問題の解決をサポートします。';
+  String get liveChatConnectWithOurSupport => 'サポートチームに接続してリアルタイムで相談できます。営業時間内にエージェントが質問や問題の解決をサポートします。';
 
   @override
   String get liveChatEndChat => 'チャットを終了しますか？';
@@ -18924,12 +18302,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get livePrSnackbarNewPr => '新PR達成！';
 
   @override
-  String livePrSnackbarRm(
-    Object oneRmStr,
-    Object reps,
-    Object unitLabel,
-    Object weightStr,
-  ) {
+  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr) {
     return '$weightStr$unitLabel×$reps  →  $oneRmStr $unitLabel 1RM, ';
   }
 
@@ -18944,15 +18317,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsAddALocationTo =>
-      'ジムプロフィールに場所を追加して自動切り替えを有効にします。プロフィールを編集し「場所を追加」をタップしてください。';
+  String get locationSettingsAddALocationTo => 'ジムプロフィールに場所を追加して自動切り替えを有効にします。プロフィールを編集し「場所を追加」をタップしてください。';
 
   @override
   String get locationSettingsAutoSwitchGymProfiles => 'ジムプロフィールの自動切り替え';
 
   @override
-  String get locationSettingsAutoSwitchNeedsAlways =>
-      '自動切り替えには、ジムへの到着を検知するために「常に」位置情報へのアクセスが必要です。';
+  String get locationSettingsAutoSwitchNeedsAlways => '自動切り替えには、ジムへの到着を検知するために「常に」位置情報へのアクセスが必要です。';
 
   @override
   String get locationSettingsAutoSwitchProfiles => 'プロフィールの自動切り替え';
@@ -18977,8 +18348,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsSetAPreferredWorkout =>
-      'ジムプロフィールで優先ワークアウト時間を設定すると、時間ベースの切り替えが可能になります。';
+  String get locationSettingsSetAPreferredWorkout => 'ジムプロフィールで優先ワークアウト時間を設定すると、時間ベースの切り替えが可能になります。';
 
   @override
   String get locationSettingsTapToGrantPermission => 'タップして権限を許可';
@@ -18987,8 +18357,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get locationSettingsTimeBasedSwitching => '時間ベースの切り替え';
 
   @override
-  String get locationSettingsYourLocationIsOnly =>
-      '位置情報は、保存されたジムへの近接性を確認するためにローカルでのみ使用されます。';
+  String get locationSettingsYourLocationIsOnly => '位置情報は、保存されたジムへの近接性を確認するためにローカルでのみ使用されます。';
 
   @override
   String get log1rmCurrent1rm => '現在の1RM:';
@@ -19269,8 +18638,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logMealSheetEGGrilledChicken => '例えば「焼き鳥丼、半分食べました」';
 
   @override
-  String get logMealSheetEnableMicrophoneAccessIn =>
-      '[設定] でマイクへのアクセスを有効にするか、代わりに [検索] に食事を入力してください。';
+  String get logMealSheetEnableMicrophoneAccessIn => '[設定] でマイクへのアクセスを有効にするか、代わりに [検索] に食事を入力してください。';
 
   @override
   String get logMealSheetEstimatedNutrition => '推定栄養成分';
@@ -19322,8 +18690,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetHandsFreeLoggingSpeak =>
-      'ハンズフリーのログ記録 — 自然に話し、テキストを確認して確認します。調理中に大活躍します。';
+  String get logMealSheetHandsFreeLoggingSpeak => 'ハンズフリーのログ記録 — 自然に話し、テキストを確認して確認します。調理中に大活躍します。';
 
   @override
   String get logMealSheetHeardEditIfNeeded => '読み取り完了 — 必要に応じて編集し、確認してください';
@@ -19471,8 +18838,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logMealSheetPlannedHighOutputDay => '計画的に生産性の高い日を設定します。これは仕様です。';
 
   @override
-  String get logMealSheetPortionsAdjustedReviewWei =>
-      '分量を調整しました — 以下の重量を確認してください';
+  String get logMealSheetPortionsAdjustedReviewWei => '分量を調整しました — 以下の重量を確認してください';
 
   @override
   String get logMealSheetReTakePhoto => '撮り直す';
@@ -19547,8 +18913,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logMealSheetTapAgainWhenYou => '終了したらもう一度タップ';
 
   @override
-  String get logMealSheetTapHereToSave =>
-      'ここをタップして食事を毎日の記録に保存します。分析だけでは記録されません。';
+  String get logMealSheetTapHereToSave => 'ここをタップして食事を毎日の記録に保存します。分析だけでは記録されません。';
 
   @override
   String get logMealSheetTapToConfirmEach => 'タップしてそれぞれを確認するか、下のリストの値を編集します。';
@@ -19557,23 +18922,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logMealSheetTapToSpeak => 'タップして話す';
 
   @override
-  String get logMealSheetTellTheAiAnything =>
-      '食べた量、交換内容、お皿のサイズなど、役に立つことを AI に伝えます。';
+  String get logMealSheetTellTheAiAnything => '食べた量、交換内容、お皿のサイズなど、役に立つことを AI に伝えます。';
 
   @override
-  String get logMealSheetThatCorrectionProducedAn =>
-      'この修正により、空の食事が生成され、以前の推定値が維持されました。';
+  String get logMealSheetThatCorrectionProducedAn => 'この修正により、空の食事が生成され、以前の推定値が維持されました。';
 
   @override
-  String get logMealSheetThatLooksLikeA =>
-      'これはレシピのように見えます。これをレシピ インポーターに貼り付けます。';
+  String get logMealSheetThatLooksLikeA => 'これはレシピのように見えます。これをレシピ インポーターに貼り付けます。';
 
   @override
   String get logMealSheetThisPhotoWasHard => 'この写真は読み取りが困難でした';
 
   @override
-  String get logMealSheetTipAddBrandPortion =>
-      'ヒント: 精度を高めるためにブランドと分量を追加します (例: 「チポトレ チキンボウル」または「ドミノ スライス 2 枚」)';
+  String get logMealSheetTipAddBrandPortion => 'ヒント: 精度を高めるためにブランドと分量を追加します (例: 「チポトレ チキンボウル」または「ドミノ スライス 2 枚」)';
 
   @override
   String get logMealSheetTryAgain => '再試行';
@@ -19622,10 +18983,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetUiOfItemsMatchedVerified(
-    Object length,
-    Object verifiedCount,
-  ) {
+  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount) {
     return '$length品中$verifiedCount品が検証済み栄養データと一致しました';
   }
 
@@ -19806,11 +19164,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValidRange(
-    Object label,
-    Object maxValue,
-    Object minValue,
-  ) {
+  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue) {
     return '有効範囲: $minValue-$maxValue $label';
   }
 
@@ -19941,8 +19295,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loggedMealsEnergyLevel => 'エネルギーレベル';
 
   @override
-  String get loggedMealsExamplesSoftDrinksInstant =>
-      '例：清涼飲料水、インスタントラーメン、包装されたスナック菓子、チキンナゲット、多くの朝食用シリアル。';
+  String get loggedMealsExamplesSoftDrinksInstant => '例：清涼飲料水、インスタントラーメン、包装されたスナック菓子、チキンナゲット、多くの朝食用シリアル。';
 
   @override
   String get loggedMealsFG => '脂質 (g)';
@@ -20017,8 +19370,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loggedMealsQuantity => '数量';
 
   @override
-  String get loggedMealsRatesHowInflammatoryA =>
-      '加工度、脂質の質、糖分、食物繊維、抗酸化特性に基づいて、食品の炎症誘発性を評価します。';
+  String get loggedMealsRatesHowInflammatoryA => '加工度、脂質の質、糖分、食物繊維、抗酸化特性に基づいて、食品の炎症誘発性を評価します。';
 
   @override
   String get loggedMealsRemove => '削除';
@@ -20035,8 +19387,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loggedMealsReportIncorrectData => '不正確なデータを報告';
 
   @override
-  String get loggedMealsResearchLinksRegularConsump =>
-      '研究によると、日常的な摂取は炎症、肥満、心臓病、消化器系の問題の増加と関連しています。';
+  String get loggedMealsResearchLinksRegularConsump => '研究によると、日常的な摂取は炎症、肥満、心臓病、消化器系の問題の増加と関連しています。';
 
   @override
   String get loggedMealsSaveAsRecipe => 'レシピとして保存';
@@ -20216,8 +19567,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get loggedMealsUltraProcessedFoods => '超加工食品';
 
   @override
-  String get loggedMealsUltraProcessedFoodsNova =>
-      '超加工食品（NOVAグループ4）には、乳化剤、硬化油、人工甘味料、分離タンパク質など、家庭料理では使われない工業的な添加物が含まれています。';
+  String get loggedMealsUltraProcessedFoodsNova => '超加工食品（NOVAグループ4）には、乳化剤、硬化油、人工甘味料、分離タンパク質など、家庭料理では使われない工業的な添加物が含まれています。';
 
   @override
   String get loggedMealsUndo => '元に戻す';
@@ -20266,8 +19616,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mainShellPartSignUpFreeFor => '無料で登録して無制限にアクセス';
 
   @override
-  String get manageDuplicateImportsCouldNotLoadDuplicate =>
-      '重複したインポートを読み込めませんでした';
+  String get manageDuplicateImportsCouldNotLoadDuplicate => '重複したインポートを読み込めませんでした';
 
   @override
   String get manageDuplicateImportsDuplicateImports => '重複したインポート';
@@ -20279,8 +19628,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get manageDuplicateImportsMakeThisPrimary => 'これをメインにする';
 
   @override
-  String get manageDuplicateImportsNoDuplicateImportsDetected =>
-      '重複したインポートは検出されませんでした';
+  String get manageDuplicateImportsNoDuplicateImportsDetected => '重複したインポートは検出されませんでした';
 
   @override
   String get manageDuplicateImportsPrimary => 'メイン';
@@ -20341,10 +19689,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String manageGymProfilesSheetEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '$equipmentCount種類の器具 • $environmentDisplayName';
   }
 
@@ -20400,8 +19745,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get masteriesGridYourMasteriesWillLevel =>
-      'ワークアウト、歩数、有酸素運動を記録すると、マスタリーのレベルが上がります。';
+  String get masteriesGridYourMasteriesWillLevel => 'ワークアウト、歩数、有酸素運動を記録すると、マスタリーのレベルが上がります。';
 
   @override
   String get mealPlannerAddARecipe => 'レシピを追加';
@@ -20475,8 +19819,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mealRemindersSettingsActiveSchedules => 'アクティブなスケジュール';
 
   @override
-  String get mealRemindersSettingsAutoSnapshotRecipeVersions =>
-      'レシピバージョンの自動スナップショット';
+  String get mealRemindersSettingsAutoSnapshotRecipeVersions => 'レシピバージョンの自動スナップショット';
 
   @override
   String get mealRemindersSettingsDeleteSchedule => 'スケジュールを削除しますか？';
@@ -20488,8 +19831,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mealRemindersSettingsMealReminders => '食事リマインダー';
 
   @override
-  String get mealRemindersSettingsNoSchedulesYetAdd =>
-      'スケジュールがまだありません。レシピ詳細画面から追加してください。';
+  String get mealRemindersSettingsNoSchedulesYetAdd => 'スケジュールがまだありません。レシピ詳細画面から追加してください。';
 
   @override
   String get mealRemindersSettingsPublicSharingDefault => '公開共有のデフォルト設定';
@@ -20619,8 +19961,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get measurementDetailTrends => 'トレンド';
 
   @override
-  String get measurementDetailTrySelectingAWider =>
-      'より広い期間を選択するか、新しい記録を追加してください';
+  String get measurementDetailTrySelectingAWider => 'より広い期間を選択するか、新しい記録を追加してください';
 
   @override
   String get measurementDetailViewTrends => 'トレンドを表示';
@@ -20676,10 +20017,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get measurementsScreenPartAddAnyNotes => 'メモを追加...';
 
   @override
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
-    Object _selectedFormat,
-    Object length,
-  ) {
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length) {
     return '測定タイプを $length としてエクスポート (.(_selectedFormat))';
   }
 
@@ -20749,12 +20087,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get measurementsScreenPartSelectAll => 'すべて選択';
 
   @override
-  String get measurementsScreenPartWeightBodyFatChest =>
-      '体重, 体脂肪率, 胸囲, ウエスト, ヒップ, 首回り, 肩幅, 左上腕, 右上腕, 左前腕, 右前腕, 左太もも, 右太もも, 左ふくらはぎ, 右ふくらはぎ';
+  String get measurementsScreenPartWeightBodyFatChest => '体重, 体脂肪率, 胸囲, ウエスト, ヒップ, 首回り, 肩幅, 左上腕, 右上腕, 左前腕, 右前腕, 左太もも, 右太もも, 左ふくらはぎ, 右ふくらはぎ';
 
   @override
-  String get measurementsScreenPartWorkoutsNutritionMeasureme =>
-      'ワークアウト、栄養、測定値など';
+  String get measurementsScreenPartWorkoutsNutritionMeasureme => 'ワークアウト、栄養、測定値など';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -20883,15 +20219,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get medicalDisclaimerAiRecommendations => 'AIによる推奨事項';
 
   @override
-  String get medicalDisclaimerAlwaysSeekTheAdvice =>
-      '新しい運動プログラムを開始する前には、特に既存の病状、怪我、または健康上の懸念がある場合は、必ず医師やその他の資格のある医療提供者の助言を求めてください。このアプリで読んだ内容を理由に、専門的な医療アドバイスを無視したり、受診を遅らせたりしないでください。';
+  String get medicalDisclaimerAlwaysSeekTheAdvice => '新しい運動プログラムを開始する前には、特に既存の病状、怪我、または健康上の懸念がある場合は、必ず医師やその他の資格のある医療提供者の助言を求めてください。このアプリで読んだ内容を理由に、専門的な医療アドバイスを無視したり、受診を遅らせたりしないでください。';
 
   @override
   String get medicalDisclaimerAssumptionOfRisk => 'リスクの引き受け';
 
   @override
-  String get medicalDisclaimerBannerAiGeneratedContentNot =>
-      'AI生成コンテンツ - 医療アドバイスではありません';
+  String get medicalDisclaimerBannerAiGeneratedContentNot => 'AI生成コンテンツ - 医療アドバイスではありません';
 
   @override
   String get medicalDisclaimerConsultYourDoctor => '医師に相談する';
@@ -20914,9 +20248,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
-    Object appName,
-  ) {
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName) {
     return '身体運動には固有のリスクが伴います。$appNameを使用することで、ユーザーは自発的に身体活動に参加し、怪我、病気、死亡を含むがこれらに限定されない、当該活動に関連するすべてのリスクを負うことを認めるものとします。';
   }
 
@@ -20931,12 +20263,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get medicalDisclaimerStopExercisingImmediatelyIf =>
-      '痛み、めまい、息切れ、吐き気、または通常の運動以上の不快感を感じた場合は、直ちに運動を中止してください。AIはリアルタイムであなたの身体状態を評価できないため、自身の限界内で運動することはあなたの責任です。';
+  String get medicalDisclaimerStopExercisingImmediatelyIf => '痛み、めまい、息切れ、吐き気、または通常の運動以上の不快感を感じた場合は、直ちに運動を中止してください。AIはリアルタイムであなたの身体状態を評価できないため、自身の限界内で運動することはあなたの責任です。';
 
   @override
-  String get medicalDisclaimerWorkoutRecommendationsAreGe =>
-      'ワークアウトの推奨事項は、提供された情報（フィットネスレベル、目標、機器など）に基づいて生成されます。AIは正確性を追求していますが、すべての個人的な要因を考慮することはできません。推奨事項がすべての人に適しているとは限りません。';
+  String get medicalDisclaimerWorkoutRecommendationsAreGe => 'ワークアウトの推奨事項は、提供された情報（フィットネスレベル、目標、機器など）に基づいて生成されます。AIは正確性を追求していますが、すべての個人的な要因を考慮することはできません。推奨事項がすべての人に適しているとは限りません。';
 
   @override
   String get menuAnalysisAddFood => '食事を追加';
@@ -21030,8 +20360,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuAnalysisHistorySearchByNameRestaurant => '名前、レストラン、または住所で検索';
 
   @override
-  String get menuAnalysisHistoryTapTheBookmarkButton =>
-      'メニューをスキャンした後、ブックマークボタンをタップしてここに保存してください。';
+  String get menuAnalysisHistoryTapTheBookmarkButton => 'メニューをスキャンした後、ブックマークボタンをタップしてここに保存してください。';
 
   @override
   String get menuAnalysisHistoryTryADifferentSearch => '別の検索ワードを試してください。';
@@ -21211,15 +20540,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuAnalysisSort2 => '並び替え';
 
   @override
-  String get menuAnalysisTourAiPicksTheBest =>
-      'AIが、あなたの残りのマクロ栄養素、アレルギー、炎症耐性に基づいて最適な3品を選びます。';
+  String get menuAnalysisTourAiPicksTheBest => 'AIが、あなたの残りのマクロ栄養素、アレルギー、炎症耐性に基づいて最適な3品を選びます。';
 
   @override
   String get menuAnalysisTourFilterByDietAllergens => '食事制限とアレルギーで絞り込み';
 
   @override
-  String get menuAnalysisTourHideDishesThatDon =>
-      '食事制限に合わない、またはアレルギー成分を含む料理を非表示にします。設定の内容が反映されます。';
+  String get menuAnalysisTourHideDishesThatDon => '食事制限に合わない、またはアレルギー成分を含む料理を非表示にします。設定の内容が反映されます。';
 
   @override
   String get menuAnalysisTourRecommendedForYou => 'おすすめ';
@@ -21231,12 +20558,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuAnalysisTourSortTheWholeMenu => 'メニュー全体を並び替え';
 
   @override
-  String get menuAnalysisTourTapProteinCarbsFat =>
-      'タンパク質、炭水化物、脂質、または炎症をタップして、すべての料理を一度にランク付けします。「その他…」から詳細な並び替えが可能です。';
+  String get menuAnalysisTourTapProteinCarbsFat => 'タンパク質、炭水化物、脂質、または炎症をタップして、すべての料理を一度にランク付けします。「その他…」から詳細な並び替えが可能です。';
 
   @override
-  String get menuAnalysisTourTickTheDishesYou =>
-      '実際に注文した料理にチェックを入れ、「記録」をタップして毎日の合計に反映させます。';
+  String get menuAnalysisTourTickTheDishesYou => '実際に注文した料理にチェックを入れ、「記録」をタップして毎日の合計に反映させます。';
 
   @override
   String get menuAnalysisUpdateExisting => '既存のメニューを更新';
@@ -21266,8 +20591,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuDishAdjustHowMuchDidYou => 'どれくらい食べましたか？';
 
   @override
-  String get menuDishAdjustMenuMacrosAreAs =>
-      'メニューの栄養素は「提供時」の数値です。実際に食べた量を教えてください。';
+  String get menuDishAdjustMenuMacrosAreAs => 'メニューの栄養素は「提供時」の数値です。実際に食べた量を教えてください。';
 
   @override
   String get menuDishAdjustOrDescribeIt => 'または説明を入力';
@@ -21290,8 +20614,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuFilterAvoid => '避ける';
 
   @override
-  String get menuFilterBasedOnIngredientProfile =>
-      '成分プロファイル（オメガ3、食物繊維、添加糖など）に基づきます。';
+  String get menuFilterBasedOnIngredientProfile => '成分プロファイル（オメガ3、食物繊維、添加糖など）に基づきます。';
 
   @override
   String get menuFilterBloodSugar => '血糖値';
@@ -21324,8 +20647,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuFilterForSpecificTargetsMost => '特定の目標用です。ほとんどの方は必要ありません。';
 
   @override
-  String get menuFilterGlycemicLoadPerServing =>
-      '1食あたりのグリセミック負荷（低いほどエネルギーが安定します）。';
+  String get menuFilterGlycemicLoadPerServing => '1食あたりのグリセミック負荷（低いほどエネルギーが安定します）。';
 
   @override
   String get menuFilterGood => '✅ 良い';
@@ -21358,8 +20680,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get menuFilterOkay => '👌 普通';
 
   @override
-  String get menuFilterOnionGarlicWheatLactose =>
-      '玉ねぎ、にんにく、小麦、乳糖はIBS症状を引き起こす可能性があります。';
+  String get menuFilterOnionGarlicWheatLactose => '玉ねぎ、にんにく、小麦、乳糖はIBS症状を引き起こす可能性があります。';
 
   @override
   String get menuFilterPerDishBudget => '料理ごとの予算';
@@ -21458,15 +20779,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get merchClaimsNotNow => '今はしない';
 
   @override
-  String get merchClaimsPushEmailAlertsWhen =>
-      '特典ティアに近づいた時や特典が利用可能な時にプッシュ通知とメールで通知します';
+  String get merchClaimsPushEmailAlertsWhen => '特典ティアに近づいた時や特典が利用可能な時にプッシュ通知とメールで通知します';
 
   @override
   String get merchClaimsRealRewardsForReal => '努力に応えるリアルな特典';
 
   @override
-  String get merchClaimsRewardAcceptedWeLl =>
-      '特典を受け付けました！配送先情報を収集するためメールをお送りします。';
+  String get merchClaimsRewardAcceptedWeLl => '特典を受け付けました！配送先情報を収集するためメールをお送りします。';
 
   @override
   String get merchClaimsRewardCancelled => '特典をキャンセルしました。';
@@ -21502,8 +20821,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get merchClaimsTapAcceptToClaim =>
-      '「受け取る」をタップして申請してください。発送準備が整い次第、サイズと配送先住所を伺うメールをお送りします。';
+  String get merchClaimsTapAcceptToClaim => '「受け取る」をタップして申請してください。発送準備が整い次第、サイズと配送先住所を伺うメールをお送りします。';
 
   @override
   String get merchClaimsTracking => '追跡番号';
@@ -21543,8 +20861,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get messagesPleaseLogInTo => 'メッセージを表示するにはログインしてください';
 
   @override
-  String get messagesStartAConversationWith =>
-      '友達と会話を始めましょう！\nメッセージはここに表示されます。';
+  String get messagesStartAConversationWith => '友達と会話を始めましょう！\nメッセージはここに表示されます。';
 
   @override
   String get metricHistoryCardNoDataForThis => 'この日のデータはありません';
@@ -21553,8 +20870,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get metricHistoryCardTrendUnavailable => 'トレンドは利用できません。';
 
   @override
-  String get metricHistoryCardTwoOrMoreSynced =>
-      'トレンドを表示するには、2日分以上の同期データが必要です。';
+  String get metricHistoryCardTwoOrMoreSynced => 'トレンドを表示するには、2日分以上の同期データが必要です。';
 
   @override
   String get metricPickerChooseAMetric => '指標を選択';
@@ -21709,9 +21025,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String milestonesScreenUiAverageMinWorkout(
-    Object averageWorkoutDurationMinutes,
-  ) {
+  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes) {
     return '平均: $averageWorkoutDurationMinutes分/ワークアウト';
   }
 
@@ -21952,8 +21266,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get moodHistoryStartTrackingYourMood =>
-      '気分を記録して、パーソナライズされたワークアウトの提案を受け取り、傾向を確認しましょう。';
+  String get moodHistoryStartTrackingYourMood => '気分を記録して、パーソナライズされたワークアウトの提案を受け取り、傾向を確認しましょう。';
 
   @override
   String get moodHistoryYourMoodInsights => 'あなたの気分のインサイト';
@@ -22074,8 +21387,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get morningRecoveryNudgeBody =>
-      '今日のレディネスが低いです。ボリュームを下げます——アプリを開いて再生成してください。';
+  String get morningRecoveryNudgeBody => '今日のレディネスが低いです。ボリュームを下げます——アプリを開いて再生成してください。';
 
   @override
   String get morningRecoveryNudgeTitle => '今日は無理をしないで';
@@ -22099,16 +21411,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get muscleAnalyticsBalanced => 'バランス良好';
 
   @override
-  String get muscleAnalyticsCompleteMoreWorkoutsTo =>
-      'ワークアウトを完了して、筋肉バランス分析を確認しましょう。';
+  String get muscleAnalyticsCompleteMoreWorkoutsTo => 'ワークアウトを完了して、筋肉バランス分析を確認しましょう。';
 
   @override
-  String get muscleAnalyticsCompleteSomeWorkoutsTo =>
-      'ワークアウトを完了して、筋肉トレーニングのヒートマップを確認しましょう。';
+  String get muscleAnalyticsCompleteSomeWorkoutsTo => 'ワークアウトを完了して、筋肉トレーニングのヒートマップを確認しましょう。';
 
   @override
-  String get muscleAnalyticsCompleteWorkoutsOverMultipl =>
-      '数週間にわたってワークアウトを完了し、トレーニング頻度を確認しましょう。';
+  String get muscleAnalyticsCompleteWorkoutsOverMultipl => '数週間にわたってワークアウトを完了し、トレーニング頻度を確認しましょう。';
 
   @override
   String get muscleAnalyticsFrequency => '頻度';
@@ -22322,8 +21631,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get my1rmsAddManually => '手動で追加';
 
   @override
-  String get my1rmsAddYourMaxLifts =>
-      '最大挙上重量を追加して、トレーニング強度に基づいたパーソナライズされた重量推奨を取得しましょう。';
+  String get my1rmsAddYourMaxLifts => '最大挙上重量を追加して、トレーニング強度に基づいたパーソナライズされた重量推奨を取得しましょう。';
 
   @override
   String get my1rmsAutoPopulateFromWorkout => 'ワークアウト履歴から自動入力';
@@ -22385,11 +21693,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardKg(
-    Object derivedWeight,
-    Object multiplierDisplay,
-    Object relationshipDisplay,
-  ) {
+  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay) {
     return '$multiplierDisplay = $derivedWeight kg • $relationshipDisplay';
   }
 
@@ -22404,17 +21708,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardLinkedTo(
-    Object primaryExerciseName,
-    Object text,
-  ) {
+  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text) {
     return '$textを$primaryExerciseNameにリンクしました';
   }
 
   @override
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
-    Object linkedExerciseName,
-  ) {
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName) {
     return '$linkedExerciseNameをリンクされたエクササイズから削除しますか？';
   }
 
@@ -22466,8 +21765,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get myBadgesShowcaseLogYourFirstWorkout =>
-      '最初のワークアウトを記録して、最初のバッジを獲得しましょう';
+  String get myBadgesShowcaseLogYourFirstWorkout => '最初のワークアウトを記録して、最初のバッジを獲得しましょう';
 
   @override
   String myExercisesAreYouSureDelete(Object exercise) {
@@ -22551,12 +21849,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String myFoodsSheetKcalUBP(
-    Object food,
-    Object food1,
-    Object food2,
-    Object food3,
-  ) {
+  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3) {
     return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
@@ -22703,10 +21996,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardBestKgX(
-    Object item,
-    Object maxReps,
-  ) {
+  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps) {
     return 'ベスト: ${item}kg x $maxReps';
   }
 
@@ -22717,11 +22007,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get myLibraryTabViewAll => 'すべて表示';
 
   @override
-  String myProgramSummaryCardValue(
-    Object experience,
-    Object goal,
-    Object workoutDays,
-  ) {
+  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays) {
     return '$workoutDays  •  $experience  •  $goal';
   }
 
@@ -22752,12 +22038,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get myWrappedCompleteAtLeast3 =>
-      '今月中に3回以上のワークアウトを完了して\nパーソナライズされたまとめをアンロックしましょう';
+  String get myWrappedCompleteAtLeast3 => '今月中に3回以上のワークアウトを完了して\nパーソナライズされたまとめをアンロックしましょう';
 
   @override
-  String get myWrappedEarnAUniquePersonality =>
-      '3回以上のワークアウトを完了して、毎月ユニークなパーソナリティを獲得しましょう。';
+  String get myWrappedEarnAUniquePersonality => '3回以上のワークアウトを完了して、毎月ユニークなパーソナリティを獲得しましょう。';
 
   @override
   String get myWrappedFailedToLoadWrapped => 'Wrappedデータの読み込みに失敗しました';
@@ -22785,10 +22069,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String myWrappedScreenWrappedDropsInDays(
-    Object daysUntilDrop,
-    Object monthName,
-  ) {
+  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName) {
     return '$monthName Wrappedまであと$daysUntilDrop日';
   }
 
@@ -22968,10 +22249,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String neatDashboardScreenPartStreaksCardQuietHours(
-    Object endTime,
-    Object startTime,
-  ) {
+  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime) {
     return 'おやすみ時間: $startTime - $endTime';
   }
 
@@ -23156,8 +22434,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get netflixExerciseCarouselSeeAll => 'すべて見る';
 
   @override
-  String get netflixExercisesAddYourOwnExercises =>
-      '独自のレップ数、セット数、手順でエクササイズを追加しましょう。';
+  String get netflixExercisesAddYourOwnExercises => '独自のレップ数、セット数、手順でエクササイズを追加しましょう。';
 
   @override
   String get netflixExercisesAiSearchEG => 'AI検索 (例: 「胸のトレーニング」)';
@@ -23193,8 +22470,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get netflixExercisesTabCreate => '作成';
 
   @override
-  String get netflixExercisesTabCreateYourOwnExercises =>
-      '写真とAI分析を使って独自のエクササイズを作成しましょう';
+  String get netflixExercisesTabCreateYourOwnExercises => '写真とAI分析を使って独自のエクササイズを作成しましょう';
 
   @override
   String get netflixExercisesTabMyCustomExercises => 'マイカスタムエクササイズ';
@@ -23206,10 +22482,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get netflixExercisesTabNoExercisesFound => 'エクササイズが見つかりません';
 
   @override
-  String netflixExercisesTabPartExerciseListCardDaysWeek(
-    Object daysPerWeek,
-    Object duration,
-  ) {
+  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration) {
     return '$daysPerWeek日/週 • $duration';
   }
 
@@ -23233,10 +22506,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get newTilesAmazingStreakKeepGoing => '素晴らしい継続記録です！この調子で頑張りましょう！';
 
   @override
-  String newTilesPartActiveChallengeCardDayOf(
-    Object currentDay,
-    Object totalDays,
-  ) {
+  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays) {
     return '$totalDays日中$currentDay日目';
   }
 
@@ -23246,10 +22516,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String newTilesPartActiveChallengeCardTodayReps(
-    Object targetReps,
-    Object todayReps,
-  ) {
+  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps) {
     return '今日: $todayReps / $targetReps回';
   }
 
@@ -23409,8 +22676,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nextSetPreviewUseThis => 'これを使用';
 
   @override
-  String get nextWorkoutCardCouldNotSkipWorkout =>
-      'ワークアウトをスキップできませんでした。もう一度お試しください。';
+  String get nextWorkoutCardCouldNotSkipWorkout => 'ワークアウトをスキップできませんでした。もう一度お試しください。';
 
   @override
   String get nextWorkoutCardQuick => 'クイック';
@@ -23422,8 +22688,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nextWorkoutCardSkipWorkout => 'ワークアウトをスキップしますか？';
 
   @override
-  String get nextWorkoutCardThisWorkoutWillBe =>
-      'このワークアウトはスキップとして記録され、週間目標にはカウントされません。';
+  String get nextWorkoutCardThisWorkoutWillBe => 'このワークアウトはスキップとして記録され、週間目標にはカウントされません。';
 
   @override
   String get nextWorkoutCardUpcoming => '予定';
@@ -23544,8 +22809,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationTestShowsANotificationRight => '今すぐ通知を表示します';
 
   @override
-  String get notificationTestShowsAllScheduledNotificati =>
-      'スケジュールされたすべての通知を表示します';
+  String get notificationTestShowsAllScheduledNotificati => 'スケジュールされたすべての通知を表示します';
 
   @override
   String get notificationTestShowsCurrentTimezoneSetting => '現在のタイムゾーン設定を表示します';
@@ -23554,16 +22818,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationTestStayHydratedYouRe => '「水分補給を忘れずに！ 💧 現在40%です」';
 
   @override
-  String get notificationTestTestsScheduledNotificationD =>
-      'スケジュールされた通知の配信をテストします';
+  String get notificationTestTestsScheduledNotificationD => 'スケジュールされた通知の配信をテストします';
 
   @override
-  String get notificationTestTheseAreLocalNotifications =>
-      'これらはローカル通知（Firebaseではありません）です。スケジュールされた通知がデバイスで機能するかテストするために使用してください。';
+  String get notificationTestTheseAreLocalNotifications => 'これらはローカル通知（Firebaseではありません）です。スケジュールされた通知がデバイスで機能するかテストするために使用してください。';
 
   @override
-  String get notificationTestTheseNotificationsAreSent =>
-      'これらの通知は、バックエンドを通じてFirebase Cloud Messagingから送信されます。';
+  String get notificationTestTheseNotificationsAreSent => 'これらの通知は、バックエンドを通じてFirebase Cloud Messagingから送信されます。';
 
   @override
   String get notificationTestTimeToLogYour => '「朝食を記録する時間です！ 📸」';
@@ -23650,12 +22911,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationsEvening => '夜';
 
   @override
-  String get notificationsFailedToAcceptRequest =>
-      'リクエストの承認に失敗しました。もう一度お試しください。';
+  String get notificationsFailedToAcceptRequest => 'リクエストの承認に失敗しました。もう一度お試しください。';
 
   @override
-  String get notificationsFailedToIgnoreRequest =>
-      'リクエストの無視に失敗しました。もう一度お試しください。';
+  String get notificationsFailedToIgnoreRequest => 'リクエストの無視に失敗しました。もう一度お試しください。';
 
   @override
   String get notificationsFailedToLoadNotifications => '通知の読み込みに失敗しました';
@@ -23748,8 +23007,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationsScreenPartWhatToExpect => '通知の内容';
 
   @override
-  String get notificationsScreenPartYourAiCoachWill =>
-      'AIコーチがワークアウトのリマインダー、モチベーション、進捗状況をここでお知らせします。';
+  String get notificationsScreenPartYourAiCoachWill => 'AIコーチがワークアウトのリマインダー、モチベーション、進捗状況をここでお知らせします。';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -23855,10 +23113,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutrientExplorerPartNutrientScore => '栄養スコア';
 
   @override
-  String nutrientExplorerPartNutrientScoreCardCurrent(
-    Object currentValue,
-    Object unit,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit) {
     return '現在: $currentValue$unit';
   }
 
@@ -23868,10 +23123,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String nutrientExplorerPartNutrientScoreCardOptimal(
-    Object optimalCount,
-    Object totalCount,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount) {
     return '$optimalCount/$totalCount 理想的';
   }
 
@@ -23926,8 +23178,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutrientExplorerVitamins => 'ビタミン';
 
   @override
-  String get nutrientRushGameCatchTheGoldenZealova =>
-      '黄金のZealovaマークをキャッチしてパワーアップ！';
+  String get nutrientRushGameCatchTheGoldenZealova => '黄金のZealovaマークをキャッチしてパワーアップ！';
 
   @override
   String get nutrientRushGameNewBest => '🎉 新記録！';
@@ -24119,21 +23370,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionGoalsCardMetabolismSlowsWithAge => '年齢とともに代謝は低下します';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula =>
-      'Mifflin-St Jeor式 · タップして詳細を表示';
+  String get nutritionGoalsCardMifflinStJeorFormula => 'Mifflin-St Jeor式 · タップして詳細を表示';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula2 =>
-      'ミフリン-セント・ジェオール式 (プロファイル データは内訳に利用できません)';
+  String get nutritionGoalsCardMifflinStJeorFormula2 => 'ミフリン-セント・ジェオール式 (プロファイル データは内訳に利用できません)';
 
   @override
-  String get nutritionGoalsCardMoreMassMoreEnergy =>
-      '体重が増えるほど、安静時のエネルギー消費量も増えます';
+  String get nutritionGoalsCardMoreMassMoreEnergy => '体重が増えるほど、安静時のエネルギー消費量も増えます';
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
-    Object activityMultiplier,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier) {
     return '活動係数 (×$activityMultiplier)';
   }
 
@@ -24163,12 +23409,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
-    Object carbPct,
-    Object displayName,
-    Object fatPct,
-    Object proteinPct,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct) {
     return 'マクロバランス ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
@@ -24199,8 +23440,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionGoalsCardRecalculate => '再計算';
 
   @override
-  String get nutritionGoalsCardTallerLargerSurfaceArea =>
-      '身長が高いほど、体表面積が大きくなります';
+  String get nutritionGoalsCardTallerLargerSurfaceArea => '身長が高いほど、体表面積が大きくなります';
 
   @override
   String get nutritionGoalsCardTdeeDailyEnergyNeeds => 'TDEE (毎日のエネルギー必要量)';
@@ -24233,8 +23473,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionPatternsAiMoodGuesses => 'AIによる気分の推測';
 
   @override
-  String get nutritionPatternsAutoInferMoodFrom =>
-      'チェックインをスキップすると、栄養から気分を自動的に推測します';
+  String get nutritionPatternsAutoInferMoodFrom => 'チェックインをスキップすると、栄養から気分を自動的に推測します';
 
   @override
   String get nutritionPatternsBasedOnTheLast => '過去90日間に基づく';
@@ -24258,15 +23497,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionPatternsFoodsThatEnergizeYou => '活力を与えてくれる食品';
 
   @override
-  String get nutritionPatternsLog3MealsWith =>
-      'チェックインして 3 回以上の食事を記録し、どの食べ物がエネルギーを供給し、どの食べ物が気分を落ち込ませるかを確認します。';
+  String get nutritionPatternsLog3MealsWith => 'チェックインして 3 回以上の食事を記録し、どの食べ物がエネルギーを供給し、どの食べ物が気分を落ち込ませるかを確認します。';
 
   @override
   String get nutritionPatternsLogAFewMeals => 'いくつかの食事を記録して、マクロの傾向を確認します。';
 
   @override
-  String get nutritionPatternsLoggedMealsWillShow =>
-      '記録された食事はタイムラインとしてここに表示されます。';
+  String get nutritionPatternsLoggedMealsWillShow => '記録された食事はタイムラインとしてここに表示されます。';
 
   @override
   String get nutritionPatternsMealHistory => '食事履歴';
@@ -24296,8 +23533,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionPatternsReEnable => '再度有効にする';
 
   @override
-  String get nutritionPatternsReEnableThePost =>
-      '食後のチェックインシートを再度有効にして、食事の気分パターンの構築を開始します。';
+  String get nutritionPatternsReEnableThePost => '食後のチェックインシートを再度有効にして、食事の気分パターンの構築を開始します。';
 
   @override
   String get nutritionPatternsSignInToSee => 'サインインしてパターンを表示';
@@ -24394,8 +23630,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionPreferencesOtherAllergens => 'その他のアレルゲン';
 
   @override
-  String get nutritionPreferencesOutsideTheFdaBig =>
-      'FDA Big 9 以外（マンゴー、ナス科、トウモロコシなど）';
+  String get nutritionPreferencesOutsideTheFdaBig => 'FDA Big 9 以外（マンゴー、ナス科、トウモロコシなど）';
 
   @override
   String get nutritionRecipesTab => 'レシピ';
@@ -24434,8 +23669,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get nutritionSettingsAdjustAiCalorieEstimates =>
-      'AIの推定カロリーを実際の経験に合わせて調整';
+  String get nutritionSettingsAdjustAiCalorieEstimates => 'AIの推定カロリーを実際の経験に合わせて調整';
 
   @override
   String get nutritionSettingsAlwaysRules => '常にルール';
@@ -24518,8 +23752,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionSettingsScreenFoodPreferences => '食べ物の好み';
 
   @override
-  String get nutritionSettingsScreenGoalsUpdatedAndTargets =>
-      '目標が更新され、目標が再計算されました。';
+  String get nutritionSettingsScreenGoalsUpdatedAndTargets => '目標が更新され、目標が再計算されました。';
 
   @override
   String get nutritionSettingsScreenMealPattern => '食事パターン';
@@ -24549,8 +23782,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionSettingsScreenSaveRecalculate => '保存して再計算';
 
   @override
-  String get nutritionSettingsScreenSelectYourGoalsFirst =>
-      '目標を選択してください (最初に選択 = 主要)';
+  String get nutritionSettingsScreenSelectYourGoalsFirst => '目標を選択してください (最初に選択 = 主要)';
 
   @override
   String get nutritionSettingsScreenTrainingDay => 'トレーニングデー';
@@ -24591,16 +23823,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionSettingsShowMacrosOnLog => 'ログにマクロを表示';
 
   @override
-  String get nutritionSettingsStandingRulesZealovaApplies =>
-      'Zealovaがすべての食品分析に適用する基本ルール';
+  String get nutritionSettingsStandingRulesZealovaApplies => 'Zealovaがすべての食品分析に適用する基本ルール';
 
   @override
-  String get nutritionSettingsStreakFreezeUsedYour =>
-      'ストリークフリーズ採用！あなたの連続記録は保護されます。';
+  String get nutritionSettingsStreakFreezeUsedYour => 'ストリークフリーズ採用！あなたの連続記録は保護されます。';
 
   @override
-  String get nutritionSettingsTargetsRecalculatedFromYour =>
-      'ターゲットはプロフィールから再計算されます。';
+  String get nutritionSettingsTargetsRecalculatedFromYour => 'ターゲットはプロフィールから再計算されます。';
 
   @override
   String get nutritionSettingsTrainingDayBoost => 'トレーニングデイブースト';
@@ -24645,8 +23874,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionShowcaseGrilledSalmonBowl => '焼きサーモン丼';
 
   @override
-  String get nutritionShowcaseIntroSubtitle =>
-      'どんなメニューもスキャン — Zealovaが目標に合わせて全料理をランク付け 🍽️';
+  String get nutritionShowcaseIntroSubtitle => 'どんなメニューもスキャン — Zealovaが目標に合わせて全料理をランク付け 🍽️';
 
   @override
   String get nutritionShowcaseIntroTitle => 'メニュー選びで迷わない';
@@ -24661,8 +23889,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionShowcaseMultiplePagesSnapThem => '複数ページ?全部撮ってください。';
 
   @override
-  String get nutritionShowcaseNoDishesSelectedGo =>
-      '料理が選択されていません - 戻っていくつか選んでください。';
+  String get nutritionShowcaseNoDishesSelectedGo => '料理が選択されていません - 戻っていくつか選んでください。';
 
   @override
   String get nutritionShowcaseRecent => '最近の';
@@ -24705,8 +23932,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionShowcaseSortCleared => '並び替え解除 — 元のメニュー順';
 
   @override
-  String get nutritionShowcaseSortHint =>
-      '試してみて — 「タンパク質」をタップして並び替え。炭水化物・脂質・炎症でも並び替え可能。';
+  String get nutritionShowcaseSortHint => '試してみて — 「タンパク質」をタップして並び替え。炭水化物・脂質・炎症でも並び替え可能。';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
@@ -24781,8 +24007,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionStreakCardLogAMealTo => '食事を記録してストリークを開始';
 
   @override
-  String get nutritionStreakCardStreakFreezeUsedYour =>
-      'ストリークフリーズが使用されています - ストリークは安全です。';
+  String get nutritionStreakCardStreakFreezeUsedYour => 'ストリークフリーズが使用されています - ストリークは安全です。';
 
   @override
   String get nutritionStreakCardThisWeek => '今週';
@@ -24938,23 +24163,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionTourSaved => '保存されました';
 
   @override
-  String get nutritionTourStartAndTrackA =>
-      'ここで断食を開始して追跡します。ライブの断食期間がこのカードに表示されます。';
+  String get nutritionTourStartAndTrackA => 'ここで断食を開始して追跡します。ライブの断食期間がこのカードに表示されます。';
 
   @override
   String get nutritionTourSwipeThroughDates => '日付をスワイプ';
 
   @override
-  String get nutritionTourTapTheCameraBarcode =>
-      'カメラ、バーコード、または + ボタンをタップすると、ビジョン OCR によってカロリーとマクロが自動入力されます。';
+  String get nutritionTourTapTheCameraBarcode => 'カメラ、バーコード、または + ボタンをタップすると、ビジョン OCR によってカロリーとマクロが自動入力されます。';
 
   @override
-  String get nutritionTourUseTheDateArrows =>
-      '過去の日付を確認するには、日付矢印を使用するか、「履歴」をタップします。';
+  String get nutritionTourUseTheDateArrows => '過去の日付を確認するには、日付矢印を使用するか、「履歴」をタップします。';
 
   @override
-  String get nutritionTourYourSavedRecipesFoods =>
-      '保存したレシピ、食品、スキャンしたメニューはここに保存されます。ワンタップで再度記録できます。';
+  String get nutritionTourYourSavedRecipesFoods => '保存したレシピ、食品、スキャンしたメニューはここに保存されます。ワンタップで再度記録できます。';
 
   @override
   String get nutritionUndo => '元に戻す';
@@ -24966,8 +24187,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get offlineModeOfflineMode => 'オフラインモード';
 
   @override
-  String get offlineModeWorkOutWithoutInternet =>
-      'インターネットなしでワークアウト。デバイス上のAI、事前キャッシュされたワークアウト、エクササイズ動画のダウンロード、バックグラウンド同期が可能です。';
+  String get offlineModeWorkOutWithoutInternet => 'インターネットなしでワークアウト。デバイス上のAI、事前キャッシュされたワークアウト、エクササイズ動画のダウンロード、バックグラウンド同期が可能です。';
 
   @override
   String get onboardingAlreadyHaveAccount => 'すでにアカウントを持っています';
@@ -24976,8 +24196,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingBlockerLetSDoIt => '始めましょう';
 
   @override
-  String get onboardingBlockerNoJudgmentKnowingThe =>
-      '批判はしません。壁を知ることは、それを乗り越える計画を立てるために必要です。';
+  String get onboardingBlockerNoJudgmentKnowingThe => '批判はしません。壁を知ることは、それを乗り越える計画を立てるために必要です。';
 
   @override
   String get onboardingBlockerThatMakesSense => '納得です。';
@@ -25196,8 +24415,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get overviewPersonalRecords => '自己ベスト';
 
   @override
-  String get overviewPersonalRecordsAreTracked =>
-      'ワークアウトを完了すると自己ベストが記録されます。トレーニングを開始して、進捗を確認しましょう！';
+  String get overviewPersonalRecordsAreTracked => 'ワークアウトを完了すると自己ベストが記録されます。トレーニングを開始して、進捗を確認しましょう！';
 
   @override
   String get overviewQuickAccess => 'クイックアクセス';
@@ -25275,10 +24493,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String parsedExercisesPreviewSheetValue(
-    Object exercise,
-    Object formattedSetsReps,
-  ) {
+  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps) {
     return '$formattedSetsReps @ $exercise';
   }
 
@@ -25298,8 +24513,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pauseInterceptPauseFor30Days => '30日間一時停止';
 
   @override
-  String get pauseInterceptPauseYourPlanInstead =>
-      'プランを一時停止しましょう。中断したところからすぐに再開できます。';
+  String get pauseInterceptPauseYourPlanInstead => 'プランを一時停止しましょう。中断したところからすぐに再開できます。';
 
   @override
   String get pauseInterceptQuickBreakShortTrip => '短期休暇 — 短い旅行、忙しい週など';
@@ -25392,8 +24606,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallFeatures52Skills => '52のスキル';
 
   @override
-  String get paywallFeatures7DayFreeTrial =>
-      '7日間の無料トライアル\nいつでもキャンセル可能、質問は一切ありません';
+  String get paywallFeatures7DayFreeTrial => '7日間の無料トライアル\nいつでもキャンセル可能、質問は一切ありません';
 
   @override
   String get paywallFeaturesAiCoachChat => 'AIコーチチャット';
@@ -25408,8 +24621,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallFeaturesAutoAdaptWorkoutsAround => '怪我に合わせてワークアウトを自動調整';
 
   @override
-  String get paywallFeaturesChartsHeatmapsAndDetailed =>
-      'チャート、ヒートマップ、詳細なトレンド分析';
+  String get paywallFeaturesChartsHeatmapsAndDetailed => 'チャート、ヒートマップ、詳細なトレンド分析';
 
   @override
   String get paywallFeaturesFoodPhotoScanning => '食事写真スキャン';
@@ -25427,8 +24639,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallFeaturesNutritionFormRecoveryAs => '栄養、フォーム、回復について何でも質問可能';
 
   @override
-  String get paywallFeaturesPersonalizedPlansForAny =>
-      'あらゆる機器と目標に対応したパーソナライズプラン';
+  String get paywallFeaturesPersonalizedPlansForAny => 'あらゆる機器と目標に対応したパーソナライズプラン';
 
   @override
   String get paywallFeaturesProgressTrackingAnalytics => '進捗追跡と分析';
@@ -25455,8 +24666,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricing7DayFreeTrial => '7日間の無料トライアル';
 
   @override
-  String get paywallPricing7DayFreeTrial2 =>
-      '7日間の無料トライアル\nいつでもキャンセル可能、質問は一切ありません';
+  String get paywallPricing7DayFreeTrial2 => '7日間の無料トライアル\nいつでもキャンセル可能、質問は一切ありません';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6種目';
@@ -25504,8 +24714,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricingNoPurchasesFound => '購入履歴が見つかりません';
 
   @override
-  String get paywallPricingNoSurprisesCancelAnytime =>
-      '追加料金なし。7日目までに設定からいつでもキャンセルできます。';
+  String get paywallPricingNoSurprisesCancelAnytime => '追加料金なし。7日目までに設定からいつでもキャンセルできます。';
 
   @override
   String get paywallPricingPlanUpdatedSuccessfully => 'プランが正常に更新されました！';
@@ -25571,8 +24780,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricingScreenThatSJust0 => '1日わずか\$0.10 — コーヒー1杯分以下です';
 
   @override
-  String get paywallPricingScreenThisSpecialDiscountIs =>
-      'この特別割引は現在ご利用いただけません。';
+  String get paywallPricingScreenThisSpecialDiscountIs => 'この特別割引は現在ご利用いただけません。';
 
   @override
   String get paywallPricingScreenWaitSpecialOffer => 'お待ちください！特別オファー';
@@ -25589,8 +24797,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricingScreenYouWillBeUpgraded => 'すぐにアップグレードされます';
 
   @override
-  String get paywallPricingStartWithA7 =>
-      '7日間の無料トライアルを開始しましょう。いつでもキャンセル可能。トライアル終了まで料金は発生しません。';
+  String get paywallPricingStartWithA7 => '7日間の無料トライアルを開始しましょう。いつでもキャンセル可能。トライアル終了まで料金は発生しません。';
 
   @override
   String get paywallPricingStartYour7Day => '7日間の無料トライアルを開始して\n継続する';
@@ -25602,8 +24809,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricingToday => '今日';
 
   @override
-  String get paywallPricingUnlockUnlimitedAiWorkouts =>
-      '無制限のAIワークアウト、食事スキャンとマクロ管理、フォーム分析、詳細な進捗トラッキングをアンロック。';
+  String get paywallPricingUnlockUnlimitedAiWorkouts => '無制限のAIワークアウト、食事スキャンとマクロ管理、フォーム分析、詳細な進捗トラッキングをアンロック。';
 
   @override
   String get paywallPricingWeLlSendYou => '無料トライアル終了前に\nリマインダーをお送りします';
@@ -25624,8 +24830,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallPricingYourAiCoach => 'あなたのAIコーチ';
 
   @override
-  String get paywallTimelineCancelAnytimeDuringOr =>
-      'トライアル期間中または終了後にいつでもキャンセルできます。トライアル終了まで料金は発生せず、Google Playからサブスクリプションを管理できます。';
+  String get paywallTimelineCancelAnytimeDuringOr => 'トライアル期間中または終了後にいつでもキャンセルできます。トライアル終了まで料金は発生せず、Google Playからサブスクリプションを管理できます。';
 
   @override
   String get paywallTimelineHowYourFree => '無料トライアルの';
@@ -25656,12 +24861,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallTimelineTrialWorks => '仕組み';
 
   @override
-  String get paywallTimelineUnlimitedWorkoutsFoodScann =>
-      '無制限のワークアウト、食事スキャン、怪我の記録、スキル向上など';
+  String get paywallTimelineUnlimitedWorkoutsFoodScann => '無制限のワークアウト、食事スキャン、怪我の記録、スキル向上など';
 
   @override
-  String get paywallTimelineWeLlRemindYou =>
-      'トライアル終了前にリマインドします - 追加料金の心配はありません';
+  String get paywallTimelineWeLlRemindYou => 'トライアル終了前にリマインドします - 追加料金の心配はありません';
 
   @override
   String pendingRequestCardValue(Object message) {
@@ -25684,8 +24887,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get permissionsPrimerGrantPermissions => '権限を許可する';
 
   @override
-  String get permissionsPrimerGrantingTheseNowMeans =>
-      '今許可しておくと、ワークアウト中に中断されることなくスムーズに機能を利用できます。';
+  String get permissionsPrimerGrantingTheseNowMeans => '今許可しておくと、ワークアウト中に中断されることなくスムーズに機能を利用できます。';
 
   @override
   String get permissionsPrimerMicrophone => 'マイク';
@@ -25806,8 +25008,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get personalInfoWeUseTheseTo =>
-      'これらはコーチングのパーソナライズとアカウントの安全のために使用されます。';
+  String get personalInfoWeUseTheseTo => 'これらはコーチングのパーソナライズとアカウントの安全のために使用されます。';
 
   @override
   String get personalInfoYesSetItUp => 'はい、設定する';
@@ -25828,8 +25029,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get personalRecordsCard1WeekAgo => '1週間前';
 
   @override
-  String get personalRecordsCardAfternoonTip =>
-      '水分補給を忘れずに！ワークアウト前に少なくとも500mlの水を飲むことを目標にしましょう。';
+  String get personalRecordsCardAfternoonTip => '水分補給を忘れずに！ワークアウト前に少なくとも500mlの水を飲むことを目標にしましょう。';
 
   @override
   String get personalRecordsCardAskCoachForMore => 'コーチに他のヒントを聞く';
@@ -25838,8 +25038,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get personalRecordsCardCoachTip => 'コーチからのヒント';
 
   @override
-  String get personalRecordsCardCompleteWorkoutsToPR =>
-      'ワークアウトを完了して自己ベストを更新しましょう';
+  String get personalRecordsCardCompleteWorkoutsToPR => 'ワークアウトを完了して自己ベストを更新しましょう';
 
   @override
   String get personalRecordsCardConnectHealthToTrack => 'ヘルスケアと連携して記録';
@@ -25850,8 +25049,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardEveningTip =>
-      '夜のワークアウトは気分を高めてくれます。今夜ぐっすり眠りたい場合は、中程度の強度に抑えましょう。';
+  String get personalRecordsCardEveningTip => '夜のワークアウトは気分を高めてくれます。今夜ぐっすり眠りたい場合は、中程度の強度に抑えましょう。';
 
   @override
   String get personalRecordsCardGettingPersonalizedTip => 'パーソナライズされたヒントを取得中…';
@@ -25867,8 +25065,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardMorningTip =>
-      'ワークアウトの前に5分間のダイナミックストレッチを行い、パフォーマンス向上と怪我の予防に努めましょう。';
+  String get personalRecordsCardMorningTip => 'ワークアウトの前に5分間のダイナミックストレッチを行い、パフォーマンス向上と怪我の予防に努めましょう。';
 
   @override
   String personalRecordsCardOfUsers(Object count) {
@@ -25915,8 +25112,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get personalRecordsCardYesterday => '昨日';
 
   @override
-  String get personalRecordsCompleteWorkoutsToStart =>
-      'ワークアウトを完了して、種目ごとのPRの記録を開始しましょう。';
+  String get personalRecordsCompleteWorkoutsToStart => 'ワークアウトを完了して、種目ごとのPRの記録を開始しましょう。';
 
   @override
   String get personalRecordsNoPersonalRecordsYet => '自己ベストはまだありません';
@@ -26086,8 +25282,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get photosTabUiTakeFirstPhoto => '最初の写真を撮る';
 
   @override
-  String get photosTabUiTakePhotosFromDifferent =>
-      'さまざまな角度から写真を撮って、視覚的な進捗を記録しましょう。';
+  String get photosTabUiTakePhotosFromDifferent => 'さまざまな角度から写真を撮って、視覚的な進捗を記録しましょう。';
 
   @override
   String get photosTakePhoto => '写真を撮る';
@@ -26132,8 +25327,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pillarDetailCustomTrends => 'カスタムトレンド';
 
   @override
-  String get pillarDetailDarkerCloserToGoal =>
-      '色が濃いほど目標に近いです。枠線付きのセルは目標達成済みです。';
+  String get pillarDetailDarkerCloserToGoal => '色が濃いほど目標に近いです。枠線付きのセルは目標達成済みです。';
 
   @override
   String get pillarDetailDuration => '期間';
@@ -26317,8 +25511,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planPreviewRestRecovery => '休息と回復';
 
   @override
-  String get planPreviewScreenAnalyzingYourGoalsFitness =>
-      '目標、フィットネスレベル、機器を分析して最適なプログラムを作成しています';
+  String get planPreviewScreenAnalyzingYourGoalsFitness => '目標、フィットネスレベル、機器を分析して最適なプログラムを作成しています';
 
   @override
   String get planPreviewScreenBuildStrengthFoundation => '筋力の基礎を構築';
@@ -26363,8 +25556,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planPreviewScreenSubscribeForFullAccess => '登録してフルアクセス';
 
   @override
-  String get planPreviewScreenThisIsYourPersonalized =>
-      'これがあなたのパーソナライズされたプランです';
+  String get planPreviewScreenThisIsYourPersonalized => 'これがあなたのパーソナライズされたプランです';
 
   @override
   String get planPreviewScreenTryOneWorkoutFree => 'ワークアウトを1回無料で試す';
@@ -26387,8 +25579,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planTodaySPlan => '今日のプラン';
 
   @override
-  String get plateauDashboardCompleteMoreWorkoutsAnd =>
-      'ワークアウトを完了し、体重を記録して停滞期の検出インサイトを確認しましょう。';
+  String get plateauDashboardCompleteMoreWorkoutsAnd => 'ワークアウトを完了し、体重を記録して停滞期の検出インサイトを確認しましょう。';
 
   @override
   String get plateauDashboardCurrentWeight => '現在の体重';
@@ -26455,8 +25646,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get portionAmountInputThreeQuarters => '0.75倍';
 
   @override
-  String get postMealReviewCheckInDisabledRe =>
-      'チェックインは無効です。栄養 → パターンから再度有効にしてください。';
+  String get postMealReviewCheckInDisabledRe => 'チェックインは無効です。栄養 → パターンから再度有効にしてください。';
 
   @override
   String get postMealReviewCheckInSaved => 'チェックインを保存しました！';
@@ -26486,11 +25676,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postMealReviewSaveCheckIn => 'チェックインを保存';
 
   @override
-  String postMealReviewSheetKcal(
-    Object extraCount,
-    Object foodSummary,
-    Object totalCalories,
-  ) {
+  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories) {
     return '$foodSummary$extraCount · $totalCalories kcal';
   }
 
@@ -26520,8 +25706,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postWorkoutHrMin => '最小';
 
   @override
-  String get postWorkoutHrNoHeartRateData =>
-      '心拍データが取得されていません。ストラップ（Amazfit Heliosなど）を装着し、ヘルスケアの権限を許可して、ライブ心拍数とワークアウト後のグラフを表示してください。';
+  String get postWorkoutHrNoHeartRateData => '心拍データが取得されていません。ストラップ（Amazfit Heliosなど）を装着し、ヘルスケアの権限を許可して、ライブ心拍数とワークアウト後のグラフを表示してください。';
 
   @override
   String get postWorkoutHrPeak => '最大';
@@ -26699,8 +25884,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get prSummaryCardLogYourWorkoutsAnd =>
-      'ワークアウトを記録すれば、\nベストリフトを自動的に追跡します！';
+  String get prSummaryCardLogYourWorkoutsAnd => 'ワークアウトを記録すれば、\nベストリフトを自動的に追跡します！';
 
   @override
   String get prSummaryCardNoPersonalRecordsYet => 'まだ自己ベストはありません';
@@ -26752,23 +25936,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get preAuthQuizConsistencyBeatsIntensity => '継続は力なり';
 
   @override
-  String get preAuthQuizControlsHowQuicklyWeights =>
-      '毎週の重量、レップ数、難易度の上昇スピードを調整します。';
+  String get preAuthQuizControlsHowQuicklyWeights => '毎週の重量、レップ数、難易度の上昇スピードを調整します。';
 
   @override
-  String get preAuthQuizEveryExerciseWillBe =>
-      'すべてのエクササイズは、手元にある器具に基づいて選択されます。代用は不要です。';
+  String get preAuthQuizEveryExerciseWillBe => 'すべてのエクササイズは、手元にある器具に基づいて選択されます。代用は不要です。';
 
   @override
-  String get preAuthQuizFailedToSaveOnboarding =>
-      'オンボーディングデータの保存に失敗しました。もう一度お試しください。';
+  String get preAuthQuizFailedToSaveOnboarding => 'オンボーディングデータの保存に失敗しました。もう一度お試しください。';
 
   @override
   String get preAuthQuizFineTuningYourPlan => 'プランを微調整中';
 
   @override
-  String get preAuthQuizFitnessLevelHelpsSet =>
-      'フィットネスレベルは、適切な重量、レップ範囲、エクササイズの複雑さなど、最適なスタート地点を設定するのに役立ちます。';
+  String get preAuthQuizFitnessLevelHelpsSet => 'フィットネスレベルは、適切な重量、レップ範囲、エクササイズの複雑さなど、最適なスタート地点を設定するのに役立ちます。';
 
   @override
   String get preAuthQuizFuelYourTraining => 'トレーニングのエネルギー補給';
@@ -26783,8 +25963,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get preAuthQuizMatchedToYourSetup => '環境に最適化';
 
   @override
-  String get preAuthQuizNutritionTrackingIsOptional =>
-      '栄養管理は任意ですが、非常に効果的です。AIが目標と活動レベルに基づいてマクロ栄養素を計算します。';
+  String get preAuthQuizNutritionTrackingIsOptional => '栄養管理は任意ですが、非常に効果的です。AIが目標と活動レベルに基づいてマクロ栄養素を計算します。';
 
   @override
   String get preAuthQuizSafetyFirst => '安全第一';
@@ -26799,20 +25978,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get preAuthQuizSomethingWentWrongPlease => '問題が発生しました。もう一度お試しください。';
 
   @override
-  String get preAuthQuizTellingUsAboutInjuries =>
-      '怪我について教えていただくことで、痛みや悪化の原因となるエクササイズを回避できます。';
+  String get preAuthQuizTellingUsAboutInjuries => '怪我について教えていただくことで、痛みや悪化の原因となるエクササイズを回避できます。';
 
   @override
-  String get preAuthQuizTheseOptionalDetailsMake =>
-      'これらの詳細（任意）を入力すると、ワークアウトがさらにパーソナライズされます。AIのデフォルト設定でよければスキップしてください。';
+  String get preAuthQuizTheseOptionalDetailsMake => 'これらの詳細（任意）を入力すると、ワークアウトがさらにパーソナライズされます。AIのデフォルト設定でよければスキップしてください。';
 
   @override
-  String get preAuthQuizWeLlBuildThe =>
-      'あなたのスケジュールに最適なトレーニング分割を作成します。回数が多ければ良いというわけではありません。回復も重要です。';
+  String get preAuthQuizWeLlBuildThe => 'あなたのスケジュールに最適なトレーニング分割を作成します。回数が多ければ良いというわけではありません。回復も重要です。';
 
   @override
-  String get preAuthQuizWeUseYourGoals =>
-      '目標に基づいて、トレーニング分割、エクササイズの選択、進捗スピードを決定します。';
+  String get preAuthQuizWeUseYourGoals => '目標に基づいて、トレーニング分割、エクササイズの選択、進捗スピードを決定します。';
 
   @override
   String get preAuthQuizWhichDaysWorkBest => 'どの曜日が最適ですか？';
@@ -26944,8 +26119,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get previewTileMockGoodProgressKeepIt => '順調です。その調子で頑張りましょう！';
 
   @override
-  String get previousWorkoutsCompleteYourFirstWorkout =>
-      '最初のワークアウトを完了してここに表示しましょう';
+  String get previousWorkoutsCompleteYourFirstWorkout => '最初のワークアウトを完了してここに表示しましょう';
 
   @override
   String get previousWorkoutsNoCompletedWorkoutsYet => '完了したワークアウトはまだありません';
@@ -27025,8 +26199,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileWorkoutHistoryImport => 'ワークアウト履歴のインポート';
 
   @override
-  String get programBuilderPartAddYourWarmUp =>
-      '各セッションにウォーミングアップとストレッチの定番メニューを追加しましょう。';
+  String get programBuilderPartAddYourWarmUp => '各セッションにウォーミングアップとストレッチの定番メニューを追加しましょう。';
 
   @override
   String get programBuilderPartApplyMyStapleExercises => '定番種目を適用';
@@ -27155,8 +26328,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programHistoryUnknownError => '不明なエラー';
 
   @override
-  String get programHistoryWhenYouCustomizeYour =>
-      'プログラムをカスタマイズすると、スナップショットがここに保存されます。';
+  String get programHistoryWhenYouCustomizeYour => 'プログラムをカスタマイズすると、スナップショットがここに保存されます。';
 
   @override
   String get programLibrary => '•  ';
@@ -27181,8 +26353,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programLibraryClearFilters => 'フィルターをクリア';
 
   @override
-  String get programLibraryCouldNotImportThis =>
-      'このプログラムをインポートできませんでした。もう一度お試しください。';
+  String get programLibraryCouldNotImportThis => 'このプログラムをインポートできませんでした。もう一度お試しください。';
 
   @override
   String get programLibraryImportCustomize => 'インポートしてカスタマイズ';
@@ -27227,8 +26398,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programMenuButtonCustomizeProgram => 'プログラムをカスタマイズ';
 
   @override
-  String get programMenuButtonCustomizeYourWorkoutProgram =>
-      'ワークアウトプログラムをカスタマイズするか、現在の設定で再生成します。';
+  String get programMenuButtonCustomizeYourWorkoutProgram => 'ワークアウトプログラムをカスタマイズするか、現在の設定で再生成します。';
 
   @override
   String get programMenuButtonFailedToClearWorkouts => 'ワークアウトのクリアに失敗しました';
@@ -27251,8 +26421,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programMenuButtonProgramOptions => 'プログラムオプション';
 
   @override
-  String get programMenuButtonProgramUpdatedYourNew =>
-      'プログラムを更新しました！新しいワークアウトの準備ができました。';
+  String get programMenuButtonProgramUpdatedYourNew => 'プログラムを更新しました！新しいワークアウトの準備ができました。';
 
   @override
   String get programMenuButtonRegenerateThisWeek => '今週分を再生成';
@@ -27264,12 +26433,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programMenuButtonSeeYourWorkoutDays => 'ワークアウトの日程、経験レベル、目標を確認';
 
   @override
-  String get programMenuButtonThisWillDeleteYour =>
-      '今後の未完了ワークアウトが削除され、現在のプログラム設定に基づいて新しいワークアウトが生成されます。\n\n完了済みのワークアウトには影響しません。';
+  String get programMenuButtonThisWillDeleteYour => '今後の未完了ワークアウトが削除され、現在のプログラム設定に基づいて新しいワークアウトが生成されます。\n\n完了済みのワークアウトには影響しません。';
 
   @override
-  String get programMenuButtonTryCelebrityWorkoutsSport =>
-      '有名人のワークアウトやスポーツトレーニングなどを試す';
+  String get programMenuButtonTryCelebrityWorkoutsSport => '有名人のワークアウトやスポーツトレーニングなどを試す';
 
   @override
   String get programMenuButtonViewMyPreferences => '設定を表示';
@@ -27376,8 +26543,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programSummaryYourProgramIsReady => 'プログラムの準備が完了しました';
 
   @override
-  String get programTemplateBuilderAProgramNeedsAt =>
-      'プログラムには少なくとも1日のトレーニング日が必要です。';
+  String get programTemplateBuilderAProgramNeedsAt => 'プログラムには少なくとも1日のトレーニング日が必要です。';
 
   @override
   String get programTemplateBuilderAddExercise => 'エクササイズを追加';
@@ -27389,8 +26555,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programTemplateBuilderCopyDayToAnother => '別の日へコピー';
 
   @override
-  String get programTemplateBuilderCouldNotSaveThe =>
-      'テンプレートを保存できませんでした。もう一度お試しください。';
+  String get programTemplateBuilderCouldNotSaveThe => 'テンプレートを保存できませんでした。もう一度お試しください。';
 
   @override
   String get programTemplateBuilderDropInASplit => '作成済みのスプリットを入力すると、解析を行います。';
@@ -27408,8 +26573,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get programTemplateBuilderImportFromLibrary => 'ライブラリからインポート';
 
   @override
-  String get programTemplateBuilderLayOutEachTraining =>
-      '各トレーニング日をエクササイズごとに構成します。';
+  String get programTemplateBuilderLayOutEachTraining => '各トレーニング日をエクササイズごとに構成します。';
 
   @override
   String get programTemplateBuilderMakeRestDay => '休息日に設定';
@@ -27464,15 +26628,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String programTemplateBuilderScreenWeeksWhenScheduled(
-    Object repeatWeeksHint,
-  ) {
+  String programTemplateBuilderScreenWeeksWhenScheduled(Object repeatWeeksHint) {
     return 'スケジュール設定時: $repeatWeeksHint週間';
   }
 
   @override
-  String get programTemplateBuilderStartFromAStructured =>
-      '構成済みのプログラムから始めて、自分好みにカスタマイズ。';
+  String get programTemplateBuilderStartFromAStructured => '構成済みのプログラムから始めて、自分好みにカスタマイズ。';
 
   @override
   String get programsAll => 'すべて';
@@ -27541,12 +26702,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressAll => 'すべて';
 
   @override
-  String get progressChartsCompleteSomeWorkoutsTo =>
-      'ワークアウトを完了して、ボリュームの推移を確認しましょう。';
+  String get progressChartsCompleteSomeWorkoutsTo => 'ワークアウトを完了して、ボリュームの推移を確認しましょう。';
 
   @override
-  String get progressChartsCompleteWeightedExercisesTo =>
-      'ウェイトトレーニングを完了して、筋力の向上を確認しましょう。';
+  String get progressChartsCompleteWeightedExercisesTo => 'ウェイトトレーニングを完了して、筋力の向上を確認しましょう。';
 
   @override
   String get progressChartsFailedToLoadData => 'データの読み込みに失敗しました';
@@ -27629,8 +26788,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressScores => 'スコア';
 
   @override
-  String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      'この筋肉をターゲットにしたワークアウトを完了して、\n筋力の進捗を確認しましょう。';
+  String get progressScreenExtCompleteWorkoutsTargetingTh => 'この筋肉をターゲットにしたワークアウトを完了して、\n筋力の進捗を確認しましょう。';
 
   @override
   String get progressScreenExtDetails => '詳細';
@@ -27653,8 +26811,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressScreenUiAddPhoto => '写真を追加';
 
   @override
-  String get progressScreenUiAi100RatingBody =>
-      'AIによる100点満点評価、体脂肪リング、姿勢フィードバック';
+  String get progressScreenUiAi100RatingBody => 'AIによる100点満点評価、体脂肪リング、姿勢フィードバック';
 
   @override
   String get progressScreenUiBodyAnalyzer => 'ボディアナライザー';
@@ -27684,8 +26841,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressScreenUiLogMeasurements => '測定値を記録';
 
   @override
-  String get progressScreenUiMasterEasierVariantsThen =>
-      '簡単なバリエーションをマスターしてから、より難しいものへ進みましょう';
+  String get progressScreenUiMasterEasierVariantsThen => '簡単なバリエーションをマスターしてから、より難しいものへ進みましょう';
 
   @override
   String get progressScreenUiMuscleAnalytics => '筋肉分析';
@@ -27706,12 +26862,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressScreenUiTakeFirstPhoto => '最初の写真を撮影';
 
   @override
-  String get progressScreenUiTakePhotosFromDifferent =>
-      'さまざまな角度から写真を撮り、視覚的な変化を記録しましょう。';
+  String get progressScreenUiTakePhotosFromDifferent => 'さまざまな角度から写真を撮り、視覚的な変化を記録しましょう。';
 
   @override
-  String get progressScreenUiTrackYourBodyMeasurements =>
-      '体重計以外の詳細な進捗を確認するために、身体測定値を記録しましょう。';
+  String get progressScreenUiTrackYourBodyMeasurements => '体重計以外の詳細な進捗を確認するために、身体測定値を記録しましょう。';
 
   @override
   String get progressScreenUiTrainingVolumeBalance => 'トレーニングボリュームとバランス';
@@ -27772,10 +26926,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressShareTemplatesInTheBooks => '記録更新';
 
   @override
-  String progressShareTemplatesLocalLegendShedsIn(
-    Object durationText,
-    Object weightLostText,
-  ) {
+  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText) {
     return 'LOCAL LEGEND: $durationTextで$weightLostText減量';
   }
 
@@ -27813,8 +26964,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressShareTemplatesReportedBy => '報告者:';
 
   @override
-  String get progressShareTemplatesSourcesCloseToThe =>
-      '関係者によると、この変化は一貫したトレーニング、誠実な食事、そして脚のトレーニングをサボらないことによるものだそうです。専門家はこれを「前例のない献身」と呼んでいます。';
+  String get progressShareTemplatesSourcesCloseToThe => '関係者によると、この変化は一貫したトレーニング、誠実な食事、そして脚のトレーニングをサボらないことによるものだそうです。専門家はこれを「前例のない献身」と呼んでいます。';
 
   @override
   String get progressShareTemplatesTheDailyGains => '日々の成果';
@@ -27844,8 +26994,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\nTUESDAY';
+  String get progressShareTemplatesTransformationNtuesday => '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => '変化しました';
@@ -27876,10 +27025,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String progressShareTemplatesWorkoutsDayStreak(
-    Object currentStreak,
-    Object totalWorkouts,
-  ) {
+  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts) {
     return '$totalWorkoutsワークアウト · $currentStreak日連続';
   }
 
@@ -27917,8 +27063,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressThisActionCannotBe => 'この操作は取り消せません。';
 
   @override
-  String get progressTrackYourFitnessJourney =>
-      '進捗写真、身体測定値、筋力スコアでフィットネスの旅を記録しましょう。これまでの成果を確認できます！';
+  String get progressTrackYourFitnessJourney => '進捗写真、身体測定値、筋力スコアでフィットネスの旅を記録しましょう。これまでの成果を確認できます！';
 
   @override
   String get progressUploadFailed => 'アップロード失敗';
@@ -27951,8 +27096,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressionPaceAutoDeloadWeeks => '自動ディロード週';
 
   @override
-  String get progressionPaceControlHowQuicklyThe =>
-      'AIがワークアウトの重量を増やすペースを調整します。初心者には遅めの進行が安全で、経験豊富なリフターには速めが適しています。';
+  String get progressionPaceControlHowQuicklyThe => 'AIがワークアウトの重量を増やすペースを調整します。初心者には遅めの進行が安全で、経験豊富なリフターには速めが適しています。';
 
   @override
   String get progressionPaceDeloadFrequency => 'ディロード頻度';
@@ -28042,8 +27186,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressionStripTarget => '目標 ';
 
   @override
-  String get progressionSuggestionCardCompleteAFewMore =>
-      '「簡単」なセッションをいくつか完了してプログレッションをアンロックしましょう';
+  String get progressionSuggestionCardCompleteAFewMore => '「簡単」なセッションをいくつか完了してプログレッションをアンロックしましょう';
 
   @override
   String get progressionSuggestionCardCurrent => '現在';
@@ -28069,10 +27212,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String progressionSuggestionCardValue2(
-    Object currentExercise,
-    Object suggestedExercise,
-  ) {
+  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise) {
     return '$currentExercise -> $suggestedExercise';
   }
 
@@ -28159,11 +27299,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get publicRecipeSaveToMyRecipes => 'マイレシピに保存';
 
   @override
-  String publicRecipeScreenByViewsSaves(
-    Object authorDisplayName,
-    Object saveCount,
-    Object viewCount,
-  ) {
+  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount) {
     return '$authorDisplayNameによる投稿 · $viewCountビュー · $saveCount保存';
   }
 
@@ -28181,8 +27317,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get queuePositionCardPleaseWaitWhileWe =>
-      'サポート担当者におつなぎしますので、少々お待ちください';
+  String get queuePositionCardPleaseWaitWhileWe => 'サポート担当者におつなぎしますので、少々お待ちください';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -28558,8 +27693,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quickLogOverlaySnack => '間食';
 
   @override
-  String get quickLogOverlayTapAMealType =>
-      '食事タイプをタップして記録するか、アプリで他のオプションを確認してください';
+  String get quickLogOverlayTapAMealType => '食事タイプをタップして記録するか、アプリで他のオプションを確認してください';
 
   @override
   String get quickLogWeightLogMoreWeightsTo => '体重をさらに記録して傾向を確認しましょう';
@@ -28614,8 +27748,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quickStatsCardActiveFeatures => '有効な機能';
 
   @override
-  String get quickStatsCardConfigureYourHormonalHealth =>
-      'ホルモンバランスの設定を構成して、パーソナライズされたインサイトを取得しましょう。';
+  String get quickStatsCardConfigureYourHormonalHealth => 'ホルモンバランスの設定を構成して、パーソナライズされたインサイトを取得しましょう。';
 
   @override
   String get quickStatsCardCycleSyncedNutrition => 'サイクル同期栄養管理';
@@ -28754,31 +27887,22 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration) {
     return '$_selectedDuration分のワークアウトを生成';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
-    Object phaseDisplayName,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName) {
     return 'メソサイクル: $phaseDisplayName';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration) {
     return '$_selectedDuration分';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
-    Object totalWeeks,
-    Object weekNumber,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber) {
     return '週 $weekNumber/$totalWeeks';
   }
 
@@ -28786,8 +27910,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quickWorkoutSheetPerfectForBusyDays => '忙しい日に最適';
 
   @override
-  String get quickWorkoutSheetPersonalizedSuggestionsBased =>
-      'プロフィールに基づいたパーソナライズされた提案';
+  String get quickWorkoutSheetPersonalizedSuggestionsBased => 'プロフィールに基づいたパーソナライズされた提案';
 
   @override
   String get quickWorkoutSheetQuickWorkout => 'クイックワークアウト';
@@ -28811,8 +27934,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quickWorkoutSheetWithPlates => 'プレートあり';
 
   @override
-  String get quickWorkoutSheetWorkoutAlreadyScheduled =>
-      'ワークアウトは既にスケジュールされています';
+  String get quickWorkoutSheetWorkoutAlreadyScheduled => 'ワークアウトは既にスケジュールされています';
 
   @override
   String get quickWorkoutSheetWorkoutFocus => 'ワークアウトのフォーカス';
@@ -28836,10 +27958,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quitWorkoutAddANoteOptional => 'メモを追加（任意）...';
 
   @override
-  String quitWorkoutDialogCompleteSetsDone(
-    Object progressPercent,
-    Object totalCompletedSets,
-  ) {
+  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets) {
     return '$progressPercent% 完了 • $totalCompletedSets セット終了';
   }
 
@@ -28943,15 +28062,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizContinueButtonSeeMyPlan => 'プランを見る';
 
   @override
-  String get quizDaysSelectorAiGeneratesWorkoutsWithin =>
-      'AIが選択した範囲内でワークアウトを生成します';
+  String get quizDaysSelectorAiGeneratesWorkoutsWithin => 'AIが選択した範囲内でワークアウトを生成します';
 
   @override
   String get quizDaysSelectorBest => 'ベスト';
 
   @override
-  String get quizDaysSelectorConsistencyBeatsIntensity =>
-      '強さよりも継続が大切です。維持できるものを選びましょう';
+  String get quizDaysSelectorConsistencyBeatsIntensity => '強さよりも継続が大切です。維持できるものを選びましょう';
 
   @override
   String quizDaysSelectorDays(int arg0) {
@@ -29053,15 +28170,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizEquipmentCableMachine => 'ケーブルマシン';
 
   @override
-  String get quizEquipmentCouldnTLoadIdentified =>
-      '識別された器具を読み込めませんでした。以下のリストから選択してください。';
+  String get quizEquipmentCouldnTLoadIdentified => '識別された器具を読み込めませんでした。以下のリストから選択してください。';
 
   @override
   String get quizEquipmentCouldnTOpenThe => 'カメラを開けませんでした。以下の器具を選択してください。';
 
   @override
-  String get quizEquipmentDedicatedSpaceWithDumbbells =>
-      'ダンベル、バーベル、ベンチのある専用スペース';
+  String get quizEquipmentDedicatedSpaceWithDumbbells => 'ダンベル、バーベル、ベンチのある専用スペース';
 
   @override
   String get quizEquipmentDoYouHaveA => 'ウェイトベンチはありますか？';
@@ -29123,8 +28238,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizEquipmentNeededForBarbell => 'バーベルに必要';
 
   @override
-  String get quizEquipmentNoEquipmentIdentifiedPick =>
-      '器具が特定できませんでした。以下のリストから選択してください。';
+  String get quizEquipmentNoEquipmentIdentifiedPick => '器具が特定できませんでした。以下のリストから選択してください。';
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
@@ -29156,19 +28270,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizEquipmentSnapTitle => 'ジムを撮影';
 
   @override
-  String get quizEquipmentRequiredForBarbellSquat =>
-      '必要な種目: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
+  String get quizEquipmentRequiredForBarbellSquat => '必要な種目: バーベルスクワット、オーバーヘッドプレス、バーベルベンチプレス';
 
   @override
   String get quizEquipmentResistanceBands => 'レジスタンスバンド';
 
   @override
-  String get quizEquipmentSelectAllThatApply =>
-      '当てはまるものをすべて選択してください。お持ちの器具に合わせてワークアウトを作成します。';
+  String get quizEquipmentSelectAllThatApply => '当てはまるものをすべて選択してください。お持ちの器具に合わせてワークアウトを作成します。';
 
   @override
-  String get quizEquipmentSelectingYourWorkoutEnviron =>
-      'ワークアウト環境を選択すると、最適なエクササイズや器具を提案できます。';
+  String get quizEquipmentSelectingYourWorkoutEnviron => 'ワークアウト環境を選択すると、最適なエクササイズや器具を提案できます。';
 
   @override
   String get quizEquipmentSquatRack => 'スクワットラック';
@@ -29198,12 +28309,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizEquipmentU1f9f3 => '🧳';
 
   @override
-  String get quizEquipmentUnlocksBenchPressIncline =>
-      'アンロック: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
+  String get quizEquipmentUnlocksBenchPressIncline => 'アンロック: ベンチプレス、インクラインプレス、プルオーバー、チェストサポートロウ';
 
   @override
-  String get quizEquipmentUnlocksChestSupportedKb =>
-      'アンロック: チェストサポートKBロウ、KBフロアプレスの代替種目';
+  String get quizEquipmentUnlocksChestSupportedKb => 'アンロック: チェストサポートKBロウ、KBフロアプレスの代替種目';
 
   @override
   String quizEquipmentUsersSnappedEquipment(Object apiBaseUrl, Object userId) {
@@ -29223,8 +28332,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizEquipmentYesAddIt => 'はい、追加する';
 
   @override
-  String get quizEquipmentYouCanCustomizeEquipment =>
-      '環境を選択した後に器具をカスタマイズできます。スキップして手動で選択することも可能です。';
+  String get quizEquipmentYouCanCustomizeEquipment => '環境を選択した後に器具をカスタマイズできます。スキップして手動で選択することも可能です。';
 
   @override
   String get quizFastingApplyCustomProtocol => 'カスタムプロトコルを適用';
@@ -29233,10 +28341,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizFastingChooseAFastingProtocol => 'ファスティングプロトコルを選択';
 
   @override
-  String quizFastingCustomProtocol(
-    Object _customEatingHours,
-    Object _customFastingHours,
-  ) {
+  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours) {
     return 'カスタム $_customFastingHours:$_customEatingHours プロトコル';
   }
 
@@ -29257,8 +28362,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get quizFastingIntermittentFastingCanHelp =>
-      'インターミッテント・ファスティングは目標達成を早めるのに役立ちます';
+  String get quizFastingIntermittentFastingCanHelp => 'インターミッテント・ファスティングは目標達成を早めるのに役立ちます';
 
   @override
   String get quizFastingOptionalYouCanSet => '任意 - 後で設定可能';
@@ -29294,16 +28398,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String quizFastingUiMealsSpacedHoursApart(
-    Object hoursBetweenMeals,
-    Object meals,
-  ) {
+  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals) {
     return '$meals食、約$hoursBetweenMeals時間間隔';
   }
 
   @override
-  String get quizFastingUiTipConsiderLargerNutrient =>
-      'ヒント: 栄養価の高い食事をしっかり摂ることを検討してください';
+  String get quizFastingUiTipConsiderLargerNutrient => 'ヒント: 栄養価の高い食事をしっかり摂ることを検討してください';
 
   @override
   String get quizFastingUiWakeUp => '起床時間';
@@ -29447,10 +28547,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizMotivationWhatSDrivingYou => 'ワークアウトのモチベーションは何ですか？';
 
   @override
-  String quizMuscleFocusAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints) {
     return '$availablePoints/$maxTotalPoints 利用可能';
   }
 
@@ -29473,8 +28570,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizNutritionGateDietaryPreferences => '食事の好み';
 
   @override
-  String get quizNutritionGateGetPersonalizedCalorieAnd =>
-      'フィットネス目標をサポートするパーソナライズされたカロリーとマクロ栄養素の目標を取得';
+  String get quizNutritionGateGetPersonalizedCalorieAnd => 'フィットネス目標をサポートするパーソナライズされたカロリーとマクロ栄養素の目標を取得';
 
   @override
   String get quizNutritionGateMealTimingGuidance => '食事タイミングのガイダンス';
@@ -29522,17 +28618,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get quizNutritionGoalsHelpsPersonalizeMealSuggest =>
-      '食事の提案をパーソナライズするのに役立ちます';
+  String get quizNutritionGoalsHelpsPersonalizeMealSuggest => '食事の提案をパーソナライズするのに役立ちます';
 
   @override
   String get quizNutritionGoalsIncludeAllMealsAnd => 'すべての食事と間食を含める';
 
   @override
-  String quizNutritionGoalsKcalGProteinPer(
-    Object calPerMeal,
-    Object proteinPerMeal,
-  ) {
+  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal) {
     return '1食あたり ~$calPerMeal kcal & ${proteinPerMeal}gのタンパク質';
   }
 
@@ -29576,16 +28668,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizPersonalizationGateQuickStart => 'クイックスタート';
 
   @override
-  String get quizPersonalizationGateUsedToPersonalizeYour =>
-      'プランと予測のパーソナライズに使用されます';
+  String get quizPersonalizationGateUsedToPersonalizeYour => 'プランと予測のパーソナライズに使用されます';
 
   @override
-  String get quizPrimaryGoalAdjustsRestPeriodsExercise =>
-      '目標に基づいて、休憩時間、エクササイズの難易度、全体のトレーニングボリュームを調整します。';
+  String get quizPrimaryGoalAdjustsRestPeriodsExercise => '目標に基づいて、休憩時間、エクササイズの難易度、全体のトレーニングボリュームを調整します。';
 
   @override
-  String get quizPrimaryGoalAiPicksExercisesThat =>
-      'AIが目標に最適なエクササイズを選択します。筋力アップにはコンパウンド種目、筋肥大にはアイソレーション種目を選びます。';
+  String get quizPrimaryGoalAiPicksExercisesThat => 'AIが目標に最適なエクササイズを選択します。筋力アップにはコンパウンド種目、筋肥大にはアイソレーション種目を選びます。';
 
   @override
   String get quizPrimaryGoalCanChangeAnytime => 'いつでも変更可能';
@@ -29603,22 +28692,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizPrimaryGoalRepRanges => 'レップ範囲';
 
   @override
-  String get quizPrimaryGoalSetsTheNumberOf =>
-      'エクササイズごとのレップ数を設定します。筋肥大は8～12レップ、筋力向上は3～6レップ、持久力向上は12レップ以上が目安です。';
+  String get quizPrimaryGoalSetsTheNumberOf => 'エクササイズごとのレップ数を設定します。筋肥大は8～12レップ、筋力向上は3～6レップ、持久力向上は12レップ以上が目安です。';
 
   @override
   String get quizPrimaryGoalWorkoutIntensity => 'トレーニング強度';
 
   @override
-  String get quizPrimaryGoalYouCanUpdateYour =>
-      '目標が変わった場合は、設定からいつでもトレーニングの焦点を更新できます。';
+  String get quizPrimaryGoalYouCanUpdateYour => '目標が変わった場合は、設定からいつでもトレーニングの焦点を更新できます。';
 
   @override
   String get quizProgressionConstraintsBalanced => 'バランス型';
 
   @override
-  String get quizProgressionConstraintsBuildStrengthGraduallyLowe =>
-      '怪我のリスクを抑え、徐々に筋力を向上';
+  String get quizProgressionConstraintsBuildStrengthGraduallyLowe => '怪我のリスクを抑え、徐々に筋力を向上';
 
   @override
   String get quizProgressionConstraintsFastAggressive => '高速・アグレッシブ';
@@ -29630,15 +28716,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizProgressionConstraintsProgressionPace => '進歩のペース';
 
   @override
-  String get quizProgressionConstraintsPushHardFasterGains =>
-      'ハードに追い込み、より早く成果を出す（上級者向け）';
+  String get quizProgressionConstraintsPushHardFasterGains => 'ハードに追い込み、より早く成果を出す（上級者向け）';
 
   @override
   String get quizProgressionConstraintsSlowSteady => 'ゆっくり・着実';
 
   @override
-  String get quizProgressionConstraintsSteadyProgressWithManageabl =>
-      '無理のない範囲で着実に進歩';
+  String get quizProgressionConstraintsSteadyProgressWithManageabl => '無理のない範囲で着実に進歩';
 
   @override
   String get quizTrainingPreferencesAllOptional => 'すべて任意';
@@ -29653,8 +28737,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizTrainingPreferencesProgressionPace => '進歩のペース';
 
   @override
-  String get quizTrainingPreferencesProgressiveOverloadRirInt =>
-      'プログレッシブオーバーロードとRIRを統合';
+  String get quizTrainingPreferencesProgressiveOverloadRirInt => 'プログレッシブオーバーロードとRIRを統合';
 
   @override
   String get quizTrainingPreferencesTrainingPreferences => 'トレーニング設定';
@@ -29674,8 +28757,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizTrainingStyleArnoldSplit => 'アーノルドスプリット';
 
   @override
-  String get quizTrainingStyleAutomaticallyOptimizedForYo =>
-      'スケジュールに合わせて自動最適化（推奨）';
+  String get quizTrainingStyleAutomaticallyOptimizedForYo => 'スケジュールに合わせて自動最適化（推奨）';
 
   @override
   String get quizTrainingStyleBestFor56 => '週5～6回に最適';
@@ -29705,8 +28787,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quizTrainingStyleOneMuscleGroupPer => '1日1部位（週5回以上）';
 
   @override
-  String get quizTrainingStylePowerHypertrophyAdaptiveTra =>
-      'PHAT（パワー・筋肥大適応トレーニング）（週5回）';
+  String get quizTrainingStylePowerHypertrophyAdaptiveTra => 'PHAT（パワー・筋肥大適応トレーニング）（週5回）';
 
   @override
   String get quizTrainingStylePowerHypertrophyUpperL => 'パワー＋筋肥大、上半身＋下半身（週4回）';
@@ -29750,8 +28831,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get racePredictorCardRacePredictor => 'レース予測';
 
   @override
-  String get racePredictorCardRunAMeasuredKm =>
-      '最初の予測のために、計測された距離を1～2km走ってください';
+  String get racePredictorCardRunAMeasuredKm => '最初の予測のために、計測された距離を1～2km走ってください';
 
   @override
   String get racePredictorDetailAskCoach => 'コーチに聞く';
@@ -29760,8 +28840,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get racePredictorDetailHowPredictionsAreCalculated => '予測の計算方法';
 
   @override
-  String get racePredictorDetailLogAtLeastThree =>
-      '少なくとも3回のラン（うち1回は計測済み距離）を記録すると、予測が表示されます。';
+  String get racePredictorDetailLogAtLeastThree => '少なくとも3回のラン（うち1回は計測済み距離）を記録すると、予測が表示されます。';
 
   @override
   String get racePredictorDetailNeedMoreData => 'データが不足しています';
@@ -29784,8 +28863,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ratingPromptBannerGot30Seconds => '30秒だけお時間ありますか？';
 
   @override
-  String get ratingPromptBannerHelpUsOutRate =>
-      'ZealovaをApp Storeで評価して応援してください。';
+  String get ratingPromptBannerHelpUsOutRate => 'ZealovaをApp Storeで評価して応援してください。';
 
   @override
   String get ratingPromptDonTAskAgain => '今後表示しない';
@@ -29838,8 +28916,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readinessCheckinCardTodaySReadiness => '今日のレディネス';
 
   @override
-  String get readinessTileBuildingBaselineCheckIn =>
-      'ベースラインを作成中 — 14日間毎日チェックインしてください';
+  String get readinessTileBuildingBaselineCheckIn => 'ベースラインを作成中 — 14日間毎日チェックインしてください';
 
   @override
   String get readinessTileRecoveryReadiness => '回復レディネス';
@@ -29947,10 +29024,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String recipeBuilderSheetLoggedServingSOf(
-    Object portionEaten,
-    Object recipeName,
-  ) {
+  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName) {
     return '「$recipeName」を$portionEaten人分記録しました: ';
   }
 
@@ -30175,8 +29249,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipeFromFridgeFromYourFridge => '冷蔵庫から';
 
   @override
-  String get recipeFromFridgeNoRecipesFoundFor =>
-      'これらの材料に合うレシピは見つかりませんでした。他の材料を追加してみてください。';
+  String get recipeFromFridgeNoRecipesFoundFor => 'これらの材料に合うレシピは見つかりませんでした。他の材料を追加してみてください。';
 
   @override
   String get recipeFromFridgeScanComplete => 'スキャン完了';
@@ -30218,8 +29291,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipeFromFridgeSuggestions => '提案';
 
   @override
-  String get recipeFromFridgeTapFindRecipesTo =>
-      '「レシピを探す」をタップして、これらの材料を使った提案を表示します';
+  String get recipeFromFridgeTapFindRecipesTo => '「レシピを探す」をタップして、これらの材料を使った提案を表示します';
 
   @override
   String get recipeFromFridgeTypeIngredientEggsSpinach => '材料を入力（卵、ほうれん草など）';
@@ -30234,8 +29306,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipeHistoryNoDifferences => '違いはありません';
 
   @override
-  String get recipeHistoryNoEditsYetVersioning =>
-      'まだ編集されていません。最初の変更後にバージョン管理が開始されます。';
+  String get recipeHistoryNoEditsYetVersioning => 'まだ編集されていません。最初の変更後にバージョン管理が開始されます。';
 
   @override
   String get recipeHistoryNowPickASecond => '比較する2つ目のバージョンを選択してください';
@@ -30270,8 +29341,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipeHistoryUpdated => '更新済み';
 
   @override
-  String get recipeImportAimAtARecipe =>
-      'レシピカード、料理本のページ、またはスクリーンショットにカメラを向けます。フレームに合わせて、動かさないようにしてください。';
+  String get recipeImportAimAtARecipe => 'レシピカード、料理本のページ、またはスクリーンショットにカメラを向けます。フレームに合わせて、動かさないようにしてください。';
 
   @override
   String get recipeImportAlignRecipeInsideFrame => 'フレーム内にレシピを合わせてください';
@@ -30318,12 +29388,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipePreferencesRecipePreferences => 'レシピ設定';
 
   @override
-  String get recipePreferencesSelectCuisinesYouEnjoy =>
-      '好みの料理を選択してください（タップで切り替え）';
+  String get recipePreferencesSelectCuisinesYouEnjoy => '好みの料理を選択してください（タップで切り替え）';
 
   @override
-  String get recipePreferencesYourBodyTypeHelps =>
-      'あなたの体型に合わせて、代謝に最適なレシピを提案します';
+  String get recipePreferencesYourBodyTypeHelps => 'あなたの体型に合わせて、代謝に最適なレシピを提案します';
 
   @override
   String recipeSaveJobsListenerCouldnTSaveRecipe(Object job) {
@@ -30464,8 +29532,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionsAnySpecificRequirementsE =>
-      '何か要望はありますか？（例：400kcal以下、高食物繊維）';
+  String get recipeSuggestionsAnySpecificRequirementsE => '何か要望はありますか？（例：400kcal以下、高食物繊維）';
 
   @override
   String get recipeSuggestionsGenerateSuggestions => '提案を生成';
@@ -30500,8 +29567,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipeSuggestionsSuggestions => '提案';
 
   @override
-  String get recipeSuggestionsTapGenerateSuggestionsTo =>
-      '「提案を生成」をタップして、あなたの好みに基づいたAIレシピのアイデアを取得します';
+  String get recipeSuggestionsTapGenerateSuggestionsTo => '「提案を生成」をタップして、あなたの好みに基づいたAIレシピのアイデアを取得します';
 
   @override
   String get recipeSuggestionsWhatMealAreYou => '何の食事を予定していますか？';
@@ -30601,8 +29667,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recipesTakePhoto => '写真を撮る';
 
   @override
-  String get recipesTapBuildToCreate =>
-      '「作成」をタップして最初のレシピを作るか、上の冷蔵庫スキャンやインポート機能をお試しください。';
+  String get recipesTapBuildToCreate => '「作成」をタップして最初のレシピを作るか、上の冷蔵庫スキャンやインポート機能をお試しください。';
 
   @override
   String get recipesUpTo5Photos => '最大5枚まで — 冷蔵庫、パントリー、冷凍庫';
@@ -30778,8 +29843,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get referralsQualified => '条件達成';
 
   @override
-  String get referralsRedeemItHereBoth =>
-      'こちらで引き換えてください。あなたと友達の両方がXPとクレートを獲得できます。';
+  String get referralsRedeemItHereBoth => 'こちらで引き換えてください。あなたと友達の両方がXPとクレートを獲得できます。';
 
   @override
   String referralsScreenMoreQualifiedReferral(Object neededForNext) {
@@ -31051,8 +30115,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWithNewContinueCurrent => '現在を継続';
 
   @override
-  String get regenerateWithNewEitherWayFutureWorkouts =>
-      'どちらの場合も、今後のワークアウトには更新された機器が使用されます。';
+  String get regenerateWithNewEitherWayFutureWorkouts => 'どちらの場合も、今後のワークアウトには更新された機器が使用されます。';
 
   @override
   String get regenerateWithNewEquipmentUpdated => '機器を更新しました';
@@ -31061,8 +30124,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWithNewRegenerateThisWorkout => 'このワークアウトを再生成';
 
   @override
-  String get regenerateWorkoutSheetAiGenerationTypicallyTakes =>
-      'AI生成には通常15〜30秒かかります';
+  String get regenerateWorkoutSheetAiGenerationTypicallyTakes => 'AI生成には通常15〜30秒かかります';
 
   @override
   String get regenerateWorkoutSheetAiSuggestions => 'AI提案';
@@ -31071,8 +30133,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWorkoutSheetApplyThisWorkout => 'このワークアウトを適用';
 
   @override
-  String get regenerateWorkoutSheetCouldnTKeepYour =>
-      '元のワークアウトを保持できませんでした。新しいワークアウトのみが表示されます。';
+  String get regenerateWorkoutSheetCouldnTKeepYour => '元のワークアウトを保持できませんでした。新しいワークアウトのみが表示されます。';
 
   @override
   String get regenerateWorkoutSheetCustomize => 'カスタマイズ';
@@ -31081,12 +30142,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWorkoutSheetCustomizeOrLetAi => 'カスタマイズするか、AIに提案させる';
 
   @override
-  String get regenerateWorkoutSheetDefaultedToReplaceYour =>
-      '「置換」がデフォルト設定されました。以前のワークアウトは上書きされました。';
+  String get regenerateWorkoutSheetDefaultedToReplaceYour => '「置換」がデフォルト設定されました。以前のワークアウトは上書きされました。';
 
   @override
-  String get regenerateWorkoutSheetDescribeYourIdealWorkout =>
-      '理想のワークアウトを説明してください';
+  String get regenerateWorkoutSheetDescribeYourIdealWorkout => '理想のワークアウトを説明してください';
 
   @override
   String get regenerateWorkoutSheetDoThisToday => '今日これを行う';
@@ -31095,8 +30154,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWorkoutSheetEGAQuick => '例: 「器具なしのクイック上半身ワークアウト」';
 
   @override
-  String get regenerateWorkoutSheetEnterAPromptAbove =>
-      'プロンプトを入力するか、更新をタップしてAIによるワークアウト提案を取得してください';
+  String get regenerateWorkoutSheetEnterAPromptAbove => 'プロンプトを入力するか、更新をタップしてAIによるワークアウト提案を取得してください';
 
   @override
   String get regenerateWorkoutSheetGeneratingSuggestions => '提案を生成中...';
@@ -31108,40 +30166,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWorkoutSheetNoSuggestionsYet => '提案はまだありません';
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message) {
     return '提案の適用に失敗しました: $message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e) {
     return '提案の適用に失敗しました: $e';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message) {
     return '再生成に失敗しました: $message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e) {
     return '再生成に失敗しました: $e';
   }
 
   @override
-  String get regenerateWorkoutSheetPreviewNotSupportedBy =>
-      'サーバーがプレビューに対応していません。アプリをアップデートするか、サポートにお問い合わせください。';
+  String get regenerateWorkoutSheetPreviewNotSupportedBy => 'サーバーがプレビューに対応していません。アプリをアップデートするか、サポートにお問い合わせください。';
 
   @override
   String get regenerateWorkoutSheetRegenerateCurrentWorkout => '現在のワークアウトを再生成';
@@ -31156,15 +30201,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get regenerateWorkoutSheetRestoredFromYourLast => '前回の再生成から復元されました';
 
   @override
-  String get regenerateWorkoutSheetTodayIsnTIn =>
-      '今日は通常のワークアウト日ではありませんが、追加します。';
+  String get regenerateWorkoutSheetTodayIsnTIn => '今日は通常のワークアウト日ではありませんが、追加します。';
 
   @override
   String get regenerateWorkoutSheetWhen => 'いつ？';
 
   @override
-  String get regionVariantDropdownCouldNotSwapVariant =>
-      'バリエーションを切り替えられませんでした。もう一度お試しください。';
+  String get regionVariantDropdownCouldNotSwapVariant => 'バリエーションを切り替えられませんでした。もう一度お試しください。';
 
   @override
   String regionVariantDropdownKcalG(Object v) {
@@ -31213,8 +30256,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repPreferencesRepRange => 'レップ範囲';
 
   @override
-  String get repPreferencesSectionConfigureYourSetVolume =>
-      '各エクササイズのセットボリュームを設定してください';
+  String get repPreferencesSectionConfigureYourSetVolume => '各エクササイズのセットボリュームを設定してください';
 
   @override
   String get repPreferencesSectionEndurance1520 => '持久力 (15-20)';
@@ -31244,20 +30286,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repPreferencesSectionMinimal12 => '最小限 (1-2)';
 
   @override
-  String get repPreferencesSectionMinimumSetsToEnsure =>
-      '十分なボリュームを確保するための最小セット数';
+  String get repPreferencesSectionMinimumSetsToEnsure => '十分なボリュームを確保するための最小セット数';
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
-    Object maxSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets) {
     return '最大セット数: $maxSets';
   }
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
-    Object minSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets) {
     return '最小セット数: $minSets';
   }
 
@@ -31268,8 +30305,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repPreferencesSectionRepRangePreference => 'レップ範囲の設定';
 
   @override
-  String get repPreferencesSectionSetYourPreferredReps =>
-      'セットごとの希望レップ数を設定してください';
+  String get repPreferencesSectionSetYourPreferredReps => 'セットごとの希望レップ数を設定してください';
 
   @override
   String get repPreferencesSectionSetsPerExercise => 'エクササイズごとのセット数';
@@ -31281,12 +30317,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repPreferencesSectionStrength15 => '筋力 (1-5)';
 
   @override
-  String get repPreferencesSectionTheAiWillGenerate =>
-      'AIはこのセット範囲でワークアウトを生成します。セット数が多いほどボリュームが増え、筋肉への刺激が強まります。';
+  String get repPreferencesSectionTheAiWillGenerate => 'AIはこのセット範囲でワークアウトを生成します。セット数が多いほどボリュームが増え、筋肉への刺激が強まります。';
 
   @override
-  String get repPreferencesSectionTheAiWillTry =>
-      'AIは重量を調整したりプログレッションを提案したりして、エクササイズをこの範囲内に収めるよう努めます。';
+  String get repPreferencesSectionTheAiWillTry => 'AIは重量を調整したりプログレッションを提案したりして、エクササイズをこの範囲内に収めるよう努めます。';
 
   @override
   String get repPreferencesSetsPerExercise => 'エクササイズごとのセット数';
@@ -31307,10 +30341,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get repProgressionCardRepProgression => 'レップ数とプログレッション';
 
   @override
-  String repProgressionCardReps(
-    Object preferredMaxReps,
-    Object preferredMinReps,
-  ) {
+  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps) {
     return '$preferredMinReps-$preferredMaxReps回';
   }
 
@@ -31353,8 +30384,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reportInjurySeverity => '深刻度';
 
   @override
-  String get reportInjuryThisIsForTracking =>
-      'これは記録目的のみに使用されます。適切な診断と治療については医療専門家にご相談ください。';
+  String get reportInjuryThisIsForTracking => 'これは記録目的のみに使用されます。適切な診断と治療については医療専門家にご相談ください。';
 
   @override
   String get reportInjuryWhenDidItOccur => 'いつ発生しましたか？';
@@ -31366,8 +30396,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reportMessageHelpUsImproveOur => 'AIコーチの改善にご協力ください';
 
   @override
-  String get reportMessageReportSubmittedThankYou =>
-      '報告を送信しました。フィードバックありがとうございます！';
+  String get reportMessageReportSubmittedThankYou => '報告を送信しました。フィードバックありがとうございます！';
 
   @override
   String get reportMessageReportThisResponse => 'この回答を報告';
@@ -31560,8 +30589,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reportsHubWeightBodyFatCircumferenc => '体重、体脂肪率、身体サイズの推移';
 
   @override
-  String get reportsHubWorkoutsTimeCaloriesBy =>
-      'ワークアウト、時間、カロリー（1週間 / 1ヶ月 / 3ヶ月 / 6ヶ月 / 1年 / 年初来 / カスタム）';
+  String get reportsHubWorkoutsTimeCaloriesBy => 'ワークアウト、時間、カロリー（1週間 / 1ヶ月 / 3ヶ月 / 6ヶ月 / 1年 / 年初来 / カスタム）';
 
   @override
   String get requestRefundAdditionalCommentsOptional => '追加コメント（任意）';
@@ -31588,8 +30616,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get requestRefundRefundRequestSubmitted => '返金リクエストを送信しました';
 
   @override
-  String get requestRefundRefundRequestsAreTypically =>
-      '返金リクエストは通常5〜7営業日以内に処理されます。リクエストが確認され次第、メールで通知が届きます。';
+  String get requestRefundRefundRequestsAreTypically => '返金リクエストは通常5〜7営業日以内に処理されます。リクエストが確認され次第、メールで通知が届きます。';
 
   @override
   String get requestRefundRequestId => 'リクエストID';
@@ -31620,8 +30647,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get requestRefundTellUsMoreAbout => '詳細を教えてください...';
 
   @override
-  String get requestRefundWeWillSendYou =>
-      '返金リクエストの詳細をメールで送信します。処理には通常5〜7営業日かかります。';
+  String get requestRefundWeWillSendYou => '返金リクエストの詳細をメールで送信します。処理には通常5〜7営業日かかります。';
 
   @override
   String get rescheduleFailedToLoadSuggestions => '提案の読み込みに失敗しました';
@@ -31834,8 +30860,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get retuneProposalPreviewUnavailable => 'プレビューは利用できません。';
 
   @override
-  String get retuneProposalProgramRetunedNextPlan =>
-      'プログラムを再調整しました。次のプランに変更が反映されます。';
+  String get retuneProposalProgramRetunedNextPlan => 'プログラムを再調整しました。次のプランに変更が反映されます。';
 
   @override
   String get retuneProposalRetuneProposal => '再調整案';
@@ -31947,8 +30972,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get roiSummaryCardCalories => 'カロリー';
 
   @override
-  String get roiSummaryCardCompleteYourFirstWorkout =>
-      '最初のワークアウトを完了して、進捗の記録を始めましょう！';
+  String get roiSummaryCardCompleteYourFirstWorkout => '最初のワークアウトを完了して、進捗の記録を始めましょう！';
 
   @override
   String get roiSummaryCardInvested => '投資';
@@ -31965,8 +30989,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get routeMapOpenstreetmapContributors =>
-      '© OpenStreetMap contributors';
+  String get routeMapOpenstreetmapContributors => '© OpenStreetMap contributors';
 
   @override
   String get rpeCardAutomaticallyAdjustBasedOn => 'RPEのフィードバックに基づいて自動調整';
@@ -32088,8 +31111,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get savedHubSaved => '保存済み';
 
   @override
-  String get savedHubScanARestaurantMenu =>
-      'レストランのメニューやビュッフェをスキャンしましょう。スキャンしたデータはここに保存されます。';
+  String get savedHubScanARestaurantMenu => 'レストランのメニューやビュッフェをスキャンしましょう。スキャンしたデータはここに保存されます。';
 
   @override
   String get savedHubSignInToSee => 'サインインして、保存したレシピをここに表示しましょう。';
@@ -32098,8 +31120,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get savedHubSignInToSee2 => 'サインインして、保存した食品をここに表示しましょう。';
 
   @override
-  String get savedHubTapOnAnyRecipe =>
-      'Discoverやライブラリのレシピにある♥をタップして、ここに保存しましょう。';
+  String get savedHubTapOnAnyRecipe => 'Discoverやライブラリのレシピにある♥をタップして、ここに保存しましょう。';
 
   @override
   String get savedHubTryAgain => '再試行';
@@ -32161,11 +31182,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String scheduleMismatchDialogRequiresDaysPerWeek(
-    Object currentDayCount,
-    Object requiredDays,
-    Object splitName,
-  ) {
+  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName) {
     return '$splitNameには週$requiredDays日のトレーニングが必要ですが、現在は$currentDayCount日が選択されています。';
   }
 
@@ -32213,10 +31230,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String scheduleScreenGenerating(
-    Object _generatedCount,
-    Object _totalToGenerate,
-  ) {
+  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate) {
     return '生成中 $_generatedCount/$_totalToGenerate...';
   }
 
@@ -32310,8 +31324,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreChangeAnnouncementSleep => '睡眠';
 
   @override
-  String get scoreChangeAnnouncementSleepNowCountsToward =>
-      '睡眠が毎日のスコアに反映されるようになりました。';
+  String get scoreChangeAnnouncementSleepNowCountsToward => '睡眠が毎日のスコアに反映されるようになりました。';
 
   @override
   String get scoreChangeAnnouncementTrain => 'トレーニング';
@@ -32344,8 +31357,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainAddedSugar => '添加糖';
 
   @override
-  String get scoreExplainAddedSugarIsThe =>
-      '添加糖は、西洋型食事におけるメタボリックシンドロームの最も強力な予測因子です。';
+  String get scoreExplainAddedSugarIsThe => '添加糖は、西洋型食事におけるメタボリックシンドロームの最も強力な予測因子です。';
 
   @override
   String scoreExplainAddedSugarValue(Object value) {
@@ -32353,20 +31365,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainAiPicksATrafficLight =>
-      'AIがあなたの健康目標に基づき、各食事を信号機の色で評価します。';
+  String get scoreExplainAiPicksATrafficLight => 'AIがあなたの健康目標に基づき、各食事を信号機の色で評価します。';
 
   @override
-  String get scoreExplainAimForADailyAverage =>
-      '1日の平均スコアを4未満に抑えましょう。抗炎症食品は1〜3、炎症性の高い食品は7〜10と評価されます。';
+  String get scoreExplainAimForADailyAverage => '1日の平均スコアを4未満に抑えましょう。抗炎症食品は1〜3、炎症性の高い食品は7〜10と評価されます。';
 
   @override
-  String get scoreExplainCertainPortionsOfAvocado =>
-      'アボカド、サツマイモ、アーモンドの一部。少量ならOKですが、大量摂取は負担になります。';
+  String get scoreExplainCertainPortionsOfAvocado => 'アボカド、サツマイモ、アーモンドの一部。少量ならOKですが、大量摂取は負担になります。';
 
   @override
-  String get scoreExplainChronicLowGradeInflammation =>
-      '食事による慢性的な軽度の炎症は、代謝性疾患、関節痛、認知機能の低下に関連しています。';
+  String get scoreExplainChronicLowGradeInflammation => '食事による慢性的な軽度の炎症は、代謝性疾患、関節痛、認知機能の低下に関連しています。';
 
   @override
   String get scoreExplainCurrentLabelAntiInfl => '抗炎症';
@@ -32405,35 +31413,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainCurrentLabelWhole => 'WHOLE';
 
   @override
-  String get scoreExplainDailyAverageAbove6 =>
-      '1日の平均スコアが6を超えると、長期的な代謝の健康状態が良好であることと関連しています。';
+  String get scoreExplainDailyAverageAbove6 => '1日の平均スコアが6を超えると、長期的な代謝の健康状態が良好であることと関連しています。';
 
   @override
-  String get scoreExplainDessertsSugaryDrinksCandy =>
-      'デザート、加糖飲料、キャンディ、多くの朝食用シリアル。インスリン値を急上昇させ、エネルギー切れを引き起こします。';
+  String get scoreExplainDessertsSugaryDrinksCandy => 'デザート、加糖飲料、キャンディ、多くの朝食用シリアル。インスリン値を急上昇させ、エネルギー切れを引き起こします。';
 
   @override
-  String get scoreExplainEachMealGets =>
-      '各食事には、栄養密度、加工レベル、目標への適合性に基づき1〜10の健康スコアが付けられます。';
+  String get scoreExplainEachMealGets => '各食事には、栄養密度、加工レベル、目標への適合性に基づき1〜10の健康スコアが付けられます。';
 
   @override
-  String get scoreExplainEngineeredFoodProductsChip =>
-      '加工食品：ポテトチップス、炭酸飲料、インスタントラーメン、市販の菓子類、ほとんどのファストフード。';
+  String get scoreExplainEngineeredFoodProductsChip => '加工食品：ポテトチップス、炭酸飲料、インスタントラーメン、市販の菓子類、ほとんどのファストフード。';
 
   @override
   String get scoreExplainFodmapRating => 'FODMAP評価';
 
   @override
-  String get scoreExplainFodmapsAreShortChain =>
-      'FODMAPは、腸内細菌によって発酵されやすく、吸収されにくい短鎖炭水化物です。';
+  String get scoreExplainFodmapsAreShortChain => 'FODMAPは、腸内細菌によって発酵されやすく、吸収されにくい短鎖炭水化物です。';
 
   @override
-  String get scoreExplainFriedFoodsProcessedMeats =>
-      '揚げ物、加工肉、加糖飲料、精製された種子油、市販のスナック菓子。';
+  String get scoreExplainFriedFoodsProcessedMeats => '揚げ物、加工肉、加糖飲料、精製された種子油、市販のスナック菓子。';
 
   @override
-  String get scoreExplainGlycemicLoadCombines =>
-      'グリセミック負荷は炭水化物の量と質を組み合わせた指標です。食後の血糖値の上昇度を予測します。';
+  String get scoreExplainGlycemicLoadCombines => 'グリセミック負荷は炭水化物の量と質を組み合わせた指標です。食後の血糖値の上昇度を予測します。';
 
   @override
   String scoreExplainGlycemicLoadValue(Object v) {
@@ -32461,22 +31462,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainHigh20 => '高い (20以上)';
 
   @override
-  String get scoreExplainHighInflammationUltraProce =>
-      '炎症性が高く、超加工食品であるか、目標マクロ栄養素から大きく外れています。可能であれば「良い」選択肢に変更してください。';
+  String get scoreExplainHighInflammationUltraProce => '炎症性が高く、超加工食品であるか、目標マクロ栄養素から大きく外れています。可能であれば「良い」選択肢に変更してください。';
 
   @override
   String get scoreExplainHighProteinOrFiber => '高タンパクまたは高食物繊維、自然食品、低添加糖、抗炎症成分。';
 
   @override
-  String get scoreExplainHitsYourGoalMacros =>
-      '目標マクロ栄養素を満たしており、主に自然食品で、炎症レベルは低〜中程度です。自由に選んでください。';
+  String get scoreExplainHitsYourGoalMacros => '目標マクロ栄養素を満たしており、主に自然食品で、炎症レベルは低〜中程度です。自由に選んでください。';
 
   @override
   String get scoreExplainHowThisDishRates => 'この料理の評価';
 
   @override
-  String get scoreExplainImportantIfYouHaveDiabetes =>
-      '糖尿病、インスリン抵抗性がある方、またはエネルギーレベルを管理している方にとって重要です。';
+  String get scoreExplainImportantIfYouHaveDiabetes => '糖尿病、インスリン抵抗性がある方、またはエネルギーレベルを管理している方にとって重要です。';
 
   @override
   String scoreExplainInflammationScoreValue(Object v) {
@@ -32484,12 +31482,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainLargePopulationStudies =>
-      '大規模な疫学研究により、超加工食品の摂取はがん、心血管疾患、早期死亡のリスクと関連付けられています。';
+  String get scoreExplainLargePopulationStudies => '大規模な疫学研究により、超加工食品の摂取はがん、心血管疾患、早期死亡のリスクと関連付けられています。';
 
   @override
-  String get scoreExplainLeafyGreensBerriesWild =>
-      '葉物野菜、ベリー類、天然サケ、ターメリック、エキストラバージンオリーブオイル、ナッツ類、豆類。';
+  String get scoreExplainLeafyGreensBerriesWild => '葉物野菜、ベリー類、天然サケ、ターメリック、エキストラバージンオリーブオイル、ナッツ類、豆類。';
 
   @override
   String get scoreExplainLow => '低い';
@@ -32501,8 +31497,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainLowUnder5G => '低い (5g未満)';
 
   @override
-  String get scoreExplainMeatEggsRiceOats =>
-      '肉、卵、米、オートミール、乳糖不耐症対応乳製品、ニンジン、ズッキーニ、ほうれん草、ベリー類、オレンジ。';
+  String get scoreExplainMeatEggsRiceOats => '肉、卵、米、オートミール、乳糖不耐症対応乳製品、ニンジン、ズッキーニ、ほうれん草、ベリー類、オレンジ。';
 
   @override
   String get scoreExplainMedium => '中程度';
@@ -32511,8 +31506,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainMedium1019 => '中程度 (10 – 19)';
 
   @override
-  String get scoreExplainMinimalBloodSugarSpike =>
-      '血糖値の上昇は最小限。非デンプン質野菜、卵、肉、ベリー類、ほとんどの乳製品。';
+  String get scoreExplainMinimalBloodSugarSpike => '血糖値の上昇は最小限。非デンプン質野菜、卵、肉、ベリー類、ほとんどの乳製品。';
 
   @override
   String get scoreExplainModerate => '中程度';
@@ -32521,36 +31515,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainModerate514G => '中程度 (5 – 14g)';
 
   @override
-  String get scoreExplainModerateSpikeOatsWhole =>
-      '中程度の上昇。オートミール、全粒粉パン、バナナ、サツマイモ、バスマティライス。';
+  String get scoreExplainModerateSpikeOatsWhole => '中程度の上昇。オートミール、全粒粉パン、バナナ、サツマイモ、バスマティライス。';
 
   @override
-  String get scoreExplainMostSavouryDishesPlain =>
-      'ほとんどの惣菜、プレーン乳製品、果物全体。血糖値への影響はほとんどありません。';
+  String get scoreExplainMostSavouryDishesPlain => 'ほとんどの惣菜、プレーン乳製品、果物全体。血糖値への影響はほとんどありません。';
 
   @override
-  String get scoreExplainOnionGarlicWheatRye =>
-      '玉ねぎ、ニンニク、小麦、ライ麦、牛乳/アイスクリーム、リンゴ、梨、蜂蜜、豆類、カリフラワー。';
+  String get scoreExplainOnionGarlicWheatRye => '玉ねぎ、ニンニク、小麦、ライ麦、牛乳/アイスクリーム、リンゴ、梨、蜂蜜、豆類、カリフラワー。';
 
   @override
-  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
-      'IBS（過敏性腸症候群）や診断された腸疾患がある場合にのみ関連します。それ以外の場合は無視して問題ありません。';
+  String get scoreExplainOnlyRelevantIfYouHaveIbs => 'IBS（過敏性腸症候群）や診断された腸疾患がある場合にのみ関連します。それ以外の場合は無視して問題ありません。';
 
   @override
-  String get scoreExplainRatingsArePersonalised =>
-      '評価はあなたの目標、アレルギー、食事履歴に合わせてパーソナライズされます。';
+  String get scoreExplainRatingsArePersonalised => '評価はあなたの目標、アレルギー、食事履歴に合わせてパーソナライズされます。';
 
   @override
-  String get scoreExplainRawOrBasicCooked =>
-      '生のまま、または基本的な調理をした食品：肉、卵、野菜、プレーンヨーグルト、チーズ、全粒穀物。';
+  String get scoreExplainRawOrBasicCooked => '生のまま、または基本的な調理をした食品：肉、卵、野菜、プレーンヨーグルト、チーズ、全粒穀物。';
 
   @override
-  String get scoreExplainReasonableChoiceCouldBe =>
-      '妥当な選択肢ですが、1〜2点（食物繊維を増やす、加工度を下げるなど）改善の余地があります。';
+  String get scoreExplainReasonableChoiceCouldBe => '妥当な選択肢ですが、1〜2点（食物繊維を増やす、加工度を下げるなど）改善の余地があります。';
 
   @override
-  String get scoreExplainReasonableChoiceWithA =>
-      'トレードオフのある妥当な選択肢。分量に注意するか、よりクリーンなサイドメニューと組み合わせてください。';
+  String get scoreExplainReasonableChoiceWithA => 'トレードオフのある妥当な選択肢。分量に注意するか、よりクリーンなサイドメニューと組み合わせてください。';
 
   @override
   String get scoreExplainScoreDetailUnavailable => 'この食事のスコア詳細は利用できません。';
@@ -32559,12 +31545,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainSkip => 'スキップ';
 
   @override
-  String get scoreExplainSteepSpikeCrashWhite =>
-      '急上昇と急降下。白米丼、加糖飲料、ペストリー、大盛りのパスタ。';
+  String get scoreExplainSteepSpikeCrashWhite => '急上昇と急降下。白米丼、加糖飲料、ペストリー、大盛りのパスタ。';
 
   @override
-  String get scoreExplainSweetenedYogurtASmall =>
-      '加糖ヨーグルト、小さなペストリー、スポーツドリンク半分。妥当なご褒美ですが、毎日食べるものではありません。';
+  String get scoreExplainSweetenedYogurtASmall => '加糖ヨーグルト、小さなペストリー、スポーツドリンク半分。妥当なご褒美ですが、毎日食べるものではありません。';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -32575,22 +31559,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoreExplainUltraProcessed => '超加工食品';
 
   @override
-  String get scoreExplainUltraProcessedDeepFried =>
-      '超加工食品、揚げ物、低食物繊維、または添加糖・ナトリウムが非常に多い。';
+  String get scoreExplainUltraProcessedDeepFried => '超加工食品、揚げ物、低食物繊維、または添加糖・ナトリウムが非常に多い。';
 
   @override
   String get scoreExplainUltraProcessedNova4 => '超加工食品 (NOVA 4)';
 
   @override
-  String get scoreExplainWeUseTheNovaClassification =>
-      'サンパウロ大学が開発したNOVA分類システムを使用しています。';
+  String get scoreExplainWeUseTheNovaClassification => 'サンパウロ大学が開発したNOVA分類システムを使用しています。';
 
   @override
   String get scoreExplainWhiteRicePlainEggs => '白米、プレーン卵、ハードチーズ、赤身肉（少量）。';
 
   @override
-  String get scoreExplainWhoRecommendsAdults =>
-      'WHOは、成人に対して添加糖の摂取量を1日25g未満（総エネルギーの5%未満）に抑えることを推奨しています。';
+  String get scoreExplainWhoRecommendsAdults => 'WHOは、成人に対して添加糖の摂取量を1日25g未満（総エネルギーの5%未満）に抑えることを推奨しています。';
 
   @override
   String get scoreExplainWholeMinimallyProcessed => '自然食品 / 低加工食品';
@@ -32638,8 +31619,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scoringHowScoresAreCalculated => 'スコアの算出方法';
 
   @override
-  String get scoringYourOverallFitnessScore =>
-      '総合フィットネススコアは、これらの要素を組み合わせて、あなたのフィットネスの旅を包括的に示します。';
+  String get scoringYourOverallFitnessScore => '総合フィットネススコアは、これらの要素を組み合わせて、あなたのフィットネスの旅を包括的に示します。';
 
   @override
   String get sectionHeaderWhatSThis => 'これは何ですか？';
@@ -32703,8 +31683,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get seniorFitnessSettingsSaved => '設定を保存しました';
 
   @override
-  String get seniorFitnessTheseSettingsHelpCustomize =>
-      'これらの設定は、長めの回復時間や関節に優しいエクササイズなど、シニアのフィットネスニーズに合わせてワークアウトをカスタマイズするのに役立ちます。';
+  String get seniorFitnessTheseSettingsHelpCustomize => 'これらの設定は、長めの回復時間や関節に優しいエクササイズなど、シニアのフィットネスニーズに合わせてワークアウトをカスタマイズするのに役立ちます。';
 
   @override
   String get seniorNavFood => '食事';
@@ -32762,30 +31741,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setAdjustmentSheetEditSets => 'セットを編集';
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
-    Object originalSetCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount) {
     return '$originalSetCount 追加';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
-    Object completedCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount) {
     return '$completedCount 完了';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
-    Object remainingCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount) {
     return '残り $remainingCount';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
-    Object length,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length) {
     return '$length 削除';
   }
 
@@ -32795,9 +31766,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
-    Object completedSets,
-  ) {
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets) {
     return '$completedSets セット完了';
   }
 
@@ -33015,10 +31984,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String setTrackingSectionSetTapToExpand(
-    Object currentSetNumber,
-    Object totalSets,
-  ) {
+  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets) {
     return 'セット $currentSetNumber/$totalSets • タップで展開';
   }
 
@@ -33045,26 +32011,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setTrackingSheetsGotIt => '了解';
 
   @override
-  String get setTrackingSheetsImmediatelyReduceWeightAfte =>
-      '限界まで達した直後に重量を減らし、レップを続けます。筋肥大に最適です！';
+  String get setTrackingSheetsImmediatelyReduceWeightAfte => '限界まで達した直後に重量を減らし、レップを続けます。筋肥大に最適です！';
 
   @override
   String get setTrackingSheetsLastSession => '前回のセッション';
 
   @override
-  String get setTrackingSheetsLightWeightToPrepare =>
-      '筋肉を準備するための軽い重量です。ワークアウトのボリュームにはカウントされません。';
+  String get setTrackingSheetsLightWeightToPrepare => '筋肉を準備するための軽い重量です。ワークアウトのボリュームにはカウントされません。';
 
   @override
-  String get setTrackingSheetsMarkWhenYouCouldn =>
-      '目標レップ数を達成できなかった場合にマークします。強度の追跡に役立ちます。';
+  String get setTrackingSheetsMarkWhenYouCouldn => '目標レップ数を達成できなかった場合にマークします。強度の追跡に役立ちます。';
 
   @override
   String get setTrackingSheetsPersonalRecord => 'パーソナルレコード';
 
   @override
-  String get setTrackingSheetsRateOfPerceivedExertion =>
-      'RPE (自覚的運動強度) はセットのきつさを測定します：';
+  String get setTrackingSheetsRateOfPerceivedExertion => 'RPE (自覚的運動強度) はセットのきつさを測定します：';
 
   @override
   String get setTrackingSheetsReps => 'レップ数';
@@ -33097,23 +32059,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setTrackingSheetsWhatIsRpe => 'RPEとは？';
 
   @override
-  String get setTrackingTableALowerRir0 =>
-      '低いRIR (0–1) は限界まで追い込んだことを意味します。高いRIR (4–6+) はセットが楽で、まだ余裕があったことを意味します。';
+  String get setTrackingTableALowerRir0 => '低いRIR (0–1) は限界まで追い込んだことを意味します。高いRIR (4–6+) はセットが楽で、まだ余裕があったことを意味します。';
 
   @override
-  String get setTrackingTableALowerRir02 =>
-      '低いRIR (0–1) は限界近くまで追い込んだことを意味します。高いRIR (3–4) はまだ余裕があったことを意味します。';
+  String get setTrackingTableALowerRir02 => '低いRIR (0–1) は限界近くまで追い込んだことを意味します。高いRIR (3–4) はまだ余裕があったことを意味します。';
 
   @override
   String get setTrackingTableAddSet => 'セットを追加';
 
   @override
-  String get setTrackingTableBeginnersGetExtraBuffer =>
-      '初心者はフォーム習得のために余裕を持たせています。上級者は安全に限界まで追い込むことができます。';
+  String get setTrackingTableBeginnersGetExtraBuffer => '初心者はフォーム習得のために余裕を持たせています。上級者は安全に限界まで追い込むことができます。';
 
   @override
-  String get setTrackingTableCompoundLiftsSquatsPresse =>
-      'コンパウンド種目 (スクワット、プレス) はアイソレーション種目 (カール、レイズ) よりも控えめに設定されます。筋肥大は筋力向上よりも限界近くまで追い込みます。';
+  String get setTrackingTableCompoundLiftsSquatsPresse => 'コンパウンド種目 (スクワット、プレス) はアイソレーション種目 (カール、レイズ) よりも控えめに設定されます。筋肥大は筋力向上よりも限界近くまで追い込みます。';
 
   @override
   String get setTrackingTableEasiest => '最も簡単';
@@ -33131,8 +32089,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setTrackingTableLeft => '左';
 
   @override
-  String get setTrackingTableMachinesCablesAreSafer =>
-      'マシンやケーブルは追い込みやすく安全です。バーベルやケトルベルは怪我のリスクがあるため、余裕を持つ必要があります。';
+  String get setTrackingTableMachinesCablesAreSafer => 'マシンやケーブルは追い込みやすく安全です。バーベルやケトルベルは怪我のリスクがあるため、余裕を持つ必要があります。';
 
   @override
   String get setTrackingTableManyRepsInReserve => '余裕あり';
@@ -33157,12 +32114,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setTrackingTableRight => '右';
 
   @override
-  String get setTrackingTableRirDecreasesAcrossSets =>
-      'セットを重ねるごとにRIRは減少します。最初のセットで準備し、最後のセットで最も追い込みます。';
+  String get setTrackingTableRirDecreasesAcrossSets => 'セットを重ねるごとにRIRは減少します。最初のセットで準備し、最後のセットで最も追い込みます。';
 
   @override
-  String get setTrackingTableRirStandsForReps =>
-      'RIRはReps in Reserveの略で、セットがどれほどきつかったかを簡単に表す指標です。';
+  String get setTrackingTableRirStandsForReps => 'RIRはReps in Reserveの略で、セットがどれほどきつかったかを簡単に表す指標です。';
 
   @override
   String get setTrackingTableSet => 'セット';
@@ -33180,8 +32135,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get setTrackingTableWhatYouSeeAbove => '上記はRIRスケールです';
 
   @override
-  String get setTrackingTableYouAreNotRequired =>
-      'RIRの記録は必須ではありませんが、強く推奨します。限界までの距離を把握することで、現在の筋力レベルや疲労度に合わせてアプリがより適切に調整できるようになります。';
+  String get setTrackingTableYouAreNotRequired => 'RIRの記録は必須ではありませんが、強く推奨します。限界までの距離を把握することで、現在の筋力レベルや疲労度に合わせてアプリがより適切に調整できるようになります。';
 
   @override
   String get setTrackingTableYourFitnessLevel => 'フィットネスレベル';
@@ -33224,8 +32178,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get settingsCardChangingDaysWillReschedule =>
-      '曜日を変更すると、今後のワークアウトが自動的に再スケジュールされます。';
+  String get settingsCardChangingDaysWillReschedule => '曜日を変更すると、今後のワークアウトが自動的に再スケジュールされます。';
 
   @override
   String settingsCardExercises(Object length) {
@@ -33281,16 +32234,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String settingsCardPartAccentColorGridValue(
-    Object currentOffset,
-    Object region,
-  ) {
+  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region) {
     return '$region • $currentOffset';
   }
 
   @override
-  String get settingsCardPartChangingDaysWillReschedule =>
-      '曜日を変更すると、今後のワークアウトが自動的に再スケジュールされます。';
+  String get settingsCardPartChangingDaysWillReschedule => '曜日を変更すると、今後のワークアウトが自動的に再スケジュールされます。';
 
   @override
   String get settingsCardPartClearAll => 'すべてクリア';
@@ -33499,6 +32448,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsEquipment => '器具';
 
   @override
+  String settingsEquipmentItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsExercisePrefs => 'エクササイズ設定';
 
   @override
@@ -33599,12 +32559,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsScreenExtReplayIndividualTours => '個別のツアーを再表示';
 
   @override
-  String get settingsScreenExtReplayOnboardingWalkthrough =>
-      'オンボーディングのチュートリアルを再表示';
+  String get settingsScreenExtReplayOnboardingWalkthrough => 'オンボーディングのチュートリアルを再表示';
 
   @override
-  String get settingsScreenExtReplayTheOnboardingWalkthro =>
-      'オンボーディングのチュートリアルや個別の画面ツアーを再表示したり、インラインヒントをリセットしたりします。';
+  String get settingsScreenExtReplayTheOnboardingWalkthro => 'オンボーディングのチュートリアルや個別の画面ツアーを再表示したり、インラインヒントをリセットしたりします。';
 
   @override
   String get settingsScreenExtResetInlineHints => 'インラインヒントをリセット';
@@ -33613,8 +32571,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsScreenExtSearchSettings => '設定を検索...';
 
   @override
-  String get settingsScreenExtSmallEmptyStateHints =>
-      'アプリ内の各所にある小さなヒントです。リセットすると、ヘルプテキストが再度表示されます。';
+  String get settingsScreenExtSmallEmptyStateHints => 'アプリ内の各所にある小さなヒントです。リセットすると、ヘルプテキストが再度表示されます。';
 
   @override
   String get settingsScreenExtTutorialsHints => 'チュートリアルとヒント';
@@ -33630,14 +32587,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get settingsScreenExtYourAiPoweredPersonal =>
-      'あなたのAI搭載パーソナルフィットネスコーチ。パーソナライズされたワークアウトプランの作成、進捗の記録、そしてフィットネス目標の達成をサポートします。';
+  String get settingsScreenExtYourAiPoweredPersonal => 'あなたのAI搭載パーソナルフィットネスコーチ。パーソナライズされたワークアウトプランの作成、進捗の記録、そしてフィットネス目標の達成をサポートします。';
 
   @override
-  String settingsScreenMailtoSubjectSupportRequest(
-    Object appName,
-    Object supportEmail,
-  ) {
+  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail) {
     return 'mailto:$supportEmail?subject=$appName サポートリクエスト';
   }
 
@@ -33653,8 +32606,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsScreenUiNoSettingsFound => '設定が見つかりません';
 
   @override
-  String get settingsScreenUiTryDifferentKeywordsLike =>
-      '「テーマ」「通知」「AIボイス」などのキーワードで試してください';
+  String get settingsScreenUiTryDifferentKeywordsLike => '「テーマ」「通知」「AIボイス」などのキーワードで試してください';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -33971,8 +32923,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sharedWorkoutDetailAcceptChallenge => 'チャレンジを受ける';
 
   @override
-  String get sharedWorkoutDetailExerciseDetailsNotAvailable =>
-      'エクササイズ詳細を利用できません';
+  String get sharedWorkoutDetailExerciseDetailsNotAvailable => 'エクササイズ詳細を利用できません';
 
   @override
   String get sharedWorkoutDetailScheduleForLater => '後で予定する';
@@ -34054,15 +33005,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get skillProgressionsBrowseSkills => 'スキルを探す';
 
   @override
-  String get skillProgressionsChooseASkillProgression =>
-      'スキルプログレッションを選択して、自重トレーニングの習得をステップバイステップで始めましょう。';
+  String get skillProgressionsChooseASkillProgression => 'スキルプログレッションを選択して、自重トレーニングの習得をステップバイステップで始めましょう。';
 
   @override
   String get skillProgressionsDiscoverMoreSkills => '他のスキルを探す';
 
   @override
-  String get skillProgressionsMasterBodyweightSkillsStep =>
-      '自重トレーニングをステップバイステップで習得';
+  String get skillProgressionsMasterBodyweightSkillsStep => '自重トレーニングをステップバイステップで習得';
 
   @override
   String get skillProgressionsMyProgress => '自分の進捗';
@@ -34083,8 +33032,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get skillProgressionsTryAgain => '再試行';
 
   @override
-  String get skillsMasterBodyweightSkillsStep =>
-      'ガイド付きのプログレッションチェーンで、自重トレーニングをステップバイステップで習得しましょう。';
+  String get skillsMasterBodyweightSkillsStep => 'ガイド付きのプログレッションチェーンで、自重トレーニングをステップバイステップで習得しましょう。';
 
   @override
   String get skillsSkillProgressions => 'スキルプログレッション';
@@ -34230,8 +33178,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get smartInsightCardSmartInsight => 'スマートインサイト';
 
   @override
-  String get snappedEquipmentCouldnTReuseThat =>
-      'そのスナップは再利用できませんでした。再試行してください。';
+  String get snappedEquipmentCouldnTReuseThat => 'そのスナップは再利用できませんでした。再試行してください。';
 
   @override
   String get snappedEquipmentNoMatchingExercisesFor => 'この器具に一致するエクササイズはありません。';
@@ -34267,8 +33214,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get socialPrivacyAllowFriendRequests => '友達リクエストを許可';
 
   @override
-  String get socialPrivacyAllowGeneratingShareableWor =>
-      '誰でも開ける共有可能なワークアウトURLの生成を許可する';
+  String get socialPrivacyAllowGeneratingShareableWor => '誰でも開ける共有可能なワークアウトURLの生成を許可する';
 
   @override
   String get socialPrivacyAppearInPublicAnd => '公開およびフレンドのリーダーボードに表示する';
@@ -34319,8 +33265,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get socialPrivacySocialPrivacy => 'ソーシャルとプライバシー';
 
   @override
-  String get socialPrivacyWhenFriendsCompleteWorkouts =>
-      'フレンドがワークアウトを完了またはマイルストーンを達成したとき';
+  String get socialPrivacyWhenFriendsCompleteWorkouts => 'フレンドがワークアウトを完了またはマイルストーンを達成したとき';
 
   @override
   String get socialPrivacyWhenSomeoneCommentsOn => '誰かがあなたの投稿にコメントしたとき';
@@ -34449,8 +33394,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get soundSettingsPlaySoundWhenRest => '休憩終了時にサウンドを再生';
 
   @override
-  String get soundSettingsPlaySoundsDuringCountdown =>
-      'カウントダウン中（3, 2, 1）にサウンドを再生';
+  String get soundSettingsPlaySoundsDuringCountdown => 'カウントダウン中（3, 2, 1）にサウンドを再生';
 
   @override
   String get soundSettingsRestTimerEnd => '休憩タイマー終了';
@@ -34501,8 +33445,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stackedBannerPanelFollowUsOnInstagram => 'Instagramでフォローする';
 
   @override
-  String get stackedBannerPanelGetHelpShareWins =>
-      'Discordでヘルプの確認、成果の共有、機能のリクエストができます';
+  String get stackedBannerPanelGetHelpShareWins => 'Discordでヘルプの確認、成果の共有、機能のリクエストができます';
 
   @override
   String get stackedBannerPanelJoinTheCommunity => 'コミュニティに参加する';
@@ -34516,11 +33459,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelMinExercises(
-    Object durationMinutes,
-    Object exercisesCount,
-    Object missedDescription,
-  ) {
+  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription) {
     return '$missedDescription · $durationMinutes分 · $exercisesCount種目';
   }
 
@@ -34545,11 +33484,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stackedBannerPanelOpeningCrate => 'クレートを開封中...';
 
   @override
-  String stackedBannerPanelRenewsInDaysFor(
-    Object days,
-    Object formattedAmount,
-    Object tierLabel,
-  ) {
+  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel) {
     return '$tierLabelは$days日後に$formattedAmountで更新されます';
   }
 
@@ -34570,10 +33505,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelWorkoutsLifted(
-    Object totalWorkouts,
-    Object volumeStr,
-  ) {
+  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr) {
     return '$totalWorkouts回のワークアウト · $volumeStrを持ち上げました';
   }
 
@@ -34848,8 +33780,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stapleExercisesTargetDays => '目標日';
 
   @override
-  String get stapleExercisesTheseCoreLiftsWill =>
-      'これらのコアリフトは、バリエーション設定に関係なく、ワークアウトから除外されることはありません。';
+  String get stapleExercisesTheseCoreLiftsWill => 'これらのコアリフトは、バリエーション設定に関係なく、ワークアウトから除外されることはありません。';
 
   @override
   String get stapleExercisesTreadmillSettings => 'トレッドミル設定';
@@ -35079,11 +34010,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stepGoalCardGoalReachedGreatJob => '目標達成！よく頑張りました！';
 
   @override
-  String stepGoalCardStepGoalProgressOf(
-    Object currentSteps,
-    Object goalSteps,
-    Object percentage,
-  ) {
+  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage) {
     return '歩数目標の進捗: $currentSteps/$goalSteps 歩、$percentage% 完了';
   }
 
@@ -35096,8 +34023,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get stepGoalEditorAutomaticallyIncreasesYourG =>
-      '改善に合わせて目標を自動的に引き上げます';
+  String get stepGoalEditorAutomaticallyIncreasesYourG => '改善に合わせて目標を自動的に引き上げます';
 
   @override
   String get stepGoalEditorQuickSelect => 'クイック選択';
@@ -35119,10 +34045,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetStepGoalSliderFrom(
-    Object _maxGoal,
-    Object _minGoal,
-  ) {
+  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal) {
     return '歩数目標スライダー、$_minGoal 歩から $_maxGoal 歩まで';
   }
 
@@ -35138,8 +34061,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stepGoalEditorUseProgressiveGoal => 'プログレッシブ目標を使用';
 
   @override
-  String get stepGoalEditorWhenYouHitYour =>
-      '目標を5日連続で達成すると、目標が500歩増えます。3日達成できないと、基本目標にリセットされます。';
+  String get stepGoalEditorWhenYouHitYour => '目標を5日連続で達成すると、目標が500歩増えます。3日達成できないと、基本目標にリセットされます。';
 
   @override
   String stepsCounterCardConnect(Object sourceLabel) {
@@ -35191,8 +34113,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get strainCoachCardTodaySIntensity => '今日の強度';
 
   @override
-  String get strainDashboardCompleteSomeWorkoutsTo =>
-      'ワークアウトを完了して、負荷予防のインサイトを確認しましょう。';
+  String get strainDashboardCompleteSomeWorkoutsTo => 'ワークアウトを完了して、負荷予防のインサイトを確認しましょう。';
 
   @override
   String get strainDashboardFailedToLoadData => 'データの読み込みに失敗しました';
@@ -35347,12 +34268,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get strengthOverviewCardCheckIn => 'チェックイン';
 
   @override
-  String get strengthOverviewCardCompleteWorkoutsWithResista =>
-      'レジスタンスエクササイズを含むワークアウトを完了して、\n筋力の進捗を記録しましょう。';
+  String get strengthOverviewCardCompleteWorkoutsWithResista => 'レジスタンスエクササイズを含むワークアウトを完了して、\n筋力の進捗を記録しましょう。';
 
   @override
-  String get strengthOverviewCardDragU2630ToReorder =>
-      '☰をドラッグして並べ替え・ピンをタップして固定';
+  String get strengthOverviewCardDragU2630ToReorder => '☰をドラッグして並べ替え・ピンをタップして固定';
 
   @override
   String get strengthOverviewCardHowAreYouFeeling => '今日の体調はどうですか？';
@@ -35391,19 +34310,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get strengthOverviewCardRecalculate => '再計算';
 
   @override
-  String get strengthOverviewCardScoreIsCalculatedFrom =>
-      'スコアは、過去90日間の各筋肉グループのベストセット（重量 x 回数）から計算されます。体重比が高いほど、スコアも高くなります。';
+  String get strengthOverviewCardScoreIsCalculatedFrom => 'スコアは、過去90日間の各筋肉グループのベストセット（重量 x 回数）から計算されます。体重比が高いほど、スコアも高くなります。';
 
   @override
-  String get strengthOverviewCardScoresUpdateAutomaticallyAf =>
-      'スコアはワークアウトごとに自動更新されます。記録されたレジスタンスエクササイズのみがカウントされ、インポートされた有酸素運動はスコアに影響しません。';
+  String get strengthOverviewCardScoresUpdateAutomaticallyAf => 'スコアはワークアウトごとに自動更新されます。記録されたレジスタンスエクササイズのみがカウントされ、インポートされた有酸素運動はスコアに影響しません。';
 
   @override
   String get strengthOverviewCardStrengthScore => 'ストレングスコア';
 
   @override
-  String get strengthOverviewCardTheRingDisplaysA =>
-      'リングには、すべての筋肉グループスコアの加重平均が表示されます。1RMは、過去90日間に記録されたベストセットから、Brzycki/Epley/Lombardi公式の平均を使用して推定されます。';
+  String get strengthOverviewCardTheRingDisplaysA => 'リングには、すべての筋肉グループスコアの加重平均が表示されます。1RMは、過去90日間に記録されたベストセットから、Brzycki/Epley/Lombardi公式の平均を使用して推定されます。';
 
   @override
   String get strengthOverviewCardTrainingStatus => 'トレーニングステータス';
@@ -35414,20 +34330,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get strengthOverviewCardValuesAreForIntermediate =>
-      '値は中級者向けであり、トレーニングレベルに基づいて自動的に調整されます。ステータスにはレディネスチェックインの結果も考慮されます。';
+  String get strengthOverviewCardValuesAreForIntermediate => '値は中級者向けであり、トレーニングレベルに基づいて自動的に調整されます。ステータスにはレディネスチェックインの結果も考慮されます。';
 
   @override
-  String get strengthOverviewCardVolumeGuidelinesSetsWeek =>
-      'ボリュームガイドライン（セット数/週）';
+  String get strengthOverviewCardVolumeGuidelinesSetsWeek => 'ボリュームガイドライン（セット数/週）';
 
   @override
-  String get strengthOverviewCardYourOverallFitnessScore =>
-      '総合フィットネススコアの加重配分：\n筋力 40% + 一貫性 30% + 栄養 20% + レディネス 10%';
+  String get strengthOverviewCardYourOverallFitnessScore => '総合フィットネススコアの加重配分：\n筋力 40% + 一貫性 30% + 栄養 20% + レディネス 10%';
 
   @override
-  String get strengthOverviewCardYourStrengthScore0 =>
-      'ストレングスコア（0-100）は、確立された基準と比較して、体重に対してどれだけ持ち上げられるかを測定します。';
+  String get strengthOverviewCardYourStrengthScore0 => 'ストレングスコア（0-100）は、確立された基準と比較して、体重に対してどれだけ持ち上げられるかを測定します。';
 
   @override
   String get strengthRecentPersonalRecords => '最近の自己ベスト';
@@ -35483,16 +34395,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionManagementBillingInformation => '請求情報';
 
   @override
-  String get subscriptionManagementCouldNotOpenSubscription =>
-      'サブスクリプション設定を開けませんでした';
+  String get subscriptionManagementCouldNotOpenSubscription => 'サブスクリプション設定を開けませんでした';
 
   @override
-  String get subscriptionManagementFailedToLoadSubscription =>
-      'サブスクリプションの読み込みに失敗しました';
+  String get subscriptionManagementFailedToLoadSubscription => 'サブスクリプションの読み込みに失敗しました';
 
   @override
-  String get subscriptionManagementGetUnlimitedWorkoutsAi =>
-      '無制限のワークアウト、AIコーチングなどを利用する';
+  String get subscriptionManagementGetUnlimitedWorkoutsAi => '無制限のワークアウト、AIコーチングなどを利用する';
 
   @override
   String get subscriptionManagementManageSubscription => 'サブスクリプション管理';
@@ -35501,8 +34410,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionManagementNoBillingInformationAvailab => '請求情報がありません';
 
   @override
-  String get subscriptionManagementPurchasesRestoredSuccessfull =>
-      '購入の復元が完了しました';
+  String get subscriptionManagementPurchasesRestoredSuccessfull => '購入の復元が完了しました';
 
   @override
   String get subscriptionManagementRequestRefund => '返金をリクエスト';
@@ -35517,8 +34425,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionManagementScreenCancelAutoRenewal => '自動更新をキャンセル';
 
   @override
-  String get subscriptionManagementScreenCancelSubscription =>
-      'サブスクリプションをキャンセル';
+  String get subscriptionManagementScreenCancelSubscription => 'サブスクリプションをキャンセル';
 
   @override
   String subscriptionManagementScreenFailedToPauseSubscription(Object e) {
@@ -35549,9 +34456,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionManagementScreenStartBillingAgain => '請求を再開';
 
   @override
-  String subscriptionManagementScreenSubscriptionPausedForDays(
-    Object durationDays,
-  ) {
+  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays) {
     return 'サブスクリプションを $durationDays 日間一時停止しました';
   }
 
@@ -35568,12 +34473,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get subscriptionManagementSubscriptionPaused => 'サブスクリプション一時停止中';
 
   @override
-  String get subscriptionManagementSubscriptionResumedSuccessfu =>
-      'サブスクリプションの再開が完了しました';
+  String get subscriptionManagementSubscriptionResumedSuccessfu => 'サブスクリプションの再開が完了しました';
 
   @override
-  String get subscriptionManagementSyncWithAppStore =>
-      'App Store / Play Storeと同期';
+  String get subscriptionManagementSyncWithAppStore => 'App Store / Play Storeと同期';
 
   @override
   String get subscriptionManagementUnknownError => '不明なエラー';
@@ -36089,8 +34992,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supersetAlgorithmCardEGBentOver => '例：ベントオーバーロウ';
 
   @override
-  String get supersetAlgorithmCardEnterTwoExercisesYou =>
-      'スーパーセットにする2つの種目を入力してください';
+  String get supersetAlgorithmCardEnterTwoExercisesYou => 'スーパーセットにする2つの種目を入力してください';
 
   @override
   String get supersetAlgorithmCardFavoritePairs => 'お気に入りのペア';
@@ -36173,10 +35075,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supersetPairSheetPairTwoExercisesFor => '効率的なトレーニングのために2種目をペアリング';
 
   @override
-  String supersetPairSheetPartSupersetPairSheetStateValue(
-    Object name,
-    Object name1,
-  ) {
+  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1) {
     return '$name + $name1';
   }
 
@@ -36235,10 +35134,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supersetReorderReset => 'リセット';
 
   @override
-  String supersetReorderSheetEdit(
-    Object _originalTypeLabel,
-    Object groupNumber,
-  ) {
+  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber) {
     return '$_originalTypeLabel $groupNumberを編集';
   }
 
@@ -36264,12 +35160,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get supersetSettingsChestBackBicepsTriceps => '胸/背中、二頭筋/三頭筋のペアリング';
 
   @override
-  String get supersetSettingsControlHowSupersetsAre =>
-      'AIワークアウトでのスーパーセットの生成方法を管理します';
+  String get supersetSettingsControlHowSupersetsAre => 'AIワークアウトでのスーパーセットの生成方法を管理します';
 
   @override
-  String get supersetSettingsIncludeSupersetPairsIn =>
-      'AI生成ワークアウトにスーパーセットのペアを含める';
+  String get supersetSettingsIncludeSupersetPairsIn => 'AI生成ワークアウトにスーパーセットのペアを含める';
 
   @override
   String get supersetSettingsPreferAntagonistPairs => '拮抗筋ペアを優先する';
@@ -36324,8 +35218,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncDetailsSyncDetails => '同期の詳細';
 
   @override
-  String get syncDetailsThisErrorWonT =>
-      'このエラーは再試行しても解決しません。「編集して再ログ」または「破棄」を選択してください。';
+  String get syncDetailsThisErrorWonT => 'このエラーは再試行しても解決しません。「編集して再ログ」または「破棄」を選択してください。';
 
   @override
   String get syncStatusSyncNow => '今すぐ同期';
@@ -36349,8 +35242,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedSummaryMaxHr => '最大心拍数';
 
   @override
-  String get syncedSummaryNoActivityMetricsWere =>
-      'このセッションのアクティビティ指標は取得されませんでした';
+  String get syncedSummaryNoActivityMetricsWere => 'このセッションのアクティビティ指標は取得されませんでした';
 
   @override
   String get syncedSummarySyncedActivity => '同期済みアクティビティ';
@@ -36418,15 +35310,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedWorkoutDetailDate => '日付';
 
   @override
-  String get syncedWorkoutDetailDeleteThisSyncedWorkout =>
-      'この同期済みワークアウトを削除しますか？';
+  String get syncedWorkoutDetailDeleteThisSyncedWorkout => 'この同期済みワークアウトを削除しますか？';
 
   @override
   String get syncedWorkoutDetailDistance => '距離';
 
   @override
-  String get syncedWorkoutDetailDuplicateOfAnotherImport =>
-      '他のインポートと重複しています。優先されるソースが適用されます。';
+  String get syncedWorkoutDetailDuplicateOfAnotherImport => '他のインポートと重複しています。優先されるソースが適用されます。';
 
   @override
   String get syncedWorkoutDetailDuration => '時間';
@@ -36453,8 +35343,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedWorkoutDetailHrvPre => 'HRV（開始前）';
 
   @override
-  String get syncedWorkoutDetailItWillReAppear =>
-      '次回Health Connectと同期する際に再表示されます。';
+  String get syncedWorkoutDetailItWillReAppear => '次回Health Connectと同期する際に再表示されます。';
 
   @override
   String get syncedWorkoutDetailManage => '管理';
@@ -36475,8 +35364,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get syncedWorkoutDetailPeak => 'ピーク';
 
   @override
-  String get syncedWorkoutDetailPullingRicherDataFrom =>
-      'Health Connectから詳細データを取得中...';
+  String get syncedWorkoutDetailPullingRicherDataFrom => 'Health Connectから詳細データを取得中...';
 
   @override
   String get syncedWorkoutDetailRestingHr => '安静時心拍数';
@@ -36744,8 +35632,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get templateListCouldNotDeletePlease => '削除できませんでした。もう一度お試しください。';
 
   @override
-  String get templateListCouldNotSchedulePlease =>
-      'スケジュールできませんでした。もう一度お試しください。';
+  String get templateListCouldNotSchedulePlease => 'スケジュールできませんでした。もう一度お試しください。';
 
   @override
   String get templateListCreateAProgram => 'プログラムを作成';
@@ -36854,8 +35741,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tierComparisonFeature => '機能';
 
   @override
-  String get tierComparisonLongPressTheEasy =>
-      '「初級」または「上級」のピルを長押しすると、いつでもこれを開けます。';
+  String get tierComparisonLongPressTheEasy => '「初級」または「上級」のピルを長押しすると、いつでもこれを開けます。';
 
   @override
   String get tierComparisonWhichTierIsRight => '自分に合ったプランは？';
@@ -36932,8 +35818,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timelineEntryDetailEditDurationMin => '時間を編集 (分)';
 
   @override
-  String get timelineEntryDetailFailedToDeleteRefresh =>
-      '削除に失敗しました。更新して再試行してください。';
+  String get timelineEntryDetailFailedToDeleteRefresh => '削除に失敗しました。更新して再試行してください。';
 
   @override
   String get timelineEntryDetailFailedToUpdate => '更新に失敗しました';
@@ -36965,8 +35850,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timelineLoadEarlierDays => '過去の記録を読み込む';
 
   @override
-  String get timelineLogYourFirstWorkout =>
-      'チャットまたは「+」ボタンから最初のワークアウト、食事、水分を記録しましょう。ここに表示されます。';
+  String get timelineLogYourFirstWorkout => 'チャットまたは「+」ボタンから最初のワークアウト、食事、水分を記録しましょう。ここに表示されます。';
 
   @override
   String get timelineNothingLogged => '記録はありません。';
@@ -37036,8 +35920,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timerRestMixinGotIt => '了解';
 
   @override
-  String get timerRestMixinRateOfPerceivedExertion =>
-      'RPE（自覚的運動強度）は、セットのきつさを表します：';
+  String get timerRestMixinRateOfPerceivedExertion => 'RPE（自覚的運動強度）は、セットのきつさを表します：';
 
   @override
   String get timerRestMixinWhatIsRpe => 'RPEとは？';
@@ -37150,8 +36033,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get todayWorkoutCardCouldNotLoadWorkout => 'ワークアウトを読み込めませんでした';
 
   @override
-  String get todayWorkoutCardGenerateAWorkoutProgram =>
-      'ワークアウトプログラムを作成して始めましょう！';
+  String get todayWorkoutCardGenerateAWorkoutProgram => 'ワークアウトプログラムを作成して始めましょう！';
 
   @override
   String get todayWorkoutCardGenerateWorkouts => 'ワークアウトを作成';
@@ -37221,10 +36103,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingFocusPrimaryTrainingGoal => '主なトレーニング目標';
 
   @override
-  String trainingFocusScreenAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints) {
     return '$availablePoints/$maxTotalPoints ポイント利用可能';
   }
 
@@ -37254,8 +36133,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get trainingLoadChartNoCardioActivityYet =>
-      'カーディオアクティビティはまだありません。ランニング、ライド、またはロウを記録して、ベースラインの構築を開始してください。';
+  String get trainingLoadChartNoCardioActivityYet => 'カーディオアクティビティはまだありません。ランニング、ライド、またはロウを記録して、ベースラインの構築を開始してください。';
 
   @override
   String get trainingLoadChronic28d => '慢性（ 28日）';
@@ -37277,15 +36155,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingMethodsTrainingMethods => '研修方法';
 
   @override
-  String get trainingPreferencesAddPastWorkoutsFor =>
-      '過去のワークアウトを追加して、AIの重みを高める';
+  String get trainingPreferencesAddPastWorkoutsFor => '過去のワークアウトを追加して、AIの重みを高める';
 
   @override
   String get trainingPreferencesBoostedInSelectionCan => '選択範囲がブーストされ、回転可能';
 
   @override
-  String get trainingPreferencesCustomizeHowWorkoutsAre =>
-      'ワークアウトの生成方法をカスタマイズする';
+  String get trainingPreferencesCustomizeHowWorkoutsAre => 'ワークアウトの生成方法をカスタマイズする';
 
   @override
   String get trainingPreferencesEquipmentAvailableForWorkou => 'エクササイズに利用可能な機器';
@@ -37306,15 +36182,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingPreferencesFirstDayOfThe => 'カレンダー上の週の初日';
 
   @override
-  String get trainingPreferencesGuaranteedNeverRotateOut =>
-      '保証され、決してローテーションアウトしない';
+  String get trainingPreferencesGuaranteedNeverRotateOut => '保証され、決してローテーションアウトしない';
 
   @override
   String get trainingPreferencesHowFastToIncrease => 'どのくらいの速さで重量を増やすか';
 
   @override
-  String get trainingPreferencesHowMuchExercisesChange =>
-      '毎週どのくらいのエクササイズが変化するか';
+  String get trainingPreferencesHowMuchExercisesChange => '毎週どのくらいのエクササイズが変化するか';
 
   @override
   String get trainingPreferencesImportWorkoutHistory => 'ワークアウト履歴をインポート';
@@ -37338,8 +36212,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingPreferencesPushPullLegsFull => 'プッシュ/プル/レッグ、フルボディなど';
 
   @override
-  String get trainingPreferencesQueueExercisesForNext =>
-      '次のワークアウトのためのキューエクササイズ';
+  String get trainingPreferencesQueueExercisesForNext => '次のワークアウトのためのキューエクササイズ';
 
   @override
   String get trainingPreferencesSkipOrReduceMuscle => '筋肉群をスキップまたは減少させる';
@@ -37369,8 +36242,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingPreferencesViewAndEditYour => '最大リフト数の表示と編集';
 
   @override
-  String get trainingPreferencesVisualizeStrengthVolumeOv =>
-      '時間の経過とともに強さとボリュームを視覚化する';
+  String get trainingPreferencesVisualizeStrengthVolumeOv => '時間の経過とともに強さとボリュームを視覚化する';
 
   @override
   String get trainingPreferencesWeekStartsOn => '週の始まり';
@@ -37397,19 +36269,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingPreferencesWorkoutType => 'ワークアウトの種類';
 
   @override
-  String get trainingProgramSelectorChooseYourTrainingSplit =>
-      'トレーニングの分割を選択してください';
+  String get trainingProgramSelectorChooseYourTrainingSplit => 'トレーニングの分割を選択してください';
 
   @override
   String get trainingProgramSelectorCustomProgram => 'カスタムプログラム';
 
   @override
-  String get trainingProgramSelectorDescribeWhatYouWant =>
-      'トレーニングの目的を説明してください。AIがパーソナライズされたプログラムを作成します。';
+  String get trainingProgramSelectorDescribeWhatYouWant => 'トレーニングの目的を説明してください。AIがパーソナライズされたプログラムを作成します。';
 
   @override
-  String get trainingProgramSelectorEGTrainFor =>
-      '例：「ハイロックスコンペティションのためのトレーニング」';
+  String get trainingProgramSelectorEGTrainFor => '例：「ハイロックスコンペティションのためのトレーニング」';
 
   @override
   String get trainingProgramSelectorExamples => '実施例';
@@ -37436,8 +36305,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trainingSetupCardFocusAreas => '重点分野';
 
   @override
-  String get trainingSetupCardHowMuchExerciseVariety =>
-      '毎週どのくらいのエクササイズバラエティがありますか？';
+  String get trainingSetupCardHowMuchExerciseVariety => '毎週どのくらいのエクササイズバラエティがありますか？';
 
   @override
   String get trainingSetupCardMyCustomEquipment => '私のカスタム装備';
@@ -37466,8 +36334,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get transitionCountdownOverlayGetReady => '準備';
 
   @override
-  String get transitionCountdownOverlayNextExerciseStartingSoon =>
-      '次のエクササイズはまもなく開始';
+  String get transitionCountdownOverlayNextExerciseStartingSoon => '次のエクササイズはまもなく開始';
 
   @override
   String get transitionCountdownOverlayStartNow => '今すぐはじめる';
@@ -37583,8 +36450,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trophiesEarnedNoNewRecords => '新しい記録はありません';
 
   @override
-  String get trophiesEarnedNoNewRecordsThis =>
-      'このセッションには新しい記録はありません。あなたが取り組んでいることは次のとおりです。';
+  String get trophiesEarnedNoNewRecordsThis => 'このセッションには新しい記録はありません。あなたが取り組んでいることは次のとおりです。';
 
   @override
   String get trophiesEarnedPersonalRecords => '個人記録';
@@ -37623,8 +36489,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trophiesEarnedViewAllCardioPrs => 'すべてのカーディオPRを表示';
 
   @override
-  String get trophiesEarnedYouVeClearedEvery =>
-      'すべてのマイルストーンをクリアしました。一貫性を保ち、新しいマイルストーンが表示されます！';
+  String get trophiesEarnedYouVeClearedEvery => 'すべてのマイルストーンをクリアしました。一貫性を保ち、新しいマイルストーンが表示されます！';
 
   @override
   String get trophiesEarnedYourFitnessJourney => 'あなたのフィットネスジャーニー';
@@ -37715,8 +36580,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get trophyRoomScreenProgressHiddenUntilDiscover =>
-      '見つかるまで進行状況は非表示になります';
+  String get trophyRoomScreenProgressHiddenUntilDiscover => '見つかるまで進行状況は非表示になります';
 
   @override
   String get trophyRoomScreenTrophyRoom => 'トロフィールーム';
@@ -37806,8 +36670,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get unifiedHomeWidgetsDrink16ozPostWorkout =>
-      'ワークアウト後に16ozの水分を補給しましょう';
+  String get unifiedHomeWidgetsDrink16ozPostWorkout => 'ワークアウト後に16ozの水分を補給しましょう';
 
   @override
   String unifiedHomeWidgetsEndTheDayAtGoal(Object arg0) {
@@ -37867,8 +36730,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get unifiedHomeWidgetsRefuelHydration => '水分を補給しましょう';
 
   @override
-  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled =>
-      '休息日：ワークアウトの予定はありません';
+  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled => '休息日：ワークアウトの予定はありません';
 
   @override
   String get unifiedHomeWidgetsRestDayNothingScheduled => '休息日：予定はありません';
@@ -37898,19 +36760,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get unresolvedExercisesBulkFixUnresolvedExercises => '未解決のエクササイズを修正';
 
   @override
-  String get unresolvedExercisesBulkMapRawNamesFrom =>
-      'インポートした生の名前をライブラリエクササイズにマッピングします。';
+  String get unresolvedExercisesBulkMapRawNamesFrom => 'インポートした生の名前をライブラリエクササイズにマッピングします。';
 
   @override
   String get unresolvedExercisesBulkMore => 'その他...';
 
   @override
-  String get unresolvedExercisesBulkNoAutoSuggestionOpen =>
-      '自動提案なし—開いて手動で選択します。';
+  String get unresolvedExercisesBulkNoAutoSuggestionOpen => '自動提案なし—開いて手動で選択します。';
 
   @override
-  String get unresolvedExercisesBulkNothingToFixEvery =>
-      '修正するものは何もありません。インポートされたすべてのエクササイズがマッピングされます！';
+  String get unresolvedExercisesBulkNothingToFixEvery => '修正するものは何もありません。インポートされたすべてのエクササイズがマッピングされます！';
 
   @override
   String unresolvedExercisesBulkSheetCouldNotLoad(Object error) {
@@ -37923,10 +36782,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String unresolvedExercisesBulkSheetMappedRowsTo(
-    Object canonicalName,
-    Object rowsAffected,
-  ) {
+  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected) {
     return '$rowsAffected行を\"$canonicalName\"にマッピングしました。';
   }
 
@@ -37970,8 +36826,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get upNextCardCouldNotLoadSchedule => 'スケジュールを読み込めませんでした';
 
   @override
-  String get upNextCardNoUpcomingItemsTap =>
-      '予定されている商品はありません。+をタップしてスケジュールに追加してください';
+  String get upNextCardNoUpcomingItemsTap => '予定されている商品はありません。+をタップしてスケジュールに追加してください';
 
   @override
   String get upNextCardTapToRetry => 'タップして再試行';
@@ -37991,8 +36846,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get upcomingWorkoutsAiWillCreateYour => 'AIがワークアウトを作成します';
 
   @override
-  String get upcomingWorkoutsCreatingYourPersonalizedWor =>
-      'パーソナライズされたワークアウトを作成する';
+  String get upcomingWorkoutsCreatingYourPersonalizedWor => 'パーソナライズされたワークアウトを作成する';
 
   @override
   String get upcomingWorkoutsEditGymProfile => 'ジムのプロフィールを編集';
@@ -38029,8 +36883,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get upcomingWorkoutsUpcomingWorkouts => '今後のワークアウト';
 
   @override
-  String get upcomingWorkoutsUpdateYourWorkoutSchedule =>
-      '「設定」でワークアウトスケジュールを更新する';
+  String get upcomingWorkoutsUpdateYourWorkoutSchedule => '「設定」でワークアウトスケジュールを更新する';
 
   @override
   String get upgradePromptDismiss => '閉じる';
@@ -38158,12 +37011,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get vo2maxDetailVo2max => '最大酸素摂取量';
 
   @override
-  String get voiceAnnouncementsAnnouncingExerciseNamesDuri =>
-      'トランジション中にエクササイズ名を発表する';
+  String get voiceAnnouncementsAnnouncingExerciseNamesDuri => 'トランジション中にエクササイズ名を発表する';
 
   @override
-  String get voiceAnnouncementsMicFabOnActive =>
-      'アクティブワークアウトのマイクFAB — \"225 for 5\"';
+  String get voiceAnnouncementsMicFabOnActive => 'アクティブワークアウトのマイクFAB — \"225 for 5\"';
 
   @override
   String get voiceAnnouncementsTestVoice => 'テストボイス';
@@ -38187,10 +37038,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get volumeAlertCardAcknowledge => '認識する';
 
   @override
-  String volumeAlertCardIncrease(
-    Object formattedIncrease,
-    Object muscleGroupDisplay,
-  ) {
+  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay) {
     return '$muscleGroupDisplay: $formattedIncrease増加';
   }
 
@@ -38209,15 +37057,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get volumeChartAverage => '平均';
 
   @override
-  String get volumeChartCompleteSomeWorkoutsTo =>
-      'ボリュームの傾向を確認するには、いくつかのワークアウトを完了してください。';
+  String get volumeChartCompleteSomeWorkoutsTo => 'ボリュームの傾向を確認するには、いくつかのワークアウトを完了してください。';
 
   @override
   String get volumeChartDangerousIncrease => '危険な増加';
 
   @override
-  String get volumeChartLogAFewWeighted =>
-      'ボリュームの傾向を確認するには、いくつかの重み付けセットをログに記録します。';
+  String get volumeChartLogAFewWeighted => 'ボリュームの傾向を確認するには、いくつかの重み付けセットをログに記録します。';
 
   @override
   String volumeChartMuscleGroupVolume(Object muscleGroup) {
@@ -38259,8 +37105,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get volumeHistoryCompleteWorkoutsToSee =>
-      'ボリュームの傾向を確認するには、ワークアウトを完了して';
+  String get volumeHistoryCompleteWorkoutsToSee => 'ボリュームの傾向を確認するには、ワークアウトを完了して';
 
   @override
   String get volumeHistoryFailedToLoad => 'ロードに失敗しました。';
@@ -38285,12 +37130,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get volumeHistoryVolumeHistory => 'ボリューム履歴';
 
   @override
-  String get volumeProgressionCardDefineCustomProgressionVia =>
-      'JSON経由でカスタムプログレッションを定義する（高度）';
+  String get volumeProgressionCardDefineCustomProgressionVia => 'JSON経由でカスタムプログレッションを定義する（高度）';
 
   @override
-  String get volumeProgressionCardHowTrainingVolumeIncreases =>
-      'トレーニングの量が時間の経過とともにどのように増加するか';
+  String get volumeProgressionCardHowTrainingVolumeIncreases => 'トレーニングの量が時間の経過とともにどのように増加するか';
 
   @override
   String volumeProgressionCardValue(Object v) {
@@ -38306,8 +37149,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardWavePatternVolumeCycles =>
-      'ウェーブパターン：毎週ボリュームサイクルが上下します';
+  String get volumeProgressionCardWavePatternVolumeCycles => 'ウェーブパターン：毎週ボリュームサイクルが上下します';
 
   @override
   String get warmupControllerPause => '一時停止';
@@ -38409,12 +37251,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get warmupSettingsWarnBeforeFinishingWith => '未記録のセットがある場合に終了前に警告';
 
   @override
-  String get watchInstallBannerCouldNotOpenPlay =>
-      'ウォッチでPlayストアを開けませんでした。手動でインストールしてください。';
+  String get watchInstallBannerCouldNotOpenPlay => 'ウォッチでPlayストアを開けませんでした。手動でインストールしてください。';
 
   @override
-  String get watchInstallBannerFailedToConnectTo =>
-      'ウォッチに接続できませんでした。もう一度お試しください。';
+  String get watchInstallBannerFailedToConnectTo => 'ウォッチに接続できませんでした。もう一度お試しください。';
 
   @override
   String get watchInstallBannerInstallOnWatch => 'ウォッチにインストール';
@@ -38541,8 +37381,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinApplyChanges => '変更を適用';
 
   @override
-  String get weeklyCheckinConservativeModerateOrAgg =>
-      '保守的、中程度、積極的のいずれかを選択。それぞれ目標カロリーと週ごとの期待変化量が異なります。';
+  String get weeklyCheckinConservativeModerateOrAgg => '保守的、中程度、積極的のいずれかを選択。それぞれ目標カロリーと週ごとの期待変化量が異なります。';
 
   @override
   String get weeklyCheckinDisable => '無効にする';
@@ -38566,8 +37405,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinKeepIt => '維持する';
 
   @override
-  String get weeklyCheckinPickAPlanTo =>
-      'プランを選択して目標を更新するか、スキップして現状を維持してください。自動的に変更されることはありません。';
+  String get weeklyCheckinPickAPlanTo => 'プランを選択して目標を更新するか、スキップして現状を維持してください。自動的に変更されることはありません。';
 
   @override
   String get weeklyCheckinPleaseTryAgainLater => '後でもう一度お試しください';
@@ -38635,12 +37473,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinSheetKeepLogging => '記録を続けましょう！';
 
   @override
-  String get weeklyCheckinSheetKeepLoggingYourMeals =>
-      '食事と体重を記録し続けて、パーソナライズされたTDEE計算を有効にしましょう。';
+  String get weeklyCheckinSheetKeepLoggingYourMeals => '食事と体重を記録し続けて、パーソナライズされたTDEE計算を有効にしましょう。';
 
   @override
-  String get weeklyCheckinSheetLogMealsConsistentlyFor =>
-      '最良の結果を得るために、一貫して食事を記録してください';
+  String get weeklyCheckinSheetLogMealsConsistentlyFor => '最良の結果を得るために、一貫して食事を記録してください';
 
   @override
   String get weeklyCheckinSheetMetabolicAdaptationDetected => '代謝適応を検出しました';
@@ -38657,10 +37493,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(
-    Object current,
-    Object target,
-  ) {
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target) {
     return '$current / $target日';
   }
 
@@ -38690,9 +37523,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
-    Object dataQualityPercent,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent) {
     return '$dataQualityPercent%';
   }
 
@@ -38702,9 +37533,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
-    Object formattedWeeklyRate,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate) {
     return '体重の傾向: $formattedWeeklyRate';
   }
 
@@ -38721,8 +37550,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinSheetRecommendedAdjustment => '推奨される調整';
 
   @override
-  String get weeklyCheckinSheetSelectARecommendationBased =>
-      '好みに基づいて推奨事項を選択してください';
+  String get weeklyCheckinSheetSelectARecommendationBased => '好みに基づいて推奨事項を選択してください';
 
   @override
   String weeklyCheckinSheetSuggestedAction(Object action) {
@@ -38744,8 +37572,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinSheetTipsForBetterResults => 'より良い結果を得るためのヒント';
 
   @override
-  String get weeklyCheckinSheetWeNeedABit =>
-      'パーソナライズされたTDEEを計算するには、もう少しデータが必要です。';
+  String get weeklyCheckinSheetWeNeedABit => 'パーソナライズされたTDEEを計算するには、もう少しデータが必要です。';
 
   @override
   String get weeklyCheckinSheetWeightChange => '体重の変化';
@@ -38760,8 +37587,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinSheetYourAdaptiveTdee => '適応型TDEE';
 
   @override
-  String get weeklyCheckinSheetYourCurrentTargetsAre =>
-      '現在の目標は進捗と一致しています。この調子で頑張りましょう！';
+  String get weeklyCheckinSheetYourCurrentTargetsAre => '現在の目標は進捗と一致しています。この調子で頑張りましょう！';
 
   @override
   String get weeklyCheckinSkipThisWeek => '今週はスキップ';
@@ -38791,8 +37617,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinYouCanReEnable => '栄養設定からいつでも再有効化できます。';
 
   @override
-  String get weeklyCheckinYouCanTurnThis =>
-      '栄養設定 → 週間チェックインのリマインダーからいつでもオフにできます。';
+  String get weeklyCheckinYouCanTurnThis => '栄養設定 → 週間チェックインのリマインダーからいつでもオフにできます。';
 
   @override
   String get weeklyCheckinYouChooseOrSkip => '選択、またはスキップ';
@@ -38804,8 +37629,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyCheckinYouSee23 => '2〜3つのプランオプションが表示されます';
 
   @override
-  String get weeklyCheckinYourLoggedMealsAnd =>
-      '記録された食事と体重のデータを使用して、実際のTDEEを計算します。これはどんな数式よりも正確です。';
+  String get weeklyCheckinYourLoggedMealsAnd => '記録された食事と体重のデータを使用して、実際のTDEEを計算します。これはどんな数式よりも正確です。';
 
   @override
   String weeklyGoalsCardNewPr(Object prsThisWeek) {
@@ -38822,17 +37646,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyHighlightsTemplateAiHighlights => 'AIハイライト';
 
   @override
-  String get weeklyHighlightsTemplateAnotherWeekInThe =>
-      'また1週間が終わりました。継続こそが真の力です。';
+  String get weeklyHighlightsTemplateAnotherWeekInThe => 'また1週間が終わりました。継続こそが真の力です。';
 
   @override
   String get weeklyHighlightsTemplateThisWeek => '今週';
 
   @override
-  String weeklyPercentileHeroOfActiveUsersTap(
-    Object totalActive,
-    Object yourRank,
-  ) {
+  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank) {
     return 'アクティブユーザー中$yourRank/$totalActive位 · タップしてDiscoverへ';
   }
 
@@ -38854,8 +37674,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyPlanCardWeeklyPlan => '週間プラン';
 
   @override
-  String get weeklyPlanCreateAHolisticPlan =>
-      '今週のワークアウト、栄養、断食スケジュールを調整した包括的なプランを作成します。';
+  String get weeklyPlanCreateAHolisticPlan => '今週のワークアウト、栄養、断食スケジュールを調整した包括的なプランを作成します。';
 
   @override
   String get weeklyPlanErrorLoadingPlan => 'プランの読み込みエラー';
@@ -38977,10 +37796,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String weeklyReportCardOfWorkoutsThisWeek(
-    Object completed,
-    Object scheduled,
-  ) {
+  String weeklyReportCardOfWorkoutsThisWeek(Object completed, Object scheduled) {
     return '今週のワークアウト $completed / $scheduled件';
   }
 
@@ -39002,8 +37818,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklySummaryGenerateSummary => 'サマリーを生成';
 
   @override
-  String get weeklySummaryGenerateYourFirstWeekly =>
-      '最初の週間サマリーを生成して、AIによるインサイトで進捗を確認しましょう';
+  String get weeklySummaryGenerateYourFirstWeekly => '最初の週間サマリーを生成して、AIによるインサイトで進捗を確認しましょう';
 
   @override
   String get weeklySummaryHighlights => 'ハイライト';
@@ -39027,10 +37842,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String weeklySummaryScreenWorkoutsCompleted(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsCompleted/$workoutsScheduled ワークアウト完了';
   }
 
@@ -39056,8 +37868,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyWrappedFromYourCoach => 'コーチより';
 
   @override
-  String get weeklyWrappedNoWorkoutsScheduledYet =>
-      '予定されているワークアウトはありません。ホームからプランを生成してください。';
+  String get weeklyWrappedNoWorkoutsScheduledYet => '予定されているワークアウトはありません。ホームからプランを生成してください。';
 
   @override
   String get weeklyWrappedPrs => 'PR';
@@ -39087,8 +37898,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weightIncrementsCardConfigureIncrements => '増減単位を設定';
 
   @override
-  String get weightIncrementsCardCustomizeStepPerEquipme =>
-      '機器タイプごとの増減ステップをカスタマイズ';
+  String get weightIncrementsCardCustomizeStepPerEquipme => '機器タイプごとの増減ステップをカスタマイズ';
 
   @override
   String get weightIncrementsCardWeightIncrements => '重量の増減単位';
@@ -39122,8 +37932,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get weightIncrementsSourcesRogueLifeFitness =>
-      'ソース：Rogue, Life Fitness, Eleiko';
+  String get weightIncrementsSourcesRogueLifeFitness => 'ソース：Rogue, Life Fitness, Eleiko';
 
   @override
   String get weightIncrementsUseDefaults => 'デフォルトを使用';
@@ -39141,8 +37950,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weightProjectionPerWeek => '週あたり';
 
   @override
-  String get weightProjectionSafeRate05 =>
-      '安全なペース：週0.5〜1kg。このプランは科学的根拠に基づいたガイドラインに従っています。';
+  String get weightProjectionSafeRate05 => '安全なペース：週0.5〜1kg。このプランは科学的根拠に基づいたガイドラインに従っています。';
 
   @override
   String get weightProjectionScreenContinueToYourPlan => 'プランに進む';
@@ -39153,8 +37961,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get weightProjectionScreenLetSKeepYou =>
-      '今の状態を維持しましょう！現在の体型をキープしながら、全体的なフィットネス、筋力、エネルギーレベルの向上を目指します。';
+  String get weightProjectionScreenLetSKeepYou => '今の状態を維持しましょう！現在の体型をキープしながら、全体的なフィットネス、筋力、エネルギーレベルの向上を目指します。';
 
   @override
   String get weightProjectionScreenYouReAtYour => '理想的な体重です！';
@@ -39253,8 +38060,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get welcomeAffirmationLetSBegin => '始めましょう';
 
   @override
-  String get welcomeAffirmationMostUsersHitTheir =>
-      '多くのユーザーが30日以内に最初のマイルストーンを達成しています';
+  String get welcomeAffirmationMostUsersHitTheir => '多くのユーザーが30日以内に最初のマイルストーンを達成しています';
 
   @override
   String get welcomeAffirmationYouReAboutTo => 'あなたもすぐに達成できるはずです。';
@@ -39313,8 +38119,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutActionsChangeWorkoutDate => 'ワークアウトの日付を変更';
 
   @override
-  String get workoutActionsCompleteTheWorkoutFirst =>
-      '共有リンクを生成するには、まずワークアウトを完了してください';
+  String get workoutActionsCompleteTheWorkoutFirst => '共有リンクを生成するには、まずワークアウトを完了してください';
 
   @override
   String get workoutActionsCoolDownStretches => 'クールダウンストレッチ';
@@ -39347,8 +38152,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutActionsFailedToRegenerateWorkout => 'ワークアウトの再生成に失敗しました';
 
   @override
-  String get workoutActionsFailedToRescheduleWorkout =>
-      'ワークアウトのスケジュール変更に失敗しました';
+  String get workoutActionsFailedToRescheduleWorkout => 'ワークアウトのスケジュール変更に失敗しました';
 
   @override
   String get workoutActionsFinishThisWorkoutTo => 'ワークアウトを完了してシェアしましょう';
@@ -39407,11 +38211,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutActionsSheetValue(
-    Object _regenerateMessage,
-    Object _regenerateStep,
-    Object _regenerateTotalSteps,
-  ) {
+  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps) {
     return '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)';
   }
 
@@ -39424,8 +38224,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutActionsThisActionCannotBe => 'この操作は元に戻すことができません。';
 
   @override
-  String get workoutActionsThisWillCreateA =>
-      'これにより、その日の新しいトレーニング計画が作成されます。現在のワークアウトはバージョン履歴に保存されます。';
+  String get workoutActionsThisWillCreateA => 'これにより、その日の新しいトレーニング計画が作成されます。現在のワークアウトはバージョン履歴に保存されます。';
 
   @override
   String get workoutActionsThisWorkoutCannotBe => 'このワークアウトはまだシェアできません';
@@ -39562,9 +38361,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenExt1GreatWillBeIncluded(
-    Object suggestedNextVariant,
-  ) {
+  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant) {
     return '素晴らしい！$suggestedNextVariantは今後のワークアウトに含まれます。';
   }
 
@@ -39579,8 +38376,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenFailedToExtendWorkout =>
-      'トレーニングの延長に失​​敗しました。もう一度試してください。';
+  String get workoutCompleteScreenFailedToExtendWorkout => 'トレーニングの延長に失​​敗しました。もう一度試してください。';
 
   @override
   String get workoutCompleteScreenFeelingStrongerToday => '今日は気持ちが強くなりました！';
@@ -39612,10 +38408,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenMinSaunaCal(
-    Object _saunaCalories,
-    Object _saunaMinutes,
-  ) {
+  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes) {
     return 'サウナ$_saunaMinutes分 · 約$_saunaCalories kcal';
   }
 
@@ -39635,8 +38428,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutCompleteScreenNotYet => 'まだ';
 
   @override
-  String get workoutCompleteScreenNoticeImprovementsInYour =>
-      '体力や持久力が向上していることに気づきましたか?';
+  String get workoutCompleteScreenNoticeImprovementsInYour => '体力や持久力が向上していることに気づきましたか?';
 
   @override
   String get workoutCompleteScreenPleaseRateYourWorkout => 'ワークアウトを評価してください';
@@ -39645,8 +38437,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutCompleteScreenRateIndividualExercises => '個々の演習を評価する';
 
   @override
-  String get workoutCompleteScreenRatingsHelpOurAi =>
-      '評価は、AI がより良いワークアウトを作成するのに役立ちます。とにかくスキップしますか？';
+  String get workoutCompleteScreenRatingsHelpOurAi => '評価は、AI がより良いワークアウトを作成するのに役立ちます。とにかくスキップしますか？';
 
   @override
   String get workoutCompleteScreenReadyToLevelUp => 'レベルアップの準備完了!';
@@ -39685,17 +38476,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutCompleteScreenU1f4aa => '💪';
 
   @override
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
-    Object streak,
-    Object totalWorkouts,
-  ) {
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts) {
     return '$streak 日連続記録、合計 $totalWorkouts ワークアウト';
   }
 
   @override
-  String workoutCompleteScreenUi1MarkedAsTooEasy(
-    Object consecutiveEasySessions,
-  ) {
+  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions) {
     return '「簡単すぎる」と $consecutiveEasySessions 回連続でマークされました';
   }
 
@@ -39715,10 +38501,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2SetsReps(
-    Object currentReps,
-    Object currentSets,
-  ) {
+  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets) {
     return '$currentSetsセット, $currentReps回';
   }
 
@@ -39743,12 +38526,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenYouDonTHave =>
-      'あなたにはまだ友達がいません。まずは友達を追加してください！';
+  String get workoutCompleteScreenYouDonTHave => 'あなたにはまだ友達がいません。まずは友達を追加してください！';
 
   @override
-  String get workoutCompleteScreenYouVeMasteredThese =>
-      'あなたはこれらの演習をマスターしました。より難しいバリエーションを試してみませんか?';
+  String get workoutCompleteScreenYouVeMasteredThese => 'あなたはこれらの演習をマスターしました。より難しいバリエーションを試してみませんか?';
 
   @override
   String get workoutCompleteSkipRating => '評価をスキップ';
@@ -39769,8 +38550,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutCompleteWorkoutComplete => 'トレーニング完了！';
 
   @override
-  String get workoutCompleteYourRatingsHelpUs =>
-      '評価は今後のワークアウトをパーソナライズするために役立てられます';
+  String get workoutCompleteYourRatingsHelpUs => '評価は今後のワークアウトをパーソナライズするために役立てられます';
 
   @override
   String get workoutDayDetailAvgHr => '平均心拍数';
@@ -39803,8 +38583,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutDayDetailMusclesWorked => '筋肉が働いた';
 
   @override
-  String get workoutDayDetailRecoveryIsJustAs =>
-      '回復はトレーニングと同じくらい重要です。筋肉は休んでいる間に成長します！';
+  String get workoutDayDetailRecoveryIsJustAs => '回復はトレーニングと同じくらい重要です。筋肉は休んでいる間に成長します！';
 
   @override
   String get workoutDayDetailRestDay => '休息日';
@@ -39829,8 +38608,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutDayDetailWorkoutMissed => 'トレーニングに参加できませんでした';
 
   @override
-  String get workoutDaysChangingWorkoutDaysWill =>
-      'ワークアウト日を変更すると、スケジュールが更新されます。今後のワークアウトは再生成されます。';
+  String get workoutDaysChangingWorkoutDaysWill => 'ワークアウト日を変更すると、スケジュールが更新されます。今後のワークアウトは再生成されます。';
 
   @override
   String get workoutDaysSelectWhichDaysYou => 'ワークアウトを行う曜日を選択してください';
@@ -39900,8 +38678,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutDetailAiTapToSeeAi => 'タップしてAIによるエクササイズ選定の理由を表示';
 
   @override
-  String get workoutDetailAiTheseParametersWereUsed =>
-      'これらのパラメーターは、ユーザーのフィットネス レベル、目標、利用可能な機器に合わせてパーソナライズされたエクササイズを生成するために AI によって使用されました。';
+  String get workoutDetailAiTheseParametersWereUsed => 'これらのパラメーターは、ユーザーのフィットネス レベル、目標、利用可能な機器に合わせてパーソナライズされたエクササイズを生成するために AI によって使用されました。';
 
   @override
   String get workoutDetailAiUserProfile => 'ユーザープロフィール';
@@ -39986,8 +38763,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutDetailScreenFailedToUpdateFavorite => 'お気に入りの更新に失敗しました';
 
   @override
-  String get workoutDetailScreenKeepThisSessionUnchanged =>
-      'このセッションを変更しないでください。新しい機器は今後のトレーニングに適用されます。';
+  String get workoutDetailScreenKeepThisSessionUnchanged => 'このセッションを変更しないでください。新しい機器は今後のトレーニングに適用されます。';
 
   @override
   String get workoutDetailScreenLetSGo => 'さあ行こう';
@@ -40027,24 +38803,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutDetailScreenSupersetCreated => 'スーパーセットが作成されました!';
 
   @override
-  String get workoutDetailScreenSwapThoseExercisesIn =>
-      'このセッションでは、これらの演習を交換してください。完了したセットは記録されたままになります。';
+  String get workoutDetailScreenSwapThoseExercisesIn => 'このセッションでは、これらの演習を交換してください。完了したセットは記録されたままになります。';
 
   @override
-  String get workoutDetailScreenTapAnotherExerciseTo =>
-      '別のアクティビティをタップしてスーパーセットとしてリンク';
+  String get workoutDetailScreenTapAnotherExerciseTo => '別のアクティビティをタップしてスーパーセットとしてリンク';
 
   @override
-  String get workoutDetailScreenThisIsAnOptional =>
-      'これはオプションの高度な演習です。準備ができたら試してみてください！';
+  String get workoutDetailScreenThisIsAnOptional => 'これはオプションの高度な演習です。準備ができたら試してみてください！';
 
   @override
-  String get workoutDetailScreenThisWillRestoreAll =>
-      'これにより、すべてのエクササイズが、機器の変更が適用される前の元の状態に復元されます。';
+  String get workoutDetailScreenThisWillRestoreAll => 'これにより、すべてのエクササイズが、機器の変更が適用される前の元の状態に復元されます。';
 
   @override
-  String get workoutDetailScreenThisWillUnlinkThese =>
-      'これにより、これらの演習のリンクが解除され、個別に実行できるようになります。';
+  String get workoutDetailScreenThisWillUnlinkThese => 'これにより、これらの演習のリンクが解除され、個別に実行できるようになります。';
 
   @override
   String workoutDetailScreenUi1AddToCreateA(Object name, Object newSetType) {
@@ -40097,8 +38868,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenWouldYouLikeTo =>
-      '今後のワークアウトのためにこの機器構成をプロファイルに保存しますか?';
+  String get workoutDetailScreenWouldYouLikeTo => '今後のワークアウトのためにこの機器構成をプロファイルに保存しますか?';
 
   @override
   String get workoutDetailScreenYesSave => 'はい、保存します';
@@ -40131,8 +38901,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutFlowMixinKeepGoing => '継続しましょう';
 
   @override
-  String get workoutGalleryCompleteAWorkoutAnd =>
-      'ワークアウトを完了してシェアし、\nギャラリーを始めましょう';
+  String get workoutGalleryCompleteAWorkoutAnd => 'ワークアウトを完了してシェアし、\nギャラリーを始めましょう';
 
   @override
   String get workoutGalleryDeleteImage => '画像を削除しますか?';
@@ -40165,8 +38934,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutGenerationFinalizingYourPlan => 'プランを最終調整中';
 
   @override
-  String get workoutGenerationGeneratingYourPersonalizedP =>
-      'パーソナライズされたプランを生成中';
+  String get workoutGenerationGeneratingYourPersonalizedP => 'パーソナライズされたプランを生成中';
 
   @override
   String get workoutGenerationGeneratingYourPlan => '計画を立てる';
@@ -40199,12 +38967,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutHistoryImportAddToHistory => '履歴に追加';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout =>
-      '過去のワークアウト データを追加すると、AI があなたの筋力レベルに合ったウェイトでワークアウトを生成できるようになります。';
+  String get workoutHistoryImportAddYourPastWorkout => '過去のワークアウト データを追加すると、AI があなたの筋力レベルに合ったウェイトでワークアウトを生成できるようになります。';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout2 =>
-      '上記の過去のワークアウト データを追加すると、AI がより良いワークアウトを生成できるようになります。';
+  String get workoutHistoryImportAddYourPastWorkout2 => '上記の過去のワークアウト データを追加すると、AI がより良いワークアウトを生成できるようになります。';
 
   @override
   String get workoutHistoryImportAppleHealth => 'Apple 健康';
@@ -40248,8 +39014,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutHistoryImportExerciseName => '演習名';
 
   @override
-  String get workoutHistoryImportExportFromHevy =>
-      'Hevy、Strong、Fitbod、Jeff Nippard、Renaissance Periodization、Wendler 5/3/1、Apple Health、Garmin、Strava、Pelotonなどからエクスポート。';
+  String get workoutHistoryImportExportFromHevy => 'Hevy、Strong、Fitbod、Jeff Nippard、Renaissance Periodization、Wendler 5/3/1、Apple Health、Garmin、Strava、Pelotonなどからエクスポート。';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -40340,11 +39105,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutHistoryImportScreenSetsRepsKg(
-    Object reps,
-    Object sets,
-    Object weightKg,
-  ) {
+  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg) {
     return '$setsセット × $reps回 @ $weightKg kg';
   }
 
@@ -40367,8 +39128,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutHistoryImportStronglifts => 'StrongLifts';
 
   @override
-  String get workoutHistoryImportSupportsCsvXlsxXlsm =>
-      'CSV、XLSX、XLSM、JSON、Parquet、PDF、FIT、XML、ZIP をサポートします。';
+  String get workoutHistoryImportSupportsCsvXlsxXlsm => 'CSV、XLSX、XLSM、JSON、Parquet、PDF、FIT、XML、ZIP をサポートします。';
 
   @override
   String get workoutHistoryImportTheAiUsesThis => 'AIはこのデータを使用して適切な重量を設定します';
@@ -40386,8 +39146,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutHistoryImportWendler531 => 'ウェンドラー 5/3/1';
 
   @override
-  String get workoutHistoryImportWhichUnitIsThe =>
-      '重量欄の単位はどれですか?ソース アプリがわかっている場合は、それを選択します。兄弟形式 (Hevy と強力な CSV) を明確にするのに役立ちます。';
+  String get workoutHistoryImportWhichUnitIsThe => '重量欄の単位はどれですか?ソース アプリがわかっている場合は、それを選択します。兄弟形式 (Hevy と強力な CSV) を明確にするのに役立ちます。';
 
   @override
   String get workoutHistoryImportYourStrengthData => 'あなたの強さのデータ';
@@ -40452,8 +39211,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutImportPreviewNo => 'いいえ';
 
   @override
-  String get workoutImportPreviewNoSampleRowsProduced =>
-      'サンプル行は生成されません (ファイルが空であるか認識されない可能性があります)。';
+  String get workoutImportPreviewNoSampleRowsProduced => 'サンプル行は生成されません (ファイルが空であるか認識されない可能性があります)。';
 
   @override
   String get workoutImportPreviewPreviewImport => 'インポートをプレビュー';
@@ -40483,8 +39241,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutImportPreviewTemplate => 'テンプレート';
 
   @override
-  String get workoutImportPreviewTheseWillStillImport =>
-      'これらは引き続きインポートされます。ジョブの終了後に正規名にマップできます。';
+  String get workoutImportPreviewTheseWillStillImport => 'これらは引き続きインポートされます。ジョブの終了後に正規名にマップできます。';
 
   @override
   String get workoutImportPreviewUnmatchedExercises => '一致しないエクササイズ';
@@ -40501,8 +39258,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workoutImportProgressThisUsuallyFinishesIn =>
-      '通常、これは 10 ～ 30 秒で終了します。';
+  String get workoutImportProgressThisUsuallyFinishesIn => '通常、これは 10 ～ 30 秒で終了します。';
 
   @override
   String get workoutImportRunning => 'ランニング';
@@ -40566,12 +39322,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutImportSummaryStrengthSetsAdded => '筋トレセットを追加しました';
 
   @override
-  String get workoutImportSummaryTheseRowsWereImported =>
-      'これらの行はインポートされましたが、まだライブラリの演習と一致していません。それらをマッピングすると、重みの提案とグラフが改善されます。';
+  String get workoutImportSummaryTheseRowsWereImported => 'これらの行はインポートされましたが、まだライブラリの演習と一致していません。それらをマッピングすると、重みの提案とグラフが改善されます。';
 
   @override
-  String get workoutImportSummaryUnknownErrorPleaseTry =>
-      '不明なエラー — もう一度試すか、サポートにお問い合わせください。';
+  String get workoutImportSummaryUnknownErrorPleaseTry => '不明なエラー — もう一度試すか、サポートにお問い合わせください。';
 
   @override
   String get workoutImportSummaryWarnings => '警告';
@@ -40580,12 +39334,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutImportSummaryWeCouldnTFinish => 'インポートを完了できませんでした。';
 
   @override
-  String get workoutImportSummaryWeParsedAMulti =>
-      '複数週間にわたるプログラムのテンプレートを解析しました。これを有効にすると、来週の月曜日からワークアウトがスケジュールされます。';
+  String get workoutImportSummaryWeParsedAMulti => '複数週間にわたるプログラムのテンプレートを解析しました。これを有効にすると、来週の月曜日からワークアウトがスケジュールされます。';
 
   @override
-  String get workoutImportSummaryWeightSuggestionsAcrossThe =>
-      'アプリ全体の体重の提案には、1 分以内にこの履歴が反映され始めます。';
+  String get workoutImportSummaryWeightSuggestionsAcrossThe => 'アプリ全体の体重の提案には、1 分以内にこの履歴が反映され始めます。';
 
   @override
   String get workoutImportSwimming => '水泳';
@@ -40679,8 +39431,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutOptionsSkipWorkout => 'トレーニングをスキップしますか？';
 
   @override
-  String get workoutOptionsThisWillMarkThe =>
-      'これにより、トラッキング セットなしでワークアウトが完了済みとしてマークされます。';
+  String get workoutOptionsThisWillMarkThe => 'これにより、トラッキング セットなしでワークアウトが完了済みとしてマークされます。';
 
   @override
   String get workoutOptionsThisWorkoutWillBe => 'このワークアウトはスキップとしてマークされます。';
@@ -40689,8 +39440,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutPermissionsPrimeGotItLetU2019s => '了解しました。始めましょう';
 
   @override
-  String get workoutPermissionsPrimeLetsUsAutoConnect =>
-      'BLE 心拍数ストラップが近くにある場合は、それを自動接続しましょう。';
+  String get workoutPermissionsPrimeLetsUsAutoConnect => 'BLE 心拍数ストラップが近くにある場合は、それを自動接続しましょう。';
 
   @override
   String get workoutPermissionsPrimeMicrophone => 'マイクロフォン';
@@ -40699,15 +39449,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutPermissionsPrimeNearbyDevices => '周辺機器';
 
   @override
-  String get workoutPermissionsPrimeTapTheMicMid =>
-      'セットの中央にあるマイクをタップして、音声で質問したりメモを記録したりできます。';
+  String get workoutPermissionsPrimeTapTheMicMid => 'セットの中央にあるマイクをタップして、音声で質問したりメモを記録したりできます。';
 
   @override
   String get workoutPermissionsPrimeTwoQuickHeadsUps => '2 つの素早いヘッズアップ';
 
   @override
-  String get workoutPermissionsPrimeYouMaySeeThese =>
-      'ワークアウト中にこれらのシステム プロンプトが表示される場合があります。どちらもオプションです。どちらかをスキップしても、ワークアウトは引き続き機能します。';
+  String get workoutPermissionsPrimeYouMaySeeThese => 'ワークアウト中にこれらのシステム プロンプトが表示される場合があります。どちらもオプションです。どちらかをスキップしても、ワークアウトは引き続き機能します。';
 
   @override
   String get workoutPlanDrawerAddExercise => 'エクササイズを追加';
@@ -40829,12 +39577,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSettingsAddPastWorkoutsFor => '過去のワークアウトを追加してAIの重量設定を改善';
 
   @override
-  String get workoutSettingsAutoDeloadDeloadFrequency =>
-      '自動ディロード、ディロード頻度、および進行週数';
+  String get workoutSettingsAutoDeloadDeloadFrequency => '自動ディロード、ディロード頻度、および進行週数';
 
   @override
-  String get workoutSettingsCustomizeWhichExercisesAppe =>
-      'ワークアウトに表示するエクササイズをカスタマイズ';
+  String get workoutSettingsCustomizeWhichExercisesAppe => 'ワークアウトに表示するエクササイズをカスタマイズ';
 
   @override
   String get workoutSettingsExercisePreferences => '演習 PR参考文献';
@@ -41001,8 +39747,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSheetsMixinNoPreviousDataFor => 'この演習には以前のデータがありません。';
 
   @override
-  String get workoutSheetsMixinOrDragExercisesTogether =>
-      'またはエクササイズをドラッグしてまとめることで追加できます';
+  String get workoutSheetsMixinOrDragExercisesTogether => 'またはエクササイズをドラッグしてまとめることで追加できます';
 
   @override
   String get workoutSheetsMixinSelectTheTypeOf => '使用するバーの種類を選択してください';
@@ -41014,12 +39759,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSheetsMixinSupersetRemoved => 'スーパーセットを削除しました';
 
   @override
-  String get workoutSheetsMixinSupersetsHelpYouSave =>
-      'スーパーセットを使用すると、休憩を最小限に抑えてエクササイズを交互に行うことができるため、時間を節約できます。';
+  String get workoutSheetsMixinSupersetsHelpYouSave => 'スーパーセットを使用すると、休憩を最小限に抑えてエクササイズを交互に行うことができるため、時間を節約できます。';
 
   @override
-  String get workoutSheetsMixinTheAiCoachWill =>
-      'AI コーチは、このワークアウト セッションでは非表示になります。引き続き [設定] からアクセスできます。';
+  String get workoutSheetsMixinTheAiCoachWill => 'AI コーチは、このワークアウト セッションでは非表示になります。引き続き [設定] からアクセスできます。';
 
   @override
   String workoutSheetsMixinUiChangedTo(Object displayName) {
@@ -41038,15 +39781,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSheetsMixinWarmUp => '準備し始める';
 
   @override
-  String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'ウォームアップは怪我の予防とパフォーマンスの向上に役立ちます。\n\n推奨: ワーキング セットの前に 1 ～ 2 セットの軽いセットを行うことをお勧めします。';
+  String get workoutSheetsMixinWarmingUpHelpsPrevent => 'ウォームアップは怪我の予防とパフォーマンスの向上に役立ちます。\n\n推奨: ワーキング セットの前に 1 ～ 2 セットの軽いセットを行うことをお勧めします。';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';
 
   @override
-  String get workoutShowcaseViralFormatsTap =>
-      'ワークアウトと食事の人気フォーマット200種以上 — タップでプレビュー';
+  String get workoutShowcaseViralFormatsTap => 'ワークアウトと食事の人気フォーマット200種以上 — タップでプレビュー';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM 見積もり';
@@ -41186,8 +39927,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutShowcaseInstructions => '説明書';
 
   @override
-  String get workoutShowcaseIntroSubtitle =>
-      'Zealovaが全セットをコーチ — 重量も自動でレベルアップ 💪';
+  String get workoutShowcaseIntroSubtitle => 'Zealovaが全セットをコーチ — 重量も自動でレベルアップ 💪';
 
   @override
   String get workoutShowcaseIntroTitle => '最初のワークアウトを始めましょう';
@@ -41222,11 +39962,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutShowcaseNewPr => '新規 PR';
 
   @override
-  String workoutShowcaseNextTargetRaised(
-    Object delta,
-    Object set,
-    Object weight,
-  ) {
+  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight) {
     return 'セット$setを記録 — 次の目標を自動で$weight lbに引き上げ（+$delta lb）';
   }
 
@@ -41237,8 +39973,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutShowcasePlan => 'プラン';
 
   @override
-  String get workoutShowcasePlanAutoAdjustsNext =>
-      '計画は次のセッションを自動調整します - 体重と回数は実際のパフォーマンスから再調整されます。';
+  String get workoutShowcasePlanAutoAdjustsNext => '計画は次のセッションを自動調整します - 体重と回数は実際のパフォーマンスから再調整されます。';
 
   @override
   String get workoutShowcasePoweredByZealova => 'Zealovaによって提供されます';
@@ -41279,11 +40014,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutShowcaseScreenTotalPrs(
-    Object duration,
-    Object prs,
-    Object volume,
-  ) {
+  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume) {
     return '合計 $duration · $volume · $prs PRs';
   }
 
@@ -41381,8 +40112,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutShowcaseZealova => 'ZEALOVA';
 
   @override
-  String get workoutStateCardsAiPoweredPersonalizedProgra =>
-      'AI搭載のパーソナライズされたプログラム';
+  String get workoutStateCardsAiPoweredPersonalizedProgra => 'AI搭載のパーソナライズされたプログラム';
 
   @override
   String get workoutStateCardsCreatingYourWorkouts => 'ワークアウトを作成中';
@@ -41394,8 +40124,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutStateCardsGetStarted => '始める';
 
   @override
-  String get workoutStateCardsGetYourPersonalizedWorkout =>
-      'パーソナライズされたワークアウトプランを取得';
+  String get workoutStateCardsGetYourPersonalizedWorkout => 'パーソナライズされたワークアウトプランを取得';
 
   @override
   String get workoutStateCardsReadyToStart => '準備はいいですか？';
@@ -41404,8 +40133,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutStateCardsTryAgain => '再試行';
 
   @override
-  String get workoutStateCardsYourPersonalizedWorkoutPlan =>
-      'パーソナライズされたワークアウトプランを作成しています';
+  String get workoutStateCardsYourPersonalizedWorkoutPlan => 'パーソナライズされたワークアウトプランを作成しています';
 
   @override
   String get workoutStatsStripCalories => '消費カロリー';
@@ -41455,8 +40183,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryAdvancedConfidence => '信頼度';
 
   @override
-  String get workoutSummaryAdvancedDetailedTrackingDataIs =>
-      'このワークアウトの詳細なトラッキングデータはありません。';
+  String get workoutSummaryAdvancedDetailedTrackingDataIs => 'このワークアウトの詳細なトラッキングデータはありません。';
 
   @override
   String get workoutSummaryAdvancedDuration => '時間';
@@ -41474,10 +40201,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryAdvancedExerciseOrderTime => '種目の順序と時間';
 
   @override
-  String workoutSummaryAdvancedExercises(
-    Object completedCount,
-    Object totalPlanned,
-  ) {
+  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned) {
     return '$completedCount / $totalPlanned 種目';
   }
 
@@ -41546,8 +40270,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryAdvancedNo => 'いいえ';
 
   @override
-  String get workoutSummaryAdvancedNoCompletedSetsLogged =>
-      'このワークアウトで記録されたセットはありません。';
+  String get workoutSummaryAdvancedNoCompletedSetsLogged => 'このワークアウトで記録されたセットはありません。';
 
   @override
   String get workoutSummaryAdvancedNoVolumeDataYet => 'ボリュームデータはまだありません';
@@ -41716,8 +40439,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryGeneralCalories => '消費カロリー';
 
   @override
-  String get workoutSummaryGeneralConnectAHeartRate =>
-      '心拍数モニターを接続して\nゾーンをトラッキングしましょう';
+  String get workoutSummaryGeneralConnectAHeartRate => '心拍数モニターを接続して\nゾーンをトラッキングしましょう';
 
   @override
   String get workoutSummaryGeneralDifficulty => '難易度';
@@ -41735,11 +40457,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => '心拍数';
 
   @override
-  String workoutSummaryGeneralLbXReps(
-    Object reps,
-    String unit,
-    Object weightLbs,
-  ) {
+  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs) {
     return '$weightLbs $unit x $reps 回';
   }
 
@@ -41802,8 +40520,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutSummaryScreenFailedToLoadSummary => 'サマリーの読み込みに失敗しました';
 
   @override
-  String get workoutSummaryScreenFirstTimePerformingThis =>
-      'このタイプのワークアウトは初めてです！';
+  String get workoutSummaryScreenFirstTimePerformingThis => 'このタイプのワークアウトは初めてです！';
 
   @override
   String get workoutSummaryScreenHighlights => 'ハイライト';
@@ -41817,14 +40534,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryScreenPleaseCheckYourConnection =>
-      '接続を確認して、もう一度お試しください。';
+  String get workoutSummaryScreenPleaseCheckYourConnection => '接続を確認して、もう一度お試しください。';
 
   @override
-  String workoutSummaryScreenRepsAcrossSets(
-    Object totalReps,
-    Object totalSets,
-  ) {
+  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets) {
     return '$totalSetsセットで合計$totalReps回';
   }
 
@@ -41842,11 +40555,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutSummaryScreenUiKgXRepsEst(
-    Object estimated1rmKg,
-    Object reps,
-    Object weightKg,
-  ) {
+  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg) {
     return '$weightKg kg x $reps 回  |  推定 1RM: $estimated1rmKg kg';
   }
 
@@ -41880,12 +40589,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutTopOverlayPaused => '一時停止中';
 
   @override
-  String get workoutTypeSelectorEnterCustomWorkoutType =>
-      'カスタムワークアウトタイプを入力 (例: \"Mobility\")';
+  String get workoutTypeSelectorEnterCustomWorkoutType => 'カスタムワークアウトタイプを入力 (例: \"Mobility\")';
 
   @override
-  String get workoutTypeSelectorHowYouWantTo =>
-      'トレーニング方法を選択してください。下の「ターゲット部位」から部位を選べます。';
+  String get workoutTypeSelectorHowYouWantTo => 'トレーニング方法を選択してください。下の「ターゲット部位」から部位を選べます。';
 
   @override
   String get workoutTypeSelectorTrainingStyle => 'トレーニングスタイル';
@@ -41900,15 +40607,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutUiBuildersDrink => '水分補給';
 
   @override
-  String get workoutUiBuildersHeardRepsButNot =>
-      '回数は認識しましたが、重量が不明です。「225 for 5」のように入力してください。';
+  String get workoutUiBuildersHeardRepsButNot => '回数は認識しましたが、重量が不明です。「225 for 5」のように入力してください。';
 
   @override
   String get workoutUiBuildersHowTo => 'やり方';
 
   @override
-  String get workoutUiBuildersLoadingYourPersonalizedWarm =>
-      'パーソナライズされたウォームアップを読み込み中';
+  String get workoutUiBuildersLoadingYourPersonalizedWarm => 'パーソナライズされたウォームアップを読み込み中';
 
   @override
   String workoutUiBuildersMixinUi2HeardKg(Object parsed) {
@@ -41916,10 +40621,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String workoutUiBuildersMixinUi2LoggedReps(
-    Object reps,
-    Object weightDisplay,
-  ) {
+  String workoutUiBuildersMixinUi2LoggedReps(Object reps, Object weightDisplay) {
     return '$weightDisplay × $reps回を記録';
   }
 
@@ -41958,19 +40660,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutUiModeAdvanced => '上級者向け';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchLb =>
-      'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±5lb単位の調整、プレートチャート。';
+  String get workoutUiModeEverythingWarmupStretchLb => 'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±5lb単位の調整、プレートチャート。';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchPh =>
-      'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±2.5kg単位の調整、プレートチャート。';
+  String get workoutUiModeEverythingWarmupStretchPh => 'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±2.5kg単位の調整、プレートチャート。';
 
   @override
   String get workoutUiModePickTheLevelOf => 'セット記録時の詳細レベルを選択してください。いつでも変更可能です。';
 
   @override
-  String get workoutUiModePolishedDefaultSteppersAi =>
-      '洗練されたデフォルト設定。ステッパー、AIコーチ、休憩タイマー、音声・写真付きメモ、過去セットのタップ編集機能。ほとんどのセッションに最適です。';
+  String get workoutUiModePolishedDefaultSteppersAi => '洗練されたデフォルト設定。ステッパー、AIコーチ、休憩タイマー、音声・写真付きメモ、過去セットのタップ編集機能。ほとんどのセッションに最適です。';
 
   @override
   String get workoutUiModeSelected => '選択済み';
@@ -41984,8 +40683,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutUiModeWorkoutMode => 'ワークアウトモード';
 
   @override
-  String get workoutsBenchSquatDeadliftBest =>
-      'ベンチ、スクワット、デッドリフト — メインセットのみを記録する場合に最適';
+  String get workoutsBenchSquatDeadliftBest => 'ベンチ、スクワット、デッドリフト — メインセットのみを記録する場合に最適';
 
   @override
   String get workoutsCollapseWeekView => '週表示を折りたたむ';
@@ -42015,12 +40713,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutsGym => 'ジム';
 
   @override
-  String get workoutsHealthConnectAppleHealth =>
-      'Health Connect / Apple Health';
+  String get workoutsHealthConnectAppleHealth => 'Health Connect / Apple Health';
 
   @override
-  String get workoutsHevyStrongLiftinFitbod =>
-      'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, カスタムCSV';
+  String get workoutsHevyStrongLiftinFitbod => 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, カスタムCSV';
 
   @override
   String get workoutsImportWorkouts => 'ワークアウトをインポート';
@@ -42052,15 +40748,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutsSyncSessionsFromYour => 'ウォッチからセッションを同期（バックグラウンドで同期中）';
 
   @override
-  String get workoutsTourHitStartOnToday =>
-      '「今日のワークアウト」を開始して、休憩タイマーを使いながらセット、回数、重量を記録しましょう。';
+  String get workoutsTourHitStartOnToday => '「今日のワークアウト」を開始して、休憩タイマーを使いながらセット、回数、重量を記録しましょう。';
 
   @override
   String get workoutsTourMakeItYours => '自分好みにカスタマイズ';
 
   @override
-  String get workoutsTourPinFavoritesHideExercises =>
-      'お気に入りをピン留め、不要なエクササイズを非表示、または次にやりたい種目をキューに追加できます。';
+  String get workoutsTourPinFavoritesHideExercises => 'お気に入りをピン留め、不要なエクササイズを非表示、または次にやりたい種目をキューに追加できます。';
 
   @override
   String get workoutsTourSetYourPreferences => '設定をカスタマイズ';
@@ -42069,8 +40763,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutsTourStartAWorkout => 'ワークアウトを開始';
 
   @override
-  String get workoutsTourUseCustomBrowseOr =>
-      '「カスタム」「ブラウズ」「お気に入り」を使って、ワークアウトの作成、入れ替え、繰り返しを行いましょう。';
+  String get workoutsTourUseCustomBrowseOr => '「カスタム」「ブラウズ」「お気に入り」を使って、ワークアウトの作成、入れ替え、繰り返しを行いましょう。';
 
   @override
   String get workoutsTypeAFewPrs => 'PRをいくつか手動で入力';
@@ -42079,8 +40772,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutsUpcoming => '予定';
 
   @override
-  String get workoutsYouCanEditUndo =>
-      'インポート後も編集、取り消し、再マッピングが可能で、データが破壊されることはありません。';
+  String get workoutsYouCanEditUndo => 'インポート後も編集、取り消し、再マッピングが可能で、データが破壊されることはありません。';
 
   @override
   String get workoutsYourNextWorkoutIs => '次のワークアウトは各セッション終了後に自動作成されます';
@@ -42183,8 +40875,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get xpGoalsDialogFirstChatWithAiCoachXp => 'AIコーチと初チャット：+15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      '初回の食事/体重/測定：各+50 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp => '初回の食事/体重/測定：各+50 XP';
 
   @override
   String get xpGoalsDialogFirstPrXp => '初PR：+100 XP';
@@ -42256,8 +40947,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get xpGoalsScreenConsumableLegend => '消費アイテムの凡例';
 
   @override
-  String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
-      '月間実績の読み込み中にエラーが発生しました';
+  String get xpGoalsScreenErrorLoadingMonthlyAchievem => '月間実績の読み込み中にエラーが発生しました';
 
   @override
   String get xpGoalsScreenErrorLoadingWeeklyProgress => '週間進捗の読み込み中にエラーが発生しました';
@@ -42325,10 +41015,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get xpGoalsScreenSetFirstPersonalRecord => '最初の自己ベストを更新';
 
   @override
-  String xpGoalsScreenUi1CheckpointsComplete(
-    Object completedCount,
-    Object length,
-  ) {
+  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length) {
     return '$completedCount/$length個のチェックポイント完了';
   }
 
@@ -42450,8 +41137,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get xpLeaderboardNoLeaderboardDataYet =>
-      'リーダーボードのデータはまだありません。\nXPを獲得してランキングを上げましょう！';
+  String get xpLeaderboardNoLeaderboardDataYet => 'リーダーボードのデータはまだありません。\nXPを獲得してランキングを上げましょう！';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {
@@ -42660,8 +41346,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get vacationModeBannerOn => '通知がオンになっています';
 
   @override
-  String get vacationModeBannerOnSubtitle =>
-      '重要ではないリマインダーを一時停止するには、以下の休暇モードを有効にします。';
+  String get vacationModeBannerOnSubtitle => '重要ではないリマインダーを一時停止するには、以下の休暇モードを有効にします。';
 
   @override
   String get difficultyEasy => '初心者';
@@ -42717,8 +41402,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importsEmptyTitle => 'まだ何も共有されていません';
 
   @override
-  String get importsEmptyBody =>
-      '写真、YouTube、ChatGPT、ボイスメモなど、どこでも共有を押すと、自動的にここに表示されます。';
+  String get importsEmptyBody => '写真、YouTube、ChatGPT、ボイスメモなど、どこでも共有を押すと、自動的にここに表示されます。';
 
   @override
   String get importsActionOpen => '開ける';
@@ -42744,8 +41428,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody =>
-      'レコードはインポート履歴から削除されます。インポートしたワークアウト/レシピ/食事ログ自体は残ります。';
+  String get importsDeleteConfirmBody => 'レコードはインポート履歴から削除されます。インポートしたワークアウト/レシピ/食事ログ自体は残ります。';
 
   @override
   String get importsActionCancel => 'キャンセル';
@@ -42808,22 +41491,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'ルーティングする前に必ず尋ねる';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle =>
-      '自動ルートのカウントダウンをスキップします。すべての共有でセレクターが開きます。';
+  String get importsPrivacyAlwaysAskSubtitle => '自動ルートのカウントダウンをスキップします。すべての共有でセレクターが開きます。';
 
   @override
   String get importsPrivacyClearHistoryTitle => '共有履歴をクリアする';
 
   @override
-  String get importsPrivacyClearHistorySubtitle =>
-      'インポート リストからすべてのレコードを削除します。インポートしたワークアウト、レシピ、食事ログ自体は残ります。';
+  String get importsPrivacyClearHistorySubtitle => 'インポート リストからすべてのレコードを削除します。インポートしたワークアウト、レシピ、食事ログ自体は残ります。';
 
   @override
   String get importsPrivacyClearConfirmTitle => '共有履歴を消去しますか?';
 
   @override
-  String get importsPrivacyClearConfirmBody =>
-      'Imports リストのすべての行が削除されます。インポートしたワークアウト、レシピ、食事ログはそのまま残ります。';
+  String get importsPrivacyClearConfirmBody => 'Imports リストのすべての行が削除されます。インポートしたワークアウト、レシピ、食事ログはそのまま残ります。';
 
   @override
   String get importsPrivacyClearAction => 'クリア';
@@ -42871,8 +41551,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroModesPillSlowConnection => 'TAKING A WHILE';
 
   @override
-  String get heroModesBodySlowConnection =>
-      'Taking longer than usual to load — retrying automatically.';
+  String get heroModesBodySlowConnection => 'Taking longer than usual to load — retrying automatically.';
 
   @override
   String get heroModesPillLive => 'ライブ';
@@ -43013,8 +41692,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get metricsDashboardHrHigh => 'High';
 
   @override
-  String get metricsDashboardHrDisclaimer =>
-      'Informational only, not medical advice. Talk to a clinician about any concerns.';
+  String get metricsDashboardHrDisclaimer => 'Informational only, not medical advice. Talk to a clinician about any concerns.';
 
   @override
   String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
@@ -43039,8 +41717,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get metricsDashboardGetStartedTitle => 'Start tracking';
 
   @override
-  String get metricsDashboardGetStartedCta =>
-      'Connect a wearable or log a meal to see your metrics.';
+  String get metricsDashboardGetStartedCta => 'Connect a wearable or log a meal to see your metrics.';
 
   @override
   String quizMinutesLeft(int minutes) {
@@ -43211,8 +41888,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallFounderHeadline => '手が届かなかったコーチを、自分で作った。';
 
   @override
-  String get paywallFounderQuote =>
-      '「優秀なパーソナルトレーナーは\$400/月。とても払えなかったので、2年かけて自分で作りました。2,300種目、本物の漸進ロジック、あなたの1週間を実際に見てくれるコーチ。私自身、毎日使っています。」';
+  String get paywallFounderQuote => '「優秀なパーソナルトレーナーは\$400/月。とても払えなかったので、2年かけて自分で作りました。2,300種目、本物の漸進ロジック、あなたの1週間を実際に見てくれるコーチ。私自身、毎日使っています。」';
 
   @override
   String get paywallFounderName => 'Chetan · 創業者';
@@ -43227,8 +41903,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallTesterName => 'Keertan · 初期テスター';
 
   @override
-  String get paywallTesterQuote2 =>
-      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
+  String get paywallTesterQuote2 => '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
   String get paywallTesterName2 => 'Toby · macro tracker';
@@ -43287,8 +41962,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get paywallV7DownsellHeadline => 'プランが削除されてもいい?';
 
   @override
-  String get paywallV7DownsellSub =>
-      '一度きりの創業メンバー価格、同じ7日間無料トライアル付き。このオファーは二度と戻りません。';
+  String get paywallV7DownsellSub => '一度きりの創業メンバー価格、同じ7日間無料トライアル付き。このオファーは二度と戻りません。';
 
   @override
   String metricSetupPanelKicker(num count) {

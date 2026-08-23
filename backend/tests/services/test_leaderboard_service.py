@@ -50,11 +50,14 @@ class TestCheckUnlockStatus:
 
     Retired behavior: these tests used to mock the `check_leaderboard_unlock`
     RPC, because check_unlock_status called it. Commit 00400f9f replaced the
-    RPC with a direct `workouts` count query
-    (`.table("workouts").select("id", count="exact").eq(...).eq(...)`), and
-    cdc3841c added the `scope` argument (friends unlocks at 1 workout,
-    global/country still at 10). The RPC no longer exists in this path, so the
-    RPC mocks were dead and `result.count` came back as a bare MagicMock.
+    RPC with a direct count query, and cdc3841c added the `scope` argument
+    (friends unlocks at 1 workout, global/country still at 10). Finding #241
+    then moved the count query from `workouts` to `workout_logs` (status=
+    "completed") since counting from `workouts` undercounts the moment a plan
+    change (e.g. an injury-adapt regeneration) deletes/replaces that table's
+    rows — `workout_logs` is the append-only record of finished sessions.
+    The RPC no longer exists in this path, so the RPC mocks were dead and
+    `result.count` came back as a bare MagicMock.
 
     The guarantee these tests protect is unchanged and is still asserted below:
     a user's completed-workout count drives is_unlocked / workouts_completed /
@@ -90,8 +93,10 @@ class TestCheckUnlockStatus:
         service = LeaderboardService()
         result = service.check_unlock_status("user-123")
 
-        # Counted against the completed-workouts table, not an RPC.
-        mock_client.table.assert_called_with("workouts")
+        # Finding #241: unlock progress is counted from workout_logs
+        # (status="completed"), not the workouts table — a plan-regeneration
+        # that deletes/replaces `workouts` rows must not reset progress.
+        mock_client.table.assert_called_with("workout_logs")
 
         assert result["is_unlocked"] is True
         assert result["workouts_completed"] == 15

@@ -12,6 +12,20 @@ class DailyGoalsStatus {
   final bool hydrationGoal;
   final bool calorieGoal;
 
+  // Finding #358: real per-goal XP amounts the ledger (xp_transactions)
+  // actually paid today, so the UI can stop advertising a static constant
+  // that may not match what was really awarded (anti-fraud halving / event
+  // multipliers / etc). 0 when the goal has not been completed today.
+  final int weightLogXp;
+  final int mealLogXp;
+  final int workoutCompleteXp;
+  final int proteinGoalXp;
+  final int bodyMeasurementsXp;
+  final int stepsGoalXp;
+  final int hydrationGoalXp;
+  final int calorieGoalXp;
+  final int dailyLoginXp;
+
   const DailyGoalsStatus({
     this.weightLog = false,
     this.mealLog = false,
@@ -21,6 +35,15 @@ class DailyGoalsStatus {
     this.stepsGoal = false,
     this.hydrationGoal = false,
     this.calorieGoal = false,
+    this.weightLogXp = 0,
+    this.mealLogXp = 0,
+    this.workoutCompleteXp = 0,
+    this.proteinGoalXp = 0,
+    this.bodyMeasurementsXp = 0,
+    this.stepsGoalXp = 0,
+    this.hydrationGoalXp = 0,
+    this.calorieGoalXp = 0,
+    this.dailyLoginXp = 0,
   });
 
   factory DailyGoalsStatus.fromJson(Map<String, dynamic> json) {
@@ -33,6 +56,15 @@ class DailyGoalsStatus {
       stepsGoal: json['steps_goal'] as bool? ?? false,
       hydrationGoal: json['hydration_goal'] as bool? ?? false,
       calorieGoal: json['calorie_goal'] as bool? ?? false,
+      weightLogXp: (json['weight_log_xp'] as num?)?.toInt() ?? 0,
+      mealLogXp: (json['meal_log_xp'] as num?)?.toInt() ?? 0,
+      workoutCompleteXp: (json['workout_complete_xp'] as num?)?.toInt() ?? 0,
+      proteinGoalXp: (json['protein_goal_xp'] as num?)?.toInt() ?? 0,
+      bodyMeasurementsXp: (json['body_measurements_xp'] as num?)?.toInt() ?? 0,
+      stepsGoalXp: (json['steps_goal_xp'] as num?)?.toInt() ?? 0,
+      hydrationGoalXp: (json['hydration_goal_xp'] as num?)?.toInt() ?? 0,
+      calorieGoalXp: (json['calorie_goal_xp'] as num?)?.toInt() ?? 0,
+      dailyLoginXp: (json['daily_login_xp'] as num?)?.toInt() ?? 0,
     );
   }
 }

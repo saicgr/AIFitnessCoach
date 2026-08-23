@@ -62,6 +62,23 @@ class DailyGoals {
   final bool hitCalorieGoal;
   final DateTime date;
 
+  // Finding #358: the REAL per-goal XP amounts the ledger (xp_transactions)
+  // actually paid today, as reported by GET /xp/daily-goals-status. Null
+  // means "not yet known" (not synced from backend this session) so callers
+  // can fall back to an advertised/potential estimate; once known, these are
+  // what must be displayed/summed as "earned" — never a static constant,
+  // since anti-fraud halving / event multipliers can make the real amount
+  // differ from the advertised base value.
+  final int? loggedInXp;
+  final int? completedWorkoutXp;
+  final int? loggedMealXp;
+  final int? loggedWeightXp;
+  final int? hitProteinGoalXp;
+  final int? loggedBodyMeasurementsXp;
+  final int? hitStepsGoalXp;
+  final int? hitHydrationGoalXp;
+  final int? hitCalorieGoalXp;
+
   const DailyGoals({
     this.loggedIn = false,
     this.completedWorkout = false,
@@ -73,6 +90,15 @@ class DailyGoals {
     this.hitHydrationGoal = false,
     this.hitCalorieGoal = false,
     required this.date,
+    this.loggedInXp,
+    this.completedWorkoutXp,
+    this.loggedMealXp,
+    this.loggedWeightXp,
+    this.hitProteinGoalXp,
+    this.loggedBodyMeasurementsXp,
+    this.hitStepsGoalXp,
+    this.hitHydrationGoalXp,
+    this.hitCalorieGoalXp,
   });
 
   DailyGoals copyWith({
@@ -86,6 +112,15 @@ class DailyGoals {
     bool? hitHydrationGoal,
     bool? hitCalorieGoal,
     DateTime? date,
+    int? loggedInXp,
+    int? completedWorkoutXp,
+    int? loggedMealXp,
+    int? loggedWeightXp,
+    int? hitProteinGoalXp,
+    int? loggedBodyMeasurementsXp,
+    int? hitStepsGoalXp,
+    int? hitHydrationGoalXp,
+    int? hitCalorieGoalXp,
   }) {
     return DailyGoals(
       loggedIn: loggedIn ?? this.loggedIn,
@@ -98,6 +133,15 @@ class DailyGoals {
       hitHydrationGoal: hitHydrationGoal ?? this.hitHydrationGoal,
       hitCalorieGoal: hitCalorieGoal ?? this.hitCalorieGoal,
       date: date ?? this.date,
+      loggedInXp: loggedInXp ?? this.loggedInXp,
+      completedWorkoutXp: completedWorkoutXp ?? this.completedWorkoutXp,
+      loggedMealXp: loggedMealXp ?? this.loggedMealXp,
+      loggedWeightXp: loggedWeightXp ?? this.loggedWeightXp,
+      hitProteinGoalXp: hitProteinGoalXp ?? this.hitProteinGoalXp,
+      loggedBodyMeasurementsXp: loggedBodyMeasurementsXp ?? this.loggedBodyMeasurementsXp,
+      hitStepsGoalXp: hitStepsGoalXp ?? this.hitStepsGoalXp,
+      hitHydrationGoalXp: hitHydrationGoalXp ?? this.hitHydrationGoalXp,
+      hitCalorieGoalXp: hitCalorieGoalXp ?? this.hitCalorieGoalXp,
     );
   }
 

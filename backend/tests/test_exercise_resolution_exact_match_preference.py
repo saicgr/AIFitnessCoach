@@ -162,7 +162,14 @@ class TestExactMatchPreference:
         service = _make_service(_LIBRARY_ROWS)
         results = service.search_exercises("Pull-Up normal grip", limit=1)
         assert len(results) == 1
-        assert results[0]["name"] == "Pull-Up normal grip"
+        # Finding #222: clean_exercise_name_for_display() now Title-Cases
+        # its output (via the shared _title_case_words() helper) so a raw
+        # lowercase/mixed-case library row never displays next to Title
+        # Case peers — "Pull-Up normal grip" -> "Pull-Up Normal Grip" is the
+        # deliberately-corrected display casing, not a resolution failure;
+        # the exact-match-over-substring guarantee this test protects
+        # (finding #233) is the `id == 3` / equipment assertions below.
+        assert results[0]["name"] == "Pull-Up Normal Grip"
         assert results[0]["id"] == 3
         # the wrong prod behavior handed back the assisted variant instead
         assert results[0]["equipment"] != "Assisted Chin-Up / Pull-Up Machine"

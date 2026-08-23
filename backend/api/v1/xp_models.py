@@ -231,6 +231,19 @@ class DailyGoalsStatusResponse(NullTolerantResponse):
     steps_goal: bool = False
     hydration_goal: bool = False
     calorie_goal: bool = False
+    # Finding #358: the '+N XP TODAY' figure must be the real amount the
+    # ledger paid (xp_transactions.xp_amount), not a client-side constant.
+    # 0 when the goal has not been completed today. daily_login_xp mirrors
+    # finding #357's fix (25 * LEAST(streak, 7), not a flat 5).
+    weight_log_xp: int = 0
+    meal_log_xp: int = 0
+    workout_complete_xp: int = 0
+    protein_goal_xp: int = 0
+    body_measurements_xp: int = 0
+    steps_goal_xp: int = 0
+    hydration_goal_xp: int = 0
+    calorie_goal_xp: int = 0
+    daily_login_xp: int = 0
 
 
 # =============================================================================

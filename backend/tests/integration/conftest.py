@@ -31,8 +31,26 @@ class _FakeTable:
         self._last_filters: list = []
 
     def insert(self, rows, **kwargs):
+        # Simulate the real `uq_workout_history_imports_source_hash` partial
+        # unique index (WHERE source_row_hash IS NOT NULL) on (user_id,
+        # source_row_hash): a plain INSERT of a row whose hash we've already
+        # stored raises a unique-violation, same as real Postgres would —
+        # this is what the service's per-row 23505 fallback depends on.
         self._last_op = "insert"
         self._last_payload = rows if isinstance(rows, list) else [rows]
+        hash_key = "source_row_hash"
+        seen = self._store.setdefault("_seen_hashes", set())
+        for r in self._last_payload:
+            h = r.get(hash_key)
+            if h and (r.get("user_id"), h) in seen:
+                raise Exception(
+                    f"duplicate key value violates unique constraint "
+                    f'"uq_workout_history_imports_source_hash" (23505)'
+                )
+        for r in self._last_payload:
+            h = r.get(hash_key)
+            if h:
+                seen.add((r.get("user_id"), h))
         self._store.setdefault("inserts", []).extend(self._last_payload)
         return self
 

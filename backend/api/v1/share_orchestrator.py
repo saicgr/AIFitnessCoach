@@ -78,12 +78,18 @@ async def fetch_url_endpoint(
 
     Streams SSE progress events. Always terminates with `{stage:"done"}`
     or `{stage:"error"}`."""
+    # See E2E #262 — shared_items.user_id -> auth.users(id) but
+    # share_rate_counters.user_id -> public.users(id) (migration 2412).
+    # user_id stays the public id (cap check + FCM lookup by
+    # `users.id` in share_push_notifier._fcm_token_for); auth_id is used
+    # for every shared_items read/write below.
     user_id = current_user["id"]
+    auth_id = current_user["auth_id"]
     url = request.url.strip()
     url_hash = soft_hash(url)[:16]
 
     # Soft-dedupe — repeat URL share within 60s short-circuits.
-    existing = _find_recent_softhash(user_id, url_hash)
+    existing = _find_recent_softhash(auth_id, url_hash)
     if existing:
         async def _dedupe_stream():
             yield _sse({
@@ -97,7 +103,7 @@ async def fetch_url_endpoint(
 
     source_origin = _detect_url_origin(url)
     item_id = _new_shared_item(
-        user_id=user_id,
+        user_id=auth_id,
         source_kind="url",
         source_origin=source_origin,
         source_url=url,
@@ -124,7 +130,7 @@ async def fetch_url_endpoint(
                 if content and not content.error:
                     url_result_cache.set_(url, content, request.locale)
             if content.error:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": content.error[:500],
                 })
@@ -147,14 +153,14 @@ async def fetch_url_endpoint(
                     "has_media": bool(content.media),
                 })
 
-            _merge_tags(item_id, user_id, {
+            _merge_tags(item_id, auth_id, {
                 "author": content.author_handle,
                 "title": content.title,
             })
 
             text_for_classify = content.as_text()
             if not text_for_classify:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": "No extractable text or caption.",
                 })
@@ -174,12 +180,12 @@ async def fetch_url_endpoint(
             intent = result["intent"]
             routing = INTENT_ROUTING.get(intent, INTENT_ROUTING["discuss"])
 
-            _update_shared_item(item_id, user_id, {
+            _update_shared_item(item_id, auth_id, {
                 "classifier_intent": intent,
                 "classifier_confidence": result["confidence"],
                 "status": "extracting",
             })
-            _merge_tags(item_id, user_id, {
+            _merge_tags(item_id, auth_id, {
                 "category": _intent_to_category(intent),
             })
 
@@ -216,7 +222,7 @@ async def fetch_url_endpoint(
                         "index": idx, "of": len(exercises_payload),
                         "name": e["name"], "sets": e["sets"], "reps": e["reps"],
                     })
-                _merge_tags(item_id, user_id, {
+                _merge_tags(item_id, auth_id, {
                     "exercise_count": len(exercises_payload),
                     "duration_s": (workout.estimated_duration_min or 0) * 60,
                 })
@@ -236,7 +242,7 @@ async def fetch_url_endpoint(
                     "media_s3_keys": [m.s3_key for m in content.media],
                 })
 
-            _update_shared_item(item_id, user_id, {
+            _update_shared_item(item_id, auth_id, {
                 "extracted_payload": extracted_payload,
                 "target_entity_kind": target_entity_kind,
                 "status": "completed",
@@ -264,7 +270,7 @@ async def fetch_url_endpoint(
         except Exception as e:
             logger.exception(f"[FetchUrl] error: {e}")
             try:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": str(e)[:500],
                 })
@@ -340,7 +346,10 @@ async def import_audio(
 ):
     """Voice memo or other audio file → Gemini audio understanding →
     intent classifier → routing. SSE."""
+    # See E2E #262 — public.users.id for the cap RPC, auth.users id for
+    # every shared_items read/write (different FK targets, migration 2412).
     user_id = current_user["id"]
+    auth_id = current_user["auth_id"]
     await _check_and_increment_cap(user_id, "audio")
 
     data = await file.read()
@@ -352,7 +361,7 @@ async def import_audio(
     mime = file.content_type or "audio/mp4"
 
     item_id = _new_shared_item(
-        user_id=user_id,
+        user_id=auth_id,
         source_kind="audio",
         source_origin="voicememos",
         tags={"format": "audio", "origin": "voicememos"},
@@ -366,7 +375,7 @@ async def import_audio(
             understanding = await transcribe_and_hint(data, mime_type=mime)
 
             if not understanding.transcript:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": "Couldn't transcribe audio.",
                 })
@@ -394,7 +403,7 @@ async def import_audio(
             intent = result["intent"]
             routing = INTENT_ROUTING.get(intent, INTENT_ROUTING["discuss"])
 
-            _update_shared_item(item_id, user_id, {
+            _update_shared_item(item_id, auth_id, {
                 "raw_text": understanding.transcript[: MAX_SIZES["text_db_truncate_bytes"]],
                 "classifier_intent": intent,
                 "classifier_confidence": result["confidence"],
@@ -406,7 +415,7 @@ async def import_audio(
                     "audio_hint": understanding.content_hint,
                 },
             })
-            _merge_tags(item_id, user_id, {
+            _merge_tags(item_id, auth_id, {
                 "category": _intent_to_category(intent),
                 "format": "audio",
                 "origin": "voicememos",
@@ -424,7 +433,7 @@ async def import_audio(
         except Exception as e:
             logger.exception(f"[ImportAudio] error: {e}")
             try:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": str(e)[:500],
                 })
@@ -446,7 +455,10 @@ async def import_pdf(
     current_user: dict = Depends(get_current_user),
 ):
     """PDF → Gemini PDF understanding → intent classifier → routing. SSE."""
+    # See E2E #262 — public.users.id for the cap RPC, auth.users id for
+    # every shared_items read/write (different FK targets, migration 2412).
     user_id = current_user["id"]
+    auth_id = current_user["auth_id"]
     await _check_and_increment_cap(user_id, "pdf")
 
     data = await file.read()
@@ -456,7 +468,7 @@ async def import_pdf(
         raise HTTPException(400, "PDF appears empty")
 
     item_id = _new_shared_item(
-        user_id=user_id,
+        user_id=auth_id,
         source_kind="pdf",
         source_origin="files",
         tags={"format": "pdf", "origin": "files"},
@@ -470,7 +482,7 @@ async def import_pdf(
             understanding = await understand_pdf(data)
 
             if understanding.locked:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": "Password-protected or unreadable PDF.",
                 })
@@ -479,7 +491,7 @@ async def import_pdf(
                 return
 
             if not understanding.text:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": understanding.error or "Couldn't read PDF.",
                 })
@@ -499,7 +511,7 @@ async def import_pdf(
             intent = result["intent"]
             routing = INTENT_ROUTING.get(intent, INTENT_ROUTING["discuss"])
 
-            _update_shared_item(item_id, user_id, {
+            _update_shared_item(item_id, auth_id, {
                 "raw_text": understanding.text[: MAX_SIZES["text_db_truncate_bytes"]],
                 "classifier_intent": intent,
                 "classifier_confidence": result["confidence"],
@@ -510,7 +522,7 @@ async def import_pdf(
                     "text_preview": understanding.text[:8000],
                 },
             })
-            _merge_tags(item_id, user_id, {
+            _merge_tags(item_id, auth_id, {
                 "category": _intent_to_category(intent),
                 "format": "pdf",
                 "origin": "files",
@@ -527,7 +539,7 @@ async def import_pdf(
         except Exception as e:
             logger.exception(f"[ImportPdf] error: {e}")
             try:
-                _update_shared_item(item_id, user_id, {
+                _update_shared_item(item_id, auth_id, {
                     "status": "failed",
                     "error_message": str(e)[:500],
                 })

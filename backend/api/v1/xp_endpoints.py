@@ -1244,6 +1244,9 @@ async def get_all_levels(
         logger.warning(f"[XP] Failed to fetch level thresholds from DB, using Python fallback: {e}")
         db_levels = {}
 
+    # Merch ladder — DB is the single source of truth (E2E #371).
+    merch_by_level = await _get_merch_type_by_level()
+
     levels = []
     for level in range(1, 251):
         reward = milestone_rewards.get(level) or per_level_rewards.get(level)
@@ -1256,7 +1259,7 @@ async def get_all_levels(
             "milestone_reward": reward,
             "milestone_icon": icon,
             "is_major_milestone": level in MAJOR_MILESTONE_LEVELS,
-            "merch_type": MERCH_TYPE_FOR_LEVEL.get(level),
+            "merch_type": merch_by_level.get(level),
         })
 
     return levels
@@ -1269,13 +1272,14 @@ async def get_all_levels(
 
 MAJOR_MILESTONE_LEVELS = {5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250}
 
-MERCH_TYPE_FOR_LEVEL = {
-    50: "sticker_pack",
-    100: "t_shirt",
-    150: "hoodie",
-    200: "full_merch_kit",
-    250: "signed_premium_kit",
-}
+# NOTE: there is no Python-side merch unlock ladder here anymore (E2E #371).
+# The SQL function `merch_type_for_level()` (migration 2424) is the single
+# source of truth for level -> merch_type; `_get_merch_type_by_level()`
+# below reads it in bulk via the `get_all_merch_levels` RPC (migration
+# 2432). A hardcoded MERCH_TYPE_FOR_LEVEL dict used to live here at the
+# OLD (pre-2424) thresholds (50/100/150/200/250) and silently drifted out
+# of sync with the DB's rescaled ladder (20/40/60/80/100) — do not
+# reintroduce it.
 
 # Levels to proactively nudge users toward (push + email): within 3 levels of next merch tier.
 MERCH_PROXIMITY_NUDGE_LEVELS = {97, 98, 99, 147, 148, 149, 197, 198, 199, 247, 248, 249}
@@ -1285,6 +1289,23 @@ MERCH_NEXT_FOR_PROXIMITY = {
     197: 200, 198: 200, 199: 200,
     247: 250, 248: 250, 249: 250,
 }
+
+
+async def _get_merch_type_by_level() -> dict[int, str]:
+    """level -> merch_type, read from the DB (single source of truth: the
+    `merch_type_for_level()` SQL function, migration 2424) via the
+    `get_all_merch_levels` bulk RPC (migration 2432). See E2E #371 — this
+    replaces a Python-side dict that duplicated (and drifted from) the
+    DB ladder. No Python fallback ladder on RPC failure: an empty dict
+    just means no merch_type is attached this request, rather than
+    silently reintroducing a second, staler source of truth."""
+    try:
+        db = get_supabase_db()
+        result = (await run_db(lambda: db.client.rpc("get_all_merch_levels").execute()))
+        return {row["lvl"]: row["merch_type"] for row in (result.data or [])}
+    except Exception as e:
+        logger.warning(f"[Merch] Failed to fetch merch level thresholds from DB: {e}")
+        return {}
 
 MILESTONE_REWARDS_DISPLAY = {
     5:   '3x Streak Shield + 2x Fitness Crate + Premium Crate + 2x XP Token · "Rising Star" Animated Badge',
@@ -1415,7 +1436,9 @@ async def list_merch_claims(current_user=Depends(get_current_user)):
                     .not_.is_("awarded_at_level", "null")
                     .execute()))
                 already_awarded = {r.get("awarded_at_level") for r in (existing_claims.data or [])}
-                for threshold_level, merch_type in MERCH_TYPE_FOR_LEVEL.items():
+                # DB is the single source of truth for the merch ladder (E2E #371).
+                merch_by_level = await _get_merch_type_by_level()
+                for threshold_level, merch_type in merch_by_level.items():
                     if current_level >= threshold_level and threshold_level not in already_awarded:
                         try:
                             await run_db(lambda tl=threshold_level, mt=merch_type: db.client.table("merch_claims").upsert({

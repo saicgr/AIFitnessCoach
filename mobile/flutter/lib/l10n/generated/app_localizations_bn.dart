@@ -34974,6 +34974,17 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settingsEquipment => 'সরঞ্জাম';
 
   @override
+  String settingsEquipmentItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsExercisePrefs => 'ব্যায়ামের পছন্দ';
 
   @override

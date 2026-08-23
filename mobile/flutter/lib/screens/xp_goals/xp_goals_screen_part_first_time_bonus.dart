@@ -23,12 +23,20 @@ class _DailyGoal {
   final int xp;
   final bool isComplete;
   final IconData icon;
+  // Finding #358: the REAL XP the ledger (xp_transactions) paid for this
+  // goal today, from GET /xp/daily-goals-status. Null when not yet known
+  // (goal incomplete, or backend hasn't been synced this session) — callers
+  // fall back to [xp] (the advertised/potential amount) in that case. When
+  // present, this is the number to display/sum — it already reflects any
+  // server-side multiplier, so it must NOT be multiplied again client-side.
+  final int? actualXp;
 
   _DailyGoal({
     required this.title,
     required this.xp,
     required this.isComplete,
     required this.icon,
+    this.actualXp,
   });
 }
 

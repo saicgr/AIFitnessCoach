@@ -632,7 +632,14 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     Color accentColor,
     bool isDark,
   ) {
-    final effectiveXP = (goal.xp * multiplier).round();
+    // Finding #358: once the ledger has actually paid this goal, show that
+    // real amount as-is — it already includes any server-side multiplier,
+    // so re-applying [multiplier] here would double-count it. Only the
+    // still-unearned advertised/potential amount gets the client-side
+    // multiplier preview.
+    final effectiveXP = goal.isComplete && goal.actualXp != null
+        ? goal.actualXp!
+        : (goal.xp * multiplier).round();
     final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
 
     return Container(

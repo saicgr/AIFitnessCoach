@@ -117,6 +117,27 @@ def create_mock_db(user_data=None, table_data=None, check_existing_data=None):
     return mock_db
 
 
+def _wire_empty_library_lookup(mock_db):
+    """Wire the `exercise_library_cleaned` ilike lookup to return no match.
+
+    Finding #233 (queue side, `inject_queued_exercise_into_next_workout` in
+    preference_engine_helpers.py): resolving a queued exercise name now goes
+    through a case-insensitive `ilike(...).limit(1)` (plus a `%name%`
+    substring fallback) against `exercise_library_cleaned`, instead of an
+    exact match, so "Lat Pulldown" (display space) can still find the
+    library row even when casing/spacing differs. `create_mock_db`'s
+    `select_mock`/`eq_chain` only wire up `.eq`/`.order`/`.is_` — an
+    unconfigured `.ilike(...).limit(...).execute()` returns an
+    auto-vivified MagicMock whose truthy `.data` isn't a real list, so
+    `lib_result.data[0]` hands back another MagicMock instead of falling
+    through to the helper's own `{"name": exercise_name}` fallback. Wiring
+    `.ilike().limit().execute()` to a real empty result lets that fallback
+    trigger as it would against a real Postgres "no match" response.
+    """
+    select_mock = mock_db.client.table.return_value.select.return_value
+    select_mock.ilike.return_value.limit.return_value.execute.return_value = MagicMock(data=[])
+
+
 class TestFavoriteExercisesAPI:
     """Tests for the favorite exercises API endpoints."""
 
@@ -416,6 +437,7 @@ class TestExerciseQueueAPI:
             user_data={"id": user_id, "email": "test@example.com"},
             table_data=[new_queued]
         )
+        _wire_empty_library_lookup(mock_db)
         mock_get_db.return_value = mock_db
 
         response = client.post(
@@ -455,6 +477,7 @@ class TestExerciseQueueAPI:
             user_data={"id": user_id, "email": "test@example.com"},
             table_data=[new_queued]
         )
+        _wire_empty_library_lookup(mock_db)
         mock_get_db.return_value = mock_db
 
         response = client.post(

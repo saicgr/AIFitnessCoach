@@ -211,7 +211,13 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tc = ThemeColors.of(context);
-    const dailyLoginXP = 5;
+    // Finding #358 / #357: the daily-login goal no longer advertises a flat
+    // constant — it's 25 * LEAST(streak, 7), matching what process_daily_login
+    // actually pays (migration 2422). Used only as the PRE-completion/potential
+    // preview; once the goal is complete, the real ledger amount (actualXp
+    // below) is shown instead.
+    final loginStreakDay = (streak?.currentStreak ?? 1).clamp(1, 7).toInt();
+    final advertisedDailyLoginXP = 25 * loginStreakDay;
 
     // Get actual daily goals state
     final dailyGoalsState = ref.watch(dailyGoalsProvider);
@@ -225,64 +231,79 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     final dailyGoals = [
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenLogInToday,
-        xp: dailyLoginXP,
+        xp: advertisedDailyLoginXP,
         isComplete: hasLoggedInToday,
         icon: Icons.login,
+        actualXp: dailyGoalsState?.loggedInXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenComplete1Workout,
         xp: 100,
         isComplete: dailyGoalsState?.completedWorkout ?? false,
         icon: Icons.fitness_center,
+        actualXp: dailyGoalsState?.completedWorkoutXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).homeLogMeal,
         xp: 25,
         isComplete: dailyGoalsState?.loggedMeal ?? false,
         icon: Icons.restaurant,
+        actualXp: dailyGoalsState?.loggedMealXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenLogWeight,
         xp: 15,
         isComplete: dailyGoalsState?.loggedWeight ?? false,
         icon: Icons.monitor_weight_outlined,
+        actualXp: dailyGoalsState?.loggedWeightXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenHitProteinGoal,
         xp: 50,
         isComplete: dailyGoalsState?.hitProteinGoal ?? false,
         icon: Icons.egg_alt,
+        actualXp: dailyGoalsState?.hitProteinGoalXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenLogBodyMeasurements,
         xp: 20,
         isComplete: dailyGoalsState?.loggedBodyMeasurements ?? false,
         icon: Icons.straighten,
+        actualXp: dailyGoalsState?.loggedBodyMeasurementsXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenHit10kSteps,
         xp: 100,
         isComplete: dailyGoalsState?.hitStepsGoal ?? false,
         icon: Icons.directions_walk,
+        actualXp: dailyGoalsState?.hitStepsGoalXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenHitHydrationGoal,
         xp: 40,
         isComplete: dailyGoalsState?.hitHydrationGoal ?? false,
         icon: Icons.water_drop_outlined,
+        actualXp: dailyGoalsState?.hitHydrationGoalXp,
       ),
       _DailyGoal(
         title: AppLocalizations.of(context).xpGoalsScreenHitCalorieGoal,
         xp: 60,
         isComplete: dailyGoalsState?.hitCalorieGoal ?? false,
         icon: Icons.local_fire_department_outlined,
+        actualXp: dailyGoalsState?.hitCalorieGoalXp,
       ),
     ];
 
     final completedCount = dailyGoals.where((g) => g.isComplete).length;
-    final totalXPEarned = dailyGoals
-        .where((g) => g.isComplete)
-        .fold(0, (sum, g) => sum + g.xp);
+    // Finding #358: sum the REAL ledger amount for each completed goal
+    // (already multiplier-inclusive) instead of static per-goal constants —
+    // falling back to the advertised*multiplier estimate only when the real
+    // amount genuinely hasn't been synced from the backend yet.
+    final totalXPEarned = dailyGoals.where((g) => g.isComplete).fold(0, (sum, g) {
+      final real = g.actualXp;
+      if (real != null) return sum + real;
+      return sum + (g.xp * multiplier).round();
+    });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

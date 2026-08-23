@@ -24,29 +24,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get accessibilityCardAccessibility => 'Erişilebilirlik';
 
   @override
-  String get accessibilityCardBiggerTouchTargetsFor =>
-      'Daha kolay dokunma için daha büyük dokunma alanları';
+  String get accessibilityCardBiggerTouchTargetsFor => 'Daha kolay dokunma için daha büyük dokunma alanları';
 
   @override
   String get accessibilityCardHighContrast => 'Yüksek Kontrast';
 
   @override
-  String get accessibilityCardIncreaseColorContrastFor =>
-      'Daha iyi görünürlük için renk kontrastını artır';
+  String get accessibilityCardIncreaseColorContrastFor => 'Daha iyi görünürlük için renk kontrastını artır';
 
   @override
   String get accessibilityCardLargeButtons => 'Büyük Düğmeler';
 
   @override
-  String get accessibilityCardMinimizeMotionEffects =>
-      'Hareket efektlerini en aza indir';
+  String get accessibilityCardMinimizeMotionEffects => 'Hareket efektlerini en aza indir';
 
   @override
   String get accessibilityCardReduceAnimations => 'Animasyonları Azalt';
 
   @override
-  String get accessibilityCardVisualAndInteractionAdjustm =>
-      'Görsel ve etkileşim ayarlamaları';
+  String get accessibilityCardVisualAndInteractionAdjustm => 'Görsel ve etkileşim ayarlamaları';
 
   @override
   String get accessibilityCurrentMode => 'Mevcut Mod';
@@ -95,8 +91,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get achievementsCardCompleteWorkoutsToUnlock =>
-      'Rozetlerin kilidini açmak için antrenmanları tamamla!';
+  String get achievementsCardCompleteWorkoutsToUnlock => 'Rozetlerin kilidini açmak için antrenmanları tamamla!';
 
   @override
   String get achievementsCardLoadingAchievements => 'Başarılar yükleniyor...';
@@ -108,19 +103,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get achievementsCardStartYourJourney => 'Yolculuğuna başla';
 
   @override
-  String get achievementsCompleteWorkoutsToEarn =>
-      'Başarılar kazanmak için antrenmanları tamamla!';
+  String get achievementsCompleteWorkoutsToEarn => 'Başarılar kazanmak için antrenmanları tamamla!';
 
   @override
   String get achievementsCurrentStreaks => 'MEVCUT SERİLER';
 
   @override
-  String get achievementsKeepWorkingOutTo =>
-      'Rozetlerin kilidini açmak için antrenmana devam et!';
+  String get achievementsKeepWorkingOutTo => 'Rozetlerin kilidini açmak için antrenmana devam et!';
 
   @override
-  String get achievementsLiftHeavierToSet =>
-      'Yeni PR\'lar belirlemek için daha ağır kaldır!';
+  String get achievementsLiftHeavierToSet => 'Yeni PR\'lar belirlemek için daha ağır kaldır!';
 
   @override
   String get achievementsNoAchievementsYet => 'Henüz başarı yok';
@@ -277,8 +269,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activeWorkoutHelperBreathing => 'Nefes alma';
 
   @override
-  String get activeWorkoutHelperChooseHowWeightChanges =>
-      'Ağırlığın setler boyunca nasıl değişeceğini seç';
+  String get activeWorkoutHelperChooseHowWeightChanges => 'Ağırlığın setler boyunca nasıl değişeceğini seç';
 
   @override
   String get activeWorkoutHelperDifficulty => 'Zorluk';
@@ -296,8 +287,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activeWorkoutHelperFormCues => 'Form İpuçları';
 
   @override
-  String get activeWorkoutHelperLoadingAiCoachTips =>
-      'AI koç ipuçları yükleniyor...';
+  String get activeWorkoutHelperLoadingAiCoachTips => 'AI koç ipuçları yükleniyor...';
 
   @override
   String get activeWorkoutHelperPrimaryMuscle => 'Birincil Kas';
@@ -312,8 +302,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activeWorkoutHelperSetProgression => 'Set İlerlemesi';
 
   @override
-  String get activeWorkoutHelperTapVideoToWatch =>
-      'Form gösterimini izlemek için \"Video\"ya dokun';
+  String get activeWorkoutHelperTapVideoToWatch => 'Form gösterimini izlemek için \"Video\"ya dokun';
 
   @override
   String get activeWorkoutHelperVideo => 'Video';
@@ -325,8 +314,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activeWorkoutHelperWhenToUse => 'Ne zaman kullanılır';
 
   @override
-  String get activeWorkoutScreenExerciseSwappedSuccessfully =>
-      'Egzersiz başarıyla değiştirildi';
+  String get activeWorkoutScreenExerciseSwappedSuccessfully => 'Egzersiz başarıyla değiştirildi';
 
   @override
   String activeWorkoutScreenRefactoredExerciseSAdded(Object _exercises) {
@@ -340,12 +328,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activeWorkoutScreenWorkoutAdapted => 'Antrenman uyarlandı.';
 
   @override
-  String get activityCardAdditionalDetailsOptional =>
-      'Ek detaylar (isteğe bağlı)';
+  String get activityCardAdditionalDetailsOptional => 'Ek detaylar (isteğe bağlı)';
 
   @override
-  String get activityCardAreYouSureYou =>
-      'Bu gönderiyi silmek istediğine emin misin? Bu işlem geri alınamaz.';
+  String get activityCardAreYouSureYou => 'Bu gönderiyi silmek istediğine emin misin? Bu işlem geri alınamaz.';
 
   @override
   String get activityCardCopyLink => 'Bağlantıyı Kopyala';
@@ -357,8 +343,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activityCardEditPost => 'Gönderiyi Düzenle';
 
   @override
-  String get activityCardFailedToSubmitReport =>
-      'Rapor gönderilemedi. Lütfen tekrar deneyin.';
+  String get activityCardFailedToSubmitReport => 'Rapor gönderilemedi. Lütfen tekrar deneyin.';
 
   @override
   String get activityCardLinkCopiedToClipboard => 'Bağlantı panoya kopyalandı';
@@ -384,8 +369,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activityCardReportPost => 'Gönderiyi Rapor Et';
 
   @override
-  String get activityCardReportSubmittedThankYou =>
-      'Rapor gönderildi. Topluluğumuzu güvende tutmamıza yardımcı olduğunuz için teşekkürler.';
+  String get activityCardReportSubmittedThankYou => 'Rapor gönderildi. Topluluğumuzu güvende tutmamıza yardımcı olduğunuz için teşekkürler.';
 
   @override
   String get activityCardSubmit => 'Gönder';
@@ -397,8 +381,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activityCardUiEarnedAnAchievement => 'bir başarı kazandı';
 
   @override
-  String get activityCardUiKeepTrainingEveryAttempt =>
-      'Antrenmana devam! Her deneme seni daha güçlü kılar';
+  String get activityCardUiKeepTrainingEveryAttempt => 'Antrenmana devam! Her deneme seni daha güçlü kılar';
 
   @override
   String activityCardUiLbs(Object yourVolume) {
@@ -452,8 +435,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activityCardUnpinPost => 'İğneyi Kaldır';
 
   @override
-  String get activityCardWhyAreYouReporting =>
-      'Bu gönderiyi neden rapor ediyorsun?';
+  String get activityCardWhyAreYouReporting => 'Bu gönderiyi neden rapor ediyorsun?';
 
   @override
   String get activityHeatmapActivity => 'Aktivite';
@@ -513,8 +495,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get activityShareTapToAddA => 'Açıklama eklemek için dokun...';
 
   @override
-  String get addFoodEGMadeWith =>
-      'örn. \'zeytinyağı ile yapıldı, tam tahıl yok\' veya \'sadece yarısını yedim\'';
+  String get addFoodEGMadeWith => 'örn. \'zeytinyağı ile yapıldı, tam tahıl yok\' veya \'sadece yarısını yedim\'';
 
   @override
   String get addFoodRefineWithAi => 'Yapay Zeka ile İyileştir';
@@ -538,8 +519,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymProfileCreateGym => 'Spor Salonu Oluştur';
 
   @override
-  String get addGymProfileCustomizeTheEquipmentAvaila =>
-      'Ağırlık aralıkları dahil olmak üzere bu spor salonundaki mevcut ekipmanı özelleştirin';
+  String get addGymProfileCustomizeTheEquipmentAvaila => 'Ağırlık aralıkları dahil olmak üzere bu spor salonundaki mevcut ekipmanı özelleştirin';
 
   @override
   String get addGymProfileDoYouHaveA => 'Ağırlık sehpanız var mı?';
@@ -548,12 +528,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymProfileDoYouHaveA2 => 'Squat rafınız var mı?';
 
   @override
-  String get addGymProfileEGHomeGym =>
-      'örn. Ev Spor Salonu, Planet Fitness, Otel';
+  String get addGymProfileEGHomeGym => 'örn. Ev Spor Salonu, Planet Fitness, Otel';
 
   @override
-  String get addGymProfileEnterANameFor =>
-      'Önce spor salonunuz için bir isim girin (adım 1).';
+  String get addGymProfileEnterANameFor => 'Önce spor salonunuz için bir isim girin (adım 1).';
 
   @override
   String get addGymProfileEquipment => 'Ekipman';
@@ -565,27 +543,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymProfileIcon => 'Simge';
 
   @override
-  String get addGymProfileImportFromPdfPhoto =>
-      'PDF, fotoğraf veya URL\'den içe aktar';
+  String get addGymProfileImportFromPdfPhoto => 'PDF, fotoğraf veya URL\'den içe aktar';
 
   @override
   String get addGymProfileMatchAppTheme => 'Uygulama temasıyla eşleştir';
 
   @override
-  String get addGymProfileOptionalLeaveOnLet =>
-      'İsteğe bağlı — emin değilseniz \"Yapay Zeka Karar Versin\" seçeneğinde bırakın.';
+  String get addGymProfileOptionalLeaveOnLet => 'İsteğe bağlı — emin değilseniz \"Yapay Zeka Karar Versin\" seçeneğinde bırakın.';
 
   @override
-  String get addGymProfilePickAtLeastOne =>
-      'Bu spor salonu için en az bir antrenman günü seçin.';
+  String get addGymProfilePickAtLeastOne => 'Bu spor salonu için en az bir antrenman günü seçin.';
 
   @override
-  String get addGymProfilePleaseEnterAName =>
-      'Lütfen spor salonunuz için bir isim girin';
+  String get addGymProfilePleaseEnterAName => 'Lütfen spor salonunuz için bir isim girin';
 
   @override
-  String get addGymProfileRequiredForBarbellSquat =>
-      'Gerekenler: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get addGymProfileRequiredForBarbellSquat => 'Gerekenler: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
   String get addGymProfileResetAll => 'Hepsini Sıfırla';
@@ -606,23 +579,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get addGymProfileTapToAddRemove =>
-      'Ağırlık eklemek, kaldırmak veya düzenlemek için dokunun';
+  String get addGymProfileTapToAddRemove => 'Ağırlık eklemek, kaldırmak veya düzenlemek için dokunun';
 
   @override
-  String get addGymProfileThisHelpsUsSuggest =>
-      'Bu, doğru ekipmanı önermemize yardımcı olur';
+  String get addGymProfileThisHelpsUsSuggest => 'Bu, doğru ekipmanı önermemize yardımcı olur';
 
   @override
   String get addGymProfileTrainingSplit => 'Antrenman Bölünmesi';
 
   @override
-  String get addGymProfileUnlocksBenchPressIncline =>
-      'Kilidi açılanlar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get addGymProfileUnlocksBenchPressIncline => 'Kilidi açılanlar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get addGymProfileUnlocksChestSupportedKb =>
-      'Kilidi açılanlar: Chest-Supported KB Row, KB Floor Press alternatifleri';
+  String get addGymProfileUnlocksChestSupportedKb => 'Kilidi açılanlar: Chest-Supported KB Row, KB Floor Press alternatifleri';
 
   @override
   String get addGymProfileWorkoutEnvironment => 'Antrenman Ortamı';
@@ -648,8 +617,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymSheetCommercialGym => 'Ticari Spor Salonu';
 
   @override
-  String get addGymSheetCommercialGymDesc =>
-      'Tüm makine ve ekipmanlara tam erişim';
+  String get addGymSheetCommercialGymDesc => 'Tüm makine ve ekipmanlara tam erişim';
 
   @override
   String addGymSheetConflictDay(Object day, Object names) {
@@ -673,12 +641,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymSheetCurrent => 'mevcut';
 
   @override
-  String get addGymSheetEnterGymName =>
-      'Lütfen spor salonunuz için bir ad girin';
+  String get addGymSheetEnterGymName => 'Lütfen spor salonunuz için bir ad girin';
 
   @override
-  String get addGymSheetEnterNameFirst =>
-      'Lütfen önce bir spor salonu adı girin';
+  String get addGymSheetEnterNameFirst => 'Lütfen önce bir spor salonu adı girin';
 
   @override
   String get addGymSheetEquipment => 'Ekipman';
@@ -699,33 +665,28 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get addGymSheetFollowUpBenchSubtitle =>
-      'Açılanlar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get addGymSheetFollowUpBenchSubtitle => 'Açılanlar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
   String get addGymSheetFollowUpBenchTitle => 'Ağırlık sehpanız var mı?';
 
   @override
-  String get addGymSheetFollowUpSquatRackSubtitle =>
-      'Gerekenler: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get addGymSheetFollowUpSquatRackSubtitle => 'Gerekenler: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
   String get addGymSheetFollowUpSquatRackTitle => 'Squat rack\'iniz var mı?';
 
   @override
-  String get addGymSheetGymNameHint =>
-      'ör. Ev Spor Salonu, Planet Fitness, Otel';
+  String get addGymSheetGymNameHint => 'ör. Ev Spor Salonu, Planet Fitness, Otel';
 
   @override
-  String get addGymSheetHelpsUsSuggest =>
-      'Bu, doğru ekipmanı önermemize yardımcı olur';
+  String get addGymSheetHelpsUsSuggest => 'Bu, doğru ekipmanı önermemize yardımcı olur';
 
   @override
   String get addGymSheetHomeGym => 'Ev Spor Salonu';
 
   @override
-  String get addGymSheetHomeGymDesc =>
-      'Kendi ekipmanlarınızla özel antrenman alanı';
+  String get addGymSheetHomeGymDesc => 'Kendi ekipmanlarınızla özel antrenman alanı';
 
   @override
   String get addGymSheetHomeMinimal => 'Ev (Minimal)';
@@ -737,8 +698,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymSheetHotelTravel => 'Otel / Seyahat';
 
   @override
-  String get addGymSheetHotelTravelDesc =>
-      'Seyahat sırasında kısıtlı alan ve ekipman';
+  String get addGymSheetHotelTravelDesc => 'Seyahat sırasında kısıtlı alan ve ekipman';
 
   @override
   String addGymSheetItems(Object count) {
@@ -752,16 +712,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addGymSheetOutdoors => 'Dış Mekan';
 
   @override
-  String get addGymSheetOutdoorsDesc =>
-      'Parklar, açık hava spor alanları ve boş alanlar';
+  String get addGymSheetOutdoorsDesc => 'Parklar, açık hava spor alanları ve boş alanlar';
 
   @override
-  String get addGymSheetPickAtLeastOneDay =>
-      'Lütfen en az bir antrenman günü seçin';
+  String get addGymSheetPickAtLeastOneDay => 'Lütfen en az bir antrenman günü seçin';
 
   @override
-  String get addGymSheetPickDaysDesc =>
-      'Bu spor salonunda antrenman yapacağınız günleri seçin. Bu profile geçtiğiniz anda, bu günler için 14 günlük antrenman önceden oluşturulacaktır.';
+  String get addGymSheetPickDaysDesc => 'Bu spor salonunda antrenman yapacağınız günleri seçin. Bu profile geçtiğiniz anda, bu günler için 14 günlük antrenman önceden oluşturulacaktır.';
 
   @override
   String addGymSheetSameAs(Object name) {
@@ -828,12 +785,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addScheduleItemSaveChanges => 'Değişiklikleri Kaydet';
 
   @override
-  String get advancedAudioCountdownRestTimerVoice =>
-      'Geri sayım, dinlenme zamanlayıcısı, sesli duyurular';
+  String get advancedAudioCountdownRestTimerVoice => 'Geri sayım, dinlenme zamanlayıcısı, sesli duyurular';
 
   @override
-  String get advancedAudioSoundEffectsWorkoutAudio =>
-      'Ses efektleri ve antrenman sesi';
+  String get advancedAudioSoundEffectsWorkoutAudio => 'Ses efektleri ve antrenman sesi';
 
   @override
   String get agentInfoHeaderConnectedToSupport => 'Destek ekibine bağlandı';
@@ -856,8 +811,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachAdvancedSettings => 'Gelişmiş ayarlar';
 
   @override
-  String get aiCoachAiPersonalizedMessages =>
-      'Yapay Zeka Destekli Kişiselleştirilmiş Mesajlar';
+  String get aiCoachAiPersonalizedMessages => 'Yapay Zeka Destekli Kişiselleştirilmiş Mesajlar';
 
   @override
   String get aiCoachBalanced => 'Dengeli';
@@ -881,8 +835,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachGentle => 'Nazik';
 
   @override
-  String get aiCoachGetNotifiedWhenYour =>
-      'Kutunuz hazır olduğunda bildirim alın';
+  String get aiCoachGetNotifiedWhenYour => 'Kutunuz hazır olduğunda bildirim alın';
 
   @override
   String get aiCoachHabitReminders => 'Alışkanlık Hatırlatıcıları';
@@ -900,8 +853,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealAngryWhatToEat => 'Öfkeli — ne yemeli?';
 
   @override
-  String get aiCoachMealAnxiousCalmingPick =>
-      'Endişeli — sakinleştirici bir seçim?';
+  String get aiCoachMealAnxiousCalmingPick => 'Endişeli — sakinleştirici bir seçim?';
 
   @override
   String get aiCoachMealAnythingHealthy => 'Sağlıklı herhangi bir şey';
@@ -922,27 +874,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealBloatedWhatNow => 'Şişkinlik — şimdi ne yapmalı?';
 
   @override
-  String get aiCoachMealBoredEatingWhatInstead =>
-      'Can sıkıntısından yeme — yerine ne yemeli?';
+  String get aiCoachMealBoredEatingWhatInstead => 'Can sıkıntısından yeme — yerine ne yemeli?';
 
   @override
   String get aiCoachMealBudgetFriendlyMeal => 'Bütçe dostu öğün?';
 
   @override
-  String get aiCoachMealBulkingCalorieDensePick =>
-      'Hacim kazanmak için kalorisi yoğun bir seçim?';
+  String get aiCoachMealBulkingCalorieDensePick => 'Hacim kazanmak için kalorisi yoğun bir seçim?';
 
   @override
-  String get aiCoachMealCoachNeedsAConnection =>
-      'Koçun bağlantıya ihtiyacı var.';
+  String get aiCoachMealCoachNeedsAConnection => 'Koçun bağlantıya ihtiyacı var.';
 
   @override
-  String get aiCoachMealComfortFoodSmartVersion =>
-      'Rahatlatıcı yiyecek, akıllı versiyon?';
+  String get aiCoachMealComfortFoodSmartVersion => 'Rahatlatıcı yiyecek, akıllı versiyon?';
 
   @override
-  String get aiCoachMealCravingSugarSmartSwap =>
-      'Şeker aşermesi — akıllı bir değişim?';
+  String get aiCoachMealCravingSugarSmartSwap => 'Şeker aşermesi — akıllı bir değişim?';
 
   @override
   String get aiCoachMealCuttingFriendlyMeal => 'Definasyon dostu öğün?';
@@ -990,8 +937,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealLogThisMeal => 'Bu öğünü kaydet';
 
   @override
-  String get aiCoachMealLookingAtTodayS =>
-      'Bugünkü öğünlere, antrenmana ve favorilere bakılıyor…';
+  String get aiCoachMealLookingAtTodayS => 'Bugünkü öğünlere, antrenmana ve favorilere bakılıyor…';
 
   @override
   String get aiCoachMealLowCalSwap => 'Düşük kalorili değişim?';
@@ -1000,8 +946,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealLowSugarOption => 'Düşük şekerli seçenek?';
 
   @override
-  String get aiCoachMealMaintenanceSteadyPick =>
-      'Koruma dönemi için istikrarlı seçim?';
+  String get aiCoachMealMaintenanceSteadyPick => 'Koruma dönemi için istikrarlı seçim?';
 
   @override
   String get aiCoachMealMediterranean => 'Akdeniz';
@@ -1013,8 +958,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealMexican => 'Meksika';
 
   @override
-  String get aiCoachMealMexicanWithGoodMacros =>
-      'İyi makrolara sahip Meksika yemeği?';
+  String get aiCoachMealMexicanWithGoodMacros => 'İyi makrolara sahip Meksika yemeği?';
 
   @override
   String get aiCoachMealNeedMoreFiber => 'Daha fazla lif mi lazım?';
@@ -1050,10 +994,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealStressedWhatHelps => 'Stresli — ne iyi gelir?';
 
   @override
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal) {
     return 'Asya esintili $meal — bir seçenek (pirinç kasesi, erişte, suşi, stir fry), makrolar ve hazırlık.$budgetTail';
   }
 
@@ -1103,10 +1044,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetGotALaterToday(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType) {
     return 'Bugün ilerleyen saatlerde $workoutType antrenmanım var. Enerji depolamak için sağlam bir antrenman öncesi $meal önerisi? Makrolar + zamanlama.';
   }
 
@@ -1121,10 +1059,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetHighProteinPickOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal) {
     return 'Yüksek proteinli $meal seçimi. Tek bir ürün, tam makrolar, kısa hazırlık.$budgetTail';
   }
 
@@ -1159,26 +1094,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal) {
     return 'Hint $meal — bir otantik seçenek (kuzey veya güney), makrolar, plana sadık kalmak için kaçınılması/eklenmesi gereken yan ürünler.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal) {
     return 'İtalyan veya rahatlatıcı bir $meal — tek bir gerçek seçenek, makrolar, gerekirse daha hafif bir alternatif.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
-    Object meal,
-    Object workoutType,
-  ) {
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType) {
     return '$workoutType antrenmanımı yeni bitirdim. Daha önce yediklerimle uyumlu bir toparlanma (recovery) $meal önerisi?';
   }
 
@@ -1193,10 +1119,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal) {
     return '$meal öğünümü kaydediyorum. Günlük planıma uyan, sağlıklı ve gerçek gıdalardan oluşan bir seçenek sun — makrolar, kısa ve öz.$budgetTail';
   }
 
@@ -1206,10 +1129,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal) {
     return 'Akdeniz $meal — bir seçenek (kase, tabak, dürüm), makrolar, neden uygun olduğu.$budgetTail';
   }
 
@@ -1219,10 +1139,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal) {
     return 'Meksika $meal — bir gerçek seçenek (kase, taco vb.), makrolar, plana sadık kalmak için nasıl oluşturulmalı.$budgetTail';
   }
 
@@ -1237,10 +1154,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(
-    Object budgetTail,
-    Object meal,
-  ) {
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal) {
     return 'Ocak veya fırın yok — 5 dakikada hazırlayabileceğim hızlı bir $meal. Makrolar + ne almalı.$budgetTail';
   }
 
@@ -1283,8 +1197,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealTiredEnergyFood => 'Yorgun — enerji veren yiyecek?';
 
   @override
-  String get aiCoachMealUpsetStomachGentleMeal =>
-      'Mide bozukluğu — hafif bir öğün?';
+  String get aiCoachMealUpsetStomachGentleMeal => 'Mide bozukluğu — hafif bir öğün?';
 
   @override
   String get aiCoachMealVegetarianPick => 'Vejetaryen seçimi?';
@@ -1296,8 +1209,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachMealWhatCanIEat => 'Şu an ne yiyebilirim?';
 
   @override
-  String get aiCoachMealWorkingFromPartialData =>
-      'Kısmi verilerle çalışılıyor — cevap genel olabilir.';
+  String get aiCoachMealWorkingFromPartialData => 'Kısmi verilerle çalışılıyor — cevap genel olabilir.';
 
   @override
   String get aiCoachMissedWorkoutNudge => 'Kaçırılan Antrenman Hatırlatıcısı';
@@ -1320,8 +1232,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachPostWorkoutMeal => 'Antrenman Sonrası Öğünü';
 
   @override
-  String get aiCoachRefuelReminderAfterTraining =>
-      'Antrenman sonrası yakıt hatırlatıcısı';
+  String get aiCoachRefuelReminderAfterTraining => 'Antrenman sonrası yakıt hatırlatıcısı';
 
   @override
   String get aiCoachRemindByEveningIf => 'Atladığında akşama kadar hatırlat';
@@ -1342,8 +1253,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiCoachReportGreatWorkoutKeepUp =>
-      'Harika antrenman! Tempoyu koru.';
+  String get aiCoachReportGreatWorkoutKeepUp => 'Harika antrenman! Tempoyu koru.';
 
   @override
   String get aiCoachReportMusclesWorked => 'Çalışan Kaslar';
@@ -1361,12 +1271,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiCoachReportVsLast => 'Sonuncuya kıyasla';
 
   @override
-  String get aiCoachShowFloatingBubbleFor =>
-      'Hızlı AI Coach erişimi için yüzen balonu göster';
+  String get aiCoachShowFloatingBubbleFor => 'Hızlı AI Coach erişimi için yüzen balonu göster';
 
   @override
-  String get aiCoachShowFloatingChatBubble =>
-      'Yüzen sohbet balonunu, özel bildirimleri ve gizlilik kontrollerini göster';
+  String get aiCoachShowFloatingChatBubble => 'Yüzen sohbet balonunu, özel bildirimleri ve gizlilik kontrollerini göster';
 
   @override
   String get aiCoachStreakCelebrations => 'Seri Kutlamaları';
@@ -1378,8 +1286,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiDataUsageDataWeDoNot => 'Modellerle paylaşmadığımız veriler';
 
   @override
-  String get aiDataUsageEverythingNeededToCoach =>
-      'Sizi eğitmek için gereken her şey';
+  String get aiDataUsageEverythingNeededToCoach => 'Sizi eğitmek için gereken her şey';
 
   @override
   String get aiDataUsageHowDataIsProtected => 'Veriler Nasıl Korunur';
@@ -1393,15 +1300,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiDataUsageTechnicalSafeguardsInPlace =>
-      'Uygulanan teknik güvenlik önlemleri';
+  String get aiDataUsageTechnicalSafeguardsInPlace => 'Uygulanan teknik güvenlik önlemleri';
 
   @override
   String get aiDataUsageWhatModelsReceive => 'Modellerin Aldıkları';
 
   @override
-  String get aiDataUsageWhatNeverLeavesOur =>
-      'Sunucularımızdan Asla Çıkmayanlar';
+  String get aiDataUsageWhatNeverLeavesOur => 'Sunucularımızdan Asla Çıkmayanlar';
 
   @override
   String get aiDataUsageYouAreInCharge => 'Verilerinizin kontrolü sizde';
@@ -1410,12 +1315,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiDataUsageYourControls => 'Kontrolleriniz';
 
   @override
-  String aiFeaturesMixinValue(
-    Object displayCurrent,
-    Object message,
-    Object snappedDisplay,
-    Object unit,
-  ) {
+  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit) {
     return '$message: $displayCurrent → $snappedDisplay $unit';
   }
 
@@ -1463,12 +1363,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiIntegrationsCopyTokenOnly => 'Sadece token\'ı kopyala';
 
   @override
-  String get aiIntegrationsCouldNotCreateConnection =>
-      'Bağlantı oluşturulamadı.';
+  String get aiIntegrationsCouldNotCreateConnection => 'Bağlantı oluşturulamadı.';
 
   @override
-  String get aiIntegrationsCouldNotLoadIntegrations =>
-      'Entegrasyonlar yüklenemedi';
+  String get aiIntegrationsCouldNotLoadIntegrations => 'Entegrasyonlar yüklenemedi';
 
   @override
   String get aiIntegrationsCreateConnection => 'Bağlantı Oluştur';
@@ -1480,8 +1378,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiIntegrationsDisconnect => 'Bağlantıyı kes';
 
   @override
-  String get aiIntegrationsDisconnectThisAssistant =>
-      'Bu asistanın bağlantısı kesilsin mi?';
+  String get aiIntegrationsDisconnectThisAssistant => 'Bu asistanın bağlantısı kesilsin mi?';
 
   @override
   String get aiIntegrationsDisconnecting => 'Bağlantı kesiliyor...';
@@ -1490,8 +1387,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiIntegrationsGenerate => 'Oluştur';
 
   @override
-  String get aiIntegrationsGiveThisConnectionA =>
-      'Önce bu bağlantıya bir isim verin.';
+  String get aiIntegrationsGiveThisConnectionA => 'Önce bu bağlantıya bir isim verin.';
 
   @override
   String get aiIntegrationsGrantedPermissions => 'Verilen izinler';
@@ -1512,8 +1408,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiIntegrationsOauth => 'OAuth';
 
   @override
-  String get aiIntegrationsPasteThisConfigInto =>
-      'Bu yapılandırmayı AI istemcinize yapıştırın.';
+  String get aiIntegrationsPasteThisConfigInto => 'Bu yapılandırmayı AI istemcinize yapıştırın.';
 
   @override
   String get aiIntegrationsPermissions => 'İzinler';
@@ -1568,15 +1463,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiIntegrationsTryAgain => 'Tekrar dene';
 
   @override
-  String get aiIntegrationsUncheckAnythingYouWant =>
-      'Bu bağlantıdan gizlemek istediğiniz her şeyin işaretini kaldırın.';
+  String get aiIntegrationsUncheckAnythingYouWant => 'Bu bağlantıdan gizlemek istediğiniz her şeyin işaretini kaldırın.';
 
   @override
   String get aiModelDownloadBasic => 'Temel';
 
   @override
-  String get aiModelDownloadBatteryWarning =>
-      'Cihaz içi yapay zeka modelleri telefonunuzda yoğun hesaplamalar yapar. Bu durum pil tüketimini artırabilir ve antrenman oluşturma sırasında cihazın ısınmasına neden olabilir. Daha büyük modeller daha fazla kaynak kullanır.';
+  String get aiModelDownloadBatteryWarning => 'Cihaz içi yapay zeka modelleri telefonunuzda yoğun hesaplamalar yapar. Bu durum pil tüketimini artırabilir ve antrenman oluşturma sırasında cihazın ısınmasına neden olabilir. Daha büyük modeller daha fazla kaynak kullanır.';
 
   @override
   String get aiModelDownloadBestQuality => 'En iyi kalite';
@@ -1609,8 +1502,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadGetYourTokenAt =>
-      'Token\'ınızı huggingface.co/settings/tokens adresinden alın';
+  String get aiModelDownloadGetYourTokenAt => 'Token\'ınızı huggingface.co/settings/tokens adresinden alın';
 
   @override
   String get aiModelDownloadHf => 'hf_...';
@@ -1619,12 +1511,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelDownloadHuggingfaceToken => 'HuggingFace Token';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenRemoved =>
-      'HuggingFace token kaldırıldı';
+  String get aiModelDownloadHuggingfaceTokenRemoved => 'HuggingFace token kaldırıldı';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenSaved =>
-      'HuggingFace token kaydedildi';
+  String get aiModelDownloadHuggingfaceTokenSaved => 'HuggingFace token kaydedildi';
 
   @override
   String get aiModelDownloadImages => 'Görseller';
@@ -1657,8 +1547,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelDownloadRemove => 'Kaldır';
 
   @override
-  String get aiModelDownloadRequiredToDownload =>
-      'HuggingFace\'ten model indirmek için gereklidir. Ücretsiz token\'ınızı huggingface.co/settings/tokens adresinden alın';
+  String get aiModelDownloadRequiredToDownload => 'HuggingFace\'ten model indirmek için gereklidir. Ücretsiz token\'ınızı huggingface.co/settings/tokens adresinden alın';
 
   @override
   String aiModelDownloadRequiresRam(Object ramLabel) {
@@ -1688,22 +1577,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelDownloadStandard => 'Standart';
 
   @override
-  String get aiModelDownloadTokenSavedSecurely =>
-      'Token güvenli bir şekilde kaydedildi';
+  String get aiModelDownloadTokenSavedSecurely => 'Token güvenli bir şekilde kaydedildi';
 
   @override
   String get aiModelDownloadUnknown => 'Bilinmiyor';
 
   @override
-  String get aiModelsCheckingDeviceCapabilities =>
-      'Cihaz yetenekleri kontrol ediliyor...';
+  String get aiModelsCheckingDeviceCapabilities => 'Cihaz yetenekleri kontrol ediliyor...';
 
   @override
   String get aiModelsCouldNotDetectDevice => 'Cihaz yeteneği algılanamadı';
 
   @override
-  String get aiModelsGetTokenAtHuggingface =>
-      'Token\'ı huggingface.co/settings/tokens adresinden alın';
+  String get aiModelsGetTokenAtHuggingface => 'Token\'ı huggingface.co/settings/tokens adresinden alın';
 
   @override
   String get aiModelsHf => 'hf_...';
@@ -1712,8 +1598,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelsHuggingfaceToken => 'HuggingFace Token';
 
   @override
-  String get aiModelsManageGemmaModelsFor =>
-      'Çevrimdışı antrenman oluşturma için Gemma modellerini yönetin';
+  String get aiModelsManageGemmaModelsFor => 'Çevrimdışı antrenman oluşturma için Gemma modellerini yönetin';
 
   @override
   String get aiModelsModelLibrary => 'Model Kütüphanesi';
@@ -1728,8 +1613,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiModelsRemove => 'Kaldır';
 
   @override
-  String get aiModelsRequiredToDownloadGated =>
-      'HuggingFace\'ten kısıtlı modelleri indirmek için gereklidir.';
+  String get aiModelsRequiredToDownloadGated => 'HuggingFace\'ten kısıtlı modelleri indirmek için gereklidir.';
 
   @override
   String get aiModelsSaveToken => 'Token\'ı Kaydet';
@@ -1760,20 +1644,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiModelsTokenSavedSecurely =>
-      'Token güvenli bir şekilde kaydedildi';
+  String get aiModelsTokenSavedSecurely => 'Token güvenli bir şekilde kaydedildi';
 
   @override
-  String get aiPrivacyContributeToWomenS =>
-      'Kadın Sağlığı Araştırmalarına katkıda bulunun';
+  String get aiPrivacyContributeToWomenS => 'Kadın Sağlığı Araştırmalarına katkıda bulunun';
 
   @override
-  String get aiPrivacyControlHowYourData =>
-      'Verilerinizin nasıl kullanıldığını kontrol edin';
+  String get aiPrivacyControlHowYourData => 'Verilerinizin nasıl kullanıldığını kontrol edin';
 
   @override
-  String get aiPrivacyCouldnTUpdateConsent =>
-      'Onay güncellenemedi. Lütfen tekrar deneyin.';
+  String get aiPrivacyCouldnTUpdateConsent => 'Onay güncellenemedi. Lütfen tekrar deneyin.';
 
   @override
   String get aiPrivacyHowYourDataIs => 'Verileriniz Nasıl Kullanılır';
@@ -1785,8 +1665,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiPrivacyMedicalDisclaimer => 'Tıbbi Sorumluluk Reddi';
 
   @override
-  String get aiPrivacyMessagesAreStoredSo =>
-      'Mesajlar, koçunuzun bağlamı hatırlaması için saklanır';
+  String get aiPrivacyMessagesAreStoredSo => 'Mesajlar, koçunuzun bağlamı hatırlaması için saklanır';
 
   @override
   String get aiPrivacyPersonalization => 'Kişiselleştirme';
@@ -1798,12 +1677,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiPrivacySaveChatHistory => 'Sohbet Geçmişini Kaydet';
 
   @override
-  String get aiPrivacySeeWhatDataIs =>
-      'Hangi verilerin işlendiğini ve nasıl işlendiğini görün';
+  String get aiPrivacySeeWhatDataIs => 'Hangi verilerin işlendiğini ve nasıl işlendiğini görün';
 
   @override
-  String get aiPrivacyYourCoachPersonalizesWorkou =>
-      'Koçunuz antrenmanları ve sohbeti kişiselleştirir';
+  String get aiPrivacyYourCoachPersonalizesWorkou => 'Koçunuz antrenmanları ve sohbeti kişiselleştirir';
 
   @override
   String get aiSettingsAdvancedSettings => 'Gelişmiş ayarlar';
@@ -1824,8 +1701,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsPersonalityTone => 'KİŞİLİK VE TON';
 
   @override
-  String get aiSettingsPickTheWeeklyStructure =>
-      'Yapay zekanın planlaması için haftalık yapıyı seçin. Değişiklikler bir sonraki planlamanızda geçerli olur; mevcut haftanız değişmez.';
+  String get aiSettingsPickTheWeeklyStructure => 'Yapay zekanın planlaması için haftalık yapıyı seçin. Değişiklikler bir sonraki planlamanızda geçerli olur; mevcut haftanız değişmez.';
 
   @override
   String get aiSettingsPrivacyData => 'GİZLİLİK VE VERİ';
@@ -1837,8 +1713,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsResponsePreferences => 'YANIT TERCİHLERİ';
 
   @override
-  String get aiSettingsScreenAddEmojisToAi =>
-      'Yapay zeka yanıtlarına emoji ekle';
+  String get aiSettingsScreenAddEmojisToAi => 'Yapay zeka yanıtlarına emoji ekle';
 
   @override
   String aiSettingsScreenAddFocus(Object length) {
@@ -1846,19 +1721,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiSettingsScreenAddHelpfulTipsIn =>
-      'Yanıtlara faydalı ipuçları ekle';
+  String get aiSettingsScreenAddHelpfulTipsIn => 'Yanıtlara faydalı ipuçları ekle';
 
   @override
-  String get aiSettingsScreenAiCoachDuringWorkouts =>
-      'Antrenman Sırasında Yapay Zeka Koçu';
+  String get aiSettingsScreenAiCoachDuringWorkouts => 'Antrenman Sırasında Yapay Zeka Koçu';
 
   @override
   String get aiSettingsScreenAiCoachSettings => 'Yapay Zeka Koç Ayarları';
 
   @override
-  String get aiSettingsScreenAiLearnsFromPast =>
-      'Yapay zeka geçmiş etkileşimlerden öğrenir (RAG)';
+  String get aiSettingsScreenAiLearnsFromPast => 'Yapay zeka geçmiş etkileşimlerden öğrenir (RAG)';
 
   @override
   String get aiSettingsScreenAvailableAgents => 'Mevcut Temsilciler';
@@ -1873,8 +1745,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsScreenClearChatHistory => 'Sohbet Geçmişini Temizle';
 
   @override
-  String get aiSettingsScreenClearChatHistory2 =>
-      'Sohbet Geçmişi Temizlensin mi?';
+  String get aiSettingsScreenClearChatHistory2 => 'Sohbet Geçmişi Temizlensin mi?';
 
   @override
   String get aiSettingsScreenCoachName => 'Koç ismi';
@@ -1886,19 +1757,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsScreenCommunicationTone => 'İletişim Tonu';
 
   @override
-  String get aiSettingsScreenConsiderYourInjuriesWhen =>
-      'Tavsiye verirken sakatlıklarınızı dikkate al';
+  String get aiSettingsScreenConsiderYourInjuriesWhen => 'Tavsiye verirken sakatlıklarınızı dikkate al';
 
   @override
-  String get aiSettingsScreenCustomizeHowYourAi =>
-      'Yapay zeka koçunuzun sizinle nasıl etkileşim kuracağını özelleştirin';
+  String get aiSettingsScreenCustomizeHowYourAi => 'Yapay zeka koçunuzun sizinle nasıl etkileşim kuracağını özelleştirin';
 
   @override
   String get aiSettingsScreenDefaultAgent => 'Varsayılan Temsilci';
 
   @override
-  String get aiSettingsScreenEnableOrDisableAgents =>
-      '@bahsetme ile kullanabileceğiniz temsilcileri etkinleştirin veya devre dışı bırakın';
+  String get aiSettingsScreenEnableOrDisableAgents => '@bahsetme ile kullanabileceğiniz temsilcileri etkinleştirin veya devre dışı bırakın';
 
   @override
   String get aiSettingsScreenEncouragementLevel => 'Teşvik Seviyesi';
@@ -1907,16 +1775,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsScreenFormReminders => 'Form Hatırlatıcıları';
 
   @override
-  String get aiSettingsScreenGetRemindersAboutProper =>
-      'Doğru egzersiz formu hakkında hatırlatıcılar alın';
+  String get aiSettingsScreenGetRemindersAboutProper => 'Doğru egzersiz formu hakkında hatırlatıcılar alın';
 
   @override
-  String get aiSettingsScreenGetSuggestionsForRest =>
-      'Dinlenme ve toparlanma için öneriler alın';
+  String get aiSettingsScreenGetSuggestionsForRest => 'Dinlenme ve toparlanma için öneriler alın';
 
   @override
-  String get aiSettingsScreenIncludeNutritionAdviceIn =>
-      'Antrenman tartışmalarına beslenme tavsiyelerini dahil et';
+  String get aiSettingsScreenIncludeNutritionAdviceIn => 'Antrenman tartışmalarına beslenme tavsiyelerini dahil et';
 
   @override
   String get aiSettingsScreenIncludeTips => 'İpuçlarını Dahil Et';
@@ -1941,8 +1806,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get aiSettingsScreenRenameYourCoachPreset =>
-      'Koçunuzu yeniden adlandırın — ön ayar aynı kalır';
+  String get aiSettingsScreenRenameYourCoachPreset => 'Koçunuzu yeniden adlandırın — ön ayar aynı kalır';
 
   @override
   String get aiSettingsScreenResponseLength => 'Yanıt Uzunluğu';
@@ -1954,42 +1818,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiSettingsScreenSaveChatHistory => 'Sohbet Geçmişini Kaydet';
 
   @override
-  String get aiSettingsScreenShowAiCoachAssistant =>
-      'Egzersiz yaparken yapay zeka koç asistanını göster';
+  String get aiSettingsScreenShowAiCoachAssistant => 'Egzersiz yaparken yapay zeka koç asistanını göster';
 
   @override
-  String get aiSettingsScreenStoreConversationsForContex =>
-      'Bağlam için konuşmaları sakla';
+  String get aiSettingsScreenStoreConversationsForContex => 'Bağlam için konuşmaları sakla';
 
   @override
-  String get aiSettingsScreenThisAgentRespondsWhen =>
-      'Bu temsilci, belirli bir temsilciden @bahsetmediğinizde yanıt verir';
+  String get aiSettingsScreenThisAgentRespondsWhen => 'Bu temsilci, belirli bir temsilciden @bahsetmediğinizde yanıt verir';
 
   @override
-  String get aiSettingsScreenThisWillDeleteAll =>
-      'Bu, tüm sohbet geçmişinizi silecek';
+  String get aiSettingsScreenThisWillDeleteAll => 'Bu, tüm sohbet geçmişinizi silecek';
 
   @override
-  String get aiSettingsScreenThisWillPermanentlyDelete =>
-      'Bu, yapay zeka koçu ile olan tüm konuşmalarınızı kalıcı olarak silecektir. Bu işlem geri alınamaz.';
+  String get aiSettingsScreenThisWillPermanentlyDelete => 'Bu, yapay zeka koçu ile olan tüm konuşmalarınızı kalıcı olarak silecektir. Bu işlem geri alınamaz.';
 
   @override
   String get aiSettingsScreenUseEmojis => 'Emoji Kullan';
 
   @override
-  String get aiSettingsScreenUsePreviousConversations =>
-      'Önceki Konuşmaları Kullan';
+  String get aiSettingsScreenUsePreviousConversations => 'Önceki Konuşmaları Kullan';
 
   @override
-  String get aiSettingsShowAiAgentsFitness =>
-      'Yapay zeka temsilcilerini, fitness koçluğu geçişlerini ve gizlilik kontrollerini göster';
+  String get aiSettingsShowAiAgentsFitness => 'Yapay zeka temsilcilerini, fitness koçluğu geçişlerini ve gizlilik kontrollerini göster';
 
   @override
   String get aiSettingsSuggestions => 'Öneriler';
 
   @override
-  String get aiSettingsTellTheAiWhat =>
-      'Bu blokta nelerin en önemli olduğunu yapay zekaya söyleyin. Her biri 1-5 arası ağırlıklandırılmış en fazla 5 şey.';
+  String get aiSettingsTellTheAiWhat => 'Bu blokta nelerin en önemli olduğunu yapay zekaya söyleyin. Her biri 1-5 arası ağırlıklandırılmış en fazla 5 şey.';
 
   @override
   String get aiSettingsTrainingSplit => 'ANTRENMAN BÖLÜMÜ';
@@ -2014,10 +1870,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
-    Object scheduleSuffix,
-    Object splitDisplayName,
-  ) {
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName) {
     return '$splitDisplayName$scheduleSuffix olarak değiştirildi. Yeni antrenmanlar oluşturuluyor...';
   }
 
@@ -2061,31 +1914,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get aiTextInputGotIt => 'Anlaşıldı';
 
   @override
-  String get aiTextInputLogSets1358 =>
-      'Setleri kaydet: 135*8, 145*6, +10...\nEgzersiz ekle: 135 ile 3x10 deadlift';
+  String get aiTextInputLogSets1358 => 'Setleri kaydet: 135*8, 145*6, +10...\nEgzersiz ekle: 135 ile 3x10 deadlift';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Setleri kaydet / Egzersiz ekle';
 
   @override
-  String get aiTextInputLogSetsForCurrent =>
-      '📝 Mevcut egzersiz için setleri kaydet:';
+  String get aiTextInputLogSetsForCurrent => '📝 Mevcut egzersiz için setleri kaydet:';
 
   @override
-  String get aiTextInputOpenAiExerciseInput =>
-      'Yapay zeka egzersiz girişini aç';
+  String get aiTextInputOpenAiExerciseInput => 'Yapay zeka egzersiz girişini aç';
 
   @override
-  String get aiTextInputPhotoOfWorkoutLog =>
-      'Antrenman günlüğü, beyaz tahta veya halter fotoğrafı';
+  String get aiTextInputPhotoOfWorkoutLog => 'Antrenman günlüğü, beyaz tahta veya halter fotoğrafı';
 
   @override
-  String get aiTextInputSpeakNaturallyDid135 =>
-      'Doğal bir şekilde konuşun: \"135 ile 8 tekrar yaptım\"';
+  String get aiTextInputSpeakNaturallyDid135 => 'Doğal bir şekilde konuşun: \"135 ile 8 tekrar yaptım\"';
 
   @override
-  String get aiTextInputTapToAddExercises =>
-      'Yapay zeka ile egzersiz eklemek için ✦ simgesine dokunun';
+  String get aiTextInputTapToAddExercises => 'Yapay zeka ile egzersiz eklemek için ✦ simgesine dokunun';
 
   @override
   String get allSplitsTrainingSplits => 'Antrenman Bölümleri';
@@ -2111,8 +1958,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get audioCoachCardAudioSynthesisDisabledSho =>
-      'Ses sentezi devre dışı — sadece metin gösteriliyor.';
+  String get audioCoachCardAudioSynthesisDisabledSho => 'Ses sentezi devre dışı — sadece metin gösteriliyor.';
 
   @override
   String get audioCoachCardTodaySCoachBrief => 'Bugünün koç özeti';
@@ -2124,16 +1970,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get audioSettingsBackgroundMusic => 'Arka Plan Müziği';
 
   @override
-  String get audioSettingsKeepSpotifyMusicPlaying =>
-      'Antrenman sırasında Spotify/müzik çalmaya devam etsin';
+  String get audioSettingsKeepSpotifyMusicPlaying => 'Antrenman sırasında Spotify/müzik çalmaya devam etsin';
 
   @override
-  String get audioSettingsLowerMusicDuringVoice =>
-      'Sesli duyurular sırasında müziğin sesini kıs';
+  String get audioSettingsLowerMusicDuringVoice => 'Sesli duyurular sırasında müziğin sesini kıs';
 
   @override
-  String get audioSettingsMuteVoiceDuringVideos =>
-      'Videolar Sırasında Sesi Kapat';
+  String get audioSettingsMuteVoiceDuringVideos => 'Videolar Sırasında Sesi Kapat';
 
   @override
   String audioSettingsSectionValue(Object displayPct) {
@@ -2195,15 +2038,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get avoidedExercisesChangeExercise => 'Egzersizi Değiştir';
 
   @override
-  String get avoidedExercisesErrorLoadingExercises =>
-      'Egzersizler yüklenirken hata oluştu';
+  String get avoidedExercisesErrorLoadingExercises => 'Egzersizler yüklenirken hata oluştu';
 
   @override
   String get avoidedExercisesExercisesToAvoid => 'Kaçınılacak Egzersizler';
 
   @override
-  String get avoidedExercisesExercisesYouAddHere =>
-      'Buraya eklediğiniz egzersizler, AI tarafından oluşturulan antrenman planlarından çıkarılacaktır.';
+  String get avoidedExercisesExercisesYouAddHere => 'Buraya eklediğiniz egzersizler, AI tarafından oluşturulan antrenman planlarından çıkarılacaktır.';
 
   @override
   String get avoidedExercisesNoExercisesToAvoid => 'Kaçınılacak egzersiz yok';
@@ -2212,8 +2053,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get avoidedExercisesPleaseLogIn => 'Lütfen giriş yapın';
 
   @override
-  String get avoidedExercisesReasonAndTemporarySettings =>
-      'Neden ve geçici ayarlar her egzersiz için geçerli olacaktır. Daha sonra tekil girişleri düzenleyebilirsiniz.';
+  String get avoidedExercisesReasonAndTemporarySettings => 'Neden ve geçici ayarlar her egzersiz için geçerli olacaktır. Daha sonra tekil girişleri düzenleyebilirsiniz.';
 
   @override
   String get avoidedExercisesReasonOptional => 'Neden (isteğe bağlı)';
@@ -2243,8 +2083,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenBrowseTheExerciseLibrary =>
-      'Seçenekler için egzersiz kütüphanesine göz atın';
+  String get avoidedExercisesScreenBrowseTheExerciseLibrary => 'Seçenekler için egzersiz kütüphanesine göz atın';
 
   @override
   String avoidedExercisesScreenEdit(Object exerciseName) {
@@ -2252,26 +2091,18 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenErrorLoadingAlternatives =>
-      'Alternatifler yüklenirken hata oluştu';
+  String get avoidedExercisesScreenErrorLoadingAlternatives => 'Alternatifler yüklenirken hata oluştu';
 
   @override
-  String get avoidedExercisesScreenNoSpecificAlternativesFound =>
-      'Belirli bir alternatif bulunamadı';
+  String get avoidedExercisesScreenNoSpecificAlternativesFound => 'Belirli bir alternatif bulunamadı';
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
-    Object exerciseName,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName) {
     return '$exerciseName yerine';
   }
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
-    Object day,
-    Object month,
-    Object year,
-  ) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year) {
     return '$day/$month/$year tarihine kadar';
   }
 
@@ -2317,20 +2148,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenViewSafeAlternatives =>
-      'Güvenli Alternatifleri Görüntüle';
+  String get avoidedExercisesScreenViewSafeAlternatives => 'Güvenli Alternatifleri Görüntüle';
 
   @override
-  String get avoidedExercisesSetAnEndDate =>
-      'Bu kısıtlamalar için bir bitiş tarihi belirleyin';
+  String get avoidedExercisesSetAnEndDate => 'Bu kısıtlamalar için bir bitiş tarihi belirleyin';
 
   @override
-  String get avoidedExercisesSetAnEndDate2 =>
-      'Bu kısıtlama için bir bitiş tarihi belirleyin';
+  String get avoidedExercisesSetAnEndDate2 => 'Bu kısıtlama için bir bitiş tarihi belirleyin';
 
   @override
-  String get avoidedExercisesTapToAddExercises =>
-      'Atlamak istediğiniz egzersizleri eklemek için + simgesine dokunun';
+  String get avoidedExercisesTapToAddExercises => 'Atlamak istediğiniz egzersizleri eklemek için + simgesine dokunun';
 
   @override
   String get avoidedExercisesTemporary => 'Geçici';
@@ -2342,12 +2169,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get avoidedMusclesCurrentlyAvoided => 'Şu Anda Kaçınılanlar';
 
   @override
-  String get avoidedMusclesErrorLoadingMuscles =>
-      'Kaslar yüklenirken hata oluştu';
+  String get avoidedMusclesErrorLoadingMuscles => 'Kaslar yüklenirken hata oluştu';
 
   @override
-  String get avoidedMusclesExercisesTargetingThisMuscl =>
-      'Bu kası hedefleyen egzersizler tamamen hariç tutulacaktır';
+  String get avoidedMusclesExercisesTargetingThisMuscl => 'Bu kası hedefleyen egzersizler tamamen hariç tutulacaktır';
 
   @override
   String get avoidedMusclesMusclesToAvoid => 'Kaçınılacak Kaslar';
@@ -2362,12 +2187,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get avoidedMusclesRemove => 'Kaldır';
 
   @override
-  String get avoidedMusclesRemoveFromAvoidList =>
-      'Kaçınılacaklar Listesinden Kaldır';
+  String get avoidedMusclesRemoveFromAvoidList => 'Kaçınılacaklar Listesinden Kaldır';
 
   @override
-  String get avoidedMusclesReplacedExercisesTargetingT =>
-      'Yaklaşan antrenmanlarda bu kası hedefleyen egzersizler değiştirildi';
+  String get avoidedMusclesReplacedExercisesTargetingT => 'Yaklaşan antrenmanlarda bu kası hedefleyen egzersizler değiştirildi';
 
   @override
   String get avoidedMusclesSaveChanges => 'Değişiklikleri Kaydet';
@@ -2393,8 +2216,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get avoidedMusclesSelectMusclesToAvoid =>
-      'Antrenmanlarınızda kaçınmak veya azaltmak istediğiniz kasları seçin';
+  String get avoidedMusclesSelectMusclesToAvoid => 'Antrenmanlarınızda kaçınmak veya azaltmak istediğiniz kasları seçin';
 
   @override
   String get avoidedMusclesSeverity => 'Şiddet';
@@ -2409,8 +2231,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get badgeHubChallenges => 'MEYDAN OKUMALAR';
 
   @override
-  String get badgeHubHeroEarnBadgesForEvery =>
-      'Her dönüm noktası, seri ve PB için rozet kazanın.';
+  String get badgeHubHeroEarnBadgesForEvery => 'Her dönüm noktası, seri ve PB için rozet kazanın.';
 
   @override
   String get badgeHubHeroHowItWorks => 'Nasıl çalışır';
@@ -2425,8 +2246,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get badgeHubInProgress2 => 'DEVAM EDİYOR';
 
   @override
-  String get badgeHubLevelledBadgesThatKeep =>
-      'Daha fazla adım, kalori, seans veya mesafe kaydettikçe yükselmeye devam eden seviyeli rozetler.';
+  String get badgeHubLevelledBadgesThatKeep => 'Daha fazla adım, kalori, seans veya mesafe kaydettikçe yükselmeye devam eden seviyeli rozetler.';
 
   @override
   String get badgeHubMasteries => 'Ustalıklar';
@@ -2438,8 +2258,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get badgeHubMyBadges => 'ROZETLERİM';
 
   @override
-  String get badgeHubOneTimeTrophiesFor =>
-      'Dönüm noktalarına ulaşmak için tek seferlik kupalar — zaman hedefleri, istikrar serileri, büyük PR\'lar.';
+  String get badgeHubOneTimeTrophiesFor => 'Dönüm noktalarına ulaşmak için tek seferlik kupalar — zaman hedefleri, istikrar serileri, büyük PR\'lar.';
 
   @override
   String get badgeHubPersonalBests => 'Kişisel Rekorlar';
@@ -2456,16 +2275,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get badgeHubWeeklyOrDailyChallenges =>
-      'Kovalayabileceğiniz haftalık veya günlük meydan okumalar. Her zaman yeniden kazanabilmeniz için belirli bir programda sıfırlanırlar.';
+  String get badgeHubWeeklyOrDailyChallenges => 'Kovalayabileceğiniz haftalık veya günlük meydan okumalar. Her zaman yeniden kazanabilmeniz için belirli bir programda sıfırlanırlar.';
 
   @override
-  String get badgeHubYourHighestLiftsLongest =>
-      'En yüksek kaldırışlarınız, en uzun seanslarınız, en büyük antrenmanlarınız. Madalyayı yükseltmek için onları geçin.';
+  String get badgeHubYourHighestLiftsLongest => 'En yüksek kaldırışlarınız, en uzun seanslarınız, en büyük antrenmanlarınız. Madalyayı yükseltmek için onları geçin.';
 
   @override
-  String get barcodeScannerOverlayPointYourCameraAt =>
-      'Kameranızı ürün barkoduna doğrultun';
+  String get barcodeScannerOverlayPointYourCameraAt => 'Kameranızı ürün barkoduna doğrultun';
 
   @override
   String get barcodeScannerOverlayScanABarcode => 'Barkod Tara';
@@ -2474,8 +2290,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get batchPortioningBatchPortioning => 'Toplu Porsiyonlama';
 
   @override
-  String get batchPortioningCalculateNutritionPerPortio =>
-      'Porsiyon başına besin değerini hesapla';
+  String get batchPortioningCalculateNutritionPerPortio => 'Porsiyon başına besin değerini hesapla';
 
   @override
   String get batchPortioningCalories => 'Kalori';
@@ -2514,8 +2329,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beastHeaderCardBeastMode => 'BEAST MODE';
 
   @override
-  String get beastHeaderCardPowerUserToolkit =>
-      'İleri düzey kullanıcı araç seti';
+  String get beastHeaderCardPowerUserToolkit => 'İleri düzey kullanıcı araç seti';
 
   @override
   String get beastModeAboutBeastMode => 'BEAST MODE HAKKINDA';
@@ -2527,8 +2341,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beastModeAlgorithmInspector => 'ALGORİTMA DENETÇİSİ';
 
   @override
-  String get beastModeAlgorithmInspectorSubtitle =>
-      'Antrenmanlarınızın arkasındaki matematiği görün';
+  String get beastModeAlgorithmInspectorSubtitle => 'Antrenmanlarınızın arkasındaki matematiği görün';
 
   @override
   String get beastModeBeastMode => 'Beast Mode';
@@ -2537,15 +2350,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beastModeCustomizationLab => 'ÖZELLEŞTİRME LABORATUVARI';
 
   @override
-  String get beastModeCustomizationLabSubtitle =>
-      'Gelişmiş renk ve yazı tipi kontrolleri';
+  String get beastModeCustomizationLabSubtitle => 'Gelişmiş renk ve yazı tipi kontrolleri';
 
   @override
   String get beastModeDataAndSyncTools => 'VERİ VE SENKRONİZASYON ARAÇLARI';
 
   @override
-  String get beastModeDataAndSyncToolsSubtitle =>
-      'Senkronizasyon sorunlarını giderin ve verilerinizi yönetin';
+  String get beastModeDataAndSyncToolsSubtitle => 'Senkronizasyon sorunlarını giderin ve verilerinizi yönetin';
 
   @override
   String get beastModePremium => 'Premium';
@@ -2554,8 +2365,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beastModeRecoveryAndProgression => 'TOPARLANMA VE GELİŞİM';
 
   @override
-  String get beastModeRecoveryAndProgressionSubtitle =>
-      'Vücudunuzun toparlanmasını görselleştirin ve gelişiminizi tahmin edin';
+  String get beastModeRecoveryAndProgressionSubtitle => 'Vücudunuzun toparlanmasını görselleştirin ve gelişiminizi tahmin edin';
 
   @override
   String get beastModeUnlockBeastMode => 'BEAST MODE';
@@ -2567,26 +2377,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beastModeUnlockUnlocked => 'KİLİDİ AÇILDI';
 
   @override
-  String get beastModeUnlockYouVeUnlockedThe =>
-      'Güçlü kullanıcı araç setinin kilidini açtınız. Antrenmanlarınızın arkasındaki algoritmaları görün.';
+  String get beastModeUnlockYouVeUnlockedThe => 'Güçlü kullanıcı araç setinin kilidini açtınız. Antrenmanlarınızın arkasındaki algoritmaları görün.';
 
   @override
   String get beastModeWorkoutAlgorithm => 'ANTRENMAN ALGORİTMASI';
 
   @override
-  String get beastModeWorkoutAlgorithmSubtitle =>
-      'Antrenman oluşturma üzerinde derin kontrol';
+  String get beastModeWorkoutAlgorithmSubtitle => 'Antrenman oluşturma üzerinde derin kontrol';
 
   @override
   String get beastModeWorkoutTemplates => 'ANTRENMAN ŞABLONLARI';
 
   @override
-  String get beastModeWorkoutTemplatesSubtitle =>
-      'Özel antrenman yapısı ön ayarları';
+  String get beastModeWorkoutTemplatesSubtitle => 'Özel antrenman yapısı ön ayarları';
 
   @override
-  String get bleHeartRateAutoConnectOnWorkout =>
-      'Antrenman başlangıcında otomatik bağlan';
+  String get bleHeartRateAutoConnectOnWorkout => 'Antrenman başlangıcında otomatik bağlan';
 
   @override
   String get bleHeartRateConnect => 'Bağlan';
@@ -2643,15 +2449,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bodyAnalyzerBodyFat => 'Vücut Yağı';
 
   @override
-  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement =>
-      'Fotoğraflardan mezura ölçümlerini de tahmin et';
+  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement => 'Fotoğraflardan mezura ölçümlerini de tahmin et';
 
   @override
   String get bodyAnalyzerCaptureAnalyzing => 'Analiz ediliyor…';
 
   @override
-  String get bodyAnalyzerCaptureFusesHeightWeightBody =>
-      'Boy/kilo/vücut yağı ve mezura değerlerini analizde birleştirir.';
+  String get bodyAnalyzerCaptureFusesHeightWeightBody => 'Boy/kilo/vücut yağı ve mezura değerlerini analizde birleştirir.';
 
   @override
   String get bodyAnalyzerCapturePickAtLeastOne => 'En az bir fotoğraf seçin.';
@@ -2665,15 +2469,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get bodyAnalyzerCaptureUseMyStoredMeasurements =>
-      'Kayıtlı ölçümlerimi kullan';
+  String get bodyAnalyzerCaptureUseMyStoredMeasurements => 'Kayıtlı ölçümlerimi kullan';
 
   @override
   String get bodyAnalyzerCreatingProposal => 'Öneri oluşturuluyor…';
 
   @override
-  String get bodyAnalyzerGetYourBodyAnalyzer =>
-      'Vücut Analizörü geri bildiriminizi alın';
+  String get bodyAnalyzerGetYourBodyAnalyzer => 'Vücut Analizörü geri bildiriminizi alın';
 
   @override
   String get bodyAnalyzerHeroOverallRating => 'Genel Puan';
@@ -2721,12 +2523,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bodyMetricsStrength => 'Güç';
 
   @override
-  String get bodyMuscleSelectorLoadingBodyDiagram =>
-      'Vücut diyagramı yükleniyor...';
+  String get bodyMuscleSelectorLoadingBodyDiagram => 'Vücut diyagramı yükleniyor...';
 
   @override
-  String get bodyMuscleSelectorTapOnAMuscle =>
-      'Seçmek için bir kasa dokunun • Yakınlaştırmak için çimdikleyin';
+  String get bodyMuscleSelectorTapOnAMuscle => 'Seçmek için bir kasa dokunun • Yakınlaştırmak için çimdikleyin';
 
   @override
   String get bodyPartSelectorSelectBodyPart => 'Vücut Bölgesi Seçin';
@@ -2735,8 +2535,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bodyPartSelectorTapTheAffectedArea => 'Etkilenen bölgeye dokunun';
 
   @override
-  String get bodyScoreOverlayLoadingBodyDiagram =>
-      'Vücut diyagramı yükleniyor...';
+  String get bodyScoreOverlayLoadingBodyDiagram => 'Vücut diyagramı yükleniyor...';
 
   @override
   String breathPromptWidgetStartsInS(Object _sessionSecondsLeft) {
@@ -2779,22 +2578,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get calendarIconButtonSchedule => 'Program';
 
   @override
-  String get caloriesBurnedAllFromBackgroundActivity =>
-      'Tamamı arka plan aktivitesinden';
+  String get caloriesBurnedAllFromBackgroundActivity => 'Tamamı arka plan aktivitesinden';
 
   @override
   String get caloriesBurnedCaloriesBurnedToday => 'Bugün yakılan kaloriler';
 
   @override
-  String get caloriesBurnedCompleteAWorkoutOr =>
-      'Bir antrenman tamamlayın veya sağlık uygulamanızdan eşitleyin';
+  String get caloriesBurnedCompleteAWorkoutOr => 'Bir antrenman tamamlayın veya sağlık uygulamanızdan eşitleyin';
 
   @override
   String get caloriesBurnedInApp => 'Uygulama içi';
 
   @override
-  String get caloriesBurnedNoActivityRecordedToday =>
-      'Bugün kaydedilen aktivite yok';
+  String get caloriesBurnedNoActivityRecordedToday => 'Bugün kaydedilen aktivite yok';
 
   @override
   String get caloriesBurnedPassive => 'Pasif';
@@ -2828,15 +2624,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get caloriesBurnedStepsHeartRateAnd =>
-      'Gün boyu adımlar, kalp atış hızı ve hareket';
+  String get caloriesBurnedStepsHeartRateAnd => 'Gün boyu adımlar, kalp atış hızı ve hareket';
 
   @override
   String get caloriesBurnedSynced => 'Eşitlendi';
 
   @override
-  String get caloriesBurnedSyncedFromHealth =>
-      'Health uygulamasından eşitlendi';
+  String get caloriesBurnedSyncedFromHealth => 'Health uygulamasından eşitlendi';
 
   @override
   String get caloriesBurnedTodaySActivity => 'Bugünün Aktivitesi';
@@ -2855,8 +2649,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cancelConfirmationAnythingElseYouD =>
-      'Paylaşmak istediğiniz başka bir şey var mı? (isteğe bağlı)';
+  String get cancelConfirmationAnythingElseYouD => 'Paylaşmak istediğiniz başka bir şey var mı? (isteğe bağlı)';
 
   @override
   String get cancelConfirmationCancelAnyway => 'Yine de iptal et';
@@ -2868,8 +2661,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cancelConfirmationKeepMySubscription => 'Aboneliğimi koru';
 
   @override
-  String get cancelConfirmationNeedABreakInstead =>
-      'Bunun yerine bir molaya mı ihtiyacınız var?';
+  String get cancelConfirmationNeedABreakInstead => 'Bunun yerine bir molaya mı ihtiyacınız var?';
 
   @override
   String get cancelConfirmationNeverMindKeepMy => 'Boşver, aboneliğimi koru';
@@ -2893,8 +2685,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cancelConfirmationSpecialOffersJustFor =>
-      'Sadece size özel teklifler';
+  String get cancelConfirmationSpecialOffersJustFor => 'Sadece size özel teklifler';
 
   @override
   String get cancelConfirmationWeDHateTo => 'Gitmenizi hiç istemeyiz';
@@ -2903,16 +2694,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cancelConfirmationWhatYouLlLose => 'Neleri kaybedeceksiniz';
 
   @override
-  String get cancelConfirmationWhyAreYouThinking =>
-      'Neden iptal etmeyi düşünüyorsunuz?';
+  String get cancelConfirmationWhyAreYouThinking => 'Neden iptal etmeyi düşünüyorsunuz?';
 
   @override
-  String get capabilityAndCommunityAiCoachAvailability =>
-      'AI koç kullanılabilirliği';
+  String get capabilityAndCommunityAiCoachAvailability => 'AI koç kullanılabilirliği';
 
   @override
-  String get capabilityAndCommunityAiUpdatedContinuously =>
-      'Sürekli güncellenen AI';
+  String get capabilityAndCommunityAiUpdatedContinuously => 'Sürekli güncellenen AI';
 
   @override
   String get capabilityAndCommunityBuiltRight => 'Doğru inşa edildi.';
@@ -2921,12 +2709,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get capabilityAndCommunityDiscord => 'Discord';
 
   @override
-  String get capabilityAndCommunityExercisesWithHdVideo =>
-      'HD videolu egzersizler';
+  String get capabilityAndCommunityExercisesWithHdVideo => 'HD videolu egzersizler';
 
   @override
-  String get capabilityAndCommunityFoodsInOurDatabase =>
-      'Veritabanımızdaki yiyecekler';
+  String get capabilityAndCommunityFoodsInOurDatabase => 'Veritabanımızdaki yiyecekler';
 
   @override
   String get capabilityAndCommunityInstagram => 'Instagram';
@@ -2935,8 +2721,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get capabilityAndCommunityReachUsAnytime => 'Bize her zaman ulaşın';
 
   @override
-  String get capabilityAndCommunityRealNumbersRealPeople =>
-      'Gerçek sayılar. Arkasında gerçek insanlar var.';
+  String get capabilityAndCommunityRealNumbersRealPeople => 'Gerçek sayılar. Arkasında gerçek insanlar var.';
 
   @override
   String get cardioHistoryAll => 'Tümü';
@@ -2990,8 +2775,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cardioHistoryHike => 'Doğa Yürüyüşü';
 
   @override
-  String get cardioHistoryImportFromStravaPeloton =>
-      'Geçmişinizi burada görmek için Strava, Peloton, Garmin, Apple Health veya Fitbit\'ten içe aktarın.';
+  String get cardioHistoryImportFromStravaPeloton => 'Geçmişinizi burada görmek için Strava, Peloton, Garmin, Apple Health veya Fitbit\'ten içe aktarın.';
 
   @override
   String get cardioHistoryIndoorCycle => 'İç Mekan Bisiklet';
@@ -3022,19 +2806,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cardioHistoryNoCardioSessionsYet =>
-      'Henüz kardiyo antrenmanı yok.';
+  String get cardioHistoryNoCardioSessionsYet => 'Henüz kardiyo antrenmanı yok.';
 
   @override
-  String get cardioHistoryNoSessionsMatchThis =>
-      'Bu filtreyle eşleşen oturum yok.';
+  String get cardioHistoryNoSessionsMatchThis => 'Bu filtreyle eşleşen oturum yok.';
 
   @override
   String get cardioHistoryNotes => 'Notlar';
 
   @override
-  String get cardioHistoryPleaseSignInTo =>
-      'Kardiyo geçmişinizi görmek için lütfen giriş yapın.';
+  String get cardioHistoryPleaseSignInTo => 'Kardiyo geçmişinizi görmek için lütfen giriş yapın.';
 
   @override
   String cardioHistoryRouteRecordedPts(Object count) {
@@ -3088,8 +2869,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cardioHistoryThisWeek => 'Bu hafta';
 
   @override
-  String get cardioHistoryTryClearingFiltersOr =>
-      'Filtreleri temizlemeyi veya tarih aralığını genişletmeyi deneyin.';
+  String get cardioHistoryTryClearingFiltersOr => 'Filtreleri temizlemeyi veya tarih aralığını genişletmeyi deneyin.';
 
   @override
   String get cardioHistoryWalk => 'Yürüyüş';
@@ -3098,8 +2878,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cardioHistoryYoga => 'Yoga';
 
   @override
-  String get cardioPrHistoryAllTimeBestsBy =>
-      'Spora göre tüm zamanların en iyileri';
+  String get cardioPrHistoryAllTimeBestsBy => 'Spora göre tüm zamanların en iyileri';
 
   @override
   String get cardioPrHistoryCardioPrs => 'Kardiyo PR\'ları';
@@ -3111,8 +2890,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cardioPrHistoryFirstTime => 'İlk kez!';
 
   @override
-  String get cardioPrHistoryLogACardioSession =>
-      'PR takibine başlamak için bir kardiyo oturumu kaydedin.';
+  String get cardioPrHistoryLogACardioSession => 'PR takibine başlamak için bir kardiyo oturumu kaydedin.';
 
   @override
   String get cardioPrHistoryNoCardioPrsYet => 'Henüz kardiyo PR\'ı yok';
@@ -3141,8 +2919,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chainDetailProgressionPath => 'Gelişim Yolu';
 
   @override
-  String get chainDetailProgressionStartedGoodLuck =>
-      'Gelişim başladı! İyi şanslar!';
+  String get chainDetailProgressionStartedGoodLuck => 'Gelişim başladı! İyi şanslar!';
 
   @override
   String chainDetailScreenAttemptsAtCurrentStep(Object attemptsAtCurrent) {
@@ -3177,8 +2954,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeCardActive => 'AKTİF';
 
   @override
-  String get challengeCardChallengedYouToBeat =>
-      'Sana meydan okudu, geçebilecek misin?';
+  String get challengeCardChallengedYouToBeat => 'Sana meydan okudu, geçebilecek misin?';
 
   @override
   String challengeCardDaysLeft(Object daysRemaining) {
@@ -3203,8 +2979,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeCompareChallengeResults => 'Meydan Okuma Sonuçları';
 
   @override
-  String get challengeCompareFailedToLoadChallenge =>
-      'Meydan okuma yüklenemedi';
+  String get challengeCompareFailedToLoadChallenge => 'Meydan okuma yüklenemedi';
 
   @override
   String get challengeCompareRematch => 'RÖVANŞ';
@@ -3262,8 +3037,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get challengeCompletePerformanceComparison =>
-      'Performans Karşılaştırması';
+  String get challengeCompletePerformanceComparison => 'Performans Karşılaştırması';
 
   @override
   String get challengeCompleteThem => 'Onlar: ';
@@ -3275,8 +3049,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeCompleteVictory => 'ZAFER!';
 
   @override
-  String get challengeCompleteViewFullComparison =>
-      'Tam Karşılaştırmayı Görüntüle';
+  String get challengeCompleteViewFullComparison => 'Tam Karşılaştırmayı Görüntüle';
 
   @override
   String get challengeCompleteViewInFeed => 'Akışta Görüntüle';
@@ -3288,12 +3061,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeCompleteYou => 'Sen: ';
 
   @override
-  String get challengeCompleteYourVictoryHasBeen =>
-      'Zaferin arkadaşlarınla paylaşıldı! 🎉';
+  String get challengeCompleteYourVictoryHasBeen => 'Zaferin arkadaşlarınla paylaşıldı! 🎉';
 
   @override
-  String get challengeCreateAnyoneCanJoinVia =>
-      'Sosyal sekmesi üzerinden herkes katılabilir';
+  String get challengeCreateAnyoneCanJoinVia => 'Sosyal sekmesi üzerinden herkes katılabilir';
 
   @override
   String get challengeCreateButton => 'Meydan okuma oluştur';
@@ -3320,8 +3091,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeCreateTitle => 'Meydan okuma oluştur';
 
   @override
-  String get challengeFriendsAddTrashTalkMessage =>
-      'Atışma mesajı ekle (isteğe bağlı) 💪';
+  String get challengeFriendsAddTrashTalkMessage => 'Atışma mesajı ekle (isteğe bağlı) 💪';
 
   @override
   String get challengeFriendsChallengeFriends => 'Arkadaşlarına Meydan Oku';
@@ -3342,12 +3112,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get challengeFriendsNoFriendsToChallenge =>
-      'Meydan okunacak arkadaş yok';
+  String get challengeFriendsNoFriendsToChallenge => 'Meydan okunacak arkadaş yok';
 
   @override
-  String get challengeFriendsPleaseSelectAtLeast =>
-      'Lütfen en az bir arkadaş seçin';
+  String get challengeFriendsPleaseSelectAtLeast => 'Lütfen en az bir arkadaş seçin';
 
   @override
   String get challengeFriendsSearchFriends => 'Arkadaş ara...';
@@ -3368,8 +3136,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeHistoryChallengeStats => 'Meydan Okuma İstatistikleri';
 
   @override
-  String get challengeHistoryFailedToLoadChallenges =>
-      'Meydan okumalar yüklenemedi';
+  String get challengeHistoryFailedToLoadChallenges => 'Meydan okumalar yüklenemedi';
 
   @override
   String get challengeHistoryLetSGo => 'Hadi Başlayalım! 💪';
@@ -3393,8 +3160,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengeHistoryRetryChallenge2 => 'MÜCADELEYİ TEKRAR DENE?';
 
   @override
-  String get challengeHistoryRetryChallengeSentTime =>
-      '🔥 Mücadele tekrarı gönderildi! Rövanş zamanı!';
+  String get challengeHistoryRetryChallengeSentTime => '🔥 Mücadele tekrarı gönderildi! Rövanş zamanı!';
 
   @override
   String challengeHistoryScreenFailedToSendRetry(Object e) {
@@ -3426,12 +3192,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengesChallenge => 'Mücadele';
 
   @override
-  String get challengesCouldNotLoadChallenges =>
-      'Mücadeleler yüklenemedi.\nLütfen tekrar deneyin.';
+  String get challengesCouldNotLoadChallenges => 'Mücadeleler yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
-  String get challengesCouldNotLoadYour =>
-      'Mücadelelerin yüklenemedi.\nLütfen tekrar deneyin.';
+  String get challengesCouldNotLoadYour => 'Mücadelelerin yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get challengesCreateChallenge => 'Mücadele Oluştur';
@@ -3440,8 +3204,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengesFailedToLoadChallenges => 'Mücadeleler Yüklenemedi';
 
   @override
-  String get challengesJoinAChallengeTo =>
-      'Arkadaşlarınla rekabet etmek ve fitness hedeflerine ulaşmak için bir mücadeleye katıl!';
+  String get challengesJoinAChallengeTo => 'Arkadaşlarınla rekabet etmek ve fitness hedeflerine ulaşmak için bir mücadeleye katıl!';
 
   @override
   String get challengesMyChallenges => 'Mücadelelerim';
@@ -3456,8 +3219,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get challengesPopularChallenges => 'Popüler Mücadeleler';
 
   @override
-  String get challengesStartYourOwnChallenge =>
-      'Kendi mücadeleni başlat ve arkadaşlarını davet et';
+  String get challengesStartYourOwnChallenge => 'Kendi mücadeleni başlat ve arkadaşlarını davet et';
 
   @override
   String get challengesStrip100KmTarget => '100 km hedefi';
@@ -3480,8 +3242,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get changeEquipmentHelperEquipment => 'Ekipman';
 
   @override
-  String get changeEquipmentHelperNoActiveGymProfile =>
-      'Aktif spor salonu profili yok — önce Ayarlar → Spor Salonları kısmını açın.';
+  String get changeEquipmentHelperNoActiveGymProfile => 'Aktif spor salonu profili yok — önce Ayarlar → Spor Salonları kısmını açın.';
 
   @override
   String get chatActionConfirmApplied => 'Uygulandı';
@@ -3499,19 +3260,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatClearChatHistory => 'Sohbet Geçmişini Temizle?';
 
   @override
-  String get chatFeaturesInfoLongPressActionPills =>
-      'Kısayollarını özelleştirmek için eylem butonlarına uzun basın';
+  String get chatFeaturesInfoLongPressActionPills => 'Kısayollarını özelleştirmek için eylem butonlarına uzun basın';
 
   @override
-  String get chatFeaturesInfoTryAskingWhatCan =>
-      'Tüm yeteneklerin listesi için şunu sormayı deneyin: \"Neler yapabilirsin?\"';
+  String get chatFeaturesInfoTryAskingWhatCan => 'Tüm yeteneklerin listesi için şunu sormayı deneyin: \"Neler yapabilirsin?\"';
 
   @override
   String get chatFeaturesInfoWhatCanIDo => 'Neler yapabilirim?';
 
   @override
-  String get chatFeaturesInfoYourAiCoachCan =>
-      'AI koçunuz medyayı analiz edebilir, antrenman oluşturabilir, beslenme tavsiyesi verebilir ve daha fazlasını yapabilir.';
+  String get chatFeaturesInfoYourAiCoachCan => 'AI koçunuz medyayı analiz edebilir, antrenman oluşturabilir, beslenme tavsiyesi verebilir ve daha fazlasını yapabilir.';
 
   @override
   String get chatGotIt => 'Anladım';
@@ -3601,8 +3359,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatQuickPillsCustomizeShortcuts => 'Kısayolları Özelleştir';
 
   @override
-  String get chatQuickPillsDragToReorderTop =>
-      'Yeniden sıralamak için sürükleyin. İlk 5, giriş çubuğunun üzerinde buton olarak görünür.';
+  String get chatQuickPillsDragToReorderTop => 'Yeniden sıralamak için sürükleyin. İlk 5, giriş çubuğunun üzerinde buton olarak görünür.';
 
   @override
   String get chatQuickPillsRecordVideo => 'Video Kaydet';
@@ -3614,19 +3371,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatQuickPillsTakePhoto => 'Fotoğraf Çek';
 
   @override
-  String get chatQuickPillsTapAnActionTo =>
-      'Kullanmak için bir eyleme dokunun. Yeniden sıralamak için butonlara uzun basın.';
+  String get chatQuickPillsTapAnActionTo => 'Kullanmak için bir eyleme dokunun. Yeniden sıralamak için butonlara uzun basın.';
 
   @override
   String get chatScreenCantReachCoach => 'Şu anda koça ulaşılamıyor.';
 
   @override
-  String get chatScreenCheckConnection =>
-      'Bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get chatScreenCheckConnection => 'Bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
-  String get chatScreenCoachIsThinkingLonger =>
-      'Koç her zamankinden daha uzun süre düşünüyor.';
+  String get chatScreenCoachIsThinkingLonger => 'Koç her zamankinden daha uzun süre düşünüyor.';
 
   @override
   String get chatScreenCouldntReachCoach => 'Koça ulaşılamadı.';
@@ -3653,12 +3407,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatScreenExtClearChatHistory => 'Sohbet Geçmişini Temizle';
 
   @override
-  String get chatScreenExtConnectWithAReal =>
-      'Gerçek bir destek temsilcisiyle bağlantı kurun';
+  String get chatScreenExtConnectWithAReal => 'Gerçek bir destek temsilcisiyle bağlantı kurun';
 
   @override
-  String get chatScreenExtEmailOurSupportTeam =>
-      'Destek ekibimize e-posta gönderin';
+  String get chatScreenExtEmailOurSupportTeam => 'Destek ekibimize e-posta gönderin';
 
   @override
   String get chatScreenExtFailedToLogFood => 'Besin öğeleri kaydedilemedi';
@@ -3688,8 +3440,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatScreenExtResetsAtMidnight => 'Gece yarısı sıfırlanır';
 
   @override
-  String get chatScreenExtSeeWhatYourAi =>
-      'AI koçunuzun neler yapabileceğini görün';
+  String get chatScreenExtSeeWhatYourAi => 'AI koçunuzun neler yapabileceğini görün';
 
   @override
   String get chatScreenExtSwitchToADifferent => 'Farklı bir AI koça geçin';
@@ -3714,8 +3465,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatScreenExtTodaySUsage => 'Bugünkü Kullanım';
 
   @override
-  String get chatScreenExtUnlimitedAccessWithPremium =>
-      'Premium ile sınırsız erişim';
+  String get chatScreenExtUnlimitedAccessWithPremium => 'Premium ile sınırsız erişim';
 
   @override
   String get chatScreenExtUpgradeForUnlimited => 'Sınırsız için yükselt';
@@ -3736,8 +3486,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get chatScreenMultiAgentHangTight =>
-      'Çoklu temsilci yanıtları iki dakikaya kadar sürebilir — bekleyin veya tekrar deneyin.';
+  String get chatScreenMultiAgentHangTight => 'Çoklu temsilci yanıtları iki dakikaya kadar sürebilir — bekleyin veya tekrar deneyin.';
 
   @override
   String get chatScreenPartAddAMessage => 'Bir mesaj ekle...';
@@ -3746,8 +3495,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatScreenPartAddVideo => 'Video Ekle';
 
   @override
-  String get chatScreenPartCheckingAvailability =>
-      'Uygunluk kontrol ediliyor...';
+  String get chatScreenPartCheckingAvailability => 'Uygunluk kontrol ediliyor...';
 
   @override
   String get chatScreenPartChooseVideo => 'Video Seç';
@@ -3781,12 +3529,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatScreenPartUseCameraMax60s => 'Kamerayı kullan (maks. 60 sn)';
 
   @override
-  String get chatScreenPartWaitTimeUnavailable =>
-      'Bekleme süresi kullanılamıyor';
+  String get chatScreenPartWaitTimeUnavailable => 'Bekleme süresi kullanılamıyor';
 
   @override
-  String get chatScreenPartYouWillBeConnected =>
-      'Sorularınızda size yardımcı olabilecek gerçek bir destek temsilcisine bağlanacaksınız.';
+  String get chatScreenPartYouWillBeConnected => 'Sorularınızda size yardımcı olabilecek gerçek bir destek temsilcisine bağlanacaksınız.';
 
   @override
   String chatScreenRouteNotRegistered(Object route) {
@@ -3794,8 +3540,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get chatScreenSomethingWentWrongLoading =>
-      'Sohbetiniz yüklenirken bir şeyler ters gitti.';
+  String get chatScreenSomethingWentWrongLoading => 'Sohbetiniz yüklenirken bir şeyler ters gitti.';
 
   @override
   String get chatScreenTyping => 'Yazıyor...';
@@ -3836,16 +3581,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chatSearchOverlayTypeToSearch => 'Aramak için yazın';
 
   @override
-  String get chatThisMatchIsMissing =>
-      'Bu eşleşmede bir egzersiz kimliği eksik.';
+  String get chatThisMatchIsMissing => 'Bu eşleşmede bir egzersiz kimliği eksik.';
 
   @override
-  String get chatThisWillDeleteAll =>
-      'Bu, AI koçu ile olan tüm sohbet geçmişinizi silecektir. Bu işlem geri alınamaz.';
+  String get chatThisWillDeleteAll => 'Bu, AI koçu ile olan tüm sohbet geçmişinizi silecektir. Bu işlem geri alınamaz.';
 
   @override
-  String get chatYourPersonalAiPowered =>
-      'Kişisel AI destekli fitness koçunuz. Antrenmanlar, beslenme, toparlanma veya fitness ile ilgili her türlü soruyu sorun. AI, kişiselleştirilmiş tavsiyeler vermek için ilerlemenizden öğrenir.';
+  String get chatYourPersonalAiPowered => 'Kişisel AI destekli fitness koçunuz. Antrenmanlar, beslenme, toparlanma veya fitness ile ilgili her türlü soruyu sorun. AI, kişiselleştirilmiş tavsiyeler vermek için ilerlemenizden öğrenir.';
 
   @override
   String get classicStatsTemplateCalories => 'KALORİ';
@@ -3907,8 +3649,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachDashboardWeight => 'Ağırlık';
 
   @override
-  String get coachHeroCardAlreadyRefreshedInThe =>
-      'Son 30 dakika içinde zaten yenilendi.';
+  String get coachHeroCardAlreadyRefreshedInThe => 'Son 30 dakika içinde zaten yenilendi.';
 
   @override
   String get coachHeroCardRethinking => 'Yeniden düşünülüyor…';
@@ -3920,8 +3661,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachHeroCardYourCoach => 'KOÇUN';
 
   @override
-  String get coachHeroCardYourCoachIsGathering =>
-      'Koçun düşüncelerini topluyor.';
+  String get coachHeroCardYourCoachIsGathering => 'Koçun düşüncelerini topluyor.';
 
   @override
   String get coachHeroCardYourCoachIsHere => 'Koçun burada.';
@@ -3933,8 +3673,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachReviewApply => 'Uygula';
 
   @override
-  String get coachReviewApplySwapComingWith =>
-      'Değişimi uygula — planlayıcı entegrasyonu ile geliyor';
+  String get coachReviewApplySwapComingWith => 'Değişimi uygula — planlayıcı entegrasyonu ile geliyor';
 
   @override
   String get coachReviewCoachReview => 'Koç değerlendirmesi';
@@ -3949,8 +3688,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachReviewMicronutrientGaps => 'Mikro besin eksikleri';
 
   @override
-  String get coachReviewNoReviewYetTap =>
-      'Henüz değerlendirme yok — oluşturmak için yenilemeye dokun';
+  String get coachReviewNoReviewYetTap => 'Henüz değerlendirme yok — oluşturmak için yenilemeye dokun';
 
   @override
   String get coachReviewOutOfDate => 'Güncel değil';
@@ -3959,8 +3697,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachReviewOverallScore => 'Genel puan';
 
   @override
-  String get coachReviewRequestHumanProReview =>
-      'Profesyonel insan değerlendirmesi iste';
+  String get coachReviewRequestHumanProReview => 'Profesyonel insan değerlendirmesi iste';
 
   @override
   String coachReviewSheetAllergenAlert(Object allergenFlags) {
@@ -3987,12 +3724,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachReviewTemplateWorkoutReview => 'ANTRENMAN DEĞERLENDİRMESİ';
 
   @override
-  String get coachReviewWeLlNotifyYou =>
-      'İnsan değerlendiriciler başladığında sizi bilgilendireceğiz';
+  String get coachReviewWeLlNotifyYou => 'İnsan değerlendiriciler başladığında sizi bilgilendireceğiz';
 
   @override
-  String get coachSelectionAiGeneratedAvatar =>
-      'AI tarafından oluşturulan avatar';
+  String get coachSelectionAiGeneratedAvatar => 'AI tarafından oluşturulan avatar';
 
   @override
   String get coachSelectionAppearance => 'Görünüm';
@@ -4028,15 +3763,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachSelectionGender => 'Cinsiyet';
 
   @override
-  String get coachSelectionLetSGoooTime =>
-      'HADİ GİDELİM! Bugün o kazanımları parçalama zamanı! 5 günlük bir seridesin ve bunu bozmana izin vermeyeceğim. Sihir yapmaya hazır mısın?';
+  String get coachSelectionLetSGoooTime => 'HADİ GİDELİM! Bugün o kazanımları parçalama zamanı! 5 günlük bir seridesin ve bunu bozmana izin vermeyeceğim. Sihir yapmaya hazır mısın?';
 
   @override
   String get coachSelectionLook => 'Görünüş';
 
   @override
-  String get coachSelectionMotivationalEncouraging =>
-      'Motivasyonel ve Teşvik Edici';
+  String get coachSelectionMotivationalEncouraging => 'Motivasyonel ve Teşvik Edici';
 
   @override
   String get coachSelectionNameYourCoach => 'Koçuna isim ver';
@@ -4089,8 +3822,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachVoicePickerCoachVoice => 'Koç sesi';
 
   @override
-  String get coachVoicePickerDeeperHighEnergyVoice =>
-      'Daha derin, yüksek enerjili ses';
+  String get coachVoicePickerDeeperHighEnergyVoice => 'Daha derin, yüksek enerjili ses';
 
   @override
   String get coachVoicePickerDefault => 'Varsayılan';
@@ -4101,12 +3833,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get coachVoicePickerPlaysDuringWorkoutAnnouncem =>
-      'Antrenman duyuruları sırasında çalar';
+  String get coachVoicePickerPlaysDuringWorkoutAnnouncem => 'Antrenman duyuruları sırasında çalar';
 
   @override
-  String get coachVoicePickerUnlocksAtLevel50 =>
-      '50. Seviyede açılır — seviye atlamaya devam et!';
+  String get coachVoicePickerUnlocksAtLevel50 => '50. Seviyede açılır — seviye atlamaya devam et!';
 
   @override
   String get coachVoicePickerUnlocksAtLevel502 => '50. Seviyede açılır';
@@ -4151,16 +3881,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get combinedHealthConnectHealth => 'Sağlık Bağlantısı';
 
   @override
-  String get combinedHealthConnectHealthBody =>
-      'Adımlar, kalp atış hızı, uyku ve daha fazlası Android\'de Health Connect ve iOS\'te Apple Sağlık uygulaması üzerinden senkronize edilir.';
+  String get combinedHealthConnectHealthBody => 'Adımlar, kalp atış hızı, uyku ve daha fazlası Android\'de Health Connect ve iOS\'te Apple Sağlık uygulaması üzerinden senkronize edilir.';
 
   @override
-  String get combinedHealthConnectHealthToSee =>
-      'Aktiviteni görmek için Sağlık bağlantısını kur';
+  String get combinedHealthConnectHealthToSee => 'Aktiviteni görmek için Sağlık bağlantısını kur';
 
   @override
-  String get combinedHealthCouldNotLoadYour =>
-      'Sağlık verilerin yüklenemedi. Aşağı çekip tekrar dene.';
+  String get combinedHealthCouldNotLoadYour => 'Sağlık verilerin yüklenemedi. Aşağı çekip tekrar dene.';
 
   @override
   String get combinedHealthCouldNotSaveGoal => 'Hedef kaydedilemedi.';
@@ -4172,8 +3899,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get combinedHealthHealth => 'Sağlık';
 
   @override
-  String get combinedHealthHitYourStepGoal =>
-      'Seri başlatmak için adım hedefine ulaş.';
+  String get combinedHealthHitYourStepGoal => 'Seri başlatmak için adım hedefine ulaş.';
 
   @override
   String get combinedHealthRestingHeartRate => 'Dinlenme Nabzı';
@@ -4214,8 +3940,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get combinedHealthWater => 'Su';
 
   @override
-  String get comebackModeComebackModeReducesSets =>
-      'Geri dönüş modu, bir aradan sonra sakatlanmayı önlemek için setleri ve yoğunluğu azaltır.';
+  String get comebackModeComebackModeReducesSets => 'Geri dönüş modu, bir aradan sonra sakatlanmayı önlemek için setleri ve yoğunluğu azaltır.';
 
   @override
   String get comebackModeEaseMeBackIn => 'Yavaşça başlat';
@@ -4235,15 +3960,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonActiveChallenges => 'Aktif Meydan Okumalar';
 
   @override
-  String get comingSoonBeforeAfterProgressComparis =>
-      'Öncesi/sonrası gelişim karşılaştırması';
+  String get comingSoonBeforeAfterProgressComparis => 'Öncesi/sonrası gelişim karşılaştırması';
 
   @override
   String get comingSoonBluetoothHeartRateHardware => 'Bluetooth Nabız Donanımı';
 
   @override
-  String get comingSoonBody =>
-      'Bu özellik üzerinde çalışıyoruz. Takipte kalın.';
+  String get comingSoonBody => 'Bu özellik üzerinde çalışıyoruz. Takipte kalın.';
 
   @override
   String get comingSoonBottomComingSoon => 'Yakında';
@@ -4252,10 +3975,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonBottomGotIt => 'Anladım!';
 
   @override
-  String comingSoonBottomSheetWeeksSessionsPerWeek(
-    Object durationWeeks,
-    Object sessionsPerWeek,
-  ) {
+  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek) {
     return '$durationWeeks hafta • haftada $sessionsPerWeek seans';
   }
 
@@ -4263,15 +3983,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonBottomWhatYouCanExpect => 'Neler bekleyebilirsin:';
 
   @override
-  String get comingSoonBrowseLikeAndRemix =>
-      'Topluluk tarafından paylaşılan tariflere göz at, beğen ve yeniden düzenle. Sosyal sekmesiyle geliyor.';
+  String get comingSoonBrowseLikeAndRemix => 'Topluluk tarafından paylaşılan tariflere göz at, beğen ve yeniden düzenle. Sosyal sekmesiyle geliyor.';
 
   @override
   String get comingSoonCaloriesSummary => 'Kalori Özeti';
 
   @override
-  String get comingSoonChallengeProgressMiniCard =>
-      'Meydan okuma ilerleme mini kartı';
+  String get comingSoonChallengeProgressMiniCard => 'Meydan okuma ilerleme mini kartı';
 
   @override
   String get comingSoonComingSoon => 'Yakında';
@@ -4283,12 +4001,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonDailyStats => 'Günlük İstatistikler';
 
   @override
-  String get comingSoonExerciseVariationThisWeek =>
-      'Bu haftaki egzersiz çeşitliliği';
+  String get comingSoonExerciseVariationThisWeek => 'Bu haftaki egzersiz çeşitliliği';
 
   @override
-  String get comingSoonFeaturesWeReWorking =>
-      'Üzerinde çalıştığımız yeni özellikler';
+  String get comingSoonFeaturesWeReWorking => 'Üzerinde çalıştığımız yeni özellikler';
 
   @override
   String get comingSoonFitnessScore => 'Fitness Skoru';
@@ -4300,12 +4016,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonFriendActivity => 'Arkadaş Aktivitesi';
 
   @override
-  String get comingSoonHealthDeviceActivitySummary =>
-      'Sağlık cihazı aktivite özeti';
+  String get comingSoonHealthDeviceActivitySummary => 'Sağlık cihazı aktivite özeti';
 
   @override
-  String get comingSoonHolisticPlanWithWorkouts =>
-      'Antrenman, beslenme ve oruç içeren bütünsel plan';
+  String get comingSoonHolisticPlanWithWorkouts => 'Antrenman, beslenme ve oruç içeren bütünsel plan';
 
   @override
   String get comingSoonLeaderboard => 'Liderlik Tablosu';
@@ -4317,15 +4031,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonMiniCalendar => 'Mini Takvim';
 
   @override
-  String get comingSoonMiniCalendarWithWorkout =>
-      'Antrenman günlerini içeren mini takvim';
+  String get comingSoonMiniCalendarWithWorkout => 'Antrenman günlerini içeren mini takvim';
 
   @override
   String get comingSoonMoodCheckIn => 'Ruh hali bildirimi';
 
   @override
-  String get comingSoonMuscleGroupsTrainedRecently =>
-      'Son zamanlarda çalıştırılan kas grupları';
+  String get comingSoonMuscleGroupsTrainedRecently => 'Son zamanlarda çalıştırılan kas grupları';
 
   @override
   String get comingSoonMuscleHeatmap => 'Kas Isı Haritası';
@@ -4334,23 +4046,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonMyJourney => 'Yolculuğum';
 
   @override
-  String get comingSoonOneTapOnYour =>
-      'Kalori ve makroları içeren bir AI yemek fikri için ana ekranına veya kilit ekranına tek dokunuş — artı bir \"Kaydet\" butonu';
+  String get comingSoonOneTapOnYour => 'Kalori ve makroları içeren bir AI yemek fikri için ana ekranına veya kilit ekranına tek dokunuş — artı bir \"Kaydet\" butonu';
 
   @override
-  String get comingSoonOneTapToStart =>
-      'Bugünün antrenmanını başlatmak için tek dokunuş';
+  String get comingSoonOneTapToStart => 'Bugünün antrenmanını başlatmak için tek dokunuş';
 
   @override
-  String get comingSoonOverallFitnessStrengthNu =>
-      'Genel fitness, güç ve beslenme skorları';
+  String get comingSoonOverallFitnessStrengthNu => 'Genel fitness, güç ve beslenme skorları';
 
   @override
   String get comingSoonOverlayComingSoon => 'Yakında';
 
   @override
-  String get comingSoonPairBleChestStraps =>
-      'Antrenman sırasında canlı BPM için BLE göğüs bantlarını ve nabız monitörlerini eşleştir';
+  String get comingSoonPairBleChestStraps => 'Antrenman sırasında canlı BPM için BLE göğüs bantlarını ve nabız monitörlerini eşleştir';
 
   @override
   String get comingSoonPhotoCompare => 'Fotoğraf Karşılaştırma';
@@ -4362,15 +4070,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonQuickMeasurements => 'Hızlı Ölçümler';
 
   @override
-  String get comingSoonQuickMoodPickerFor =>
-      'Anlık antrenmanlar için hızlı ruh hali seçici';
+  String get comingSoonQuickMoodPickerFor => 'Anlık antrenmanlar için hızlı ruh hali seçici';
 
   @override
   String get comingSoonQuickStart => 'Hızlı Başlangıç';
 
   @override
-  String get comingSoonRecentWeightWithTrend =>
-      'Trend okuyla birlikte güncel kilo';
+  String get comingSoonRecentWeightWithTrend => 'Trend okuyla birlikte güncel kilo';
 
   @override
   String get comingSoonRecipeDiscoveryFeed => 'Tarif Keşif Akışı';
@@ -4379,8 +4085,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonRecipeImport => 'Tarif İçe Aktarma';
 
   @override
-  String get comingSoonRecoveryTipsForRest =>
-      'Dinlenme günleri için toparlanma ipuçları';
+  String get comingSoonRecoveryTipsForRest => 'Dinlenme günleri için toparlanma ipuçları';
 
   @override
   String get comingSoonRestDayTips => 'Dinlenme Günü İpuçları';
@@ -4389,20 +4094,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonSearchFeatures => 'Özellikleri ara...';
 
   @override
-  String get comingSoonSeeWhatFriendsAre =>
-      'Arkadaşlarının neler yaptığını gör';
+  String get comingSoonSeeWhatFriendsAre => 'Arkadaşlarının neler yaptığını gör';
 
   @override
-  String get comingSoonStepsCountAndCalorie =>
-      'Adım sayısı ve kalori açığı takibi';
+  String get comingSoonStepsCountAndCalorie => 'Adım sayısı ve kalori açığı takibi';
 
   @override
-  String get comingSoonStrengthAndVolumeCharts =>
-      'Zaman içindeki güç ve hacim grafikleri';
+  String get comingSoonStrengthAndVolumeCharts => 'Zaman içindeki güç ve hacim grafikleri';
 
   @override
-  String get comingSoonTheseFeaturesAreIn =>
-      'Bu özellikler geliştirme aşamasındadır ve yakında ana ekran widget\'ları olarak eklenecektir.';
+  String get comingSoonTheseFeaturesAreIn => 'Bu özellikler geliştirme aşamasındadır ve yakında ana ekran widget\'ları olarak eklenecektir.';
 
   @override
   String get comingSoonTitle => 'Yakında';
@@ -4411,19 +4112,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonTodaySIntakeVs => 'Bugünkü alım ve hedef durumu';
 
   @override
-  String get comingSoonTotalWorkoutsTimeInvested =>
-      'Toplam antrenman, harcanan zaman ve dönüm noktaları';
+  String get comingSoonTotalWorkoutsTimeInvested => 'Toplam antrenman, harcanan zaman ve dönüm noktaları';
 
   @override
-  String get comingSoonTrackBodyMeasurementsEasily =>
-      'Vücut ölçülerini kolayca takip et';
+  String get comingSoonTrackBodyMeasurementsEasily => 'Vücut ölçülerini kolayca takip et';
 
   @override
   String get comingSoonUpcomingHomeWidgets => 'Yaklaşan Ana Ekran Widget\'ları';
 
   @override
-  String get comingSoonVisualDonutChartsFor =>
-      'Protein, karbonhidrat ve yağ için görsel halka grafikler';
+  String get comingSoonVisualDonutChartsFor => 'Protein, karbonhidrat ve yağ için görsel halka grafikler';
 
   @override
   String get comingSoonWeekChanges => 'Haftalık Değişimler';
@@ -4438,8 +4136,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comingSoonWhatShouldIEat => 'Ne Yemeliyim? Widget\'ı';
 
   @override
-  String get comingSoonYourFitnessJourneyProgress =>
-      'Fitness yolculuğundaki ilerlemen';
+  String get comingSoonYourFitnessJourneyProgress => 'Fitness yolculuğundaki ilerlemen';
 
   @override
   String get comingSoonYourJourneyRoi => 'Yolculuğunun ROI değeri';
@@ -4489,8 +4186,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get commitmentPactSkipTheCommitment => 'Taahhüdü atla?';
 
   @override
-  String get commitmentPactWeLlHandleThe =>
-      'Planı biz hallederiz, sen sadece gelmeye odaklan.';
+  String get commitmentPactWeLlHandleThe => 'Planı biz hallederiz, sen sadece gelmeye odaklan.';
 
   @override
   String get commonBack => 'Geri';
@@ -4541,31 +4237,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get communityRecipeSearchCommunityRecipes => 'Topluluk tarifleri';
 
   @override
-  String get communityRecipeSearchNothingFoundInCommunity =>
-      'Topluluk tariflerinde hiçbir şey bulunamadı.';
+  String get communityRecipeSearchNothingFoundInCommunity => 'Topluluk tariflerinde hiçbir şey bulunamadı.';
 
   @override
-  String get communityRecipeSearchOpenTheRecipeTo =>
-      'Kitaplığına kaydetmek için tarifi aç';
+  String get communityRecipeSearchOpenTheRecipeTo => 'Kitaplığına kaydetmek için tarifi aç';
 
   @override
   String get communityRecipeSearchSaveToMyRecipes => 'Tariflerime kaydet';
 
   @override
-  String communityRecipeSearchScreenKcalLogs(
-    Object summary,
-    Object timesLogged,
-  ) {
+  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged) {
     return '$summary kcal · $timesLogged kayıt';
   }
 
   @override
-  String get communityRecipeSearchSearchPublicRecipes =>
-      'Herkese açık tarifleri ara…';
+  String get communityRecipeSearchSearchPublicRecipes => 'Herkese açık tarifleri ara…';
 
   @override
-  String get communityRecipeSearchSearchPublicRecipesShared =>
-      'Diğer kullanıcılar tarafından paylaşılan tarifleri ara.';
+  String get communityRecipeSearchSearchPublicRecipesShared => 'Diğer kullanıcılar tarafından paylaşılan tarifleri ara.';
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
@@ -4576,10 +4265,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get compactWorkoutRow => ' • ';
 
   @override
-  String compactWorkoutRowMinExercises(
-    Object bestDurationMinutes,
-    Object exerciseCount,
-  ) {
+  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount) {
     return '${bestDurationMinutes}dk • $exerciseCount egzersiz';
   }
 
@@ -4587,8 +4273,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get companionPickerAddAll => 'Hepsini ekle';
 
   @override
-  String get companionPickerLastTimeYouLogged =>
-      'Bunları en son birlikte kaydetmiştin; bugün sadece geçerli olanları seç.';
+  String get companionPickerLastTimeYouLogged => 'Bunları en son birlikte kaydetmiştin; bugün sadece geçerli olanları seç.';
 
   @override
   String get companionPickerLogSelected => 'Seçilenleri kaydet';
@@ -4653,15 +4338,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comparisonGalleryComparisonDeleted => 'Karşılaştırma silindi';
 
   @override
-  String get comparisonGalleryCreateABeforeAfter =>
-      'Zaman içindeki ilerlemeni görmek için Fotoğraflar sekmesinden bir öncesi ve sonrası karşılaştırması oluştur.';
+  String get comparisonGalleryCreateABeforeAfter => 'Zaman içindeki ilerlemeni görmek için Fotoğraflar sekmesinden bir öncesi ve sonrası karşılaştırması oluştur.';
 
   @override
   String get comparisonGalleryDeleteComparison => 'Karşılaştırmayı Sil?';
 
   @override
-  String get comparisonGalleryExportAndShareThis =>
-      'Bu karşılaştırmayı dışa aktar ve paylaş';
+  String get comparisonGalleryExportAndShareThis => 'Bu karşılaştırmayı dışa aktar ve paylaş';
 
   @override
   String get comparisonGalleryNoComparisonsYet => 'Henüz Karşılaştırma Yok';
@@ -4670,26 +4353,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comparisonGalleryOpen => 'Aç';
 
   @override
-  String get comparisonGalleryOpenInComparisonEditor =>
-      'Karşılaştırma düzenleyicide aç';
+  String get comparisonGalleryOpenInComparisonEditor => 'Karşılaştırma düzenleyicide aç';
 
   @override
-  String get comparisonGalleryOpenTheComparisonIn =>
-      'Dışa aktarmak ve paylaşmak için önce karşılaştırmayı düzenleyicide aç.';
+  String get comparisonGalleryOpenTheComparisonIn => 'Dışa aktarmak ve paylaşmak için önce karşılaştırmayı düzenleyicide aç.';
 
   @override
   String get comparisonGalleryReEdit => 'Yeniden düzenle';
 
   @override
-  String get comparisonGalleryRemoveThisComparison =>
-      'Bu karşılaştırmayı kaldır';
+  String get comparisonGalleryRemoveThisComparison => 'Bu karşılaştırmayı kaldır';
 
   @override
   String get comparisonGallerySavedComparisons => 'Kaydedilen Karşılaştırmalar';
 
   @override
-  String get comparisonGalleryThisWillPermanentlyRemove =>
-      'Bu işlem karşılaştırmayı kalıcı olarak kaldıracaktır. Orijinal fotoğraflar silinmeyecektir.';
+  String get comparisonGalleryThisWillPermanentlyRemove => 'Bu işlem karşılaştırmayı kalıcı olarak kaldıracaktır. Orijinal fotoğraflar silinmeyecektir.';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4752,11 +4431,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String comparisonViewExtSelectedPhotos(
-    Object length,
-    Object maxPhotos,
-    Object minPhotos,
-  ) {
+  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos) {
     return '$length seçildi ($minPhotos-$maxPhotos fotoğraf)';
   }
 
@@ -4816,12 +4491,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comparisonWidth => 'Genişlik';
 
   @override
-  String get completeExtendFailed =>
-      'Antrenman uzatılamadı. Lütfen tekrar deneyin.';
+  String get completeExtendFailed => 'Antrenman uzatılamadı. Lütfen tekrar deneyin.';
 
   @override
-  String get completeNoFriendsYet =>
-      'Henüz arkadaş yok — birkaç kişiyi davet edin!';
+  String get completeNoFriendsYet => 'Henüz arkadaş yok — birkaç kişiyi davet edin!';
 
   @override
   String get completeNoShareData => 'Paylaşılacak antrenman verisi henüz yok';
@@ -4839,8 +4512,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get completeViewGoals => 'Hedefleri Görüntüle';
 
   @override
-  String get complianceRingCardAllWorkoutsCompleted =>
-      'Tüm antrenmanlar tamamlandı';
+  String get complianceRingCardAllWorkoutsCompleted => 'Tüm antrenmanlar tamamlandı';
 
   @override
   String get complianceRingCardGetStartedToday => 'Bugün başla';
@@ -4851,8 +4523,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get complianceRingCardNoWorkoutsScheduledThis =>
-      'Bu hafta planlanmış antrenman yok';
+  String get complianceRingCardNoWorkoutsScheduledThis => 'Bu hafta planlanmış antrenman yok';
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
@@ -4871,8 +4542,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get comprehensiveStatsStatsScores => 'İstatistikler ve Skorlar';
 
   @override
-  String get connectedAppsAutoImportEvery15 =>
-      'Her 15 dakikada bir otomatik içe aktar';
+  String get connectedAppsAutoImportEvery15 => 'Her 15 dakikada bir otomatik içe aktar';
 
   @override
   String get connectedAppsConnect => 'Bağlan';
@@ -4887,16 +4557,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get connectedAppsEnable => 'Etkinleştir';
 
   @override
-  String get connectedAppsIncludeCardioSessions =>
-      'Kardiyo seanslarını dahil et';
+  String get connectedAppsIncludeCardioSessions => 'Kardiyo seanslarını dahil et';
 
   @override
-  String get connectedAppsIncludeStrengthWorkouts =>
-      'Güç antrenmanlarını dahil et';
+  String get connectedAppsIncludeStrengthWorkouts => 'Güç antrenmanlarını dahil et';
 
   @override
-  String get connectedAppsNoSyncYetWill =>
-      'Henüz senkronizasyon yok — 15 dakika içinde gerçekleşecek.';
+  String get connectedAppsNoSyncYetWill => 'Henüz senkronizasyon yok — 15 dakika içinde gerçekleşecek.';
 
   @override
   String get connectedAppsReconnect => 'Yeniden bağlan';
@@ -4954,15 +4621,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get consistencyInsightCardDayStreak => 'günlük seri';
 
   @override
-  String get consistencyInsightCardStartFreshToday =>
-      'Bugün Yeni Bir Başlangıç Yap!';
+  String get consistencyInsightCardStartFreshToday => 'Bugün Yeni Bir Başlangıç Yap!';
 
   @override
   String get consistencyInsightCardStreak => 'Seri';
 
   @override
-  String get consistencyInsightCardTapToBeginA =>
-      'Yeni bir seri başlatmak için dokun';
+  String get consistencyInsightCardTapToBeginA => 'Yeni bir seri başlatmak için dokun';
 
   @override
   String get consistencyInsightCardTapToRefresh => 'Yenilemek için dokun';
@@ -4996,8 +4661,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get consistencyScoreCardWorkoutCompletionRate =>
-      'Antrenman tamamlama oranı';
+  String get consistencyScoreCardWorkoutCompletionRate => 'Antrenman tamamlama oranı';
 
   @override
   String consistencyScreenAverageWeeklyCompletion(Object avgRate) {
@@ -5059,27 +4723,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get contributeFoodDataCouldNotDeletePlease =>
-      'Silinemedi — lütfen tekrar deneyin';
+  String get contributeFoodDataCouldNotDeletePlease => 'Silinemedi — lütfen tekrar deneyin';
 
   @override
-  String get contributeFoodDataDeleteFoodContributions =>
-      'Gıda katkılarını sil?';
+  String get contributeFoodDataDeleteFoodContributions => 'Gıda katkılarını sil?';
 
   @override
-  String get contributeFoodDataDeleteMyFoodContributions =>
-      'Gıda katkılarımı sil';
+  String get contributeFoodDataDeleteMyFoodContributions => 'Gıda katkılarımı sil';
 
   @override
-  String get contributeFoodDataHelpImproveNutritionData =>
-      'Beslenme verilerini iyileştirmeye yardımcı ol';
+  String get contributeFoodDataHelpImproveNutritionData => 'Beslenme verilerini iyileştirmeye yardımcı ol';
 
   @override
   String get contributeFoodDataNoContributionsToDelete => 'Silinecek katkı yok';
 
   @override
-  String get contributeFoodDataSharingNovelDishesRecommen =>
-      'Yeni yemekler paylaşmak (önerilir)';
+  String get contributeFoodDataSharingNovelDishesRecommen => 'Yeni yemekler paylaşmak (önerilir)';
 
   @override
   String get conversationEncrypted => 'Şifreli';
@@ -5113,15 +4772,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get conversationSendTheFirstMessage => 'İlk mesajı gönder!';
 
   @override
-  String get conversationSomeMessagesWereEncrypted =>
-      'Bazı mesajlar başka bir cihazda şifrelendi ve burada okunamıyor.';
+  String get conversationSomeMessagesWereEncrypted => 'Bazı mesajlar başka bir cihazda şifrelendi ve burada okunamıyor.';
 
   @override
   String get conversationTypeAMessage => 'Bir mesaj yaz...';
 
   @override
-  String get cookingConverterConvertBetweenRawAnd =>
-      'Çiğ ve pişmiş ağırlıklar arasında dönüştür';
+  String get cookingConverterConvertBetweenRawAnd => 'Çiğ ve pişmiş ağırlıklar arasında dönüştür';
 
   @override
   String get cookingConverterCooked => 'Pişmiş';
@@ -5189,8 +4846,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cosmeticsGalleryYourLoadout => 'Ekipmanların';
 
   @override
-  String get createChallengeAnyoneCanDiscoverAnd =>
-      'Herkes keşfedebilir ve katılabilir';
+  String get createChallengeAnyoneCanDiscoverAnd => 'Herkes keşfedebilir ve katılabilir';
 
   @override
   String get createChallengeChallengeType => 'Meydan Okuma Türü';
@@ -5241,8 +4897,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createExerciseAdvancedOptional => 'Gelişmiş (isteğe bağlı)';
 
   @override
-  String get createExerciseAiFilledExerciseDetails =>
-      'AI tarafından doldurulan egzersiz detayları — incele ve kaydet';
+  String get createExerciseAiFilledExerciseDetails => 'AI tarafından doldurulan egzersiz detayları — incele ve kaydet';
 
   @override
   String get createExerciseAnalyzeWithAi => 'AI ile analiz et';
@@ -5251,8 +4906,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createExerciseAnalyzing => 'Analiz ediliyor...';
 
   @override
-  String get createExerciseAnySpecialInstructions =>
-      'Özel bir talimatınız var mı...';
+  String get createExerciseAnySpecialInstructions => 'Özel bir talimatınız var mı...';
 
   @override
   String get createExerciseBand => 'Direnç Bandı';
@@ -5267,19 +4921,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createExerciseCreateExercise => 'Egzersiz Oluştur';
 
   @override
-  String get createExerciseDescribeHowToPerform =>
-      'Bu egzersizin nasıl yapılacağını tarif et...';
+  String get createExerciseDescribeHowToPerform => 'Bu egzersizin nasıl yapılacağını tarif et...';
 
   @override
-  String get createExerciseEGBenchPress =>
-      'örn. Bench Press & Chest Fly Süper Set';
+  String get createExerciseEGBenchPress => 'örn. Bench Press & Chest Fly Süper Set';
 
   @override
   String get createExerciseEGBenchPress2 => 'örn. Bench Press';
 
   @override
-  String get createExerciseEGFocusOn =>
-      'örn. Tepe noktasında sıkıştırmaya odaklan, yavaş negatif';
+  String get createExerciseEGFocusOn => 'örn. Tepe noktasında sıkıştırmaya odaklan, yavaş negatif';
 
   @override
   String get createExerciseEGMyCustom => 'örn. Özel Press Hareketim';
@@ -5294,8 +4945,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createExerciseReps => 'Tekrar: ';
 
   @override
-  String get createExerciseRestRpeTempoIncline =>
-      'Dinlenme, RPE, tempo, eğim, mesafe, süre, notlar';
+  String get createExerciseRestRpeTempoIncline => 'Dinlenme, RPE, tempo, eğim, mesafe, süre, notlar';
 
   @override
   String createExerciseSheetAddMoreExercises(Object length) {
@@ -5319,8 +4969,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createExerciseTakePhoto => 'Fotoğraf Çek';
 
   @override
-  String get createGoalChallengeYourselfToBeat =>
-      'Kişisel rekorunu kırmak için kendine meydan oku!';
+  String get createGoalChallengeYourselfToBeat => 'Kişisel rekorunu kırmak için kendine meydan oku!';
 
   @override
   String get createGoalExercise => 'Egzersiz';
@@ -5441,8 +5090,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get createPostSheetMediaOptional => 'Medya (İsteğe bağlı)';
 
   @override
-  String get createPostSheetShareYourFitnessJourney =>
-      'Fitness yolculuğunu paylaş...';
+  String get createPostSheetShareYourFitnessJourney => 'Fitness yolculuğunu paylaş...';
 
   @override
   String get createPostSheetTrending => 'Trendler';
@@ -5507,12 +5155,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customColorLabCustomColorLab => 'Özel Renk Laboratuvarı';
 
   @override
-  String get customColorLabFineTuneAccentColor =>
-      'Vurgu rengini HSV seçici ile ince ayar yapın';
+  String get customColorLabFineTuneAccentColor => 'Vurgu rengini HSV seçici ile ince ayar yapın';
 
   @override
-  String get customContentAddYourOwnEquipment =>
-      'Kendi ekipmanınızı ve egzersizlerinizi ekleyin';
+  String get customContentAddYourOwnEquipment => 'Kendi ekipmanınızı ve egzersizlerinizi ekleyin';
 
   @override
   String get customContentMyCustomContent => 'ÖZEL İÇERİĞİM';
@@ -5524,16 +5170,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customContentSectionAddCustomExercise => 'Özel Egzersiz Ekle';
 
   @override
-  String get customContentSectionAddEquipmentAboveTo =>
-      'Başlamak için yukarıdan ekipman ekleyin';
+  String get customContentSectionAddEquipmentAboveTo => 'Başlamak için yukarıdan ekipman ekleyin';
 
   @override
-  String get customContentSectionAddEquipmentNotIn =>
-      'Standart listede olmayan ekipmanları ekleyin';
+  String get customContentSectionAddEquipmentNotIn => 'Standart listede olmayan ekipmanları ekleyin';
 
   @override
-  String get customContentSectionAddEquipmentThatWill =>
-      'Antrenmanlarınız oluşturulurken kullanılacak ekipmanları ekleyin.';
+  String get customContentSectionAddEquipmentThatWill => 'Antrenmanlarınız oluşturulurken kullanılacak ekipmanları ekleyin.';
 
   @override
   String get customContentSectionAddExercise => 'Egzersiz Ekle';
@@ -5542,19 +5185,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customContentSectionCompoundExercise => 'Bileşik Egzersiz';
 
   @override
-  String get customContentSectionCreateCustomComboExercise =>
-      'Özel ve kombo egzersizler oluşturun';
+  String get customContentSectionCreateCustomComboExercise => 'Özel ve kombo egzersizler oluşturun';
 
   @override
-  String get customContentSectionCreateExercisesThatCan =>
-      'AI tarafından oluşturulan antrenmanlarınıza dahil edilebilecek egzersizler oluşturun.';
+  String get customContentSectionCreateExercisesThatCan => 'AI tarafından oluşturulan antrenmanlarınıza dahil edilebilecek egzersizler oluşturun.';
 
   @override
   String get customContentSectionDeleteExercise => 'Egzersizi Sil?';
 
   @override
-  String get customContentSectionDescribeHowToPerform =>
-      'Nasıl yapılacağını açıklayın...';
+  String get customContentSectionDescribeHowToPerform => 'Nasıl yapılacağını açıklayın...';
 
   @override
   String get customContentSectionEGPikePush => 'örn. Pike Push-ups';
@@ -5563,12 +5203,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customContentSectionEnterEquipmentName => 'Ekipman adını girin...';
 
   @override
-  String get customContentSectionFailedToLoadExercises =>
-      'Egzersizler yüklenemedi';
+  String get customContentSectionFailedToLoadExercises => 'Egzersizler yüklenemedi';
 
   @override
-  String get customContentSectionInstructionsOptional =>
-      'Talimatlar (isteğe bağlı)';
+  String get customContentSectionInstructionsOptional => 'Talimatlar (isteğe bağlı)';
 
   @override
   String get customContentSectionMyCustomEquipment => 'Özel Ekipmanım';
@@ -5583,17 +5221,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customContentSectionMyExercises => 'Egzersizlerim';
 
   @override
-  String get customContentSectionNoCustomEquipmentYet =>
-      'Henüz özel ekipman yok';
+  String get customContentSectionNoCustomEquipmentYet => 'Henüz özel ekipman yok';
 
   @override
-  String get customContentSectionNoCustomExercisesYet =>
-      'Henüz özel egzersiz yok';
+  String get customContentSectionNoCustomExercisesYet => 'Henüz özel egzersiz yok';
 
   @override
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed) {
     return '\"$trimmed\" ekipmanına eklendi';
   }
 
@@ -5613,9 +5247,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(
-    Object trimmed,
-  ) {
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed) {
     return '$trimmed zaten listende';
   }
 
@@ -5631,12 +5263,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customContentSectionSets => 'Set';
 
   @override
-  String get customContentSectionTapTheButtonAbove =>
-      'Bir tane oluşturmak için yukarıdaki düğmeye dokunun';
+  String get customContentSectionTapTheButtonAbove => 'Bir tane oluşturmak için yukarıdaki düğmeye dokunun';
 
   @override
-  String get customContentSectionTargetsMultipleMuscleGroups =>
-      'Birden fazla kas grubunu hedefler';
+  String get customContentSectionTargetsMultipleMuscleGroups => 'Birden fazla kas grubunu hedefler';
 
   @override
   String get customExerciseCard => ' • ';
@@ -5670,8 +5300,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customExercisesMyExercises => 'Egzersizlerim';
 
   @override
-  String get customExercisesNoExercisesMatchYour =>
-      'Aramanızla eşleşen egzersiz bulunamadı';
+  String get customExercisesNoExercisesMatchYour => 'Aramanızla eşleşen egzersiz bulunamadı';
 
   @override
   String customExercisesScreenAreYouSureYou(Object name) {
@@ -5679,10 +5308,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenExercisesUses(
-    Object totalCustomExercises,
-    Object totalUses,
-  ) {
+  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses) {
     return '$totalCustomExercises egzersiz, $totalUses kullanım';
   }
 
@@ -5711,8 +5337,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customFoodBuilderCreateNewAnyway => 'Yine de yeni oluştur';
 
   @override
-  String get customFoodBuilderFillItInYourself =>
-      'Kendiniz doldurun veya AI\'nın bir isim ya da etiket fotoğrafından önermesine izin verin. Her değer düzenlenebilir kalır.';
+  String get customFoodBuilderFillItInYourself => 'Kendiniz doldurun veya AI\'nın bir isim ya da etiket fotoğrafından önermesine izin verin. Her değer düzenlenebilir kalır.';
 
   @override
   String get customFoodBuilderLabelFromPhotos => 'Fotoğraflardan etiketle';
@@ -5743,12 +5368,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customFoodBuilderUseExisting => 'Mevcut olanı kullan';
 
   @override
-  String get customGoalsAddSpecificSkillsOr =>
-      'Geliştirmek istediğiniz belirli becerileri veya hedefleri ekleyin.\nAI, doğru egzersizleri bulmanıza yardımcı olacaktır.';
+  String get customGoalsAddSpecificSkillsOr => 'Geliştirmek istediğiniz belirli becerileri veya hedefleri ekleyin.\nAI, doğru egzersizleri bulmanıza yardımcı olacaktır.';
 
   @override
-  String get customGoalsAiGeneratedKeywords =>
-      'AI Tarafından Oluşturulan Anahtar Kelimeler';
+  String get customGoalsAiGeneratedKeywords => 'AI Tarafından Oluşturulan Anahtar Kelimeler';
 
   @override
   String get customGoalsCustomGoals => 'Özel Hedefler';
@@ -5757,8 +5380,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customGoalsDeleteGoal => 'Hedefi Sil?';
 
   @override
-  String get customGoalsEGImproveBox =>
-      'örn. \"Box jump yüksekliğini geliştir\"';
+  String get customGoalsEGImproveBox => 'örn. \"Box jump yüksekliğini geliştir\"';
 
   @override
   String get customGoalsGoalCreated => 'Hedef Oluşturuldu!';
@@ -5778,8 +5400,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customGoalsSomethingWentWrong => 'Bir şeyler yanlış gitti';
 
   @override
-  String get customGoalsTheseKeywordsWillHelp =>
-      'Bu anahtar kelimeler, hedefiniz için ilgili egzersizleri bulmanıza yardımcı olacaktır.';
+  String get customGoalsTheseKeywordsWillHelp => 'Bu anahtar kelimeler, hedefiniz için ilgili egzersizleri bulmanıza yardımcı olacaktır.';
 
   @override
   String get customTrendAddMetric => 'Metrik ekle';
@@ -5791,8 +5412,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customTrendCompareLastCycle => 'Son döngüyü karşılaştır';
 
   @override
-  String get customTrendCompareLastCycleNeeds =>
-      'Son döngüyü karşılaştır · aralıkta ≥ 2 döngü gerekir';
+  String get customTrendCompareLastCycleNeeds => 'Son döngüyü karşılaştır · aralıkta ≥ 2 döngü gerekir';
 
   @override
   String get customTrendCustomTrendSaved => 'Özel trend kaydedildi';
@@ -5827,10 +5447,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String customTrendScreenSharedDays(
-    Object kMinCorrelationPairs,
-    Object pairedPoints,
-  ) {
+  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints) {
     return '$pairedPoints/$kMinCorrelationPairs ortak gün';
   }
 
@@ -5841,8 +5458,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customWorkoutBuilderBuildCustomWorkout => 'Özel Antrenman Oluştur';
 
   @override
-  String get customWorkoutBuilderCustomWorkoutCreated =>
-      'Özel antrenman oluşturuldu!';
+  String get customWorkoutBuilderCustomWorkoutCreated => 'Özel antrenman oluşturuldu!';
 
   @override
   String get customWorkoutBuilderDifficulty => 'Zorluk';
@@ -5851,20 +5467,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customWorkoutBuilderExercise => 'Egzersiz';
 
   @override
-  String get customWorkoutBuilderFailedToCreateWorkout =>
-      'Antrenman oluşturulamadı';
+  String get customWorkoutBuilderFailedToCreateWorkout => 'Antrenman oluşturulamadı';
 
   @override
-  String get customWorkoutBuilderNoExercisesAddedYet =>
-      'Henüz egzersiz eklenmedi';
+  String get customWorkoutBuilderNoExercisesAddedYet => 'Henüz egzersiz eklenmedi';
 
   @override
-  String get customWorkoutBuilderPleaseAddAtLeast =>
-      'Lütfen en az bir egzersiz ekleyin';
+  String get customWorkoutBuilderPleaseAddAtLeast => 'Lütfen en az bir egzersiz ekleyin';
 
   @override
-  String get customWorkoutBuilderPleaseEnterAWorkout =>
-      'Lütfen bir antrenman adı girin';
+  String get customWorkoutBuilderPleaseEnterAWorkout => 'Lütfen bir antrenman adı girin';
 
   @override
   String get customWorkoutBuilderReps => 'Tekrar';
@@ -5889,8 +5501,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customWorkoutBuilderSets => 'Setler';
 
   @override
-  String get customWorkoutBuilderTapTheButtonBelow =>
-      'Egzersiz eklemek için aşağıdaki düğmeye dokun';
+  String get customWorkoutBuilderTapTheButtonBelow => 'Egzersiz eklemek için aşağıdaki düğmeye dokun';
 
   @override
   String get customWorkoutBuilderWeightKg => 'Ağırlık (kg)';
@@ -5989,8 +5600,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cycleMonthlySummaryThisRecapStaysPrivate =>
-      'Bu özet size özel kalır; döngü verileri asla paylaşılmaz.';
+  String get cycleMonthlySummaryThisRecapStaysPrivate => 'Bu özet size özel kalır; döngü verileri asla paylaşılmaz.';
 
   @override
   String get cycleMonthlySummaryYourMonthInReview => 'Aylık değerlendirmeniz';
@@ -6027,8 +5637,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleOpen => 'Aç';
 
   @override
-  String get cyclePeriodSavedYourCoach =>
-      'Adet kaydedildi; koçunuz içgörülerinizi yeniledi';
+  String get cyclePeriodSavedYourCoach => 'Adet kaydedildi; koçunuz içgörülerinizi yeniledi';
 
   @override
   String get cyclePhaseChartGotIt => 'Anladım';
@@ -6065,8 +5674,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiCheckYourConnectionAnd =>
-      'Bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get cycleScreenUiCheckYourConnectionAnd => 'Bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
   String get cycleScreenUiCouldnTLoadYour => 'Döngü verileriniz yüklenemedi';
@@ -6081,8 +5689,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleScreenUiLogPeriod => 'Adet kaydet';
 
   @override
-  String get cycleScreenUiLogYourFirstPeriod =>
-      'Tahminleri başlatmak için ilk regl dönemini kaydet.';
+  String get cycleScreenUiLogYourFirstPeriod => 'Tahminleri başlatmak için ilk regl dönemini kaydet.';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -6090,8 +5697,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiPredictionsAreEstimates =>
-      'Tahminler, kaydedilen verilerinize dayalı tahminlerdir; doğum kontrol yöntemi veya tıbbi tavsiye değildir. Herhangi bir sağlık sorunu için bir doktora danışın.';
+  String get cycleScreenUiPredictionsAreEstimates => 'Tahminler, kaydedilen verilerinize dayalı tahminlerdir; doğum kontrol yöntemi veya tıbbi tavsiye değildir. Herhangi bir sağlık sorunu için bir doktora danışın.';
 
   @override
   String get cycleScreenUiPregnancyModeIsOn => 'Hamilelik modu açık';
@@ -6108,20 +5714,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cycleSettingsAMorningNudgeTo =>
-      'Bazal vücut ısınızı (BBT) kaydetmeniz için sabah hatırlatıcısı';
+  String get cycleSettingsAMorningNudgeTo => 'Bazal vücut ısınızı (BBT) kaydetmeniz için sabah hatırlatıcısı';
 
   @override
-  String get cycleSettingsAnEveningNudgeTo =>
-      'Nasıl hissettiğinizi kaydetmeniz için akşam hatırlatıcısı';
+  String get cycleSettingsAnEveningNudgeTo => 'Nasıl hissettiğinizi kaydetmeniz için akşam hatırlatıcısı';
 
   @override
-  String get cycleSettingsBestTakenBeforeGetting =>
-      'En iyi yataktan kalkmadan önce ölçülür';
+  String get cycleSettingsBestTakenBeforeGetting => 'En iyi yataktan kalkmadan önce ölçülür';
 
   @override
-  String get cycleSettingsCalendarPredictionsLogging =>
-      'Takvim, tahminler, kayıt ve içgörüler';
+  String get cycleSettingsCalendarPredictionsLogging => 'Takvim, tahminler, kayıt ve içgörüler';
 
   @override
   String get cycleSettingsCheckInTime => 'Kontrol zamanı';
@@ -6130,8 +5732,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleSettingsCycle => 'Döngü';
 
   @override
-  String get cycleSettingsCycleAwarePhotoReminders =>
-      'Döngüye duyarlı fotoğraf hatırlatıcıları';
+  String get cycleSettingsCycleAwarePhotoReminders => 'Döngüye duyarlı fotoğraf hatırlatıcıları';
 
   @override
   String get cycleSettingsCycleReminders => 'Döngü hatırlatıcıları';
@@ -6140,8 +5741,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleSettingsCycleTracking => 'Döngü takibi';
 
   @override
-  String get cycleSettingsDailyTemperatureReminder =>
-      'Günlük sıcaklık hatırlatıcısı';
+  String get cycleSettingsDailyTemperatureReminder => 'Günlük sıcaklık hatırlatıcısı';
 
   @override
   String get cycleSettingsDaysBefore => 'Gün önce';
@@ -6150,12 +5750,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleSettingsFertileWindow => 'Doğurganlık dönemi';
 
   @override
-  String get cycleSettingsMasterSwitchForAll =>
-      'Tüm döngü bildirimleri için ana anahtar';
+  String get cycleSettingsMasterSwitchForAll => 'Tüm döngü bildirimleri için ana anahtar';
 
   @override
-  String get cycleSettingsOnYourPredictedPeriod =>
-      'Tahmini adet başlangıç tarihinizde';
+  String get cycleSettingsOnYourPredictedPeriod => 'Tahmini adet başlangıç tarihinizde';
 
   @override
   String get cycleSettingsOpenCycle => 'Döngüyü Aç';
@@ -6184,12 +5782,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleSettingsSymptomCheckIn => 'Belirti kontrolü';
 
   @override
-  String get cycleSettingsTemperatureReminderTime =>
-      'Sıcaklık hatırlatıcı zamanı';
+  String get cycleSettingsTemperatureReminderTime => 'Sıcaklık hatırlatıcı zamanı';
 
   @override
-  String get cycleSettingsWhenTheRemindersAbove =>
-      'Yukarıdaki hatırlatıcılar gönderildiğinde';
+  String get cycleSettingsWhenTheRemindersAbove => 'Yukarıdaki hatırlatıcılar gönderildiğinde';
 
   @override
   String get cycleSetupHomeDismiss => 'Kapat';
@@ -6221,8 +5817,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleSuggestedChipsAskYourCoach => 'Koçuna sor';
 
   @override
-  String get cycleSwitchHowTheCycle =>
-      'Döngü ekranının bulunduğunuz duruma göre nasıl çalışacağını değiştirin.';
+  String get cycleSwitchHowTheCycle => 'Döngü ekranının bulunduğunuz duruma göre nasıl çalışacağını değiştirin.';
 
   @override
   String get cycleTemperatureChartAsk => 'Sor';
@@ -6231,12 +5826,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cycleTemperatureChartBasalTemperature => 'Bazal sıcaklık';
 
   @override
-  String get cycleTemperatureChartDragAcrossTheChart =>
-      'Herhangi bir günü incelemek için grafiği sürükleyin';
+  String get cycleTemperatureChartDragAcrossTheChart => 'Herhangi bir günü incelemek için grafiği sürükleyin';
 
   @override
-  String get cycleTemperatureChartLogBasalTemperatureTo =>
-      'Bu grafiği doldurmak için bazal vücut ısınızı kaydedin';
+  String get cycleTemperatureChartLogBasalTemperatureTo => 'Bu grafiği doldurmak için bazal vücut ısınızı kaydedin';
 
   @override
   String get cycleToday => 'Bugün';
@@ -6335,8 +5928,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dailyExpired => 'SÜRESİ DOLDU';
 
   @override
-  String get dailyFailedToUpdatePinned =>
-      'Sabitlenmiş besin değerleri güncellenemedi';
+  String get dailyFailedToUpdatePinned => 'Sabitlenmiş besin değerleri güncellenemedi';
 
   @override
   String get dailyFat => 'Yağ';
@@ -6348,8 +5940,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dailyLeftoversReadyToLog => 'Artan yemekler kaydedilmeye hazır';
 
   @override
-  String get dailyPickTheNutrientsYou =>
-      'Günlük sekmesinin en üstünde görmek istediğiniz besinleri seçin.';
+  String get dailyPickTheNutrientsYou => 'Günlük sekmesinin en üstünde görmek istediğiniz besinleri seçin.';
 
   @override
   String get dailyPinNutrients => 'Besinleri sabitle';
@@ -6477,8 +6068,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get dailyTapSettingsIconTo =>
-      'Bu hedefleri ayarlamak için ayarlar simgesine dokunun';
+  String get dailyTapSettingsIconTo => 'Bu hedefleri ayarlamak için ayarlar simgesine dokunun';
 
   @override
   String get dailyTapToLog => 'KAYDETMEK İÇİN DOKUN';
@@ -6508,12 +6098,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dangerZoneDeleteAccount => 'Hesabı Sil';
 
   @override
-  String get dangerZoneDeleteWorkoutsKeepAccount =>
-      'Antrenmanları sil, hesabı tut';
+  String get dangerZoneDeleteWorkoutsKeepAccount => 'Antrenmanları sil, hesabı tut';
 
   @override
-  String get dangerZonePermanentlyDeleteAllData =>
-      'Tüm verileri kalıcı olarak sil';
+  String get dangerZonePermanentlyDeleteAllData => 'Tüm verileri kalıcı olarak sil';
 
   @override
   String get dangerZoneResetProgram => 'Programı Sıfırla';
@@ -6525,8 +6113,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dangerZoneThisWill => 'Bu işlem şunları yapacaktır:';
 
   @override
-  String get dangerZoneYourCompletedWorkoutHistory =>
-      'Tamamlanmış antrenman geçmişiniz korunacaktır.';
+  String get dangerZoneYourCompletedWorkoutHistory => 'Tamamlanmış antrenman geçmişiniz korunacaktır.';
 
   @override
   String get dataManagementAutoRenewalActive => 'Otomatik yenileme aktif';
@@ -6538,8 +6125,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dataManagementDownloadThisWeekS => 'Bu haftanın videolarını indir';
 
   @override
-  String get dataManagementDownloadYourWorkoutNutrit =>
-      'Antrenman ve beslenme verilerinizi indirin';
+  String get dataManagementDownloadYourWorkoutNutrit => 'Antrenman ve beslenme verilerinizi indirin';
 
   @override
   String get dataManagementDownloadedVideos => 'İndirilen Videolar';
@@ -6548,39 +6134,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dataManagementExportMyWorkouts => 'Antrenmanlarımı Dışa Aktar';
 
   @override
-  String get dataManagementHevyStrongFitbodPdf =>
-      'Hevy / Strong / Fitbod / PDF / GPX — istediğiniz yere taşıyın';
+  String get dataManagementHevyStrongFitbodPdf => 'Hevy / Strong / Fitbod / PDF / GPX — istediğiniz yere taşıyın';
 
   @override
   String get dataManagementLifetimeAccess => 'Ömür Boyu Erişim';
 
   @override
-  String get dataManagementManageDuplicateImports =>
-      'Yinelenen içe aktarımları yönet';
+  String get dataManagementManageDuplicateImports => 'Yinelenen içe aktarımları yönet';
 
   @override
-  String get dataManagementManageOfflineExerciseVideos =>
-      'Çevrimdışı egzersiz videolarını yönet';
+  String get dataManagementManageOfflineExerciseVideos => 'Çevrimdışı egzersiz videolarını yönet';
 
   @override
-  String get dataManagementNoExercisesFoundIn =>
-      'Planınızda egzersiz bulunamadı.';
+  String get dataManagementNoExercisesFoundIn => 'Planınızda egzersiz bulunamadı.';
 
   @override
-  String get dataManagementNoUpcomingChargesYou =>
-      'Yaklaşan ödeme yok - ömür boyu erişiminiz var';
+  String get dataManagementNoUpcomingChargesYou => 'Yaklaşan ödeme yok - ömür boyu erişiminiz var';
 
   @override
-  String get dataManagementNoVideoUrlsAvailable =>
-      'Planınız için video URL\'si mevcut değil.';
+  String get dataManagementNoVideoUrlsAvailable => 'Planınız için video URL\'si mevcut değil.';
 
   @override
-  String get dataManagementPreCacheAllExercises =>
-      'Çevrimdışı kullanım için planınızdaki tüm egzersizleri önbelleğe alın';
+  String get dataManagementPreCacheAllExercises => 'Çevrimdışı kullanım için planınızdaki tüm egzersizleri önbelleğe alın';
 
   @override
-  String get dataManagementRePickThePrimary =>
-      'Aynı antrenman iki kez senkronize edildiğinde birincil kaynağı yeniden seçin';
+  String get dataManagementRePickThePrimary => 'Aynı antrenman iki kez senkronize edildiğinde birincil kaynağı yeniden seçin';
 
   @override
   String get dataManagementRequestRefund => 'İade Talebi Oluştur';
@@ -6616,8 +6194,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get dataManagementSignInToDownload =>
-      'Haftalık planını indirmek için giriş yap.';
+  String get dataManagementSignInToDownload => 'Haftalık planını indirmek için giriş yap.';
 
   @override
   String get dataManagementSubmitARefundRequest => 'İade talebi gönder';
@@ -6635,8 +6212,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dataSyncDeviceInfo => 'Cihaz Bilgisi';
 
   @override
-  String get dataSyncFreeMemoryByClearing =>
-      'Bellek içi önbellekleri temizleyerek yer aç';
+  String get dataSyncFreeMemoryByClearing => 'Bellek içi önbellekleri temizleyerek yer aç';
 
   @override
   String get dataSyncLoading => 'Yükleniyor...';
@@ -6693,8 +6269,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteAccountFlowPleaseEnterYourPassword => 'Lütfen şifreni gir';
 
   @override
-  String get deleteAccountFlowReAuthenticationRequired =>
-      'Yeniden kimlik doğrulama gerekli';
+  String get deleteAccountFlowReAuthenticationRequired => 'Yeniden kimlik doğrulama gerekli';
 
   @override
   String get deleteAccountFlowResetPassword => 'Şifreyi sıfırla';
@@ -6706,12 +6281,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteAccountFlowThisActionCannotBe => 'Bu işlem geri alınamaz!';
 
   @override
-  String get deleteAccountFlowThisWillPermanentlyDelete =>
-      'Bu işlem şunları kalıcı olarak silecek:';
+  String get deleteAccountFlowThisWillPermanentlyDelete => 'Bu işlem şunları kalıcı olarak silecek:';
 
   @override
-  String get deleteAccountFlowWeCouldNotVerify =>
-      'Şifreni doğrulayamadık. Önce şifreni sıfırla, ardından hesabını silmeyi tekrar dene.';
+  String get deleteAccountFlowWeCouldNotVerify => 'Şifreni doğrulayamadık. Önce şifreni sıfırla, ardından hesabını silmeyi tekrar dene.';
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
@@ -6719,8 +6292,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get deleteAccountFlowYouWillNeedTo =>
-      'Uygulamayı kullanmak için tekrar kaydolman gerekecek.';
+  String get deleteAccountFlowYouWillNeedTo => 'Uygulamayı kullanmak için tekrar kaydolman gerekecek.';
 
   @override
   String get deleteAccountProgressDeletingYourAccount => 'Hesabın siliniyor';
@@ -6753,20 +6325,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoActiveWorkoutExitWorkout => 'Antrenmandan Çık?';
 
   @override
-  String get demoActiveWorkoutGetAiGeneratedWorkout =>
-      'AI destekli antrenman planları al, ilerlemeni takip et ve fitness hedeflerine daha hızlı ulaş.';
+  String get demoActiveWorkoutGetAiGeneratedWorkout => 'AI destekli antrenman planları al, ilerlemeni takip et ve fitness hedeflerine daha hızlı ulaş.';
 
   @override
-  String get demoActiveWorkoutGetPersonalizedWorkouts =>
-      'Kişiselleştirilmiş Antrenmanlar Al';
+  String get demoActiveWorkoutGetPersonalizedWorkouts => 'Kişiselleştirilmiş Antrenmanlar Al';
 
   @override
-  String get demoActiveWorkoutGreatJobTimeTo =>
-      'Harika iş! Esneme ve toparlanma zamanı.';
+  String get demoActiveWorkoutGreatJobTimeTo => 'Harika iş! Esneme ve toparlanma zamanı.';
 
   @override
-  String get demoActiveWorkoutNextExerciseComingUp =>
-      'Sıradaki Egzersiz Geliyor!';
+  String get demoActiveWorkoutNextExerciseComingUp => 'Sıradaki Egzersiz Geliyor!';
 
   @override
   String get demoActiveWorkoutReadyForTheFull => 'Tam deneyime hazır mısın?';
@@ -6785,16 +6353,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String demoActiveWorkoutScreenUi1SetOf(
-    Object _currentExerciseSets,
-    Object _currentSet,
-  ) {
+  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet) {
     return '$_currentSet. set / $_currentExerciseSets';
   }
 
   @override
-  String get demoActiveWorkoutSignUpToGet =>
-      'Kişiselleştirilmiş AI koçluğu, detaylı ilerleme takibi ve hedeflerine uygun antrenmanlar için kaydol.';
+  String get demoActiveWorkoutSignUpToGet => 'Kişiselleştirilmiş AI koçluğu, detaylı ilerleme takibi ve hedeflerine uygun antrenmanlar için kaydol.';
 
   @override
   String get demoActiveWorkoutSkipAll => 'Hepsini Atla';
@@ -6812,8 +6376,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoActiveWorkoutWorkoutComplete => 'Antrenman Tamamlandı!';
 
   @override
-  String get demoActiveWorkoutYourProgressInThis =>
-      'Bu demo antrenmanındaki ilerlemen kaydedilmeyecek. Çıkmak istediğine emin misin?';
+  String get demoActiveWorkoutYourProgressInThis => 'Bu demo antrenmanındaki ilerlemen kaydedilmeyecek. Çıkmak istediğine emin misin?';
 
   @override
   String get demoDayBanner24HoursOfFull => '24 Saat Tam Erişim';
@@ -6822,15 +6385,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoDayBannerDemoDay => 'DEMO GÜNÜ';
 
   @override
-  String get demoDayBannerExploreAllPremiumFeatures =>
-      'Tüm premium özellikleri keşfet - taahhüt yok';
+  String get demoDayBannerExploreAllPremiumFeatures => 'Tüm premium özellikleri keşfet - taahhüt yok';
 
   @override
   String get demoDayBannerTimeRemaining => 'Kalan Süre: ';
 
   @override
-  String get demoTasksSeeHowTrainingWorks =>
-      'Antrenmanın nasıl çalıştığını gör';
+  String get demoTasksSeeHowTrainingWorks => 'Antrenmanın nasıl çalıştığını gör';
 
   @override
   String get demoTasksSeeItInAction => 'İşleyişi gör';
@@ -6839,12 +6400,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoTasksSnapAMenuLog => 'Menünün fotoğrafını çek, öğünü kaydet';
 
   @override
-  String get demoTasksTryOneOrBoth =>
-      'Birini veya ikisini dene. İstersen atla.';
+  String get demoTasksTryOneOrBoth => 'Birini veya ikisini dene. İstersen atla.';
 
   @override
-  String get demoWorkoutCreatingYourPersonalizedWor =>
-      'Kişiselleştirilmiş antrenmanın oluşturuluyor...';
+  String get demoWorkoutCreatingYourPersonalizedWor => 'Kişiselleştirilmiş antrenmanın oluşturuluyor...';
 
   @override
   String get demoWorkoutExercises => 'EGZERSİZLER';
@@ -6853,8 +6412,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoWorkoutFailedToLoadWorkout => 'Antrenman yüklenemedi';
 
   @override
-  String get demoWorkoutFocusOnProperForm =>
-      'Doğru forma ve kontrollü hareketlere odaklan.';
+  String get demoWorkoutFocusOnProperForm => 'Doğru forma ve kontrollü hareketlere odaklan.';
 
   @override
   String get demoWorkoutHowToPerform => 'Nasıl yapılır';
@@ -6863,8 +6421,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoWorkoutScreenAi => 'AI';
 
   @override
-  String get demoWorkoutScreenBasedOnYourGoals =>
-      'Hedeflerine, ekipmanına ve fitness seviyene göre';
+  String get demoWorkoutScreenBasedOnYourGoals => 'Hedeflerine, ekipmanına ve fitness seviyene göre';
 
   @override
   String get demoWorkoutScreenDifficulty => 'Zorluk';
@@ -6873,30 +6430,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoWorkoutScreenEquipmentNeeded => 'GEREKLİ EKİPMAN';
 
   @override
-  String get demoWorkoutScreenGetAiPersonalizedWorkouts =>
-      'AI ile Kişiselleştirilmiş Antrenmanlar Al';
+  String get demoWorkoutScreenGetAiPersonalizedWorkouts => 'AI ile Kişiselleştirilmiş Antrenmanlar Al';
 
   @override
-  String get demoWorkoutScreenGetPersonalizedWorkouts =>
-      'Kişiselleştirilmiş Antrenmanlar Al';
+  String get demoWorkoutScreenGetPersonalizedWorkouts => 'Kişiselleştirilmiş Antrenmanlar Al';
 
   @override
   String get demoWorkoutScreenSampleWorkout => 'Örnek Antrenman';
 
   @override
-  String get demoWorkoutScreenSampleWorkoutPreview =>
-      'Örnek Antrenman Önizlemesi';
+  String get demoWorkoutScreenSampleWorkoutPreview => 'Örnek Antrenman Önizlemesi';
 
   @override
-  String get demoWorkoutScreenSignUpToGet =>
-      'Hedeflerine, fitness seviyene ve mevcut ekipmanına uygun antrenmanlar almak için kaydol.';
+  String get demoWorkoutScreenSignUpToGet => 'Hedeflerine, fitness seviyene ve mevcut ekipmanına uygun antrenmanlar almak için kaydol.';
 
   @override
   String get demoWorkoutScreenStartWorkout => 'Antrenmanı Başlat';
 
   @override
-  String get demoWorkoutScreenTryAnotherSampleWorkout =>
-      'Başka Bir Örnek Antrenman Dene';
+  String get demoWorkoutScreenTryAnotherSampleWorkout => 'Başka Bir Örnek Antrenman Dene';
 
   @override
   String get demoWorkoutScreenType => 'Tür';
@@ -6907,8 +6459,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get demoWorkoutScreenYourPersonalizedWorkout =>
-      'Kişiselleştirilmiş Antrenmanın';
+  String get demoWorkoutScreenYourPersonalizedWorkout => 'Kişiselleştirilmiş Antrenmanın';
 
   @override
   String get demoWorkoutTryAgain => 'Tekrar Dene';
@@ -6920,40 +6471,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get demoWorkoutVideoUnavailable => 'Video kullanılamıyor';
 
   @override
-  String get derivedMetricDetailABmiBetween18 =>
-      '18.5 ile 24.9 arasındaki bir BMI, sağlıklı bir kilo aralığı olarak kabul edilir. İyi iş çıkarmaya devam et!';
+  String get derivedMetricDetailABmiBetween18 => '18.5 ile 24.9 arasındaki bir BMI, sağlıklı bir kilo aralığı olarak kabul edilir. İyi iş çıkarmaya devam et!';
 
   @override
-  String get derivedMetricDetailABmiBetween25 =>
-      '25 ile 29.9 arası VKI, kilolu olarak kabul edilir. Not: VKI, kas ile yağı birbirinden ayırmaz.';
+  String get derivedMetricDetailABmiBetween25 => '25 ile 29.9 arası VKI, kilolu olarak kabul edilir. Not: VKI, kas ile yağı birbirinden ayırmaz.';
 
   @override
-  String get derivedMetricDetailABmiOf30 =>
-      '30 veya üzeri VKI, obez olarak sınıflandırılır. Rehberlik için bir sağlık uzmanına danışmayı düşünün.';
+  String get derivedMetricDetailABmiOf30 => '30 veya üzeri VKI, obez olarak sınıflandırılır. Rehberlik için bir sağlık uzmanına danışmayı düşünün.';
 
   @override
-  String get derivedMetricDetailAChestToWaist =>
-      '1.1\'in altındaki göğüs-bel oranı, bele göre dar bir göğsü gösterir. Göğüs ve sırt egzersizlerine odaklanın.';
+  String get derivedMetricDetailAChestToWaist => '1.1\'in altındaki göğüs-bel oranı, bele göre dar bir göğsü gösterir. Göğüs ve sırt egzersizlerine odaklanın.';
 
   @override
-  String get derivedMetricDetailAChestToWaist2 =>
-      '1.1-1.3 arası göğüs-bel oranı ortalamadır. Göğüs ve bel arasında sağlıklı oranlar.';
+  String get derivedMetricDetailAChestToWaist2 => '1.1-1.3 arası göğüs-bel oranı ortalamadır. Göğüs ve bel arasında sağlıklı oranlar.';
 
   @override
-  String get derivedMetricDetailAChestToWaist3 =>
-      '1.3\'ün üzerindeki göğüs-bel oranı, bele göre iyi gelişmiş bir göğsü gösterir. Harika oranlar!';
+  String get derivedMetricDetailAChestToWaist3 => '1.3\'ün üzerindeki göğüs-bel oranı, bele göre iyi gelişmiş bir göğsü gösterir. Harika oranlar!';
 
   @override
-  String get derivedMetricDetailAWhtrAbove0 =>
-      '0.6\'nın üzerindeki bel-boy oranı, önemli ölçüde karın yağına ve artan sağlık riskine işaret eder.';
+  String get derivedMetricDetailAWhtrAbove0 => '0.6\'nın üzerindeki bel-boy oranı, önemli ölçüde karın yağına ve artan sağlık riskine işaret eder.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween0 =>
-      '0.4 ile 0.5 arası bel-boy oranı sağlıklı kabul edilir. Beliniz boyunuzun yarısından azdır.';
+  String get derivedMetricDetailAWhtrBetween0 => '0.4 ile 0.5 arası bel-boy oranı sağlıklı kabul edilir. Beliniz boyunuzun yarısından azdır.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween02 =>
-      '0.5 ile 0.6 arası bel-boy oranı artan karın yağını gösterir. Bel çevresini azaltmaya odaklanın.';
+  String get derivedMetricDetailAWhtrBetween02 => '0.5 ile 0.6 arası bel-boy oranı artan karın yağını gösterir. Bel çevresini azaltmaya odaklanın.';
 
   @override
   String get derivedMetricDetailAboveAverage => 'Ortalama Üstü';
@@ -6992,8 +6534,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get derivedMetricDetailGood => 'İyi';
 
   @override
-  String get derivedMetricDetailGoodSymmetry9397 =>
-      'İyi simetri (%93-97). Normal aralıkta küçük bir fark.';
+  String get derivedMetricDetailGoodSymmetry9397 => 'İyi simetri (%93-97). Normal aralıkta küçük bir fark.';
 
   @override
   String get derivedMetricDetailHealthy => 'Sağlıklı';
@@ -7032,8 +6573,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get derivedMetricDetailModerate => 'Orta';
 
   @override
-  String get derivedMetricDetailModerateAsymmetry8893 =>
-      'Orta düzey asimetri (%88-93). Dengesizliği gidermek için tek taraflı egzersizler eklemeyi düşünün.';
+  String get derivedMetricDetailModerateAsymmetry8893 => 'Orta düzey asimetri (%88-93). Dengesizliği gidermek için tek taraflı egzersizler eklemeyi düşünün.';
 
   @override
   String get derivedMetricDetailModerateRisk => 'Orta Risk';
@@ -7045,8 +6585,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get derivedMetricDetailNarrow => 'Dar';
 
   @override
-  String get derivedMetricDetailNearPerfectSymmetry97 =>
-      'Neredeyse mükemmel simetri (%97+). Her iki taraf da çok dengeli.';
+  String get derivedMetricDetailNearPerfectSymmetry97 => 'Neredeyse mükemmel simetri (%97+). Her iki taraf da çok dengeli.';
 
   @override
   String get derivedMetricDetailNoHistoryYet => 'Henüz geçmiş yok';
@@ -7079,8 +6618,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get derivedMetricDetailShoulders => 'Omuzlar';
 
   @override
-  String get derivedMetricDetailSignificantAsymmetryBelow8 =>
-      'Belirgin asimetri (%88\'in altı). Zayıf taraf için tek taraflı antrenmana odaklanın.';
+  String get derivedMetricDetailSignificantAsymmetryBelow8 => 'Belirgin asimetri (%88\'in altı). Zayıf taraf için tek taraflı antrenmana odaklanın.';
 
   @override
   String get derivedMetricDetailSuperior => 'Üstün';
@@ -7140,8 +6678,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diabetesDashboardScreenAbove => 'Üstünde';
 
   @override
-  String get diabetesDashboardScreenAllBloodGlucoseReadings =>
-      'Tüm Kan Glikozu Ölçümleri';
+  String get diabetesDashboardScreenAllBloodGlucoseReadings => 'Tüm Kan Glikozu Ölçümleri';
 
   @override
   String get diabetesDashboardScreenBasedOnReadings => 'Ölçümlere göre';
@@ -7161,8 +6698,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get diabetesDashboardScreenGreatYouReMeeting =>
-      'Harika! %70+ aralık hedefiyle uyum içindesiniz.';
+  String get diabetesDashboardScreenGreatYouReMeeting => 'Harika! %70+ aralık hedefiyle uyum içindesiniz.';
 
   @override
   String get diabetesDashboardScreenHealthConnect => 'Health Connect';
@@ -7194,8 +6730,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diabetesDashboardScreenMgDl => 'mg/dL';
 
   @override
-  String get diabetesDashboardScreenNoAdditionalReadingsAvailab =>
-      'Başka ölçüm mevcut değil';
+  String get diabetesDashboardScreenNoAdditionalReadingsAvailab => 'Başka ölçüm mevcut değil';
 
   @override
   String diabetesDashboardScreenPartA1CCardDaysAgo(Object daysSinceMeasured) {
@@ -7208,9 +6743,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
-    Object daysIncluded,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded) {
     return 'Son $daysIncluded gün';
   }
 
@@ -7225,16 +6758,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
-    Object totalRapidUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits) {
     return '$totalRapidUnitsÜ';
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU3(
-    Object totalLongUnits,
-  ) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits) {
     return '$totalLongUnitsÜ';
   }
 
@@ -7264,8 +6793,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diabetesDashboardScreenSync => 'Senkronize Et';
 
   @override
-  String get diabetesDashboardScreenSyncYourGlucoseData =>
-      'Glikoz verilerinizi senkronize edin';
+  String get diabetesDashboardScreenSyncYourGlucoseData => 'Glikoz verilerinizi senkronize edin';
 
   @override
   String get diabetesDashboardScreenTimeInRange => 'Hedef Aralıktaki Süre';
@@ -7341,8 +6869,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get difficultyCardTapAnyCellTo =>
-      'Ölçeklendirme faktörlerini düzenlemek için herhangi bir hücreye dokunun';
+  String get difficultyCardTapAnyCellTo => 'Ölçeklendirme faktörlerini düzenlemek için herhangi bir hücreye dokunun';
 
   @override
   String get difficultyCardTier => 'Kademe';
@@ -7372,8 +6899,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get difficultySelectorChooseDifferent => 'Farklı Birini Seç';
 
   @override
-  String get difficultySelectorConsiderChallengingForA =>
-      'Daha güvenli ve yoğun bir antrenman için \"Zorlayıcı\" seçeneğini değerlendirin';
+  String get difficultySelectorConsiderChallengingForA => 'Daha güvenli ve yoğun bir antrenman için \"Zorlayıcı\" seçeneğini değerlendirin';
 
   @override
   String get difficultySelectorContinueAnyway => 'Yine de Devam Et';
@@ -7407,8 +6933,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get difficultySelectorThisIsAnExtreme =>
-      'Bu, sınırlarınızı zorlamak için tasarlanmış aşırı yoğunlukta bir antrenmandır.';
+  String get difficultySelectorThisIsAnExtreme => 'Bu, sınırlarınızı zorlamak için tasarlanmış aşırı yoğunlukta bir antrenmandır.';
 
   @override
   String get discoverBrowseByCategory => 'Kategoriye Göre Göz At';
@@ -7423,31 +6948,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverChallenges => 'Meydan okumalar';
 
   @override
-  String get discoverCheckYourConnectionAnd =>
-      'Bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get discoverCheckYourConnectionAnd => 'Bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
-  String get discoverComplete3WorkoutsTo =>
-      'Fitness profilinizin kilidini açmak için 3 antrenman tamamlayın.';
+  String get discoverComplete3WorkoutsTo => 'Fitness profilinizin kilidini açmak için 3 antrenman tamamlayın.';
 
   @override
-  String get discoverCompleteAWorkoutThis =>
-      'Bu hafta bir antrenman tamamlayın';
+  String get discoverCompleteAWorkoutThis => 'Bu hafta bir antrenman tamamlayın';
 
   @override
-  String get discoverCompleteAWorkoutTo =>
-      'Sıralamada yükselmek için bir antrenman tamamlayın';
+  String get discoverCompleteAWorkoutTo => 'Sıralamada yükselmek için bir antrenman tamamlayın';
 
   @override
-  String get discoverCompleteYourProfileTo =>
-      'Kişiselleştirilmiş öneriler almak için profilinizi tamamlayın';
+  String get discoverCompleteYourProfileTo => 'Kişiselleştirilmiş öneriler almak için profilinizi tamamlayın';
 
   @override
   String get discoverCouldnTLoadDiscover => 'Keşfet yüklenemedi.';
 
   @override
-  String get discoverCuratedRecipesToTry =>
-      'Denenecek veya uyarlanacak seçkin tarifler';
+  String get discoverCuratedRecipesToTry => 'Denenecek veya uyarlanacak seçkin tarifler';
 
   @override
   String get discoverFeed => 'Akış';
@@ -7459,8 +6978,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverFriends => 'Arkadaşlar';
 
   @override
-  String get discoverGetAPersonalizedAi =>
-      'Kişiselleştirilmiş bir AI önerisi alın';
+  String get discoverGetAPersonalizedAi => 'Kişiselleştirilmiş bir AI önerisi alın';
 
   @override
   String get discoverHidden => 'Gizli';
@@ -7527,15 +7045,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverTopOfTheWeek => 'Haftanın en iyileri';
 
   @override
-  String get discoverTourBrowseRisingStarsAnd =>
-      'Sizin seviyenizde kimlerin antrenman yaptığını görmek için Yükselen Yıldızlar ve Yakınınızdakiler bölümlerine göz atın.';
+  String get discoverTourBrowseRisingStarsAnd => 'Sizin seviyenizde kimlerin antrenman yaptığını görmek için Yükselen Yıldızlar ve Yakınınızdakiler bölümlerine göz atın.';
 
   @override
   String get discoverTourFindYourPeers => 'Akranlarınızı bulun';
 
   @override
-  String get discoverTourOpenTheir6Axis =>
-      '6 eksenli fitness radarlarını açın ve XP, hacim, seriler ve daha fazlası genelinde nasıl bir performans sergilediğinizi görün.';
+  String get discoverTourOpenTheir6Axis => '6 eksenli fitness radarlarını açın ve XP, hacim, seriler ve daha fazlası genelinde nasıl bir performans sergilediğinizi görün.';
 
   @override
   String get discoverTourSwitchBoards => 'Sıralamalar arasında geçiş yapın';
@@ -7544,8 +7060,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverTourTapAnyUser => 'Herhangi bir kullanıcıya dokunun';
 
   @override
-  String get discoverTourXpVolumeStreaksEach =>
-      'XP / Hacim / Seriler, her biri farklı bir oyunu derecelendirir; en güçlü ekseninizi bulmak için hepsini deneyin.';
+  String get discoverTourXpVolumeStreaksEach => 'XP / Hacim / Seriler, her biri farklı bir oyunu derecelendirir; en güçlü ekseninizi bulmak için hepsini deneyin.';
 
   @override
   String get discoverTrainingPlans => 'Antrenman Planları';
@@ -7566,8 +7081,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverYou => 'Siz · ';
 
   @override
-  String get discoverYourRankPercentileAppears =>
-      'Sıralamanız ve yüzdelik diliminiz, listeye girdiğinizde görünür';
+  String get discoverYourRankPercentileAppears => 'Sıralamanız ve yüzdelik diliminiz, listeye girdiğinizde görünür';
 
   @override
   String get dismissedBannersDailyXpGoals => 'Günlük XP Hedefleri';
@@ -7576,8 +7090,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dismissedBannersDismissedBanners => 'GİZLENEN BAŞLIKLAR';
 
   @override
-  String get dismissedBannersDismissedBannersResetAutoma =>
-      'Gizlenen başlıklar gece yarısı otomatik olarak sıfırlanır.';
+  String get dismissedBannersDismissedBannersResetAutoma => 'Gizlenen başlıklar gece yarısı otomatik olarak sıfırlanır.';
 
   @override
   String get dismissedBannersRestore => 'Geri Yükle';
@@ -7604,8 +7117,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get downloadedVideosAllDownloadsCleared => 'Tüm indirmeler temizlendi';
 
   @override
-  String get downloadedVideosBrowseExerciseLibrary =>
-      'Egzersiz Kütüphanesine Göz At';
+  String get downloadedVideosBrowseExerciseLibrary => 'Egzersiz Kütüphanesine Göz At';
 
   @override
   String get downloadedVideosClearAll => 'Tümünü Temizle';
@@ -7623,8 +7135,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get downloadedVideosNoDownloadsYet => 'Henüz İndirme Yok';
 
   @override
-  String get downloadedVideosSaveExerciseVideosFor =>
-      'Egzersiz videolarını çevrimdışı izlemek için kaydedin; WiFi bağlantısının zayıf olduğu spor salonları için harikadır.';
+  String get downloadedVideosSaveExerciseVideosFor => 'Egzersiz videolarını çevrimdışı izlemek için kaydedin; WiFi bağlantısının zayıf olduğu spor salonları için harikadır.';
 
   @override
   String downloadedVideosScreenDeleted(Object exerciseName) {
@@ -7642,15 +7153,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get downloadedVideosStorageAlmostFullOldest =>
-      'Depolama alanı neredeyse dolu. En eski videolar otomatik olarak silinecektir.';
+  String get downloadedVideosStorageAlmostFullOldest => 'Depolama alanı neredeyse dolu. En eski videolar otomatik olarak silinecektir.';
 
   @override
   String get downloadedVideosStorageUsed => 'Kullanılan Depolama';
 
   @override
-  String get downloadedVideosThisWillDeleteAll =>
-      'Bu işlem, cihazınızdaki tüm indirilen egzersiz videolarını silecektir. Bunları istediğiniz zaman tekrar indirebilirsiniz.';
+  String get downloadedVideosThisWillDeleteAll => 'Bu işlem, cihazınızdaki tüm indirilen egzersiz videolarını silecektir. Bunları istediğiniz zaman tekrar indirebilirsiniz.';
 
   @override
   String get durationRangeSliderDuration => 'Süre';
@@ -7717,8 +7226,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get easyExerciseActionsDonTHaveWhat => 'Listelenen ekipman yok mu?';
 
   @override
-  String get easyExerciseActionsPickADifferentMovement =>
-      'Bu slot için farklı bir hareket seç';
+  String get easyExerciseActionsPickADifferentMovement => 'Bu slot için farklı bir hareket seç';
 
   @override
   String get easyExerciseActionsReportPain => 'Ağrıyı bildir';
@@ -7727,12 +7235,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get easyExerciseActionsShowVideo => 'Videoyu göster';
 
   @override
-  String get easyExerciseActionsSkipThisExerciseAvoid =>
-      'Bu egzersizi atla ve bir süreliğine kaçın';
+  String get easyExerciseActionsSkipThisExerciseAvoid => 'Bu egzersizi atla ve bir süreliğine kaçın';
 
   @override
-  String get easyExerciseActionsSkipToNextExercise =>
-      'Bir sonraki egzersize atla';
+  String get easyExerciseActionsSkipToNextExercise => 'Bir sonraki egzersize atla';
 
   @override
   String get easyExerciseActionsSwapExercise => 'Egzersizi değiştir';
@@ -7767,8 +7273,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get easyFocalColumnWeight => 'Ağırlık';
 
   @override
-  String get easyHelpAdjustWeightAndReps =>
-      'Ağırlık ve tekrarları − ve + ile ayarlayın. Doğrudan yazmak için bir sayıya uzun basın.';
+  String get easyHelpAdjustWeightAndReps => 'Ağırlık ve tekrarları − ve + ile ayarlayın. Doğrudan yazmak için bir sayıya uzun basın.';
 
   @override
   String get easyHelpGotIt => 'Anladım';
@@ -7786,12 +7291,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get easyHelpSwitchToAdvanced => 'Gelişmiş Mod\'a geç';
 
   @override
-  String get easyHelpTapTheBigWhen =>
-      'Bir seti bitirdiğinizde büyük ✓ işaretine dokunun. Gerisini biz hallederiz.';
+  String get easyHelpTapTheBigWhen => 'Bir seti bitirdiğinizde büyük ✓ işaretine dokunun. Gerisini biz hallederiz.';
 
   @override
-  String get easyHelpThisIsTodayS =>
-      'Bu bugünün egzersizi. Formunuzu hatırlamak istediğinizde ▶ Videoyu göster\'e dokunun.';
+  String get easyHelpThisIsTodayS => 'Bu bugünün egzersizi. Formunuzu hatırlamak istediğinizde ▶ Videoyu göster\'e dokunun.';
 
   @override
   String get easyHelpTodaySExercise => 'Bugünün egzersizi';
@@ -7838,8 +7341,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get easySheetHelpersHowToPerform => 'Nasıl yapılır';
 
   @override
-  String get easySheetHelpersNoDemoVideoFor =>
-      'Bu egzersiz için henüz demo videosu yok.';
+  String get easySheetHelpersNoDemoVideoFor => 'Bu egzersiz için henüz demo videosu yok.';
 
   @override
   String get easySheetHelpersPrimaryMuscle => 'Birincil kas';
@@ -7884,8 +7386,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editGymProfileColor => 'Renk';
 
   @override
-  String get editGymProfileCustomizeWorkoutsForThis =>
-      'Bu spor salonu için antrenmanları özelleştir';
+  String get editGymProfileCustomizeWorkoutsForThis => 'Bu spor salonu için antrenmanları özelleştir';
 
   @override
   String get editGymProfileDuplicate => 'Çoğalt';
@@ -7912,22 +7413,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editGymProfileFocusAreas => 'Odak Bölgeleri';
 
   @override
-  String get editGymProfileHowMuchExerciseVariety =>
-      'Her hafta ne kadar egzersiz çeşitliliği';
+  String get editGymProfileHowMuchExerciseVariety => 'Her hafta ne kadar egzersiz çeşitliliği';
 
   @override
   String get editGymProfileIcon => 'Simge';
 
   @override
-  String get editGymProfileLeaveOnAutoFor =>
-      'AI\'nın karar vermesi için Otomatik modda bırakın veya belirli bir güne odak atayın (örneğin Sal → Üst Vücut).';
+  String get editGymProfileLeaveOnAutoFor => 'AI\'nın karar vermesi için Otomatik modda bırakın veya belirli bir güne odak atayın (örneğin Sal → Üst Vücut).';
 
   @override
   String get editGymProfileLocationOptional => 'Konum (İsteğe bağlı)';
 
   @override
-  String get editGymProfileMuscleGroupsToPrioritize =>
-      'Öncelik verilecek kas grupları';
+  String get editGymProfileMuscleGroupsToPrioritize => 'Öncelik verilecek kas grupları';
 
   @override
   String get editGymProfileName => 'İsim';
@@ -7936,8 +7434,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editGymProfileNoPref => 'Tercih yok';
 
   @override
-  String get editGymProfilePinFocusPerDay =>
-      'Günlük odak noktası belirle (isteğe bağlı)';
+  String get editGymProfilePinFocusPerDay => 'Günlük odak noktası belirle (isteğe bağlı)';
 
   @override
   String get editGymProfilePleaseEnterAName => 'Lütfen bir isim girin';
@@ -7949,15 +7446,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editGymProfileRenameGym => 'Spor Salonunu Yeniden Adlandır';
 
   @override
-  String get editGymProfileRequiresLocationPermission =>
-      'Konum izni gerektirir';
+  String get editGymProfileRequiresLocationPermission => 'Konum izni gerektirir';
 
   @override
   String get editGymProfileSaveChanges => 'Değişiklikleri Kaydet';
 
   @override
-  String get editGymProfileSetALocationTo =>
-      'Profilleri otomatik değiştirmek için bir konum ayarla';
+  String get editGymProfileSetALocationTo => 'Profilleri otomatik değiştirmek için bir konum ayarla';
 
   @override
   String editGymProfileSheetEquipmentItems(Object length) {
@@ -7995,19 +7490,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get editGymProfileTapToAddRemove =>
-      'Ağırlık eklemek, kaldırmak veya düzenlemek için dokun';
+  String get editGymProfileTapToAddRemove => 'Ağırlık eklemek, kaldırmak veya düzenlemek için dokun';
 
   @override
-  String get editGymProfileTrainingPreferencesOptional =>
-      'Antrenman Tercihleri (İsteğe Bağlı)';
+  String get editGymProfileTrainingPreferencesOptional => 'Antrenman Tercihleri (İsteğe Bağlı)';
 
   @override
   String get editGymProfileWeeklyVariety => 'Haftalık Çeşitlilik';
 
   @override
-  String get editGymProfileWhenDoYouUsually =>
-      'Burada genellikle ne zaman antrenman yaparsın?';
+  String get editGymProfileWhenDoYouUsually => 'Burada genellikle ne zaman antrenman yaparsın?';
 
   @override
   String get editGymProfileWorkoutDays => 'Antrenman Günleri';
@@ -8016,8 +7508,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editGymProfileWorkoutDuration => 'Antrenman Süresi';
 
   @override
-  String get editGymProfileWorkoutTimeOptional =>
-      'Antrenman Zamanı (İsteğe Bağlı)';
+  String get editGymProfileWorkoutTimeOptional => 'Antrenman Zamanı (İsteğe Bağlı)';
 
   @override
   String get editPersonalInfoChooseFromGallery => 'Galeriden Seç';
@@ -8035,8 +7526,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editPersonalInfoTakePhoto => 'Fotoğraf Çek';
 
   @override
-  String get editPersonalInfoTapToChangePhoto =>
-      'Fotoğrafı değiştirmek için dokun';
+  String get editPersonalInfoTapToChangePhoto => 'Fotoğrafı değiştirmek için dokun';
 
   @override
   String get editPersonalInfoTargetWeight => 'HEDEF KİLO';
@@ -8063,12 +7553,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetBack => 'Geri';
 
   @override
-  String get editProgramSheetChangeYourWeeklySchedule =>
-      'Haftalık programını, ekipmanını veya zorluk seviyesini değiştir. Antrenmanların yeni ayarlarına göre yeniden oluşturulacaktır.';
+  String get editProgramSheetChangeYourWeeklySchedule => 'Haftalık programını, ekipmanını veya zorluk seviyesini değiştir. Antrenmanların yeni ayarlarına göre yeniden oluşturulacaktır.';
 
   @override
-  String get editProgramSheetChooseATrainingSplit =>
-      'Programına ve hedeflerine uygun bir antrenman bölmesi seç';
+  String get editProgramSheetChooseATrainingSplit => 'Programına ve hedeflerine uygun bir antrenman bölmesi seç';
 
   @override
   String get editProgramSheetContinue => 'Devam et';
@@ -8101,8 +7589,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get editProgramSheetDescribeWhatYouWant =>
-      'Ne için antrenman yapmak istediğini tanımla, Zealova senin için kişiselleştirilmiş bir program oluştursun.';
+  String get editProgramSheetDescribeWhatYouWant => 'Ne için antrenman yapmak istediğini tanımla, Zealova senin için kişiselleştirilmiş bir program oluştursun.';
 
   @override
   String get editProgramSheetDifficulty => 'Zorluk';
@@ -8111,8 +7598,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetDuration => 'Süre';
 
   @override
-  String get editProgramSheetEGTrainFor =>
-      'ör. \"HYROX yarışması için antrenman yap\"';
+  String get editProgramSheetEGTrainFor => 'ör. \"HYROX yarışması için antrenman yap\"';
 
   @override
   String get editProgramSheetEquipment => 'Ekipman';
@@ -8146,24 +7632,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetInjuries => 'Sakatlıklar';
 
   @override
-  String get editProgramSheetNoProgramHistoryFound =>
-      'Program geçmişi bulunamadı';
+  String get editProgramSheetNoProgramHistoryFound => 'Program geçmişi bulunamadı';
 
   @override
-  String editProgramSheetPartEditProgramSheetStateOf(
-    Object _generatingWorkout,
-    Object _totalWorkoutsToGenerate,
-  ) {
+  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate) {
     return '$_totalWorkoutsToGenerate antrenmandan $_generatingWorkout.sı';
   }
 
   @override
-  String get editProgramSheetPleaseLogInTo =>
-      'Program geçmişini görüntülemek için lütfen giriş yap';
+  String get editProgramSheetPleaseLogInTo => 'Program geçmişini görüntülemek için lütfen giriş yap';
 
   @override
-  String get editProgramSheetPleaseSelectAtLeast =>
-      'Lütfen en az bir antrenman günü seç';
+  String get editProgramSheetPleaseSelectAtLeast => 'Lütfen en az bir antrenman günü seç';
 
   @override
   String get editProgramSheetProgram => 'Program';
@@ -8172,12 +7652,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetProgramHistory => 'Program Geçmişi';
 
   @override
-  String get editProgramSheetProgramRestoredRegenerateW =>
-      'Program geri yüklendi! Değişiklikleri uygulamak için antrenmanları yeniden oluştur.';
+  String get editProgramSheetProgramRestoredRegenerateW => 'Program geri yüklendi! Değişiklikleri uygulamak için antrenmanları yeniden oluştur.';
 
   @override
-  String get editProgramSheetRestoreAPreviousProgram =>
-      'Önceki bir program yapılandırmasını geri yükle';
+  String get editProgramSheetRestoreAPreviousProgram => 'Önceki bir program yapılandırmasını geri yükle';
 
   @override
   String get editProgramSheetRestoreThisProgram => 'Bu Programı Geri Yükle';
@@ -8195,8 +7673,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetSummary => 'Özet';
 
   @override
-  String get editProgramSheetThisStepIsOptional =>
-      'Bu adım isteğe bağlıdır. Bildirilecek bir sakatlığın yoksa atlayabilirsin.';
+  String get editProgramSheetThisStepIsOptional => 'Bu adım isteğe bağlıdır. Bildirilecek bir sakatlığın yoksa atlayabilirsin.';
 
   @override
   String get editProgramSheetToday => 'Bugün';
@@ -8208,8 +7685,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editProgramSheetUnknownDate => 'Bilinmeyen tarih';
 
   @override
-  String get editProgramSheetUpdateAndRegenerate =>
-      'Güncelle ve yeniden oluştur';
+  String get editProgramSheetUpdateAndRegenerate => 'Güncelle ve yeniden oluştur';
 
   @override
   String get editProgramSheetUpdating => 'Güncelleniyor';
@@ -8253,12 +7729,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editTargetsRec => 'Önerilen';
 
   @override
-  String get editTargetsRecalculateFromProfile =>
-      'Profil üzerinden yeniden hesapla';
+  String get editTargetsRecalculateFromProfile => 'Profil üzerinden yeniden hesapla';
 
   @override
-  String get editTargetsRecommendationUnavailableR =>
-      'Öneri kullanılamıyor — önce profil üzerinden yeniden hesapla';
+  String get editTargetsRecommendationUnavailableR => 'Öneri kullanılamıyor — önce profil üzerinden yeniden hesapla';
 
   @override
   String get editTargetsReset => 'Sıfırla';
@@ -8317,12 +7791,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String editTargetsSheetUWks(
-    Object dateStr,
-    Object deficitInfo,
-    Object goalLabel,
-    Object weeks,
-  ) {
+  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks) {
     return '$goalLabel → ~$weeks hafta ($dateStr)$deficitInfo';
   }
 
@@ -8332,8 +7801,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get editTargetsTargetsRecalculatedFromProf =>
-      'Hedefler profil üzerinden yeniden hesaplandı';
+  String get editTargetsTargetsRecalculatedFromProf => 'Hedefler profil üzerinden yeniden hesaplandı';
 
   @override
   String get editTargetsTargetsUpdated => 'Hedefler güncellendi';
@@ -8348,52 +7816,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editTargetsWeeklyRateKgWk => 'Haftalık Oran (kg/hafta)';
 
   @override
-  String get editTrackingAtLeastOneStat =>
-      'En az bir istatistik görünür kalmalıdır';
+  String get editTrackingAtLeastOneStat => 'En az bir istatistik görünür kalmalıdır';
 
   @override
   String get editTrackingCaloriesBurned => 'Yakılan Kalori';
 
   @override
-  String get editTrackingCaloriesPCF =>
-      'Kalori, P/C/F makroları ve su tüketimi';
+  String get editTrackingCaloriesPCF => 'Kalori, P/C/F makroları ve su tüketimi';
 
   @override
-  String get editTrackingChooseWhichStatsTo =>
-      'Takip çubuğunda hangi istatistiklerin gösterileceğini seç';
+  String get editTrackingChooseWhichStatsTo => 'Takip çubuğunda hangi istatistiklerin gösterileceğini seç';
 
   @override
-  String get editTrackingConsecutiveWorkoutDays =>
-      'Arka arkaya antrenman günleri';
+  String get editTrackingConsecutiveWorkoutDays => 'Arka arkaya antrenman günleri';
 
   @override
   String get editTrackingDailyGoals => 'Günlük Hedefler';
 
   @override
-  String get editTrackingDailyHabitCompletionProgres =>
-      'Günlük alışkanlık tamamlama ilerlemesi';
+  String get editTrackingDailyHabitCompletionProgres => 'Günlük alışkanlık tamamlama ilerlemesi';
 
   @override
-  String get editTrackingDailyStepCountFrom =>
-      'Sağlık cihazlarından günlük adım sayısı';
+  String get editTrackingDailyStepCountFrom => 'Sağlık cihazlarından günlük adım sayısı';
 
   @override
   String get editTrackingEditTracking => 'Takibi Düzenle';
 
   @override
-  String get editTrackingFromConnectedHealthDevices =>
-      'Bağlı sağlık cihazlarından';
+  String get editTrackingFromConnectedHealthDevices => 'Bağlı sağlık cihazlarından';
 
   @override
   String get editTrackingHabits => 'Alışkanlıklar';
 
   @override
-  String get editTrackingLastNightSSleep =>
-      'Dün geceki uyku süresi ve kalitesi';
+  String get editTrackingLastNightSSleep => 'Dün geceki uyku süresi ve kalitesi';
 
   @override
-  String get editTrackingLoginWeightMealWorkout =>
-      'Giriş, kilo, öğün ve antrenman takibi';
+  String get editTrackingLoginWeightMealWorkout => 'Giriş, kilo, öğün ve antrenman takibi';
 
   @override
   String get editTrackingNutritionHydration => 'Beslenme ve Hidrasyon';
@@ -8411,8 +7870,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editTrackingWorkoutStreak => 'Antrenman Serisi';
 
   @override
-  String get editWeightsAnyWeightAllowedIn =>
-      'Antrenmanlarda her ağırlığa izin ver';
+  String get editWeightsAnyWeightAllowedIn => 'Antrenmanlarda her ağırlığa izin ver';
 
   @override
   String get editWeightsApplyAPreset => 'Bir ön ayar uygula';
@@ -8427,8 +7885,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editWeightsClearedAllWeights => 'Tüm ağırlıklar temizlendi';
 
   @override
-  String get editWeightsCommercialGymStandardSet =>
-      'Ticari spor salonu standart seti';
+  String get editWeightsCommercialGymStandardSet => 'Ticari spor salonu standart seti';
 
   @override
   String get editWeightsCompetitionSet832 => 'Yarışma seti (8–32 kg)';
@@ -8458,8 +7915,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editWeightsMin => 'Min';
 
   @override
-  String get editWeightsNoWeightsYetPick =>
-      'Henüz ağırlık yok — min/maks/adım değerlerini seçin ve Oluştur\'a dokunun.';
+  String get editWeightsNoWeightsYetPick => 'Henüz ağırlık yok — min/maks/adım değerlerini seçin ve Oluştur\'a dokunun.';
 
   @override
   String get editWeightsPreset => 'Ön ayar';
@@ -8505,16 +7961,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String editWorkoutEquipmentSheetValue(
-    Object length,
-    Object selectedInCategory,
-  ) {
+  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory) {
     return '($selectedInCategory/$length)';
   }
 
   @override
-  String get editWorkoutEquipmentUpdateWorkoutEquipment =>
-      'Antrenman Ekipmanını Güncelle';
+  String get editWorkoutEquipmentUpdateWorkoutEquipment => 'Antrenman Ekipmanını Güncelle';
 
   @override
   String get editWorkoutEquipmentWeights => 'Ağırlıklar';
@@ -8532,8 +7984,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editableFitnessCardActiveInjuries => 'Aktif Sakatlıklar';
 
   @override
-  String get editableFitnessCardChangesAffectYourWorkout =>
-      'Değişiklikler antrenman programınızı etkiler';
+  String get editableFitnessCardChangesAffectYourWorkout => 'Değişiklikler antrenman programınızı etkiler';
 
   @override
   String get editableFitnessCardCustom => 'Özel';
@@ -8568,8 +8019,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editableFitnessCardFitnessLevel => 'Fitness Seviyesi';
 
   @override
-  String get editableFitnessCardFitnessSettingsUpdatedWor =>
-      'Fitness ayarları güncellendi - antrenmanlar yeniden oluşturulacak';
+  String get editableFitnessCardFitnessSettingsUpdatedWor => 'Fitness ayarları güncellendi - antrenmanlar yeniden oluşturulacak';
 
   @override
   String get editableFitnessCardGoal => 'Hedef';
@@ -8598,24 +8048,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editableFitnessCardNotSet => 'Ayarlanmadı';
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(
-    Object _selectedStretchDuration,
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration+$_selectedStretchDuration dk';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin(
-    Object _selectedWarmupDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration) {
     return '$_selectedWarmupDuration dk';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin2(
-    Object _selectedStretchDuration,
-  ) {
+  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration) {
     return '$_selectedStretchDuration dk';
   }
 
@@ -8667,8 +8110,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get emailPreferencesAFollowUpIf =>
-      'Planlanan zamanınız kaydedilmeden geçerse bir takip bildirimi';
+  String get emailPreferencesAFollowUpIf => 'Planlanan zamanınız kaydedilmeden geçerse bir takip bildirimi';
 
   @override
   String get emailPreferencesAchievementUnlocks => 'Başarı kilidi açılmaları';
@@ -8677,34 +8119,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emailPreferencesBillingAccount => 'Faturalandırma ve hesap';
 
   @override
-  String get emailPreferencesCheckInsFromYour =>
-      'Koçunuzdan check-in\'ler — aktivasyon, geri dönüşler, nazik hatırlatmalar';
+  String get emailPreferencesCheckInsFromYour => 'Koçunuzdan check-in\'ler — aktivasyon, geri dönüşler, nazik hatırlatmalar';
 
   @override
-  String get emailPreferencesDailyRemindersAboutYour =>
-      'Planlanan antrenmanlarınız hakkında günlük hatırlatmalar';
+  String get emailPreferencesDailyRemindersAboutYour => 'Planlanan antrenmanlarınız hakkında günlük hatırlatmalar';
 
   @override
   String get emailPreferencesEmailPreferences => 'E-POSTA TERCİHLERİ';
 
   @override
-  String get emailPreferencesFailedToLoadEmail =>
-      'E-posta tercihleri yüklenemedi';
+  String get emailPreferencesFailedToLoadEmail => 'E-posta tercihleri yüklenemedi';
 
   @override
-  String get emailPreferencesKeepOnlyEssentialWorkout =>
-      'Sadece temel antrenman hatırlatıcılarını tut';
+  String get emailPreferencesKeepOnlyEssentialWorkout => 'Sadece temel antrenman hatırlatıcılarını tut';
 
   @override
-  String get emailPreferencesMissedWorkoutNudges =>
-      'Kaçırılan antrenman uyarıları';
+  String get emailPreferencesMissedWorkoutNudges => 'Kaçırılan antrenman uyarıları';
 
   @override
   String get emailPreferencesMotivationalNudges => 'Motivasyon uyarıları';
 
   @override
-  String get emailPreferencesNewFeaturesAndApp =>
-      'Yeni özellikler ve uygulama iyileştirmeleri';
+  String get emailPreferencesNewFeaturesAndApp => 'Yeni özellikler ve uygulama iyileştirmeleri';
 
   @override
   String get emailPreferencesOffersDiscounts => 'Teklifler ve indirimler';
@@ -8713,8 +8149,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emailPreferencesProductUpdates => 'Ürün güncellemeleri';
 
   @override
-  String get emailPreferencesPurchaseBillingCancellatio =>
-      'Satın alma, faturalandırma, iptal (gerekli)';
+  String get emailPreferencesPurchaseBillingCancellatio => 'Satın alma, faturalandırma, iptal (gerekli)';
 
   @override
   String emailPreferencesSectionControlWhatEmailsYou(Object appName) {
@@ -8722,48 +8157,40 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get emailPreferencesSpecialOffersAndRe =>
-      'Özel teklifler ve yeniden katılım indirimleri';
+  String get emailPreferencesSpecialOffersAndRe => 'Özel teklifler ve yeniden katılım indirimleri';
 
   @override
   String get emailPreferencesStreakAlerts => 'Seri uyarıları';
 
   @override
-  String get emailPreferencesSundayRecapWithWorkouts =>
-      'Antrenmanlar, beslenme, seri ve XP içeren Pazar özeti';
+  String get emailPreferencesSundayRecapWithWorkouts => 'Antrenmanlar, beslenme, seri ve XP içeren Pazar özeti';
 
   @override
-  String get emailPreferencesThisWillTurnOff =>
-      'Bu, tüm pazarlama e-postalarını kapatacaktır:';
+  String get emailPreferencesThisWillTurnOff => 'Bu, tüm pazarlama e-postalarını kapatacaktır:';
 
   @override
-  String get emailPreferencesTrophiesFirstWorkoutCeleb =>
-      'Kupalar + ilk antrenman kutlamaları';
+  String get emailPreferencesTrophiesFirstWorkoutCeleb => 'Kupalar + ilk antrenman kutlamaları';
 
   @override
   String get emailPreferencesUnsubscribe => 'Abonelikten çık';
 
   @override
-  String get emailPreferencesUnsubscribeFromAllMarketing =>
-      'Tüm pazarlama e-postalarından çık';
+  String get emailPreferencesUnsubscribeFromAllMarketing => 'Tüm pazarlama e-postalarından çık';
 
   @override
-  String get emailPreferencesUnsubscribedFromMarketingEm =>
-      'Pazarlama e-postalarından çıkıldı';
+  String get emailPreferencesUnsubscribedFromMarketingEm => 'Pazarlama e-postalarından çıkıldı';
 
   @override
   String get emailPreferencesWeeklySummary => 'Haftalık özet';
 
   @override
-  String get emailPreferencesWhenYourStreakIs =>
-      'Seriniz bozulma riski altındayken';
+  String get emailPreferencesWhenYourStreakIs => 'Seriniz bozulma riski altındayken';
 
   @override
   String get emailPreferencesWorkoutReminders => 'Antrenman hatırlatıcıları';
 
   @override
-  String get emailPreferencesYouWillStillReceive =>
-      'Temel antrenman hatırlatıcılarını almaya devam edeceksiniz.';
+  String get emailPreferencesYouWillStillReceive => 'Temel antrenman hatırlatıcılarını almaya devam edeceksiniz.';
 
   @override
   String get emailSignInAlreadyHaveAnAccount => 'Zaten bir hesabınız var mı?';
@@ -8781,8 +8208,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emailSignInForgotPassword => 'Şifremi Unuttum?';
 
   @override
-  String get emailSignInIfAnAccountExists =>
-      'Bu e-posta ile bir hesap varsa, şifre sıfırlama bağlantısı gönderildi.';
+  String get emailSignInIfAnAccountExists => 'Bu e-posta ile bir hesap varsa, şifre sıfırlama bağlantısı gönderildi.';
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
@@ -8807,8 +8233,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emailVerificationBannerResend => 'Yeniden gönder';
 
   @override
-  String get emailVerificationBannerVerifyYourEmailTo =>
-      'Hesabınızı güvenceye almak için e-postanızı doğrulayın.';
+  String get emailVerificationBannerVerifyYourEmailTo => 'Hesabınızı güvenceye almak için e-postanızı doğrulayın.';
 
   @override
   String get embeddedCameraPanelFromGallery => 'Galeriden';
@@ -8817,23 +8242,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get embeddedCameraPanelTryAgain => 'Tekrar dene';
 
   @override
-  String get emptyCustomExercisesBuildCustomExercisesTailore =>
-      'İhtiyaçlarınıza göre özel egzersizler oluşturun veya birden fazla hareketi güçlü kombinasyonlar halinde birleştirin.';
+  String get emptyCustomExercisesBuildCustomExercisesTailore => 'İhtiyaçlarınıza göre özel egzersizler oluşturun veya birden fazla hareketi güçlü kombinasyonlar halinde birleştirin.';
 
   @override
-  String get emptyCustomExercisesCreateYourFirstExercise =>
-      'İlk Egzersizini Oluştur';
+  String get emptyCustomExercisesCreateYourFirstExercise => 'İlk Egzersizini Oluştur';
 
   @override
-  String get emptyCustomExercisesCreateYourOwnExercises =>
-      'Kendi Egzersizlerini Oluştur';
+  String get emptyCustomExercisesCreateYourOwnExercises => 'Kendi Egzersizlerini Oluştur';
 
   @override
   String get emptyStateClearFilters => 'Filtreleri temizle';
 
   @override
-  String get emptyStateCompleteYourFirstWorkout =>
-      'İlerlemeni takip etmeye başlamak için\nilk antrenmanını tamamla!';
+  String get emptyStateCompleteYourFirstWorkout => 'İlerlemeni takip etmeye başlamak için\nilk antrenmanını tamamla!';
 
   @override
   String get emptyStateCreateProgram => 'Program oluştur';
@@ -8854,23 +8275,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emptyStateNoWorkoutsYet => 'Henüz antrenman yok';
 
   @override
-  String get emptyStatePleaseCheckYourInternet =>
-      'Lütfen internet bağlantını kontrol et\nve tekrar dene.';
+  String get emptyStatePleaseCheckYourInternet => 'Lütfen internet bağlantını kontrol et\nve tekrar dene.';
 
   @override
   String get emptyStateTipGotIt => 'Anladım';
 
   @override
-  String get emptyStateTryAdjustingYourFilters =>
-      'Filtrelerini ayarlamayı dene\nveya başka bir şey ara.';
+  String get emptyStateTryAdjustingYourFilters => 'Filtrelerini ayarlamayı dene\nveya başka bir şey ara.';
 
   @override
-  String get emptyStateWeCouldnTFind =>
-      'Aradığını bulamadık.\nFarklı anahtar kelimeler dene.';
+  String get emptyStateWeCouldnTFind => 'Aradığını bulamadık.\nFarklı anahtar kelimeler dene.';
 
   @override
-  String get emptyStateYourWorkoutScheduleIs =>
-      'Antrenman programın boş.\nBir program oluşturarak başla!';
+  String get emptyStateYourWorkoutScheduleIs => 'Antrenman programın boş.\nBir program oluşturarak başla!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'ŞUNU SORMAYI DENE...';
@@ -8881,12 +8298,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get enhancedEmptyStateYourPersonalFitnessAssistan =>
-      'Kişisel fitness asistanın';
+  String get enhancedEmptyStateYourPersonalFitnessAssistan => 'Kişisel fitness asistanın';
 
   @override
-  String get enhancedNotesAddNotesAboutForm =>
-      'Form, ipuçları veya değişiklikler hakkında notlar ekle...';
+  String get enhancedNotesAddNotesAboutForm => 'Form, ipuçları veya değişiklikler hakkında notlar ekle...';
 
   @override
   String get enhancedNotesCamera => 'Kamera';
@@ -8910,8 +8325,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get enhancedNotesListeningSpeakNow => 'Dinleniyor... şimdi konuş';
 
   @override
-  String get enhancedNotesMicrophonePermissionRequired =>
-      'Mikrofon izni gerekli';
+  String get enhancedNotesMicrophonePermissionRequired => 'Mikrofon izni gerekli';
 
   @override
   String get enhancedNotesRecord => 'Kaydet';
@@ -8920,8 +8334,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get enhancedNotesRecording => 'Kaydediliyor...';
 
   @override
-  String get enhancedNotesSpeechRecognitionNotAvailab =>
-      'Konuşma tanıma kullanılamıyor';
+  String get enhancedNotesSpeechRecognitionNotAvailab => 'Konuşma tanıma kullanılamıyor';
 
   @override
   String get enhancedNotesStop => 'Durdur';
@@ -8999,12 +8412,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get environmentDetailSearchEquipment => 'Ekipman ara...';
 
   @override
-  String get environmentDetailSeparateMultipleWeightsWith =>
-      'Birden fazla ağırlığı virgülle ayır';
+  String get environmentDetailSeparateMultipleWeightsWith => 'Birden fazla ağırlığı virgülle ayır';
 
   @override
-  String get environmentDetailTapAddEquipmentTo =>
-      'Başlamak için \"Ekipman Ekle\"ye dokun';
+  String get environmentDetailTapAddEquipmentTo => 'Başlamak için \"Ekipman Ekle\"ye dokun';
 
   @override
   String get environmentDetailThisIsYourActive => 'Bu senin aktif ortamın';
@@ -9019,8 +8430,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get environmentDetailUseThis => 'Bunu Kullan';
 
   @override
-  String get environmentDetailYouHaveUnsavedChanges =>
-      'Kaydedilmemiş değişikliklerin var. Çıkmadan önce kaydetmek istiyor musun?';
+  String get environmentDetailYouHaveUnsavedChanges => 'Kaydedilmemiş değişikliklerin var. Çıkmadan önce kaydetmek istiyor musun?';
 
   @override
   String get environmentListActive => 'Aktif';
@@ -9056,8 +8466,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get environmentListSelectYourWorkoutEnvironmen =>
-      'Kullanabileceğiniz ekipmanları özelleştirmek için antrenman ortamınızı seçin.';
+  String get environmentListSelectYourWorkoutEnvironmen => 'Kullanabileceğiniz ekipmanları özelleştirmek için antrenman ortamınızı seçin.';
 
   @override
   String get environmentListUseThis => 'Bunu Kullan';
@@ -9066,22 +8475,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get environmentListWorkoutEnvironment => 'Antrenman Ortamı';
 
   @override
-  String get equipmentCalibration15x220x225x230x2 =>
-      '15x2, 20x2, 25x2, 30x2, 35x2';
+  String get equipmentCalibration15x220x225x230x2 => '15x2, 20x2, 25x2, 30x2, 35x2';
 
   @override
   String get equipmentCalibration175ForEz => 'EZ için 17.5, Olimpik için 45';
 
   @override
-  String get equipmentCalibration45x435x225x410x2 =>
-      '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
+  String get equipmentCalibration45x435x225x410x2 => '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
 
   @override
   String get equipmentCalibration794ForEz => 'EZ için 7.94, Olimpik için 20';
 
   @override
-  String get equipmentCalibrationAddABarbellMachine =>
-      'Varsayılanları geçersiz kılmak için bir halter, makine veya kablo ekleyin.';
+  String get equipmentCalibrationAddABarbellMachine => 'Varsayılanları geçersiz kılmak için bir halter, makine veya kablo ekleyin.';
 
   @override
   String get equipmentCalibrationAddEquipment => 'Ekipman ekle';
@@ -9090,8 +8496,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentCalibrationCalibration => 'KALİBRASYON';
 
   @override
-  String get equipmentCalibrationCouldNotLoadCalibrations =>
-      'Kalibrasyonlar yüklenemedi';
+  String get equipmentCalibrationCouldNotLoadCalibrations => 'Kalibrasyonlar yüklenemedi';
 
   @override
   String get equipmentCalibrationEGHomeRack => 'örn. \"Ev tipi rack EZ bar\"';
@@ -9100,8 +8505,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentCalibrationEditEquipment => 'Ekipmanı düzenle';
 
   @override
-  String get equipmentCalibrationIntroBody =>
-      'Plaka önerileri ve ağırlık tavsiyeleri gerçekten sahip olduğunuzla eşleşecek. Bar ağırlıkları, makine kızak ağırlıkları, kablo pin artışları ve plaka / dambıl envanterini ayarlayın.';
+  String get equipmentCalibrationIntroBody => 'Plaka önerileri ve ağırlık tavsiyeleri gerçekten sahip olduğunuzla eşleşecek. Bar ağırlıkları, makine kızak ağırlıkları, kablo pin artışları ve plaka / dambıl envanterini ayarlayın.';
 
   @override
   String get equipmentCalibrationIntroTitle => 'Gerçek ekipmanını bize anlat';
@@ -9110,8 +8514,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentCalibrationLabelOptional => 'Etiket (isteğe bağlı)';
 
   @override
-  String get equipmentCalibrationLeaveBlankToUse =>
-      'Standart IPF setini kullanmak için boş bırakın';
+  String get equipmentCalibrationLeaveBlankToUse => 'Standart IPF setini kullanmak için boş bırakın';
 
   @override
   String get equipmentCalibrationLegPress20 => 'Leg press: 20';
@@ -9120,12 +8523,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentCalibrationLegPress45 => 'Leg press: 45';
 
   @override
-  String get equipmentCalibrationNoCalibratedEquipmentYet =>
-      'Henüz kalibre edilmiş ekipman yok';
+  String get equipmentCalibrationNoCalibratedEquipmentYet => 'Henüz kalibre edilmiş ekipman yok';
 
   @override
-  String get equipmentCalibrationPlateMathWillFall =>
-      'Plaka hesaplaması standart varsayılanlara dönecektir.';
+  String get equipmentCalibrationPlateMathWillFall => 'Plaka hesaplaması standart varsayılanlara dönecektir.';
 
   @override
   String get equipmentCalibrationRemove => 'Kaldır';
@@ -9154,8 +8555,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get equipmentCalibrationSetBarSledCable =>
-      'Bar / kızak / kablo / plaka envanterini ayarla';
+  String get equipmentCalibrationSetBarSledCable => 'Bar / kızak / kablo / plaka envanterini ayarla';
 
   @override
   String get equipmentCalibrationTitle => 'Ekipmanı kalibre et';
@@ -9172,8 +8572,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get equipmentMatchCardStartAWorkoutWith =>
-      'Bununla bir antrenman başlat';
+  String get equipmentMatchCardStartAWorkoutWith => 'Bununla bir antrenman başlat';
 
   @override
   String get equipmentMatchCardUse => 'Kullan';
@@ -9209,8 +8608,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentSearchSearchEquipment => 'Ekipman ara...';
 
   @override
-  String get equipmentSearchSearchFrom100Equipment =>
-      '100\'den fazla ekipman türü arasından arayın';
+  String get equipmentSearchSearchFrom100Equipment => '100\'den fazla ekipman türü arasından arayın';
 
   @override
   String equipmentSearchSheetAdd(Object _searchQuery) {
@@ -9223,15 +8621,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get equipmentSelectorEnterCustomEquipmentE =>
-      'Özel ekipman girin (örn. \"TRX Bantları\")';
+  String get equipmentSelectorEnterCustomEquipmentE => 'Özel ekipman girin (örn. \"TRX Bantları\")';
 
   @override
   String get equipmentSelectorEquipmentAvailable => 'Mevcut Ekipman';
 
   @override
-  String get equipmentSelectorOnlyGenerateExercisesWith =>
-      'Sadece seçili ekipmanlarla egzersiz oluştur';
+  String get equipmentSelectorOnlyGenerateExercisesWith => 'Sadece seçili ekipmanlarla egzersiz oluştur';
 
   @override
   String equipmentSelectorSelected(Object selectedCount) {
@@ -9245,12 +8641,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentSnapFlowLooksABitBlurry => 'Biraz bulanık görünüyor';
 
   @override
-  String get equipmentSnapFlowNotTheseDescribeInstead =>
-      'Bunlar değil, bunun yerine tarif et';
+  String get equipmentSnapFlowNotTheseDescribeInstead => 'Bunlar değil, bunun yerine tarif et';
 
   @override
-  String get equipmentSnapFlowReplaceWithCardio =>
-      'Kardiyo ile değiştirilsin mi?';
+  String get equipmentSnapFlowReplaceWithCardio => 'Kardiyo ile değiştirilsin mi?';
 
   @override
   String get equipmentSnapFlowRetake => 'Yeniden çek';
@@ -9264,8 +8658,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentSnapFlowSomethingWentWrong => 'Bir şeyler yanlış gitti.';
 
   @override
-  String get equipmentSnapFlowThisWillSwapSets =>
-      'Bu işlem setleri/tekrar sayılarını süre hedefiyle değiştirecek. Devam edilsin mi?';
+  String get equipmentSnapFlowThisWillSwapSets => 'Bu işlem setleri/tekrar sayılarını süre hedefiyle değiştirecek. Devam edilsin mi?';
 
   @override
   String get equipmentSnapFlowTryAgain => 'Tekrar dene';
@@ -9274,8 +8667,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get equipmentSnapFlowUseAnyway => 'Yine de kullan';
 
   @override
-  String get equipmentSnapFlowWeReNot100 =>
-      'Yüzde 100 emin değiliz, en yakın eşleşmeyi seçin.';
+  String get equipmentSnapFlowWeReNot100 => 'Yüzde 100 emin değiliz, en yakın eşleşmeyi seçin.';
 
   @override
   String get equipmentSnapFlowWhichOneIsIt => 'Hangisi?';
@@ -9293,8 +8685,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get eventBasedWorkoutTapToLearnMore => 'Daha fazla bilgi için dokun';
 
   @override
-  String get eventBasedWorkoutTrainForYourBig =>
-      'Büyük günün için antrenman yap';
+  String get eventBasedWorkoutTrainForYourBig => 'Büyük günün için antrenman yap';
 
   @override
   String get eventBasedWorkoutWeddingPrep => 'Düğün Hazırlığı';
@@ -9309,19 +8700,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get eventLoggedUndoUndo => 'Geri al';
 
   @override
-  String get eventWorkoutComingEventBasedWorkouts =>
-      'Etkinlik Bazlı Antrenmanlar';
+  String get eventWorkoutComingEventBasedWorkouts => 'Etkinlik Bazlı Antrenmanlar';
 
   @override
   String get eventWorkoutComingGotIt => 'Anladım!';
 
   @override
-  String get eventWorkoutComingJune152026183 =>
-      '15 Haziran 2026 • 183 gün kaldı';
+  String get eventWorkoutComingJune152026183 => '15 Haziran 2026 • 183 gün kaldı';
 
   @override
-  String get eventWorkoutComingTrainSmarterForYour =>
-      'Büyük anların için daha akıllıca antrenman yap';
+  String get eventWorkoutComingTrainSmarterForYour => 'Büyük anların için daha akıllıca antrenman yap';
 
   @override
   String get eventWorkoutComingWeddingPrep => 'Düğün Hazırlığı';
@@ -9342,8 +8730,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAddNoMineYet => 'Henüz kişisel egzersiz yok';
 
   @override
-  String get exerciseAddNoMineYetHint =>
-      'Burada görmek için favoriler, temel egzersizler veya özel egzersizler ekleyin';
+  String get exerciseAddNoMineYetHint => 'Burada görmek için favoriler, temel egzersizler veya özel egzersizler ekleyin';
 
   @override
   String get exerciseAddSearchMine => 'Egzersizlerimde ara...';
@@ -9367,15 +8754,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAddSheetAll => 'Tümü';
 
   @override
-  String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Kütüphane → Benimkiler kısmından özel egzersizler oluşturun veya favorilerinizi işaretleyin';
+  String get exerciseAddSheetCreateCustomExercisesOr => 'Kütüphane → Benimkiler kısmından özel egzersizler oluşturun veya favorilerinizi işaretleyin';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Egzersiz eklenemedi';
 
   @override
-  String get exerciseAddSheetFindThePerfectExercise =>
-      'Antrenmanınıza eklemek için mükemmel egzersizi bulun';
+  String get exerciseAddSheetFindThePerfectExercise => 'Antrenmanınıza eklemek için mükemmel egzersizi bulun';
 
   @override
   String get exerciseAddSheetGettingAiSuggestions => 'AI önerileri alınıyor...';
@@ -9387,8 +8772,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAddSheetMine => 'Benimkiler';
 
   @override
-  String get exerciseAddSheetNoCustomExercisesFavorites =>
-      'Henüz özel egzersiz, favori veya temel hareket yok';
+  String get exerciseAddSheetNoCustomExercisesFavorites => 'Henüz özel egzersiz, favori veya temel hareket yok';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable => 'Öneri bulunamadı';
@@ -9411,8 +8795,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Tarandı';
 
   @override
-  String get exerciseAddSheetSubtitle =>
-      'Antrenmanına ekleyecek doğru hareketi bul';
+  String get exerciseAddSheetSubtitle => 'Antrenmanına ekleyecek doğru hareketi bul';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai seçimleri';
@@ -9433,8 +8816,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAnalyticsCompareWithFriends => 'Arkadaşlarla Karşılaştır';
 
   @override
-  String get exerciseAnalyticsCompleteMoreSessionsTo =>
-      'Trendleri görmek için daha fazla antrenman tamamla';
+  String get exerciseAnalyticsCompleteMoreSessionsTo => 'Trendleri görmek için daha fazla antrenman tamamla';
 
   @override
   String get exerciseAnalyticsDrop => 'Drop';
@@ -9482,8 +8864,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAnalyticsTotalVolume => 'Toplam Hacim';
 
   @override
-  String get exerciseAnalyticsVolumeWeightXReps =>
-      'Zaman içinde hacim (ağırlık x tekrar)';
+  String get exerciseAnalyticsVolumeWeightXReps => 'Zaman içinde hacim (ağırlık x tekrar)';
 
   @override
   String get exerciseAnalyticsWarmup => 'Isınma';
@@ -9492,8 +8873,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAnalyticsWeightProgression => 'Ağırlık Gelişimi';
 
   @override
-  String get exerciseAnalyticsWeightProgressionChart =>
-      'Ağırlık gelişim grafiği';
+  String get exerciseAnalyticsWeightProgressionChart => 'Ağırlık gelişim grafiği';
 
   @override
   String get exerciseAnalyticsWorking => 'Çalışma';
@@ -9529,8 +8909,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseCardFailedToLoadWorkouts => 'Antrenmanlar yüklenemedi';
 
   @override
-  String get exerciseCardGenerateAWorkoutPlan =>
-      'Önce bir antrenman planı oluştur';
+  String get exerciseCardGenerateAWorkoutPlan => 'Önce bir antrenman planı oluştur';
 
   @override
   String get exerciseCardNoUpcomingWorkouts => 'Yaklaşan antrenman yok';
@@ -9539,8 +8918,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseCardOrAddToWorkout => 'VEYA ANTRENMANA EKLE';
 
   @override
-  String get exerciseCardWillBeIncludedIn =>
-      'Bir sonraki antrenmana dahil edilecek';
+  String get exerciseCardWillBeIncludedIn => 'Bir sonraki antrenmana dahil edilecek';
 
   @override
   String get exerciseDetailActionGuide => 'Uygulama Rehberi';
@@ -9579,8 +8957,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailMuscle => 'Kas';
 
   @override
-  String get exerciseDetailNoHistoryForThis =>
-      'Bu egzersiz için henüz geçmiş yok';
+  String get exerciseDetailNoHistoryForThis => 'Bu egzersiz için henüz geçmiş yok';
 
   @override
   String get exerciseDetailPrevious => 'Önceki';
@@ -9607,8 +8984,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailScreenCoachingCues => 'KOÇLUK İPUÇLARI';
 
   @override
-  String get exerciseDetailScreenCompleteAWorkoutTo =>
-      'Takibe başlamak için bir antrenman tamamla';
+  String get exerciseDetailScreenCompleteAWorkoutTo => 'Takibe başlamak için bir antrenman tamamla';
 
   @override
   String get exerciseDetailScreenDifficulty => 'Zorluk';
@@ -9633,8 +9009,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailScreenNoStatsForThis =>
-      'Bu egzersiz için henüz istatistik yok';
+  String get exerciseDetailScreenNoStatsForThis => 'Bu egzersiz için henüz istatistik yok';
 
   @override
   String get exerciseDetailScreenNotes => 'Notlar';
@@ -9707,44 +9082,30 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailSheetNoExercisesInCurrent =>
-      'Mevcut antrenmanda değiştirilecek egzersiz yok';
+  String get exerciseDetailSheetNoExercisesInCurrent => 'Mevcut antrenmanda değiştirilecek egzersiz yok';
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
-    Object e,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e) {
     return 'Sabitleme başarısız: $e';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
-    Object exerciseName,
-    Object selected,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected) {
     return '\"$selected\", \"$exerciseName\" ile değiştirildi';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
-    Object exerciseName,
-    Object section,
-    Object timing,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing) {
     return '\"$exerciseName\", $section bölümüne sabitlendi ($timing)';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName) {
     return '\"$exerciseName\" sabitlemesi kaldırıldı';
   }
 
   @override
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
-    Object exerciseName,
-  ) {
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName) {
     return '\"$exerciseName\" için çevrimdışı videoyu kaldırmak istiyor musunuz? İstediğiniz zaman tekrar indirebilirsiniz.';
   }
 
@@ -9752,8 +9113,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailSheetQueue => 'Sıra';
 
   @override
-  String get exerciseDetailSheetReplaceWhichExercise =>
-      'Hangi egzersiz değiştirilsin?';
+  String get exerciseDetailSheetReplaceWhichExercise => 'Hangi egzersiz değiştirilsin?';
 
   @override
   String exerciseDetailSheetSet(Object setNumber) {
@@ -9764,8 +9124,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailSheetStaple => 'Temel';
 
   @override
-  String get exerciseDetailSheetTrackYourMaxStrength =>
-      'Maksimum gücünü takip et';
+  String get exerciseDetailSheetTrackYourMaxStrength => 'Maksimum gücünü takip et';
 
   @override
   String get exerciseDetailStapleOptions => 'Temel Seçenekleri';
@@ -9783,12 +9142,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailVideoNotAvailable => 'Video mevcut değil';
 
   @override
-  String get exerciseDetailWillAutoPlayWhen =>
-      'Hazır olduğunda otomatik oynatılacak';
+  String get exerciseDetailWillAutoPlayWhen => 'Hazır olduğunda otomatik oynatılacak';
 
   @override
-  String get exerciseDetailYourSessionsWillAppear =>
-      'Antrenmanlarınız burada görünecek';
+  String get exerciseDetailYourSessionsWillAppear => 'Antrenmanlarınız burada görünecek';
 
   @override
   String get exerciseDetailsAiCoachTips => 'Ai koç ipuçları';
@@ -9842,8 +9199,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailsSheetDifficulty => 'Zorluk';
 
   @override
-  String get exerciseDetailsSheetDonTHaveThis =>
-      'Bu ekipmana sahip değil misiniz?';
+  String get exerciseDetailsSheetDonTHaveThis => 'Bu ekipmana sahip değil misiniz?';
 
   @override
   String get exerciseDetailsSheetEquipment => 'Ekipman';
@@ -9855,8 +9211,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailsSheetFormCues => 'Form İpuçları';
 
   @override
-  String get exerciseDetailsSheetLoadingAiCoachTips =>
-      'AI koç ipuçları yükleniyor...';
+  String get exerciseDetailsSheetLoadingAiCoachTips => 'AI koç ipuçları yükleniyor...';
 
   @override
   String get exerciseDetailsSheetPrimaryMuscle => 'Birincil Kas';
@@ -9868,8 +9223,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseDetailsSheetSecondaryMuscles => 'İkincil Kaslar';
 
   @override
-  String get exerciseDetailsSheetTapVideoToWatch =>
-      'Form gösterimini izlemek için \"Video\"ya dokunun';
+  String get exerciseDetailsSheetTapVideoToWatch => 'Form gösterimini izlemek için \"Video\"ya dokunun';
 
   @override
   String get exerciseDetailsSheetVideo => 'Video';
@@ -9920,8 +9274,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseHistoryAllTime => 'TÜM ZAMANLAR';
 
   @override
-  String get exerciseHistoryCompleteSomeWorkoutsTo =>
-      'Egzersiz geçmişinizi görmek ve zaman içindeki gelişiminizi takip etmek için birkaç antrenman tamamlayın.';
+  String get exerciseHistoryCompleteSomeWorkoutsTo => 'Egzersiz geçmişinizi görmek ve zaman içindeki gelişiminizi takip etmek için birkaç antrenman tamamlayın.';
 
   @override
   String get exerciseHistoryExerciseHistory => 'Egzersiz Geçmişi';
@@ -9933,15 +9286,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseHistoryFailedToLoadExercises => 'Egzersizler yüklenemedi';
 
   @override
-  String get exerciseHistoryKeepTrainingAndPushing =>
-      'Antrenmana ve sınırlarınızı zorlamaya devam edin. Güçlendikçe kişisel rekorlarınız burada görünecektir.';
+  String get exerciseHistoryKeepTrainingAndPushing => 'Antrenmana ve sınırlarınızı zorlamaya devam edin. Güçlendikçe kişisel rekorlarınız burada görünecektir.';
 
   @override
   String get exerciseHistoryLast30Days => 'Son 30 Gün';
 
   @override
-  String get exerciseHistoryNoExerciseHistoryYet =>
-      'Henüz Egzersiz Geçmişi Yok';
+  String get exerciseHistoryNoExerciseHistoryYet => 'Henüz Egzersiz Geçmişi Yok';
 
   @override
   String get exerciseHistoryNoPersonalRecordsYet => 'Henüz Kişisel Rekor Yok';
@@ -9980,16 +9331,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseInfoRetrying => 'Yeniden deneniyor';
 
   @override
-  String get exerciseManagementMixinAiPoweredAlternatives =>
-      'AI destekli alternatifler';
+  String get exerciseManagementMixinAiPoweredAlternatives => 'AI destekli alternatifler';
 
   @override
-  String get exerciseManagementMixinBreakTheSupersetPair =>
-      'Superset eşleşmesini boz';
+  String get exerciseManagementMixinBreakTheSupersetPair => 'Superset eşleşmesini boz';
 
   @override
-  String get exerciseManagementMixinChooseExerciseToPair =>
-      'Eşleştirmek için egzersiz seçin';
+  String get exerciseManagementMixinChooseExerciseToPair => 'Eşleştirmek için egzersiz seçin';
 
   @override
   String get exerciseManagementMixinCreateSuperset => 'Superset Oluştur';
@@ -10000,24 +9348,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseManagementMixinMakeThisTheActive =>
-      'Bunu aktif egzersiz yap';
+  String get exerciseManagementMixinMakeThisTheActive => 'Bunu aktif egzersiz yap';
 
   @override
-  String get exerciseManagementMixinNoAvailableExercisesTo =>
-      'Eşleştirilecek uygun egzersiz yok';
+  String get exerciseManagementMixinNoAvailableExercisesTo => 'Eşleştirilecek uygun egzersiz yok';
 
   @override
-  String get exerciseManagementMixinPairWithNextExercise =>
-      'Sonraki Egzersizle Eşleştir';
+  String get exerciseManagementMixinPairWithNextExercise => 'Sonraki Egzersizle Eşleştir';
 
   @override
-  String get exerciseManagementMixinRemoveFromSuperset =>
-      'Superset\'ten kaldır';
+  String get exerciseManagementMixinRemoveFromSuperset => 'Superset\'ten kaldır';
 
   @override
-  String get exerciseManagementMixinRemoveFromThisWorkout =>
-      'Bu antrenmandan kaldır';
+  String get exerciseManagementMixinRemoveFromThisWorkout => 'Bu antrenmandan kaldır';
 
   @override
   String get exerciseManagementMixinReplaceExercise => 'Egzersizi Değiştir';
@@ -10047,8 +9390,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseMenuNeverRecommend => 'Asla önerme';
 
   @override
-  String get exerciseMenuQueuedForNext =>
-      'Bir sonraki antrenman için sıraya alındı';
+  String get exerciseMenuQueuedForNext => 'Bir sonraki antrenman için sıraya alındı';
 
   @override
   String get exerciseMenuRemoveAsStaple => 'Temel egzersizden çıkar';
@@ -10087,15 +9429,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseMiniChartNotEnoughHistory => 'Yeterli geçmiş yok';
 
   @override
-  String get exerciseNavigationMixinApplyToAllLinked =>
-      'Tüm bağlantılı egzersizlere uygulansın mı?';
+  String get exerciseNavigationMixinApplyToAllLinked => 'Tüm bağlantılı egzersizlere uygulansın mı?';
 
   @override
   String get exerciseNavigationMixinBarType => 'Bar Türü';
 
   @override
-  String get exerciseNavigationMixinCannotRemoveTheLast =>
-      'Son egzersiz kaldırılamaz';
+  String get exerciseNavigationMixinCannotRemoveTheLast => 'Son egzersiz kaldırılamaz';
 
   @override
   String exerciseNavigationMixinChangedTo(Object displayName) {
@@ -10122,8 +9462,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinIncompleteExercises =>
-      'Tamamlanmamış Egzersizler';
+  String get exerciseNavigationMixinIncompleteExercises => 'Tamamlanmamış Egzersizler';
 
   @override
   String get exerciseNavigationMixinMyGym => 'Spor Salonum';
@@ -10158,8 +9497,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinSomeExercisesHaveMissing =>
-      'Bazı egzersizlerin eksik kayıtları var:';
+  String get exerciseNavigationMixinSomeExercisesHaveMissing => 'Bazı egzersizlerin eksik kayıtları var:';
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
@@ -10183,8 +9521,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseNavigationMixinUndo => 'Geri al';
 
   @override
-  String get exerciseNavigationMixinUseTheNotesSection =>
-      'Setlerin altındaki notlar bölümünü kullanın';
+  String get exerciseNavigationMixinUseTheNotesSection => 'Setlerin altındaki notlar bölümünü kullanın';
 
   @override
   String get exerciseNavigationMixinYesApplyToAll => 'Evet, hepsine uygula';
@@ -10196,15 +9533,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseOptionsChangeEquipment => 'Ekipmanı değiştir';
 
   @override
-  String get exerciseOptionsChangeRepsProgression =>
-      'Tekrar İlerlemesini Değiştir';
+  String get exerciseOptionsChangeRepsProgression => 'Tekrar İlerlemesini Değiştir';
 
   @override
   String get exerciseOptionsExerciseHistory => 'Egzersiz Geçmişi';
 
   @override
-  String get exerciseOptionsInfoExerciseOptionsExplained =>
-      'Egzersiz Seçenekleri Açıklandı';
+  String get exerciseOptionsInfoExerciseOptionsExplained => 'Egzersiz Seçenekleri Açıklandı';
 
   @override
   String get exerciseOptionsInfoFavorite => 'Favori';
@@ -10213,45 +9548,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseOptionsInfoLinkAsSuperset => 'Superset olarak bağla';
 
   @override
-  String get exerciseOptionsInfoMarkAsACore =>
-      'Asla değiştirilmeyecek bir temel egzersiz olarak işaretleyin. AI, antrenmanlarınıza her zaman temel egzersizleri dahil edecektir; tutarlı bir progressive overload istediğiniz bileşik hareketler için mükemmeldir.';
+  String get exerciseOptionsInfoMarkAsACore => 'Asla değiştirilmeyecek bir temel egzersiz olarak işaretleyin. AI, antrenmanlarınıza her zaman temel egzersizleri dahil edecektir; tutarlı bir progressive overload istediğiniz bileşik hareketler için mükemmeldir.';
 
   @override
   String get exerciseOptionsInfoNeverRecommend => 'Asla Önerme';
 
   @override
-  String get exerciseOptionsInfoPairWithAnotherExercise =>
-      'Minimum dinlenme ile arka arkaya yapmak için başka bir egzersizle eşleştirin. Zaman verimliliği ve kas pompalaması için harikadır.';
+  String get exerciseOptionsInfoPairWithAnotherExercise => 'Minimum dinlenme ile arka arkaya yapmak için başka bir egzersizle eşleştirin. Zaman verimliliği ve kas pompalaması için harikadır.';
 
   @override
-  String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
-      'Bu egzersizi gelecekteki AI önerilerinden kalıcı olarak engelleyin. Bunu sevmediğiniz veya sakatlık nedeniyle yapamadığınız egzersizler için kullanın.';
+  String get exerciseOptionsInfoPermanentlyBlockThisExercis => 'Bu egzersizi gelecekteki AI önerilerinden kalıcı olarak engelleyin. Bunu sevmediğiniz veya sakatlık nedeniyle yapamadığınız egzersizler için kullanın.';
 
   @override
-  String get exerciseOptionsInfoQueueThisExerciseTo =>
-      'Bu egzersizi bir sonraki antrenmanınızda görünecek şekilde sıraya alın. Odaklanmak istediğiniz egzersizler için harikadır. Sıraya alınan egzersizler kullanılmazsa 7 gün sonra sona erer.';
+  String get exerciseOptionsInfoQueueThisExerciseTo => 'Bu egzersizi bir sonraki antrenmanınızda görünecek şekilde sıraya alın. Odaklanmak istediğiniz egzersizler için harikadır. Sıraya alınan egzersizler kullanılmazsa 7 gün sonra sona erer.';
 
   @override
   String get exerciseOptionsInfoRemoveFromWorkout => 'Antrenmandan Kaldır';
 
   @override
-  String get exerciseOptionsInfoRemoveThisExerciseFrom =>
-      'Bu egzersizi sadece mevcut antrenmandan kaldırın. Egzersiz gelecekteki antrenmanlarda tekrar görünebilir.';
+  String get exerciseOptionsInfoRemoveThisExerciseFrom => 'Bu egzersizi sadece mevcut antrenmandan kaldırın. Egzersiz gelecekteki antrenmanlarda tekrar görünebilir.';
 
   @override
   String get exerciseOptionsInfoRepeatNextTime => 'Bir Sonraki Sefere Tekrarla';
 
   @override
-  String get exerciseOptionsInfoReplaceWithASimilar =>
-      'Aynı kasları hedefleyen benzer bir egzersizle değiştirin. AI önerileri, son değişiklikler arasından seçim yapın veya tüm kütüphaneye göz atın.';
+  String get exerciseOptionsInfoReplaceWithASimilar => 'Aynı kasları hedefleyen benzer bir egzersizle değiştirin. AI önerileri, son değişiklikler arasından seçim yapın veya tüm kütüphaneye göz atın.';
 
   @override
-  String get exerciseOptionsInfoSaveExercisesYouLove =>
-      'Hızlı erişim için sevdiğiniz egzersizleri kaydedin. Favoriler, Egzersiz Kütüphanesi filtreli görünümünde görünür ve AI önerilerinde önceliklendirilir.';
+  String get exerciseOptionsInfoSaveExercisesYouLove => 'Hızlı erişim için sevdiğiniz egzersizleri kaydedin. Favoriler, Egzersiz Kütüphanesi filtreli görünümünde görünür ve AI önerilerinde önceliklendirilir.';
 
   @override
-  String get exerciseOptionsInfoSeeYourPerformanceHistory =>
-      'Bu egzersiz için zaman içindeki performans geçmişinizi ve ilerleme grafiklerinizi görün.';
+  String get exerciseOptionsInfoSeeYourPerformanceHistory => 'Bu egzersiz için zaman içindeki performans geçmişinizi ve ilerleme grafiklerinizi görün.';
 
   @override
   String get exerciseOptionsInfoStapleExercise => 'Temel Egzersiz';
@@ -10286,8 +9613,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetAddExerciseToAvoid =>
-      'Kaçınılacak Egzersiz Ekle';
+  String get exercisePickerSheetAddExerciseToAvoid => 'Kaçınılacak Egzersiz Ekle';
 
   @override
   String get exercisePickerSheetAddFavoriteExercise => 'Favori Egzersiz Ekle';
@@ -10305,8 +9631,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePickerSheetBodyPart => 'Vücut Bölgesi';
 
   @override
-  String get exercisePickerSheetCanTFindYour =>
-      'Egzersizinizi bulamıyor musunuz? Özel olarak ekleyin';
+  String get exercisePickerSheetCanTFindYour => 'Egzersizinizi bulamıyor musunuz? Özel olarak ekleyin';
 
   @override
   String get exercisePickerSheetClearAll => 'Hepsini temizle';
@@ -10332,29 +9657,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePickerSheetNoExercisesFound => 'Egzersiz bulunamadı';
 
   @override
-  String get exercisePickerSheetOrTypeAboveTo =>
-      'Veya tüm egzersiz kütüphanesini aramak için yukarıya yazın';
+  String get exercisePickerSheetOrTypeAboveTo => 'Veya tüm egzersiz kütüphanesini aramak için yukarıya yazın';
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
-    Object length,
-    Object length1,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1) {
     return '$length1 öğeden $length tanesi gösteriliyor';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue(
-    Object customCount,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount) {
     return '($customCount)';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(
-    Object count,
-    Object name,
-  ) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name) {
     return '$name ($count)';
   }
 
@@ -10367,27 +9683,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetSearchForCoreLifts =>
-      'Antrenmanlarınıza sabitlemek için temel hareketleri arayın';
+  String get exercisePickerSheetSearchForCoreLifts => 'Antrenmanlarınıza sabitlemek için temel hareketleri arayın';
 
   @override
   String get exercisePickerSheetSearchForExercises => 'Egzersizleri ara';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToAdd =>
-      'Favorilerinize eklemek için egzersiz arayın';
+  String get exercisePickerSheetSearchForExercisesToAdd => 'Favorilerinize eklemek için egzersiz arayın';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToInclude =>
-      'Bir sonraki antrenmanınıza dahil etmek için egzersiz arayın';
+  String get exercisePickerSheetSearchForExercisesToInclude => 'Bir sonraki antrenmanınıza dahil etmek için egzersiz arayın';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToSkip =>
-      'Atlamak istediğiniz egzersizleri arayın';
+  String get exercisePickerSheetSearchForExercisesToSkip => 'Atlamak istediğiniz egzersizleri arayın';
 
   @override
-  String get exercisePickerSheetSearchTryPushRow =>
-      'Ara — \"push\", \"row\", \"squat\" deneyin';
+  String get exercisePickerSheetSearchTryPushRow => 'Ara — \"push\", \"row\", \"squat\" deneyin';
 
   @override
   String get exercisePickerSheetSearching => 'Aranıyor...';
@@ -10396,26 +9707,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePickerSheetShowingResultsFor => 'Sonuçlar gösteriliyor: ';
 
   @override
-  String get exercisePickerSheetTapExercisesToSelect =>
-      'Birden fazla seçmek için egzersizlere dokunun';
+  String get exercisePickerSheetTapExercisesToSelect => 'Birden fazla seçmek için egzersizlere dokunun';
 
   @override
-  String get exercisePickerSheetTryADifferentSearch =>
-      'Farklı bir arama veya filtre deneyin';
+  String get exercisePickerSheetTryADifferentSearch => 'Farklı bir arama veya filtre deneyin';
 
   @override
   String get exercisePickerSheetType => 'Tür';
 
   @override
-  String get exercisePickerSheetTypeToSearchOr =>
-      'Aramak için yazın veya göz atmak için filtreleri kullanın';
+  String get exercisePickerSheetTypeToSearchOr => 'Aramak için yazın veya göz atmak için filtreleri kullanın';
 
   @override
   String get exercisePickerSheetYourCustomExercises => 'ÖZEL EGZERSİZLERİNİZ';
 
   @override
-  String get exercisePreferencesCardAiWillPrioritizeThese =>
-      'AI bunlara öncelik verecek';
+  String get exercisePreferencesCardAiWillPrioritizeThese => 'AI bunlara öncelik verecek';
 
   @override
   String exercisePreferencesCardAvoided(Object avoidedCount) {
@@ -10426,39 +9733,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePreferencesCardCooldownStretch => 'Soğuma Esnemesi';
 
   @override
-  String get exercisePreferencesCardCoreLiftsThatNever =>
-      'Asla değişmeyen temel kaldırışlar';
+  String get exercisePreferencesCardCoreLiftsThatNever => 'Asla değişmeyen temel kaldırışlar';
 
   @override
   String get exercisePreferencesCardCustomExercises => 'Özel Egzersizler';
 
   @override
-  String get exercisePreferencesCardCustomizeStepPerEquipme =>
-      'Ekipman başına +/- adımını özelleştirin';
+  String get exercisePreferencesCardCustomizeStepPerEquipme => 'Ekipman başına +/- adımını özelleştirin';
 
   @override
-  String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
-      'Antrenmanlarda hangi egzersizlerin görüneceğini özelleştirin';
+  String get exercisePreferencesCardCustomizeWhichExercisesAppe => 'Antrenmanlarda hangi egzersizlerin görüneceğini özelleştirin';
 
   @override
-  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts =>
-      'Antrenman öncesi dinamik ısınma';
+  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts => 'Antrenman öncesi dinamik ısınma';
 
   @override
-  String get exercisePreferencesCardEnableOrDisableWorkout =>
-      'Antrenman aşamalarını etkinleştirin veya devre dışı bırakın';
+  String get exercisePreferencesCardEnableOrDisableWorkout => 'Antrenman aşamalarını etkinleştirin veya devre dışı bırakın';
 
   @override
-  String get exercisePreferencesCardExercisePreferences =>
-      'Egzersiz Tercihleri';
+  String get exercisePreferencesCardExercisePreferences => 'Egzersiz Tercihleri';
 
   @override
-  String get exercisePreferencesCardExercisePreferences2 =>
-      'EGZERSİZ TERCİHLERİ';
+  String get exercisePreferencesCardExercisePreferences2 => 'EGZERSİZ TERCİHLERİ';
 
   @override
-  String get exercisePreferencesCardExercisePreferencesExplained =>
-      'Egzersiz Tercihleri Açıklandı';
+  String get exercisePreferencesCardExercisePreferencesExplained => 'Egzersiz Tercihleri Açıklandı';
 
   @override
   String get exercisePreferencesCardExerciseQueue => 'Egzersiz Sırası';
@@ -10479,26 +9778,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardExercisesToAvoid =>
-      'Kaçınılacak Egzersizler';
+  String get exercisePreferencesCardExercisesToAvoid => 'Kaçınılacak Egzersizler';
 
   @override
   String get exercisePreferencesCardFavoriteExercises => 'Favori Egzersizler';
 
   @override
-  String get exercisePreferencesCardFavoritesAvoidedQueue =>
-      'Favoriler, kaçınılanlar, sıra';
+  String get exercisePreferencesCardFavoritesAvoidedQueue => 'Favoriler, kaçınılanlar, sıra';
 
   @override
-  String get exercisePreferencesCardIncompleteExerciseWarning =>
-      'Tamamlanmamış Egzersiz Uyarısı';
+  String get exercisePreferencesCardIncompleteExerciseWarning => 'Tamamlanmamış Egzersiz Uyarısı';
 
   @override
   String get exercisePreferencesCardMusclesToAvoid => 'Kaçınılacak Kaslar';
 
   @override
-  String get exercisePreferencesCardQueueExercisesForNext =>
-      'Bir sonraki antrenman için egzersizleri sıraya alın';
+  String get exercisePreferencesCardQueueExercisesForNext => 'Bir sonraki antrenman için egzersizleri sıraya alın';
 
   @override
   String exercisePreferencesCardQueued(Object queueCount) {
@@ -10506,19 +9801,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardSkipOrReduceMuscle =>
-      'Kas gruplarını atlayın veya azaltın';
+  String get exercisePreferencesCardSkipOrReduceMuscle => 'Kas gruplarını atlayın veya azaltın';
 
   @override
-  String get exercisePreferencesCardSkipSpecificExercises =>
-      'Belirli egzersizleri atlayın';
+  String get exercisePreferencesCardSkipSpecificExercises => 'Belirli egzersizleri atlayın';
 
   @override
   String get exercisePreferencesCardStapleExercises => 'Temel Egzersizler';
 
   @override
-  String get exercisePreferencesCardStretchingAfterWorkouts =>
-      'Antrenman sonrası esneme';
+  String get exercisePreferencesCardStretchingAfterWorkouts => 'Antrenman sonrası esneme';
 
   @override
   String get exercisePreferencesCardWarmupCooldown => 'ISINMA VE SOĞUMA';
@@ -10527,8 +9819,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePreferencesCardWarmupPhase => 'Isınma Aşaması';
 
   @override
-  String get exercisePreferencesCardWarnBeforeFinishingWith =>
-      'Kaydedilmemiş setlerle bitirmeden önce uyar';
+  String get exercisePreferencesCardWarnBeforeFinishingWith => 'Kaydedilmemiş setlerle bitirmeden önce uyar';
 
   @override
   String get exercisePreferencesCardWeightIncrements => 'Ağırlık Artışları';
@@ -10540,8 +9831,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exercisePreferencesCardWorkoutMode => 'ANTRENMAN MODU';
 
   @override
-  String get exercisePreferencesCardYourPersonalExerciseLibrary =>
-      'Kişisel egzersiz kütüphaneniz';
+  String get exercisePreferencesCardYourPersonalExerciseLibrary => 'Kişisel egzersiz kütüphaneniz';
 
   @override
   String get exercisePreviewOverlayFormDemo => 'Form Demosu';
@@ -10552,8 +9842,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exercisePreviewOverlayTapAnywhereToStart =>
-      'Başlamak için herhangi bir yere dokunun';
+  String get exercisePreviewOverlayTapAnywhereToStart => 'Başlamak için herhangi bir yere dokunun';
 
   @override
   String exercisePreviewOverlayTarget(Object muscles) {
@@ -10570,12 +9859,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseProgressDetailInsights => 'İçgörüler';
 
   @override
-  String get exerciseProgressDetailNoDataForThis =>
-      'Bu egzersiz için henüz veri yok';
+  String get exerciseProgressDetailNoDataForThis => 'Bu egzersiz için henüz veri yok';
 
   @override
-  String get exerciseProgressDetailNoSessionsRecorded =>
-      'Henüz kayıtlı oturum yok';
+  String get exerciseProgressDetailNoSessionsRecorded => 'Henüz kayıtlı oturum yok';
 
   @override
   String get exerciseProgressDetailProgress => 'İlerleme';
@@ -10593,12 +9880,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseProgressionsBestReps => 'En iyi tekrar';
 
   @override
-  String get exerciseProgressionsEarnTheHarderVariant =>
-      'Daha zor varyantı hak et';
+  String get exerciseProgressionsEarnTheHarderVariant => 'Daha zor varyantı hak et';
 
   @override
-  String get exerciseProgressionsLoadingYourProgressions =>
-      'İlerlemeleriniz yükleniyor...';
+  String get exerciseProgressionsLoadingYourProgressions => 'İlerlemeleriniz yükleniyor...';
 
   @override
   String get exerciseProgressionsMasteryProgress => 'Ustalık ilerlemesi';
@@ -10610,12 +9895,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseProgressionsNotYet => 'Henüz değil';
 
   @override
-  String get exerciseProgressionsOneMoreTooEasy =>
-      'Bir \"çok kolay\" oturumu daha, bir sonraki varyantın kilidini açar.';
+  String get exerciseProgressionsOneMoreTooEasy => 'Bir \"çok kolay\" oturumu daha, bir sonraki varyantın kilidini açar.';
 
   @override
-  String get exerciseProgressionsOtherTrackedExercises =>
-      'DİĞER TAKİP EDİLEN EGZERSİZLER';
+  String get exerciseProgressionsOtherTrackedExercises => 'DİĞER TAKİP EDİLEN EGZERSİZLER';
 
   @override
   String get exerciseProgressionsProgressions => 'İlerlemeler';
@@ -10658,10 +9941,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenEasySessions(
-    Object _target,
-    Object consecutiveEasy,
-  ) {
+  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy) {
     return '$consecutiveEasy / $_target kolay seans';
   }
 
@@ -10681,10 +9961,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenYouWillMoveFrom(
-    Object exerciseName,
-    Object suggestedExercise,
-  ) {
+  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise) {
     return '$exerciseName egzersizinden $suggestedExercise egzersizine geçeceksiniz. ';
   }
 
@@ -10698,8 +9975,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseProgressionsUnlocked => 'Kilidi açıldı';
 
   @override
-  String get exerciseProgressionsYourProgressionChains =>
-      'İLERLEME ZİNCİRLERİNİZ';
+  String get exerciseProgressionsYourProgressionChains => 'İLERLEME ZİNCİRLERİNİZ';
 
   @override
   String get exerciseQueue => ' • ';
@@ -10714,8 +9990,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseQueueNoExercisesQueued => 'Sırada Egzersiz Yok';
 
   @override
-  String get exerciseQueueQueuedExercisesWillBe =>
-      'Sıraya alınan egzersizler bir sonraki antrenmanınıza dahil edilecektir. Öğeler 7 gün sonra sona erer.';
+  String get exerciseQueueQueuedExercisesWillBe => 'Sıraya alınan egzersizler bir sonraki antrenmanınıza dahil edilecektir. Öğeler 7 gün sonra sona erer.';
 
   @override
   String get exerciseQueueRemove => 'Kaldır';
@@ -10739,16 +10014,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseQueueTheseExercisesWillBe =>
-      'Bu egzersizler bir sonraki antrenmanınıza dahil edilecektir. Sıra öğeleri 7 gün sonra sona erer.';
+  String get exerciseQueueTheseExercisesWillBe => 'Bu egzersizler bir sonraki antrenmanınıza dahil edilecektir. Sıra öğeleri 7 gün sonra sona erer.';
 
   @override
-  String get exerciseSafetyAuditAllExercisesTagged =>
-      'Tüm egzersizler etiketlendi!';
+  String get exerciseSafetyAuditAllExercisesTagged => 'Tüm egzersizler etiketlendi!';
 
   @override
-  String get exerciseSafetyAuditFailedToLoadExercises =>
-      'Egzersizler yüklenemedi';
+  String get exerciseSafetyAuditFailedToLoadExercises => 'Egzersizler yüklenemedi';
 
   @override
   String get exerciseSafetyAuditInjurySafeFlags => 'SAKATLIK RİSKİ ETİKETLERİ';
@@ -10760,15 +10032,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSafetyAuditNoDifficulty => 'zorluk yok';
 
   @override
-  String get exerciseSafetyAuditNoExercisesPendingManual =>
-      'Manuel denetim bekleyen egzersiz yok.';
+  String get exerciseSafetyAuditNoExercisesPendingManual => 'Manuel denetim bekleyen egzersiz yok.';
 
   @override
   String get exerciseSafetyAuditNoPattern => 'desen yok';
 
   @override
-  String get exerciseSafetyAuditOptionalCiteSourceExplain =>
-      'İsteğe bağlı: kaynak belirtin, uç durumu açıklayın, belirsizliği işaretleyin...';
+  String get exerciseSafetyAuditOptionalCiteSourceExplain => 'İsteğe bağlı: kaynak belirtin, uç durumu açıklayın, belirsizliği işaretleyin...';
 
   @override
   String get exerciseSafetyAuditRefresh => 'Yenile';
@@ -10803,61 +10073,49 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSafetyAuditTryAgain => 'Tekrar Dene';
 
   @override
-  String get exerciseScienceResearchAllTrainingParametersAre =>
-      'Tüm antrenman parametreleri hakemli egzersiz bilimi literatüründen türetilmiştir. Bireysel sonuçlar değişebilir.';
+  String get exerciseScienceResearchAllTrainingParametersAre => 'Tüm antrenman parametreleri hakemli egzersiz bilimi literatüründen türetilmiştir. Bireysel sonuçlar değişebilir.';
 
   @override
-  String get exerciseScienceResearchAmericanCollegeOfSports =>
-      'American College of Sports Medicine (ACSM)';
+  String get exerciseScienceResearchAmericanCollegeOfSports => 'American College of Sports Medicine (ACSM)';
 
   @override
-  String get exerciseScienceResearchAndroulakisKorakakisPFis =>
-      'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
+  String get exerciseScienceResearchAndroulakisKorakakisPFis => 'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
 
   @override
   String get exerciseScienceResearchBarbaRuizCEt => 'Barba-Ruiz, C. et al.';
 
   @override
-  String get exerciseScienceResearchEffectsOfSupersetConfigurat =>
-      'Effects of Superset Configuration on Kinetic, Kinematic, and Perceived Exertion in the Barbell Bench Press';
+  String get exerciseScienceResearchEffectsOfSupersetConfigurat => 'Effects of Superset Configuration on Kinetic, Kinematic, and Perceived Exertion in the Barbell Bench Press';
 
   @override
-  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms =>
-      'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
+  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms => 'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
 
   @override
-  String get exerciseScienceResearchEssentialsOfStrengthTrainin =>
-      'Essentials of Strength Training and Conditioning';
+  String get exerciseScienceResearchEssentialsOfStrengthTrainin => 'Essentials of Strength Training and Conditioning';
 
   @override
-  String get exerciseScienceResearchEverySubmittedSourceIs =>
-      'Gönderilen her kaynak, bilgi tabanına eklenmeden önce bir insan tarafından incelenir ve doğrulanır.';
+  String get exerciseScienceResearchEverySubmittedSourceIs => 'Gönderilen her kaynak, bilgi tabanına eklenmeden önce bir insan tarafından incelenir ve doğrulanır.';
 
   @override
-  String get exerciseScienceResearchEvidenceBasedTraining =>
-      'Kanıta Dayalı Antrenman';
+  String get exerciseScienceResearchEvidenceBasedTraining => 'Kanıta Dayalı Antrenman';
 
   @override
   String get exerciseScienceResearchFeedDataToRag => 'Veriyi RAG\'e Besle';
 
   @override
-  String get exerciseScienceResearchFeedYourOwnResearch =>
-      'Kendi araştırma makalelerinizi, egzersiz veritabanlarınızı ve antrenman metodolojilerinizi RAG (Retrieval-Augmented Generation) sistemimize besleyin. Bu, AI koçunun kişiselleştirilmiş antrenman planlarınızı oluştururken daha da yüksek kaliteli kaynaklardan yararlanmasını sağlayarak önerileri daha akıllı ve en son bilimsel gelişmelere daha uygun hale getirir.';
+  String get exerciseScienceResearchFeedYourOwnResearch => 'Kendi araştırma makalelerinizi, egzersiz veritabanlarınızı ve antrenman metodolojilerinizi RAG (Retrieval-Augmented Generation) sistemimize besleyin. Bu, AI koçunun kişiselleştirilmiş antrenman planlarınızı oluştururken daha da yüksek kaliteli kaynaklardan yararlanmasını sağlayarak önerileri daha akıllı ve en son bilimsel gelişmelere daha uygun hale getirir.';
 
   @override
   String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. et al.';
 
   @override
-  String get exerciseScienceResearchGoldsteinANLeung =>
-      'Goldstein, A. N. & Leung, E.';
+  String get exerciseScienceResearchGoldsteinANLeung => 'Goldstein, A. N. & Leung, E.';
 
   @override
-  String get exerciseScienceResearchGuidelinesForExerciseTestin =>
-      'Guidelines for Exercise Testing and Prescription';
+  String get exerciseScienceResearchGuidelinesForExerciseTestin => 'Guidelines for Exercise Testing and Prescription';
 
   @override
-  String get exerciseScienceResearchHaffGGTriplett =>
-      'Haff, G. G. & Triplett, N. T.';
+  String get exerciseScienceResearchHaffGGTriplett => 'Haff, G. G. & Triplett, N. T.';
 
   @override
   String get exerciseScienceResearchHowItWorks => 'Nasıl çalışır';
@@ -10866,8 +10124,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseScienceResearchImportantGuidelines => 'Önemli kılavuzlar';
 
   @override
-  String get exerciseScienceResearchIsraetelMRpStrength =>
-      'Israetel, M. / RP Strength';
+  String get exerciseScienceResearchIsraetelMRpStrength => 'Israetel, M. / RP Strength';
 
   @override
   String get exerciseScienceResearchKeyFindings => 'Temel Bulgular';
@@ -10894,15 +10151,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseScienceResearchUploadData => 'Veri Yükle';
 
   @override
-  String get exerciseScienceResearchUploadPdfsArticlesOr =>
-      'Egzersiz bilimi araştırmalarını içeren PDF\'leri, makaleleri veya metin dosyalarını yükleyin. Sistemimiz içeriği işler ve dizine ekler, böylece antrenmanlarınızı oluştururken AI için bağlam olarak kullanılabilir hale getirir.';
+  String get exerciseScienceResearchUploadPdfsArticlesOr => 'Egzersiz bilimi araştırmalarını içeren PDF\'leri, makaleleri veya metin dosyalarını yükleyin. Sistemimiz içeriği işler ve dizine ekler, böylece antrenmanlarınızı oluştururken AI için bağlam olarak kullanılabilir hale getirir.';
 
   @override
   String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. et al.';
 
   @override
-  String get exerciseSearchBarSearchExercisesOrEquipment =>
-      'Egzersiz veya ekipman ara...';
+  String get exerciseSearchBarSearchExercisesOrEquipment => 'Egzersiz veya ekipman ara...';
 
   @override
   String get exerciseSearchBarSearchPrograms => 'Program ara...';
@@ -10913,8 +10168,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get exerciseSearchResultsFailedToSearchExercises =>
-      'Egzersizler aranamadı';
+  String get exerciseSearchResultsFailedToSearchExercises => 'Egzersizler aranamadı';
 
   @override
   String exerciseSearchResultsMoreWorkouts(Object results) {
@@ -10935,10 +10189,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String exerciseSearchResultsWorkoutsFound(
-    Object exerciseName,
-    Object totalResults,
-  ) {
+  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults) {
     return '\"$exerciseName\" - $totalResults antrenman bulundu';
   }
 
@@ -11016,8 +10267,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseStatsWidgetsEst1rm => 'Tahmini 1RM';
 
   @override
-  String get exerciseStatsWidgetsNotEnoughDataTo =>
-      'Grafiği gösterecek yeterli veri yok';
+  String get exerciseStatsWidgetsNotEnoughDataTo => 'Grafiği gösterecek yeterli veri yok';
 
   @override
   String get exerciseStatsWidgetsPersonalRecords => 'Kişisel Rekorlar';
@@ -11064,8 +10314,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapBadgeTopPick => 'Öne Çıkan';
 
   @override
-  String get exerciseSwapFindingAlternatives =>
-      'En iyi alternatiflerinizi buluyorum';
+  String get exerciseSwapFindingAlternatives => 'En iyi alternatiflerinizi buluyorum';
 
   @override
   String get exerciseSwapGetAiSuggestions => 'AI Önerileri Al';
@@ -11077,8 +10326,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapListeningNow => 'Dinliyorum... şimdi konuşun';
 
   @override
-  String get exerciseSwapMatchingEquipment =>
-      'Ekipman, kaslar ve antrenman geçmişinizle eşleştiriliyor';
+  String get exerciseSwapMatchingEquipment => 'Ekipman, kaslar ve antrenman geçmişinizle eşleştiriliyor';
 
   @override
   String get exerciseSwapNoAlternatives => 'Alternatif bulunamadı';
@@ -11090,8 +10338,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetAiPicks => 'AI Seçimleri';
 
   @override
-  String get exerciseSwapSheetAiPicksUnavailable =>
-      'AI Seçimleri kullanılamıyor';
+  String get exerciseSwapSheetAiPicksUnavailable => 'AI Seçimleri kullanılamıyor';
 
   @override
   String get exerciseSwapSheetAnyEquipment => 'Herhangi Bir Ekipman';
@@ -11103,20 +10350,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetEGIOnly => 'Örn: \"Sadece dambılım var\"';
 
   @override
-  String get exerciseSwapSheetFailedToSwapExercise =>
-      'Egzersiz değiştirilemedi';
+  String get exerciseSwapSheetFailedToSwapExercise => 'Egzersiz değiştirilemedi';
 
   @override
-  String get exerciseSwapSheetFindingMuscleMatchedAlterna =>
-      'Kas grubuna uygun alternatifler aranıyor...';
+  String get exerciseSwapSheetFindingMuscleMatchedAlterna => 'Kas grubuna uygun alternatifler aranıyor...';
 
   @override
-  String get exerciseSwapSheetFindingSimilarExercises =>
-      'Benzer egzersizler aranıyor...';
+  String get exerciseSwapSheetFindingSimilarExercises => 'Benzer egzersizler aranıyor...';
 
   @override
-  String get exerciseSwapSheetFindingYourBestAlternatives =>
-      'En iyi alternatiflerin bulunuyor';
+  String get exerciseSwapSheetFindingYourBestAlternatives => 'En iyi alternatiflerin bulunuyor';
 
   @override
   String get exerciseSwapSheetGetAiSuggestions => 'AI Önerileri Al';
@@ -11134,12 +10377,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetListeningSpeakNow => 'Dinleniyor... şimdi konuş';
 
   @override
-  String get exerciseSwapSheetLoadingRecentExercises =>
-      'Son egzersizler yükleniyor...';
+  String get exerciseSwapSheetLoadingRecentExercises => 'Son egzersizler yükleniyor...';
 
   @override
-  String get exerciseSwapSheetMatchingEquipmentMusclesA =>
-      'Ekipman, kaslar ve antrenman geçmişin eşleştiriliyor';
+  String get exerciseSwapSheetMatchingEquipmentMusclesA => 'Ekipman, kaslar ve antrenman geçmişin eşleştiriliyor';
 
   @override
   String get exerciseSwapSheetNoAlternativesYet => 'Henüz alternatif yok';
@@ -11148,9 +10389,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetNoRecentSwaps => 'Son değişiklik yok';
 
   @override
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
-    Object newExerciseName,
-  ) {
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName) {
     return '$newExerciseName ile değiştirildi';
   }
 
@@ -11176,8 +10415,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetSnapped => 'Tarandı';
 
   @override
-  String get exerciseSwapSheetSpeechRecognitionNotAvailab =>
-      'Ses tanıma kullanılamıyor';
+  String get exerciseSwapSheetSpeechRecognitionNotAvailab => 'Ses tanıma kullanılamıyor';
 
   @override
   String get exerciseSwapSheetSwap => 'Değiştir';
@@ -11210,19 +10448,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseSwapSheetTryAiSuggestions => 'AI Önerilerini Dene';
 
   @override
-  String get exerciseSwapSheetTryRephrasingYourRequest =>
-      'Yukarıdaki isteğini yeniden ifade etmeyi, farklı bir neden seçmeyi veya Kütüphane sekmesini kontrol etmeyi dene.';
+  String get exerciseSwapSheetTryRephrasingYourRequest => 'Yukarıdaki isteğini yeniden ifade etmeyi, farklı bir neden seçmeyi veya Kütüphane sekmesini kontrol etmeyi dene.';
 
   @override
-  String get exerciseSwapSheetYourSwapHistoryWill =>
-      'Değişiklik geçmişin burada görünecek';
+  String get exerciseSwapSheetYourSwapHistoryWill => 'Değişiklik geçmişin burada görünecek';
 
   @override
   String get exerciseSwapSwapToThis => 'Bu egzersizle değiştir';
 
   @override
-  String get exerciseSwapTryRephrasing =>
-      'İsteğinizi farklı şekilde ifade etmeyi deneyin';
+  String get exerciseSwapTryRephrasing => 'İsteğinizi farklı şekilde ifade etmeyi deneyin';
 
   @override
   String get exerciseTableHeaderLast => 'Son';
@@ -11291,8 +10526,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get expandedExerciseCardLinkAsSuperset => 'Superset Olarak Bağla';
 
   @override
-  String get expandedExerciseCardMarkAsStaple =>
-      'Temel Egzersiz Olarak İşaretle';
+  String get expandedExerciseCardMarkAsStaple => 'Temel Egzersiz Olarak İşaretle';
 
   @override
   String get expandedExerciseCardNeverRecommend => 'Asla Önerme';
@@ -11334,8 +10568,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get expandedExerciseCardWhatDoTheseMean => 'Bunlar ne anlama geliyor?';
 
   @override
-  String get exportDataAlwaysIncludedForCardio =>
-      'Sadece kardiyo formatları için her zaman dahil edilir.';
+  String get exportDataAlwaysIncludedForCardio => 'Sadece kardiyo formatları için her zaman dahil edilir.';
 
   @override
   String get exportDataCardioSessions => 'Kardiyo seansları';
@@ -11344,19 +10577,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportDataCustom => 'Özel...';
 
   @override
-  String get exportDataDisabledThisFormatIs =>
-      'Devre dışı — bu format sadece kardiyo içindir.';
+  String get exportDataDisabledThisFormatIs => 'Devre dışı — bu format sadece kardiyo içindir.';
 
   @override
   String get exportDataExportMyData => 'Verilerimi Dışa Aktar';
 
   @override
-  String get exportDataExportedAsText =>
-      'Veriler metin olarak başarıyla dışa aktarıldı!';
+  String get exportDataExportedAsText => 'Veriler metin olarak başarıyla dışa aktarıldı!';
 
   @override
-  String get exportDataExportedSuccessfully =>
-      'Veriler başarıyla dışa aktarıldı!';
+  String get exportDataExportedSuccessfully => 'Veriler başarıyla dışa aktarıldı!';
 
   @override
   String get exportDataGenerateExport => 'Dışa Aktarımı Oluştur';
@@ -11365,12 +10595,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportDataGenerating => 'Oluşturuluyor...';
 
   @override
-  String get exportDataNotApplicableForCardio =>
-      'Sadece kardiyo formatları için geçerli değildir.';
+  String get exportDataNotApplicableForCardio => 'Sadece kardiyo formatları için geçerli değildir.';
 
   @override
-  String get exportDataPickAtLeastOne =>
-      'Dışa aktarmak için en az bir veri seti seç.';
+  String get exportDataPickAtLeastOne => 'Dışa aktarmak için en az bir veri seti seç.';
 
   @override
   String get exportDataProgramTemplates => 'Program şablonları';
@@ -11389,8 +10617,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportDataStrengthHistory => 'Güç geçmişi';
 
   @override
-  String get exportDataYourDataIsYours =>
-      'Verilerin sana aittir — istediğin yere götür.';
+  String get exportDataYourDataIsYours => 'Verilerin sana aittir — istediğin yere götür.';
 
   @override
   String get exportDialogPartCsvZip => 'CSV/ZIP';
@@ -11434,22 +10661,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportDialogPartPlainText => 'Düz Metin';
 
   @override
-  String get exportDialogPartProfileIsAlwaysIncluded =>
-      'Profil her zaman dahildir.';
+  String get exportDialogPartProfileIsAlwaysIncluded => 'Profil her zaman dahildir.';
 
   @override
   String get exportDialogPartTimeRange => 'Zaman Aralığı';
 
   @override
-  String get exportDialogPartYourDataWillBe =>
-      'Verileriniz, CSV dosyalarını içeren bir ZIP dosyası olarak dışa aktarılacaktır.';
+  String get exportDialogPartYourDataWillBe => 'Verileriniz, CSV dosyalarını içeren bir ZIP dosyası olarak dışa aktarılacaktır.';
 
   @override
   String get exportExportingYourData => 'Verileriniz dışa aktarılıyor...';
 
   @override
-  String get exportExportingYourDataAs =>
-      'Verileriniz metin olarak dışa aktarılıyor...';
+  String get exportExportingYourDataAs => 'Verileriniz metin olarak dışa aktarılıyor...';
 
   @override
   String get exportNoDataReceivedFrom => 'Sunucudan veri alınamadı';
@@ -11461,19 +10685,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportStatsExportStats => 'İstatistikleri Dışa Aktar';
 
   @override
-  String get exportStatsFullDataExportWith =>
-      'Tüm antrenmanlar, PR\'lar ve ölçümlerle tam veri dışa aktarımı';
+  String get exportStatsFullDataExportWith => 'Tüm antrenmanlar, PR\'lar ve ölçümlerle tam veri dışa aktarımı';
 
   @override
   String get exportStatsPdfReport => 'PDF Raporu';
 
   @override
-  String get exportStatsQuickShareableTextSummary =>
-      'İstatistiklerinizin hızlı paylaşılabilir metin özeti';
+  String get exportStatsQuickShareableTextSummary => 'İstatistiklerinizin hızlı paylaşılabilir metin özeti';
 
   @override
-  String get exportStatsStyledReportWithStats =>
-      'İstatistik özeti ve ilerleme içeren şık rapor';
+  String get exportStatsStyledReportWithStats => 'İstatistik özeti ve ilerleme içeren şık rapor';
 
   @override
   String get exportStatsTextSummary => 'Metin Özeti';
@@ -11482,8 +10703,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportThisMayTakeA => 'Bu birkaç saniye sürebilir';
 
   @override
-  String get exportUserDataNotFound =>
-      'Kullanıcı verisi bulunamadı. Lütfen çıkış yapıp tekrar giriş yapmayı deneyin.';
+  String get exportUserDataNotFound => 'Kullanıcı verisi bulunamadı. Lütfen çıkış yapıp tekrar giriş yapmayı deneyin.';
 
   @override
   String get exportWorkoutButtonExportAsFit => 'FIT olarak dışa aktar';
@@ -11501,66 +10721,52 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exportWorkoutButtonGarminWahooNative => 'Garmin / Wahoo yerel';
 
   @override
-  String get exportWorkoutButtonMyfitnesspalSportstracks =>
-      'MyFitnessPal / Sportstracks';
+  String get exportWorkoutButtonMyfitnesspalSportstracks => 'MyFitnessPal / Sportstracks';
 
   @override
-  String get exportWorkoutButtonStravaGarminConnectKomo =>
-      'Strava / Garmin Connect / Komoot';
+  String get exportWorkoutButtonStravaGarminConnectKomo => 'Strava / Garmin Connect / Komoot';
 
   @override
   String get fastingAiInsightAiInsight => 'AI İçgörüsü';
 
   @override
-  String get fastingAiInsightCouldnTLoadYour =>
-      'İçgörünüz yüklenemedi. Bağlantınızı kontrol edin.';
+  String get fastingAiInsightCouldnTLoadYour => 'İçgörünüz yüklenemedi. Bağlantınızı kontrol edin.';
 
   @override
-  String get fastingAreYouSureYou =>
-      'Orucunuzu şimdi bitirmek istediğinizden emin misiniz?';
+  String get fastingAreYouSureYou => 'Orucunuzu şimdi bitirmek istediğinizden emin misiniz?';
 
   @override
   String get fastingAvgDuration => 'Ort. Süre';
 
   @override
-  String get fastingBenefit_appetite =>
-      'İştah hormonları zamanla sıfırlanarak daha az yemeyi kolaylaştırır.';
+  String get fastingBenefit_appetite => 'İştah hormonları zamanla sıfırlanarak daha az yemeyi kolaylaştırır.';
 
   @override
-  String get fastingBenefit_autophagy =>
-      'Hücresel otofaji, yaşlanmanın yavaşlamasıyla bağlantılı olan hasarlı proteinleri temizler.';
+  String get fastingBenefit_autophagy => 'Hücresel otofaji, yaşlanmanın yavaşlamasıyla bağlantılı olan hasarlı proteinleri temizler.';
 
   @override
-  String get fastingBenefit_bs_control =>
-      'Kan şekeri daha sabit kalarak aşermeyi ve enerji düşüşlerini azaltır.';
+  String get fastingBenefit_bs_control => 'Kan şekeri daha sabit kalarak aşermeyi ve enerji düşüşlerini azaltır.';
 
   @override
-  String get fastingBenefit_cellular_repair =>
-      'Uzun süreli oruçlar sırasında DNA onarım yolları aktive olur.';
+  String get fastingBenefit_cellular_repair => 'Uzun süreli oruçlar sırasında DNA onarım yolları aktive olur.';
 
   @override
-  String get fastingBenefit_energy =>
-      'Gün boyu sabit enerji — yemek sonrası çöküşler yok.';
+  String get fastingBenefit_energy => 'Gün boyu sabit enerji — yemek sonrası çöküşler yok.';
 
   @override
-  String get fastingBenefit_gut_rest =>
-      'Sindirim sistemi mola vererek bağırsak mikrobiyom sağlığını destekler.';
+  String get fastingBenefit_gut_rest => 'Sindirim sistemi mola vererek bağırsak mikrobiyom sağlığını destekler.';
 
   @override
-  String get fastingBenefit_insulin_sensitivity =>
-      'İyileştirilmiş insülin duyarlılığı, tip 2 diyabet riskini azaltır.';
+  String get fastingBenefit_insulin_sensitivity => 'İyileştirilmiş insülin duyarlılığı, tip 2 diyabet riskini azaltır.';
 
   @override
-  String get fastingBenefit_longevity =>
-      'Hayvan çalışmaları, orucu daha uzun bir sağlık süresi ve azalmış hastalık belirteçleri ile ilişkilendiriyor.';
+  String get fastingBenefit_longevity => 'Hayvan çalışmaları, orucu daha uzun bir sağlık süresi ve azalmış hastalık belirteçleri ile ilişkilendiriyor.';
 
   @override
-  String get fastingBenefit_mental_clarity =>
-      'Ketonlar, beyni glikoz dalgalanmalarından daha istikrarlı bir şekilde besler.';
+  String get fastingBenefit_mental_clarity => 'Ketonlar, beyni glikoz dalgalanmalarından daha istikrarlı bir şekilde besler.';
 
   @override
-  String get fastingBenefit_weight_loss =>
-      'Yağsız doku yerine depolanmış yağı hedef alarak sürdürülebilir kilo kaybı.';
+  String get fastingBenefit_weight_loss => 'Yağsız doku yerine depolanmış yağı hedef alarak sürdürülebilir kilo kaybı.';
 
   @override
   String get fastingBodyStatusBeyondGoal => 'Hedefinizin ötesinde';
@@ -11577,8 +10783,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fastingBodyStatusPreviewSubtitle =>
-      'Orucun metabolik aşamalarının bir önizlemesi.';
+  String get fastingBodyStatusPreviewSubtitle => 'Orucun metabolik aşamalarının bir önizlemesi.';
 
   @override
   String fastingBodyStatusScreenAtH(Object startHour) {
@@ -11596,8 +10801,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fastingBodyStatusStartFastHint =>
-      'Her aşamaya ulaşılan tam saati içeren canlı zaman çizelgenizi görmek için bir oruç başlatın.';
+  String get fastingBodyStatusStartFastHint => 'Her aşamaya ulaşılan tam saati içeren canlı zaman çizelgenizi görmek için bir oruç başlatın.';
 
   @override
   String get fastingBodyStatusYouAreHere => 'Buradasınız';
@@ -11618,10 +10822,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingCalendarWeight => 'Kilo';
 
   @override
-  String fastingCalendarWidgetCompleted(
-    Object goalsCompleted,
-    Object goalsTotal,
-  ) {
+  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal) {
     return '$goalsCompleted/$goalsTotal tamamlandı';
   }
 
@@ -11641,8 +10842,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fastingCompleteYourFirstFast =>
-      'Burada görmek için ilk orucunuzu tamamlayın';
+  String get fastingCompleteYourFirstFast => 'Burada görmek için ilk orucunuzu tamamlayın';
 
   @override
   String get fastingContinueFasting => 'Oruca Devam Et';
@@ -11677,8 +10877,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingEndFast2 => 'Orucu Bitir';
 
   @override
-  String get fastingFailedToEndFast =>
-      'Oruç bitirilemedi. Lütfen tekrar deneyin.';
+  String get fastingFailedToEndFast => 'Oruç bitirilemedi. Lütfen tekrar deneyin.';
 
   @override
   String get fastingFasting => 'Oruç';
@@ -11708,19 +10907,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingGuideIsItSafeFor => 'Benim için güvenli mi?';
 
   @override
-  String get fastingGuideSafetyBody =>
-      'Baş dönmesi, baygınlık, titreme veya kendinizi kötü hissetme durumunda orucu bırakın ve bir şeyler yiyin. 24 saati aşan oruçlarda elektrolitlere ekstra dikkat edilmelidir ve 72 saati aşan oruçlar yalnızca tıbbi gözetim altında yapılmalıdır. Oruç tutmak tıbbi bakımın yerini tutmaz; bu rehber eğiticidir ve tıbbi tavsiye niteliği taşımaz.';
+  String get fastingGuideSafetyBody => 'Baş dönmesi, baygınlık, titreme veya kendinizi kötü hissetme durumunda orucu bırakın ve bir şeyler yiyin. 24 saati aşan oruçlarda elektrolitlere ekstra dikkat edilmelidir ve 72 saati aşan oruçlar yalnızca tıbbi gözetim altında yapılmalıdır. Oruç tutmak tıbbi bakımın yerini tutmaz; bu rehber eğiticidir ve tıbbi tavsiye niteliği taşımaz.';
 
   @override
   String get fastingGuideStaySafe => 'Güvende kal';
 
   @override
-  String get fastingGuideSubtitle =>
-      'Güvenle oruç tutmak için ihtiyacınız olan her şey — nedir, nasıl çalışır ve vücudunuzda neler olur.';
+  String get fastingGuideSubtitle => 'Güvenle oruç tutmak için ihtiyacınız olan her şey — nedir, nasıl çalışır ve vücudunuzda neler olur.';
 
   @override
-  String get fastingGuideSwipeTimeline =>
-      'Son öğününüzden 30 günlük bir oruca kadar saat saat neler olduğunu görmek için kaydırın.';
+  String get fastingGuideSwipeTimeline => 'Son öğününüzden 30 günlük bir oruca kadar saat saat neler olduğunu görmek için kaydırın.';
 
   @override
   String get fastingGuideTheFastingTimeline => 'Oruç zaman çizelgesi';
@@ -11760,12 +10956,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fastingHydrationRowSyncedVisibleOnHome =>
-      'Senkronize edildi — Ana Sayfa ve Beslenme bölümlerinde de görünür.';
+  String get fastingHydrationRowSyncedVisibleOnHome => 'Senkronize edildi — Ana Sayfa ve Beslenme bölümlerinde de görünür.';
 
   @override
-  String get fastingHydrationRowWaterKeepsYouEnergized =>
-      'Su, oruç tutarken enerjik kalmanızı sağlar';
+  String get fastingHydrationRowWaterKeepsYouEnergized => 'Su, oruç tutarken enerjik kalmanızı sağlar';
 
   @override
   String get fastingImpactActivityCalendar => 'Aktivite Takvimi';
@@ -11779,19 +10973,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fastingImpactCompleteMoreFastsTo =>
-      'Doğru bir etki analizi almak için daha fazla oruç tamamlayın. En az 7 oruç günü öneriyoruz.';
+  String get fastingImpactCompleteMoreFastsTo => 'Doğru bir etki analizi almak için daha fazla oruç tamamlayın. En az 7 oruç günü öneriyoruz.';
 
   @override
-  String get fastingImpactCompleteSomeFastsAnd =>
-      'Orucun hedeflerinizi nasıl etkilediğini görmek için bazı oruçları tamamlayın ve kilonuzu kaydedin.';
+  String get fastingImpactCompleteSomeFastsAnd => 'Orucun hedeflerinizi nasıl etkilediğini görmek için bazı oruçları tamamlayın ve kilonuzu kaydedin.';
 
   @override
   String get fastingImpactFailedToLoadData => 'Veri yüklenemedi';
 
   @override
-  String get fastingImpactFastingDaysMarkedWith =>
-      'Oruç günleri mor noktalarla işaretlenmiştir';
+  String get fastingImpactFastingDaysMarkedWith => 'Oruç günleri mor noktalarla işaretlenmiştir';
 
   @override
   String get fastingImpactFastingImpact => 'Oruç Etkisi';
@@ -11866,8 +11057,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingMoodCheckinHowDoYouFeel => 'Nasıl hissediyorsun?';
 
   @override
-  String get fastingMoodCheckinLogYourMoodAnd =>
-      'Oruç sonrası ruh halini ve enerjini kaydet (isteğe bağlı).';
+  String get fastingMoodCheckinLogYourMoodAnd => 'Oruç sonrası ruh halini ve enerjini kaydet (isteğe bağlı).';
 
   @override
   String fastingMoodCheckinValue(Object value) {
@@ -11895,8 +11085,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingPlanCardsPopular => 'Popüler';
 
   @override
-  String get fastingProtocol_16_8_desc =>
-      'Kahvaltıyı atlayın, öğlen ile akşam 8 arasında yiyin';
+  String get fastingProtocol_16_8_desc => 'Kahvaltıyı atlayın, öğlen ile akşam 8 arasında yiyin';
 
   @override
   String get fastingProtocol_16_8_name => '16:8';
@@ -11914,50 +11103,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingProtocol_20_4_name => '20:4';
 
   @override
-  String get fastingProtocol_36h_desc =>
-      'Keşiş orucu — uzun süreli otofaji penceresi';
+  String get fastingProtocol_36h_desc => 'Keşiş orucu — uzun süreli otofaji penceresi';
 
   @override
   String get fastingProtocol_36h_name => '36 saatlik';
 
   @override
-  String get fastingProtocol_48h_desc =>
-      'Uzun süreli oruç — tıbbi gözetim önerilir';
+  String get fastingProtocol_48h_desc => 'Uzun süreli oruç — tıbbi gözetim önerilir';
 
   @override
   String get fastingProtocol_48h_name => '48 saatlik';
 
   @override
-  String get fastingProtocol_5_2_desc =>
-      '5 gün normal beslenme, 2 gün 500-600 kalori';
+  String get fastingProtocol_5_2_desc => '5 gün normal beslenme, 2 gün 500-600 kalori';
 
   @override
   String get fastingProtocol_5_2_name => '5:2';
 
   @override
-  String get fastingProtocol_72h_desc =>
-      'Kök hücre yenileme orucu — tıbbi gözetim gereklidir';
+  String get fastingProtocol_72h_desc => 'Kök hücre yenileme orucu — tıbbi gözetim gereklidir';
 
   @override
   String get fastingProtocol_72h_name => '72 saatlik';
 
   @override
-  String get fastingProtocol_adf_desc =>
-      'Gün Aşırı Oruç — normal bir gün, ardından çok düşük kalorili bir gün';
+  String get fastingProtocol_adf_desc => 'Gün Aşırı Oruç — normal bir gün, ardından çok düşük kalorili bir gün';
 
   @override
   String get fastingProtocol_adf_name => 'ADF';
 
   @override
-  String get fastingProtocol_custom_desc =>
-      'Kendi yeme ve oruç pencerenizi ayarlayın';
+  String get fastingProtocol_custom_desc => 'Kendi yeme ve oruç pencerenizi ayarlayın';
 
   @override
   String get fastingProtocol_custom_name => 'Özel';
 
   @override
-  String get fastingProtocol_omad_desc =>
-      'Günde Tek Öğün — tüm besinleri tek oturuşta alın';
+  String get fastingProtocol_omad_desc => 'Günde Tek Öğün — tüm besinleri tek oturuşta alın';
 
   @override
   String get fastingProtocol_omad_name => 'OMAD';
@@ -11969,8 +11151,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingSavedRowSaved => 'Kaydedildi';
 
   @override
-  String get fastingScheduleEditorPickAProtocolFor =>
-      'Her gün için bir protokol seç';
+  String get fastingScheduleEditorPickAProtocolFor => 'Her gün için bir protokol seç';
 
   @override
   String get fastingScheduleEditorRestEatingDay => 'Dinlenme / yemek günü';
@@ -11984,16 +11165,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String fastingScheduleEditorSheetValue(
-    Object difficulty,
-    Object displayName,
-  ) {
+  String fastingScheduleEditorSheetValue(Object difficulty, Object displayName) {
     return '$displayName  ·  $difficulty';
   }
 
   @override
-  String get fastingScheduleEditorWeeklyFastingScheduleSaved =>
-      'Haftalık oruç programı kaydedildi';
+  String get fastingScheduleEditorWeeklyFastingScheduleSaved => 'Haftalık oruç programı kaydedildi';
 
   @override
   String get fastingScheduleEditorWeeklySchedule => 'Haftalık Program';
@@ -12044,8 +11221,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingScreenRedesignedBackToToday => 'Bugüne dön';
 
   @override
-  String get fastingScreenRedesignedCompleteAFastTo =>
-      'Burada görmek için bir oruç tamamla';
+  String get fastingScreenRedesignedCompleteAFastTo => 'Burada görmek için bir oruç tamamla';
 
   @override
   String get fastingScreenRedesignedDayStreak => 'Günlük Seri';
@@ -12067,8 +11243,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingScreenRedesignedFastPaused => 'Oruç Duraklatıldı';
 
   @override
-  String get fastingScreenRedesignedFastResumedYourTimer =>
-      'Oruç devam ediyor — zamanlayıcın geri döndü.';
+  String get fastingScreenRedesignedFastResumedYourTimer => 'Oruç devam ediyor — zamanlayıcın geri döndü.';
 
   @override
   String get fastingScreenRedesignedFasting => 'Oruç';
@@ -12086,8 +11261,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingScreenRedesignedNoFastYet => 'Henüz oruç yok';
 
   @override
-  String get fastingScreenRedesignedNoFastingHistoryYet =>
-      'Henüz oruç geçmişi yok';
+  String get fastingScreenRedesignedNoFastingHistoryYet => 'Henüz oruç geçmişi yok';
 
   @override
   String get fastingScreenRedesignedPauseFast => 'Orucu Duraklat';
@@ -12107,8 +11281,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingScreenRedesignedResumeFast => 'Oruca Devam Et';
 
   @override
-  String get fastingScreenRedesignedSignUpToUnlock =>
-      'Kilidi Açmak İçin Kaydol';
+  String get fastingScreenRedesignedSignUpToUnlock => 'Kilidi Açmak İçin Kaydol';
 
   @override
   String get fastingScreenRedesignedStartFast => 'Oruca Başla';
@@ -12128,8 +11301,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingScreenRedesignedViewTrends => 'Eğilimleri görüntüle';
 
   @override
-  String get fastingScreenRedesignedYouDidNotLog =>
-      'Bu gün için bir oruç kaydetmedin.';
+  String get fastingScreenRedesignedYouDidNotLog => 'Bu gün için bir oruç kaydetmedin.';
 
   @override
   String fastingScreenYouVeBeenFasting(Object elapsedTimeFormatted) {
@@ -12161,20 +11333,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingSettingsGoalReached => 'Hedefe ulaşıldı';
 
   @override
-  String get fastingSettingsNotifyWhenEnteringNew =>
-      'Yeni oruç bölgelerine girildiğinde bildir';
+  String get fastingSettingsNotifyWhenEnteringNew => 'Yeni oruç bölgelerine girildiğinde bildir';
 
   @override
-  String get fastingSettingsNotifyWhenYouReach =>
-      'Oruç hedefine ulaştığında bildir';
+  String get fastingSettingsNotifyWhenYouReach => 'Oruç hedefine ulaştığında bildir';
 
   @override
-  String get fastingSettingsRemindBeforeEatingWindow =>
-      'Yemek penceresi kapanmadan önce hatırlat';
+  String get fastingSettingsRemindBeforeEatingWindow => 'Yemek penceresi kapanmadan önce hatırlat';
 
   @override
-  String get fastingSettingsRemindWhenItS =>
-      'Oruca başlama zamanı geldiğinde hatırlat';
+  String get fastingSettingsRemindWhenItS => 'Oruca başlama zamanı geldiğinde hatırlat';
 
   @override
   String get fastingSettingsSaveSettings => 'Ayarları Kaydet';
@@ -12210,8 +11378,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingStageCardCurrentStage => 'Mevcut aşama';
 
   @override
-  String get fastingStageCardFinalMetabolicStageReached =>
-      'Son metabolik aşamaya ulaşıldı';
+  String get fastingStageCardFinalMetabolicStageReached => 'Son metabolik aşamaya ulaşıldı';
 
   @override
   String fastingStageCardNext(Object name) {
@@ -12228,50 +11395,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingStageTimerReadyToFast => 'Oruca hazır';
 
   @override
-  String get fastingStage_autophagy_desc =>
-      'Hücreler hasarlı proteinleri ve organelleri parçalayıp geri dönüştürmeye başlar — derin bir hücresel temizlik.';
+  String get fastingStage_autophagy_desc => 'Hücreler hasarlı proteinleri ve organelleri parçalayıp geri dönüştürmeye başlar — derin bir hücresel temizlik.';
 
   @override
   String get fastingStage_autophagy_name => 'Otofaji';
 
   @override
-  String get fastingStage_fat_burning_desc =>
-      'Glikojen azaldığında, yağ hücreleri yakıt olarak kullanılmak üzere kan dolaşımına yağ asitleri salar.';
+  String get fastingStage_fat_burning_desc => 'Glikojen azaldığında, yağ hücreleri yakıt olarak kullanılmak üzere kan dolaşımına yağ asitleri salar.';
 
   @override
   String get fastingStage_fat_burning_name => 'Yağ Yakımı';
 
   @override
-  String get fastingStage_glycogen_depletion_desc =>
-      'Vücudunuz önce depolanmış glikozu kullanır. 12-14 saat sonra karaciğer glikojeni azalır ve metabolik değişim başlar.';
+  String get fastingStage_glycogen_depletion_desc => 'Vücudunuz önce depolanmış glikozu kullanır. 12-14 saat sonra karaciğer glikojeni azalır ve metabolik değişim başlar.';
 
   @override
   String get fastingStage_glycogen_depletion_name => 'Glikojen Tükenişi';
 
   @override
-  String get fastingStage_growth_hormone_desc =>
-      'HGH seviyeleri keskin bir şekilde yükselerek yağsız kas kütlesini korur ve yağ metabolizmasını hızlandırır.';
+  String get fastingStage_growth_hormone_desc => 'HGH seviyeleri keskin bir şekilde yükselerek yağsız kas kütlesini korur ve yağ metabolizmasını hızlandırır.';
 
   @override
   String get fastingStage_growth_hormone_name => 'Büyüme Hormonu Artışı';
 
   @override
-  String get fastingStage_inflammation_drop_desc =>
-      'Bağırsak dinlenirken ve bağışıklık hücreleri yenilenirken enflamatuar belirteçler azalır.';
+  String get fastingStage_inflammation_drop_desc => 'Bağırsak dinlenirken ve bağışıklık hücreleri yenilenirken enflamatuar belirteçler azalır.';
 
   @override
   String get fastingStage_inflammation_drop_name => 'Enflamasyon Düşüşü';
 
   @override
-  String get fastingStage_insulin_low_desc =>
-      'İnsülin baz seviyesine yakın kalarak yağ depolarını açar ve insülin duyarlılığını artırır.';
+  String get fastingStage_insulin_low_desc => 'İnsülin baz seviyesine yakın kalarak yağ depolarını açar ve insülin duyarlılığını artırır.';
 
   @override
   String get fastingStage_insulin_low_name => 'Düşük İnsülin';
 
   @override
-  String get fastingStage_ketosis_desc =>
-      'Karaciğer, yağ asitlerini beyin için temiz ve verimli bir yakıt olan keton cisimciklerine dönüştürür.';
+  String get fastingStage_ketosis_desc => 'Karaciğer, yağ asitlerini beyin için temiz ve verimli bir yakıt olan keton cisimciklerine dönüştürür.';
 
   @override
   String get fastingStage_ketosis_name => 'Ketozis';
@@ -12280,8 +11440,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingStartFast => 'Oruca Başla';
 
   @override
-  String get fastingStartYourFirstFast =>
-      'İstatistik oluşturmak için ilk orucuna başla';
+  String get fastingStartYourFirstFast => 'İstatistik oluşturmak için ilk orucuna başla';
 
   @override
   String get fastingStatsCardAvg => 'Ort.';
@@ -12387,51 +11546,40 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingTimerEndFast => 'Orucu Bitir';
 
   @override
-  String get fastingTip_bcaa_avoid =>
-      'BCAA\'lar ve kalori veya amino asit içeren çoğu takviye orucu bozar.';
+  String get fastingTip_bcaa_avoid => 'BCAA\'lar ve kalori veya amino asit içeren çoğu takviye orucu bozar.';
 
   @override
-  String get fastingTip_break_with_protein =>
-      'Kasları korumak ve daha uzun süre tok kalmak için orucunuzu protein açısından zengin bir öğünle açın.';
+  String get fastingTip_break_with_protein => 'Kasları korumak ve daha uzun süre tok kalmak için orucunuzu protein açısından zengin bir öğünle açın.';
 
   @override
-  String get fastingTip_coffee_ok =>
-      'Sade kahve orucunuzu bozmaz ve aslında açlığı bastırabilir.';
+  String get fastingTip_coffee_ok => 'Sade kahve orucunuzu bozmaz ve aslında açlığı bastırabilir.';
 
   @override
-  String get fastingTip_exercise_fasted_ok_intermediate =>
-      'Alıştıktan sonra aç karnına hafif-orta şiddetli kardiyo yapmakta sorun yoktur. Vücudunuzu dinleyin.';
+  String get fastingTip_exercise_fasted_ok_intermediate => 'Alıştıktan sonra aç karnına hafif-orta şiddetli kardiyo yapmakta sorun yoktur. Vücudunuzu dinleyin.';
 
   @override
-  String get fastingTip_exercise_high_intensity_eat_first =>
-      'Ağır kaldırma veya yoğun aralıklı antrenmanlar için öncesinde yemek yemek performansı korur.';
+  String get fastingTip_exercise_high_intensity_eat_first => 'Ağır kaldırma veya yoğun aralıklı antrenmanlar için öncesinde yemek yemek performansı korur.';
 
   @override
-  String get fastingTip_ramp_up_gradually =>
-      '12 saatle başlayın ve her hafta 30 dakika ekleyin — ilk günden OMAD\'a atlamayın.';
+  String get fastingTip_ramp_up_gradually => '12 saatle başlayın ve her hafta 30 dakika ekleyin — ilk günden OMAD\'a atlamayın.';
 
   @override
-  String get fastingTip_refeed_carbs_carefully =>
-      '36 saatten uzun süren bir oruçtan sonra, sindirim rahatsızlığını önlemek için karbonhidratları kademeli olarak tekrar ekleyin.';
+  String get fastingTip_refeed_carbs_carefully => '36 saatten uzun süren bir oruçtan sonra, sindirim rahatsızlığını önlemek için karbonhidratları kademeli olarak tekrar ekleyin.';
 
   @override
-  String get fastingTip_sleep_helps_extended =>
-      'Orucunuzu uykuyla çakıştıracak şekilde planlamak, daha uzun pencereleri çok daha kolaylaştırır.';
+  String get fastingTip_sleep_helps_extended => 'Orucunuzu uykuyla çakıştıracak şekilde planlamak, daha uzun pencereleri çok daha kolaylaştırır.';
 
   @override
-  String get fastingTip_stay_hydrated =>
-      'Su, sade kahve ve sade çay oruç sırasında serbesttir.';
+  String get fastingTip_stay_hydrated => 'Su, sade kahve ve sade çay oruç sırasında serbesttir.';
 
   @override
-  String get fastingTip_track_hunger_separate_from_appetite =>
-      'Açlık ve iştah farklıdır. Açlık dalgalar halinde azalır; iştah ise alışkanlıktır.';
+  String get fastingTip_track_hunger_separate_from_appetite => 'Açlık ve iştah farklıdır. Açlık dalgalar halinde azalır; iştah ise alışkanlıktır.';
 
   @override
   String get fastingTotalFasts => 'Toplam Oruç';
 
   @override
-  String get fastingTrackYourIntermittentFastin =>
-      'Akıllı bölge bildirimleri, ilerleme analizleri ve detaylı geçmiş ile aralıklı orucunuzu takip edin.';
+  String get fastingTrackYourIntermittentFastin => 'Akıllı bölge bildirimleri, ilerleme analizleri ve detaylı geçmiş ile aralıklı orucunuzu takip edin.';
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
@@ -12475,8 +11623,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertModalBodyweightExerciseDropThe =>
-      'Vücut ağırlığı egzersizi — ağırlık yerine tekrar hedefini düşürün.';
+  String get fatigueAlertModalBodyweightExerciseDropThe => 'Vücut ağırlığı egzersizi — ağırlık yerine tekrar hedefini düşürün.';
 
   @override
   String get fatigueAlertModalContinueAsPlanned => 'Planlandığı Gibi Devam Et';
@@ -12544,15 +11691,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get favoriteExercisesTheAiWillPrioritize =>
-      'Yapay zeka, antrenmanlarınızı oluştururken bu egzersizlere öncelik verecektir.';
+  String get favoriteExercisesTheAiWillPrioritize => 'Yapay zeka, antrenmanlarınızı oluştururken bu egzersizlere öncelik verecektir.';
 
   @override
   String get favoriteWorkoutsFavoriteWorkouts => 'Favori Antrenmanlar';
 
   @override
-  String get favoriteWorkoutsNoFavoriteWorkoutsYet =>
-      'Henüz favori antrenman yok';
+  String get favoriteWorkoutsNoFavoriteWorkoutsYet => 'Henüz favori antrenman yok';
 
   @override
   String favoriteWorkoutsSavedCount(num count) {
@@ -12565,8 +11710,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get favoriteWorkoutsTapTheHeartOn =>
-      'Buraya kaydetmek için herhangi bir antrenmandaki kalp simgesine dokunun';
+  String get favoriteWorkoutsTapTheHeartOn => 'Buraya kaydetmek için herhangi bir antrenmandaki kalp simgesine dokunun';
 
   @override
   String get favoriteWorkoutsWorkoutFallback => 'Antrenman';
@@ -12578,12 +11722,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get favoritesCardYourGoTo => 'VAZGEÇİLMEZİNİZ';
 
   @override
-  String get favoritesCardYourMostPerformedExercise =>
-      'En çok yaptığınız egzersiz';
+  String get favoritesCardYourMostPerformedExercise => 'En çok yaptığınız egzersiz';
 
   @override
-  String get favoritesCheckYourConnectionAnd =>
-      'Bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get favoritesCheckYourConnectionAnd => 'Bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
   String get favoritesFavorites => 'Favoriler';
@@ -12592,8 +11734,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get favoritesNoFavoritesYet => 'Henüz favori yok';
 
   @override
-  String get favoritesTapU2665OnAny =>
-      'Buraya kaydetmek için Keşfet veya kütüphanenizdeki herhangi bir tarifte ♥ simgesine dokunun.';
+  String get favoritesTapU2665OnAny => 'Buraya kaydetmek için Keşfet veya kütüphanenizdeki herhangi bir tarifte ♥ simgesine dokunun.';
 
   @override
   String get favoritesTryAgain => 'Tekrar dene';
@@ -12614,12 +11755,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get featureVotingVoting => 'Oylama';
 
   @override
-  String get feedCompleteWorkoutsToSee =>
-      'Burada paylaşılmalarını görmek için antrenmanları tamamlayın! Arkadaşlarınızın antrenmanlarını görmek için onları takip edin.';
+  String get feedCompleteWorkoutsToSee => 'Burada paylaşılmalarını görmek için antrenmanları tamamlayın! Arkadaşlarınızın antrenmanlarını görmek için onları takip edin.';
 
   @override
-  String get feedCouldNotLoadYour =>
-      'Aktivite akışınız yüklenemedi. Lütfen daha sonra tekrar deneyin.';
+  String get feedCouldNotLoadYour => 'Aktivite akışınız yüklenemedi. Lütfen daha sonra tekrar deneyin.';
 
   @override
   String get feedCreateYourFirstPost => 'İlk gönderinizi oluşturun!';
@@ -12637,8 +11776,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedNotLoggedIn => 'Giriş Yapılmadı';
 
   @override
-  String get feedPleaseLogInTo =>
-      'Aktivite akışınızı görmek için lütfen giriş yapın';
+  String get feedPleaseLogInTo => 'Aktivite akışınızı görmek için lütfen giriş yapın';
 
   @override
   String feedTabErrorLoadingFeed(Object error) {
@@ -12646,8 +11784,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get feelResultsCompleteWorkoutsWithMood =>
-      'Egzersizin kendinizi nasıl daha iyi hissettirdiğini görmek için ruh hali bildirimleriyle antrenmanları tamamlayın.';
+  String get feelResultsCompleteWorkoutsWithMood => 'Egzersizin kendinizi nasıl daha iyi hissettirdiğini görmek için ruh hali bildirimleriyle antrenmanları tamamlayın.';
 
   @override
   String get feelResultsFeelResults => 'Hissedilen Sonuçlar';
@@ -12679,16 +11816,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String feelResultsScreenYouFeltStrongerAfter(
-    Object feelingStrongerCount,
-    Object totalWorkouts,
-  ) {
+  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts) {
     return '$totalWorkouts antrenmanın $feelingStrongerCount tanesinden sonra daha güçlü hissettin!';
   }
 
   @override
-  String get feelResultsStartTrackingYourProgress =>
-      'İlerlemenizi Takip Etmeye Başlayın!';
+  String get feelResultsStartTrackingYourProgress => 'İlerlemenizi Takip Etmeye Başlayın!';
 
   @override
   String get feelResultsU1f4aa => '💪';
@@ -12725,19 +11858,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get firstActionPromptPickOneTakesUnder =>
-      'Birini seçin — bir dakikadan az sürer.';
+  String get firstActionPromptPickOneTakesUnder => 'Birini seçin — bir dakikadan az sürer.';
 
   @override
-  String get firstActionPromptPullInYourActivity =>
-      'Aktivitenizi, uykunuzu ve kilo geçmişinizi içe aktarın.';
+  String get firstActionPromptPullInYourActivity => 'Aktivitenizi, uykunuzu ve kilo geçmişinizi içe aktarın.';
 
   @override
   String get firstActionPromptQuickStart => 'Hızlı başlangıç';
 
   @override
-  String get firstActionPromptTheyHaveAMessage =>
-      'Sizi bekleyen bir mesajları var.';
+  String get firstActionPromptTheyHaveAMessage => 'Sizi bekleyen bir mesajları var.';
 
   @override
   String get firstWorkoutForecastCaloriesBurned => 'Yakılan kalori';
@@ -12752,13 +11882,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get firstWorkoutForecastLetSGo => 'Hadi başlayalım';
 
   @override
-  String get firstWorkoutForecastProjectedStrengthGainOn =>
-      'Ana egzersizlerde öngörülen güç artışı';
+  String get firstWorkoutForecastProjectedStrengthGainOn => 'Ana egzersizlerde öngörülen güç artışı';
 
   @override
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(
-    Object effectiveSessions,
-  ) {
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions) {
     return 'Haftalık $effectiveSessions seansa dayalı tahmin';
   }
 
@@ -12784,8 +11911,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get firstWorkoutForecastTotalTimeTrained => 'Toplam antrenman süresi';
 
   @override
-  String get firstWorkoutForecastTotalVolumeLifted =>
-      'Toplam kaldırılan ağırlık';
+  String get firstWorkoutForecastTotalVolumeLifted => 'Toplam kaldırılan ağırlık';
 
   @override
   String get fitnessAssessmentBodyweightSquats => 'Vücut Ağırlığı ile Squat';
@@ -12794,35 +11920,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fitnessAssessmentCardioCapacity => 'Kardiyo Kapasitesi';
 
   @override
-  String get fitnessAssessmentHelpUsPersonalizeYour =>
-      'Antrenmanlarını kişiselleştirmemize yardımcı ol (~2 dk)';
+  String get fitnessAssessmentHelpUsPersonalizeYour => 'Antrenmanlarını kişiselleştirmemize yardımcı ol (~2 dk)';
 
   @override
-  String get fitnessAssessmentHowLongCanYou =>
-      'Ne kadar süre plank yapabilirsin?';
+  String get fitnessAssessmentHowLongCanYou => 'Ne kadar süre plank yapabilirsin?';
 
   @override
-  String get fitnessAssessmentHowLongCanYou2 =>
-      'Ne kadar süre kesintisiz kardiyo yapabilirsin?';
+  String get fitnessAssessmentHowLongCanYou2 => 'Ne kadar süre kesintisiz kardiyo yapabilirsin?';
 
   @override
-  String get fitnessAssessmentHowLongHaveYou =>
-      'Ne kadar süredir ağırlık antrenmanı yapıyorsun?';
+  String get fitnessAssessmentHowLongHaveYou => 'Ne kadar süredir ağırlık antrenmanı yapıyorsun?';
 
   @override
-  String get fitnessAssessmentHowManyCanYou =>
-      'Kesintisiz kaç tane yapabilirsin?';
+  String get fitnessAssessmentHowManyCanYou => 'Kesintisiz kaç tane yapabilirsin?';
 
   @override
-  String get fitnessAssessmentHowManyConsecutivePush =>
-      'Doğru formla art arda kaç şınav çekebilirsin?';
+  String get fitnessAssessmentHowManyConsecutivePush => 'Doğru formla art arda kaç şınav çekebilirsin?';
 
   @override
   String get fitnessAssessmentHowManyPullUps => 'Kaç barfiks çekebilirsin?';
 
   @override
-  String get fitnessAssessmentNoWrongAnswersJust =>
-      'Yanlış cevap yok, sadece dürüst ol!';
+  String get fitnessAssessmentNoWrongAnswersJust => 'Yanlış cevap yok, sadece dürüst ol!';
 
   @override
   String get fitnessAssessmentPlankHold => 'Plank Duruşu';
@@ -12840,15 +11959,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fitnessAssessmentTrainingExperience => 'Antrenman Deneyimi';
 
   @override
-  String get fitnessAssessmentWhatGetsPersonalized =>
-      'Neler kişiselleştiriliyor';
+  String get fitnessAssessmentWhatGetsPersonalized => 'Neler kişiselleştiriliyor';
 
   @override
   String get fitnessAssessmentWhyThisMatters => 'Bu neden önemli';
 
   @override
-  String get fitnessAssessmentYourAnswersHelpThe =>
-      'Cevapların, yapay zekanın antrenmanları tam fitness seviyene göre kalibre etmesine yardımcı olur; tahmin yürütmeye gerek kalmaz.';
+  String get fitnessAssessmentYourAnswersHelpThe => 'Cevapların, yapay zekanın antrenmanları tam fitness seviyene göre kalibre etmesine yardımcı olur; tahmin yürütmeye gerek kalmaz.';
 
   @override
   String get fitnessCrateCollect => 'TOPLA';
@@ -12896,30 +12013,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityAssessmentAllTests => 'Tüm Testler';
 
   @override
-  String get flexibilityAssessmentCompleteSomeFlexibilityAsse =>
-      'Kişiselleştirilmiş esneme önerileri almak için bazı esneklik değerlendirmelerini tamamla';
+  String get flexibilityAssessmentCompleteSomeFlexibilityAsse => 'Kişiselleştirilmiş esneme önerileri almak için bazı esneklik değerlendirmelerini tamamla';
 
   @override
-  String get flexibilityAssessmentCompleteTheseTestsTo =>
-      'Tam bir esneklik profili oluşturmak için bu testleri tamamla';
+  String get flexibilityAssessmentCompleteTheseTestsTo => 'Tam bir esneklik profili oluşturmak için bu testleri tamamla';
 
   @override
   String get flexibilityAssessmentFailedToLoadData => 'Veriler yüklenemedi';
 
   @override
-  String get flexibilityAssessmentFlexibilityAssessment =>
-      'Esneklik Değerlendirmesi';
+  String get flexibilityAssessmentFlexibilityAssessment => 'Esneklik Değerlendirmesi';
 
   @override
-  String get flexibilityAssessmentFocusOnTheseAreas =>
-      'Genel esnekliğini artırmak için bu bölgelere odaklan';
+  String get flexibilityAssessmentFocusOnTheseAreas => 'Genel esnekliğini artırmak için bu bölgelere odaklan';
 
   @override
   String get flexibilityAssessmentMyPlans => 'Planlarım';
 
   @override
-  String get flexibilityAssessmentNoFlexibilityTestsAvailable =>
-      'Kullanılabilir esneklik testi yok';
+  String get flexibilityAssessmentNoFlexibilityTestsAvailable => 'Kullanılabilir esneklik testi yok';
 
   @override
   String get flexibilityAssessmentNoStretchPlansYet => 'Henüz Esneme Planı Yok';
@@ -12931,15 +12043,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityAssessmentOverview => 'Genel Bakış';
 
   @override
-  String get flexibilityAssessmentPriorityImprovements =>
-      'Öncelikli Gelişim Alanları';
+  String get flexibilityAssessmentPriorityImprovements => 'Öncelikli Gelişim Alanları';
 
   @override
   String get flexibilityAssessmentRecentAssessments => 'Son Değerlendirmeler';
 
   @override
-  String get flexibilityAssessmentRecommendedStretches =>
-      'Önerilen Esneme Hareketleri';
+  String get flexibilityAssessmentRecommendedStretches => 'Önerilen Esneme Hareketleri';
 
   @override
   String flexibilityAssessmentScreenCurrentRating(Object rating) {
@@ -12961,15 +12071,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityHistoryAssessmentHistory => 'Değerlendirme Geçmişi';
 
   @override
-  String get flexibilityHistoryCompleteSomeFlexibilityTest =>
-      'Geçmişini burada görmek için bazı esneklik testlerini tamamla';
+  String get flexibilityHistoryCompleteSomeFlexibilityTest => 'Geçmişini burada görmek için bazı esneklik testlerini tamamla';
 
   @override
   String get flexibilityHistoryDeleteAssessment => 'Değerlendirmeyi Sil';
 
   @override
-  String get flexibilityHistoryDeleteAssessment2 =>
-      'Değerlendirme silinsin mi?';
+  String get flexibilityHistoryDeleteAssessment2 => 'Değerlendirme silinsin mi?';
 
   @override
   String get flexibilityHistoryNoAssessmentsYet => 'Henüz Değerlendirme Yok';
@@ -13029,8 +12137,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityTestDetailAboutThisTest => 'Bu Test Hakkında';
 
   @override
-  String get flexibilityTestDetailCommonMistakesToAvoid =>
-      'Kaçınılması Gereken Yaygın Hatalar';
+  String get flexibilityTestDetailCommonMistakesToAvoid => 'Kaçınılması Gereken Yaygın Hatalar';
 
   @override
   String get flexibilityTestDetailEquipmentNeeded => 'Gerekli Ekipman';
@@ -13054,8 +12161,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityTestDetailTakeTest => 'Testi Yap';
 
   @override
-  String get flexibilityTestDetailTakeThisTestTo =>
-      'Esneklik dereceni ve kişiselleştirilmiş önerilerini almak için bu testi yap';
+  String get flexibilityTestDetailTakeThisTestTo => 'Esneklik dereceni ve kişiselleştirilmiş önerilerini almak için bu testi yap';
 
   @override
   String get flexibilityTestDetailTargetMuscles => 'Hedef Kaslar';
@@ -13070,8 +12176,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityTestDetailUpdate => 'Güncelle';
 
   @override
-  String get floatingChatBubbleAskMeAnythingAbout =>
-      'Fitness hakkında bana her şeyi sorabilirsin';
+  String get floatingChatBubbleAskMeAnythingAbout => 'Fitness hakkında bana her şeyi sorabilirsin';
 
   @override
   String get floatingChatBubbleAskYourAiCoach => 'Yapay zeka koçuna sor...';
@@ -13080,12 +12185,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get floatingChatBubbleChangeCoach => 'Koçu değiştir';
 
   @override
-  String get floatingChatBubbleErrorLoadingMessages =>
-      'Mesajlar yüklenirken hata oluştu';
+  String get floatingChatBubbleErrorLoadingMessages => 'Mesajlar yüklenirken hata oluştu';
 
   @override
-  String get floatingChatBubbleHowCanIHelp =>
-      'Bugün size nasıl yardımcı olabilirim?';
+  String get floatingChatBubbleHowCanIHelp => 'Bugün size nasıl yardımcı olabilirim?';
 
   @override
   String get floatingChatBubbleOnline => 'Çevrimiçi';
@@ -13094,15 +12197,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get floatingChatBubbleTyping => 'Yazıyor...';
 
   @override
-  String get floatingChatOverlayAskMeAnythingAbout =>
-      'Fitness hakkında bana her şeyi sorabilirsiniz';
+  String get floatingChatOverlayAskMeAnythingAbout => 'Fitness hakkında bana her şeyi sorabilirsiniz';
 
   @override
   String get floatingChatOverlayAskYourAiCoach => 'AI koçunuza sorun...';
 
   @override
-  String get floatingChatOverlayErrorLoadingMessages =>
-      'Mesajlar yüklenirken hata oluştu';
+  String get floatingChatOverlayErrorLoadingMessages => 'Mesajlar yüklenirken hata oluştu';
 
   @override
   String floatingChatOverlayGoTo(Object workoutName) {
@@ -13110,19 +12211,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get floatingChatOverlayHowCanIHelp =>
-      'Bugün size nasıl yardımcı olabilirim?';
+  String get floatingChatOverlayHowCanIHelp => 'Bugün size nasıl yardımcı olabilirim?';
 
   @override
-  String get floatingChatOverlayMediaAttachmentsAvailableIn =>
-      'Medya ekleri tam sohbette mevcuttur';
+  String get floatingChatOverlayMediaAttachmentsAvailableIn => 'Medya ekleri tam sohbette mevcuttur';
 
   @override
   String get floatingChatOverlayOnline => 'Çevrimiçi';
 
   @override
-  String get floatingChatOverlayTypeYourNextMessage =>
-      'Bir sonraki mesajınızı yazın...';
+  String get floatingChatOverlayTypeYourNextMessage => 'Bir sonraki mesajınızı yazın...';
 
   @override
   String get floatingChatOverlayTyping => 'Yazıyor...';
@@ -13136,8 +12234,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get focalStepperValue => 'Değer';
 
   @override
-  String get focusAreasSelectorEnterCustomFocusArea =>
-      'Özel odak bölgesi girin (ör. \"Rotator cuff\")';
+  String get focusAreasSelectorEnterCustomFocusArea => 'Özel odak bölgesi girin (ör. \"Rotator cuff\")';
 
   @override
   String focusAreasSelectorSelected(Object selectedCount) {
@@ -13148,8 +12245,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get focusAreasSelectorTargetAreas => 'Hedef Bölgeler';
 
   @override
-  String get focusAreasSelectorWhichBodyRegionsTo =>
-      'Hangi vücut bölgeleri çalıştırılacak. Yukarıdaki Antrenman Stili ile birleştirin.';
+  String get focusAreasSelectorWhichBodyRegionsTo => 'Hangi vücut bölgeleri çalıştırılacak. Yukarıdaki Antrenman Stili ile birleştirin.';
 
   @override
   String get foldableWarmupLayoutPause => 'Duraklat';
@@ -13186,8 +12282,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fontScaleCardFontScale => 'Yazı Tipi Ölçeği';
 
   @override
-  String get fontScaleCardPreciseFontScalingControl =>
-      'Hassas yazı tipi ölçeklendirme kontrolü';
+  String get fontScaleCardPreciseFontScalingControl => 'Hassas yazı tipi ölçeklendirme kontrolü';
 
   @override
   String fontScaleCardX(Object scale) {
@@ -13229,18 +12324,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodAnalysisInlineU00b7 => '·';
 
   @override
-  String foodAnalysisLoadingElapsed(
-    Object _elapsedSeconds,
-    Object _stillWorkingIndex,
-  ) {
+  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex) {
     return 'elapsed-$_elapsedSeconds-$_stillWorkingIndex';
   }
 
   @override
-  String foodAnalysisLoadingS(
-    Object _elapsedSeconds,
-    Object analysisLoadingCopy,
-  ) {
+  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy) {
     return '$analysisLoadingCopy… ${_elapsedSeconds}sn';
   }
 
@@ -13255,8 +12344,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodAnalysisResultAiNutritionAnalysisIs =>
-      'AI beslenme analizi tahminidir. Kişiselleştirilmiş diyet tavsiyesi için bir diyetisyene danışın.';
+  String get foodAnalysisResultAiNutritionAnalysisIs => 'AI beslenme analizi tahminidir. Kişiselleştirilmiş diyet tavsiyesi için bir diyetisyene danışın.';
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
@@ -13279,10 +12367,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String foodAnalysisResultCardLeavesYouCalFor(
-    Object mealLabel,
-    Object remaining,
-  ) {
+  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining) {
     return '$mealLabel için $remaining cal kalıyor';
   }
 
@@ -13311,8 +12396,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodAnalysisResultInModeration => 'Ölçülü Tüketin';
 
   @override
-  String get foodAnalysisResultItemsLoggedToNutrition =>
-      'Öğeler beslenme takipçisine kaydedildi';
+  String get foodAnalysisResultItemsLoggedToNutrition => 'Öğeler beslenme takipçisine kaydedildi';
 
   @override
   String get foodAnalysisResultLimitThese => 'Bunları Sınırlandırın';
@@ -13345,8 +12429,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodBrowserPanelCooking => 'Pişirme';
 
   @override
-  String get foodBrowserPanelCouldNotParseAny =>
-      'Hiçbir besin öğesi ayrıştırılamadı';
+  String get foodBrowserPanelCouldNotParseAny => 'Hiçbir besin öğesi ayrıştırılamadı';
 
   @override
   String get foodBrowserPanelDefault => 'Varsayılan';
@@ -13394,8 +12477,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodBrowserPanelLog => 'Kaydet';
 
   @override
-  String get foodBrowserPanelLogAMealTo =>
-      'Geçmişinizi burada görmek için bir öğün kaydedin';
+  String get foodBrowserPanelLogAMealTo => 'Geçmişinizi burada görmek için bir öğün kaydedin';
 
   @override
   String foodBrowserPanelLogSelectedItems(Object count) {
@@ -13403,8 +12485,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelLookingForASpecific =>
-      'Belirli bir ürün mü arıyorsunuz? Bunun yerine arama yapın';
+  String get foodBrowserPanelLookingForASpecific => 'Belirli bir ürün mü arıyorsunuz? Bunun yerine arama yapın';
 
   @override
   String get foodBrowserPanelLowCal => 'Düşük kalorili';
@@ -13424,11 +12505,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodBrowserPanelOnlyMatchFound => 'Bulunan tek eşleşme';
 
   @override
-  String foodBrowserPanelPartExpandableSearchCardStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -13448,11 +12525,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String foodBrowserPanelPartNLItemSectionStateValue(
-    Object calDelta,
-    Object label,
-    Object opt,
-  ) {
+  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt) {
     return '$label ($opt$calDelta)';
   }
 
@@ -13468,8 +12541,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelSearch528000Foods =>
-      'USDA, Kanada, Hindistan ve daha fazla veritabanından 528.000+ besin arayın';
+  String get foodBrowserPanelSearch528000Foods => 'USDA, Kanada, Hindistan ve daha fazla veritabanından 528.000+ besin arayın';
 
   @override
   String get foodBrowserPanelSearchAlternatives => 'Alternatifleri ara...';
@@ -13490,19 +12562,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodBrowserPanelSize => 'Boyut';
 
   @override
-  String get foodBrowserPanelStarFoodsAfterLogging =>
-      'Kaydettikten sonra besinleri yıldızlayarak kaydedin';
+  String get foodBrowserPanelStarFoodsAfterLogging => 'Kaydettikten sonra besinleri yıldızlayarak kaydedin';
 
   @override
   String get foodBrowserPanelStartTypingAbove => 'Yukarıya yazmaya başlayın...';
 
   @override
-  String get foodBrowserPanelTapItemsToAdjust =>
-      'Ayarlamak veya alternatifleri seçmek için öğelere dokunun';
+  String get foodBrowserPanelTapItemsToAdjust => 'Ayarlamak veya alternatifleri seçmek için öğelere dokunun';
 
   @override
-  String get foodBrowserPanelUseAnalyzeForAi =>
-      'AI tahmini için Analiz et\'i kullanın';
+  String get foodBrowserPanelUseAnalyzeForAi => 'AI tahmini için Analiz et\'i kullanın';
 
   @override
   String get foodBrowserPanelYourFoods => 'BESİNLERİNİZ';
@@ -13602,20 +12671,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String foodHistoryScreenPartDateRangeValue(
-    Object _dateLabel,
-    Object _mealLabel,
-    Object _sourceLabel,
-  ) {
+  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel) {
     return '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel';
   }
 
   @override
-  String foodHistoryScreenPartFrequentFoodChipPCF(
-    Object carbsG,
-    Object fatG,
-    Object proteinG,
-  ) {
+  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG) {
     return '${proteinG}P · ${carbsG}C · ${fatG}F';
   }
 
@@ -13647,12 +12708,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodHistoryScreenSearchError => 'Arama hatası';
 
   @override
-  String get foodHistoryScreenStartLoggingMealsTo =>
-      'Geçmişinizi burada görmek için öğünlerinizi kaydetmeye başlayın!';
+  String get foodHistoryScreenStartLoggingMealsTo => 'Geçmişinizi burada görmek için öğünlerinizi kaydetmeye başlayın!';
 
   @override
-  String get foodHistorySearchMealsFoodsHigh =>
-      'Öğünleri, yiyecekleri, \"yüksek protein\"...';
+  String get foodHistorySearchMealsFoodsHigh => 'Öğünleri, yiyecekleri, \"yüksek protein\"...';
 
   @override
   String get foodHistoryUndo => 'Geri Al';
@@ -13675,12 +12734,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodItemRankingTapToSeeDetails => 'Detayları görmek için dokun';
 
   @override
-  String get foodLibraryAHomemadeMealWith =>
-      'Birden fazla malzeme içeren ev yapımı bir öğün';
+  String get foodLibraryAHomemadeMealWith => 'Birden fazla malzeme içeren ev yapımı bir öğün';
 
   @override
-  String get foodLibraryASingleFoodType =>
-      'Tek bir yiyecek — yazın veya AI\'nın doldurmasına izin verin';
+  String get foodLibraryASingleFoodType => 'Tek bir yiyecek — yazın veya AI\'nın doldurmasına izin verin';
 
   @override
   String get foodLibraryAdd => 'Ekle';
@@ -13821,8 +12878,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodLibraryThisActionCannotBe => 'Bu işlem geri alınamaz.';
 
   @override
-  String get foodLibraryUsingYourExistingCustom =>
-      'Mevcut özel yiyeceğinizi kullanma';
+  String get foodLibraryUsingYourExistingCustom => 'Mevcut özel yiyeceğinizi kullanma';
 
   @override
   String get foodLoggingRulesAddRule => 'Kural ekle';
@@ -13837,8 +12893,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodLoggingRulesDeleteRule => 'Kural silinsin mi?';
 
   @override
-  String get foodLoggingRulesEGNoBun =>
-      'örn. \"Ekmeksiz\" veya \"az yağlı Güney Hindistan usulü pişiriyoruz\"';
+  String get foodLoggingRulesEGNoBun => 'örn. \"Ekmeksiz\" veya \"az yağlı Güney Hindistan usulü pişiriyoruz\"';
 
   @override
   String get foodLoggingRulesEditRule => 'Kuralı düzenle';
@@ -13855,12 +12910,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodMoodAnalyticsAnalyzingMoodPatterns =>
-      'Ruh hali kalıpları analiz ediliyor...';
+  String get foodMoodAnalyticsAnalyzingMoodPatterns => 'Ruh hali kalıpları analiz ediliyor...';
 
   @override
-  String get foodMoodAnalyticsAvailableWhenLoggingMeals =>
-      'Öğün kaydederken kullanılabilir';
+  String get foodMoodAnalyticsAvailableWhenLoggingMeals => 'Öğün kaydederken kullanılabilir';
 
   @override
   String get foodMoodAnalyticsAverage => 'Ortalama: ';
@@ -13883,20 +12936,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodMoodAnalyticsFoodMood => 'YİYECEK & RUH HALİ';
 
   @override
-  String get foodMoodAnalyticsFoodMoodInsights =>
-      'Yiyecek & Ruh Hali Analizleri';
+  String get foodMoodAnalyticsFoodMoodInsights => 'Yiyecek & Ruh Hali Analizleri';
 
   @override
-  String get foodMoodAnalyticsFoodsThatBoostYour =>
-      'RUH HALİNİZİ İYİLEŞTİREN YİYECEKLER';
+  String get foodMoodAnalyticsFoodsThatBoostYour => 'RUH HALİNİZİ İYİLEŞTİREN YİYECEKLER';
 
   @override
-  String get foodMoodAnalyticsFoodsToWatch =>
-      'DİKKAT EDİLMESİ GEREKEN YİYECEKLER';
+  String get foodMoodAnalyticsFoodsToWatch => 'DİKKAT EDİLMESİ GEREKEN YİYECEKLER';
 
   @override
-  String get foodMoodAnalyticsLogHowYouFeel =>
-      'Kalıpları keşfetmek için öğünlerden önce ve sonra nasıl hissettiğinizi kaydedin';
+  String get foodMoodAnalyticsLogHowYouFeel => 'Kalıpları keşfetmek için öğünlerden önce ve sonra nasıl hissettiğinizi kaydedin';
 
   @override
   String get foodMoodAnalyticsMealsTracked => 'Takip edilen öğünler';
@@ -13908,8 +12957,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodMoodAnalyticsMoodImproved => 'Ruh hali iyileşti';
 
   @override
-  String get foodMoodAnalyticsNoEnergyDataRecorded =>
-      'Henüz enerji verisi kaydedilmedi';
+  String get foodMoodAnalyticsNoEnergyDataRecorded => 'Henüz enerji verisi kaydedilmedi';
 
   @override
   String get foodMoodAnalyticsNoMoodDataYet => 'Henüz ruh hali verisi yok';
@@ -13920,12 +12968,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodMoodAnalyticsStartTrackingMood =>
-      'Ruh halini takip etmeye başla';
+  String get foodMoodAnalyticsStartTrackingMood => 'Ruh halini takip etmeye başla';
 
   @override
-  String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Kalıpları ve analizleri görmek için\nöğün kaydederken ruh halinizi takip edin';
+  String get foodMoodAnalyticsTrackYourMoodWhen => 'Kalıpları ve analizleri görmek için\nöğün kaydederken ruh halinizi takip edin';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Takip edilen öğünler';
@@ -13937,8 +12983,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodMoodAnalyticsUnableToLoadData => 'Veriler yüklenemedi';
 
   @override
-  String get foodMoodAnalyticsUnableToLoadMood =>
-      'Ruh hali verileri yüklenemedi';
+  String get foodMoodAnalyticsUnableToLoadMood => 'Ruh hali verileri yüklenemedi';
 
   @override
   String get foodReportCalories => 'Kalori';
@@ -13960,8 +13005,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get foodReportEGISearched =>
-      'örn. Burrito kasesi değil, meksika kolası arattım';
+  String get foodReportEGISearched => 'örn. Burrito kasesi değil, meksika kolası arattım';
 
   @override
   String get foodReportFat => 'Yağ';
@@ -13979,8 +13023,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodReportSubmitReport => 'Bildirimi Gönder';
 
   @override
-  String get foodReportWeLlReviewAnd =>
-      '48 saat içinde inceleyip güncelleyeceğiz.\nVerilerimizi geliştirmemize yardımcı olduğunuz için teşekkürler!';
+  String get foodReportWeLlReviewAnd => '48 saat içinde inceleyip güncelleyeceğiz.\nVerilerimizi geliştirmemize yardımcı olduğunuz için teşekkürler!';
 
   @override
   String get foodReportWhatFoodDidYou => 'Aslında hangi yiyeceği kastettiniz?';
@@ -14040,12 +13083,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get foodSearchResultsSomethingWentWrong => 'Bir şeyler yanlış gitti';
 
   @override
-  String get foodSearchResultsTypeToSearchYour =>
-      'Kaydedilen besinlerinizi, son öğünlerinizi veya veritabanını aramak için yazın.';
+  String get foodSearchResultsTypeToSearchYour => 'Kaydedilen besinlerinizi, son öğünlerinizi veya veritabanını aramak için yazın.';
 
   @override
-  String get formCheckResultAiFormAnalysisIs =>
-      'Yapay zeka form analizi yalnızca eğitim amaçlıdır. Kişiselleştirilmiş rehberlik için uzman bir antrenöre danışın.';
+  String get formCheckResultAiFormAnalysisIs => 'Yapay zeka form analizi yalnızca eğitim amaçlıdır. Kişiselleştirilmiş rehberlik için uzman bir antrenöre danışın.';
 
   @override
   String get formCheckResultAreasToImprove => 'Geliştirilmesi Gereken Alanlar';
@@ -14091,15 +13132,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get formCheckResultNeedsWork => 'Çalışılması Gerekiyor';
 
   @override
-  String get formCheckResultSendAVideoOf =>
-      'Egzersizinizin bir videosunu gönderin; formunuzu kontrol edeyim, tekrarları sayayım ve düzeltmeler yapayım.';
+  String get formCheckResultSendAVideoOf => 'Egzersizinizin bir videosunu gönderin; formunuzu kontrol edeyim, tekrarları sayayım ve düzeltmeler yapayım.';
 
   @override
   String get formCheckResultTempo => 'Tempo';
 
   @override
-  String get formComparisonResultAiFormAnalysisIs =>
-      'Yapay zeka form analizi yalnızca eğitim amaçlıdır. Kişiselleştirilmiş rehberlik için uzman bir antrenöre danışın.';
+  String get formComparisonResultAiFormAnalysisIs => 'Yapay zeka form analizi yalnızca eğitim amaçlıdır. Kişiselleştirilmiş rehberlik için uzman bir antrenöre danışın.';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -14146,12 +13185,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get founderNoteRoadmap => 'Yol Haritası';
 
   @override
-  String get founderNoteFounderSoloStillOn =>
-      'Kurucu, tek başıma, hala ilk sürümdeyim.';
+  String get founderNoteFounderSoloStillOn => 'Kurucu, tek başıma, hala ilk sürümdeyim.';
 
   @override
-  String get founderNoteIUsedToLog =>
-      'İki hafta boyunca her öğünümü kaydeder, kendimle gurur duyar, sonra okuyamadığım bir Tayland restoranına girer, en güvenli görüneni yer ve sessizce uygulamayı kullanmayı bırakırdım. Üç hafta sonra başka bir uygulama yükler, bu sefer başaracağıma yemin eder ve aynı döngüyü tekrar yaşardım. Her uygulama verilerimi kaydederdi ama sessizleştiğimde hiçbiri fark etmezdi; onlar birer defterdi, koç değil.';
+  String get founderNoteIUsedToLog => 'İki hafta boyunca her öğünümü kaydeder, kendimle gurur duyar, sonra okuyamadığım bir Tayland restoranına girer, en güvenli görüneni yer ve sessizce uygulamayı kullanmayı bırakırdım. Üç hafta sonra başka bir uygulama yükler, bu sefer başaracağıma yemin eder ve aynı döngüyü tekrar yaşardım. Her uygulama verilerimi kaydederdi ama sessizleştiğimde hiçbiri fark etmezdi; onlar birer defterdi, koç değil.';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -14167,20 +13204,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get founderNoteSoIBuiltThe =>
-      'Bu yüzden defteri değil kişiyi inşa ettim. Yurt içinde veya yurt dışında herhangi bir menüyü çekin ve koç bunu size makro olarak okusun. Salı gününü atlarsanız suçluluk duygusu yaşamadan Çarşamba sabahına geri dönersiniz. Ayda bir PT seansından daha az bir sürede yiyeceklerinizi, spor salonunuzu, kayma şeklinizi öğrenir.';
+  String get founderNoteSoIBuiltThe => 'Bu yüzden defteri değil kişiyi inşa ettim. Yurt içinde veya yurt dışında herhangi bir menüyü çekin ve koç bunu size makro olarak okusun. Salı gününü atlarsanız suçluluk duygusu yaşamadan Çarşamba sabahına geri dönersiniz. Ayda bir PT seansından daha az bir sürede yiyeceklerinizi, spor salonunuzu, kayma şeklinizi öğrenir.';
 
   @override
-  String get founderNoteTheFriendsWhoActually =>
-      'Gerçekten fit olan arkadaşlarımın hepsinin onlara mesaj atan bir koçu vardı. Gerçek hesap verebilirlik ayda yaklaşık iki yüz dolara mal oluyor; işte çoğu kişinin buna sahip olamamasının ve \"takip etme\" ile \"değişim\" arasındaki boşluğun yıllarca açık kalmasının nedeni tam olarak bu.';
+  String get founderNoteTheFriendsWhoActually => 'Gerçekten fit olan arkadaşlarımın hepsinin onlara mesaj atan bir koçu vardı. Gerçek hesap verebilirlik ayda yaklaşık iki yüz dolara mal oluyor; işte çoğu kişinin buna sahip olamamasının ve \"takip etme\" ile \"değişim\" arasındaki boşluğun yıllarca açık kalmasının nedeni tam olarak bu.';
 
   @override
-  String get freshnessDecayCardControlsHowQuicklyExercise =>
-      'Egzersiz tazeliğinin ne kadar hızlı azaldığını kontrol eder: e^(-k * antrenmanlar)';
+  String get freshnessDecayCardControlsHowQuicklyExercise => 'Egzersiz tazeliğinin ne kadar hızlı azaldığını kontrol eder: e^(-k * antrenmanlar)';
 
   @override
-  String get freshnessDecayCardFreshnessDecayTuner =>
-      'Tazelik Azalma Ayarlayıcısı';
+  String get freshnessDecayCardFreshnessDecayTuner => 'Tazelik Azalma Ayarlayıcısı';
 
   @override
   String freshnessDecayCardK(Object _freshnessDecay) {
@@ -14272,22 +13305,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get friendProfileMoreDetailsComingSoon => 'Daha fazla detay yakında';
 
   @override
-  String get friendProfileThisUserWillNot =>
-      'Bu kullanıcı içeriğinizi göremeyecek veya size mesaj atamayacak. Onları daha sonra engelini kaldırabilirsiniz.';
+  String get friendProfileThisUserWillNot => 'Bu kullanıcı içeriğinizi göremeyecek veya size mesaj atamayacak. Onları daha sonra engelini kaldırabilirsiniz.';
 
   @override
   String get friendProfileUserBlocked => 'Kullanıcı engellendi';
 
   @override
-  String get friendProfileWorkoutHistoryPrsAnd =>
-      'Antrenman geçmişi, PR\'lar ve kupalar\nburada gösterilecektir.';
+  String get friendProfileWorkoutHistoryPrsAnd => 'Antrenman geçmişi, PR\'lar ve kupalar\nburada gösterilecektir.';
 
   @override
   String get friendSearchFindFriends => 'Arkadaş Bul';
 
   @override
-  String get friendSearchFollowFriendsToGet =>
-      'Daha iyi öneriler almak için arkadaşlarınızı takip edin';
+  String get friendSearchFollowFriendsToGet => 'Daha iyi öneriler almak için arkadaşlarınızı takip edin';
 
   @override
   String get friendSearchNoSuggestionsYet => 'Henüz öneri yok';
@@ -14308,28 +13338,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get friendSearchSuggestions => 'Öneriler';
 
   @override
-  String get friendSearchTryADifferentSearch =>
-      'Farklı bir arama terimi deneyin';
+  String get friendSearchTryADifferentSearch => 'Farklı bir arama terimi deneyin';
 
   @override
-  String get friendSearchTypeANameOr =>
-      'Kullanıcıları bulmak için bir isim veya kullanıcı adı yazın';
+  String get friendSearchTypeANameOr => 'Kullanıcıları bulmak için bir isim veya kullanıcı adı yazın';
 
   @override
-  String get friendsAddFriendsToSee =>
-      'Arkadaşlarınızın antrenmanlarını görmek\nve meydan okumalarda yarışmak için arkadaş ekleyin!';
+  String get friendsAddFriendsToSee => 'Arkadaşlarınızın antrenmanlarını görmek\nve meydan okumalarda yarışmak için arkadaş ekleyin!';
 
   @override
-  String get friendsCouldNotLoadUsers =>
-      'Takip ettiğiniz kullanıcılar yüklenemedi.\nLütfen tekrar deneyin.';
+  String get friendsCouldNotLoadUsers => 'Takip ettiğiniz kullanıcılar yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
-  String get friendsCouldNotLoadYour =>
-      'Arkadaş listeniz yüklenemedi.\nLütfen tekrar deneyin.';
+  String get friendsCouldNotLoadYour => 'Arkadaş listeniz yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
-  String get friendsCouldNotLoadYour2 =>
-      'Takipçi listeniz yüklenemedi.\nLütfen tekrar deneyin.';
+  String get friendsCouldNotLoadYour2 => 'Takipçi listeniz yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Takipçiler yüklenemedi';
@@ -14341,8 +13365,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get friendsFailedToLoadFriends => 'Arkadaşlar yüklenemedi';
 
   @override
-  String get friendsFollowFriendsToSee =>
-      'Arkadaşlarınızın antrenmanlarını görmek\nve birlikte motive kalmak için onları takip edin!';
+  String get friendsFollowFriendsToSee => 'Arkadaşlarınızın antrenmanlarını görmek\nve birlikte motive kalmak için onları takip edin!';
 
   @override
   String get friendsFollowers => 'Takipçi';
@@ -14354,8 +13377,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get friendsFriendRequests => 'Arkadaşlık İstekleri';
 
   @override
-  String get friendsKeepCrushingYourWorkouts =>
-      'Antrenmanlara tam gaz devam!\nArkadaşların ilerlemeni takip etmek isteyecek.';
+  String get friendsKeepCrushingYourWorkouts => 'Antrenmanlara tam gaz devam!\nArkadaşların ilerlemeni takip etmek isteyecek.';
 
   @override
   String get friendsNoFollowersYet => 'Henüz Takipçi Yok';
@@ -14427,8 +13449,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get futuristicSetCardSkipExercise => 'Egzersizi Atla';
 
   @override
-  String get generatePlanCreateAHolisticPlan =>
-      'Antrenmanlarınızı, beslenmenizi ve oruç düzeninizi koordine eden bütünsel bir plan oluşturun.';
+  String get generatePlanCreateAHolisticPlan => 'Antrenmanlarınızı, beslenmenizi ve oruç düzeninizi koordine eden bütünsel bir plan oluşturun.';
 
   @override
   String get generatePlanFastingProtocol => 'Oruç Protokolü';
@@ -14446,8 +13467,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get generatePlanNutritionStrategy => 'Beslenme Stratejisi';
 
   @override
-  String get generatePlanPreferredWorkoutTime =>
-      'Tercih Edilen Antrenman Zamanı';
+  String get generatePlanPreferredWorkoutTime => 'Tercih Edilen Antrenman Zamanı';
 
   @override
   String get generatePlanTrainingDays => 'Antrenman Günleri';
@@ -14456,8 +13476,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get generatePlanWeeklyPlanGenerated => 'Haftalık plan oluşturuldu!';
 
   @override
-  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo =>
-      'Her antrenman güvenle gelişmenize yardımcı olmak için uyarlanır!';
+  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo => 'Her antrenman güvenle gelişmenize yardımcı olmak için uyarlanır!';
 
   @override
   String get generateWorkoutPlaceholderGenerateWorkout => 'ANTRENMAN OLUŞTUR';
@@ -14466,35 +13485,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get generateWorkoutPlaceholderGenerating => 'OLUŞTURULUYOR...';
 
   @override
-  String get generateWorkoutPlaceholderGenerationFailed =>
-      'Oluşturma başarısız oldu';
+  String get generateWorkoutPlaceholderGenerationFailed => 'Oluşturma başarısız oldu';
 
   @override
-  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou =>
-      'Antrenman geçmişiniz kullanılarak kişiselleştirildi';
+  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou => 'Antrenman geçmişiniz kullanılarak kişiselleştirildi';
 
   @override
-  String get generateWorkoutPlaceholderTapBelowToTry =>
-      'Tekrar denemek için aşağıya dokunun';
+  String get generateWorkoutPlaceholderTapBelowToTry => 'Tekrar denemek için aşağıya dokunun';
 
   @override
-  String get generateWorkoutPlaceholderTapToRetry =>
-      'TEKRAR DENEMEK İÇİN DOKUN';
+  String get generateWorkoutPlaceholderTapToRetry => 'TEKRAR DENEMEK İÇİN DOKUN';
 
   @override
-  String get generateWorkoutPlaceholderWhatPowersYourWorkout =>
-      'Antrenmanınıza güç veren nedir?';
+  String get generateWorkoutPlaceholderWhatPowersYourWorkout => 'Antrenmanınıza güç veren nedir?';
 
   @override
-  String get generateWorkoutPlaceholderYourAiCoachCreates =>
-      'AI koçunuz antrenmanları şunlara göre oluşturur:';
+  String get generateWorkoutPlaceholderYourAiCoachCreates => 'AI koçunuz antrenmanları şunlara göre oluşturur:';
 
   @override
   String get glassDragToResize => 'Yeniden boyutlandırmak için sürükleyin';
 
   @override
-  String get globalChatBubbleAskMeAnythingAbout =>
-      'Fitness hakkında bana her şeyi sorabilirsin';
+  String get globalChatBubbleAskMeAnythingAbout => 'Fitness hakkında bana her şeyi sorabilirsin';
 
   @override
   String get globalChatBubbleAskYourAiCoach => 'AI koçuna sor...';
@@ -14503,12 +13515,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get globalChatBubbleChangeCoach => 'Koçu değiştir';
 
   @override
-  String get globalChatBubbleErrorLoadingMessages =>
-      'Mesajlar yüklenirken hata oluştu';
+  String get globalChatBubbleErrorLoadingMessages => 'Mesajlar yüklenirken hata oluştu';
 
   @override
-  String get globalChatBubbleHowCanIHelp =>
-      'Bugün sana nasıl yardımcı olabilirim?';
+  String get globalChatBubbleHowCanIHelp => 'Bugün sana nasıl yardımcı olabilirim?';
 
   @override
   String get globalChatBubbleOnline => 'Çevrimiçi';
@@ -14575,8 +13585,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get goalHistoryChartCompleteMoreWeeksTo =>
-      'Hedef trendlerinizi zaman içinde görmek için daha fazla hafta tamamlayın';
+  String get goalHistoryChartCompleteMoreWeeksTo => 'Hedef trendlerinizi zaman içinde görmek için daha fazla hafta tamamlayın';
 
   @override
   String get goalHistoryChartGoalTrends => 'Hedef Trendleri';
@@ -14600,15 +13609,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get goalHistoryU2022 => '• ';
 
   @override
-  String get goalLeaderboardCouldNotLoadLeaderboard =>
-      'Liderlik tablosu yüklenemedi';
+  String get goalLeaderboardCouldNotLoadLeaderboard => 'Liderlik tablosu yüklenemedi';
 
   @override
   String get goalLeaderboardFriendsLeaderboard => 'Arkadaş Liderlik Tablosu';
 
   @override
-  String get goalLeaderboardInviteFriendsToCompete =>
-      'Rekabet etmek için arkadaşlarınızı davet edin!';
+  String get goalLeaderboardInviteFriendsToCompete => 'Rekabet etmek için arkadaşlarınızı davet edin!';
 
   @override
   String get goalLeaderboardNoFriendsOnThis => 'Bu hedefte henüz arkadaş yok';
@@ -14622,8 +13629,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectConnectGoogleCalendar =>
-      'Google Takvim\'i Bağla';
+  String get googleCalendarConnectConnectGoogleCalendar => 'Google Takvim\'i Bağla';
 
   @override
   String get googleCalendarConnectConnected => 'Bağlandı';
@@ -14632,19 +13638,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get googleCalendarConnectDisconnect => 'Bağlantıyı Kes';
 
   @override
-  String get googleCalendarConnectFailedToConnectGoogle =>
-      'Google Takvim bağlanamadı';
+  String get googleCalendarConnectFailedToConnectGoogle => 'Google Takvim bağlanamadı';
 
   @override
   String get googleCalendarConnectGoogleCalendar => 'Google Takvim';
 
   @override
-  String get googleCalendarConnectGoogleCalendarConnected =>
-      'Google Takvim bağlandı!';
+  String get googleCalendarConnectGoogleCalendarConnected => 'Google Takvim bağlandı!';
 
   @override
-  String get googleCalendarConnectGoogleCalendarDisconnected =>
-      'Google Takvim bağlantısı kesildi';
+  String get googleCalendarConnectGoogleCalendarDisconnected => 'Google Takvim bağlantısı kesildi';
 
   @override
   String googleCalendarConnectSheetConnectYourGoogleCalendar(Object appName) {
@@ -14652,8 +13655,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectWeOnlyAccessCalendar =>
-      'Yalnızca açıkça izin verdiğiniz takvim verilerine erişiyoruz';
+  String get googleCalendarConnectWeOnlyAccessCalendar => 'Yalnızca açıkça izin verdiğiniz takvim verilerine erişiyoruz';
 
   @override
   String get groceryListAdd => 'Ekle';
@@ -14677,8 +13679,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groceryListHidePantryStaples => 'Kiler temel ihtiyaçlarını gizle';
 
   @override
-  String get groceryListHidingKeepsTheList =>
-      'Gizleme, listeyi gerçekten ihtiyacınız olan şeylere odaklanmış tutar';
+  String get groceryListHidingKeepsTheList => 'Gizleme, listeyi gerçekten ihtiyacınız olan şeylere odaklanmış tutar';
 
   @override
   String get groceryListItemName => 'Ürün adı';
@@ -14696,8 +13697,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groceryListShowPantryStaples => 'Kiler temel ürünlerini göster';
 
   @override
-  String get groceryListTapTheButtonBelow =>
-      'Malzeme eklemek için aşağıdaki + düğmesine dokunun.';
+  String get groceryListTapTheButtonBelow => 'Malzeme eklemek için aşağıdaki + düğmesine dokunun.';
 
   @override
   String get groceryListUnitGCup => 'Birim (g, cup, ...)';
@@ -14718,16 +13718,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groceryListsIndexNoListsYet => 'Henüz liste yok';
 
   @override
-  String groceryListsIndexScreenOfChecked(
-    Object checkedCount,
-    Object itemCount,
-  ) {
+  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount) {
     return '$itemCount öğeden $checkedCount tanesi işaretlendi';
   }
 
   @override
-  String get groceryListsIndexTapToCreateA =>
-      'Liste oluşturmak için + düğmesine dokunun veya bir tariften ekleyin.';
+  String get groceryListsIndexTapToCreateA => 'Liste oluşturmak için + düğmesine dokunun veya bir tariften ekleyin.';
 
   @override
   String get groceryListsIndexUntitled => 'Başlıksız';
@@ -14779,12 +13775,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groupSettingsAdmin => 'Yönetici';
 
   @override
-  String get groupSettingsAllYourFriendsAre =>
-      'Tüm arkadaşlarınız zaten bu grupta';
+  String get groupSettingsAllYourFriendsAre => 'Tüm arkadaşlarınız zaten bu grupta';
 
   @override
-  String get groupSettingsAreYouSureYou =>
-      'Bu gruptan ayrılmak istediğinize emin misiniz? Artık bu konuşmadan mesaj almayacaksınız.';
+  String get groupSettingsAreYouSureYou => 'Bu gruptan ayrılmak istediğinize emin misiniz? Artık bu konuşmadan mesaj almayacaksınız.';
 
   @override
   String get groupSettingsGroupNameUpdated => 'Grup adı güncellendi';
@@ -14799,8 +13793,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get groupSettingsLeaveGroup => 'Gruptan Ayrıl';
 
   @override
-  String get groupSettingsMemberListWillLoad =>
-      'Üye listesi sunucudan yüklenecek';
+  String get groupSettingsMemberListWillLoad => 'Üye listesi sunucudan yüklenecek';
 
   @override
   String get groupSettingsMembers => 'Üyeler';
@@ -14875,8 +13868,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestHomeScreenAiCoachChat => 'AI Coach Sohbeti';
 
   @override
-  String get guestHomeScreenAskAnythingAboutFitness =>
-      'Fitness hakkında her şeyi sorun';
+  String get guestHomeScreenAskAnythingAboutFitness => 'Fitness hakkında her şeyi sorun';
 
   @override
   String guestHomeScreenExploreWhatCanDo(Object appName) {
@@ -14890,8 +13882,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestHomeScreenTapToTryAi => 'AI Coach\'u denemek için dokunun';
 
   @override
-  String get guestHomeSeeHowYourPersonal =>
-      'Kişisel AI Coach\'unuzun nasıl çalıştığını görün';
+  String get guestHomeSeeHowYourPersonal => 'Kişisel AI Coach\'unuzun nasıl çalıştığını görün';
 
   @override
   String get guestHomeSessionEndingSoon => 'Oturum Yakında Sona Eriyor';
@@ -14900,20 +13891,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestHomeSignUpFree => 'Ücretsiz Kaydol';
 
   @override
-  String get guestHomeSignUpFreeTo =>
-      'Tüm özellikleri sınırsız kullanmaya devam etmek için ücretsiz kaydolun!';
+  String get guestHomeSignUpFreeTo => 'Tüm özellikleri sınırsız kullanmaya devam etmek için ücretsiz kaydolun!';
 
   @override
-  String get guestHomeSignUpFreeTo2 =>
-      'Tüm özelliklerin kilidini açmak ve fitness yolculuğunuza başlamak için ücretsiz kaydolun!';
+  String get guestHomeSignUpFreeTo2 => 'Tüm özelliklerin kilidini açmak ve fitness yolculuğunuza başlamak için ücretsiz kaydolun!';
 
   @override
-  String get guestHomeSignUpFreeTo3 =>
-      'Herhangi bir fitness sorusu sormak ve 7/24 kişiselleştirilmiş tavsiye almak için ücretsiz kaydolun';
+  String get guestHomeSignUpFreeTo3 => 'Herhangi bir fitness sorusu sormak ve 7/24 kişiselleştirilmiş tavsiye almak için ücretsiz kaydolun';
 
   @override
-  String get guestHomeTapAQuestionTo =>
-      'AI YANIT YANITINI GÖRMEK İÇİN BİR SORUYA DOKUNUN';
+  String get guestHomeTapAQuestionTo => 'AI YANIT YANITINI GÖRMEK İÇİN BİR SORUYA DOKUNUN';
 
   @override
   String get guestHomeTryItNow => 'ŞİMDİ DENEYİN';
@@ -14925,8 +13912,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestHomeWhatYouLlGet => 'NELER ALACAKSINIZ';
 
   @override
-  String get guestHomeYour10MinutePreview =>
-      '10 dakikalık önizleme oturumunuz sona erdi.';
+  String get guestHomeYour10MinutePreview => '10 dakikalık önizleme oturumunuz sona erdi.';
 
   @override
   String get guestLibraryBrowseSampleExercises => 'Örnek egzersizlere göz atın';
@@ -14953,9 +13939,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestLibraryPreview => 'ÖNİZLEME';
 
   @override
-  String guestLibraryScreenShowingSampleExercisesSign(
-    Object guestExerciseLimit,
-  ) {
+  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit) {
     return '$guestExerciseLimit örnek egzersiz gösteriliyor. 2300+ egzersize erişmek için ücretsiz kaydolun!';
   }
 
@@ -14969,20 +13953,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestLibrarySignUpFree => 'Ücretsiz Kaydol';
 
   @override
-  String get guestLibrarySignUpFreeTo =>
-      'Video gösterimleri ve talimatlar içeren eksiksiz egzersiz kütüphanemize erişmek için ücretsiz kaydolun.';
+  String get guestLibrarySignUpFreeTo => 'Video gösterimleri ve talimatlar içeren eksiksiz egzersiz kütüphanemize erişmek için ücretsiz kaydolun.';
 
   @override
-  String get guestLibrarySignUpFreeTo2 =>
-      'Tüm egzersizler için HD video rehberlerine erişmek için ücretsiz kaydolun.';
+  String get guestLibrarySignUpFreeTo2 => 'Tüm egzersizler için HD video rehberlerine erişmek için ücretsiz kaydolun.';
 
   @override
-  String get guestLibrarySignUpToView =>
-      'Bu egzersiz için ayrıntılı talimatları görüntülemek üzere kaydolun.';
+  String get guestLibrarySignUpToView => 'Bu egzersiz için ayrıntılı talimatları görüntülemek üzere kaydolun.';
 
   @override
-  String get guestLibraryUnlock1700Exercises =>
-      '2300+ Egzersizin Kilidini Açın';
+  String get guestLibraryUnlock1700Exercises => '2300+ Egzersizin Kilidini Açın';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Ücretsiz kilidini aç';
@@ -14997,8 +13977,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestSampleWorkoutFullBodyStrength => 'Tüm Vücut Gücü';
 
   @override
-  String get guestSampleWorkoutGetPersonalizedWorkouts =>
-      'Kişiselleştirilmiş Antrenmanlar Al';
+  String get guestSampleWorkoutGetPersonalizedWorkouts => 'Kişiselleştirilmiş Antrenmanlar Al';
 
   @override
   String get guestSampleWorkoutSampleWorkout => 'Örnek Antrenman';
@@ -15010,12 +13989,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestSampleWorkoutSignUpFree => 'Ücretsiz Kaydol';
 
   @override
-  String get guestSampleWorkoutSignUpFreeTo =>
-      'Hedeflerinize, ekipmanınıza ve programınıza göre uyarlanmış yapay zeka destekli antrenmanlar almak için ücretsiz kaydolun.';
+  String get guestSampleWorkoutSignUpFreeTo => 'Hedeflerinize, ekipmanınıza ve programınıza göre uyarlanmış yapay zeka destekli antrenmanlar almak için ücretsiz kaydolun.';
 
   @override
-  String get guestSampleWorkoutTapToSeeWorkout =>
-      'Antrenman demosunu görmek için dokunun';
+  String get guestSampleWorkoutTapToSeeWorkout => 'Antrenman demosunu görmek için dokunun';
 
   @override
   String get guestSessionTimerFreeDemoDay => 'ÜCRETSİZ DENEME GÜNÜ';
@@ -15033,8 +14010,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestSignUpGetYourPersonalPlan => 'Kişisel Planınızı Alın';
 
   @override
-  String get guestSignUpSeeYourFullWorkout =>
-      'Ödeme yapmadan önce tam antrenman planınızı görün - kredi kartı gerekmez!';
+  String get guestSignUpSeeYourFullWorkout => 'Ödeme yapmadan önce tam antrenman planınızı görün - kredi kartı gerekmez!';
 
   @override
   String get guestSignUpSignUp => 'Kaydol';
@@ -15057,8 +14033,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get guestUpgradeSignUpFree => 'Ücretsiz Kaydol';
 
   @override
-  String get guestUpgradeSignUpFreeFor =>
-      'Sınırsız erişim için ücretsiz kaydolun';
+  String get guestUpgradeSignUpFreeFor => 'Sınırsız erişim için ücretsiz kaydolun';
 
   @override
   String get guestUpgradeYourGuestUsageToday => 'BUGÜNKÜ MİSAFİR KULLANIMINIZ';
@@ -15076,12 +14051,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gymEquipmentFilterEquipmentByName => 'Ekipmanı isme göre filtrele';
 
   @override
-  String get gymEquipmentImportFromPdfPhotos =>
-      'PDF, fotoğraf veya URL\'den içe aktar';
+  String get gymEquipmentImportFromPdfPhotos => 'PDF, fotoğraf veya URL\'den içe aktar';
 
   @override
-  String get gymEquipmentLetAiPopulateYour =>
-      'Yapay zekanın ekipman listenizi otomatik olarak oluşturmasına izin verin';
+  String get gymEquipmentLetAiPopulateYour => 'Yapay zekanın ekipman listenizi otomatik olarak oluşturmasına izin verin';
 
   @override
   String get gymEquipmentResetAll => 'Tümünü Sıfırla';
@@ -15103,8 +14076,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gymLocationPickerGymLocation => 'Spor Salonu Konumu';
 
   @override
-  String get gymLocationPickerMapBasedLocationPicker =>
-      'Harita tabanlı konum seçici henüz mevcut değil.\nŞimdilik spor salonu adınızı profilden ayarlayın.';
+  String get gymLocationPickerMapBasedLocationPicker => 'Harita tabanlı konum seçici henüz mevcut değil.\nŞimdilik spor salonu adınızı profilden ayarlayın.';
 
   @override
   String get gymProfileSwitcherActive => 'Aktif';
@@ -15131,8 +14103,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get gymProfileSwitcherDragToReorderProfiles =>
-      'Profilleri yeniden sıralamak için sürükleyin';
+  String get gymProfileSwitcherDragToReorderProfiles => 'Profilleri yeniden sıralamak için sürükleyin';
 
   @override
   String get gymProfileSwitcherDuplicate => 'Çoğalt';
@@ -15141,14 +14112,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gymProfileSwitcherDuplicateGym => 'Spor Salonunu Çoğalt';
 
   @override
-  String get gymProfileSwitcherEnterANameFor =>
-      'Çoğaltılan spor salonu için bir ad girin:';
+  String get gymProfileSwitcherEnterANameFor => 'Çoğaltılan spor salonu için bir ad girin:';
 
   @override
-  String gymProfileSwitcherEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '$equipmentCount ekipman • $environmentDisplayName';
   }
 
@@ -15210,8 +14177,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitDetailScreenBest => 'En İyi';
 
   @override
-  String get habitDetailScreenCompleteThisHabitTo =>
-      'Geçmişinizi görmek için bu alışkanlığı tamamlayın';
+  String get habitDetailScreenCompleteThisHabitTo => 'Geçmişinizi görmek için bu alışkanlığı tamamlayın';
 
   @override
   String get habitDetailScreenCompleted => 'Tamamlandı';
@@ -15241,9 +14207,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitDetailScreenNotEnoughDataYet => 'Henüz yeterli veri yok';
 
   @override
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
-    Object daysUntilBestStreak,
-  ) {
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak) {
     return 'Kişisel rekorunuzu kırmanıza $daysUntilBestStreak gün kaldı!';
   }
 
@@ -15299,8 +14263,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitProgressHeaderTodaySHabits => 'Bugünkü Alışkanlıklar';
 
   @override
-  String get habitProgressHeaderYouCompletedAllYour =>
-      'Bugünkü tüm alışkanlıklarınızı tamamladınız!';
+  String get habitProgressHeaderYouCompletedAllYour => 'Bugünkü tüm alışkanlıklarınızı tamamladınız!';
 
   @override
   String get habitTemplatesChooseATemplate => 'Bir Şablon Seçin';
@@ -15342,15 +14305,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsCardFailedToLoadHabits => 'Alışkanlıklar yüklenemedi';
 
   @override
-  String get habitsCardGreatJobKeepingUp =>
-      'Serilerinizi sürdürme konusunda harika bir iş çıkardınız';
+  String get habitsCardGreatJobKeepingUp => 'Serilerinizi sürdürme konusunda harika bir iş çıkardınız';
 
   @override
   String get habitsCardQuickStart => 'Hızlı Başlangıç:';
 
   @override
-  String get habitsCardStartTrackingDailyHabits =>
-      'Tutarlılık oluşturmak ve hedeflerinize ulaşmak için günlük alışkanlıkları takip etmeye başlayın.';
+  String get habitsCardStartTrackingDailyHabits => 'Tutarlılık oluşturmak ve hedeflerinize ulaşmak için günlük alışkanlıkları takip etmeye başlayın.';
 
   @override
   String get habitsCardTodaySHabits => 'Bugünkü Alışkanlıklar';
@@ -15373,8 +14334,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsDeleteHabit => 'Alışkanlığı Sil?';
 
   @override
-  String get habitsHoldToReorderSwipe =>
-      'Sıralamak için basılı tut • Silmek için kaydır';
+  String get habitsHoldToReorderSwipe => 'Sıralamak için basılı tut • Silmek için kaydır';
 
   @override
   String get habitsLog => '+ Kaydet';
@@ -15404,8 +14364,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsScreenPartCreateCustomHabit => 'Özel Alışkanlık Oluştur';
 
   @override
-  String get habitsScreenPartDefineYourOwnHabit =>
-      'Kendi alışkanlığını özel isim ve simgeyle tanımla';
+  String get habitsScreenPartDefineYourOwnHabit => 'Kendi alışkanlığını özel isim ve simgeyle tanımla';
 
   @override
   String get habitsScreenPartNoHabitsFound => 'Alışkanlık bulunamadı';
@@ -15447,8 +14406,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsScreenUiHabitName => 'Alışkanlık Adı';
 
   @override
-  String get habitsScreenUiPleaseEnterAHabit =>
-      'Lütfen bir alışkanlık adı girin';
+  String get habitsScreenUiPleaseEnterAHabit => 'Lütfen bir alışkanlık adı girin';
 
   @override
   String get habitsScreenUiPreview => 'Önizleme';
@@ -15462,8 +14420,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsTileCardAddHabit => 'Alışkanlık Ekle';
 
   @override
-  String get habitsTileCardAllHabitsDoneToday =>
-      'Bugünkü tüm alışkanlıklar tamamlandı!';
+  String get habitsTileCardAllHabitsDoneToday => 'Bugünkü tüm alışkanlıklar tamamlandı!';
 
   @override
   String get habitsTileCardBuildHealthyHabits => 'Sağlıklı alışkanlıklar edin';
@@ -15483,8 +14440,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get habitsTileCardNoHabits => 'Alışkanlık yok';
 
   @override
-  String get habitsTileCardSignInToTrack =>
-      'Alışkanlıkları takip etmek için giriş yap';
+  String get habitsTileCardSignInToTrack => 'Alışkanlıkları takip etmek için giriş yap';
 
   @override
   String get habitsTileCardTodaySHabits => 'Bugünün Alışkanlıkları';
@@ -15508,8 +14464,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hardPaywallBestStreak => 'En iyi seri';
 
   @override
-  String get hardPaywallCancelAnytimeInSettings =>
-      'Ayarlardan istediğin zaman iptal et';
+  String get hardPaywallCancelAnytimeInSettings => 'Ayarlardan istediğin zaman iptal et';
 
   @override
   String get hardPaywallDonTLoseYour => 'İlerlemeni kaybetme';
@@ -15539,8 +14494,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hardPaywallYourAiCoachRemembers => 'AI koçun her şeyi hatırlar';
 
   @override
-  String get hardPaywallYourProgressIsStill =>
-      'İlerlemen hala burada. Kaldığın yerden devam etmek için abone ol.';
+  String get hardPaywallYourProgressIsStill => 'İlerlemen hala burada. Kaldığın yerden devam etmek için abone ol.';
 
   @override
   String get hardPaywallYourTrialHasEnded => 'Deneme süren sona erdi';
@@ -15562,15 +14516,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthBreakdownBloodSugar => 'Kan şekeri';
 
   @override
-  String get healthBreakdownChronicLowGradeInflammation =>
-      'Kronik düşük dereceli inflamasyon eklem rahatlığını, enerjiyi ve toparlanmayı etkiler.';
+  String get healthBreakdownChronicLowGradeInflammation => 'Kronik düşük dereceli inflamasyon eklem rahatlığını, enerjiyi ve toparlanmayı etkiler.';
 
   @override
   String get healthBreakdownFodmap => 'FODMAP';
 
   @override
-  String get healthBreakdownGlycemicLoadGiCarbs =>
-      'Glisemik Yük = GI × karbonhidrat ÷ 100. Daha düşük = daha dengeli enerji ve daha az ani yükselme.';
+  String get healthBreakdownGlycemicLoadGiCarbs => 'Glisemik Yük = GI × karbonhidrat ÷ 100. Daha düşük = daha dengeli enerji ve daha az ani yükselme.';
 
   @override
   String get healthBreakdownHealthBreakdown => 'Sağlık dökümü';
@@ -15579,23 +14531,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthBreakdownInflammation => 'İnflamasyon';
 
   @override
-  String get healthBreakdownNoGlycemicLoadComputed =>
-      'Glisemik yük hesaplanmadı (muhtemelen karbonhidratsız bir yemek).';
+  String get healthBreakdownNoGlycemicLoadComputed => 'Glisemik yük hesaplanmadı (muhtemelen karbonhidratsız bir yemek).';
 
   @override
-  String get healthBreakdownNotClassifiedForThis =>
-      'Bu yemek için sınıflandırılmadı.';
+  String get healthBreakdownNotClassifiedForThis => 'Bu yemek için sınıflandırılmadı.';
 
   @override
   String get healthBreakdownNotComputedForThis => 'Bu yemek için hesaplanmadı.';
 
   @override
-  String get healthBreakdownNotComputedLikelyNo =>
-      'Hesaplanmadı — muhtemelen bu yemekte eklenmiş şeker yok.';
+  String get healthBreakdownNotComputedLikelyNo => 'Hesaplanmadı — muhtemelen bu yemekte eklenmiş şeker yok.';
 
   @override
-  String get healthBreakdownNovaGroup4Industrial =>
-      'NOVA Grup 4 — emülgatörler, HFCS, yapay tatlandırıcılar vb. içeren endüstriyel tarifler.';
+  String get healthBreakdownNovaGroup4Industrial => 'NOVA Grup 4 — emülgatörler, HFCS, yapay tatlandırıcılar vb. içeren endüstriyel tarifler.';
 
   @override
   String healthBreakdownSheetGl(Object gl) {
@@ -15613,8 +14561,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get healthBreakdownTapAnyRowFor =>
-      'Tam açıklama, ölçek ve eğitim için herhangi bir satıra dokun.';
+  String get healthBreakdownTapAnyRowFor => 'Tam açıklama, ölçek ve eğitim için herhangi bir satıra dokun.';
 
   @override
   String get healthBreakdownUltraProcessed => 'Ultra işlenmiş';
@@ -15635,12 +14582,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthConnectOnboardingACoachThatSees => 'Her şeyi gören bir koç';
 
   @override
-  String get healthConnectOnboardingHealthConnectIsnT =>
-      'Health Connect yüklü değil — daha sonra Ayarlar\'dan bağlayabilirsin.';
+  String get healthConnectOnboardingHealthConnectIsnT => 'Health Connect yüklü değil — daha sonra Ayarlar\'dan bağlayabilirsin.';
 
   @override
-  String get healthConnectOnboardingRecoveryAwareWorkouts =>
-      'Toparlanma odaklı antrenmanlar';
+  String get healthConnectOnboardingRecoveryAwareWorkouts => 'Toparlanma odaklı antrenmanlar';
 
   @override
   String healthConnectOnboardingScreenConnect(Object _platformName) {
@@ -15648,9 +14593,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String healthConnectOnboardingScreenConnectSoZealovaCan(
-    Object _platformName,
-  ) {
+  String healthConnectOnboardingScreenConnectSoZealovaCan(Object _platformName) {
     return 'Zealova\'nın verilerinizi kullanabilmesi için $_platformName bağlantısını kurun: ';
   }
 
@@ -15658,12 +14601,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthConnectOnboardingSleepCoaching => 'Uyku koçluğu';
 
   @override
-  String get healthConnectOnboardingUnlockYourAiHealth =>
-      'AI sağlık koçunun kilidini aç';
+  String get healthConnectOnboardingUnlockYourAiHealth => 'AI sağlık koçunun kilidini aç';
 
   @override
-  String get healthConnectSyncYourHealthData =>
-      'Kişiselleştirilmiş fitness içgörüleri için sağlık verilerini senkronize et';
+  String get healthConnectSyncYourHealthData => 'Kişiselleştirilmiş fitness içgörüleri için sağlık verilerini senkronize et';
 
   @override
   String get healthDevicesHealthDevices => 'Sağlık ve Cihazlar';
@@ -15687,16 +14628,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthMetricsCardBloodGlucose => 'KAN GLİKOZU';
 
   @override
-  String get healthMetricsCardBloodGlucoseReadingsWill =>
-      'Kan şekeri ölçümleri burada görünecektir';
+  String get healthMetricsCardBloodGlucoseReadingsWill => 'Kan şekeri ölçümleri burada görünecektir';
 
   @override
-  String get healthMetricsCardConnectAGlucoseMonitor =>
-      'Health Connect üzerinden bir glikoz monitörü bağlayın';
+  String get healthMetricsCardConnectAGlucoseMonitor => 'Health Connect üzerinden bir glikoz monitörü bağlayın';
 
   @override
-  String get healthMetricsCardConnectHealthConnectTo =>
-      'Kan glikozunu görmek için Health Connect\'i bağla';
+  String get healthMetricsCardConnectHealthConnectTo => 'Kan glikozunu görmek için Health Connect\'i bağla';
 
   @override
   String get healthMetricsCardHealthMetrics => 'Sağlık Metrikleri';
@@ -15708,12 +14646,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthMetricsCardInsulinDelivery => 'İNSÜLİN SALINIMI';
 
   @override
-  String get healthMetricsCardInsulinDeliveryData =>
-      'Bağlı cihazlardan gelen insülin iletim verileri burada görünecektir';
+  String get healthMetricsCardInsulinDeliveryData => 'Bağlı cihazlardan gelen insülin iletim verileri burada görünecektir';
 
   @override
-  String get healthMetricsCardLoadingHealthData =>
-      'Sağlık verileri yükleniyor...';
+  String get healthMetricsCardLoadingHealthData => 'Sağlık verileri yükleniyor...';
 
   @override
   String get healthMetricsCardMax => 'Maks';
@@ -15737,8 +14673,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthMetricsCardNoInsulinData => 'İnsülin verisi yok';
 
   @override
-  String get healthMetricsCardNotEnoughDataFor =>
-      'Grafik için yeterli veri yok';
+  String get healthMetricsCardNotEnoughDataFor => 'Grafik için yeterli veri yok';
 
   @override
   String healthMetricsCardReadings(Object readingCount) {
@@ -15776,12 +14711,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthSyncEnable => 'Etkinleştir';
 
   @override
-  String get healthSyncEnableAiHealthCoaching =>
-      'AI sağlık koçluğunu etkinleştir?';
+  String get healthSyncEnableAiHealthCoaching => 'AI sağlık koçluğunu etkinleştir?';
 
   @override
-  String get healthSyncEnableAllDataYou =>
-      'Senkronize etmek istediğiniz tüm verileri etkinleştirin (adım, nabız, uyku vb.)';
+  String get healthSyncEnableAllDataYou => 'Senkronize etmek istediğiniz tüm verileri etkinleştirin (adım, nabız, uyku vb.)';
 
   @override
   String get healthSyncEnableSync => 'Senkronizasyonu Etkinleştir';
@@ -15799,8 +14732,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthSyncGrantPermissions => 'İzinleri Ver';
 
   @override
-  String get healthSyncHealthConnectIsNot =>
-      'Health Connect mevcut değil. Lütfen Play Store\'dan yükleyin.';
+  String get healthSyncHealthConnectIsNot => 'Health Connect mevcut değil. Lütfen Play Store\'dan yükleyin.';
 
   @override
   String get healthSyncHealthSync => 'SAĞLIK SENKRONİZASYONU';
@@ -15833,12 +14765,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthSyncOpenSamsungHealth => 'Samsung Health\'i Aç';
 
   @override
-  String get healthSyncReturnHereAndToggle =>
-      'Buraya dönün ve Health Connect\'i açın';
+  String get healthSyncReturnHereAndToggle => 'Buraya dönün ve Health Connect\'i açın';
 
   @override
-  String get healthSyncScrollDownAndTap =>
-      'Aşağı kaydırın ve \"Health Connect\"e dokunun';
+  String get healthSyncScrollDownAndTap => 'Aşağı kaydırın ve \"Health Connect\"e dokunun';
 
   @override
   String healthSyncSectionConnect(Object appName) {
@@ -15896,12 +14826,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthSyncSyncNow => 'Şimdi Senkronize Et';
 
   @override
-  String get healthSyncTurnOnSyncWith =>
-      '\"Health Connect ile Senkronize Et\" seçeneğini açın';
+  String get healthSyncTurnOnSyncWith => '\"Health Connect ile Senkronize Et\" seçeneğini açın';
 
   @override
-  String get healthSyncUsingSamsungHealth =>
-      'Samsung Health mi kullanıyorsunuz?';
+  String get healthSyncUsingSamsungHealth => 'Samsung Health mi kullanıyorsunuz?';
 
   @override
   String get healthSyncWeight => 'Kilo';
@@ -15910,8 +14838,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get healthSyncWriteToHealthApp => 'Sağlık uygulamasına yaz';
 
   @override
-  String get hearInsightButtonNoAudioOutputAvailable =>
-      'Ses çıkışı yok — kulaklık bağlayın veya sesi açın.';
+  String get hearInsightButtonNoAudioOutputAvailable => 'Ses çıkışı yok — kulaklık bağlayın veya sesi açın.';
 
   @override
   String get hearInsightButtonStop => 'Durdur';
@@ -15920,8 +14847,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hearInsightButtonStopInsightPlayback => 'İçgörü oynatmayı durdur';
 
   @override
-  String get heartRateChartAddRestingHeartRate =>
-      'Tahmin için dinlenme nabzını ekle';
+  String get heartRateChartAddRestingHeartRate => 'Tahmin için dinlenme nabzını ekle';
 
   @override
   String get heartRateChartAerobic => 'Aerobik';
@@ -15930,8 +14856,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heartRateChartAnaerobic => 'Anaerobik';
 
   @override
-  String get heartRateChartConnectASmartwatchTo =>
-      'Nabzı takip etmek için bir akıllı saat bağlayın';
+  String get heartRateChartConnectASmartwatchTo => 'Nabzı takip etmek için bir akıllı saat bağlayın';
 
   @override
   String get heartRateChartEstimatedVo2Max => 'Tahmini VO2 Max';
@@ -15965,18 +14890,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heartRateChartNoHeartRateData => 'Nabız verisi yok';
 
   @override
-  String heartRateChartPartZoneLegendItemHeartRateOfMax(
-    Object percentageRange,
-  ) {
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange) {
     return 'Nabız: Maksimumun %$percentageRange\'i';
   }
 
   @override
-  String heartRateChartPartZoneLegendItemM(
-    Object minutes,
-    Object percent,
-    Object shortLabel,
-  ) {
+  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel) {
     return '$shortLabel ${minutes}dk ($percent%)';
   }
 
@@ -16019,8 +14938,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get heartRateChartWearYourWatchDuring =>
-      'Nabzı takip etmek için antrenman sırasında saatinizi takın';
+  String get heartRateChartWearYourWatchDuring => 'Nabzı takip etmek için antrenman sırasında saatinizi takın';
 
   @override
   String get heartRateChartZoneBreakdown => 'Bölge Dağılımı';
@@ -16136,8 +15054,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroActionCardSipToXlJug => 'Yudumdan XL sürahiye';
 
   @override
-  String get heroActionCardTakeProgressPhoto =>
-      'Dönüşümünü takip etmek için bir ilerleme fotoğrafı çek';
+  String get heroActionCardTakeProgressPhoto => 'Dönüşümünü takip etmek için bir ilerleme fotoğrafı çek';
 
   @override
   String get heroActionCardTrackYourProgress => 'İlerlemeni Takip Et';
@@ -16244,19 +15161,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardCouldNotDismissWorkout => 'Antrenman reddedilemedi';
 
   @override
-  String get heroWorkoutCardCouldNotMarkWorkout =>
-      'Antrenman tamamlandı olarak işaretlenemedi';
+  String get heroWorkoutCardCouldNotMarkWorkout => 'Antrenman tamamlandı olarak işaretlenemedi';
 
   @override
   String get heroWorkoutCardCouldNotSkipWorkout => 'Antrenman atlanamadı';
 
   @override
-  String get heroWorkoutCardCouldNotUndoCompletion =>
-      'Tamamlama geri alınamadı';
+  String get heroWorkoutCardCouldNotUndoCompletion => 'Tamamlama geri alınamadı';
 
   @override
-  String get heroWorkoutCardCouldnTRegenerateWorkout =>
-      'Antrenman yeniden oluşturulamadı. Lütfen tekrar deneyin.';
+  String get heroWorkoutCardCouldnTRegenerateWorkout => 'Antrenman yeniden oluşturulamadı. Lütfen tekrar deneyin.';
 
   @override
   String get heroWorkoutCardDelayUntilFastEnds => 'Oruç bitene kadar ertele';
@@ -16268,8 +15182,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardDismissQuickWorkout => 'Hızlı Antrenmanı reddet?';
 
   @override
-  String get heroWorkoutCardDismissedOfflineWillSync =>
-      'Çevrimdışı reddedildi — çevrimiçi olunca senkronize edilecek';
+  String get heroWorkoutCardDismissedOfflineWillSync => 'Çevrimdışı reddedildi — çevrimiçi olunca senkronize edilecek';
 
   @override
   String get heroWorkoutCardDoToday => 'Bugün Yap';
@@ -16283,10 +15196,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String heroWorkoutCardExtExercises(
-    Object exerciseCount,
-    Object formattedDurationShort,
-  ) {
+  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort) {
     return '$formattedDurationShort • $exerciseCount egzersiz';
   }
 
@@ -16322,8 +15232,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardMarkDone => 'Tamamlandı İşaretle';
 
   @override
-  String get heroWorkoutCardMarkedAsARest =>
-      'Dinlenme günü olarak işaretlendi. İyi dinlenmeler.';
+  String get heroWorkoutCardMarkedAsARest => 'Dinlenme günü olarak işaretlendi. İyi dinlenmeler.';
 
   @override
   String get heroWorkoutCardMissedWorkout => 'Kaçırılan Antrenman';
@@ -16337,20 +15246,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardMoveToToday => 'BUGÜNE TAŞI';
 
   @override
-  String get heroWorkoutCardNothingToShareYet =>
-      'Henüz paylaşacak bir şey yok — önce bir antrenman kaydedin';
+  String get heroWorkoutCardNothingToShareYet => 'Henüz paylaşacak bir şey yok — önce bir antrenman kaydedin';
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
-    Object exerciseCount,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount) {
     return '$exerciseCount egzersiz';
   }
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
-    Object bestDurationMinutes,
-  ) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes) {
     return '$bestDurationMinutes dk';
   }
 
@@ -16364,8 +15268,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardQuickWorkout => 'HIZLI ANTRENMAN';
 
   @override
-  String get heroWorkoutCardQuickWorkoutDismissed =>
-      'Hızlı antrenman reddedildi';
+  String get heroWorkoutCardQuickWorkoutDismissed => 'Hızlı antrenman reddedildi';
 
   @override
   String get heroWorkoutCardRegenerate => 'Yeniden oluştur';
@@ -16421,8 +15324,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardSummary => 'Özet';
 
   @override
-  String get heroWorkoutCardSwitchGymProfile =>
-      'Spor salonu profilini değiştir';
+  String get heroWorkoutCardSwitchGymProfile => 'Spor salonu profilini değiştir';
 
   @override
   String get heroWorkoutCardSwitchToLighter => 'Daha hafife geç';
@@ -16440,16 +15342,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardThisMayTakeA => 'Bu biraz zaman alabilir';
 
   @override
-  String get heroWorkoutCardThisWillMarkThe =>
-      'Bu, antrenmanı tamamlanmamış olarak işaretleyecektir.';
+  String get heroWorkoutCardThisWillMarkThe => 'Bu, antrenmanı tamamlanmamış olarak işaretleyecektir.';
 
   @override
-  String get heroWorkoutCardThisWorkoutWillBe =>
-      'Bu antrenman atlanmış olarak işaretlenecektir.';
+  String get heroWorkoutCardThisWorkoutWillBe => 'Bu antrenman atlanmış olarak işaretlenecektir.';
 
   @override
-  String get heroWorkoutCardTodaySWorkoutComplete =>
-      'Bugünkü antrenman tamamlandı!';
+  String get heroWorkoutCardTodaySWorkoutComplete => 'Bugünkü antrenman tamamlandı!';
 
   @override
   String get heroWorkoutCardUndo => 'Geri al';
@@ -16469,16 +15368,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get heroWorkoutCardWorkoutIsNotReady =>
-      'Antrenman henüz hazır değil. Lütfen yeniden oluşturmayı deneyin.';
+  String get heroWorkoutCardWorkoutIsNotReady => 'Antrenman henüz hazır değil. Lütfen yeniden oluşturmayı deneyin.';
 
   @override
-  String get heroWorkoutCardWorkoutMarkedAsDone =>
-      'Antrenman tamamlandı olarak işaretlendi!';
+  String get heroWorkoutCardWorkoutMarkedAsDone => 'Antrenman tamamlandı olarak işaretlendi!';
 
   @override
-  String get heroWorkoutCardWorkoutRegenerated =>
-      'Antrenman yeniden oluşturuldu!';
+  String get heroWorkoutCardWorkoutRegenerated => 'Antrenman yeniden oluşturuldu!';
 
   @override
   String get heroWorkoutCardWorkoutSkipped => 'Antrenman atlandı';
@@ -16487,19 +15383,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCardWorkoutUnmarked => 'Antrenman işareti kaldırıldı';
 
   @override
-  String get heroWorkoutCardYouLlLoseThis =>
-      'Bu Hızlı antrenmanı kaybedeceksiniz. İçine kaydedilen tüm setler silinecek. Devam edilsin mi?';
+  String get heroWorkoutCardYouLlLoseThis => 'Bu Hızlı antrenmanı kaybedeceksiniz. İçine kaydedilen tüm setler silinecek. Devam edilsin mi?';
 
   @override
   String get heroWorkoutCarouselAllDoneForThis => 'Bu haftalık her şey tamam!';
 
   @override
-  String get heroWorkoutCarouselCouldNotLoadWorkouts =>
-      'Antrenmanlar yüklenemedi';
+  String get heroWorkoutCarouselCouldNotLoadWorkouts => 'Antrenmanlar yüklenemedi';
 
   @override
-  String get heroWorkoutCarouselGeneratingWorkout =>
-      'Antrenman oluşturuluyor...';
+  String get heroWorkoutCarouselGeneratingWorkout => 'Antrenman oluşturuluyor...';
 
   @override
   String get heroWorkoutCarouselNoWorkoutYet => 'Henüz antrenman yok';
@@ -16508,12 +15401,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroWorkoutCarouselRestUpForNext => 'Gelecek hafta için dinlenin';
 
   @override
-  String get heroWorkoutCarouselSetYourWorkoutDays =>
-      'Antrenman günlerinizi ayarlayın';
+  String get heroWorkoutCarouselSetYourWorkoutDays => 'Antrenman günlerinizi ayarlayın';
 
   @override
-  String get heroWorkoutCarouselSettingUpYourWorkout =>
-      'Antrenmanınız hazırlanıyor...';
+  String get heroWorkoutCarouselSettingUpYourWorkout => 'Antrenmanınız hazırlanıyor...';
 
   @override
   String get heroWorkoutCarouselTapToSetUp => 'Ayarlamak için dokunun';
@@ -16530,8 +15421,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeApply => 'Uygula';
 
   @override
-  String get homeCustomizeYourHomeLayout =>
-      'Ana ekran düzeninizi özelleştirin, spor salonu profillerini değiştirin ve seviyenizi takip edin — hepsi buradan.';
+  String get homeCustomizeYourHomeLayout => 'Ana ekran düzeninizi özelleştirin, spor salonu profillerini değiştirin ve seviyenizi takip edin — hepsi buradan.';
 
   @override
   String get homeDailyStepsGoal => 'Günlük adım hedefi';
@@ -16540,36 +15430,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeDefaultLayoutRestored => 'Varsayılan düzen geri yüklendi!';
 
   @override
-  String get homeEmptyAchievements_v1 =>
-      'Henüz başarı yok. Kilidini açmak için antrenmana devam et.';
+  String get homeEmptyAchievements_v1 => 'Henüz başarı yok. Kilidini açmak için antrenmana devam et.';
 
   @override
-  String get homeEmptyAchievements_v2 =>
-      'Kilometre taşlarına ulaştıkça başarıların kilidi açılır. Devam et.';
+  String get homeEmptyAchievements_v2 => 'Kilometre taşlarına ulaştıkça başarıların kilidi açılır. Devam et.';
 
   @override
-  String get homeEmptyAchievements_v3 =>
-      'Henüz bir şey açılmadı. İlki düşündüğünden daha yakın.';
+  String get homeEmptyAchievements_v3 => 'Henüz bir şey açılmadı. İlki düşündüğünden daha yakın.';
 
   @override
-  String get homeEmptyAchievements_v4 =>
-      'Antrenmanları kaydetmeye başla, başarılar gelecektir.';
+  String get homeEmptyAchievements_v4 => 'Antrenmanları kaydetmeye başla, başarılar gelecektir.';
 
   @override
-  String get homeEmptyChallenges_v1 =>
-      'Aktif meydan okuma yok. Göz at ve başlamak için birini seç.';
+  String get homeEmptyChallenges_v1 => 'Aktif meydan okuma yok. Göz at ve başlamak için birini seç.';
 
   @override
-  String get homeEmptyChallenges_v2 =>
-      'Meydan okumalar ivme kazanmak için harika bir yoldur. Birine katıl.';
+  String get homeEmptyChallenges_v2 => 'Meydan okumalar ivme kazanmak için harika bir yoldur. Birine katıl.';
 
   @override
-  String get homeEmptyChallenges_v3 =>
-      'Henüz devam eden bir şey yok. Seviyene uygun bir meydan okuma bul.';
+  String get homeEmptyChallenges_v3 => 'Henüz devam eden bir şey yok. Seviyene uygun bir meydan okuma bul.';
 
   @override
-  String get homeEmptyChallenges_v4 =>
-      'Meydan okuma yok mu? Seni bekleyen güzel olanlar var.';
+  String get homeEmptyChallenges_v4 => 'Meydan okuma yok mu? Seni bekleyen güzel olanlar var.';
 
   @override
   String get homeEmptyChat_v1 => 'Henüz mesaj yok. Koçuna istediğini sor.';
@@ -16578,329 +15460,250 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeEmptyChat_v2 => 'Koçun hazır. Aklında ne var?';
 
   @override
-  String get homeEmptyChat_v3 =>
-      'Sohbet boş. Bir soru sor veya nasıl hissettiğini paylaş.';
+  String get homeEmptyChat_v3 => 'Sohbet boş. Bir soru sor veya nasıl hissettiğini paylaş.';
 
   @override
   String get homeEmptyChat_v4 => 'İlk konuşma burada başlar. Merhaba de.';
 
   @override
-  String get homeEmptyCustomExercises_v1 =>
-      'Henüz özel egzersiz yok. Kendi egzersizlerini oluştur ve herhangi bir antrenmana ekle.';
+  String get homeEmptyCustomExercises_v1 => 'Henüz özel egzersiz yok. Kendi egzersizlerini oluştur ve herhangi bir antrenmana ekle.';
 
   @override
-  String get homeEmptyCustomExercises_v2 =>
-      'Özel egzersiz kütüphanesi boş. İlk hareketini oluştur.';
+  String get homeEmptyCustomExercises_v2 => 'Özel egzersiz kütüphanesi boş. İlk hareketini oluştur.';
 
   @override
-  String get homeEmptyCustomExercises_v3 =>
-      'Burada henüz bir şey yok. Ana kütüphanede olmayan bir egzersiz ekle.';
+  String get homeEmptyCustomExercises_v3 => 'Burada henüz bir şey yok. Ana kütüphanede olmayan bir egzersiz ekle.';
 
   @override
-  String get homeEmptyCustomExercises_v4 =>
-      'Özel egzersiz yok. Bir tane oluştur, aramada görünecektir.';
+  String get homeEmptyCustomExercises_v4 => 'Özel egzersiz yok. Bir tane oluştur, aramada görünecektir.';
 
   @override
-  String get homeEmptyFasting_v1 =>
-      'Oruç seansı başlatılmadı. Başlamak için bir protokol seç.';
+  String get homeEmptyFasting_v1 => 'Oruç seansı başlatılmadı. Başlamak için bir protokol seç.';
 
   @override
-  String get homeEmptyFasting_v2 =>
-      'Oruç takipçisi boş. Hazır olduğunda bir seans başlat.';
+  String get homeEmptyFasting_v2 => 'Oruç takipçisi boş. Hazır olduğunda bir seans başlat.';
 
   @override
-  String get homeEmptyFasting_v3 =>
-      'Henüz bir şey kaydedilmedi. Bir zaman aralığı seç ve saati başlat.';
+  String get homeEmptyFasting_v3 => 'Henüz bir şey kaydedilmedi. Bir zaman aralığı seç ve saati başlat.';
 
   @override
-  String get homeEmptyFasting_v4 =>
-      'Oruç verisi yok. İlk seansını başlatmak için dokun.';
+  String get homeEmptyFasting_v4 => 'Oruç verisi yok. İlk seansını başlatmak için dokun.';
 
   @override
-  String get homeEmptyFavorites_v1 =>
-      'Henüz favori yok. Kaydetmek için bir antrenmana veya egzersize kalp bırak.';
+  String get homeEmptyFavorites_v1 => 'Henüz favori yok. Kaydetmek için bir antrenmana veya egzersize kalp bırak.';
 
   @override
-  String get homeEmptyFavorites_v2 =>
-      'Burada kayıtlı bir şey yok. Sevdiğin bir şeyi bul ve sakla.';
+  String get homeEmptyFavorites_v2 => 'Burada kayıtlı bir şey yok. Sevdiğin bir şeyi bul ve sakla.';
 
   @override
-  String get homeEmptyFavorites_v3 =>
-      'Favoriler listen seni bekliyor. Keşfet ve yer imlerine ekle.';
+  String get homeEmptyFavorites_v3 => 'Favoriler listen seni bekliyor. Keşfet ve yer imlerine ekle.';
 
   @override
-  String get homeEmptyFavorites_v4 =>
-      'Buraya eklemek için herhangi bir antrenmandaki kalp simgesine dokun.';
+  String get homeEmptyFavorites_v4 => 'Buraya eklemek için herhangi bir antrenmandaki kalp simgesine dokun.';
 
   @override
-  String get homeEmptyFriends_v1 =>
-      'Henüz bağlantı yok. Birlikte antrenman yapmak için bir arkadaşınızı davet edin.';
+  String get homeEmptyFriends_v1 => 'Henüz bağlantı yok. Birlikte antrenman yapmak için bir arkadaşınızı davet edin.';
 
   @override
-  String get homeEmptyFriends_v2 =>
-      'Arkadaş listesi boş. Hesap verebilirlik gerçek bir şeydir.';
+  String get homeEmptyFriends_v2 => 'Arkadaş listesi boş. Hesap verebilirlik gerçek bir şeydir.';
 
   @override
-  String get homeEmptyFriends_v3 =>
-      'Henüz kimse yok. Çevrenizi büyütmek için bağlantınızı paylaşın.';
+  String get homeEmptyFriends_v3 => 'Henüz kimse yok. Çevrenizi büyütmek için bağlantınızı paylaşın.';
 
   @override
-  String get homeEmptyFriends_v4 =>
-      'Hiç arkadaş eklenmedi. Birisiyle birlikte çalışmak yardımcı olur; birini ekleyin.';
+  String get homeEmptyFriends_v4 => 'Hiç arkadaş eklenmedi. Birisiyle birlikte çalışmak yardımcı olur; birini ekleyin.';
 
   @override
-  String get homeEmptyGymProfiles_v1 =>
-      'Spor salonu profili yok. Antrenmanların kurulumuna uyması için ekipmanını ekle.';
+  String get homeEmptyGymProfiles_v1 => 'Spor salonu profili yok. Antrenmanların kurulumuna uyması için ekipmanını ekle.';
 
   @override
-  String get homeEmptyGymProfiles_v2 =>
-      'Spor salonu profili boş. Ekipmanını bir kez söyle, her seferinde kullanalım.';
+  String get homeEmptyGymProfiles_v2 => 'Spor salonu profili boş. Ekipmanını bir kez söyle, her seferinde kullanalım.';
 
   @override
-  String get homeEmptyGymProfiles_v3 =>
-      'Kayıtlı kurulum yok. Size özel antrenmanlar almak için bir spor salonu profili ekle.';
+  String get homeEmptyGymProfiles_v3 => 'Kayıtlı kurulum yok. Size özel antrenmanlar almak için bir spor salonu profili ekle.';
 
   @override
-  String get homeEmptyGymProfiles_v4 =>
-      'Profil boş. Ekipmanını yapılandır, gerisini AI halletsin.';
+  String get homeEmptyGymProfiles_v4 => 'Profil boş. Ekipmanını yapılandır, gerisini AI halletsin.';
 
   @override
-  String get homeEmptyHabits_v1 =>
-      'Henüz alışkanlık ayarlanmadı. Başlamak için küçük bir günlük alışkanlık ekleyin.';
+  String get homeEmptyHabits_v1 => 'Henüz alışkanlık ayarlanmadı. Başlamak için küçük bir günlük alışkanlık ekleyin.';
 
   @override
-  String get homeEmptyHabits_v2 =>
-      'Alışkanlık takipçisi boş. Bir alışkanlık oluşturun ve onu otomatik hale getirin.';
+  String get homeEmptyHabits_v2 => 'Alışkanlık takipçisi boş. Bir alışkanlık oluşturun ve onu otomatik hale getirin.';
 
   @override
-  String get homeEmptyHabits_v3 =>
-      'Henüz bir şey takip edilmedi. Her gün yapabileceğiniz bir alışkanlıkla başlayın.';
+  String get homeEmptyHabits_v3 => 'Henüz bir şey takip edilmedi. Her gün yapabileceğiniz bir alışkanlıkla başlayın.';
 
   @override
-  String get homeEmptyHabits_v4 =>
-      'Aktif alışkanlık yok. Küçük günlük eylemler büyük sonuçlara dönüşür.';
+  String get homeEmptyHabits_v4 => 'Aktif alışkanlık yok. Küçük günlük eylemler büyük sonuçlara dönüşür.';
 
   @override
-  String get homeEmptyHistory_v1 =>
-      'Henüz antrenman kaydedilmedi. Geçmişini başlatmak için bir tane tamamla.';
+  String get homeEmptyHistory_v1 => 'Henüz antrenman kaydedilmedi. Geçmişini başlatmak için bir tane tamamla.';
 
   @override
-  String get homeEmptyHistory_v2 =>
-      'Geçmişin tertemiz; ilk seansından sonra bu değişecek.';
+  String get homeEmptyHistory_v2 => 'Geçmişin tertemiz; ilk seansından sonra bu değişecek.';
 
   @override
-  String get homeEmptyHistory_v3 =>
-      'Geçmiş antrenman yok. Birini tamamla, burada görünecektir.';
+  String get homeEmptyHistory_v3 => 'Geçmiş antrenman yok. Birini tamamla, burada görünecektir.';
 
   @override
-  String get homeEmptyHistory_v4 =>
-      'Geçmişin boş olması, yeni başladığın anlamına gelir. Hadi yazmaya başla.';
+  String get homeEmptyHistory_v4 => 'Geçmişin boş olması, yeni başladığın anlamına gelir. Hadi yazmaya başla.';
 
   @override
-  String get homeEmptyJournal_v1 =>
-      'Günlük girişi yok. Bugünün başarısını, ne kadar küçük olursa olsun yaz.';
+  String get homeEmptyJournal_v1 => 'Günlük girişi yok. Bugünün başarısını, ne kadar küçük olursa olsun yaz.';
 
   @override
-  String get homeEmptyJournal_v2 =>
-      'Günlük boş. Yolculuğunu belgele; yaptığına memnun olacaksın.';
+  String get homeEmptyJournal_v2 => 'Günlük boş. Yolculuğunu belgele; yaptığına memnun olacaksın.';
 
   @override
-  String get homeEmptyJournal_v3 =>
-      'Henüz bir şey yazılmadı. İlk girişin burada başlar.';
+  String get homeEmptyJournal_v3 => 'Henüz bir şey yazılmadı. İlk girişin burada başlar.';
 
   @override
-  String get homeEmptyJournal_v4 =>
-      'Giriş yok. 2 dakikanı ayır ve dürüst bir şeyler yaz.';
+  String get homeEmptyJournal_v4 => 'Giriş yok. 2 dakikanı ayır ve dürüst bir şeyler yaz.';
 
   @override
-  String get homeEmptyMeasurements_v1 =>
-      'Ölçüm kaydedilmedi. Gelişimi takip etmek için bir temel ekle.';
+  String get homeEmptyMeasurements_v1 => 'Ölçüm kaydedilmedi. Gelişimi takip etmek için bir temel ekle.';
 
   @override
-  String get homeEmptyMeasurements_v2 =>
-      'Henüz bir şey takip edilmedi. Mevcut rakamlarınla başla.';
+  String get homeEmptyMeasurements_v2 => 'Henüz bir şey takip edilmedi. Mevcut rakamlarınla başla.';
 
   @override
-  String get homeEmptyMeasurements_v3 =>
-      'Henüz vücut verisi yok. Trendleri görmek için ölçümleri kaydet.';
+  String get homeEmptyMeasurements_v3 => 'Henüz vücut verisi yok. Trendleri görmek için ölçümleri kaydet.';
 
   @override
-  String get homeEmptyMeasurements_v4 =>
-      'Ölçümler boş. Geçmen gereken bir hedef olması için bir tane ekle.';
+  String get homeEmptyMeasurements_v4 => 'Ölçümler boş. Geçmen gereken bir hedef olması için bir tane ekle.';
 
   @override
-  String get homeEmptyMood_v1 =>
-      'Ruh hali girişi yok. Bugün nasıl hissediyorsun?';
+  String get homeEmptyMood_v1 => 'Ruh hali girişi yok. Bugün nasıl hissediyorsun?';
 
   @override
-  String get homeEmptyMood_v2 =>
-      'Ruh hali takibi boş. Bir sonraki antrenmanından sonra nasıl hissettiğini kaydet.';
+  String get homeEmptyMood_v2 => 'Ruh hali takibi boş. Bir sonraki antrenmanından sonra nasıl hissettiğini kaydet.';
 
   @override
-  String get homeEmptyMood_v3 =>
-      'Henüz bir şey kaydedilmedi. Ruh hali modelleri, en iyi antrenman günlerini tahmin etmeye yardımcı olur.';
+  String get homeEmptyMood_v3 => 'Henüz bir şey kaydedilmedi. Ruh hali modelleri, en iyi antrenman günlerini tahmin etmeye yardımcı olur.';
 
   @override
-  String get homeEmptyMood_v4 =>
-      'Ruh hali verisi yok. Bugünün girişini eklemek için dokun.';
+  String get homeEmptyMood_v4 => 'Ruh hali verisi yok. Bugünün girişini eklemek için dokun.';
 
   @override
-  String get homeEmptyNutrition_v1 =>
-      'Henüz bir şey kaydedilmedi. Başlamak için bir fotoğraf çek.';
+  String get homeEmptyNutrition_v1 => 'Henüz bir şey kaydedilmedi. Başlamak için bir fotoğraf çek.';
 
   @override
   String get homeEmptyNutrition_v2 => 'Beslenme kaydın boş. İlk öğünün nedir?';
 
   @override
-  String get homeEmptyNutrition_v3 =>
-      'Bugün hiçbir öğün takip edilmedi. Makrolarını görmek için bir tane kaydet.';
+  String get homeEmptyNutrition_v3 => 'Bugün hiçbir öğün takip edilmedi. Makrolarını görmek için bir tane kaydet.';
 
   @override
-  String get homeEmptyNutrition_v4 =>
-      'Bir şeyler mi yiyorsun? Fotoğrafını çek, sayıları biz halledelim.';
+  String get homeEmptyNutrition_v4 => 'Bir şeyler mi yiyorsun? Fotoğrafını çek, sayıları biz halledelim.';
 
   @override
   String get homeEmptyPhotos_v1 => 'Gelişim fotoğrafı yok. İlkini bugün çek.';
 
   @override
-  String get homeEmptyPhotos_v2 =>
-      'Fotoğraflar sayıların anlatamadığı hikayeyi anlatır. Şimdi bir tane çek.';
+  String get homeEmptyPhotos_v2 => 'Fotoğraflar sayıların anlatamadığı hikayeyi anlatır. Şimdi bir tane çek.';
 
   @override
-  String get homeEmptyPhotos_v3 =>
-      'Henüz burada bir şey yok. Görsel gelişim günlüğünü başlat.';
+  String get homeEmptyPhotos_v3 => 'Henüz burada bir şey yok. Görsel gelişim günlüğünü başlat.';
 
   @override
-  String get homeEmptyPhotos_v4 =>
-      'Fotoğraf kaydedilmedi. Zaman içindeki görsel değişimleri takip etmek için bir tane ekle.';
+  String get homeEmptyPhotos_v4 => 'Fotoğraf kaydedilmedi. Zaman içindeki görsel değişimleri takip etmek için bir tane ekle.';
 
   @override
-  String get homeEmptyPlans_v1 =>
-      'Henüz plan yok. AI\'nın programınıza ve hedeflerinize uygun bir plan oluşturmasına izin verin.';
+  String get homeEmptyPlans_v1 => 'Henüz plan yok. AI\'nın programınıza ve hedeflerinize uygun bir plan oluşturmasına izin verin.';
 
   @override
-  String get homeEmptyPlans_v2 =>
-      'Planlar boş. Başlamak için kişiselleştirilmiş bir antrenman planı oluşturun.';
+  String get homeEmptyPlans_v2 => 'Planlar boş. Başlamak için kişiselleştirilmiş bir antrenman planı oluşturun.';
 
   @override
-  String get homeEmptyPlans_v3 =>
-      'Henüz hiçbir şey ayarlanmadı. Bir plan oluşturun ve ona sadık kalın.';
+  String get homeEmptyPlans_v3 => 'Henüz hiçbir şey ayarlanmadı. Bir plan oluşturun ve ona sadık kalın.';
 
   @override
-  String get homeEmptyPlans_v4 =>
-      'Aktif plan yok. Her gün ne yapacağınızı düşünmeyi bırakmak için bir plan başlatın.';
+  String get homeEmptyPlans_v4 => 'Aktif plan yok. Her gün ne yapacağınızı düşünmeyi bırakmak için bir plan başlatın.';
 
   @override
-  String get homeEmptyPrograms_v1 =>
-      'Aktif program yok. Bir sonraki hedefini bulmak için programlara göz at.';
+  String get homeEmptyPrograms_v1 => 'Aktif program yok. Bir sonraki hedefini bulmak için programlara göz at.';
 
   @override
-  String get homeEmptyPrograms_v2 =>
-      'Programlar antrenmanına yapı kazandırır. Başlamak için birini seç.';
+  String get homeEmptyPrograms_v2 => 'Programlar antrenmanına yapı kazandırır. Başlamak için birini seç.';
 
   @override
-  String get homeEmptyPrograms_v3 =>
-      'Henüz devam eden bir şey yok. Haftalık planların kilidini açmak için bir program başlat.';
+  String get homeEmptyPrograms_v3 => 'Henüz devam eden bir şey yok. Haftalık planların kilidini açmak için bir program başlat.';
 
   @override
-  String get homeEmptyPrograms_v4 =>
-      'Aktif program yok. Nerede olduğunuza uyan birini seçin.';
+  String get homeEmptyPrograms_v4 => 'Aktif program yok. Nerede olduğunuza uyan birini seçin.';
 
   @override
-  String get homeEmptyRecipes_v1 =>
-      'Henüz tarif yok. Kütüphaneye göz at veya koçuna sor.';
+  String get homeEmptyRecipes_v1 => 'Henüz tarif yok. Kütüphaneye göz at veya koçuna sor.';
 
   @override
-  String get homeEmptyRecipes_v2 =>
-      'Tarif koleksiyonun boş. Sevdiğin bazı yemekleri ekle.';
+  String get homeEmptyRecipes_v2 => 'Tarif koleksiyonun boş. Sevdiğin bazı yemekleri ekle.';
 
   @override
-  String get homeEmptyRecipes_v3 =>
-      'Burada kayıtlı bir şey yok. Keşfet ve sevdiğin tarifleri kaydet.';
+  String get homeEmptyRecipes_v3 => 'Burada kayıtlı bir şey yok. Keşfet ve sevdiğin tarifleri kaydet.';
 
   @override
-  String get homeEmptyRecipes_v4 =>
-      'Tarif kütüphanesi boş. Yeni yemekler keşfetmek için dokun.';
+  String get homeEmptyRecipes_v4 => 'Tarif kütüphanesi boş. Yeni yemekler keşfetmek için dokun.';
 
   @override
-  String get homeEmptyRecovery_v1 =>
-      'Kurtarma verisi yok. Skor almak için uyku, HRV veya kas ağrısı kaydedin.';
+  String get homeEmptyRecovery_v1 => 'Kurtarma verisi yok. Skor almak için uyku, HRV veya kas ağrısı kaydedin.';
 
   @override
-  String get homeEmptyRecovery_v2 =>
-      'Kurtarma takibi boş. Bir giyilebilir cihaz bağlayın veya manuel olarak kaydedin.';
+  String get homeEmptyRecovery_v2 => 'Kurtarma takibi boş. Bir giyilebilir cihaz bağlayın veya manuel olarak kaydedin.';
 
   @override
-  String get homeEmptyRecovery_v3 =>
-      'Henüz bir şey takip edilmedi. Kurtarma verileri daha akıllıca antrenman yapmanıza yardımcı olur.';
+  String get homeEmptyRecovery_v3 => 'Henüz bir şey takip edilmedi. Kurtarma verileri daha akıllıca antrenman yapmanıza yardımcı olur.';
 
   @override
-  String get homeEmptyRecovery_v4 =>
-      'Kurtarma boş. Bir sonraki seansınızı korumak için bugünün verilerini ekleyin.';
+  String get homeEmptyRecovery_v4 => 'Kurtarma boş. Bir sonraki seansınızı korumak için bugünün verilerini ekleyin.';
 
   @override
-  String get homeEmptyScores_v1 =>
-      'Henüz puan yok. İlk hazırlık puanını oluşturmak için bir antrenman kaydet.';
+  String get homeEmptyScores_v1 => 'Henüz puan yok. İlk hazırlık puanını oluşturmak için bir antrenman kaydet.';
 
   @override
-  String get homeEmptyScores_v2 =>
-      'Puanlar, veri kaydetmeye başladıktan sonra görünür. Devam et.';
+  String get homeEmptyScores_v2 => 'Puanlar, veri kaydetmeye başladıktan sonra görünür. Devam et.';
 
   @override
-  String get homeEmptyScores_v3 =>
-      'Henüz puanlanmadı. İlk dereceni görmek için bir seansı tamamla.';
+  String get homeEmptyScores_v3 => 'Henüz puanlanmadı. İlk dereceni görmek için bir seansı tamamla.';
 
   @override
-  String get homeEmptyScores_v4 =>
-      'Puan boş. Daha fazla veri, daha keskin içgörüler demektir; kaydetmeye başla.';
+  String get homeEmptyScores_v4 => 'Puan boş. Daha fazla veri, daha keskin içgörüler demektir; kaydetmeye başla.';
 
   @override
-  String get homeEmptySleep_v1 =>
-      'Uyku verisi yok. Bir giyilebilir cihaz bağla veya manuel olarak kaydet.';
+  String get homeEmptySleep_v1 => 'Uyku verisi yok. Bir giyilebilir cihaz bağla veya manuel olarak kaydet.';
 
   @override
-  String get homeEmptySleep_v2 =>
-      'Uyku takibi boş. İyileşme, uykunu bilmekle başlar.';
+  String get homeEmptySleep_v2 => 'Uyku takibi boş. İyileşme, uykunu bilmekle başlar.';
 
   @override
-  String get homeEmptySleep_v3 =>
-      'Uyku kaydedilmedi. İyileşme trendlerini görmek için dün gecenin verilerini ekle.';
+  String get homeEmptySleep_v3 => 'Uyku kaydedilmedi. İyileşme trendlerini görmek için dün gecenin verilerini ekle.';
 
   @override
-  String get homeEmptySleep_v4 =>
-      'Uyku verisi eksik. Kaydet, iyileşme puanına dahil edelim.';
+  String get homeEmptySleep_v4 => 'Uyku verisi eksik. Kaydet, iyileşme puanına dahil edelim.';
 
   @override
-  String get homeEmptyTrends_v1 =>
-      'Henüz trend yok. Modelleri görmek için 7 gün boyunca düzenli kayıt yapın.';
+  String get homeEmptyTrends_v1 => 'Henüz trend yok. Modelleri görmek için 7 gün boyunca düzenli kayıt yapın.';
 
   @override
-  String get homeEmptyTrends_v2 =>
-      'Trendler veri gerektirir. Kayıt yapmaya devam edin, grafikler dolacaktır.';
+  String get homeEmptyTrends_v2 => 'Trendler veri gerektirir. Kayıt yapmaya devam edin, grafikler dolacaktır.';
 
   @override
-  String get homeEmptyTrends_v3 =>
-      'Henüz gösterilecek bir şey yok. Bir haftalık takipten sonra tekrar gelin.';
+  String get homeEmptyTrends_v3 => 'Henüz gösterilecek bir şey yok. Bir haftalık takipten sonra tekrar gelin.';
 
   @override
-  String get homeEmptyTrends_v4 =>
-      'Trend görünümü boş. İstikrar bunun kilidini açar; günlük kayıt tutmaya başlayın.';
+  String get homeEmptyTrends_v4 => 'Trend görünümü boş. İstikrar bunun kilidini açar; günlük kayıt tutmaya başlayın.';
 
   @override
-  String get homeEmptyVitals_v1 =>
-      'Hiçbir hayati veri kaydedilmedi. Bir giyilebilir cihaz bağlayın veya manuel olarak girin.';
+  String get homeEmptyVitals_v1 => 'Hiçbir hayati veri kaydedilmedi. Bir giyilebilir cihaz bağlayın veya manuel olarak girin.';
 
   @override
-  String get homeEmptyVitals_v2 =>
-      'Hayati veri takibi boş. Başlamak için bir veri noktası ekleyin.';
+  String get homeEmptyVitals_v2 => 'Hayati veri takibi boş. Başlamak için bir veri noktası ekleyin.';
 
   @override
-  String get homeEmptyVitals_v3 =>
-      'Henüz burada bir şey yok. Dinlenme nabzı, HRV veya kan basıncı kaydedin.';
+  String get homeEmptyVitals_v3 => 'Henüz burada bir şey yok. Dinlenme nabzı, HRV veya kan basıncı kaydedin.';
 
   @override
-  String get homeEmptyVitals_v4 =>
-      'Hayati veri yok. Otomatik senkronizasyon için giyilebilir cihazınızı bağlayın.';
+  String get homeEmptyVitals_v4 => 'Hayati veri yok. Otomatik senkronizasyon için giyilebilir cihazınızı bağlayın.';
 
   @override
   String get homeEmptyWater_v1 => 'Bugün su kaydedilmedi. İlk bardağını iç.';
@@ -16909,28 +15712,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeEmptyWater_v2 => 'Hidrasyon takibi boş. İlk bardağını kaydet.';
 
   @override
-  String get homeEmptyWater_v3 =>
-      'Henüz bir şey kaydedilmedi. Günlük su alımını başlat.';
+  String get homeEmptyWater_v3 => 'Henüz bir şey kaydedilmedi. Günlük su alımını başlat.';
 
   @override
-  String get homeEmptyWater_v4 =>
-      'Su kaydedilmedi. Susuzluğun önüne geç, şimdi kaydet.';
+  String get homeEmptyWater_v4 => 'Su kaydedilmedi. Susuzluğun önüne geç, şimdi kaydet.';
 
   @override
-  String get homeEmptyWorkout_v1 =>
-      'Henüz antrenman yok; bugünün seansını oluşturmak için dokun.';
+  String get homeEmptyWorkout_v1 => 'Henüz antrenman yok; bugünün seansını oluşturmak için dokun.';
 
   @override
-  String get homeEmptyWorkout_v2 =>
-      'Dinlenme günü mü? Yoksa harekete geçmeye hazır mısın? Karar senin.';
+  String get homeEmptyWorkout_v2 => 'Dinlenme günü mü? Yoksa harekete geçmeye hazır mısın? Karar senin.';
 
   @override
-  String get homeEmptyWorkout_v3 =>
-      'Programlar arasındasın; kaldığın yerden devam etmek için yeni bir tane başlat.';
+  String get homeEmptyWorkout_v3 => 'Programlar arasındasın; kaldığın yerden devam etmek için yeni bir tane başlat.';
 
   @override
-  String get homeEmptyWorkout_v4 =>
-      'Henüz plan yok. AI\'ın hedeflerine uygun bir plan oluşturmasına izin ver.';
+  String get homeEmptyWorkout_v4 => 'Henüz plan yok. AI\'ın hedeflerine uygun bir plan oluşturmasına izin ver.';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -17068,15 +15865,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get homeMySpaceStartFromAReady =>
-      'Hazır bir düzenle başlayın, ardından Özelleştir kısmından ince ayar yapın.';
+  String get homeMySpaceStartFromAReady => 'Hazır bir düzenle başlayın, ardından Özelleştir kısmından ince ayar yapın.';
 
   @override
   String get homeQuickActions => 'Hızlı Eylemler';
 
   @override
-  String get homeQuickWorkoutGenerationWeig =>
-      'Hızlı antrenman oluşturma, ağırlık kaydı, yemek kaydı ve daha fazlası.';
+  String get homeQuickWorkoutGenerationWeig => 'Hızlı antrenman oluşturma, ağırlık kaydı, yemek kaydı ve daha fazlası.';
 
   @override
   String get homeReadinessCardCheckIn => 'Giriş Yap';
@@ -17102,8 +15897,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeScanFood => 'Yemek tara';
 
   @override
-  String get homeScanMealsWithYour =>
-      'Yemekleri kameranızla tarayın. Makroları kolayca takip edin.';
+  String get homeScanMealsWithYour => 'Yemekleri kameranızla tarayın. Makroları kolayca takip edin.';
 
   @override
   String get homeScreenApply => 'Uygula';
@@ -17144,33 +15938,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeScreenResetToDefault => 'Varsayılana sıfırlansın mı?';
 
   @override
-  String get homeScreenResetToDefaultBody =>
-      'Bu işlem ana ekranınızı varsayılan düzene döndürecektir.';
+  String get homeScreenResetToDefaultBody => 'Bu işlem ana ekranınızı varsayılan düzene döndürecektir.';
 
   @override
-  String get homeScreenTourCarouselDesc =>
-      'Antrenman planını görmek için kaydır. Başlamak için dokun!';
+  String get homeScreenTourCarouselDesc => 'Antrenman planını görmek için kaydır. Başlamak için dokun!';
 
   @override
   String get homeScreenTourCarouselTitle => 'Bugünün Antrenmanı';
 
   @override
-  String get homeScreenTourCommunityDesc =>
-      'See the feed, challenges, ranks, and friends';
+  String get homeScreenTourCommunityDesc => 'See the feed, challenges, ranks, and friends';
 
   @override
   String get homeScreenTourCommunityTitle => 'Community Tab';
 
   @override
-  String get homeScreenTourHealthDesc =>
-      'Check your sleep, recovery, and body data';
+  String get homeScreenTourHealthDesc => 'Check your sleep, recovery, and body data';
 
   @override
   String get homeScreenTourHealthTitle => 'Health Tab';
 
   @override
-  String get homeScreenTourNutritionDesc =>
-      'Makrolarını ve günlük beslenmeni takip et';
+  String get homeScreenTourNutritionDesc => 'Makrolarını ve günlük beslenmeni takip et';
 
   @override
   String get homeScreenTourNutritionTitle => 'Beslenme Sekmesi';
@@ -17182,22 +15971,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeScreenTourProfileTitle => 'Profil Sekmesi';
 
   @override
-  String get homeScreenTourQuicklogDesc =>
-      'Öğünleri, suyu ve antrenmanları hızlıca kaydet';
+  String get homeScreenTourQuicklogDesc => 'Öğünleri, suyu ve antrenmanları hızlıca kaydet';
 
   @override
   String get homeScreenTourQuicklogTitle => 'Hızlı Kayıt';
 
   @override
-  String get homeScreenTourTopbarDesc =>
-      'Fitness profilini görüntülemek ve düzenlemek için dokun';
+  String get homeScreenTourTopbarDesc => 'Fitness profilini görüntülemek ve düzenlemek için dokun';
 
   @override
   String get homeScreenTourTopbarTitle => 'Profilin';
 
   @override
-  String get homeScreenTourWorkoutDesc =>
-      'Tüm antrenman planına ve geçmişine eriş';
+  String get homeScreenTourWorkoutDesc => 'Tüm antrenman planına ve geçmişine eriş';
 
   @override
   String get homeScreenTourWorkoutTitle => 'Antrenman Sekmesi';
@@ -17226,8 +16012,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeScreenUiAddTile => 'Kutucuk Ekle';
 
   @override
-  String get homeScreenUiChooseAPresetLayout =>
-      'Odak noktanıza uygun hazır bir düzen seçin. Uyguladıktan sonra daha fazla özelleştirebilirsiniz.';
+  String get homeScreenUiChooseAPresetLayout => 'Odak noktanıza uygun hazır bir düzen seçin. Uyguladıktan sonra daha fazla özelleştirebilirsiniz.';
 
   @override
   String get homeScreenUiCustomizeYourDashboard => 'Panelinizi Özelleştirin';
@@ -17236,8 +16021,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeScreenUiDiscoverLayouts => 'Düzenleri Keşfet';
 
   @override
-  String get homeScreenUiDragToReorderTap =>
-      'Yeniden sıralamak için sürükle • Boyutlandırmak için boyuta dokun • Gizlemek için göze dokun';
+  String get homeScreenUiDragToReorderTap => 'Yeniden sıralamak için sürükle • Boyutlandırmak için boyuta dokun • Gizlemek için göze dokun';
 
   @override
   String get homeScreenUiGotIt => 'Anladım!';
@@ -17269,8 +16053,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeStreak100Day_v2 => 'Üç basamaklı sayılar. Hiç kaçırmıyorsun.';
 
   @override
-  String get homeStreak100Day_v3 =>
-      '100 günlük seri! Bu elit seviyede bir adanmışlık.';
+  String get homeStreak100Day_v3 => '100 günlük seri! Bu elit seviyede bir adanmışlık.';
 
   @override
   String get homeStreak100Day_v4 => '100 gün geride kaldı. Durdurulamazsın.';
@@ -17282,8 +16065,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeStreak30Day_v2 => 'Bir ay oldu. Artık bu bir alışkanlık.';
 
   @override
-  String get homeStreak30Day_v3 =>
-      '30 günlük seri! Çoğu insan bu noktada bırakır — sen değil.';
+  String get homeStreak30Day_v3 => '30 günlük seri! Çoğu insan bu noktada bırakır — sen değil.';
 
   @override
   String get homeStreak30Day_v4 => 'Bir aylık istikrar. Bu nadir bir şey.';
@@ -17298,8 +16080,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeStreak365Day_v3 => 'Aralıksız 365 gün. Koca bir yıl.';
 
   @override
-  String get homeStreak365Day_v4 =>
-      'Bir yıl doldu. İstikrarın ne demek olduğunu yeniden tanımladın.';
+  String get homeStreak365Day_v4 => 'Bir yıl doldu. İstikrarın ne demek olduğunu yeniden tanımladın.';
 
   @override
   String get homeStreak7Day_v1 => '1 haftalık seri — kilitlendi!';
@@ -17314,12 +16095,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeStreak7Day_v4 => '7 gün üst üste. Ateşi canlı tut.';
 
   @override
-  String get homeSwipeToSeeThis =>
-      'Bu haftanın planını görmek için kaydır. Bugünkü antrenmanı başlatmak için dokun.';
+  String get homeSwipeToSeeThis => 'Bu haftanın planını görmek için kaydır. Bugünkü antrenmanı başlatmak için dokun.';
 
   @override
-  String get homeThisWillRestoreThe =>
-      'Bu işlem Minimalist düzeni (uygulama varsayılanı) geri yükleyecektir. Mevcut özelleştirmeleriniz değiştirilecektir.';
+  String get homeThisWillRestoreThe => 'Bu işlem Minimalist düzeni (uygulama varsayılanı) geri yükleyecektir. Mevcut özelleştirmeleriniz değiştirilecektir.';
 
   @override
   String get homeTimelineCouldnTLoadYour => 'Zaman akışınız yüklenemedi';
@@ -17333,8 +16112,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeTimelineFastingWindow => 'Açlık penceresi';
 
   @override
-  String get homeTimelineGeneratingYourWorkout =>
-      'Antrenmanınız oluşturuluyor…';
+  String get homeTimelineGeneratingYourWorkout => 'Antrenmanınız oluşturuluyor…';
 
   @override
   String get homeTimelineHangTightAlmostReady => 'Bekleyin, neredeyse hazır';
@@ -17348,16 +16126,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeTimelineLogYourMeals => 'Öğünlerinizi kaydedin';
 
   @override
-  String get homeTimelineNothingLoggedOrPlanned =>
-      'Henüz bir şey kaydedilmedi veya planlanmadı';
+  String get homeTimelineNothingLoggedOrPlanned => 'Henüz bir şey kaydedilmedi veya planlanmadı';
 
   @override
-  String get homeTimelineNothingLoggedYetToday =>
-      'Bugün henüz bir şey kaydedilmedi';
+  String get homeTimelineNothingLoggedYetToday => 'Bugün henüz bir şey kaydedilmedi';
 
   @override
-  String get homeTimelineNothingPlannedForThis =>
-      'Bu gün için hiçbir şey planlanmadı';
+  String get homeTimelineNothingPlannedForThis => 'Bu gün için hiçbir şey planlanmadı';
 
   @override
   String homeTimelineProtocolNotStarted(Object defaultProtocol) {
@@ -17365,164 +16140,124 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get homeTip_ankle_mobility =>
-      'Sınırlı ayak bileği mobilitesi, squatlarda telafi hareketlerine zorlar. Günlük esnetin ve çalışın.';
+  String get homeTip_ankle_mobility => 'Sınırlı ayak bileği mobilitesi, squatlarda telafi hareketlerine zorlar. Günlük esnetin ve çalışın.';
 
   @override
-  String get homeTip_breathing_during_lifts =>
-      'Zor kısımda nefes verin, kolay kısımda nefes alın. Core bölgenizi tüm hareket boyunca sıkın.';
+  String get homeTip_breathing_during_lifts => 'Zor kısımda nefes verin, kolay kısımda nefes alın. Core bölgenizi tüm hareket boyunca sıkın.';
 
   @override
-  String get homeTip_caffeine_timing =>
-      'Kafein içtikten 45–60 dakika sonra zirve yapar. Seansınızdan önce zamanlayın.';
+  String get homeTip_caffeine_timing => 'Kafein içtikten 45–60 dakika sonra zirve yapar. Seansınızdan önce zamanlayın.';
 
   @override
-  String get homeTip_cardio_and_strength =>
-      'Yeterince yiyorsanız ve hacmi aşırıya kaçmıyorsanız, kardiyo gelişimi öldürmez.';
+  String get homeTip_cardio_and_strength => 'Yeterince yiyorsanız ve hacmi aşırıya kaçmıyorsanız, kardiyo gelişimi öldürmez.';
 
   @override
-  String get homeTip_cold_exposure =>
-      'Soğuk duşlar veya buz banyoları antrenman sonrası iltihaplanmayı köreltebilir. Bunları antrenmandan önce değil, sonra yapın.';
+  String get homeTip_cold_exposure => 'Soğuk duşlar veya buz banyoları antrenman sonrası iltihaplanmayı köreltebilir. Bunları antrenmandan önce değil, sonra yapın.';
 
   @override
-  String get homeTip_compound_before_isolation =>
-      'Zindeyken büyük hareketlerinizi önce yapın. İzolasyon çalışmaları sona saklanmalıdır.';
+  String get homeTip_compound_before_isolation => 'Zindeyken büyük hareketlerinizi önce yapın. İzolasyon çalışmaları sona saklanmalıdır.';
 
   @override
-  String get homeTip_compound_lifts =>
-      'Squat, hinge, push, pull, carry. Bu beşinde ustalaşın, %80\'ini halletmiş olursunuz.';
+  String get homeTip_compound_lifts => 'Squat, hinge, push, pull, carry. Bu beşinde ustalaşın, %80\'ini halletmiş olursunuz.';
 
   @override
-  String get homeTip_consistency_beats_perfection =>
-      '%100 veremediğiniz için antrenmanı atlamaktansa, %70 ile oraya gitmek daha iyidir.';
+  String get homeTip_consistency_beats_perfection => '%100 veremediğiniz için antrenmanı atlamaktansa, %70 ile oraya gitmek daha iyidir.';
 
   @override
-  String get homeTip_core_in_every_lift =>
-      'Core bölgeniz her bileşik harekette çalışır. 20 dakika mekik çekmenize gerek yok.';
+  String get homeTip_core_in_every_lift => 'Core bölgeniz her bileşik harekette çalışır. 20 dakika mekik çekmenize gerek yok.';
 
   @override
-  String get homeTip_creatine_basics =>
-      'Creatine monohydrate, spor biliminde en çok çalışılan takviyedir. Günlük 3–5g işe yarar.';
+  String get homeTip_creatine_basics => 'Creatine monohydrate, spor biliminde en çok çalışılan takviyedir. Günlük 3–5g işe yarar.';
 
   @override
-  String get homeTip_deload_week =>
-      'Her 4–6 haftada bir hacmi %40 azaltın. Vücudunuz daha güçlü geri dönecektir.';
+  String get homeTip_deload_week => 'Her 4–6 haftada bir hacmi %40 azaltın. Vücudunuz daha güçlü geri dönecektir.';
 
   @override
-  String get homeTip_eat_before_training =>
-      'Aç karnına antrenman işe yarayabilir, ancak 60–90 dakika önce yenen küçük bir öğün çoğu kişinin daha iyi performans göstermesine yardımcı olur.';
+  String get homeTip_eat_before_training => 'Aç karnına antrenman işe yarayabilir, ancak 60–90 dakika önce yenen küçük bir öğün çoğu kişinin daha iyi performans göstermesine yardımcı olur.';
 
   @override
-  String get homeTip_eccentric_focus =>
-      'İndirme aşaması, çoğu kas hasarının (ve büyümenin) gerçekleştiği yerdir. Kontrol edin.';
+  String get homeTip_eccentric_focus => 'İndirme aşaması, çoğu kas hasarının (ve büyümenin) gerçekleştiği yerdir. Kontrol edin.';
 
   @override
-  String get homeTip_fiber_and_gut =>
-      'Günde 30g lif, enerjiyi sabit tutar ve aşermeyi azaltır. Çoğu insan 15g alır.';
+  String get homeTip_fiber_and_gut => 'Günde 30g lif, enerjiyi sabit tutar ve aşermeyi azaltır. Çoğu insan 15g alır.';
 
   @override
-  String get homeTip_form_over_weight =>
-      'Kötü formla yapılan ego ağırlıkları kas değil, sakatlık inşa eder. Önce hareketi oturtun.';
+  String get homeTip_form_over_weight => 'Kötü formla yapılan ego ağırlıkları kas değil, sakatlık inşa eder. Önce hareketi oturtun.';
 
   @override
-  String get homeTip_grip_strength =>
-      'Kavrama gücü, uzun ömürlülüğü diğer tüm metriklerden daha iyi tahmin eder. Çalışın.';
+  String get homeTip_grip_strength => 'Kavrama gücü, uzun ömürlülüğü diğer tüm metriklerden daha iyi tahmin eder. Çalışın.';
 
   @override
-  String get homeTip_hydration_basics =>
-      'Günlük vücut ağırlığınızın yarısı kadar (ons cinsinden) su için. Antrenman günlerinde daha fazlasını ekleyin.';
+  String get homeTip_hydration_basics => 'Günlük vücut ağırlığınızın yarısı kadar (ons cinsinden) su için. Antrenman günlerinde daha fazlasını ekleyin.';
 
   @override
-  String get homeTip_meal_timing_simple =>
-      'Çoğunlukla tam gıdalarla beslenin, proteininizi alın, yeterince uyuyun. Gerisi genellikle gürültüdür.';
+  String get homeTip_meal_timing_simple => 'Çoğunlukla tam gıdalarla beslenin, proteininizi alın, yeterince uyuyun. Gerisi genellikle gürültüdür.';
 
   @override
-  String get homeTip_mind_muscle_connection =>
-      'Yavaşlayın ve kasın çalıştığını hissedin. Sadece ağırlığı hareket ettirmekle ilgili değildir.';
+  String get homeTip_mind_muscle_connection => 'Yavaşlayın ve kasın çalıştığını hissedin. Sadece ağırlığı hareket ettirmekle ilgili değildir.';
 
   @override
-  String get homeTip_mobility_daily =>
-      'Günlük 10 dakikalık mobilite çalışması, haftada bir yapılan 60 dakikalık seanstan daha iyidir.';
+  String get homeTip_mobility_daily => 'Günlük 10 dakikalık mobilite çalışması, haftada bir yapılan 60 dakikalık seanstan daha iyidir.';
 
   @override
-  String get homeTip_no_junk_volume =>
-      '10 sıkı, odaklanmış set, 20 yarım yamalak setten iyidir. Nicelikten ziyade nitelik.';
+  String get homeTip_no_junk_volume => '10 sıkı, odaklanmış set, 20 yarım yamalak setten iyidir. Nicelikten ziyade nitelik.';
 
   @override
-  String get homeTip_omega3_basics =>
-      'Günlük 1–2g EPA+DHA iltihabı azaltır ve eklem sağlığını destekler.';
+  String get homeTip_omega3_basics => 'Günlük 1–2g EPA+DHA iltihabı azaltır ve eklem sağlığını destekler.';
 
   @override
-  String get homeTip_periodization =>
-      'Tekrar aralıklarınızı ve yoğunluğunuzu zamanla değiştirin. Doğrusal ilerleme sonsuza kadar sürmez.';
+  String get homeTip_periodization => 'Tekrar aralıklarınızı ve yoğunluğunuzu zamanla değiştirin. Doğrusal ilerleme sonsuza kadar sürmez.';
 
   @override
-  String get homeTip_progressive_overload =>
-      'Her hafta biraz daha fazla ağırlık veya bir tekrar daha ekleyin. Gelişimin yolu budur.';
+  String get homeTip_progressive_overload => 'Her hafta biraz daha fazla ağırlık veya bir tekrar daha ekleyin. Gelişimin yolu budur.';
 
   @override
-  String get homeTip_protein_per_meal =>
-      'Öğün başına 30–40g protein hedefleyin. Bunu yaymak, tek bir büyük dozdan daha iyidir.';
+  String get homeTip_protein_per_meal => 'Öğün başına 30–40g protein hedefleyin. Bunu yaymak, tek bir büyük dozdan daha iyidir.';
 
   @override
-  String get homeTip_protein_sources_vary =>
-      'Protein kaynaklarını karıştırın; tavuk, yumurta, süzme yoğurt, baklagiller. Çeşitlilik tüm amino asitleri kapsar.';
+  String get homeTip_protein_sources_vary => 'Protein kaynaklarını karıştırın; tavuk, yumurta, süzme yoğurt, baklagiller. Çeşitlilik tüm amino asitleri kapsar.';
 
   @override
-  String get homeTip_rate_of_perceived_exertion =>
-      'Eforunuzu 1–10 arası puanlayın. Çoğu seansta 7–8 arasında kalmak en ideal noktadır.';
+  String get homeTip_rate_of_perceived_exertion => 'Eforunuzu 1–10 arası puanlayın. Çoğu seansta 7–8 arasında kalmak en ideal noktadır.';
 
   @override
-  String get homeTip_rest_days_grow_muscle =>
-      'Dinlenme günleri tembellik değildir; adaptasyonun gerçekleştiği zamanlardır.';
+  String get homeTip_rest_days_grow_muscle => 'Dinlenme günleri tembellik değildir; adaptasyonun gerçekleştiği zamanlardır.';
 
   @override
-  String get homeTip_scale_not_everything =>
-      'Ağırlık, su ve yiyecek nedeniyle günlük 2–4 lbs dalgalanır. Haftalık ortalamalara göre değerlendirin.';
+  String get homeTip_scale_not_everything => 'Ağırlık, su ve yiyecek nedeniyle günlük 2–4 lbs dalgalanır. Haftalık ortalamalara göre değerlendirin.';
 
   @override
-  String get homeTip_set_rep_ranges =>
-      '1–5 tekrar güç inşa eder. 6–12 hacim kazandırır. 12–20 dayanıklılık sağlar. Hepsi önemlidir.';
+  String get homeTip_set_rep_ranges => '1–5 tekrar güç inşa eder. 6–12 hacim kazandırır. 12–20 dayanıklılık sağlar. Hepsi önemlidir.';
 
   @override
-  String get homeTip_sleep_for_recovery =>
-      'Kaslarınız antrenman sırasında değil, uyurken büyür.';
+  String get homeTip_sleep_for_recovery => 'Kaslarınız antrenman sırasında değil, uyurken büyür.';
 
   @override
-  String get homeTip_sodium_and_water =>
-      'Tuz düşman değildir; hidrasyon ve performansa yardımcı olur. Korkmayın.';
+  String get homeTip_sodium_and_water => 'Tuz düşman değildir; hidrasyon ve performansa yardımcı olur. Korkmayın.';
 
   @override
-  String get homeTip_split_options =>
-      'Push/pull/legs, upper/lower, haftada 3 kez tüm vücut — istikrarlıysanız hepsi işe yarar.';
+  String get homeTip_split_options => 'Push/pull/legs, upper/lower, haftada 3 kez tüm vücut — istikrarlıysanız hepsi işe yarar.';
 
   @override
-  String get homeTip_stress_and_recovery =>
-      'Yüksek stres = yüksek kortizol = daha yavaş toparlanma. Bütünü yönetin.';
+  String get homeTip_stress_and_recovery => 'Yüksek stres = yüksek kortizol = daha yavaş toparlanma. Bütünü yönetin.';
 
   @override
-  String get homeTip_tempo_training =>
-      'Herhangi bir egzersizi farklı hissetmek için 3-0-1 temposunu (3s iniş, 0 bekleme, 1s çıkış) deneyin.';
+  String get homeTip_tempo_training => 'Herhangi bir egzersizi farklı hissetmek için 3-0-1 temposunu (3s iniş, 0 bekleme, 1s çıkış) deneyin.';
 
   @override
-  String get homeTip_track_to_progress =>
-      'Eğer takip etmiyorsanız, yönetmiyorsunuz demektir. Setlerinizi kaydedin.';
+  String get homeTip_track_to_progress => 'Eğer takip etmiyorsanız, yönetmiyorsunuz demektir. Setlerinizi kaydedin.';
 
   @override
-  String get homeTip_vitamin_d =>
-      'Çoğu insan D vitamini eksikliği yaşar. Günlük 1000–2000 IU güvenli bir temeldir.';
+  String get homeTip_vitamin_d => 'Çoğu insan D vitamini eksikliği yaşar. Günlük 1000–2000 IU güvenli bir temeldir.';
 
   @override
-  String get homeTip_walk_after_meals =>
-      'Yemekten sonra 10 dakikalık bir yürüyüş, kan şekeri artışınızı %30 oranında azaltabilir.';
+  String get homeTip_walk_after_meals => 'Yemekten sonra 10 dakikalık bir yürüyüş, kan şekeri artışınızı %30 oranında azaltabilir.';
 
   @override
-  String get homeTip_warm_up_matters =>
-      '5 dakikalık hareket hazırlığı, her seti daha güvenli ve güçlü kılar.';
+  String get homeTip_warm_up_matters => '5 dakikalık hareket hazırlığı, her seti daha güvenli ve güçlü kılar.';
 
   @override
-  String get homeTip_zone2_cardio =>
-      'Zone 2 kardiyo (sohbet edilebilir tempo), diğer her şeyin üzerine inşa edildiği aerobik temeli oluşturur.';
+  String get homeTip_zone2_cardio => 'Zone 2 kardiyo (sohbet edilebilir tempo), diğer her şeyin üzerine inşa edildiği aerobik temeli oluşturur.';
 
   @override
   String get homeTodaysNutrition => 'Bugünkü beslenme';
@@ -17534,12 +16269,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeTrackNutrition => 'Beslenmeyi Takip Et';
 
   @override
-  String get homeViewStrengthChartsStreaks =>
-      'Güç grafiklerini, serileri, XP ve başarıları görüntüleyin.';
+  String get homeViewStrengthChartsStreaks => 'Güç grafiklerini, serileri, XP ve başarıları görüntüleyin.';
 
   @override
-  String get homeViewYourWorkoutHistory =>
-      'Antrenman geçmişinizi görüntüleyin ve egzersiz kütüphanesine göz atın.';
+  String get homeViewYourWorkoutHistory => 'Antrenman geçmişinizi görüntüleyin ve egzersiz kütüphanesine göz atın.';
 
   @override
   String get homeYourAiWorkout => 'AI Antrenmanınız';
@@ -17551,12 +16284,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeYourProgress => 'İlerlemen';
 
   @override
-  String get homescreenCustomizationChangesAreSavedAutomaticall =>
-      'Değişiklikler otomatik olarak kaydedilir ve hemen uygulanır.';
+  String get homescreenCustomizationChangesAreSavedAutomaticall => 'Değişiklikler otomatik olarak kaydedilir ve hemen uygulanır.';
 
   @override
-  String get homescreenCustomizationChooseWhichCardsTo =>
-      'Ana ekranınızda hangi kartların görüneceğini seçin';
+  String get homescreenCustomizationChooseWhichCardsTo => 'Ana ekranınızda hangi kartların görüneceğini seçin';
 
   @override
   String get homescreenCustomizationCustomizeHome => 'Ana Ekranı Özelleştir';
@@ -17565,41 +16296,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homescreenCustomizationDailyActivity => 'Günlük Aktivite';
 
   @override
-  String get homescreenCustomizationExerciseVariationThisWeek =>
-      'Bu haftaki egzersiz çeşitliliği';
+  String get homescreenCustomizationExerciseVariationThisWeek => 'Bu haftaki egzersiz çeşitliliği';
 
   @override
-  String get homescreenCustomizationFeatureVotingAndRoadmap =>
-      'Özellik oylaması ve yol haritası önizlemesi';
+  String get homescreenCustomizationFeatureVotingAndRoadmap => 'Özellik oylaması ve yol haritası önizlemesi';
 
   @override
   String get homescreenCustomizationFitnessScore => 'Fitness Puanı';
 
   @override
-  String get homescreenCustomizationGoalsAndMilestonesFor =>
-      'Haftalık hedefler ve dönüm noktaları';
+  String get homescreenCustomizationGoalsAndMilestonesFor => 'Haftalık hedefler ve dönüm noktaları';
 
   @override
-  String get homescreenCustomizationHealthDeviceActivitySummary =>
-      'Sağlık cihazı aktivite özeti';
+  String get homescreenCustomizationHealthDeviceActivitySummary => 'Sağlık cihazı aktivite özeti';
 
   @override
-  String get homescreenCustomizationLogFoodStatsShare =>
-      'Yemek, İstatistikler, Paylaş, Su butonları';
+  String get homescreenCustomizationLogFoodStatsShare => 'Yemek, İstatistikler, Paylaş, Su butonları';
 
   @override
   String get homescreenCustomizationMoodCheckIn => 'Ruh Hali Kontrolü';
 
   @override
-  String get homescreenCustomizationOverallFitnessStrengthNu =>
-      'Genel fitness, güç ve beslenme puanları';
+  String get homescreenCustomizationOverallFitnessStrengthNu => 'Genel fitness, güç ve beslenme puanları';
 
   @override
   String get homescreenCustomizationQuickActions => 'Hızlı Eylemler';
 
   @override
-  String get homescreenCustomizationQuickMoodPickerFor =>
-      'Anlık antrenmanlar için hızlı ruh hali seçici';
+  String get homescreenCustomizationQuickMoodPickerFor => 'Anlık antrenmanlar için hızlı ruh hali seçici';
 
   @override
   String get homescreenCustomizationResetToDefaults => 'Varsayılana sıfırla';
@@ -17617,12 +16341,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homescreenCustomizationWeeklyProgress => 'Haftalık İlerleme';
 
   @override
-  String get homescreenCustomizationWorkoutCompletionProgressRi =>
-      'Antrenman tamamlama ilerleme halkası';
+  String get homescreenCustomizationWorkoutCompletionProgressRi => 'Antrenman tamamlama ilerleme halkası';
 
   @override
-  String get hormonalHealthFailedToLoadHormonal =>
-      'Hormonal sağlık verileri yüklenemedi';
+  String get hormonalHealthFailedToLoadHormonal => 'Hormonal sağlık verileri yüklenemedi';
 
   @override
   String get hormonalHealthGetStarted => 'Başla';
@@ -17663,8 +16385,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hormonalHealthSettingsAddHormoneGoal => 'Hormon Hedefi Ekle';
 
   @override
-  String get hormonalHealthSettingsAdjustWorkoutIntensityBased =>
-      'Antrenman yoğunluğunu döngü evrene göre ayarla';
+  String get hormonalHealthSettingsAdjustWorkoutIntensityBased => 'Antrenman yoğunluğunu döngü evrene göre ayarla';
 
   @override
   String get hormonalHealthSettingsBirthSex => 'Doğuştan Gelen Cinsiyet';
@@ -17673,39 +16394,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hormonalHealthSettingsCycleLength => 'Döngü Uzunluğu';
 
   @override
-  String get hormonalHealthSettingsCycleSyncNutrition =>
-      'Döngüye Göre Beslenme';
+  String get hormonalHealthSettingsCycleSyncNutrition => 'Döngüye Göre Beslenme';
 
   @override
-  String get hormonalHealthSettingsCycleSyncWorkouts =>
-      'Döngüye Göre Antrenman';
+  String get hormonalHealthSettingsCycleSyncWorkouts => 'Döngüye Göre Antrenman';
 
   @override
-  String get hormonalHealthSettingsEnableCycleTracking =>
-      'Döngü Takibini Etkinleştir';
+  String get hormonalHealthSettingsEnableCycleTracking => 'Döngü Takibini Etkinleştir';
 
   @override
   String get hormonalHealthSettingsGenderIdentity => 'Cinsiyet Kimliği';
 
   @override
-  String get hormonalHealthSettingsGetNutritionTipsBased =>
-      'Döngü evrene göre beslenme ipuçları al';
+  String get hormonalHealthSettingsGetNutritionTipsBased => 'Döngü evrene göre beslenme ipuçları al';
 
   @override
-  String get hormonalHealthSettingsHormonalHealthSettings =>
-      'Hormonal Sağlık Ayarları';
+  String get hormonalHealthSettingsHormonalHealthSettings => 'Hormonal Sağlık Ayarları';
 
   @override
-  String get hormonalHealthSettingsHormoneSupportiveExercises =>
-      'Hormon Destekleyici Egzersizler';
+  String get hormonalHealthSettingsHormoneSupportiveExercises => 'Hormon Destekleyici Egzersizler';
 
   @override
-  String get hormonalHealthSettingsHormoneSupportiveFoods =>
-      'Hormon Destekleyici Gıdalar';
+  String get hormonalHealthSettingsHormoneSupportiveFoods => 'Hormon Destekleyici Gıdalar';
 
   @override
-  String get hormonalHealthSettingsIncludeHormoneFriendlyFood =>
-      'Hormon dostu gıda önerilerini dahil et';
+  String get hormonalHealthSettingsIncludeHormoneFriendlyFood => 'Hormon dostu gıda önerilerini dahil et';
 
   @override
   String get hormonalHealthSettingsLastPeriodStart => 'Son Adet Başlangıcı';
@@ -17717,8 +16430,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hormonalHealthSettingsPeriodDuration => 'Adet Süresi';
 
   @override
-  String get hormonalHealthSettingsPrioritizeExercisesThatSupp =>
-      'Hedeflerini destekleyen egzersizlere öncelik ver';
+  String get hormonalHealthSettingsPrioritizeExercisesThatSupp => 'Hedeflerini destekleyen egzersizlere öncelik ver';
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
@@ -17741,12 +16453,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hormonalHealthSettingsSelectHormoneGoals =>
-      'Hormon Hedeflerini Seç';
+  String get hormonalHealthSettingsSelectHormoneGoals => 'Hormon Hedeflerini Seç';
 
   @override
-  String get hormonalHealthSettingsTrackYourMenstrualCycle =>
-      'Optimize edilmiş antrenmanlar için adet döngünü takip et';
+  String get hormonalHealthSettingsTrackYourMenstrualCycle => 'Optimize edilmiş antrenmanlar için adet döngünü takip et';
 
   @override
   String get hormonalHealthTodaySCheckIn => 'Bugünün Kontrolü';
@@ -17779,8 +16489,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hormoneLogDailyCheckIn => 'Günlük Check-in';
 
   @override
-  String get hormoneLogHelpsYourCoachTime =>
-      'Koçunuzun doğurganlık rehberliğini zamanlamasına yardımcı olur';
+  String get hormoneLogHelpsYourCoachTime => 'Koçunuzun doğurganlık rehberliğini zamanlamasına yardımcı olur';
 
   @override
   String get hormoneLogHowAreYouFeeling => 'Bugün nasıl hissediyorsun?';
@@ -17823,8 +16532,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hormoneLogSymptoms => 'Semptomlar';
 
   @override
-  String get hormoneLogTakeItFirstThing =>
-      'Her sabah yataktan kalkmadan önce ilk iş olarak yapın.';
+  String get hormoneLogTakeItFirstThing => 'Her sabah yataktan kalkmadan önce ilk iş olarak yapın.';
 
   @override
   String get hourlyActivityChartActive => 'Aktif';
@@ -17863,8 +16571,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hrZonesCardAddYourDateOf =>
-      'Kişiselleştirilmiş kalp atış hızı bölgelerini hesaplamak için doğum tarihinizi ekleyin';
+  String get hrZonesCardAddYourDateOf => 'Kişiselleştirilmiş kalp atış hızı bölgelerini hesaplamak için doğum tarihinizi ekleyin';
 
   @override
   String hrZonesCardBpm(Object currentHR) {
@@ -17878,8 +16585,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hrZonesCardHeartRateZones => 'Kalp Atış Hızı Bölgeleri';
 
   @override
-  String get hrZonesCardHrZonesNotAvailable =>
-      'Kalp Atış Hızı Bölgeleri Mevcut Değil';
+  String get hrZonesCardHrZonesNotAvailable => 'Kalp Atış Hızı Bölgeleri Mevcut Değil';
 
   @override
   String hrZonesCardMaxHrBpm(Object maxHR) {
@@ -17890,12 +16596,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hrZonesCardMlKgMin => 'ml/kg/dk';
 
   @override
-  String get hrZonesCardPersonalizedTrainingZones =>
-      'Kişiselleştirilmiş antrenman bölgeleri';
+  String get hrZonesCardPersonalizedTrainingZones => 'Kişiselleştirilmiş antrenman bölgeleri';
 
   @override
-  String get hrZonesCardSetCustomMaxHr =>
-      'Özel maksimum kalp atış hızı belirle';
+  String get hrZonesCardSetCustomMaxHr => 'Özel maksimum kalp atış hızı belirle';
 
   @override
   String get hrZonesCardVo2Max => 'VO2 Max';
@@ -17937,8 +16641,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hydrationEnterAnyAmountIn =>
-      'Mililitre cinsinden herhangi bir miktar girin';
+  String get hydrationEnterAnyAmountIn => 'Mililitre cinsinden herhangi bir miktar girin';
 
   @override
   String get hydrationGoalMl => 'Hedef (ml)';
@@ -17962,8 +16665,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hydrationQuickActionsVideo => 'Video';
 
   @override
-  String get hydrationRecommended20003000mlPer =>
-      'Önerilen: Günlük 2000-3000ml';
+  String get hydrationRecommended20003000mlPer => 'Önerilen: Günlük 2000-3000ml';
 
   @override
   String get hydrationRemaining => 'Kalan';
@@ -17982,8 +16684,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hydrationSummaryBlockTapToViewDetails =>
-      'Detayları görmek için dokunun';
+  String get hydrationSummaryBlockTapToViewDetails => 'Detayları görmek için dokunun';
 
   @override
   String hydrationSummaryBlockValue(Object percentageInt) {
@@ -18088,16 +16789,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importEquipmentAnalyze => 'Analiz Et';
 
   @override
-  String get importEquipmentAnyPublicWebpageListing =>
-      'Spor salonu ekipmanlarını listeleyen herhangi bir herkese açık web sayfası.';
+  String get importEquipmentAnyPublicWebpageListing => 'Spor salonu ekipmanlarını listeleyen herhangi bir herkese açık web sayfası.';
 
   @override
-  String get importEquipmentEGNdumbbells5 =>
-      'örn.\nDambıllar 5-100 lb\n2x Squat rafı\nLeg press (plaka yüklü)\nKoşu bandı x4\nKablo istasyonu...';
+  String get importEquipmentEGNdumbbells5 => 'örn.\nDambıllar 5-100 lb\n2x Squat rafı\nLeg press (plaka yüklü)\nKoşu bandı x4\nKablo istasyonu...';
 
   @override
-  String get importEquipmentEverythingImportedGoesTo =>
-      'İçe aktarılan her şey bir inceleme ekranına gider — onayınız olmadan ekipmanınızı asla değiştirmeyiz.';
+  String get importEquipmentEverythingImportedGoesTo => 'İçe aktarılan her şey bir inceleme ekranına gider — onayınız olmadan ekipmanınızı asla değiştirmeyiz.';
 
   @override
   String get importEquipmentImportEquipment => 'Ekipman İçe Aktar';
@@ -18106,8 +16804,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importEquipmentImportFailed => 'İçe aktarma başarısız oldu';
 
   @override
-  String get importEquipmentLetAiReadYour =>
-      'AI\'nın spor salonunuzun ekipman listesini okumasına izin verin';
+  String get importEquipmentLetAiReadYour => 'AI\'nın spor salonunuzun ekipman listesini okumasına izin verin';
 
   @override
   String get importEquipmentPasteEquipmentText => 'Ekipman metnini yapıştırın';
@@ -18122,16 +16819,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importEquipmentResultCustom => 'Özel ✓';
 
   @override
-  String get importEquipmentResultInferredFromImportedContent =>
-      'İçe aktarılan içerikten çıkarıldı';
+  String get importEquipmentResultInferredFromImportedContent => 'İçe aktarılan içerikten çıkarıldı';
 
   @override
-  String get importEquipmentResultNoEquipmentCouldBe =>
-      'İçe aktarmanızdan hiçbir ekipman eşleştirilemedi.';
+  String get importEquipmentResultNoEquipmentCouldBe => 'İçe aktarmanızdan hiçbir ekipman eşleştirilemedi.';
 
   @override
-  String get importEquipmentResultReviewBeforeSavingTap =>
-      'Kaydetmeden önce inceleyin. Kaldırmak için bir çipe dokunun.';
+  String get importEquipmentResultReviewBeforeSavingTap => 'Kaydetmeden önce inceleyin. Kaldırmak için bir çipe dokunun.';
 
   @override
   String get importEquipmentResultSaving => 'Kaydediliyor...';
@@ -18142,10 +16836,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String importEquipmentResultSheetMatched(
-    Object matchedKeptCount,
-    Object totalMatched,
-  ) {
+  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched) {
     return 'Eşleşen ($matchedKeptCount/$totalMatched)';
   }
 
@@ -18165,8 +16856,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentResultWeCouldnTMatch =>
-      'Bunları bilinen ekipmanlarla eşleştiremedik. Atlayın veya özel olarak tutun.';
+  String get importEquipmentResultWeCouldnTMatch => 'Bunları bilinen ekipmanlarla eşleştiremedik. Atlayın veya özel olarak tutun.';
 
   @override
   String get importEquipmentResultWorkoutEnvironment => 'Antrenman ortamı';
@@ -18177,8 +16867,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentThisUsuallyTakes10 =>
-      'Bu genellikle 10-30 saniye sürer.';
+  String get importEquipmentThisUsuallyTakes10 => 'Bu genellikle 10-30 saniye sürer.';
 
   @override
   String get importEquipmentTryAgain => 'Tekrar dene';
@@ -18187,19 +16876,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importEquipmentWorking => 'Çalışılıyor...';
 
   @override
-  String get importEquipmentYourGymSEquipment =>
-      'Spor salonunuzun ekipman listesi veya tesis broşürü';
+  String get importEquipmentYourGymSEquipment => 'Spor salonunuzun ekipman listesi veya tesis broşürü';
 
   @override
   String get importExerciseDescribeTheExercise => 'Egzersizi tanımlayın';
 
   @override
-  String get importExerciseEGSeatedCable =>
-      'örneğin: \'Orta sırt ve arka omuzları hedefleyen, nötr tutuşlu oturarak kablo çekişi\'';
+  String get importExerciseEGSeatedCable => 'örneğin: \'Orta sırt ve arka omuzları hedefleyen, nötr tutuşlu oturarak kablo çekişi\'';
 
   @override
-  String get importExerciseExerciseNameHintOptional =>
-      'Egzersiz adı ipucu (isteğe bağlı)';
+  String get importExerciseExerciseNameHintOptional => 'Egzersiz adı ipucu (isteğe bağlı)';
 
   @override
   String get importExerciseFromGallery => 'Galeriden';
@@ -18220,15 +16906,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importExercisePreviewAiSearchable => 'AI ile aranabilir';
 
   @override
-  String get importExercisePreviewAlreadyInYourExercises =>
-      'Zaten egzersizlerinizde mevcut';
+  String get importExercisePreviewAlreadyInYourExercises => 'Zaten egzersizlerinizde mevcut';
 
   @override
   String get importExercisePreviewDiscard => 'Vazgeç';
 
   @override
-  String get importExercisePreviewDiscardImportedExercise =>
-      'İçe aktarılan egzersizi sil?';
+  String get importExercisePreviewDiscardImportedExercise => 'İçe aktarılan egzersizi sil?';
 
   @override
   String get importExercisePreviewSaveExercise => 'Egzersizi kaydet';
@@ -18276,8 +16960,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importImportSuccessful => 'İçe aktarma başarılı';
 
   @override
-  String get importNewDataWillBe =>
-      'Yeni veriler mevcut verilerinizin yanına eklenecektir.';
+  String get importNewDataWillBe => 'Yeni veriler mevcut verilerinizin yanına eklenecektir.';
 
   @override
   String get importSelectFile => 'Dosya seç';
@@ -18286,16 +16969,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importThisWillImport => 'Bu işlem şunları içe aktaracak:';
 
   @override
-  String get inProgressStripLogAWorkoutTo =>
-      'İlk ilerleme rozetlerinizi açmak için bir antrenman kaydedin.';
+  String get inProgressStripLogAWorkoutTo => 'İlk ilerleme rozetlerinizi açmak için bir antrenman kaydedin.';
 
   @override
-  String get inflammationAnalysisAiIsCheckingFor =>
-      'AI, inflamatuar bileşenleri kontrol ediyor';
+  String get inflammationAnalysisAiIsCheckingFor => 'AI, inflamatuar bileşenleri kontrol ediyor';
 
   @override
-  String get inflammationAnalysisAnalyzingIngredients =>
-      'İçerikler analiz ediliyor...';
+  String get inflammationAnalysisAnalyzingIngredients => 'İçerikler analiz ediliyor...';
 
   @override
   String get inflammationAnalysisConcern => 'Endişe verici';
@@ -18307,8 +16987,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inflammationAnalysisInflammationScore => 'İnflamasyon Skoru';
 
   @override
-  String get inflammationAnalysisIngredientAnalysisUnavailabl =>
-      'İçerik analizi kullanılamıyor';
+  String get inflammationAnalysisIngredientAnalysisUnavailabl => 'İçerik analizi kullanılamıyor';
 
   @override
   String get inflammationAnalysisIngredientsAnalysis => 'İçerik Analizi';
@@ -18325,12 +17004,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get inflammationTagsContainsUltraProcessedItems =>
-      'Ultra işlenmiş ürünler içerir';
+  String get inflammationTagsContainsUltraProcessedItems => 'Ultra işlenmiş ürünler içerir';
 
   @override
-  String get inflammationTagsExamplesSoftDrinksInstant =>
-      'Örnekler: gazlı içecekler, hazır erişteler, paketli atıştırmalıklar, tavuk nugget, çoğu kahvaltılık gevrek.';
+  String get inflammationTagsExamplesSoftDrinksInstant => 'Örnekler: gazlı içecekler, hazır erişteler, paketli atıştırmalıklar, tavuk nugget, çoğu kahvaltılık gevrek.';
 
   @override
   String get inflammationTagsHowTheScoreIs => 'Skor nasıl oluşturuluyor';
@@ -18339,23 +17016,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inflammationTagsInflammationScore => 'İnflamasyon Skoru';
 
   @override
-  String get inflammationTagsLowerScoresReduceSystemic =>
-      'Düşük skorlar sistemik inflamasyonu, bağırsak tahrişini ve yemek sonrası enerji düşüşlerini azaltır.';
+  String get inflammationTagsLowerScoresReduceSystemic => 'Düşük skorlar sistemik inflamasyonu, bağırsak tahrişini ve yemek sonrası enerji düşüşlerini azaltır.';
 
   @override
-  String get inflammationTagsNovaProcessingLevelOmega =>
-      'NOVA işleme seviyesi, omega-6:omega-3 yağ oranı, rafine şeker yükü, lif ve polifenol yoğunluğu, glisemik yük ve tohum yağı içeriği. Hakemli Diyet İnflamasyon İndeksi (DII) gruplarına göre kalibre edilmiştir.';
+  String get inflammationTagsNovaProcessingLevelOmega => 'NOVA işleme seviyesi, omega-6:omega-3 yağ oranı, rafine şeker yükü, lif ve polifenol yoğunluğu, glisemik yük ve tohum yağı içeriği. Hakemli Diyet İnflamasyon İndeksi (DII) gruplarına göre kalibre edilmiştir.';
 
   @override
-  String get inflammationTagsResearchLinksRegularConsump =>
-      'Araştırmalar, düzenli tüketimin artan inflamasyon, obezite, kalp hastalığı ve sindirim sorunları ile bağlantılı olduğunu göstermektedir.';
+  String get inflammationTagsResearchLinksRegularConsump => 'Araştırmalar, düzenli tüketimin artan inflamasyon, obezite, kalp hastalığı ve sindirim sorunları ile bağlantılı olduğunu göstermektedir.';
 
   @override
   String get inflammationTagsUltraProcessedFoods => 'Ultra İşlenmiş Gıdalar';
 
   @override
-  String get inflammationTagsUltraProcessedFoodsNova =>
-      'Ultra işlenmiş gıdalar (NOVA Grup 4), emülgatörler, hidrojenize yağlar, yapay tatlandırıcılar ve protein izolatları gibi ev yapımı yemeklerde bulunmayan endüstriyel katkı maddeleri içerir.';
+  String get inflammationTagsUltraProcessedFoodsNova => 'Ultra işlenmiş gıdalar (NOVA Grup 4), emülgatörler, hidrojenize yağlar, yapay tatlandırıcılar ve protein izolatları gibi ev yapımı yemeklerde bulunmayan endüstriyel katkı maddeleri içerir.';
 
   @override
   String get injuriesActive => 'Aktif';
@@ -18406,16 +17079,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get injuriesSelectorAiWillAvoidExercises =>
-      'AI, bu bölgeleri zorlayabilecek egzersizlerden kaçınacaktır';
+  String get injuriesSelectorAiWillAvoidExercises => 'AI, bu bölgeleri zorlayabilecek egzersizlerden kaçınacaktır';
 
   @override
-  String get injuriesSelectorEnterCustomInjuryE =>
-      'Özel sakatlık girin (örneğin: \"Tenisçi dirseği\")';
+  String get injuriesSelectorEnterCustomInjuryE => 'Özel sakatlık girin (örneğin: \"Tenisçi dirseği\")';
 
   @override
-  String get injuriesSelectorInjuriesToConsider =>
-      'Dikkate Alınacak Sakatlıklar';
+  String get injuriesSelectorInjuriesToConsider => 'Dikkate Alınacak Sakatlıklar';
 
   @override
   String injuriesSelectorSelected(Object selectedCount) {
@@ -18470,16 +17140,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get injuryDetailAffectedExercises => 'Etkilenen Egzersizler';
 
   @override
-  String get injuryDetailAreYouSureThis =>
-      'Bu sakatlığın tamamen iyileştiğinden emin misiniz? Bu işlem onu sakatlık geçmişinize taşıyacaktır.';
+  String get injuryDetailAreYouSureThis => 'Bu sakatlığın tamamen iyileştiğinden emin misiniz? Bu işlem onu sakatlık geçmişinize taşıyacaktır.';
 
   @override
-  String get injuryDetailCheckInLoggedSuccessfully =>
-      'Kontrol başarıyla kaydedildi';
+  String get injuryDetailCheckInLoggedSuccessfully => 'Kontrol başarıyla kaydedildi';
 
   @override
-  String get injuryDetailCongratulationsOnYourRecove =>
-      'İyileşmeniz için tebrikler!';
+  String get injuryDetailCongratulationsOnYourRecove => 'İyileşmeniz için tebrikler!';
 
   @override
   String get injuryDetailGoBack => 'Geri dön';
@@ -18509,8 +17176,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get injuryDetailRehabExercises => 'Rehabilitasyon Egzersizleri';
 
   @override
-  String get injuryDetailScreenAnyNotesAboutHow =>
-      'Bugün nasıl hissettiğinle ilgili notlar...';
+  String get injuryDetailScreenAnyNotesAboutHow => 'Bugün nasıl hissettiğinle ilgili notlar...';
 
   @override
   String get injuryDetailScreenDailyCheckIn => 'Günlük Kontrol';
@@ -18534,9 +17200,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get injuryDetailScreenLogCheckIn => 'Kontrolü Kaydet';
 
   @override
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
-    Object bodyPartDisplay,
-  ) {
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay) {
     return '$bodyPartDisplay bölgeniz bugün nasıl hissediyor?';
   }
 
@@ -18561,11 +17225,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get injuryDetailYesHealed => 'Evet, İyileşti';
 
   @override
-  String inlineEditPillEditSetByReps(
-    Object _weightText,
-    Object reps,
-    Object unit,
-  ) {
+  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit) {
     return 'Seti düzenle, $_weightText $unit ile $reps tekrar';
   }
 
@@ -18590,8 +17250,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inlineReferralExpanderEnterCode => 'KOD GİR';
 
   @override
-  String get inlineReferralExpanderReferralCodeApplied =>
-      '✓ Referans kodu uygulandı';
+  String get inlineReferralExpanderReferralCodeApplied => '✓ Referans kodu uygulandı';
 
   @override
   String get inlineRestRow15s => '-15s';
@@ -18659,8 +17318,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get inlineWorkoutChatIntentIdentifyEquipmentWh =>
-      '[intent:identify_equipment] Bu makine nedir?';
+  String get inlineWorkoutChatIntentIdentifyEquipmentWh => '[intent:identify_equipment] Bu makine nedir?';
 
   @override
   String get inlineWorkoutChatRest => 'Dinlenme';
@@ -18700,12 +17358,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get insightsDetailHighlights => 'Öne Çıkanlar';
 
   @override
-  String get insightsDetailNoAiAnalysisYet =>
-      'Bu rapor için henüz AI analizi yok';
+  String get insightsDetailNoAiAnalysisYet => 'Bu rapor için henüz AI analizi yok';
 
   @override
-  String get insightsDetailRegenerateAiAnalysis =>
-      'AI analizini yeniden oluştur';
+  String get insightsDetailRegenerateAiAnalysis => 'AI analizini yeniden oluştur';
 
   @override
   String insightsDetailScreenCouldNotRegenerate(Object e) {
@@ -18718,10 +17374,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String insightsDetailScreenOfWorkouts(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsScheduled antrenmandan $workoutsCompleted tanesi tamamlandı';
   }
 
@@ -18752,8 +17405,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get insightsNarrativeTemplateYourConsistencyIsCompoundin =>
-      'İstikrarın meyvelerini veriyor. Tekrarları biriktirmeye devam et.';
+  String get insightsNarrativeTemplateYourConsistencyIsCompoundin => 'İstikrarın meyvelerini veriyor. Tekrarları biriktirmeye devam et.';
 
   @override
   String get insightsPastReports => 'Geçmiş Raporlar';
@@ -18801,8 +17453,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get insightsPrsTemplateShowingUpIsThe =>
-      'Antrenmana gelmek asıl başarıdır. Tekrarları biriktirmeye devam et.';
+  String get insightsPrsTemplateShowingUpIsThe => 'Antrenmana gelmek asıl başarıdır. Tekrarları biriktirmeye devam et.';
 
   @override
   String get insightsReportCardCalories => 'KALORİ';
@@ -18847,12 +17498,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String insightsScreenPartBodyCardWorkoutsMinKcal(
-    Object caloriesBurnedEstimate,
-    Object totalTimeMinutes,
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsCompleted/$workoutsScheduled antrenman  |  ${totalTimeMinutes}dk  |  $caloriesBurnedEstimate kcal';
   }
 
@@ -18866,16 +17512,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get insightsScreenPartGenerateAiInsight => 'AI İçgörüsü Oluştur';
 
   @override
-  String get insightsScreenPartGetPersonalizedAiAnalysis =>
-      'Bu dönemdeki antrenman verilerinin kişiselleştirilmiş AI analizini al.';
+  String get insightsScreenPartGetPersonalizedAiAnalysis => 'Bu dönemdeki antrenman verilerinin kişiselleştirilmiş AI analizini al.';
 
   @override
-  String get insightsScreenPartLogYourMeasurementsTo =>
-      'Vücut kompozisyonu değişimlerini takip etmek için ölçümlerini kaydet';
+  String get insightsScreenPartLogYourMeasurementsTo => 'Vücut kompozisyonu değişimlerini takip etmek için ölçümlerini kaydet';
 
   @override
-  String get insightsScreenPartLogYourReadinessAnd =>
-      'Toparlanma içgörülerini görmek için hazırlık durumunu ve modunu kaydet';
+  String get insightsScreenPartLogYourReadinessAnd => 'Toparlanma içgörülerini görmek için hazırlık durumunu ve modunu kaydet';
 
   @override
   String get insightsScreenPartMoodDistribution => 'Mod Dağılımı';
@@ -18897,8 +17540,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get insightsScreenPartPleaseCheckYourConnection =>
-      'Lütfen bağlantını kontrol et ve tekrar dene.';
+  String get insightsScreenPartPleaseCheckYourConnection => 'Lütfen bağlantını kontrol et ve tekrar dene.';
 
   @override
   String get insightsScreenPartPrs => 'PR\'ler';
@@ -18907,15 +17549,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get insightsScreenPartShareThisReport => 'Bu raporu paylaş';
 
   @override
-  String get insightsScreenPartStartTrackingNutritionTo =>
-      'İçgörüleri burada görmek için beslenmeni takip etmeye başla';
+  String get insightsScreenPartStartTrackingNutritionTo => 'İçgörüleri burada görmek için beslenmeni takip etmeye başla';
 
   @override
   String get insightsScreenPartTips => 'İpuçları';
 
   @override
-  String get insightsScreenPartWeeklyReportsWillAppear =>
-      'Haftalık raporlar oluşturuldukça burada görünecektir.';
+  String get insightsScreenPartWeeklyReportsWillAppear => 'Haftalık raporlar oluşturuldukça burada görünecektir.';
 
   @override
   String get insightsScreenPartWeight => 'Kilo';
@@ -18960,8 +17600,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get intensityPromptModerate => 'Orta';
 
   @override
-  String get intensityPromptPickAnEffortTo =>
-      'Devam etmek için bir zorluk seviyesi seç';
+  String get intensityPromptPickAnEffortTo => 'Devam etmek için bir zorluk seviyesi seç';
 
   @override
   String intensityPromptSheetSet(Object exerciseName, Object setNumber) {
@@ -18969,8 +17608,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get introAnAiCoachThat =>
-      'Planı oluşturan, vücudunu tanıyan ve her hafta kendini güncelleyen bir yapay zeka koçu.';
+  String get introAnAiCoachThat => 'Planı oluşturan, vücudunu tanıyan ve her hafta kendini güncelleyen bir yapay zeka koçu.';
 
   @override
   String get introBuildMyPlan => 'Planımı Oluştur';
@@ -18987,8 +17625,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get introTagline =>
-      'Planı oluşturan, vücudunuzu tanıyan ve her hafta ayarlamalar yapan bir yapay zeka koçu.';
+  String get introTagline => 'Planı oluşturan, vücudunuzu tanıyan ve her hafta ayarlamalar yapan bir yapay zeka koçu.';
 
   @override
   String get introYourBody => 'Vücudun.';
@@ -18997,15 +17634,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get introYourTimeline => 'Zaman çizelgen.';
 
   @override
-  String get inventory2xXpActivatedFor =>
-      '24 saatliğine 2x XP etkinleştirildi!';
+  String get inventory2xXpActivatedFor => '24 saatliğine 2x XP etkinleştirildi!';
 
   @override
   String get inventory2xXpActive => '⚡ 2x XP AKTİF';
 
   @override
-  String get inventory3RefsSticker10 =>
-      '3 referans → Çıkartma · 10 → Matara · 25 → Tişört';
+  String get inventory3RefsSticker10 => '3 referans → Çıkartma · 10 → Matara · 25 → Tişört';
 
   @override
   String get inventory730100Day => '7, 30, 100 günlük seriler';
@@ -19035,19 +17670,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inventoryEvery5Levels => 'Her 5 seviyede bir';
 
   @override
-  String get inventoryEveryXpEarnedRight =>
-      'Şu an kazanılan her XP iki katına çıkarılır.';
+  String get inventoryEveryXpEarnedRight => 'Şu an kazanılan her XP iki katına çıkarılır.';
 
   @override
-  String get inventoryFailedToActivate2x =>
-      '2x XP jetonu etkinleştirilemedi. Lütfen tekrar dene.';
+  String get inventoryFailedToActivate2x => '2x XP jetonu etkinleştirilemedi. Lütfen tekrar dene.';
 
   @override
   String get inventoryFailedToOpenCrate => 'Kasa açılamadı';
 
   @override
-  String get inventoryFirstUnlockLevel50 =>
-      'İlk kilit açma: 50. Seviye — ücretsiz çıkartma paketi';
+  String get inventoryFirstUnlockLevel50 => 'İlk kilit açma: 50. Seviye — ücretsiz çıkartma paketi';
 
   @override
   String get inventoryGotIt => 'Anlaşıldı';
@@ -19071,15 +17703,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inventoryOf24hBoost => '24 saatlik güçlendirmenin';
 
   @override
-  String get inventoryOpenCratesToReceive =>
-      'XP veya tüketilebilir eşyalar almak için kasaları aç';
+  String get inventoryOpenCratesToReceive => 'XP veya tüketilebilir eşyalar almak için kasaları aç';
 
   @override
   String get inventoryPick1Of3 => 'Her gün 3 kasadan 1\'ini seç';
 
   @override
-  String get inventoryReferFriendsEarnMerch =>
-      'Arkadaşlarını davet et, ürünleri daha hızlı kazan';
+  String get inventoryReferFriendsEarnMerch => 'Arkadaşlarını davet et, ürünleri daha hızlı kazan';
 
   @override
   String inventoryScreenHM(Object hours, Object minutes) {
@@ -19102,8 +17732,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get inventoryScreenUiComeBackTomorrowFor =>
-      'Daha fazlası için yarın tekrar gel!';
+  String get inventoryScreenUiComeBackTomorrowFor => 'Daha fazlası için yarın tekrar gel!';
 
   @override
   String get inventoryScreenUiDailyCrates => 'Günlük Kasalar';
@@ -19121,8 +17750,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inventoryTapToBrowseOr => 'Göz atmak veya değiştirmek için dokun';
 
   @override
-  String get inventoryTrustLevelAffectsXp =>
-      'Güven seviyesi, antrenmanlardan ve aktivitelerden kazanılan XP\'yi etkiler.';
+  String get inventoryTrustLevelAffectsXp => 'Güven seviyesi, antrenmanlardan ve aktivitelerden kazanılan XP\'yi etkiler.';
 
   @override
   String get inventoryTrustLevels => 'Güven Seviyeleri';
@@ -19131,19 +17759,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get inventoryUnlockActivityCrate => 'Aktivite Kasasının Kilidini Aç';
 
   @override
-  String get inventoryUsedAutomaticallyWhenYou =>
-      'Bir günü kaçırdığında otomatik olarak kullanılır';
+  String get inventoryUsedAutomaticallyWhenYou => 'Bir günü kaçırdığında otomatik olarak kullanılır';
 
   @override
   String get inventoryYouReceived => 'Aldıkların:';
 
   @override
-  String get journalEmpty =>
-      'Günlüğün boş. Zaman çizelgesini başlatmak için bir antrenman kaydet.';
+  String get journalEmpty => 'Günlüğün boş. Zaman çizelgesini başlatmak için bir antrenman kaydet.';
 
   @override
-  String get journalLogAWorkoutMeal =>
-      'Zaman çizelgeni başlatmak için bir antrenman, öğün veya fotoğraf kaydet.';
+  String get journalLogAWorkoutMeal => 'Zaman çizelgeni başlatmak için bir antrenman, öğün veya fotoğraf kaydet.';
 
   @override
   String get journalSearchHint => 'Antrenman, yemek, fotoğraf ara…';
@@ -19155,8 +17780,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get journalYourJournalIsEmpty => 'Günlüğün boş';
 
   @override
-  String get kegelSessionAreYouSureYou =>
-      'Bu oturumu erken bitirmek istediğine emin misin? İlerlemen kaydedilmeyecek.';
+  String get kegelSessionAreYouSureYou => 'Bu oturumu erken bitirmek istediğine emin misin? İlerlemen kaydedilmeyecek.';
 
   @override
   String get kegelSessionBenefits => 'Faydalar';
@@ -19196,10 +17820,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String kegelSessionScreenRepsXSHold(
-    Object defaultHoldSeconds,
-    Object defaultReps,
-  ) {
+  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps) {
     return '$defaultReps tekrar x ${defaultHoldSeconds}sn bekle';
   }
 
@@ -19210,12 +17831,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kegelSessionSqueeze => 'SIK';
 
   @override
-  String get kegelSessionSqueezeYourPelvicFloor =>
-      'Pelvik taban kaslarını sık ve tut...';
+  String get kegelSessionSqueezeYourPelvicFloor => 'Pelvik taban kaslarını sık ve tut...';
 
   @override
-  String get kegelSessionStartABasicKegel =>
-      'Şimdi temel bir kegel oturumu başlat';
+  String get kegelSessionStartABasicKegel => 'Şimdi temel bir kegel oturumu başlat';
 
   @override
   String get kegelSessionStartExercise => 'Egzersizi Başlat';
@@ -19239,12 +17858,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kegelSettingsDailySessionsGoal => 'Günlük Oturum Hedefi';
 
   @override
-  String get kegelSettingsDedicatedPelvicFloorWorkout =>
-      'Özel pelvik taban antrenman oturumları';
+  String get kegelSettingsDedicatedPelvicFloorWorkout => 'Özel pelvik taban antrenman oturumları';
 
   @override
-  String get kegelSettingsEnableKegelExercises =>
-      'Kegel Egzersizlerini Etkinleştir';
+  String get kegelSettingsEnableKegelExercises => 'Kegel Egzersizlerini Etkinleştir';
 
   @override
   String get kegelSettingsExerciseLevel => 'Egzersiz Seviyesi';
@@ -19256,15 +17873,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kegelSettingsGeneral => 'Genel';
 
   @override
-  String get kegelSettingsGetRemindedToDo =>
-      'Kegel egzersizlerini yapmak için hatırlatıcı al';
+  String get kegelSettingsGetRemindedToDo => 'Kegel egzersizlerini yapmak için hatırlatıcı al';
 
   @override
   String get kegelSettingsIncludeIn => 'Dahil Et';
 
   @override
-  String get kegelSettingsIncludePelvicFloorExercises =>
-      'Pelvik taban egzersizlerini antrenmanına dahil et';
+  String get kegelSettingsIncludePelvicFloorExercises => 'Pelvik taban egzersizlerini antrenmanına dahil et';
 
   @override
   String get kegelSettingsPelvicFloorTraining => 'Pelvik Taban Antrenmanı';
@@ -19279,8 +17894,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kegelSettingsStandaloneSessions => 'Bağımsız Seanslar';
 
   @override
-  String get kegelSettingsStrengthenYourPelvicFloor =>
-      'Antrenman rutinine dahil edilen Kegel egzersizleri ile pelvik tabanını güçlendir.';
+  String get kegelSettingsStrengthenYourPelvicFloor => 'Antrenman rutinine dahil edilen Kegel egzersizleri ile pelvik tabanını güçlendir.';
 
   @override
   String get kegelSettingsWarmup => 'Isınma';
@@ -19307,15 +17921,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get lastNightSleepLastNightSSleep => 'Dün Geceki Uyku';
 
   @override
-  String get layoutEditorAppliedYourDefaultLayout =>
-      'Varsayılan düzenin uygulandı';
+  String get layoutEditorAppliedYourDefaultLayout => 'Varsayılan düzenin uygulandı';
 
   @override
   String get layoutEditorFailedToLoadLayout => 'Düzen yüklenemedi';
 
   @override
-  String get layoutEditorLayoutResetToOriginal =>
-      'Düzen orijinal haline sıfırlandı';
+  String get layoutEditorLayoutResetToOriginal => 'Düzen orijinal haline sıfırlandı';
 
   @override
   String get layoutEditorMySpace => 'Alanım';
@@ -19330,23 +17942,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get layoutEditorResetLayout => 'Düzeni Sıfırla';
 
   @override
-  String get layoutEditorSavedAsYourDefault =>
-      'Varsayılan düzenin olarak kaydedildi';
+  String get layoutEditorSavedAsYourDefault => 'Varsayılan düzenin olarak kaydedildi';
 
   @override
-  String get layoutEditorScreenAppliedYourDefaultLayout =>
-      'Varsayılan düzenin uygulandı';
+  String get layoutEditorScreenAppliedYourDefaultLayout => 'Varsayılan düzenin uygulandı';
 
   @override
   String get layoutEditorScreenApply => 'Uygula';
 
   @override
-  String get layoutEditorScreenChooseAPresetTo =>
-      'Ana ekranını hızlıca özelleştirmek için bir ön ayar seç';
+  String get layoutEditorScreenChooseAPresetTo => 'Ana ekranını hızlıca özelleştirmek için bir ön ayar seç';
 
   @override
-  String get layoutEditorScreenDragToReorderTap =>
-      'Yeniden sıralamak için sürükle • Değiştirmek için dokun';
+  String get layoutEditorScreenDragToReorderTap => 'Yeniden sıralamak için sürükle • Değiştirmek için dokun';
 
   @override
   String get layoutEditorScreenHidden => 'GİZLİ';
@@ -19378,8 +17986,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get layoutEditorScreenPreview => 'Önizleme';
 
   @override
-  String get layoutEditorScreenYourSavedCustomLayout =>
-      'Kaydedilmiş özel düzenin';
+  String get layoutEditorScreenYourSavedCustomLayout => 'Kaydedilmiş özel düzenin';
 
   @override
   String get layoutEditorToggles => 'Geçişler';
@@ -19388,8 +17995,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get leaderboardBeatTheirBest => 'En İyilerini Geç';
 
   @override
-  String get leaderboardChallengeWithoutNotification =>
-      'Bildirimsiz meydan oku (asenkron)';
+  String get leaderboardChallengeWithoutNotification => 'Bildirimsiz meydan oku (asenkron)';
 
   @override
   String get leaderboardEntryCardBeatTheirBest => 'En İyilerini Geç';
@@ -19406,16 +18012,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get leaderboardLockedStateCompleteMoreWorkoutsTo =>
-      'Kilidi açmak için daha fazla antrenman tamamla!';
+  String get leaderboardLockedStateCompleteMoreWorkoutsTo => 'Kilidi açmak için daha fazla antrenman tamamla!';
 
   @override
-  String get leaderboardLockedStateGlobalLeaderboardLocked =>
-      'Küresel Liderlik Tablosu Kilitli';
+  String get leaderboardLockedStateGlobalLeaderboardLocked => 'Küresel Liderlik Tablosu Kilitli';
 
   @override
-  String get leaderboardLockedStateViewFriendsLeaderboard =>
-      'Arkadaş Liderlik Tablosunu Görüntüle';
+  String get leaderboardLockedStateViewFriendsLeaderboard => 'Arkadaş Liderlik Tablosunu Görüntüle';
 
   @override
   String leaderboardLockedStateWorkouts(Object workoutsCompleted) {
@@ -19432,20 +18035,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get leaderboardPrivacyAnonymousMode => 'Anonim mod';
 
   @override
-  String get leaderboardPrivacyCouldnTLoadPrivacy =>
-      'Gizlilik ayarları yüklenemedi. Yeniden denemek için aşağı çek.';
+  String get leaderboardPrivacyCouldnTLoadPrivacy => 'Gizlilik ayarları yüklenemedi. Yeniden denemek için aşağı çek.';
 
   @override
-  String get leaderboardPrivacyLeaderboardPrivacy =>
-      'Liderlik Tablosu Gizliliği';
+  String get leaderboardPrivacyLeaderboardPrivacy => 'Liderlik Tablosu Gizliliği';
 
   @override
-  String get leaderboardPrivacyShowMeOnLeaderboards =>
-      'Beni liderlik tablolarında göster';
+  String get leaderboardPrivacyShowMeOnLeaderboards => 'Beni liderlik tablolarında göster';
 
   @override
-  String get leaderboardPrivacyShowMyStatsOn =>
-      'İstatistiklerimi profil önizlememde göster';
+  String get leaderboardPrivacyShowMyStatsOn => 'İstatistiklerimi profil önizlememde göster';
 
   @override
   String leaderboardRankCardOf(Object totalUsers) {
@@ -19471,8 +18070,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get leaderboardRowAdornmentsNoPreviousRankData =>
-      'Henüz önceki sıralama verisi yok';
+  String get leaderboardRowAdornmentsNoPreviousRankData => 'Henüz önceki sıralama verisi yok';
 
   @override
   String get leaderboardRowAdornmentsRankUnchanged => 'Sıralama değişmedi';
@@ -19508,8 +18106,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get levelUpCatchAwesomeGotIt => 'Harika — anlaşıldı';
 
   @override
-  String get levelUpCatchIncludesAFreePhysical =>
-      'ÜCRETSİZ fiziksel ödül içerir — Merch Ödülleri kısmından talep et';
+  String get levelUpCatchIncludesAFreePhysical => 'ÜCRETSİZ fiziksel ödül içerir — Merch Ödülleri kısmından talep et';
 
   @override
   String get levelUpCatchReveal => 'GÖSTER';
@@ -19533,10 +18130,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String levelUpCatchUpBannerYouGainedLevelsUp(
-    Object count,
-    Object highestLevel,
-  ) {
+  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel) {
     return '$count seviye kazandın (L$highestLevel seviyesine kadar)';
   }
 
@@ -19551,8 +18145,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get levelUpCatchYourRewardsAreAlready =>
-      'Ödüllerin zaten Envanterinde';
+  String get levelUpCatchYourRewardsAreAlready => 'Ödüllerin zaten Envanterinde';
 
   @override
   String get levelUpContinue => 'DEVAM ET';
@@ -19626,8 +18219,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get libraryLibrary => 'Kütüphane';
 
   @override
-  String get libraryQuickAccessBrowseExercisesProgramsW =>
-      'Egzersizlere, programlara ve antrenman geçmişine göz at';
+  String get libraryQuickAccessBrowseExercisesProgramsW => 'Egzersizlere, programlara ve antrenman geçmişine göz at';
 
   @override
   String get libraryQuickAccessExerciseLibrary => 'Egzersiz Kütüphanesi';
@@ -19636,16 +18228,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get librarySearchExercises => 'Egzersizleri ara...';
 
   @override
-  String lifetimeMemberBadgeDaysUntil(
-    Object daysRemaining,
-    Object nextTierName,
-  ) {
+  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName) {
     return '$nextTierName için $daysRemaining gün kaldı';
   }
 
   @override
-  String get lifetimeMemberBadgeEstimatedValueReceived =>
-      'Tahmini Alınan Değer';
+  String get lifetimeMemberBadgeEstimatedValueReceived => 'Tahmini Alınan Değer';
 
   @override
   String get lifetimeMemberBadgeLifetime => 'Ömür Boyu';
@@ -19671,19 +18259,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get listWorkoutNoSetsCompleted => 'Tamamlanan Set Yok';
 
   @override
-  String get listWorkoutYouHavenTCompleted =>
-      'Hiç set tamamlamadın. Bitirmek istediğine emin misin?';
+  String get listWorkoutYouHavenTCompleted => 'Hiç set tamamlamadın. Bitirmek istediğine emin misin?';
 
   @override
   String get liveChatAboutLiveChat => 'Canlı Sohbet Hakkında';
 
   @override
-  String get liveChatAreYouSureYou =>
-      'Bu konuşmayı sonlandırmak istediğine emin misin? Daha sonra yeni bir sohbet başlatabilirsin.';
+  String get liveChatAreYouSureYou => 'Bu konuşmayı sonlandırmak istediğine emin misin? Daha sonra yeni bir sohbet başlatabilirsin.';
 
   @override
-  String get liveChatConnectWithOurSupport =>
-      'Gerçek zamanlı destek için destek ekibimizle bağlantı kur. Temsilcilerimiz çalışma saatleri içinde her türlü soru veya sorununuzda yardımcı olmaya hazırdır.';
+  String get liveChatConnectWithOurSupport => 'Gerçek zamanlı destek için destek ekibimizle bağlantı kur. Temsilcilerimiz çalışma saatleri içinde her türlü soru veya sorununuzda yardımcı olmaya hazırdır.';
 
   @override
   String get liveChatEndChat => 'Sohbeti bitir?';
@@ -19719,12 +18304,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get livePrSnackbarNewPr => 'Yeni PR!';
 
   @override
-  String livePrSnackbarRm(
-    Object oneRmStr,
-    Object reps,
-    Object unitLabel,
-    Object weightStr,
-  ) {
+  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr) {
     return '$weightStr$unitLabel×$reps  →  $oneRmStr $unitLabel 1RM, ';
   }
 
@@ -19739,23 +18319,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsAddALocationTo =>
-      'Otomatik geçişi etkinleştirmek için spor salonu profillerinize bir konum ekleyin. Bir profili düzenleyin ve \"Konum Ekle\"ye dokunun.';
+  String get locationSettingsAddALocationTo => 'Otomatik geçişi etkinleştirmek için spor salonu profillerinize bir konum ekleyin. Bir profili düzenleyin ve \"Konum Ekle\"ye dokunun.';
 
   @override
-  String get locationSettingsAutoSwitchGymProfiles =>
-      'Spor salonu profillerini otomatik değiştir';
+  String get locationSettingsAutoSwitchGymProfiles => 'Spor salonu profillerini otomatik değiştir';
 
   @override
-  String get locationSettingsAutoSwitchNeedsAlways =>
-      'Otomatik geçişin, spor salonuna ne zaman geldiğinizi algılayabilmesi için \"Her zaman\" konum erişimine ihtiyacı vardır.';
+  String get locationSettingsAutoSwitchNeedsAlways => 'Otomatik geçişin, spor salonuna ne zaman geldiğinizi algılayabilmesi için \"Her zaman\" konum erişimine ihtiyacı vardır.';
 
   @override
   String get locationSettingsAutoSwitchProfiles => 'OTOMATİK PROFİL DEĞİŞİMİ';
 
   @override
-  String get locationSettingsBackgroundLocationRequired =>
-      'Arka plan konumu gerekli';
+  String get locationSettingsBackgroundLocationRequired => 'Arka plan konumu gerekli';
 
   @override
   String get locationSettingsGrantPermission => 'İzin Ver';
@@ -19774,8 +18350,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsSetAPreferredWorkout =>
-      'Zaman tabanlı geçişi etkinleştirmek için spor salonu profillerinizde tercih edilen bir antrenman zamanı ayarlayın.';
+  String get locationSettingsSetAPreferredWorkout => 'Zaman tabanlı geçişi etkinleştirmek için spor salonu profillerinizde tercih edilen bir antrenman zamanı ayarlayın.';
 
   @override
   String get locationSettingsTapToGrantPermission => 'İzin vermek için dokunun';
@@ -19784,15 +18359,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get locationSettingsTimeBasedSwitching => 'Zaman tabanlı geçiş';
 
   @override
-  String get locationSettingsYourLocationIsOnly =>
-      'Konumunuz yalnızca kayıtlı spor salonlarına yakınlığı kontrol etmek için yerel olarak kullanılır.';
+  String get locationSettingsYourLocationIsOnly => 'Konumunuz yalnızca kayıtlı spor salonlarına yakınlığı kontrol etmek için yerel olarak kullanılır.';
 
   @override
   String get log1rmCurrent1rm => 'Mevcut 1RM: ';
 
   @override
-  String get log1rmEnterTheMaxWeight =>
-      '1 tekrar için kaldırdığınız maksimum ağırlığı girin';
+  String get log1rmEnterTheMaxWeight => '1 tekrar için kaldırdığınız maksimum ağırlığı girin';
 
   @override
   String get log1rmEstimated1rm => 'Tahmini 1RM';
@@ -19807,8 +18380,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get log1rmPleaseEnterAValid => 'Lütfen geçerli bir ağırlık girin';
 
   @override
-  String get log1rmPleaseEnterAValid2 =>
-      'Lütfen geçerli bir tekrar sayısı girin';
+  String get log1rmPleaseEnterAValid2 => 'Lütfen geçerli bir tekrar sayısı girin';
 
   @override
   String get log1rmRepsCompleted => 'Tamamlanan Tekrar';
@@ -19848,8 +18420,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logCardioDuration => 'SÜRE';
 
   @override
-  String get logCardioHowDidTheSession =>
-      'Antrenman nasıl geçti? Notlarınız...';
+  String get logCardioHowDidTheSession => 'Antrenman nasıl geçti? Notlarınız...';
 
   @override
   String get logCardioLocation => 'KONUM';
@@ -19875,8 +18446,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logCardioWeatherConditions => 'HAVA DURUMU';
 
   @override
-  String get logMealAiEstimatedNutrition =>
-      'Yapay Zeka Tahmini Besin Değerleri';
+  String get logMealAiEstimatedNutrition => 'Yapay Zeka Tahmini Besin Değerleri';
 
   @override
   String get logMealAllergens => 'Alerjenler';
@@ -19952,8 +18522,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealLogThisMeal => 'Bu Öğünü Kaydet';
 
   @override
-  String get logMealLoggingThisMealWill =>
-      'Bu öğünü kaydetmek orucunuzu bitirecektir. Devam edilsin mi?';
+  String get logMealLoggingThisMealWill => 'Bu öğünü kaydetmek orucunuzu bitirecektir. Devam edilsin mi?';
 
   @override
   String get logMealMagnesium => 'Magnezyum';
@@ -19974,12 +18543,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetAdd => 'Ekle';
 
   @override
-  String get logMealSheetAddABitMore =>
-      'Daha kesin sonuç için biraz daha detay ekleyin.';
+  String get logMealSheetAddABitMore => 'Daha kesin sonuç için biraz daha detay ekleyin.';
 
   @override
-  String get logMealSheetAddAPhotoOr =>
-      'Analiz etmek için bir fotoğraf ekleyin veya öğünü tarif edin.';
+  String get logMealSheetAddAPhotoOr => 'Analiz etmek için bir fotoğraf ekleyin veya öğünü tarif edin.';
 
   @override
   String get logMealSheetAddPhotos => 'Fotoğraf ekle';
@@ -19988,16 +18555,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetAddedTheFirst5 => 'İlk 5 fotoğraf eklendi (maksimum).';
 
   @override
-  String get logMealSheetAiEstimatesFromA =>
-      'Fotoğraftan yapay zeka tahminleri — sonucu daha sonra düzenleyebilirsiniz.';
+  String get logMealSheetAiEstimatesFromA => 'Fotoğraftan yapay zeka tahminleri — sonucu daha sonra düzenleyebilirsiniz.';
 
   @override
-  String get logMealSheetAllItemsMatchedVerified =>
-      'Tüm öğeler doğrulanmış besin verileriyle eşleşti';
+  String get logMealSheetAllItemsMatchedVerified => 'Tüm öğeler doğrulanmış besin verileriyle eşleşti';
 
   @override
-  String get logMealSheetAnalysisFailed =>
-      'Analiz başarısız oldu. Lütfen tekrar deneyin.';
+  String get logMealSheetAnalysisFailed => 'Analiz başarısız oldu. Lütfen tekrar deneyin.';
 
   @override
   String get logMealSheetAnalyze => 'Analiz Et';
@@ -20006,8 +18570,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetAnalyzing => 'Analiz ediliyor…';
 
   @override
-  String get logMealSheetAnythingElseInThe =>
-      'Fotoğraflarda başka bir şey var mı? (ör. keten tohumu, whey protein)';
+  String get logMealSheetAnythingElseInThe => 'Fotoğraflarda başka bir şey var mı? (ör. keten tohumu, whey protein)';
 
   @override
   String get logMealSheetBackToResults => 'Sonuçlara dön';
@@ -20051,16 +18614,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetCouldnTApplyThat =>
-      'Bu düzeltme uygulanamadı — öğün değişmedi.';
+  String get logMealSheetCouldnTApplyThat => 'Bu düzeltme uygulanamadı — öğün değişmedi.';
 
   @override
-  String get logMealSheetCouldnTLogThose =>
-      'Bu öğeler kaydedilemedi. Bağlantınızı kontrol edin.';
+  String get logMealSheetCouldnTLogThose => 'Bu öğeler kaydedilemedi. Bağlantınızı kontrol edin.';
 
   @override
-  String get logMealSheetCouldnTRecognizeAny =>
-      'Bu açıklamada herhangi bir yiyecek tanınamadı.';
+  String get logMealSheetCouldnTRecognizeAny => 'Bu açıklamada herhangi bir yiyecek tanınamadı.';
 
   @override
   String logMealSheetCouldnTRefineError(Object message) {
@@ -20068,30 +18628,25 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetCouldnTSaveYour =>
-      'Öğününüz kaydedilemedi. Bağlantınızı kontrol edin.';
+  String get logMealSheetCouldnTSaveYour => 'Öğününüz kaydedilemedi. Bağlantınızı kontrol edin.';
 
   @override
   String get logMealSheetCustomEG1 => 'Özel (ör. 1.25)';
 
   @override
-  String get logMealSheetDidnTCatchAny =>
-      'Burada herhangi bir yiyecek yakalanamadı — tekrar deneyin.';
+  String get logMealSheetDidnTCatchAny => 'Burada herhangi bir yiyecek yakalanamadı — tekrar deneyin.';
 
   @override
-  String get logMealSheetEGGrilledChicken =>
-      'ör. \"ızgara tavuk kasesi, yarısını yedim\"';
+  String get logMealSheetEGGrilledChicken => 'ör. \"ızgara tavuk kasesi, yarısını yedim\"';
 
   @override
-  String get logMealSheetEnableMicrophoneAccessIn =>
-      'Ayarlar\'dan mikrofon erişimini etkinleştirin veya bunun yerine Arama kısmına öğünü yazın.';
+  String get logMealSheetEnableMicrophoneAccessIn => 'Ayarlar\'dan mikrofon erişimini etkinleştirin veya bunun yerine Arama kısmına öğünü yazın.';
 
   @override
   String get logMealSheetEstimatedNutrition => 'Tahmini Besin Değerleri';
 
   @override
-  String get logMealSheetEstimatesBasedOnYour =>
-      'Fotoğrafınıza/açıklamanıza dayalı tahminler';
+  String get logMealSheetEstimatesBasedOnYour => 'Fotoğrafınıza/açıklamanıza dayalı tahminler';
 
   @override
   String logMealSheetFailedToSaveError(Object error) {
@@ -20137,19 +18692,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetHandsFreeLoggingSpeak =>
-      'Eller serbest kayıt — doğal bir şekilde konuşun, metni gözden geçirin ve onaylayın. Yemek yaparken harika çalışır.';
+  String get logMealSheetHandsFreeLoggingSpeak => 'Eller serbest kayıt — doğal bir şekilde konuşun, metni gözden geçirin ve onaylayın. Yemek yaparken harika çalışır.';
 
   @override
-  String get logMealSheetHeardEditIfNeeded =>
-      'Duyuldu — gerekirse düzenleyin, ardından onaylayın';
+  String get logMealSheetHeardEditIfNeeded => 'Duyuldu — gerekirse düzenleyin, ardından onaylayın';
 
   @override
   String get logMealSheetHowManyServingsDid => 'Kaç porsiyon yediniz?';
 
   @override
-  String get logMealSheetImportALogFrom =>
-      'MyFitnessPal, Cronometer gibi uygulamalardan kayıt içe aktarın…';
+  String get logMealSheetImportALogFrom => 'MyFitnessPal, Cronometer gibi uygulamalardan kayıt içe aktarın…';
 
   @override
   String get logMealSheetInstructionsOptional => 'Talimatlar (isteğe bağlı)';
@@ -20256,8 +18808,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetMicrophoneUnavailable => 'Mikrofon kullanılamıyor';
 
   @override
-  String get logMealSheetNeedToAddNotes =>
-      'Not veya birden fazla fotoğraf mı eklemeniz gerekiyor? Tanımla özelliğini kullanın.';
+  String get logMealSheetNeedToAddNotes => 'Not veya birden fazla fotoğraf mı eklemeniz gerekiyor? Tanımla özelliğini kullanın.';
 
   @override
   String logMealSheetNutritionFor(Object servingsLabel) {
@@ -20268,8 +18819,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetNutritionLabel => 'Besin etiketi';
 
   @override
-  String get logMealSheetOneTapInstantNutrition =>
-      'Tek dokunuş — anında besin değerleri';
+  String get logMealSheetOneTapInstantNutrition => 'Tek dokunuş — anında besin değerleri';
 
   @override
   String get logMealSheetOverBudgetPickOne => 'Bütçeyi aştınız — birini seçin:';
@@ -20287,19 +18837,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetPickUpTo5 => 'Kütüphanenizden 5 taneye kadar seçin';
 
   @override
-  String get logMealSheetPlannedHighOutputDay =>
-      'Planlanmış yüksek verimli gün — bu tasarım gereği böyledir.';
+  String get logMealSheetPlannedHighOutputDay => 'Planlanmış yüksek verimli gün — bu tasarım gereği böyledir.';
 
   @override
-  String get logMealSheetPortionsAdjustedReviewWei =>
-      'Porsiyonlar ayarlandı — aşağıdaki ağırlıkları gözden geçirin';
+  String get logMealSheetPortionsAdjustedReviewWei => 'Porsiyonlar ayarlandı — aşağıdaki ağırlıkları gözden geçirin';
 
   @override
   String get logMealSheetReTakePhoto => 'Fotoğrafı yeniden çek';
 
   @override
-  String get logMealSheetReadMacrosOffA =>
-      'Paketli bir gıda etiketinden makroları okuyun';
+  String get logMealSheetReadMacrosOffA => 'Paketli bir gıda etiketinden makroları okuyun';
 
   @override
   String get logMealSheetRefine => 'İyileştir';
@@ -20341,12 +18888,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetSnapAPhoto => 'Bir fotoğraf çek';
 
   @override
-  String get logMealSheetSpeakNowTapMic =>
-      'Şimdi konuşun... durdurmak için mikrofona dokunun';
+  String get logMealSheetSpeakNowTapMic => 'Şimdi konuşun... durdurmak için mikrofona dokunun';
 
   @override
-  String get logMealSheetSpeechRecognitionNotAvailab =>
-      'Konuşma tanıma kullanılamıyor';
+  String get logMealSheetSpeechRecognitionNotAvailab => 'Konuşma tanıma kullanılamıyor';
 
   @override
   String get logMealSheetStartingAnalysis => 'Analiz başlatılıyor...';
@@ -20370,34 +18915,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetTapAgainWhenYou => 'Bitirdiğinizde tekrar dokunun';
 
   @override
-  String get logMealSheetTapHereToSave =>
-      'Öğününüzü günlük kaydınıza eklemek için buraya dokunun. Sadece analiz etmek onu kaydetmez!';
+  String get logMealSheetTapHereToSave => 'Öğününüzü günlük kaydınıza eklemek için buraya dokunun. Sadece analiz etmek onu kaydetmez!';
 
   @override
-  String get logMealSheetTapToConfirmEach =>
-      'Her birini onaylamak için dokunun — veya aşağıdaki listedeki değerleri düzenleyin.';
+  String get logMealSheetTapToConfirmEach => 'Her birini onaylamak için dokunun — veya aşağıdaki listedeki değerleri düzenleyin.';
 
   @override
   String get logMealSheetTapToSpeak => 'Konuşmak için dokunun';
 
   @override
-  String get logMealSheetTellTheAiAnything =>
-      'Yapay zekaya yardımcı olacak her şeyi söyleyin — yenen porsiyon, değişimler, tabak boyutu.';
+  String get logMealSheetTellTheAiAnything => 'Yapay zekaya yardımcı olacak her şeyi söyleyin — yenen porsiyon, değişimler, tabak boyutu.';
 
   @override
-  String get logMealSheetThatCorrectionProducedAn =>
-      'Bu düzeltme boş bir öğün oluşturdu — önceki tahmin korundu.';
+  String get logMealSheetThatCorrectionProducedAn => 'Bu düzeltme boş bir öğün oluşturdu — önceki tahmin korundu.';
 
   @override
-  String get logMealSheetThatLooksLikeA =>
-      'Bu bir tarif gibi görünüyor — tarif içe aktarıcıya yapıştırın.';
+  String get logMealSheetThatLooksLikeA => 'Bu bir tarif gibi görünüyor — tarif içe aktarıcıya yapıştırın.';
 
   @override
   String get logMealSheetThisPhotoWasHard => 'Bu fotoğrafı okumak zordu';
 
   @override
-  String get logMealSheetTipAddBrandPortion =>
-      'İpucu: Daha iyi doğruluk için marka ve porsiyon ekleyin (ör. \'Chipotle tavuk kasesi\' veya \'2 dilim Domino’s\')';
+  String get logMealSheetTipAddBrandPortion => 'İpucu: Daha iyi doğruluk için marka ve porsiyon ekleyin (ör. \'Chipotle tavuk kasesi\' veya \'2 dilim Domino’s\')';
 
   @override
   String get logMealSheetTryAgain => 'Tekrar dene';
@@ -20446,10 +18985,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetUiOfItemsMatchedVerified(
-    Object length,
-    Object verifiedCount,
-  ) {
+  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount) {
     return '$length öğeden $verifiedCount tanesi doğrulanmış besin verileriyle eşleşti';
   }
 
@@ -20470,12 +19006,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetUpTo5Pages => 'Aynı menüden 5 sayfaya kadar';
 
   @override
-  String get logMealSheetUpTo5Photos =>
-      '5 fotoğrafa kadar — daha fazlasını eklemek için birini kaldırın.';
+  String get logMealSheetUpTo5Photos => '5 fotoğrafa kadar — daha fazlasını eklemek için birini kaldırın.';
 
   @override
-  String get logMealSheetUpTo5Shots =>
-      '5 çekime kadar — fotoğraflar arasına bir tane daha ekleyin';
+  String get logMealSheetUpTo5Shots => '5 çekime kadar — fotoğraflar arasına bir tane daha ekleyin';
 
   @override
   String get logMealSheetUse => 'Kullan';
@@ -20500,8 +19034,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSugar => 'Şeker';
 
   @override
-  String get logMealTheseValuesAreAi =>
-      'Bu değerler, açıklamanıza dayalı AI tahminleridir.';
+  String get logMealTheseValuesAreAi => 'Bu değerler, açıklamanıza dayalı AI tahminleridir.';
 
   @override
   String get logMealVitaminA => 'A Vitamini';
@@ -20516,8 +19049,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealVitaminsMinerals => 'Vitaminler ve Mineraller';
 
   @override
-  String get logMealYouHavenTLogged =>
-      'Bu öğünü henüz kaydetmedin. Analiz sonuçların kaybolacak.';
+  String get logMealYouHavenTLogged => 'Bu öğünü henüz kaydetmedin. Analiz sonuçların kaybolacak.';
 
   @override
   String get logMealZinc => 'Çinko';
@@ -20591,8 +19123,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logWeightAddANoteOptional => 'Not ekle (isteğe bağlı)';
 
   @override
-  String get logWeightBodyFatDidnT =>
-      'Vücut yağı kaydedilemedi — ağırlık kaydedildi';
+  String get logWeightBodyFatDidnT => 'Vücut yağı kaydedilemedi — ağırlık kaydedildi';
 
   @override
   String get logWeightBodyFatOptional => 'VÜCUT YAĞI % (İSTEĞE BAĞLI)';
@@ -20613,8 +19144,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logWeightHideDetails => 'Detayları gizle';
 
   @override
-  String get logWeightIfThisWasA =>
-      'Eğer bu bir hataysa, doğru ağırlıkla tekrar kaydedin.';
+  String get logWeightIfThisWasA => 'Eğer bu bir hataysa, doğru ağırlıkla tekrar kaydedin.';
 
   @override
   String get logWeightLogWeight => 'Ağırlık Kaydet';
@@ -20636,21 +19166,15 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValidRange(
-    Object label,
-    Object maxValue,
-    Object minValue,
-  ) {
+  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue) {
     return 'Geçerli aralık: $minValue-$maxValue $label';
   }
 
   @override
-  String get logWeightSyncedFromAppleHealth =>
-      'Apple Health ile senkronize edildi';
+  String get logWeightSyncedFromAppleHealth => 'Apple Health ile senkronize edildi';
 
   @override
-  String get logWeightSyncedToAppleHealth =>
-      'Apple Health\'e senkronize edildi';
+  String get logWeightSyncedToAppleHealth => 'Apple Health\'e senkronize edildi';
 
   @override
   String get logWeightTapToEdit => 'Düzenlemek için dokun';
@@ -20725,8 +19249,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsCarbs => 'Karbonhidrat';
 
   @override
-  String get loggedMealsContainsUltraProcessedItems =>
-      'Ultra işlenmiş ürünler içerir';
+  String get loggedMealsContainsUltraProcessedItems => 'Ultra işlenmiş ürünler içerir';
 
   @override
   String get loggedMealsCopyTo => 'Kopyala...';
@@ -20774,8 +19297,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsEnergyLevel => 'Enerji seviyesi';
 
   @override
-  String get loggedMealsExamplesSoftDrinksInstant =>
-      'Örnekler: gazlı içecekler, hazır erişteler, paketli atıştırmalıklar, tavuk nugget, çoğu kahvaltılık gevrek.';
+  String get loggedMealsExamplesSoftDrinksInstant => 'Örnekler: gazlı içecekler, hazır erişteler, paketli atıştırmalıklar, tavuk nugget, çoğu kahvaltılık gevrek.';
 
   @override
   String get loggedMealsFG => 'Y (g)';
@@ -20814,12 +19336,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsLogThisAgainTomorrow => 'Bunu yarın tekrar kaydet';
 
   @override
-  String get loggedMealsLooksOffTapTo =>
-      'Yanlış görünüyor — onaylamak için dokun';
+  String get loggedMealsLooksOffTapTo => 'Yanlış görünüyor — onaylamak için dokun';
 
   @override
-  String get loggedMealsLowerIsBetterFor =>
-      'Daha düşük olması, vücut enflamasyonunu azaltmak ve bağırsak sağlığı için daha iyidir.';
+  String get loggedMealsLowerIsBetterFor => 'Daha düşük olması, vücut enflamasyonunu azaltmak ve bağırsak sağlığı için daha iyidir.';
 
   @override
   String get loggedMealsMedium => 'Orta';
@@ -20840,8 +19360,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsNoFoodsLogged => 'Kaydedilen yiyecek yok';
 
   @override
-  String get loggedMealsNutritionEditIfThe =>
-      'Besin değerleri (Yapay zeka yanlış yaptıysa düzenle)';
+  String get loggedMealsNutritionEditIfThe => 'Besin değerleri (Yapay zeka yanlış yaptıysa düzenle)';
 
   @override
   String get loggedMealsPG => 'P (g)';
@@ -20853,8 +19372,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsQuantity => 'Miktar';
 
   @override
-  String get loggedMealsRatesHowInflammatoryA =>
-      'İşlenme seviyesi, yağ profili, şeker içeriği, lif ve antioksidan özelliklerine göre bir yiyeceğin ne kadar enflamatuar olduğunu derecelendirir.';
+  String get loggedMealsRatesHowInflammatoryA => 'İşlenme seviyesi, yağ profili, şeker içeriği, lif ve antioksidan özelliklerine göre bir yiyeceğin ne kadar enflamatuar olduğunu derecelendirir.';
 
   @override
   String get loggedMealsRemove => 'Kaldır';
@@ -20871,8 +19389,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsReportIncorrectData => 'Hatalı veriyi bildir';
 
   @override
-  String get loggedMealsResearchLinksRegularConsump =>
-      'Araştırmalar, düzenli tüketimin artan enflamasyon, obezite, kalp hastalığı ve sindirim sorunları ile bağlantılı olduğunu göstermektedir.';
+  String get loggedMealsResearchLinksRegularConsump => 'Araştırmalar, düzenli tüketimin artan enflamasyon, obezite, kalp hastalığı ve sindirim sorunları ile bağlantılı olduğunu göstermektedir.';
 
   @override
   String get loggedMealsSaveAsRecipe => 'Tarif olarak kaydet';
@@ -21022,8 +19539,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsServings => 'Porsiyon';
 
   @override
-  String get loggedMealsSetACalorieTarget =>
-      'Kalanı takip etmek için bir kalori hedefi belirle';
+  String get loggedMealsSetACalorieTarget => 'Kalanı takip etmek için bir kalori hedefi belirle';
 
   @override
   String get loggedMealsShareMeal => 'Öğünü paylaş';
@@ -21041,8 +19557,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsTriple => 'Üçlü';
 
   @override
-  String get loggedMealsTypeAFoodAnd =>
-      'Bir yiyecek yaz ve makroları otomatik doldurmak için yapay zekaya dokun';
+  String get loggedMealsTypeAFoodAnd => 'Bir yiyecek yaz ve makroları otomatik doldurmak için yapay zekaya dokun';
 
   @override
   String get loggedMealsU00bd => '½';
@@ -21054,8 +19569,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsUltraProcessedFoods => 'Ultra İşlenmiş Gıdalar';
 
   @override
-  String get loggedMealsUltraProcessedFoodsNova =>
-      'Ultra işlenmiş gıdalar (NOVA Grup 4), emülgatörler, hidrojene yağlar, yapay tatlandırıcılar ve protein izolatları gibi ev yapımı yemeklerde bulunmayan endüstriyel katkı maddeleri içerir.';
+  String get loggedMealsUltraProcessedFoodsNova => 'Ultra işlenmiş gıdalar (NOVA Grup 4), emülgatörler, hidrojene yağlar, yapay tatlandırıcılar ve protein izolatları gibi ev yapımı yemeklerde bulunmayan endüstriyel katkı maddeleri içerir.';
 
   @override
   String get loggedMealsUndo => 'Geri al';
@@ -21070,8 +19584,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get loggedMealsXLarge => 'Çok Büyük';
 
   @override
-  String get logoutAreYouSureYou =>
-      'Çıkış yapmak istediğine emin misin? İstediğin zaman tekrar giriş yapabilirsin.';
+  String get logoutAreYouSureYou => 'Çıkış yapmak istediğine emin misin? İstediğin zaman tekrar giriş yapabilirsin.';
 
   @override
   String get logoutSignOut => 'Çıkış Yap';
@@ -21102,16 +19615,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mainShellPartSignUp => 'Kaydol';
 
   @override
-  String get mainShellPartSignUpFreeFor =>
-      'Sınırsız erişim için ücretsiz kaydol';
+  String get mainShellPartSignUpFreeFor => 'Sınırsız erişim için ücretsiz kaydol';
 
   @override
-  String get manageDuplicateImportsCouldNotLoadDuplicate =>
-      'Yinelenen içe aktarmalar yüklenemedi';
+  String get manageDuplicateImportsCouldNotLoadDuplicate => 'Yinelenen içe aktarmalar yüklenemedi';
 
   @override
-  String get manageDuplicateImportsDuplicateImports =>
-      'Yinelenen içe aktarmalar';
+  String get manageDuplicateImportsDuplicateImports => 'Yinelenen içe aktarmalar';
 
   @override
   String get manageDuplicateImportsHidden => 'Gizli';
@@ -21120,8 +19630,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get manageDuplicateImportsMakeThisPrimary => 'Bunu birincil yap';
 
   @override
-  String get manageDuplicateImportsNoDuplicateImportsDetected =>
-      'Yinelenen içe aktarma algılanmadı';
+  String get manageDuplicateImportsNoDuplicateImportsDetected => 'Yinelenen içe aktarma algılanmadı';
 
   @override
   String get manageDuplicateImportsPrimary => 'Birincil';
@@ -21152,8 +19661,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get manageGymProfilesDeleteGymProfile => 'Spor Salonu Profilini Sil?';
 
   @override
-  String get manageGymProfilesDragToReorderTap =>
-      'Sıralamak için sürükle • Düzenlemek için dokun';
+  String get manageGymProfilesDragToReorderTap => 'Sıralamak için sürükle • Düzenlemek için dokun';
 
   @override
   String get manageGymProfilesDuplicate => 'Yinele';
@@ -21162,8 +19670,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get manageGymProfilesManageGyms => 'Spor Salonlarını Yönet';
 
   @override
-  String get manageGymProfilesNoGymProfilesYet =>
-      'Henüz spor salonu profili yok';
+  String get manageGymProfilesNoGymProfilesYet => 'Henüz spor salonu profili yok';
 
   @override
   String get manageGymProfilesSetAsActive => 'Aktif Olarak Ayarla';
@@ -21184,10 +19691,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String manageGymProfilesSheetEquipment(
-    Object environmentDisplayName,
-    Object equipmentCount,
-  ) {
+  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount) {
     return '$equipmentCount ekipman • $environmentDisplayName';
   }
 
@@ -21212,8 +19716,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markFastingDayFastingProtocol => 'Oruç Protokolü';
 
   @override
-  String get markFastingDayForgotToTrackA =>
-      'Oruç tutmayı mı unuttun? Geçmiş bir günü oruç günü olarak işaretle.';
+  String get markFastingDayForgotToTrackA => 'Oruç tutmayı mı unuttun? Geçmiş bir günü oruç günü olarak işaretle.';
 
   @override
   String get markFastingDayHowDidTheFast => 'Oruç nasıl geçti?';
@@ -21236,8 +19739,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get markFastingDayYouCanMarkDays =>
-      'Son 30 gün içindeki günleri işaretleyebilirsiniz';
+  String get markFastingDayYouCanMarkDays => 'Son 30 gün içindeki günleri işaretleyebilirsiniz';
 
   @override
   String masteriesGridLv(Object level) {
@@ -21245,8 +19747,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get masteriesGridYourMasteriesWillLevel =>
-      'Antrenmanları, adımları ve kardiyoyu kaydettikçe uzmanlık seviyeleriniz artacak.';
+  String get masteriesGridYourMasteriesWillLevel => 'Antrenmanları, adımları ve kardiyoyu kaydettikçe uzmanlık seviyeleriniz artacak.';
 
   @override
   String get mealPlannerAddARecipe => 'Tarif ekle';
@@ -21264,8 +19765,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mealPlannerCustomItems => 'Özel öğeler';
 
   @override
-  String get mealPlannerEmptyTapToAdd =>
-      '(boş — eklemek için + tuşuna dokunun)';
+  String get mealPlannerEmptyTapToAdd => '(boş — eklemek için + tuşuna dokunun)';
 
   @override
   String get mealPlannerFat => 'Yağ';
@@ -21321,26 +19821,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mealRemindersSettingsActiveSchedules => 'AKTİF PROGRAMLAR';
 
   @override
-  String get mealRemindersSettingsAutoSnapshotRecipeVersions =>
-      'Tarif sürümlerinin otomatik anlık görüntüsünü al';
+  String get mealRemindersSettingsAutoSnapshotRecipeVersions => 'Tarif sürümlerinin otomatik anlık görüntüsünü al';
 
   @override
   String get mealRemindersSettingsDeleteSchedule => 'Program silinsin mi?';
 
   @override
-  String get mealRemindersSettingsMealReminderNotifications =>
-      'Öğün hatırlatıcı bildirimleri';
+  String get mealRemindersSettingsMealReminderNotifications => 'Öğün hatırlatıcı bildirimleri';
 
   @override
   String get mealRemindersSettingsMealReminders => 'Öğün hatırlatıcıları';
 
   @override
-  String get mealRemindersSettingsNoSchedulesYetAdd =>
-      'Henüz program yok. Bir tarif detay ekranından ekleyin.';
+  String get mealRemindersSettingsNoSchedulesYetAdd => 'Henüz program yok. Bir tarif detay ekranından ekleyin.';
 
   @override
-  String get mealRemindersSettingsPublicSharingDefault =>
-      'Varsayılan herkese açık paylaşım';
+  String get mealRemindersSettingsPublicSharingDefault => 'Varsayılan herkese açık paylaşım';
 
   @override
   String mealRemindersSettingsScreenCouldnTLoadSchedules(Object e) {
@@ -21353,8 +19849,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get mealRemindersSettingsSignInToSee =>
-      'Programlarını görmek için giriş yap.';
+  String get mealRemindersSettingsSignInToSee => 'Programlarını görmek için giriş yap.';
 
   @override
   String get mealScoreWidgetsGoalFit => 'Hedef uyumu';
@@ -21409,8 +19904,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get measurementDetailNotesOptional => 'NOTLAR (İSTEĞE BAĞLI)';
 
   @override
-  String get measurementDetailPleaseEnterAValid =>
-      'Lütfen geçerli bir sayı girin';
+  String get measurementDetailPleaseEnterAValid => 'Lütfen geçerli bir sayı girin';
 
   @override
   String get measurementDetailPleaseEnterAValue => 'Lütfen bir değer girin';
@@ -21469,15 +19963,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get measurementDetailTrends => 'Eğilimler';
 
   @override
-  String get measurementDetailTrySelectingAWider =>
-      'Daha geniş bir zaman aralığı seçmeyi deneyin veya yeni bir girdi kaydedin';
+  String get measurementDetailTrySelectingAWider => 'Daha geniş bir zaman aralığı seçmeyi deneyin veya yeni bir girdi kaydedin';
 
   @override
   String get measurementDetailViewTrends => 'Eğilimleri görüntüle';
 
   @override
-  String get measurementValuePillCouldNotSaveTry =>
-      'Kaydedilemedi — tekrar deneyin';
+  String get measurementValuePillCouldNotSaveTry => 'Kaydedilemedi — tekrar deneyin';
 
   @override
   String get measurementsAddEntry => 'Girdi Ekle';
@@ -21495,8 +19987,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get measurementsImperial => 'İmperyal';
 
   @override
-  String get measurementsLogAgainToSee =>
-      'Eğilimleri görmek için tekrar kaydet';
+  String get measurementsLogAgainToSee => 'Eğilimleri görmek için tekrar kaydet';
 
   @override
   String get measurementsMeasurements => 'Ölçümler';
@@ -21528,10 +20019,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get measurementsScreenPartAddAnyNotes => 'Not ekle...';
 
   @override
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
-    Object _selectedFormat,
-    Object length,
-  ) {
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length) {
     return 'Ölçüm türlerini .(_selectedFormat) olarak dışa aktar';
   }
 
@@ -21541,8 +20029,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get measurementsScreenPartAvailableMeasurementTypes =>
-      'Mevcut Ölçüm Türleri';
+  String get measurementsScreenPartAvailableMeasurementTypes => 'Mevcut Ölçüm Türleri';
 
   @override
   String get measurementsScreenPartClear => 'Temizle';
@@ -21593,23 +20080,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get measurementsScreenPartNotesOptional => 'NOTLAR (İSTEĞE BAĞLI)';
 
   @override
-  String get measurementsScreenPartPleaseEnterAValid =>
-      'Lütfen geçerli bir sayı girin';
+  String get measurementsScreenPartPleaseEnterAValid => 'Lütfen geçerli bir sayı girin';
 
   @override
-  String get measurementsScreenPartPleaseEnterAValue =>
-      'Lütfen bir değer girin';
+  String get measurementsScreenPartPleaseEnterAValue => 'Lütfen bir değer girin';
 
   @override
   String get measurementsScreenPartSelectAll => 'Tümünü Seç';
 
   @override
-  String get measurementsScreenPartWeightBodyFatChest =>
-      'ağırlık, vücut_yağı, göğüs, bel, kalça, boyun, omuzlar, sol_pazı, sağ_pazı, sol_ön_kol, sağ_ön_kol, sol_üst_bacak, sağ_üst_bacak, sol_baldır, sağ_baldır';
+  String get measurementsScreenPartWeightBodyFatChest => 'ağırlık, vücut_yağı, göğüs, bel, kalça, boyun, omuzlar, sol_pazı, sağ_pazı, sol_ön_kol, sağ_ön_kol, sol_üst_bacak, sağ_üst_bacak, sol_baldır, sağ_baldır';
 
   @override
-  String get measurementsScreenPartWorkoutsNutritionMeasureme =>
-      'Antrenmanlar, beslenme, ölçümler ve daha fazlası';
+  String get measurementsScreenPartWorkoutsNutritionMeasureme => 'Antrenmanlar, beslenme, ölçümler ve daha fazlası';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -21659,8 +20142,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get measurementsTakingLongerThanExpected =>
-      'Beklenenden uzun sürüyor...';
+  String get measurementsTakingLongerThanExpected => 'Beklenenden uzun sürüyor...';
 
   @override
   String get measurementsViewAll => 'Tümünü görüntüle';
@@ -21677,8 +20159,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mediaPickerHelperCameraPermissionRequired => 'Kamera izni gerekli';
 
   @override
-  String get mediaPickerHelperChooseMultiplePhotos =>
-      'Birden Fazla Fotoğraf Seç';
+  String get mediaPickerHelperChooseMultiplePhotos => 'Birden Fazla Fotoğraf Seç';
 
   @override
   String get mediaPickerHelperChoosePhoto => 'Fotoğraf Seç';
@@ -21696,8 +20177,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mediaPickerHelperFromGalleryMax60s => 'Galeriden (maks. 60 sn)';
 
   @override
-  String get mediaPickerHelperImagesMax10Mb =>
-      'Görseller: maks. 10 MB | Videolar: maks. 60 sn (BETA)';
+  String get mediaPickerHelperImagesMax10Mb => 'Görseller: maks. 10 MB | Videolar: maks. 60 sn (BETA)';
 
   @override
   String get mediaPickerHelperOpenSettings => 'Ayarları Aç';
@@ -21708,8 +20188,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get mediaPickerHelperPhotoLibraryPermissionRequi =>
-      'Fotoğraf kütüphanesi izni gerekli';
+  String get mediaPickerHelperPhotoLibraryPermissionRequi => 'Fotoğraf kütüphanesi izni gerekli';
 
   @override
   String get mediaPickerHelperRecordVideo => 'Video Kaydet';
@@ -21724,8 +20203,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get mediaPickerHelperUseCamera => 'Kamerayı kullan';
 
   @override
-  String get mediaPickerHelperUseCameraMax60s =>
-      'Kamerayı kullan (maks. 60 sn)';
+  String get mediaPickerHelperUseCameraMax60s => 'Kamerayı kullan (maks. 60 sn)';
 
   @override
   String get mediaPickerHelperVideo => 'Video';
@@ -21743,15 +20221,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get medicalDisclaimerAiRecommendations => 'AI Önerileri';
 
   @override
-  String get medicalDisclaimerAlwaysSeekTheAdvice =>
-      'Herhangi bir yeni egzersiz programına başlamadan önce, özellikle önceden var olan tıbbi durumlarınız, sakatlıklarınız veya sağlık sorunlarınız varsa, mutlaka doktorunuzun veya diğer yetkili sağlık uzmanlarının tavsiyesini alın. Bu uygulamada okuduğunuz bir şey nedeniyle profesyonel tıbbi tavsiyeleri asla göz ardı etmeyin veya almayı geciktirmeyin.';
+  String get medicalDisclaimerAlwaysSeekTheAdvice => 'Herhangi bir yeni egzersiz programına başlamadan önce, özellikle önceden var olan tıbbi durumlarınız, sakatlıklarınız veya sağlık sorunlarınız varsa, mutlaka doktorunuzun veya diğer yetkili sağlık uzmanlarının tavsiyesini alın. Bu uygulamada okuduğunuz bir şey nedeniyle profesyonel tıbbi tavsiyeleri asla göz ardı etmeyin veya almayı geciktirmeyin.';
 
   @override
   String get medicalDisclaimerAssumptionOfRisk => 'Risk Kabulü';
 
   @override
-  String get medicalDisclaimerBannerAiGeneratedContentNot =>
-      'AI tarafından oluşturulan içerik - tıbbi tavsiye değildir';
+  String get medicalDisclaimerBannerAiGeneratedContentNot => 'AI tarafından oluşturulan içerik - tıbbi tavsiye değildir';
 
   @override
   String get medicalDisclaimerConsultYourDoctor => 'Doktorunuza Danışın';
@@ -21774,9 +20250,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
-    Object appName,
-  ) {
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName) {
     return 'Fiziksel egzersiz doğal riskler içerir. $appName kullanarak, fiziksel aktivitelere gönüllü olarak katıldığınızı ve yaralanma, hastalık veya ölüm dahil ancak bunlarla sınırlı olmamak üzere bu tür faaliyetlerle ilişkili tüm riskleri üstlendiğinizi kabul edersiniz.';
   }
 
@@ -21791,12 +20265,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get medicalDisclaimerStopExercisingImmediatelyIf =>
-      'Ağrı, baş dönmesi, nefes darlığı, mide bulantısı veya normal eforun ötesinde herhangi bir rahatsızlık hissederseniz egzersizi derhal durdurun. AI fiziksel durumunuzu gerçek zamanlı olarak değerlendiremez, bu nedenle sınırlarınız dahilinde egzersiz yapmak sizin sorumluluğunuzdadır.';
+  String get medicalDisclaimerStopExercisingImmediatelyIf => 'Ağrı, baş dönmesi, nefes darlığı, mide bulantısı veya normal eforun ötesinde herhangi bir rahatsızlık hissederseniz egzersizi derhal durdurun. AI fiziksel durumunuzu gerçek zamanlı olarak değerlendiremez, bu nedenle sınırlarınız dahilinde egzersiz yapmak sizin sorumluluğunuzdadır.';
 
   @override
-  String get medicalDisclaimerWorkoutRecommendationsAreGe =>
-      'Antrenman önerileri, sağladığınız bilgilere (fitness seviyesi, hedefler, ekipman vb.) göre oluşturulur. AI doğruluk için çabalasa da, tüm bireysel faktörleri hesaba katamaz. Öneriler herkes için uygun olmayabilir.';
+  String get medicalDisclaimerWorkoutRecommendationsAreGe => 'Antrenman önerileri, sağladığınız bilgilere (fitness seviyesi, hedefler, ekipman vb.) göre oluşturulur. AI doğruluk için çabalasa da, tüm bireysel faktörleri hesaba katamaz. Öneriler herkes için uygun olmayabilir.';
 
   @override
   String get menuAnalysisAddFood => 'Yiyecek ekle';
@@ -21811,8 +20283,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisAlreadySaved => 'Zaten kaydedildi';
 
   @override
-  String get menuAnalysisAutoDetectedFromThe =>
-      'Menüden otomatik algılandı — yanlışsa düzenleyin';
+  String get menuAnalysisAutoDetectedFromThe => 'Menüden otomatik algılandı — yanlışsa düzenleyin';
 
   @override
   String get menuAnalysisCal => 'Kal';
@@ -21827,16 +20298,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisClearFilters => 'Filtreleri temizle';
 
   @override
-  String get menuAnalysisCouldnTRecognizeAny =>
-      'Bu açıklamada herhangi bir yiyecek tanınamadı.';
+  String get menuAnalysisCouldnTRecognizeAny => 'Bu açıklamada herhangi bir yiyecek tanınamadı.';
 
   @override
-  String get menuAnalysisEG123Main =>
-      'örn. 123 Main St veya sadece \"şehir merkezi\"';
+  String get menuAnalysisEG123Main => 'örn. 123 Main St veya sadece \"şehir merkezi\"';
 
   @override
-  String get menuAnalysisEGIndianPlace =>
-      'örn. iş yerinin yakınındaki Hint restoranı';
+  String get menuAnalysisEGIndianPlace => 'örn. iş yerinin yakınındaki Hint restoranı';
 
   @override
   String get menuAnalysisEditSavedMenu => 'Kaydedilen menüyü düzenle';
@@ -21854,16 +20322,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisHistoryClearSearch => 'Aramayı temizle';
 
   @override
-  String get menuAnalysisHistoryCouldnTLoadYour =>
-      'Kaydedilen menüleriniz yüklenemedi';
+  String get menuAnalysisHistoryCouldnTLoadYour => 'Kaydedilen menüleriniz yüklenemedi';
 
   @override
-  String get menuAnalysisHistoryEG123Main =>
-      'örn. 123 Main St veya sadece \"şehir merkezi\"';
+  String get menuAnalysisHistoryEG123Main => 'örn. 123 Main St veya sadece \"şehir merkezi\"';
 
   @override
-  String get menuAnalysisHistoryEGIndianPlace =>
-      'örn. iş yerinin yakınındaki Hint restoranı';
+  String get menuAnalysisHistoryEGIndianPlace => 'örn. iş yerinin yakınındaki Hint restoranı';
 
   @override
   String get menuAnalysisHistoryEditDetails => 'Detayları düzenle';
@@ -21894,16 +20359,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get menuAnalysisHistorySearchByNameRestaurant =>
-      'İsim, restoran veya adrese göre ara';
+  String get menuAnalysisHistorySearchByNameRestaurant => 'İsim, restoran veya adrese göre ara';
 
   @override
-  String get menuAnalysisHistoryTapTheBookmarkButton =>
-      'Buraya kaydetmek için menü taramasından sonra yer imi düğmesine dokunun.';
+  String get menuAnalysisHistoryTapTheBookmarkButton => 'Buraya kaydetmek için menü taramasından sonra yer imi düğmesine dokunun.';
 
   @override
-  String get menuAnalysisHistoryTryADifferentSearch =>
-      'Farklı bir arama deneyin.';
+  String get menuAnalysisHistoryTryADifferentSearch => 'Farklı bir arama deneyin.';
 
   @override
   String get menuAnalysisHistoryUnpin => 'Sabitlemeyi kaldır';
@@ -21912,8 +20374,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisHistoryUseRestaurantName => 'Restoran adını kullan';
 
   @override
-  String get menuAnalysisHistoryYouReOfflineThis =>
-      'Çevrimdışısınız — bu işlem bağlantı gerektirir';
+  String get menuAnalysisHistoryYouReOfflineThis => 'Çevrimdışısınız — bu işlem bağlantı gerektirir';
 
   @override
   String get menuAnalysisItemAddedSugar => 'İlave şeker';
@@ -21971,8 +20432,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisNameOptional => 'İsim (isteğe bağlı)';
 
   @override
-  String get menuAnalysisNoDishesMatchYour =>
-      'Filtrelerinize uygun yemek bulunamadı';
+  String get menuAnalysisNoDishesMatchYour => 'Filtrelerinize uygun yemek bulunamadı';
 
   @override
   String get menuAnalysisProtein => 'Protein';
@@ -21999,8 +20459,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisRemoveFromSaved2 => 'Kaydedilenlerden kaldırılsın mı?';
 
   @override
-  String get menuAnalysisRemovedFromSavedMenus =>
-      'Kaydedilen menülerden kaldırıldı';
+  String get menuAnalysisRemovedFromSavedMenus => 'Kaydedilen menülerden kaldırıldı';
 
   @override
   String get menuAnalysisResults => 'Sonuçlar';
@@ -22083,52 +20542,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuAnalysisSort2 => 'Sırala';
 
   @override
-  String get menuAnalysisTourAiPicksTheBest =>
-      'Yapay zeka; kalan makrolarınıza, alerjenlerinize ve enflamasyon toleransınıza göre en iyi üç yemeği seçer.';
+  String get menuAnalysisTourAiPicksTheBest => 'Yapay zeka; kalan makrolarınıza, alerjenlerinize ve enflamasyon toleransınıza göre en iyi üç yemeği seçer.';
 
   @override
-  String get menuAnalysisTourFilterByDietAllergens =>
-      'Diyet ve alerjenlere göre filtrele';
+  String get menuAnalysisTourFilterByDietAllergens => 'Diyet ve alerjenlere göre filtrele';
 
   @override
-  String get menuAnalysisTourHideDishesThatDon =>
-      'Diyetinize uymayan veya alerjenlerinizi içeren yemekleri gizleyin; tercihleriniz Ayarlar\'dan aktarılır.';
+  String get menuAnalysisTourHideDishesThatDon => 'Diyetinize uymayan veya alerjenlerinizi içeren yemekleri gizleyin; tercihleriniz Ayarlar\'dan aktarılır.';
 
   @override
   String get menuAnalysisTourRecommendedForYou => 'Sizin için önerilenler';
 
   @override
-  String get menuAnalysisTourSelectDishesToLog =>
-      'Kaydetmek için yemekleri seçin';
+  String get menuAnalysisTourSelectDishesToLog => 'Kaydetmek için yemekleri seçin';
 
   @override
   String get menuAnalysisTourSortTheWholeMenu => 'Tüm menüyü sırala';
 
   @override
-  String get menuAnalysisTourTapProteinCarbsFat =>
-      'Tüm yemekleri bir kerede yeniden sıralamak için Protein, Karbonhidrat, Yağ veya Enflamasyon\'a dokunun. Daha fazla… gelişmiş sıralamayı açar.';
+  String get menuAnalysisTourTapProteinCarbsFat => 'Tüm yemekleri bir kerede yeniden sıralamak için Protein, Karbonhidrat, Yağ veya Enflamasyon\'a dokunun. Daha fazla… gelişmiş sıralamayı açar.';
 
   @override
-  String get menuAnalysisTourTickTheDishesYou =>
-      'Gerçekten sipariş ettiğiniz yemekleri işaretleyin, ardından günlük toplamlarınıza göndermek için Kaydet\'e basın.';
+  String get menuAnalysisTourTickTheDishesYou => 'Gerçekten sipariş ettiğiniz yemekleri işaretleyin, ardından günlük toplamlarınıza göndermek için Kaydet\'e basın.';
 
   @override
   String get menuAnalysisUpdateExisting => 'Mevcut olanı güncelle';
 
   @override
-  String get menuAnalysisUpdatedYourSavedMenu =>
-      'Kaydedilen menünüz güncellendi';
+  String get menuAnalysisUpdatedYourSavedMenu => 'Kaydedilen menünüz güncellendi';
 
   @override
   String get menuAnalysisUseRestaurantName => 'Restoran adını kullan';
 
   @override
-  String get menuAnalysisYouReOfflineThis =>
-      'Çevrimdışısınız — bu işlem bağlantı gerektirir';
+  String get menuAnalysisYouReOfflineThis => 'Çevrimdışısınız — bu işlem bağlantı gerektirir';
 
   @override
-  String get menuDishAdjustAddABitMore =>
-      'Detaylandırmak için biraz daha bilgi ekleyin.';
+  String get menuDishAdjustAddABitMore => 'Detaylandırmak için biraz daha bilgi ekleyin.';
 
   @override
   String get menuDishAdjustAdjustThisDish => 'Bu yemeği ayarla';
@@ -22137,15 +20587,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuDishAdjustApply => 'Uygula';
 
   @override
-  String get menuDishAdjustCouldnTRefineThat =>
-      'Bu iyileştirilemedi — farklı bir ifade deneyin.';
+  String get menuDishAdjustCouldnTRefineThat => 'Bu iyileştirilemedi — farklı bir ifade deneyin.';
 
   @override
   String get menuDishAdjustHowMuchDidYou => 'Ne kadar yediniz?';
 
   @override
-  String get menuDishAdjustMenuMacrosAreAs =>
-      'Menü makroları \"servis edildiği gibidir\" — gerçekte ne yediğinizi bize söyleyin.';
+  String get menuDishAdjustMenuMacrosAreAs => 'Menü makroları \"servis edildiği gibidir\" — gerçekte ne yediğinizi bize söyleyin.';
 
   @override
   String get menuDishAdjustOrDescribeIt => 'Veya tarif edin';
@@ -22162,15 +20610,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuFilterAdvancedFilters => 'Gelişmiş filtreler';
 
   @override
-  String get menuFilterAppliesOnlyToDishes =>
-      'Sadece fiyatı listelenen yemekler için geçerlidir.';
+  String get menuFilterAppliesOnlyToDishes => 'Sadece fiyatı listelenen yemekler için geçerlidir.';
 
   @override
   String get menuFilterAvoid => 'Kaçın';
 
   @override
-  String get menuFilterBasedOnIngredientProfile =>
-      'İçerik profiline göre (omega-3, lif, ilave şeker vb.).';
+  String get menuFilterBasedOnIngredientProfile => 'İçerik profiline göre (omega-3, lif, ilave şeker vb.).';
 
   @override
   String get menuFilterBloodSugar => 'Kan şekeri';
@@ -22200,12 +20646,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuFilterFodmapIbs => 'FODMAP (IBS)';
 
   @override
-  String get menuFilterForSpecificTargetsMost =>
-      'Belirli hedefler için. Çoğu kişi buna ihtiyaç duymaz.';
+  String get menuFilterForSpecificTargetsMost => 'Belirli hedefler için. Çoğu kişi buna ihtiyaç duymaz.';
 
   @override
-  String get menuFilterGlycemicLoadPerServing =>
-      'Porsiyon başına glisemik yük — düşük = daha dengeli enerji.';
+  String get menuFilterGlycemicLoadPerServing => 'Porsiyon başına glisemik yük — düşük = daha dengeli enerji.';
 
   @override
   String get menuFilterGood => '✅ İyi';
@@ -22214,16 +20658,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuFilterHideAdvancedFilters => 'Gelişmiş filtreleri gizle';
 
   @override
-  String get menuFilterHideDishesWithMy =>
-      'Alerjenlerimi içeren yemekleri gizle';
+  String get menuFilterHideDishesWithMy => 'Alerjenlerimi içeren yemekleri gizle';
 
   @override
-  String get menuFilterHideUltraProcessedDishes =>
-      'Ultra işlenmiş yemekleri gizle';
+  String get menuFilterHideUltraProcessedDishes => 'Ultra işlenmiş yemekleri gizle';
 
   @override
-  String get menuFilterHowTheAiRated =>
-      'Yapay zekanın hedefleriniz için her yemeği nasıl puanladığı.';
+  String get menuFilterHowTheAiRated => 'Yapay zekanın hedefleriniz için her yemeği nasıl puanladığı.';
 
   @override
   String get menuFilterInflammation => 'Enflamasyon';
@@ -22241,8 +20682,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuFilterOkay => '👌 Tamam';
 
   @override
-  String get menuFilterOnionGarlicWheatLactose =>
-      'Soğan, sarımsak, buğday, laktoz IBS semptomlarını tetikleyebilir.';
+  String get menuFilterOnionGarlicWheatLactose => 'Soğan, sarımsak, buğday, laktoz IBS semptomlarını tetikleyebilir.';
 
   @override
   String get menuFilterPerDishBudget => 'Yemek başı bütçe';
@@ -22264,27 +20704,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get menuFilterShowOnlyCertainParts =>
-      'Menünün sadece belirli kısımlarını göster.';
+  String get menuFilterShowOnlyCertainParts => 'Menünün sadece belirli kısımlarını göster.';
 
   @override
   String get menuFilterSkip => '⚠️ Atla';
 
   @override
-  String get menuFilterSkipsNova4Foods =>
-      'NOVA-4 gıdalarını (endüstriyel emülgatörler, HFCS vb.) atlar';
+  String get menuFilterSkipsNova4Foods => 'NOVA-4 gıdalarını (endüstriyel emülgatörler, HFCS vb.) atlar';
 
   @override
-  String get menuFilterTapAnyThatApply =>
-      'Uygulananları seçin; sadece eşleşen yemekleri göstereceğiz.';
+  String get menuFilterTapAnyThatApply => 'Uygulananları seçin; sadece eşleşen yemekleri göstereceğiz.';
 
   @override
-  String get menuFilterUsesYourSavedAllergen =>
-      'Kaydedilmiş alerjen profilinizi kullanır';
+  String get menuFilterUsesYourSavedAllergen => 'Kaydedilmiş alerjen profilinizi kullanır';
 
   @override
-  String get menuFilterWeLlHideDishes =>
-      'Diyetinize uymayan yemekleri gizleyeceğiz.';
+  String get menuFilterWeLlHideDishes => 'Diyetinize uymayan yemekleri gizleyeceğiz.';
 
   @override
   String get menuFilterWhatAreYouIn => 'Canınız ne çekiyor?';
@@ -22328,8 +20763,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get merchClaimsFailedToLoadMerch => 'Ürün talepleri yüklenemedi';
 
   @override
-  String get merchClaimsFailedToUpdateTry =>
-      'Güncelleme başarısız oldu. Tekrar deneyin.';
+  String get merchClaimsFailedToUpdateTry => 'Güncelleme başarısız oldu. Tekrar deneyin.';
 
   @override
   String get merchClaimsKeepIt => 'Kalsın';
@@ -22347,16 +20781,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get merchClaimsNotNow => 'Şimdi değil';
 
   @override
-  String get merchClaimsPushEmailAlertsWhen =>
-      'Ürün kademelerine yaklaştığınızda veya bir ödül beklediğinde anlık bildirim + e-posta uyarıları alın';
+  String get merchClaimsPushEmailAlertsWhen => 'Ürün kademelerine yaklaştığınızda veya bir ödül beklediğinde anlık bildirim + e-posta uyarıları alın';
 
   @override
-  String get merchClaimsRealRewardsForReal =>
-      'Gerçek ilerleme için gerçek ödüller';
+  String get merchClaimsRealRewardsForReal => 'Gerçek ilerleme için gerçek ödüller';
 
   @override
-  String get merchClaimsRewardAcceptedWeLl =>
-      'Ödül kabul edildi! Kargo bilgilerini almak için size e-posta göndereceğiz.';
+  String get merchClaimsRewardAcceptedWeLl => 'Ödül kabul edildi! Kargo bilgilerini almak için size e-posta göndereceğiz.';
 
   @override
   String get merchClaimsRewardCancelled => 'Ödül iptal edildi.';
@@ -22392,8 +20823,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get merchClaimsTapAcceptToClaim =>
-      'Talep etmek için Kabul Et\'e dokunun. Gönderime hazır olduğumuzda beden ve teslimat bilgilerinizi almak için size e-posta göndereceğiz.';
+  String get merchClaimsTapAcceptToClaim => 'Talep etmek için Kabul Et\'e dokunun. Gönderime hazır olduğumuzda beden ve teslimat bilgilerinizi almak için size e-posta göndereceğiz.';
 
   @override
   String get merchClaimsTracking => 'Takip No';
@@ -22407,8 +20837,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get merchClaimsViewTracking => 'Takibi görüntüle';
 
   @override
-  String get merchClaimsWeLlEmailYou =>
-      'Önümüzdeki birkaç hafta içinde şunları almak için size e-posta göndereceğiz:';
+  String get merchClaimsWeLlEmailYou => 'Önümüzdeki birkaç hafta içinde şunları almak için size e-posta göndereceğiz:';
 
   @override
   String merchClaimsYouWillForfeit(Object displayName, Object level) {
@@ -22416,8 +20845,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get messagesCouldNotLoadYour =>
-      'Konuşmalarınız yüklenemedi.\nLütfen daha sonra tekrar deneyin.';
+  String get messagesCouldNotLoadYour => 'Konuşmalarınız yüklenemedi.\nLütfen daha sonra tekrar deneyin.';
 
   @override
   String get messagesFailedToLoadMessages => 'Mesajlar Yüklenemedi';
@@ -22432,12 +20860,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesNotLoggedIn => 'Giriş Yapılmadı';
 
   @override
-  String get messagesPleaseLogInTo =>
-      'Mesajlarınızı görmek için lütfen giriş yapın';
+  String get messagesPleaseLogInTo => 'Mesajlarınızı görmek için lütfen giriş yapın';
 
   @override
-  String get messagesStartAConversationWith =>
-      'Arkadaşlarınızla sohbete başlayın!\nMesajlarınız burada görünecektir.';
+  String get messagesStartAConversationWith => 'Arkadaşlarınızla sohbete başlayın!\nMesajlarınız burada görünecektir.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Bu gün için veri yok';
@@ -22446,8 +20872,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricHistoryCardTrendUnavailable => 'Trend kullanılamıyor.';
 
   @override
-  String get metricHistoryCardTwoOrMoreSynced =>
-      'Trend grafiği için iki veya daha fazla senkronize gün gereklidir.';
+  String get metricHistoryCardTwoOrMoreSynced => 'Trend grafiği için iki veya daha fazla senkronize gün gereklidir.';
 
   @override
   String get metricPickerChooseAMetric => 'Bir metrik seçin';
@@ -22536,8 +20961,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricsDashboardTotalTime => 'Toplam Süre';
 
   @override
-  String get metricsDashboardTrackYourProgressOver =>
-      'İlerlemenizi zaman içinde takip edin';
+  String get metricsDashboardTrackYourProgressOver => 'İlerlemenizi zaman içinde takip edin';
 
   @override
   String get metricsDashboardValue => 'Değer';
@@ -22552,8 +20976,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricsDashboardWorkoutsThisWeek => 'Bu Haftaki Antrenmanlar';
 
   @override
-  String get micronutrientsNoMicronutrientDataAvailabl =>
-      'Mikro besin verisi mevcut değil';
+  String get micronutrientsNoMicronutrientDataAvailabl => 'Mikro besin verisi mevcut değil';
 
   @override
   String get micronutrientsVitaminsMinerals => 'Vitaminler ve Mineraller';
@@ -22567,8 +20990,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get milestoneCelebrationMilestoneAchieved =>
-      'DÖNÜM NOKTASINA ULAŞILDI!';
+  String get milestoneCelebrationMilestoneAchieved => 'DÖNÜM NOKTASINA ULAŞILDI!';
 
   @override
   String get milestoneCelebrationShareYourAchievement => 'Başarınızı paylaşın';
@@ -22605,15 +21027,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String milestonesScreenUiAverageMinWorkout(
-    Object averageWorkoutDurationMinutes,
-  ) {
+  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes) {
     return 'Ortalama: $averageWorkoutDurationMinutes dk/antrenman';
   }
 
   @override
-  String get milestonesScreenUiCompleteWorkoutsToSee =>
-      'ROI değerinizi görmek için antrenmanları tamamlayın';
+  String get milestonesScreenUiCompleteWorkoutsToSee => 'ROI değerinizi görmek için antrenmanları tamamlayın';
 
   @override
   String milestonesScreenUiKg(Object totalWeightLiftedKg) {
@@ -22705,8 +21124,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get missedWorkoutBannerSkipWithoutReason => 'Nedensiz atla';
 
   @override
-  String get missedWorkoutBannerThisHelpsUsAdjust =>
-      'Bu, programınızı ayarlamamıza yardımcı olur';
+  String get missedWorkoutBannerThisHelpsUsAdjust => 'Bu, programınızı ayarlamamıza yardımcı olur';
 
   @override
   String get missedWorkoutBannerWhyAreYouSkipping => 'Neden atlıyorsunuz?';
@@ -22794,8 +21212,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get moodCardTapCellsToTune =>
-      'Ruh haline dayalı ayarlamalar yapmak için hücrelere dokun';
+  String get moodCardTapCellsToTune => 'Ruh haline dayalı ayarlamalar yapmak için hücrelere dokun';
 
   @override
   String get moodCardVol => 'Hac.';
@@ -22851,8 +21268,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get moodHistoryStartTrackingYourMood =>
-      'Kişiselleştirilmiş antrenman önerileri almak ve zaman içindeki kalıplarınızı görmek için ruh halinizi takip etmeye başlayın.';
+  String get moodHistoryStartTrackingYourMood => 'Kişiselleştirilmiş antrenman önerileri almak ve zaman içindeki kalıplarınızı görmek için ruh halinizi takip etmeye başlayın.';
 
   @override
   String get moodHistoryYourMoodInsights => 'Ruh Hali İçgörüleriniz';
@@ -22861,8 +21277,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get moodPickerAdvancedOptions => 'Gelişmiş Seçenekler';
 
   @override
-  String get moodPickerCardGeneratingYourWorkout =>
-      'Antrenmanınız oluşturuluyor...';
+  String get moodPickerCardGeneratingYourWorkout => 'Antrenmanınız oluşturuluyor...';
 
   @override
   String moodPickerCardGeneratingYourWorkout2(Object label) {
@@ -22873,8 +21288,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get moodPickerCardGenerationFailed => 'Oluşturma Başarısız';
 
   @override
-  String get moodPickerCardGetAWorkoutFor =>
-      'Ruh halinize uygun bir antrenman alın';
+  String get moodPickerCardGetAWorkoutFor => 'Ruh halinize uygun bir antrenman alın';
 
   @override
   String get moodPickerCardHowAreYouFeeling => 'Nasıl hissediyorsun?';
@@ -22896,8 +21310,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get moodPickerCardTryAgain => 'Tekrar Dene';
 
   @override
-  String get moodPickerCouldnTSaveYour =>
-      'Ruh haliniz kaydedilemedi. Lütfen tekrar deneyin.';
+  String get moodPickerCouldnTSaveYour => 'Ruh haliniz kaydedilemedi. Lütfen tekrar deneyin.';
 
   @override
   String get moodPickerGenerateWorkout => 'Antrenman Oluştur';
@@ -22968,8 +21381,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get moodWeeklyChartStable => 'Sabit';
 
   @override
-  String get moodWeeklyChartStartTrackingYourMood =>
-      'Eğilimleri görmek için ruh halinizi takip etmeye başlayın';
+  String get moodWeeklyChartStartTrackingYourMood => 'Eğilimleri görmek için ruh halinizi takip etmeye başlayın';
 
   @override
   String moodWeeklyChartValue(Object length) {
@@ -22977,8 +21389,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get morningRecoveryNudgeBody =>
-      'Bugünkü hazırlık düşük. Hacmi azaltıyoruz — yeniden oluşturmak için uygulamayı aç.';
+  String get morningRecoveryNudgeBody => 'Bugünkü hazırlık düşük. Hacmi azaltıyoruz — yeniden oluşturmak için uygulamayı aç.';
 
   @override
   String get morningRecoveryNudgeTitle => 'Bugün ağırdan al';
@@ -23002,16 +21413,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleAnalyticsBalanced => 'Dengeli';
 
   @override
-  String get muscleAnalyticsCompleteMoreWorkoutsTo =>
-      'Kas dengesi analizinizi görmek için daha fazla antrenman tamamlayın.';
+  String get muscleAnalyticsCompleteMoreWorkoutsTo => 'Kas dengesi analizinizi görmek için daha fazla antrenman tamamlayın.';
 
   @override
-  String get muscleAnalyticsCompleteSomeWorkoutsTo =>
-      'Kas antrenman ısı haritanızı görmek için birkaç antrenman tamamlayın.';
+  String get muscleAnalyticsCompleteSomeWorkoutsTo => 'Kas antrenman ısı haritanızı görmek için birkaç antrenman tamamlayın.';
 
   @override
-  String get muscleAnalyticsCompleteWorkoutsOverMultipl =>
-      'Antrenman sıklığını görmek için birden fazla hafta boyunca antrenman yapın.';
+  String get muscleAnalyticsCompleteWorkoutsOverMultipl => 'Antrenman sıklığını görmek için birden fazla hafta boyunca antrenman yapın.';
 
   @override
   String get muscleAnalyticsFrequency => 'Sıklık';
@@ -23073,8 +21481,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleAnalyticsUpperLower => 'Üst / Alt';
 
   @override
-  String get muscleAnalyticsWeeklyTrainingFrequency =>
-      'Haftalık Antrenman Sıklığı';
+  String get muscleAnalyticsWeeklyTrainingFrequency => 'Haftalık Antrenman Sıklığı';
 
   @override
   String get muscleBalanceChartBalanced => 'Dengeli';
@@ -23113,8 +21520,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleDetailMaxWeight => 'Maks Ağırlık';
 
   @override
-  String get muscleDetailNeedMoreDataFor =>
-      'Grafik için daha fazla veriye ihtiyaç var';
+  String get muscleDetailNeedMoreDataFor => 'Grafik için daha fazla veriye ihtiyaç var';
 
   @override
   String muscleDetailScreenSetsWk(Object weeklySets) {
@@ -23143,8 +21549,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleFrequencyChartLow1xWk => 'Düşük (<1x/hafta)';
 
   @override
-  String get muscleFrequencyChartNoFrequencyDataAvailable =>
-      'Frekans verisi mevcut değil';
+  String get muscleFrequencyChartNoFrequencyDataAvailable => 'Frekans verisi mevcut değil';
 
   @override
   String get muscleFrequencyChartOptimal13xWk => 'Optimal (1-3x/hafta)';
@@ -23189,8 +21594,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleHeatmapOther => 'Diğer';
 
   @override
-  String get muscleHeatmapTileCompleteWorkoutsToSee =>
-      'Kas verilerini görmek için antrenmanları tamamla';
+  String get muscleHeatmapTileCompleteWorkoutsToSee => 'Kas verilerini görmek için antrenmanları tamamla';
 
   @override
   String get muscleHeatmapTileCouldnTLoad => 'Yüklenemedi';
@@ -23210,8 +21614,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get muscleHeatmapUpperBody => 'Üst Vücut';
 
   @override
-  String get muscleScoreBreakdownNoExerciseDataIn =>
-      'Son 90 güne ait egzersiz verisi yok.';
+  String get muscleScoreBreakdownNoExerciseDataIn => 'Son 90 güne ait egzersiz verisi yok.';
 
   @override
   String muscleScoreBreakdownSheetEstimatedRmKg(Object e1rm) {
@@ -23230,12 +21633,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get my1rmsAddManually => 'Manuel ekle';
 
   @override
-  String get my1rmsAddYourMaxLifts =>
-      'Antrenman yoğunluğunuza göre kişiselleştirilmiş ağırlık önerileri almak için maksimum kaldırışlarınızı ekleyin.';
+  String get my1rmsAddYourMaxLifts => 'Antrenman yoğunluğunuza göre kişiselleştirilmiş ağırlık önerileri almak için maksimum kaldırışlarınızı ekleyin.';
 
   @override
-  String get my1rmsAutoPopulateFromWorkout =>
-      'Antrenman geçmişinden otomatik doldur';
+  String get my1rmsAutoPopulateFromWorkout => 'Antrenman geçmişinden otomatik doldur';
 
   @override
   String get my1rmsDelete1rm => '1RM silinsin mi?';
@@ -23294,11 +21695,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardKg(
-    Object derivedWeight,
-    Object multiplierDisplay,
-    Object relationshipDisplay,
-  ) {
+  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay) {
     return '$multiplierDisplay = $derivedWeight kg • $relationshipDisplay';
   }
 
@@ -23313,17 +21710,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardLinkedTo(
-    Object primaryExerciseName,
-    Object text,
-  ) {
+  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text) {
     return '$text, $primaryExerciseName ile bağlandı';
   }
 
   @override
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
-    Object linkedExerciseName,
-  ) {
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName) {
     return '$linkedExerciseName bağlantılı egzersizlerden kaldırılsın mı?';
   }
 
@@ -23375,8 +21767,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get myBadgesShowcaseLogYourFirstWorkout =>
-      'İlk rozetini kazanmak için ilk antrenmanını kaydet';
+  String get myBadgesShowcaseLogYourFirstWorkout => 'İlk rozetini kazanmak için ilk antrenmanını kaydet';
 
   @override
   String myExercisesAreYouSureDelete(Object exercise) {
@@ -23393,8 +21784,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myExercisesCreateExercise => 'Egzersiz Oluştur';
 
   @override
-  String get myExercisesCreateYourOwnExercises =>
-      'Antrenmanlarda kullanmak için kendi egzersizlerini oluştur';
+  String get myExercisesCreateYourOwnExercises => 'Antrenmanlarda kullanmak için kendi egzersizlerini oluştur';
 
   @override
   String get myExercisesCustom => 'Özel';
@@ -23424,8 +21814,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myFoodsCreateNewRecipe => 'Yeni Tarif Oluştur';
 
   @override
-  String get myFoodsCreateRecipesToQuickly =>
-      'Sık yediğin öğünleri hızlıca kaydetmek için tarifler oluştur';
+  String get myFoodsCreateRecipesToQuickly => 'Sık yediğin öğünleri hızlıca kaydetmek için tarifler oluştur';
 
   @override
   String get myFoodsCreateYourFirstRecipe => 'İlk Tarifini Oluştur';
@@ -23440,12 +21829,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myFoodsNoSavedFoodsFound => 'Kayıtlı besin bulunamadı';
 
   @override
-  String get myFoodsReopenARestaurantMenu =>
-      'Daha önce tarattığın bir restoran menüsünü tekrar aç';
+  String get myFoodsReopenARestaurantMenu => 'Daha önce tarattığın bir restoran menüsünü tekrar aç';
 
   @override
-  String get myFoodsSaveFoodsWhenLogging =>
-      'Yemekleri kaydederken yiyecekleri sakla';
+  String get myFoodsSaveFoodsWhenLogging => 'Yemekleri kaydederken yiyecekleri sakla';
 
   @override
   String get myFoodsSavedMenus => 'Kaydedilen menüler';
@@ -23464,12 +21851,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String myFoodsSheetKcalUBP(
-    Object food,
-    Object food1,
-    Object food2,
-    Object food3,
-  ) {
+  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3) {
     return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
@@ -23487,8 +21869,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myJourneyCardAmazingStreak => 'Harika bir seri! Devam et!';
 
   @override
-  String get myJourneyCardBuildingGreatHabits =>
-      'Harika alışkanlıklar kazanıyorsun!';
+  String get myJourneyCardBuildingGreatHabits => 'Harika alışkanlıklar kazanıyorsun!';
 
   @override
   String get myJourneyCardComesoFar => 'Çok yol katettin. Zorlamaya devam et!';
@@ -23497,8 +21878,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myJourneyCardDayStreak => 'günlük seri';
 
   @override
-  String get myJourneyCardEveryWorkoutCounts =>
-      'Her antrenman önemlidir. Başarabilirsin!';
+  String get myJourneyCardEveryWorkoutCounts => 'Her antrenman önemlidir. Başarabilirsin!';
 
   @override
   String get myJourneyCardKeepMomentum => 'Tempoyu koru!';
@@ -23545,8 +21925,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myJourneyCardProgressCharts => 'İlerleme Grafikleri';
 
   @override
-  String get myJourneyCardTapToSeeFullJourney =>
-      'Tüm yolculuğunu görmek için dokun';
+  String get myJourneyCardTapToSeeFullJourney => 'Tüm yolculuğunu görmek için dokun';
 
   @override
   String get myJourneyCardThisWeek => 'bu hafta';
@@ -23558,8 +21937,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myJourneyCardViewCharts => 'Grafikleri görüntüle';
 
   @override
-  String get myJourneyCardViewStrengthAndVolume =>
-      'Zaman içindeki güç ve hacim trendlerini görüntüle';
+  String get myJourneyCardViewStrengthAndVolume => 'Zaman içindeki güç ve hacim trendlerini görüntüle';
 
   @override
   String myJourneyCardWeekNumber(Object week) {
@@ -23580,23 +21958,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get myLibraryTabAiPrioritizesTheseIn =>
-      'AI, antrenmanlarında bunlara öncelik verir';
+  String get myLibraryTabAiPrioritizesTheseIn => 'AI, antrenmanlarında bunlara öncelik verir';
 
   @override
-  String get myLibraryTabBuildSupersetsCombosOr =>
-      'Süper setler, kombolar veya benzersiz hareketler oluştur';
+  String get myLibraryTabBuildSupersetsCombosOr => 'Süper setler, kombolar veya benzersiz hareketler oluştur';
 
   @override
-  String get myLibraryTabCompleteWorkoutsToSee =>
-      'Egzersiz geçmişini görmek için antrenmanları tamamla';
+  String get myLibraryTabCompleteWorkoutsToSee => 'Egzersiz geçmişini görmek için antrenmanları tamamla';
 
   @override
   String get myLibraryTabCreate => 'Oluştur';
 
   @override
-  String get myLibraryTabCreateYourFirstCustom =>
-      'İlk özel egzersizini oluştur';
+  String get myLibraryTabCreateYourFirstCustom => 'İlk özel egzersizini oluştur';
 
   @override
   String get myLibraryTabFailedToLoadActivity => 'Aktivite yüklenemedi';
@@ -23605,12 +21979,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myLibraryTabGetStarted => 'Başla';
 
   @override
-  String get myLibraryTabHeartExercisesToSave =>
-      'Kaydetmek için egzersizleri favorilerine ekle';
+  String get myLibraryTabHeartExercisesToSave => 'Kaydetmek için egzersizleri favorilerine ekle';
 
   @override
-  String get myLibraryTabMarkExercisesAsStaples =>
-      'AI\'nın öncelik vermesi için egzersizleri temel hareket olarak işaretle';
+  String get myLibraryTabMarkExercisesAsStaples => 'AI\'nın öncelik vermesi için egzersizleri temel hareket olarak işaretle';
 
   @override
   String get myLibraryTabMyExercises => 'Egzersizlerim';
@@ -23626,10 +21998,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardBestKgX(
-    Object item,
-    Object maxReps,
-  ) {
+  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps) {
     return 'En iyi: ${item}kg x $maxReps';
   }
 
@@ -23640,11 +22009,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myLibraryTabViewAll => 'Tümünü Görüntüle';
 
   @override
-  String myProgramSummaryCardValue(
-    Object experience,
-    Object goal,
-    Object workoutDays,
-  ) {
+  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays) {
     return '$workoutDays  •  $experience  •  $goal';
   }
 
@@ -23655,8 +22020,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get myStats1rm => '1RM';
 
   @override
-  String get myStatsCompleteWorkoutsToSee =>
-      'İstatistiklerini görmek için antrenmanları tamamla';
+  String get myStatsCompleteWorkoutsToSee => 'İstatistiklerini görmek için antrenmanları tamamla';
 
   @override
   String get myStatsExercisePerformance => 'Egzersiz Performansı';
@@ -23676,12 +22040,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get myWrappedCompleteAtLeast3 =>
-      'Kişiselleştirilmiş özetinin kilidini açmak için\nbu ay en az 3 antrenman tamamla';
+  String get myWrappedCompleteAtLeast3 => 'Kişiselleştirilmiş özetinin kilidini açmak için\nbu ay en az 3 antrenman tamamla';
 
   @override
-  String get myWrappedEarnAUniquePersonality =>
-      'Her ay en az 3 antrenman tamamlayarak benzersiz bir kişilik kazan.';
+  String get myWrappedEarnAUniquePersonality => 'Her ay en az 3 antrenman tamamlayarak benzersiz bir kişilik kazan.';
 
   @override
   String get myWrappedFailedToLoadWrapped => 'Özet verileri yüklenemedi';
@@ -23709,10 +22071,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String myWrappedScreenWrappedDropsInDays(
-    Object daysUntilDrop,
-    Object monthName,
-  ) {
+  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName) {
     return '$monthName Özeti $daysUntilDrop gün içinde yayınlanacak';
   }
 
@@ -23772,8 +22131,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get communityRoutineSaved => 'Rutinlerine kaydedildi';
 
   @override
-  String get communityRoutineSaveFailed =>
-      'Bu rutin kaydedilemedi. Tekrar deneyin.';
+  String get communityRoutineSaveFailed => 'Bu rutin kaydedilemedi. Tekrar deneyin.';
 
   @override
   String get communityYourProfile => 'Profilin';
@@ -23784,8 +22142,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get healthSourceSyncingBody =>
-      'Uyku, hazırlık ve yaşamsal veriler otomatik olarak eşitlenir.';
+  String get healthSourceSyncingBody => 'Uyku, hazırlık ve yaşamsal veriler otomatik olarak eşitlenir.';
 
   @override
   String vitalsPercentBelowBaseline(Object percent) {
@@ -23827,8 +22184,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatActivityCardSetUpStepGoals => 'Adım hedeflerini ayarla →';
 
   @override
-  String get neatActivityCardTrackYourDailySteps =>
-      'Günlük adımlarını ve aktiviteni takip et';
+  String get neatActivityCardTrackYourDailySteps => 'Günlük adımlarını ve aktiviteni takip et';
 
   @override
   String get neatDashboardDailyActivity => 'Günlük Aktivite';
@@ -23852,8 +22208,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatDashboardScreenComplete => 'TAMAMLANDI';
 
   @override
-  String get neatDashboardScreenGreatJobYouVe =>
-      'Harika iş! Bugün aktif saat hedefine ulaştın.';
+  String get neatDashboardScreenGreatJobYouVe => 'Harika iş! Bugün aktif saat hedefine ulaştın.';
 
   @override
   String get neatDashboardScreenHourlyActivity => 'Saatlik Aktivite';
@@ -23896,10 +22251,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String neatDashboardScreenPartStreaksCardQuietHours(
-    Object endTime,
-    Object startTime,
-  ) {
+  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime) {
     return 'Sessiz saatler: $startTime - $endTime';
   }
 
@@ -23938,8 +22290,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatDashboardScreenUpNext => 'Sırada';
 
   @override
-  String get neatDashboardScreenWorkHoursOnly9am =>
-      'Sadece çalışma saatleri (09:00 - 17:00)';
+  String get neatDashboardScreenWorkHoursOnly9am => 'Sadece çalışma saatleri (09:00 - 17:00)';
 
   @override
   String get neatDashboardUnableToLoadData => 'Veriler Yüklenemedi';
@@ -23948,8 +22299,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatGamificationWidgetsAccept => 'Kabul Et';
 
   @override
-  String get neatGamificationWidgetsAchievementUnlocked =>
-      'BAŞARI KİLİDİ AÇILDI!';
+  String get neatGamificationWidgetsAchievementUnlocked => 'BAŞARI KİLİDİ AÇILDI!';
 
   @override
   String get neatGamificationWidgetsActive => 'Aktif';
@@ -24011,8 +22361,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatGamificationWidgetsNeatPts => 'NEAT puanı';
 
   @override
-  String get neatGamificationWidgetsNoRankingsYetThis =>
-      'Bu hafta henüz sıralama yok';
+  String get neatGamificationWidgetsNoRankingsYetThis => 'Bu hafta henüz sıralama yok';
 
   @override
   String neatGamificationWidgetsPartNeatMilestonePopupStateXp(Object xpEarned) {
@@ -24051,8 +22400,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatGamificationWidgetsViewAll => 'Tümünü Görüntüle';
 
   @override
-  String get neatGamificationWidgetsWeeklyLeaderboard =>
-      'Haftalık Liderlik Tablosu';
+  String get neatGamificationWidgetsWeeklyLeaderboard => 'Haftalık Liderlik Tablosu';
 
   @override
   String neatGamificationWidgetsXpToNext(Object levelName, Object xpToNext) {
@@ -24088,12 +22436,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get netflixExerciseCarouselSeeAll => 'Tümünü Gör';
 
   @override
-  String get netflixExercisesAddYourOwnExercises =>
-      'Özel tekrar, set ve talimatlarla kendi egzersizlerini ekle.';
+  String get netflixExercisesAddYourOwnExercises => 'Özel tekrar, set ve talimatlarla kendi egzersizlerini ekle.';
 
   @override
-  String get netflixExercisesAiSearchEG =>
-      'AI araması (ör. \"göğüs için bir şeyler\")';
+  String get netflixExercisesAiSearchEG => 'AI araması (ör. \"göğüs için bir şeyler\")';
 
   @override
   String get netflixExercisesCustomExercises => 'Özel Egzersizler';
@@ -24102,8 +22448,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get netflixExercisesEquipment => 'Ekipman';
 
   @override
-  String get netflixExercisesExercisesByMuscle =>
-      'Kas grubuna göre egzersizler';
+  String get netflixExercisesExercisesByMuscle => 'Kas grubuna göre egzersizler';
 
   @override
   String get netflixExercisesFailedToLoadExercises => 'Egzersizler yüklenemedi';
@@ -24127,24 +22472,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get netflixExercisesTabCreate => 'Oluştur';
 
   @override
-  String get netflixExercisesTabCreateYourOwnExercises =>
-      'Fotoğraflar ve AI analizi ile kendi egzersizlerini oluştur';
+  String get netflixExercisesTabCreateYourOwnExercises => 'Fotoğraflar ve AI analizi ile kendi egzersizlerini oluştur';
 
   @override
   String get netflixExercisesTabMyCustomExercises => 'Özel Egzersizlerim';
 
   @override
-  String get netflixExercisesTabNoCustomExercisesYet =>
-      'Henüz özel egzersiz yok';
+  String get netflixExercisesTabNoCustomExercisesYet => 'Henüz özel egzersiz yok';
 
   @override
   String get netflixExercisesTabNoExercisesFound => 'Egzersiz bulunamadı';
 
   @override
-  String netflixExercisesTabPartExerciseListCardDaysWeek(
-    Object daysPerWeek,
-    Object duration,
-  ) {
+  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration) {
     return '$daysPerWeek gün/hafta • $duration';
   }
 
@@ -24168,10 +22508,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get newTilesAmazingStreakKeepGoing => 'Harika seri! Devam et!';
 
   @override
-  String newTilesPartActiveChallengeCardDayOf(
-    Object currentDay,
-    Object totalDays,
-  ) {
+  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays) {
     return '$totalDays günün $currentDay. günü';
   }
 
@@ -24181,10 +22518,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String newTilesPartActiveChallengeCardTodayReps(
-    Object targetReps,
-    Object todayReps,
-  ) {
+  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps) {
     return 'Bugün: $todayReps / $targetReps tekrar';
   }
 
@@ -24200,19 +22534,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get newTilesPartCoachTip => 'Koç Tavsiyesi';
 
   @override
-  String get newTilesPartCompleteWorkoutsToEarn =>
-      'PR kazanmak için antrenmanları tamamla';
+  String get newTilesPartCompleteWorkoutsToEarn => 'PR kazanmak için antrenmanları tamamla';
 
   @override
-  String get newTilesPartConnectHealthToTrack =>
-      'Takip etmek için Sağlık verilerini bağla';
+  String get newTilesPartConnectHealthToTrack => 'Takip etmek için Sağlık verilerini bağla';
 
   @override
   String get newTilesPartDayStreak => 'günlük seri';
 
   @override
-  String get newTilesPartGettingYourPersonalizedTip =>
-      'Kişiselleştirilmiş tavsiyen alınıyor...';
+  String get newTilesPartGettingYourPersonalizedTip => 'Kişiselleştirilmiş tavsiyen alınıyor...';
 
   @override
   String get newTilesPartHeartRate => 'Nabız';
@@ -24269,8 +22600,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get newTilesPartViewCharts => 'Grafikleri görüntüle';
 
   @override
-  String get newTilesPartViewStrengthAndVolume =>
-      'Zaman içindeki güç ve hacim trendlerini görüntüle';
+  String get newTilesPartViewStrengthAndVolume => 'Zaman içindeki güç ve hacim trendlerini görüntüle';
 
   @override
   String get newTilesPartWater => 'Su';
@@ -24315,8 +22645,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextSetPreviewCalculating => 'Bir sonraki set hesaplanıyor...';
 
   @override
-  String get nextSetPreviewCalculatingOptimalNextSet =>
-      'Optimal bir sonraki set hesaplanıyor...';
+  String get nextSetPreviewCalculatingOptimalNextSet => 'Optimal bir sonraki set hesaplanıyor...';
 
   @override
   String nextSetPreviewCardIntensity(Object intensityPercentage) {
@@ -24349,8 +22678,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextSetPreviewUseThis => 'Bunu Kullan';
 
   @override
-  String get nextWorkoutCardCouldNotSkipWorkout =>
-      'Antrenman atlanamadı. Lütfen tekrar dene.';
+  String get nextWorkoutCardCouldNotSkipWorkout => 'Antrenman atlanamadı. Lütfen tekrar dene.';
 
   @override
   String get nextWorkoutCardQuick => 'Hızlı';
@@ -24362,8 +22690,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextWorkoutCardSkipWorkout => 'Antrenmanı Atla?';
 
   @override
-  String get nextWorkoutCardThisWorkoutWillBe =>
-      'Bu antrenman atlanmış olarak işaretlenecek ve haftalık hedefine dahil edilmeyecektir.';
+  String get nextWorkoutCardThisWorkoutWillBe => 'Bu antrenman atlanmış olarak işaretlenecek ve haftalık hedefine dahil edilmeyecektir.';
 
   @override
   String get nextWorkoutCardUpcoming => 'Yaklaşan';
@@ -24374,8 +22701,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nextWorkoutCardWorkoutRegenerated =>
-      'Antrenman yeniden oluşturuldu!';
+  String get nextWorkoutCardWorkoutRegenerated => 'Antrenman yeniden oluşturuldu!';
 
   @override
   String get nextWorkoutCardWorkoutSkipped => 'Antrenman atlandı';
@@ -24398,8 +22724,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get notificationPrimeStayOnTrackWith =>
-      'Nazik hatırlatıcılarla hedeflerinden şaşma';
+  String get notificationPrimeStayOnTrackWith => 'Nazik hatırlatıcılarla hedeflerinden şaşma';
 
   @override
   String get notificationPrimeStreakSaves => 'Seri korumaları';
@@ -24408,8 +22733,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationPrimeWorkoutReminders => 'Antrenman hatırlatıcıları';
 
   @override
-  String get notificationPrimeYouCanChangeThis =>
-      'Bunu Ayarlar\'dan istediğin zaman değiştirebilirsin.';
+  String get notificationPrimeYouCanChangeThis => 'Bunu Ayarlar\'dan istediğin zaman değiştirebilirsin.';
 
   @override
   String get notificationTestAiCoachMessage => 'AI Koç Mesajı';
@@ -24439,8 +22763,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationTestHeyYourAiCoach => '\"Selam! AI Koçun burada 💪\"';
 
   @override
-  String get notificationTestImmediateLocalNotification =>
-      'Anlık Yerel Bildirim';
+  String get notificationTestImmediateLocalNotification => 'Anlık Yerel Bildirim';
 
   @override
   String get notificationTestItSBeenX => '\"X gün oldu! 😱\"';
@@ -24455,8 +22778,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationTestLunchReminder => 'Öğle Yemeği Hatırlatıcısı';
 
   @override
-  String get notificationTestNoPendingNotificationsSched =>
-      'Bekleyen bildirim planlanmadı';
+  String get notificationTestNoPendingNotificationsSched => 'Bekleyen bildirim planlanmadı';
 
   @override
   String get notificationTestNoTitle => 'Başlık yok';
@@ -24486,44 +22808,34 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get notificationTestShowsANotificationRight =>
-      'ŞU ANDA bir bildirim gösterir';
+  String get notificationTestShowsANotificationRight => 'ŞU ANDA bir bildirim gösterir';
 
   @override
-  String get notificationTestShowsAllScheduledNotificati =>
-      'Tüm planlanmış bildirimleri gösterir';
+  String get notificationTestShowsAllScheduledNotificati => 'Tüm planlanmış bildirimleri gösterir';
 
   @override
-  String get notificationTestShowsCurrentTimezoneSetting =>
-      'Mevcut saat dilimi ayarlarını gösterir';
+  String get notificationTestShowsCurrentTimezoneSetting => 'Mevcut saat dilimi ayarlarını gösterir';
 
   @override
-  String get notificationTestStayHydratedYouRe =>
-      '\"Sıvı alımını ihmal etme! 💧 %40 seviyesindesin\"';
+  String get notificationTestStayHydratedYouRe => '\"Sıvı alımını ihmal etme! 💧 %40 seviyesindesin\"';
 
   @override
-  String get notificationTestTestsScheduledNotificationD =>
-      'Planlanmış bildirim teslimatını test eder';
+  String get notificationTestTestsScheduledNotificationD => 'Planlanmış bildirim teslimatını test eder';
 
   @override
-  String get notificationTestTheseAreLocalNotifications =>
-      'Bunlar YEREL bildirimlerdir (Firebase değil). Planlanmış bildirimlerin cihazınızda çalışıp çalışmadığını test etmek için bunları kullanın.';
+  String get notificationTestTheseAreLocalNotifications => 'Bunlar YEREL bildirimlerdir (Firebase değil). Planlanmış bildirimlerin cihazınızda çalışıp çalışmadığını test etmek için bunları kullanın.';
 
   @override
-  String get notificationTestTheseNotificationsAreSent =>
-      'Bu bildirimler, arka ucunuz aracılığıyla Firebase Cloud Messaging ile gönderilir.';
+  String get notificationTestTheseNotificationsAreSent => 'Bu bildirimler, arka ucunuz aracılığıyla Firebase Cloud Messaging ile gönderilir.';
 
   @override
-  String get notificationTestTimeToLogYour =>
-      '\"Kahvaltını kaydetme zamanı! 📸\"';
+  String get notificationTestTimeToLogYour => '\"Kahvaltını kaydetme zamanı! 📸\"';
 
   @override
-  String get notificationTestTimeToLogYour2 =>
-      '\"Öğle yemeğini kaydetme zamanı! 📸\"';
+  String get notificationTestTimeToLogYour2 => '\"Öğle yemeğini kaydetme zamanı! 📸\"';
 
   @override
-  String get notificationTestTimeToLogYour3 =>
-      '\"Akşam yemeğini kaydetme zamanı! 📸\"';
+  String get notificationTestTimeToLogYour3 => '\"Akşam yemeğini kaydetme zamanı! 📸\"';
 
   @override
   String get notificationTestTimeToTrain => '\"Antrenman zamanı! 💪\"';
@@ -24532,26 +22844,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationTestTimezoneInfo => 'Saat Dilimi Bilgisi';
 
   @override
-  String get notificationTestViewPendingNotifications =>
-      'Bekleyen Bildirimleri Görüntüle';
+  String get notificationTestViewPendingNotifications => 'Bekleyen Bildirimleri Görüntüle';
 
   @override
-  String get notificationTestViewTimezoneInfo =>
-      'Saat Dilimi Bilgisini Görüntüle';
+  String get notificationTestViewTimezoneInfo => 'Saat Dilimi Bilgisini Görüntüle';
 
   @override
   String get notificationTestWorkoutReminder => 'Antrenman Hatırlatıcısı';
 
   @override
-  String get notificationTestYourAiCoachIs =>
-      '\"AI Coach\'un yalnız kalıyor... 🥺\"';
+  String get notificationTestYourAiCoachIs => '\"AI Coach\'un yalnız kalıyor... 🥺\"';
 
   @override
   String get notificationTestYourAiCoachIs2 => '\"AI Coach\'un hazır! 💪\"';
 
   @override
-  String get notificationTestYourMusclesMissYou =>
-      '\"Kasların seni özledi! 💪\"';
+  String get notificationTestYourMusclesMissYou => '\"Kasların seni özledi! 💪\"';
 
   @override
   String get notifications3Day => '3/gün';
@@ -24575,8 +22883,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsBreakfast => 'Kahvaltı';
 
   @override
-  String get notificationsBreakfastLunchDinner =>
-      'Kahvaltı, öğle ve akşam yemeği';
+  String get notificationsBreakfastLunchDinner => 'Kahvaltı, öğle ve akşam yemeği';
 
   @override
   String get notificationsClearAll => 'Tümünü temizle';
@@ -24591,15 +22898,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsDeliveryTime => 'Teslimat zamanı';
 
   @override
-  String get notificationsDifferentScheduleOnSat =>
-      'Cumartesi ve Pazar farklı program';
+  String get notificationsDifferentScheduleOnSat => 'Cumartesi ve Pazar farklı program';
 
   @override
   String get notificationsDinner => 'Akşam yemeği';
 
   @override
-  String get notificationsDuolingoStyleNudgesWhen =>
-      'Hareketsiz kaldığında Duolingo tarzı dürtmeler';
+  String get notificationsDuolingoStyleNudgesWhen => 'Hareketsiz kaldığında Duolingo tarzı dürtmeler';
 
   @override
   String get notificationsEnd => 'Bitiş';
@@ -24608,24 +22913,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsEvening => 'Akşam';
 
   @override
-  String get notificationsFailedToAcceptRequest =>
-      'İstek kabul edilemedi. Tekrar deneyin.';
+  String get notificationsFailedToAcceptRequest => 'İstek kabul edilemedi. Tekrar deneyin.';
 
   @override
-  String get notificationsFailedToIgnoreRequest =>
-      'İstek yoksayılamadı. Tekrar deneyin.';
+  String get notificationsFailedToIgnoreRequest => 'İstek yoksayılamadı. Tekrar deneyin.';
 
   @override
-  String get notificationsFailedToLoadNotifications =>
-      'Bildirimler yüklenemedi';
+  String get notificationsFailedToLoadNotifications => 'Bildirimler yüklenemedi';
 
   @override
-  String get notificationsFineTuneIndividualNotificat =>
-      'Bireysel bildirim türlerine ince ayar yap';
+  String get notificationsFineTuneIndividualNotificat => 'Bireysel bildirim türlerine ince ayar yap';
 
   @override
-  String get notificationsFriendRequestIgnored =>
-      'Arkadaşlık isteği yoksayıldı';
+  String get notificationsFriendRequestIgnored => 'Arkadaşlık isteği yoksayıldı';
 
   @override
   String get notificationsFullCoach => 'Tam Coach';
@@ -24634,12 +22934,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsGuiltNotifications => 'Suçluluk Bildirimleri';
 
   @override
-  String get notificationsHeadsUpWhenResting =>
-      'Dinlenme nabzı yüksek seyrettiğinde uyarı ver';
+  String get notificationsHeadsUpWhenResting => 'Dinlenme nabzı yüksek seyrettiğinde uyarı ver';
 
   @override
-  String get notificationsHourlyDuringWorkHours =>
-      'Çalışma saatleri boyunca saat başı';
+  String get notificationsHourlyDuringWorkHours => 'Çalışma saatleri boyunca saat başı';
 
   @override
   String get notificationsIncludeEmoji => 'Emoji dahil et';
@@ -24681,8 +22979,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsNudgeTime => 'Dürtme zamanı';
 
   @override
-  String get notificationsPeriodFertilityAndLogging =>
-      'Adet, doğurganlık ve kayıt hatırlatıcıları';
+  String get notificationsPeriodFertilityAndLogging => 'Adet, doğurganlık ve kayıt hatırlatıcıları';
 
   @override
   String get notificationsRecommended => 'Önerilen';
@@ -24691,15 +22988,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsRemindEvery => 'Hatırlatma sıklığı';
 
   @override
-  String get notificationsRemindOnWorkoutDays =>
-      'Antrenman günlerinde hatırlat';
+  String get notificationsRemindOnWorkoutDays => 'Antrenman günlerinde hatırlat';
 
   @override
   String get notificationsReminderTime => 'Hatırlatma zamanı';
 
   @override
-  String get notificationsReminderWhenYouRe =>
-      'Adım hedefin gerisinde kaldığında hatırlat';
+  String get notificationsReminderWhenYouRe => 'Adım hedefin gerisinde kaldığında hatırlat';
 
   @override
   String get notificationsScreenPartAccept => 'Kabul et';
@@ -24714,8 +23009,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsScreenPartWhatToExpect => 'Neler beklemeli';
 
   @override
-  String get notificationsScreenPartYourAiCoachWill =>
-      'AI Coach\'un burada sana antrenman hatırlatıcıları, motivasyon ve ilerleme güncellemeleri gönderecek.';
+  String get notificationsScreenPartYourAiCoachWill => 'AI Coach\'un burada sana antrenman hatırlatıcıları, motivasyon ve ilerleme güncellemeleri gönderecek.';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -24723,12 +23017,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get notificationsShowEmojiInNotification =>
-      'Bildirim metninde emoji göster';
+  String get notificationsShowEmojiInNotification => 'Bildirim metninde emoji göster';
 
   @override
-  String get notificationsStayHydratedThroughoutThe =>
-      'Gün boyunca sıvı alımını ihmal etme';
+  String get notificationsStayHydratedThroughoutThe => 'Gün boyunca sıvı alımını ihmal etme';
 
   @override
   String get notificationsTime => 'Zaman';
@@ -24749,8 +23041,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationsWorkoutReminders => 'Antrenman Hatırlatıcıları';
 
   @override
-  String get notificationsYourFriendIsDoing =>
-      'Arkadaşın senin antrenmanını yapıyor!';
+  String get notificationsYourFriendIsDoing => 'Arkadaşın senin antrenmanını yapıyor!';
 
   @override
   String get notificationsYourProgressSummary => 'İlerleme özetin';
@@ -24762,8 +23053,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notifsLaterButton => 'Belki sonra';
 
   @override
-  String get notifsPrimerBody =>
-      'Antrenmanlar ve check-in\'ler için hatırlatma alın.';
+  String get notifsPrimerBody => 'Antrenmanlar ve check-in\'ler için hatırlatma alın.';
 
   @override
   String get notifsPrimerTitle => 'Yolda kal';
@@ -24792,8 +23082,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerCurrent => 'Mevcut';
 
   @override
-  String get nutrientExplorerFailedToUpdatePinned =>
-      'Sabitlenen besin öğeleri güncellenemedi';
+  String get nutrientExplorerFailedToUpdatePinned => 'Sabitlenen besin öğeleri güncellenemedi';
 
   @override
   String get nutrientExplorerFattyAcids => 'YAĞ ASİTLERİ';
@@ -24802,8 +23091,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerMinerals => 'MİNERALLER';
 
   @override
-  String get nutrientExplorerNutrientsThatMatterMost =>
-      'Döngünün neresinde olduğunuza göre en önemli besin öğeleri';
+  String get nutrientExplorerNutrientsThatMatterMost => 'Döngünün neresinde olduğunuza göre en önemli besin öğeleri';
 
   @override
   String get nutrientExplorerPartCeiling => 'Tavan';
@@ -24815,8 +23103,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerPartHigh => 'Yüksek';
 
   @override
-  String get nutrientExplorerPartLogSomeFoodTo =>
-      'Mikro besin alımını görmek için biraz yemek kaydet';
+  String get nutrientExplorerPartLogSomeFoodTo => 'Mikro besin alımını görmek için biraz yemek kaydet';
 
   @override
   String get nutrientExplorerPartLow => 'Düşük';
@@ -24828,10 +23115,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerPartNutrientScore => 'Besin Puanı';
 
   @override
-  String nutrientExplorerPartNutrientScoreCardCurrent(
-    Object currentValue,
-    Object unit,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit) {
     return 'Mevcut: $currentValue$unit';
   }
 
@@ -24841,10 +23125,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String nutrientExplorerPartNutrientScoreCardOptimal(
-    Object optimalCount,
-    Object totalCount,
-  ) {
+  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount) {
     return '$optimalCount/$totalCount ideal';
   }
 
@@ -24874,8 +23155,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerPinToDashboard => 'Panoya sabitle';
 
   @override
-  String get nutrientExplorerPrioritisedForYourCycle =>
-      'DÖNGÜNÜZ İÇİN ÖNCELİKLENDİRİLDİ';
+  String get nutrientExplorerPrioritisedForYourCycle => 'DÖNGÜNÜZ İÇİN ÖNCELİKLENDİRİLDİ';
 
   @override
   String nutrientExplorerRemovedFromPinnedNutrients(Object displayName) {
@@ -24894,15 +23174,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientExplorerUnknown => 'Bilinmiyor';
 
   @override
-  String get nutrientExplorerUnpinNutrient =>
-      'Besin öğesini sabitlemeyi kaldır';
+  String get nutrientExplorerUnpinNutrient => 'Besin öğesini sabitlemeyi kaldır';
 
   @override
   String get nutrientExplorerVitamins => 'VİTAMİNLER';
 
   @override
-  String get nutrientRushGameCatchTheGoldenZealova =>
-      'Güçlendirme için altın Zealova işaretini yakala!';
+  String get nutrientRushGameCatchTheGoldenZealova => 'Güçlendirme için altın Zealova işaretini yakala!';
 
   @override
   String get nutrientRushGameNewBest => '🎉 YENİ EN İYİ!';
@@ -24911,8 +23189,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutrientRushGameNewPersonalBest => '🎉 YENİ KİŞİSEL EN İYİ!';
 
   @override
-  String get nutrientRushGameNutrientRushFriends =>
-      'Nutrient Rush — Arkadaşlar';
+  String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Arkadaşlar';
 
   @override
   String nutrientRushGameS(Object _stageNumber) {
@@ -24944,8 +23221,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionCaloriesByCyclePhase => 'Döngü Evresine Göre Kaloriler';
 
   @override
-  String get nutritionCookingUpYourRecipe =>
-      'Tarifin arka planda hazırlanıyor…';
+  String get nutritionCookingUpYourRecipe => 'Tarifin arka planda hazırlanıyor…';
 
   @override
   String get nutritionCouldNotLoadCycle => 'Döngü katmanı yüklenemedi';
@@ -24954,15 +23230,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionDailyTab => 'Günlük';
 
   @override
-  String get nutritionErrorStatePleaseCheckYourConnection =>
-      'Lütfen bağlantını kontrol et ve tekrar dene';
+  String get nutritionErrorStatePleaseCheckYourConnection => 'Lütfen bağlantını kontrol et ve tekrar dene';
 
   @override
   String get nutritionErrorStateTryAgain => 'Tekrar Dene';
 
   @override
-  String get nutritionErrorStateUnableToLoadNutrition =>
-      'Beslenme verileri yüklenemedi';
+  String get nutritionErrorStateUnableToLoadNutrition => 'Beslenme verileri yüklenemedi';
 
   @override
   String get nutritionFailedToSaveFood => 'Yemek kaydedilemedi';
@@ -24971,8 +23245,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alerjenler';
 
   @override
-  String get nutritionFastingCardBodyCompositionTarget =>
-      'Vücut kompozisyonu hedefi';
+  String get nutritionFastingCardBodyCompositionTarget => 'Vücut kompozisyonu hedefi';
 
   @override
   String nutritionFastingCardCal(Object currentCalories) {
@@ -24986,8 +23259,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionFastingCardDietType => 'Diyet Türü';
 
   @override
-  String get nutritionFastingCardEditNutritionSettings =>
-      'Beslenme ayarlarını düzenle';
+  String get nutritionFastingCardEditNutritionSettings => 'Beslenme ayarlarını düzenle';
 
   @override
   String get nutritionFastingCardFastingProtocol => 'Oruç Protokolü';
@@ -25029,8 +23301,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionFastingCardWeeklyRate => 'Haftalık Oran';
 
   @override
-  String get nutritionFastingConfigureYourEatingSchedule =>
-      'Yeme programını yapılandır';
+  String get nutritionFastingConfigureYourEatingSchedule => 'Yeme programını yapılandır';
 
   @override
   String get nutritionFastingFastingProtocol => 'Oruç Protokolü';
@@ -25054,8 +23325,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionFuel => 'Yakıt';
 
   @override
-  String get nutritionGoalsCardBmrBasalMetabolicRate =>
-      'BMR (Bazal Metabolizma Hızı)';
+  String get nutritionGoalsCardBmrBasalMetabolicRate => 'BMR (Bazal Metabolizma Hızı)';
 
   @override
   String nutritionGoalsCardBurned(Object caloriesBurned) {
@@ -25084,43 +23354,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionGoalsCardFemaleConstant => 'Kadın sabiti';
 
   @override
-  String get nutritionGoalsCardFemalesHaveDifferentBody =>
-      'kadınların vücut kompozisyonu farklıdır';
+  String get nutritionGoalsCardFemalesHaveDifferentBody => 'kadınların vücut kompozisyonu farklıdır';
 
   @override
   String get nutritionGoalsCardGoalAdjustment => 'Hedef Ayarlaması';
 
   @override
-  String get nutritionGoalsCardHowYourTargetsAre =>
-      'Hedeflerin nasıl hesaplanıyor';
+  String get nutritionGoalsCardHowYourTargetsAre => 'Hedeflerin nasıl hesaplanıyor';
 
   @override
   String get nutritionGoalsCardMaleConstant => 'Erkek sabiti';
 
   @override
-  String get nutritionGoalsCardMalesHaveMoreLean =>
-      'erkeklerin yağsız kütlesi daha fazladır';
+  String get nutritionGoalsCardMalesHaveMoreLean => 'erkeklerin yağsız kütlesi daha fazladır';
 
   @override
-  String get nutritionGoalsCardMetabolismSlowsWithAge =>
-      'metabolizma yaşla birlikte yavaşlar';
+  String get nutritionGoalsCardMetabolismSlowsWithAge => 'metabolizma yaşla birlikte yavaşlar';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula =>
-      'Mifflin-St Jeor formülü · detaylar için dokun';
+  String get nutritionGoalsCardMifflinStJeorFormula => 'Mifflin-St Jeor formülü · detaylar için dokun';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula2 =>
-      'Mifflin-St Jeor formülü (profil verileri döküm için uygun değil)';
+  String get nutritionGoalsCardMifflinStJeorFormula2 => 'Mifflin-St Jeor formülü (profil verileri döküm için uygun değil)';
 
   @override
-  String get nutritionGoalsCardMoreMassMoreEnergy =>
-      'daha fazla kütle = dinlenirken daha fazla enerji';
+  String get nutritionGoalsCardMoreMassMoreEnergy => 'daha fazla kütle = dinlenirken daha fazla enerji';
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
-    Object activityMultiplier,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier) {
     return 'Aktivite Çarpanı (×$activityMultiplier)';
   }
 
@@ -25150,12 +23411,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
-    Object carbPct,
-    Object displayName,
-    Object fatPct,
-    Object proteinPct,
-  ) {
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct) {
     return 'Makro Dağılımı ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
@@ -25186,37 +23442,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionGoalsCardRecalculate => 'Yeniden hesapla';
 
   @override
-  String get nutritionGoalsCardTallerLargerSurfaceArea =>
-      'daha uzun boy = daha geniş yüzey alanı';
+  String get nutritionGoalsCardTallerLargerSurfaceArea => 'daha uzun boy = daha geniş yüzey alanı';
 
   @override
-  String get nutritionGoalsCardTdeeDailyEnergyNeeds =>
-      'TDEE (Günlük Enerji İhtiyacı)';
+  String get nutritionGoalsCardTdeeDailyEnergyNeeds => 'TDEE (Günlük Enerji İhtiyacı)';
 
   @override
   String get nutritionJumpToToday => 'Bugüne git';
 
   @override
-  String get nutritionLogAFewDays =>
-      'Döngü katmanını görmek için birkaç gün kayıt girin';
+  String get nutritionLogAFewDays => 'Döngü katmanını görmek için birkaç gün kayıt girin';
 
   @override
   String get nutritionLogFood => 'Yemek kaydet';
 
   @override
-  String get nutritionLogSomeFoodFirst =>
-      'Paylaşmak için önce biraz yemek kaydedin';
+  String get nutritionLogSomeFoodFirst => 'Paylaşmak için önce biraz yemek kaydedin';
 
   @override
-  String get nutritionLogSomeMealsFirst =>
-      'Paylaşmak için önce birkaç öğün kaydedin';
+  String get nutritionLogSomeMealsFirst => 'Paylaşmak için önce birkaç öğün kaydedin';
 
   @override
   String get nutritionMealDeleted => 'Öğün silindi';
 
   @override
-  String get nutritionPatterns45MinReminderPush =>
-      '45 dakikalık hatırlatıcı bildirimi';
+  String get nutritionPatterns45MinReminderPush => '45 dakikalık hatırlatıcı bildirimi';
 
   @override
   String get nutritionPatternsAiGuess => 'AI tahmini';
@@ -25225,8 +23475,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPatternsAiMoodGuesses => 'AI ruh hali tahminleri';
 
   @override
-  String get nutritionPatternsAutoInferMoodFrom =>
-      'Check-in\'leri atladığınızda ruh halini beslenmeden otomatik çıkar';
+  String get nutritionPatternsAutoInferMoodFrom => 'Check-in\'leri atladığınızda ruh halini beslenmeden otomatik çıkar';
 
   @override
   String get nutritionPatternsBasedOnTheLast => 'Son 90 güne göre';
@@ -25241,34 +23490,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPatternsCheckInsAreOff => 'Check-in\'ler kapalı';
 
   @override
-  String get nutritionPatternsFoodsHighestIn =>
-      'En yüksek oranda içeren besinler...';
+  String get nutritionPatternsFoodsHighestIn => 'En yüksek oranda içeren besinler...';
 
   @override
   String get nutritionPatternsFoodsThatDragYou => 'Sizi yavaşlatan besinler';
 
   @override
-  String get nutritionPatternsFoodsThatEnergizeYou =>
-      'Size enerji veren besinler';
+  String get nutritionPatternsFoodsThatEnergizeYou => 'Size enerji veren besinler';
 
   @override
-  String get nutritionPatternsLog3MealsWith =>
-      'Hangi besinlerin size enerji verdiğini ve hangilerinin sizi yavaşlattığını görmek için check-in ile 3+ öğün kaydedin.';
+  String get nutritionPatternsLog3MealsWith => 'Hangi besinlerin size enerji verdiğini ve hangilerinin sizi yavaşlattığını görmek için check-in ile 3+ öğün kaydedin.';
 
   @override
-  String get nutritionPatternsLogAFewMeals =>
-      'Makro trendlerinizi görmek için birkaç öğün kaydedin.';
+  String get nutritionPatternsLogAFewMeals => 'Makro trendlerinizi görmek için birkaç öğün kaydedin.';
 
   @override
-  String get nutritionPatternsLoggedMealsWillShow =>
-      'Kaydedilen öğünler burada bir zaman çizelgesi olarak görünecektir.';
+  String get nutritionPatternsLoggedMealsWillShow => 'Kaydedilen öğünler burada bir zaman çizelgesi olarak görünecektir.';
 
   @override
   String get nutritionPatternsMealHistory => 'Öğün geçmişi';
 
   @override
-  String get nutritionPatternsNeedMoreDaysOf =>
-      'Daha fazla gün verisine ihtiyaç var';
+  String get nutritionPatternsNeedMoreDaysOf => 'Daha fazla gün verisine ihtiyaç var';
 
   @override
   String get nutritionPatternsNoFoodsYet => 'Henüz besin yok';
@@ -25280,8 +23523,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPatternsNoPatternsYet => 'Henüz bir desen yok';
 
   @override
-  String get nutritionPatternsNudgeIfYouSkip =>
-      'Check-in\'i atlarsanız hatırlat';
+  String get nutritionPatternsNudgeIfYouSkip => 'Check-in\'i atlarsanız hatırlat';
 
   @override
   String get nutritionPatternsNutritionTrends => 'Beslenme Trendleri';
@@ -25293,12 +23535,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPatternsReEnable => 'Yeniden etkinleştir';
 
   @override
-  String get nutritionPatternsReEnableThePost =>
-      'Besin-ruh hali desenlerinizi oluşturmaya başlamak için öğün sonrası check-in sayfasını yeniden etkinleştirin.';
+  String get nutritionPatternsReEnableThePost => 'Besin-ruh hali desenlerinizi oluşturmaya başlamak için öğün sonrası check-in sayfasını yeniden etkinleştirin.';
 
   @override
-  String get nutritionPatternsSignInToSee =>
-      'Desenlerinizi görmek için giriş yapın';
+  String get nutritionPatternsSignInToSee => 'Desenlerinizi görmek için giriş yapın';
 
   @override
   String get nutritionJournalTab => 'Geçmiş';
@@ -25347,8 +23587,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nutritionPatternsTheQuickHowDo =>
-      'Kayıttan sonra çıkan hızlı \"nasıl hissediyorsun?\" sayfası';
+  String get nutritionPatternsTheQuickHowDo => 'Kayıttan sonra çıkan hızlı \"nasıl hissediyorsun?\" sayfası';
 
   @override
   String get nutritionPatternsTodaySMacros => 'Bugünün Makroları';
@@ -25360,15 +23599,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPreferencesAdd => 'Ekle...';
 
   @override
-  String get nutritionPreferencesDailyFoodBudgetUsd =>
-      'Günlük yemek bütçesi (USD, isteğe bağlı)';
+  String get nutritionPreferencesDailyFoodBudgetUsd => 'Günlük yemek bütçesi (USD, isteğe bağlı)';
 
   @override
   String get nutritionPreferencesDietAllergens => 'Diyet ve Alerjenler';
 
   @override
-  String get nutritionPreferencesDishesOrIngredientsYou =>
-      'Önerilerden gizlememizi tercih ettiğiniz yemekler veya malzemeler';
+  String get nutritionPreferencesDishesOrIngredientsYou => 'Önerilerden gizlememizi tercih ettiğiniz yemekler veya malzemeler';
 
   @override
   String get nutritionPreferencesDislikes => 'Sevmediklerim';
@@ -25380,8 +23617,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPreferencesFoodsToAvoid => 'Kaçınılması gereken besinler';
 
   @override
-  String get nutritionPreferencesInflammationTolerance =>
-      'Enflamasyon toleransı';
+  String get nutritionPreferencesInflammationTolerance => 'Enflamasyon toleransı';
 
   @override
   String get nutritionPreferencesLenient => 'Esnek';
@@ -25396,8 +23632,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionPreferencesOtherAllergens => 'Diğer alerjenler';
 
   @override
-  String get nutritionPreferencesOutsideTheFdaBig =>
-      'FDA Big 9 dışındakiler (ör. mango, patlıcangiller, mısır)';
+  String get nutritionPreferencesOutsideTheFdaBig => 'FDA Big 9 dışındakiler (ör. mango, patlıcangiller, mısır)';
 
   @override
   String get nutritionRecipesTab => 'Tarifler';
@@ -25412,8 +23647,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionScheduling => 'Planlanıyor...';
 
   @override
-  String get nutritionScoreCardLogYourMealsTo =>
-      'Beslenme puanı dökümünüzü görmek için öğünlerinizi kaydedin.';
+  String get nutritionScoreCardLogYourMealsTo => 'Beslenme puanı dökümünüzü görmek için öğünlerinizi kaydedin.';
 
   @override
   String get nutritionScoreCardNutritionScore => 'Beslenme Puanı';
@@ -25424,8 +23658,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nutritionScoreCardWeeklyNutritionAdherence =>
-      'Haftalık beslenme uyumu';
+  String get nutritionScoreCardWeeklyNutritionAdherence => 'Haftalık beslenme uyumu';
 
   @override
   String nutritionScreenUpdatedYourDailyTarget(Object newCalories) {
@@ -25438,8 +23671,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nutritionSettingsAdjustAiCalorieEstimates =>
-      'AI kalori tahminlerini deneyiminize göre ayarlayın';
+  String get nutritionSettingsAdjustAiCalorieEstimates => 'AI kalori tahminlerini deneyiminize göre ayarlayın';
 
   @override
   String get nutritionSettingsAlwaysRules => 'Her Zaman Kuralları';
@@ -25454,12 +23686,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsCompactTrackerView => 'Kompakt Takipçi Görünümü';
 
   @override
-  String get nutritionSettingsDisableAiFoodTips =>
-      'AI Besin İpuçlarını Devre Dışı Bırak';
+  String get nutritionSettingsDisableAiFoodTips => 'AI Besin İpuçlarını Devre Dışı Bırak';
 
   @override
-  String get nutritionSettingsManageYourFoodLibrary =>
-      'Hızlı kayıt için besin kütüphanenizi yönetin';
+  String get nutritionSettingsManageYourFoodLibrary => 'Hızlı kayıt için besin kütüphanenizi yönetin';
 
   @override
   String get nutritionSettingsNutritionSettings => 'Beslenme Ayarları';
@@ -25474,8 +23704,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsRestDayReduction => 'Dinlenme Günü Azaltımı';
 
   @override
-  String get nutritionSettingsSavedFoodsRecipes =>
-      'Kaydedilen Besinler ve Tarifler';
+  String get nutritionSettingsSavedFoodsRecipes => 'Kaydedilen Besinler ve Tarifler';
 
   @override
   String get nutritionSettingsScreenAllergens => 'Alerjenler';
@@ -25484,8 +23713,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsScreenBudget => 'Bütçe';
 
   @override
-  String get nutritionSettingsScreenCalorieEstimateBias =>
-      'Kalori Tahmin Sapması';
+  String get nutritionSettingsScreenCalorieEstimateBias => 'Kalori Tahmin Sapması';
 
   @override
   String get nutritionSettingsScreenCalories => 'Kalori';
@@ -25497,22 +23725,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsScreenCookingSkill => 'Pişirme Becerisi';
 
   @override
-  String get nutritionSettingsScreenCookingTimeMinutes =>
-      'Pişirme Süresi (dakika)';
+  String get nutritionSettingsScreenCookingTimeMinutes => 'Pişirme Süresi (dakika)';
 
   @override
   String get nutritionSettingsScreenCurrentTargets => 'Mevcut Hedefler';
 
   @override
-  String get nutritionSettingsScreenDietaryRestrictions =>
-      'Diyet Kısıtlamaları';
+  String get nutritionSettingsScreenDietaryRestrictions => 'Diyet Kısıtlamaları';
 
   @override
   String get nutritionSettingsScreenDue => 'Vade';
 
   @override
-  String get nutritionSettingsScreenEditNutritionGoals =>
-      'Beslenme Hedeflerini Düzenle';
+  String get nutritionSettingsScreenEditNutritionGoals => 'Beslenme Hedeflerini Düzenle';
 
   @override
   String get nutritionSettingsScreenEditTargets => 'Hedefleri düzenle';
@@ -25529,8 +23754,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsScreenFoodPreferences => 'Besin Tercihleri';
 
   @override
-  String get nutritionSettingsScreenGoalsUpdatedAndTargets =>
-      'Hedefler güncellendi ve hedefler yeniden hesaplandı!';
+  String get nutritionSettingsScreenGoalsUpdatedAndTargets => 'Hedefler güncellendi ve hedefler yeniden hesaplandı!';
 
   @override
   String get nutritionSettingsScreenMealPattern => 'Öğün Düzeni';
@@ -25548,24 +23772,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsScreenRateOfChange => 'Değişim Oranı';
 
   @override
-  String get nutritionSettingsScreenRecalculateFromProfile =>
-      'Profilden yeniden hesapla';
+  String get nutritionSettingsScreenRecalculateFromProfile => 'Profilden yeniden hesapla';
 
   @override
-  String get nutritionSettingsScreenReviewAdjustTargets =>
-      'Hedefleri Gözden Geçir ve Ayarla';
+  String get nutritionSettingsScreenReviewAdjustTargets => 'Hedefleri Gözden Geçir ve Ayarla';
 
   @override
-  String get nutritionSettingsScreenRunWeeklyCheckIn =>
-      'Haftalık Kontrolü Başlat';
+  String get nutritionSettingsScreenRunWeeklyCheckIn => 'Haftalık Kontrolü Başlat';
 
   @override
-  String get nutritionSettingsScreenSaveRecalculate =>
-      'Kaydet ve Yeniden Hesapla';
+  String get nutritionSettingsScreenSaveRecalculate => 'Kaydet ve Yeniden Hesapla';
 
   @override
-  String get nutritionSettingsScreenSelectYourGoalsFirst =>
-      'Hedeflerinizi seçin (ilk seçilen = birincil)';
+  String get nutritionSettingsScreenSelectYourGoalsFirst => 'Hedeflerinizi seçin (ilk seçilen = birincil)';
 
   @override
   String get nutritionSettingsScreenTrainingDay => 'Antrenman Günü';
@@ -25606,23 +23825,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionSettingsShowMacrosOnLog => 'Günlükte Makroları Göster';
 
   @override
-  String get nutritionSettingsStandingRulesZealovaApplies =>
-      'Zealova\'nın her gıda analizine uyguladığı temel kurallar';
+  String get nutritionSettingsStandingRulesZealovaApplies => 'Zealova\'nın her gıda analizine uyguladığı temel kurallar';
 
   @override
-  String get nutritionSettingsStreakFreezeUsedYour =>
-      'Seri dondurucu kullanıldı! Seriniz koruma altında.';
+  String get nutritionSettingsStreakFreezeUsedYour => 'Seri dondurucu kullanıldı! Seriniz koruma altında.';
 
   @override
-  String get nutritionSettingsTargetsRecalculatedFromYour =>
-      'Hedefler profilinizden yeniden hesaplandı.';
+  String get nutritionSettingsTargetsRecalculatedFromYour => 'Hedefler profilinizden yeniden hesaplandı.';
 
   @override
   String get nutritionSettingsTrainingDayBoost => 'Antrenman Günü Desteği';
 
   @override
-  String get nutritionSettingsWeeklyCheckInReminders =>
-      'Haftalık Kontrol Hatırlatıcıları';
+  String get nutritionSettingsWeeklyCheckInReminders => 'Haftalık Kontrol Hatırlatıcıları';
 
   @override
   String get nutritionSettingsWeeklyView => 'Haftalık Görünüm';
@@ -25661,8 +23876,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionShowcaseGrilledSalmonBowl => 'Izgara Somon Kasesi';
 
   @override
-  String get nutritionShowcaseIntroSubtitle =>
-      'Herhangi bir restoran menüsünü tara — Zealova her yemeği hedeflerine göre sıralar 🍽️';
+  String get nutritionShowcaseIntroSubtitle => 'Herhangi bir restoran menüsünü tara — Zealova her yemeği hedeflerine göre sıralar 🍽️';
 
   @override
   String get nutritionShowcaseIntroTitle => 'Menüde bir daha tahmin yürütme';
@@ -25674,12 +23888,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionShowcaseMenuAnalyzed => 'Menü analiz edildi';
 
   @override
-  String get nutritionShowcaseMultiplePagesSnapThem =>
-      'Birden fazla sayfa mı? Hepsini çekin.';
+  String get nutritionShowcaseMultiplePagesSnapThem => 'Birden fazla sayfa mı? Hepsini çekin.';
 
   @override
-  String get nutritionShowcaseNoDishesSelectedGo =>
-      'Hiçbir yemek seçilmedi — geri dönün ve birkaç tane seçin.';
+  String get nutritionShowcaseNoDishesSelectedGo => 'Hiçbir yemek seçilmedi — geri dönün ve birkaç tane seçin.';
 
   @override
   String get nutritionShowcaseRecent => 'Son Kullanılanlar';
@@ -25719,12 +23931,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionShowcaseSort => 'Sırala:';
 
   @override
-  String get nutritionShowcaseSortCleared =>
-      'Sıralama temizlendi — orijinal menü sırası';
+  String get nutritionShowcaseSortCleared => 'Sıralama temizlendi — orijinal menü sırası';
 
   @override
-  String get nutritionShowcaseSortHint =>
-      'Dene — proteine göre sıralamak için Protein\'e dokun. Karbonhidrat, Yağ ve İnflam da menüyü yeniden sıralar.';
+  String get nutritionShowcaseSortHint => 'Dene — proteine göre sıralamak için Protein\'e dokun. Karbonhidrat, Yağ ve İnflam da menüyü yeniden sıralar.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
@@ -25732,8 +23942,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nutritionShowcaseSortedLeastInflammatory =>
-      'Sıralandı ✓ — önce en az inflamatuar';
+  String get nutritionShowcaseSortedLeastInflammatory => 'Sıralandı ✓ — önce en az inflamatuar';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
@@ -25741,8 +23950,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get nutritionShowcaseSortedMostInflammatory =>
-      'Sıralandı ✓ — önce en inflamatuar';
+  String get nutritionShowcaseSortedMostInflammatory => 'Sıralandı ✓ — önce en inflamatuar';
 
   @override
   String get nutritionShowcaseStarters => 'BAŞLANGIÇLAR';
@@ -25751,8 +23959,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionShowcaseTapADishTo => 'Seçmek için bir yemeğe dokunun';
 
   @override
-  String get nutritionShowcaseTapBelowToScan =>
-      'Menüyü taramak için aşağıya dokunun';
+  String get nutritionShowcaseTapBelowToScan => 'Menüyü taramak için aşağıya dokunun';
 
   @override
   String get nutritionShowcaseTheBistro => 'THE BISTRO';
@@ -25767,8 +23974,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionShowcaseWhatDidYouEat => 'Ne yedin?';
 
   @override
-  String get nutritionSignInToView =>
-      'Beslenme istatistiklerini görmek için giriş yapın';
+  String get nutritionSignInToView => 'Beslenme istatistiklerini görmek için giriş yapın';
 
   @override
   String get nutritionStreakCardBestEver => 'En iyi seri';
@@ -25800,12 +24006,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionStreakCardFreezesAvailable => 'Kullanılabilir dondurucu';
 
   @override
-  String get nutritionStreakCardLogAMealTo =>
-      'Serinizi başlatmak için bir öğün kaydedin';
+  String get nutritionStreakCardLogAMealTo => 'Serinizi başlatmak için bir öğün kaydedin';
 
   @override
-  String get nutritionStreakCardStreakFreezeUsedYour =>
-      'Seri dondurucu kullanıldı — seriniz güvende.';
+  String get nutritionStreakCardStreakFreezeUsedYour => 'Seri dondurucu kullanıldı — seriniz güvende.';
 
   @override
   String get nutritionStreakCardThisWeek => 'Bu hafta';
@@ -25864,12 +24068,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionTabPartConsistency => 'İstikrar';
 
   @override
-  String get nutritionTabPartCouldNotLoadAdherence =>
-      'Bağlılık verileri yüklenemedi';
+  String get nutritionTabPartCouldNotLoadAdherence => 'Bağlılık verileri yüklenemedi';
 
   @override
-  String get nutritionTabPartCouldNotLoadCalorie =>
-      'Kalori verileri yüklenemedi';
+  String get nutritionTabPartCouldNotLoadCalorie => 'Kalori verileri yüklenemedi';
 
   @override
   String get nutritionTabPartCouldNotLoadMacros => 'Makrolar yüklenemedi';
@@ -25893,12 +24095,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionTabPartNoMacroDataThis => 'Bu hafta makro verisi yok';
 
   @override
-  String get nutritionTabPartNoNutritionDataThis =>
-      'Bu hafta beslenme verisi yok';
+  String get nutritionTabPartNoNutritionDataThis => 'Bu hafta beslenme verisi yok';
 
   @override
-  String get nutritionTabPartNotEnoughDataFor =>
-      'TDEE tahmini için yeterli veri yok';
+  String get nutritionTabPartNotEnoughDataFor => 'TDEE tahmini için yeterli veri yok';
 
   @override
   String get nutritionTabPartProtein => 'Protein';
@@ -25907,8 +24107,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionTabPartTdeeEnergyBalance => 'TDEE ve Enerji Dengesi';
 
   @override
-  String get nutritionTabPartWeeklyAverageDistribution =>
-      'Haftalık ortalama dağılım';
+  String get nutritionTabPartWeeklyAverageDistribution => 'Haftalık ortalama dağılım';
 
   @override
   String get nutritionTabPartWeeklyOverview => 'Haftalık Genel Bakış';
@@ -25966,37 +24165,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionTourSaved => 'Kaydedilenler';
 
   @override
-  String get nutritionTourStartAndTrackA =>
-      'Orucunuzu buradan başlatın ve takip edin — canlı oruç pencereniz bu kartta görünür.';
+  String get nutritionTourStartAndTrackA => 'Orucunuzu buradan başlatın ve takip edin — canlı oruç pencereniz bu kartta görünür.';
 
   @override
   String get nutritionTourSwipeThroughDates => 'Tarihler arasında kaydırın';
 
   @override
-  String get nutritionTourTapTheCameraBarcode =>
-      'Kameraya, barkoda veya + butonuna dokunun — vision OCR kalori ve makroları otomatik doldurur.';
+  String get nutritionTourTapTheCameraBarcode => 'Kameraya, barkoda veya + butonuna dokunun — vision OCR kalori ve makroları otomatik doldurur.';
 
   @override
-  String get nutritionTourUseTheDateArrows =>
-      'Tarih oklarını kullanın veya geçmiş bir günü incelemek için Geçmiş\'e dokunun.';
+  String get nutritionTourUseTheDateArrows => 'Tarih oklarını kullanın veya geçmiş bir günü incelemek için Geçmiş\'e dokunun.';
 
   @override
-  String get nutritionTourYourSavedRecipesFoods =>
-      'Kaydedilen tarifleriniz, yiyecekleriniz ve taradığınız menüler burada bulunur — tekrar kaydetmek için bir kez dokunmanız yeterli.';
+  String get nutritionTourYourSavedRecipesFoods => 'Kaydedilen tarifleriniz, yiyecekleriniz ve taradığınız menüler burada bulunur — tekrar kaydetmek için bir kez dokunmanız yeterli.';
 
   @override
   String get nutritionUndo => 'Geri al';
 
   @override
-  String get offlineBannerDismissSyncFailureBanner =>
-      'Senkronizasyon hatası başlığını kapat';
+  String get offlineBannerDismissSyncFailureBanner => 'Senkronizasyon hatası başlığını kapat';
 
   @override
   String get offlineModeOfflineMode => 'Çevrimdışı Mod';
 
   @override
-  String get offlineModeWorkOutWithoutInternet =>
-      'İnternet olmadan antrenman yapın. Cihaz içi yapay zeka, önbelleğe alınmış antrenmanlar, egzersiz video indirmeleri ve arka plan senkronizasyonu.';
+  String get offlineModeWorkOutWithoutInternet => 'İnternet olmadan antrenman yapın. Cihaz içi yapay zeka, önbelleğe alınmış antrenmanlar, egzersiz video indirmeleri ve arka plan senkronizasyonu.';
 
   @override
   String get onboardingAlreadyHaveAccount => 'Zaten hesabım var';
@@ -26005,8 +24198,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboardingBlockerLetSDoIt => 'Hadi yapalım';
 
   @override
-  String get onboardingBlockerNoJudgmentKnowingThe =>
-      'Yargılamak yok. Engeli bilmek, etrafından nasıl plan yapacağımızı anlamamızı sağlar.';
+  String get onboardingBlockerNoJudgmentKnowingThe => 'Yargılamak yok. Engeli bilmek, etrafından nasıl plan yapacağımızı anlamamızı sağlar.';
 
   @override
   String get onboardingBlockerThatMakesSense => 'Bu mantıklı.';
@@ -26015,19 +24207,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboardingBlockerWhatSHeldYou => 'Daha önce seni ne geri tuttu?';
 
   @override
-  String get onboardingConfidenceARealisticPlaceTo =>
-      'Başlamak için gerçekçi bir yer.';
+  String get onboardingConfidenceARealisticPlaceTo => 'Başlamak için gerçekçi bir yer.';
 
   @override
-  String get onboardingConfidenceBeHonestThereIs =>
-      'Dürüst ol. Burada yanlış cevap yok.';
+  String get onboardingConfidenceBeHonestThereIs => 'Dürüst ol. Burada yanlış cevap yok.';
 
   @override
   String get onboardingConfidenceFullyIn => 'Tamamen varım';
 
   @override
-  String get onboardingConfidenceHowConfidentAreYou =>
-      'Oraya ulaşacağından ne kadar eminsin?';
+  String get onboardingConfidenceHowConfidentAreYou => 'Oraya ulaşacağından ne kadar eminsin?';
 
   @override
   String get onboardingConfidenceNotSureYet => 'Henüz emin değilim';
@@ -26043,12 +24232,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get onboardingConfidenceStartingUnsureIsHonest =>
-      'Emin olmadan başlamak dürüstlüktür.';
+  String get onboardingConfidenceStartingUnsureIsHonest => 'Emin olmadan başlamak dürüstlüktür.';
 
   @override
-  String get onboardingConfidenceThatBeliefWillCarry =>
-      'Bu inanç seni ileri taşıyacak.';
+  String get onboardingConfidenceThatBeliefWillCarry => 'Bu inanç seni ileri taşıyacak.';
 
   @override
   String get onboardingContinueButton => 'Devam';
@@ -26063,8 +24250,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboardingSkip => 'Atla';
 
   @override
-  String get onboardingValueHereSWhatThat =>
-      'İşte bunların ayrı abonelikler olarak maliyeti.';
+  String get onboardingValueHereSWhatThat => 'İşte bunların ayrı abonelikler olarak maliyeti.';
 
   @override
   String onboardingValueScreenMo(Object priceLabel) {
@@ -26121,8 +24307,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get openAllCratesDoubleXpToken => 'Çift XP Jetonu';
 
   @override
-  String get openAllCratesFailedToOpenCrates =>
-      'Kasalar açılamadı. Lütfen tekrar deneyin.';
+  String get openAllCratesFailedToOpenCrates => 'Kasalar açılamadı. Lütfen tekrar deneyin.';
 
   @override
   String get openAllCratesFitnessCrate => 'Fitness Sandığı';
@@ -26205,8 +24390,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get overviewBodyMeasurements => 'Vücut Ölçüleri';
 
   @override
-  String get overviewCouldnTRefreshShowing =>
-      'Yenilenemedi. Önbelleğe alınmış veriler gösteriliyor.';
+  String get overviewCouldnTRefreshShowing => 'Yenilenemedi. Önbelleğe alınmış veriler gösteriliyor.';
 
   @override
   String get overviewCycle => 'Döngü';
@@ -26233,8 +24417,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get overviewPersonalRecords => 'Kişisel Rekorlar';
 
   @override
-  String get overviewPersonalRecordsAreTracked =>
-      'Kişisel rekorlar antrenmanları tamamladıkça takip edilir. İlerlemeni burada görmek için antrenmana başla!';
+  String get overviewPersonalRecordsAreTracked => 'Kişisel rekorlar antrenmanları tamamladıkça takip edilir. İlerlemeni burada görmek için antrenmana başla!';
 
   @override
   String get overviewQuickAccess => 'Hızlı Erişim';
@@ -26255,8 +24438,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get overviewSocial => 'SOSYAL';
 
   @override
-  String get overviewStatsRewardsTabHas =>
-      'İstatistikler ve Ödüller sekmesinde tüm ekstralar bulunur.';
+  String get overviewStatsRewardsTabHas => 'İstatistikler ve Ödüller sekmesinde tüm ekstralar bulunur.';
 
   @override
   String get overviewStreak => 'Seri';
@@ -26313,24 +24495,18 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String parsedExercisesPreviewSheetValue(
-    Object exercise,
-    Object formattedSetsReps,
-  ) {
+  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps) {
     return '$formattedSetsReps @ $exercise';
   }
 
   @override
-  String get pauseInterceptGoingOnVacationLife =>
-      'Tatile mi çıkıyorsun? Hayat çok mu yoğun?';
+  String get pauseInterceptGoingOnVacationLife => 'Tatile mi çıkıyorsun? Hayat çok mu yoğun?';
 
   @override
-  String get pauseInterceptLongerBreakIllnessTransi =>
-      'Daha uzun bir ara — hastalık, geçiş dönemi, hayat';
+  String get pauseInterceptLongerBreakIllnessTransi => 'Daha uzun bir ara — hastalık, geçiş dönemi, hayat';
 
   @override
-  String get pauseInterceptNoThanksContinueWith =>
-      'Hayır teşekkürler, iptal ile devam et';
+  String get pauseInterceptNoThanksContinueWith => 'Hayır teşekkürler, iptal ile devam et';
 
   @override
   String get pauseInterceptPauseFor14Days => '14 günlüğüne duraklat';
@@ -26339,12 +24515,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pauseInterceptPauseFor30Days => '30 günlüğüne duraklat';
 
   @override
-  String get pauseInterceptPauseYourPlanInstead =>
-      'Planını duraklat — kaldığın yerden tam olarak devam et.';
+  String get pauseInterceptPauseYourPlanInstead => 'Planını duraklat — kaldığın yerden tam olarak devam et.';
 
   @override
-  String get pauseInterceptQuickBreakShortTrip =>
-      'Kısa bir ara — kısa gezi, yoğun hafta';
+  String get pauseInterceptQuickBreakShortTrip => 'Kısa bir ara — kısa gezi, yoğun hafta';
 
   @override
   String pauseInterceptSheetCouldnTPause(Object e) {
@@ -26401,8 +24575,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get pauseSubscriptionPremiumFeaturesAre =>
-      'Premium özellikler geçici olarak kullanılamaz';
+  String get pauseSubscriptionPremiumFeaturesAre => 'Premium özellikler geçici olarak kullanılamaz';
 
   @override
   String get pauseSubscriptionSelectADuration => 'Bir süre seçin';
@@ -26411,8 +24584,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pauseSubscriptionShortBreak => 'Kısa mola';
 
   @override
-  String get pauseSubscriptionTakeABreakWithout =>
-      'Verilerinizi kaybetmeden mola verin';
+  String get pauseSubscriptionTakeABreakWithout => 'Verilerinizi kaybetmeden mola verin';
 
   @override
   String get pauseSubscriptionVacationMode => 'Tatil modu';
@@ -26421,12 +24593,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pauseSubscriptionWhatHappensWhenYou => 'Dondurduğunuzda ne olur';
 
   @override
-  String get pauseSubscriptionYouWontBeCharged =>
-      'Duraklatma süresince ücret alınmayacak';
+  String get pauseSubscriptionYouWontBeCharged => 'Duraklatma süresince ücret alınmayacak';
 
   @override
-  String get pauseSubscriptionYourWorkoutHistory =>
-      'Antrenman geçmişiniz ve gelişiminiz güvende kalır';
+  String get pauseSubscriptionYourWorkoutHistory => 'Antrenman geçmişiniz ve gelişiminiz güvende kalır';
 
   @override
   String get paywallFeatures14Features => '14+ özellik';
@@ -26438,8 +24608,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallFeatures52Skills => '52 beceri';
 
   @override
-  String get paywallFeatures7DayFreeTrial =>
-      '7 gün ücretsiz deneme\nİstediğiniz zaman iptal edin, soru sorulmaz';
+  String get paywallFeatures7DayFreeTrial => '7 gün ücretsiz deneme\nİstediğiniz zaman iptal edin, soru sorulmaz';
 
   @override
   String get paywallFeaturesAiCoachChat => 'AI koç sohbeti';
@@ -26451,12 +24620,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallFeaturesAiWorkouts => 'AI Antrenmanları';
 
   @override
-  String get paywallFeaturesAutoAdaptWorkoutsAround =>
-      'Antrenmanları sakatlıklarınıza göre otomatik uyarlayın';
+  String get paywallFeaturesAutoAdaptWorkoutsAround => 'Antrenmanları sakatlıklarınıza göre otomatik uyarlayın';
 
   @override
-  String get paywallFeaturesChartsHeatmapsAndDetailed =>
-      'Grafikler, ısı haritaları ve detaylı trendler';
+  String get paywallFeaturesChartsHeatmapsAndDetailed => 'Grafikler, ısı haritaları ve detaylı trendler';
 
   @override
   String get paywallFeaturesFoodPhotoScanning => 'Yemek fotoğrafı tarama';
@@ -26465,30 +24632,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallFeaturesInjuryAware => 'Sakatlık farkındalığı';
 
   @override
-  String get paywallFeaturesInjuryAwareTraining =>
-      'Sakatlık farkındalıklı antrenman';
+  String get paywallFeaturesInjuryAwareTraining => 'Sakatlık farkındalıklı antrenman';
 
   @override
   String get paywallFeaturesLearnMore => 'Daha fazla bilgi';
 
   @override
-  String get paywallFeaturesNutritionFormRecoveryAs =>
-      'Beslenme, form, toparlanma — her şeyi sorun';
+  String get paywallFeaturesNutritionFormRecoveryAs => 'Beslenme, form, toparlanma — her şeyi sorun';
 
   @override
-  String get paywallFeaturesPersonalizedPlansForAny =>
-      'Her ekipman ve hedef için kişiselleştirilmiş planlar';
+  String get paywallFeaturesPersonalizedPlansForAny => 'Her ekipman ve hedef için kişiselleştirilmiş planlar';
 
   @override
-  String get paywallFeaturesProgressTrackingAnalytics =>
-      'İlerleme takibi ve analizler';
+  String get paywallFeaturesProgressTrackingAnalytics => 'İlerleme takibi ve analizler';
 
   @override
   String get paywallFeaturesSafety => 'Güvenlik';
 
   @override
-  String get paywallFeaturesSnapAPhotoGet =>
-      'Fotoğraf çekin, anında kalori ve makroları alın';
+  String get paywallFeaturesSnapAPhotoGet => 'Fotoğraf çekin, anında kalori ve makroları alın';
 
   @override
   String get paywallFeaturesUnlimitedAiWorkouts => 'Sınırsız AI antrenmanı';
@@ -26506,8 +24668,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricing7DayFreeTrial => '7 gün ücretsiz deneme';
 
   @override
-  String get paywallPricing7DayFreeTrial2 =>
-      '7 gün ücretsiz deneme\nİstediğiniz zaman iptal edin, soru sorulmaz';
+  String get paywallPricing7DayFreeTrial2 => '7 gün ücretsiz deneme\nİstediğiniz zaman iptal edin, soru sorulmaz';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6 EGZERSİZ';
@@ -26516,8 +24677,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingBestValue => 'En iyi fiyat';
 
   @override
-  String get paywallPricingBilledSecurelyThroughThe =>
-      'App Store üzerinden güvenli faturalandırma';
+  String get paywallPricingBilledSecurelyThroughThe => 'App Store üzerinden güvenli faturalandırma';
 
   @override
   String get paywallPricingCancelAnytime => 'İstediğiniz zaman iptal edin';
@@ -26529,22 +24689,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingChestShouldersTriceps => '· göğüs · omuz · triceps';
 
   @override
-  String get paywallPricingFreeFor7Days =>
-      '7 gün ücretsiz. İstediğiniz zaman iptal edin.';
+  String get paywallPricingFreeFor7Days => '7 gün ücretsiz. İstediğiniz zaman iptal edin.';
 
   @override
   String get paywallPricingIn5DaysReminder => '5 Gün İçinde · Hatırlatıcı';
 
   @override
-  String get paywallPricingIn7DaysBilling =>
-      '7 Gün İçinde · Faturalandırma Başlar';
+  String get paywallPricingIn7DaysBilling => '7 Gün İçinde · Faturalandırma Başlar';
 
   @override
   String get paywallPricingIsReady => 'hazır';
 
   @override
-  String get paywallPricingLessThanThePrice =>
-      'Haftalık bir kahve fiyatından daha az';
+  String get paywallPricingLessThanThePrice => 'Haftalık bir kahve fiyatından daha az';
 
   @override
   String get paywallPricingMonthly => 'Aylık';
@@ -26559,12 +24716,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingNoPurchasesFound => 'Satın alma bulunamadı';
 
   @override
-  String get paywallPricingNoSurprisesCancelAnytime =>
-      'Sürpriz yok. 7. günden önce Ayarlar\'dan istediğiniz zaman iptal edin.';
+  String get paywallPricingNoSurprisesCancelAnytime => 'Sürpriz yok. 7. günden önce Ayarlar\'dan istediğiniz zaman iptal edin.';
 
   @override
-  String get paywallPricingPlanUpdatedSuccessfully =>
-      'Plan başarıyla güncellendi!';
+  String get paywallPricingPlanUpdatedSuccessfully => 'Plan başarıyla güncellendi!';
 
   @override
   String get paywallPricingPurchasesRestored => 'Satın almalar geri yüklendi!';
@@ -26585,8 +24740,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingScreenConfirmChange => 'Değişikliği Onayla';
 
   @override
-  String get paywallPricingScreenConfirmPlanChange =>
-      'Plan Değişikliğini Onayla';
+  String get paywallPricingScreenConfirmPlanChange => 'Plan Değişikliğini Onayla';
 
   @override
   String get paywallPricingScreenConfirmUpgrade => 'Yükseltmeyi Onayla';
@@ -26595,12 +24749,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingScreenCurrentPlan => 'Mevcut Plan';
 
   @override
-  String get paywallPricingScreenExclusiveYearlyDiscountJust =>
-      'Size özel yıllık indirim!';
+  String get paywallPricingScreenExclusiveYearlyDiscountJust => 'Size özel yıllık indirim!';
 
   @override
-  String get paywallPricingScreenGetYearlyFor37 =>
-      '\$37.49 karşılığında Yıllık alın';
+  String get paywallPricingScreenGetYearlyFor37 => '\$37.49 karşılığında Yıllık alın';
 
   @override
   String get paywallPricingScreenJust312Month => 'Sadece \$3.12/ay';
@@ -26615,8 +24767,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingScreenOfferExpired => 'Teklif Süresi Doldu';
 
   @override
-  String get paywallPricingScreenOfferExpiresIn =>
-      'Teklifin bitmesine kalan süre: ';
+  String get paywallPricingScreenOfferExpiresIn => 'Teklifin bitmesine kalan süre: ';
 
   @override
   String get paywallPricingScreenPremiumYearly => 'PREMIUM YILLIK';
@@ -26625,16 +24776,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingScreenPriceDifference => ' fiyat farkı';
 
   @override
-  String get paywallPricingScreenSave125025 =>
-      '\$12.50 TASARRUF EDİN (%25 İNDİRİM)';
+  String get paywallPricingScreenSave125025 => '\$12.50 TASARRUF EDİN (%25 İNDİRİM)';
 
   @override
-  String get paywallPricingScreenThatSJust0 =>
-      'Günde sadece \$0.10 — bir kahveden daha ucuz';
+  String get paywallPricingScreenThatSJust0 => 'Günde sadece \$0.10 — bir kahveden daha ucuz';
 
   @override
-  String get paywallPricingScreenThisSpecialDiscountIs =>
-      'Bu özel indirim artık geçerli değil.';
+  String get paywallPricingScreenThisSpecialDiscountIs => 'Bu özel indirim artık geçerli değil.';
 
   @override
   String get paywallPricingScreenWaitSpecialOffer => 'Bekleyin! Özel Teklif';
@@ -26645,20 +24793,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get paywallPricingScreenYouCanStillGet =>
-      'Premium Yıllık paketini hala şu fiyata alabilirsiniz:';
+  String get paywallPricingScreenYouCanStillGet => 'Premium Yıllık paketini hala şu fiyata alabilirsiniz:';
 
   @override
-  String get paywallPricingScreenYouWillBeUpgraded =>
-      'Hemen yükseltileceksiniz';
+  String get paywallPricingScreenYouWillBeUpgraded => 'Hemen yükseltileceksiniz';
 
   @override
-  String get paywallPricingStartWithA7 =>
-      '7 günlük ücretsiz deneme ile başlayın. İstediğiniz zaman iptal edin — deneme bitene kadar ücret alınmaz.';
+  String get paywallPricingStartWithA7 => '7 günlük ücretsiz deneme ile başlayın. İstediğiniz zaman iptal edin — deneme bitene kadar ücret alınmaz.';
 
   @override
-  String get paywallPricingStartYour7Day =>
-      'Devam etmek için 7 günlük ÜCRETSİZ\ndenemenizi başlatın';
+  String get paywallPricingStartYour7Day => 'Devam etmek için 7 günlük ÜCRETSİZ\ndenemenizi başlatın';
 
   @override
   String get paywallPricingTerms => 'Şartlar';
@@ -26667,12 +24811,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingToday => 'Bugün';
 
   @override
-  String get paywallPricingUnlockUnlimitedAiWorkouts =>
-      'Sınırsız AI antrenmanlarının, yemek tarama ve makro takibinin, form analizinin ve tam ilerleme takibinin kilidini açın.';
+  String get paywallPricingUnlockUnlimitedAiWorkouts => 'Sınırsız AI antrenmanlarının, yemek tarama ve makro takibinin, form analizinin ve tam ilerleme takibinin kilidini açın.';
 
   @override
-  String get paywallPricingWeLlSendYou =>
-      'Ücretsiz denemeniz bitmeden önce\nsize bir hatırlatıcı göndereceğiz';
+  String get paywallPricingWeLlSendYou => 'Ücretsiz denemeniz bitmeden önce\nsize bir hatırlatıcı göndereceğiz';
 
   @override
   String get paywallPricingWhatYouGet => 'Neler elde edersiniz';
@@ -26684,22 +24826,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallPricingYouAreAlreadyOn => 'Zaten bu plandasınız';
 
   @override
-  String get paywallPricingYouReAllSet =>
-      'Her şey hazır. Denemeniz şu an aktif.';
+  String get paywallPricingYouReAllSet => 'Her şey hazır. Denemeniz şu an aktif.';
 
   @override
   String get paywallPricingYourAiCoach => 'AI koçunuz';
 
   @override
-  String get paywallTimelineCancelAnytimeDuringOr =>
-      'Denemeniz sırasında veya sonrasında istediğiniz zaman iptal edin. Deneme bitene kadar ücret alınmaz ve aboneliğinizi Google Play üzerinden yönetebilirsiniz.';
+  String get paywallTimelineCancelAnytimeDuringOr => 'Denemeniz sırasında veya sonrasında istediğiniz zaman iptal edin. Deneme bitene kadar ücret alınmaz ve aboneliğinizi Google Play üzerinden yönetebilirsiniz.';
 
   @override
   String get paywallTimelineHowYourFree => 'Ücretsiz denemenizin';
 
   @override
-  String get paywallTimelineHowYourFreeTrial =>
-      'Ücretsiz denemeniz nasıl çalışır';
+  String get paywallTimelineHowYourFreeTrial => 'Ücretsiz denemeniz nasıl çalışır';
 
   @override
   String get paywallTimelineIn5Days => '5 gün içinde';
@@ -26724,12 +24863,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallTimelineTrialWorks => 'deneme süreci işleyişi';
 
   @override
-  String get paywallTimelineUnlimitedWorkoutsFoodScann =>
-      'Sınırsız antrenman, besin tarama, sakatlık takibi, beceri gelişimi ve daha fazlası';
+  String get paywallTimelineUnlimitedWorkoutsFoodScann => 'Sınırsız antrenman, besin tarama, sakatlık takibi, beceri gelişimi ve daha fazlası';
 
   @override
-  String get paywallTimelineWeLlRemindYou =>
-      'Deneme süreniz bitmeden size hatırlatacağız - sürpriz yok';
+  String get paywallTimelineWeLlRemindYou => 'Deneme süreniz bitmeden size hatırlatacağız - sürpriz yok';
 
   @override
   String pendingRequestCardValue(Object message) {
@@ -26746,15 +24883,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get permissionsPrimerCamera => 'Kamera';
 
   @override
-  String get permissionsPrimerEachAppFeatureWill =>
-      'Her uygulama özelliği, işletim sistemine sormadan önce kendini açıklayacaktır.';
+  String get permissionsPrimerEachAppFeatureWill => 'Her uygulama özelliği, işletim sistemine sormadan önce kendini açıklayacaktır.';
 
   @override
   String get permissionsPrimerGrantPermissions => 'İzinleri ver';
 
   @override
-  String get permissionsPrimerGrantingTheseNowMeans =>
-      'Bunları şimdi onaylamak, özelliklerin doğrudan çalışmasını sağlar; antrenman sırasında sürpriz uyarılar çıkmaz.';
+  String get permissionsPrimerGrantingTheseNowMeans => 'Bunları şimdi onaylamak, özelliklerin doğrudan çalışmasını sağlar; antrenman sırasında sürpriz uyarılar çıkmaz.';
 
   @override
   String get permissionsPrimerMicrophone => 'Mikrofon';
@@ -26792,8 +24927,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get personalGoalsDeleteGoal => 'Hedefi Sil?';
 
   @override
-  String get personalGoalsFullRecordsViewComing =>
-      'Tüm kayıtları görüntüleme özelliği gelecek bir güncellemede eklenecektir';
+  String get personalGoalsFullRecordsViewComing => 'Tüm kayıtları görüntüleme özelliği gelecek bir güncellemede eklenecektir';
 
   @override
   String get personalGoalsMaxReps => 'Maksimum Tekrar';
@@ -26829,8 +24963,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personalGoalsSetAWeeklyChallenge =>
-      'Sınırlarını zorlamak için haftalık bir meydan okuma belirle!';
+  String get personalGoalsSetAWeeklyChallenge => 'Sınırlarını zorlamak için haftalık bir meydan okuma belirle!';
 
   @override
   String get personalGoalsSetYourFirstGoal => 'İlk Hedefini Belirle';
@@ -26869,8 +25002,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get personalInfoNoThanks => 'Hayır teşekkürler';
 
   @override
-  String get personalInfoPleaseCompleteTheBody =>
-      'Lütfen önce vücut ölçüleri adımını tamamlayın.';
+  String get personalInfoPleaseCompleteTheBody => 'Lütfen önce vücut ölçüleri adımını tamamlayın.';
 
   @override
   String personalInfoScreenFailedToSave(Object e) {
@@ -26878,15 +25010,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personalInfoWeUseTheseTo =>
-      'Bunları koçluk deneyiminizi kişiselleştirmek ve hesabınızı güvende tutmak için kullanıyoruz.';
+  String get personalInfoWeUseTheseTo => 'Bunları koçluk deneyiminizi kişiselleştirmek ve hesabınızı güvende tutmak için kullanıyoruz.';
 
   @override
   String get personalInfoYesSetItUp => 'Evet, ayarla';
 
   @override
-  String get personalInfoYouMustBeAt =>
-      'Zealova kullanmak için en az 16 yaşında olmalısınız.';
+  String get personalInfoYouMustBeAt => 'Zealova kullanmak için en az 16 yaşında olmalısınız.';
 
   @override
   String get personalInfoYourName => 'ADINIZ';
@@ -26901,23 +25031,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get personalRecordsCard1WeekAgo => '1 hafta önce';
 
   @override
-  String get personalRecordsCardAfternoonTip =>
-      'Sıvı alımına dikkat et! Antrenmandan önce en az 500 ml su içmeyi hedefle.';
+  String get personalRecordsCardAfternoonTip => 'Sıvı alımına dikkat et! Antrenmandan önce en az 500 ml su içmeyi hedefle.';
 
   @override
-  String get personalRecordsCardAskCoachForMore =>
-      'Daha fazla ipucu için koça sor';
+  String get personalRecordsCardAskCoachForMore => 'Daha fazla ipucu için koça sor';
 
   @override
   String get personalRecordsCardCoachTip => 'Koç Tavsiyesi';
 
   @override
-  String get personalRecordsCardCompleteWorkoutsToPR =>
-      'Kişisel rekor kırmak için antrenmanları tamamla';
+  String get personalRecordsCardCompleteWorkoutsToPR => 'Kişisel rekor kırmak için antrenmanları tamamla';
 
   @override
-  String get personalRecordsCardConnectHealthToTrack =>
-      'Takip etmek için Sağlık uygulamasını bağla';
+  String get personalRecordsCardConnectHealthToTrack => 'Takip etmek için Sağlık uygulamasını bağla';
 
   @override
   String personalRecordsCardDaysAgo(Object days) {
@@ -26925,12 +25051,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardEveningTip =>
-      'Akşam antrenmanları modunu yükseltebilir. Bu gece iyi uyumak istiyorsan orta yoğunlukta kal.';
+  String get personalRecordsCardEveningTip => 'Akşam antrenmanları modunu yükseltebilir. Bu gece iyi uyumak istiyorsan orta yoğunlukta kal.';
 
   @override
-  String get personalRecordsCardGettingPersonalizedTip =>
-      'Kişiselleştirilmiş ipucu alınıyor…';
+  String get personalRecordsCardGettingPersonalizedTip => 'Kişiselleştirilmiş ipucu alınıyor…';
 
   @override
   String personalRecordsCardGlasses(Object current, Object goal) {
@@ -26943,8 +25067,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardMorningTip =>
-      'Performansı artırmak ve sakatlık riskini azaltmak için antrenmanına 5 dakikalık dinamik ısınma ile başla.';
+  String get personalRecordsCardMorningTip => 'Performansı artırmak ve sakatlık riskini azaltmak için antrenmanına 5 dakikalık dinamik ısınma ile başla.';
 
   @override
   String personalRecordsCardOfUsers(Object count) {
@@ -26991,15 +25114,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get personalRecordsCardYesterday => 'Dün';
 
   @override
-  String get personalRecordsCompleteWorkoutsToStart =>
-      'Egzersizlerdeki PR\'larınızı takip etmeye başlamak için antrenmanları tamamlayın.';
+  String get personalRecordsCompleteWorkoutsToStart => 'Egzersizlerdeki PR\'larınızı takip etmeye başlamak için antrenmanları tamamlayın.';
 
   @override
   String get personalRecordsNoPersonalRecordsYet => 'Henüz Kişisel Rekor Yok';
 
   @override
-  String get personalRecordsNoPrsYetLog =>
-      'Henüz PR yok; bir tane belirlemek için antrenman kaydedin!';
+  String get personalRecordsNoPrsYetLog => 'Henüz PR yok; bir tane belirlemek için antrenman kaydedin!';
 
   @override
   String get personalRecordsPersonalRecords => 'Kişisel Rekorlar';
@@ -27024,8 +25145,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personalityCardYourGymPersonalityIs =>
-      'Spor salonu kişiliğiniz...';
+  String get personalityCardYourGymPersonalityIs => 'Spor salonu kişiliğiniz...';
 
   @override
   String phaseRecommendationBannerBasedOn(Object evidenceCitation) {
@@ -27055,8 +25175,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get photoEditorCropPhoto => 'Fotoğrafı Kırp';
 
   @override
-  String get photoEditorFailedToCropImage =>
-      'Fotoğraf kırpılamadı. Lütfen tekrar deneyin.';
+  String get photoEditorFailedToCropImage => 'Fotoğraf kırpılamadı. Lütfen tekrar deneyin.';
 
   @override
   String get photoEditorFlip => 'Yansıt';
@@ -27098,8 +25217,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get photoEditorSize => 'Boyut';
 
   @override
-  String get photoEditorYourRecentlyUsedStickers =>
-      'Son kullandığınız çıkartmalar burada görünecek';
+  String get photoEditorYourRecentlyUsedStickers => 'Son kullandığınız çıkartmalar burada görünecek';
 
   @override
   String get photoOverlayTemplateAddYourPhoto => 'Fotoğrafını ekle';
@@ -27166,8 +25284,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get photosTabUiTakeFirstPhoto => 'İlk Fotoğrafı Çek';
 
   @override
-  String get photosTabUiTakePhotosFromDifferent =>
-      'Zaman içindeki görsel gelişiminizi takip etmek için farklı açılardan fotoğraflar çekin.';
+  String get photosTabUiTakePhotosFromDifferent => 'Zaman içindeki görsel gelişiminizi takip etmek için farklı açılardan fotoğraflar çekin.';
 
   @override
   String get photosTakePhoto => 'Fotoğraf Çek';
@@ -27191,8 +25308,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pillarDetailActiveMin => 'Aktif dk';
 
   @override
-  String get pillarDetailBandShowsThe10th =>
-      'Bant, son 30 gününüzün 10. ile 90. yüzdelik dilimini gösterir.';
+  String get pillarDetailBandShowsThe10th => 'Bant, son 30 gününüzün 10. ile 90. yüzdelik dilimini gösterir.';
 
   @override
   String get pillarDetailCalorieHit => 'Kalori hedefi';
@@ -27213,15 +25329,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pillarDetailCustomTrends => 'Özel Trendler';
 
   @override
-  String get pillarDetailDarkerCloserToGoal =>
-      'Daha koyu = hedefe daha yakın. Kenarlıklı hücreler hedefe ulaşıldığını gösterir.';
+  String get pillarDetailDarkerCloserToGoal => 'Daha koyu = hedefe daha yakın. Kenarlıklı hücreler hedefe ulaşıldığını gösterir.';
 
   @override
   String get pillarDetailDuration => 'Süre';
 
   @override
-  String get pillarDetailFiveOrMoreLoggedDays =>
-      'Beş veya daha fazla kayıtlı gün';
+  String get pillarDetailFiveOrMoreLoggedDays => 'Beş veya daha fazla kayıtlı gün';
 
   @override
   String get pillarDetailHeatmap30d => 'ısı-haritası-30g';
@@ -27230,8 +25344,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pillarDetailHourlyActivityRibbon => 'Saatlik aktivite şeridi';
 
   @override
-  String get pillarDetailHourlyActivityRibbonBody =>
-      'Saatlik aktivite şeridi gövdesi';
+  String get pillarDetailHourlyActivityRibbonBody => 'Saatlik aktivite şeridi gövdesi';
 
   @override
   String get pillarDetailIntensity => 'Yoğunluk';
@@ -27324,8 +25437,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pillarDetailTracking => 'Takip';
 
   @override
-  String get pillarDetailTwoOrMoreLoggedDays =>
-      'İki veya daha fazla kayıtlı gün';
+  String get pillarDetailTwoOrMoreLoggedDays => 'İki veya daha fazla kayıtlı gün';
 
   @override
   String get pillarDetailVariety => 'Çeşitlilik';
@@ -27358,24 +25470,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planAnalyzingBuildingYourPlan => 'Planınız oluşturuluyor';
 
   @override
-  String get planAnalyzingCalculatingYourGoalDate =>
-      'Hedef tarihiniz hesaplanıyor';
+  String get planAnalyzingCalculatingYourGoalDate => 'Hedef tarihiniz hesaplanıyor';
 
   @override
-  String get planAnalyzingCalibratingYourSchedule =>
-      'Programınız kalibre ediliyor';
+  String get planAnalyzingCalibratingYourSchedule => 'Programınız kalibre ediliyor';
 
   @override
-  String get planAnalyzingMatchingYourBodyType =>
-      'Vücut tipinizle eşleştiriliyor';
+  String get planAnalyzingMatchingYourBodyType => 'Vücut tipinizle eşleştiriliyor';
 
   @override
-  String get planAnalyzingPullingFrom1700 =>
-      '2.300+ egzersiz arasından seçim yapılıyor';
+  String get planAnalyzingPullingFrom1700 => '2.300+ egzersiz arasından seçim yapılıyor';
 
   @override
-  String get planAnalyzingReviewingYourGoals =>
-      'Hedefleriniz gözden geçiriliyor';
+  String get planAnalyzingReviewingYourGoals => 'Hedefleriniz gözden geçiriliyor';
 
   @override
   String get planAnalyzingThisWillTakeA => 'Bu birkaç saniye sürecek...';
@@ -27406,15 +25513,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPreviewRestRecovery => 'Dinlenme ve Toparlanma';
 
   @override
-  String get planPreviewScreenAnalyzingYourGoalsFitness =>
-      'Mükemmel programı oluşturmak için hedeflerinizi, fitness seviyenizi ve ekipmanınızı analiz ediyoruz';
+  String get planPreviewScreenAnalyzingYourGoalsFitness => 'Mükemmel programı oluşturmak için hedeflerinizi, fitness seviyenizi ve ekipmanınızı analiz ediyoruz';
 
   @override
   String get planPreviewScreenBuildStrengthFoundation => 'Güç temeli oluştur';
 
   @override
-  String get planPreviewScreenBuildingYour4Week =>
-      '4 Haftalık Planınız Oluşturuluyor...';
+  String get planPreviewScreenBuildingYour4Week => '4 Haftalık Planınız Oluşturuluyor...';
 
   @override
   String get planPreviewScreenContinueFree => 'Ücretsiz Devam Et';
@@ -27425,8 +25530,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get planPreviewScreenDesignedBasedOnYour =>
-      'Anket yanıtlarınıza göre tasarlandı';
+  String get planPreviewScreenDesignedBasedOnYour => 'Anket yanıtlarınıza göre tasarlandı';
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
@@ -27439,8 +25543,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get planPreviewScreenIncreaseIntensityVolume =>
-      'Yoğunluğu ve hacmi artır';
+  String get planPreviewScreenIncreaseIntensityVolume => 'Yoğunluğu ve hacmi artır';
 
   @override
   String get planPreviewScreenMasterTheMovement => 'Harekette ustalaş';
@@ -27452,16 +25555,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planPreviewScreenSetsreps => 'setTekrar';
 
   @override
-  String get planPreviewScreenSubscribeForFullAccess =>
-      'Tam Erişim İçin Abone Ol';
+  String get planPreviewScreenSubscribeForFullAccess => 'Tam Erişim İçin Abone Ol';
 
   @override
-  String get planPreviewScreenThisIsYourPersonalized =>
-      'Bu SİZİN Kişiselleştirilmiş Planınız';
+  String get planPreviewScreenThisIsYourPersonalized => 'Bu SİZİN Kişiselleştirilmiş Planınız';
 
   @override
-  String get planPreviewScreenTryOneWorkoutFree =>
-      'Bir Antrenmanı Ücretsiz Dene';
+  String get planPreviewScreenTryOneWorkoutFree => 'Bir Antrenmanı Ücretsiz Dene';
 
   @override
   String get planPreviewScreenViewing => 'GÖRÜNTÜLENİYOR';
@@ -27481,8 +25581,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planTodaySPlan => 'Bugünün planı';
 
   @override
-  String get plateauDashboardCompleteMoreWorkoutsAnd =>
-      'Plato tespiti içgörülerini görmek için daha fazla antrenman tamamlayın ve kilonuzu kaydedin.';
+  String get plateauDashboardCompleteMoreWorkoutsAnd => 'Plato tespiti içgörülerini görmek için daha fazla antrenman tamamlayın ve kilonuzu kaydedin.';
 
   @override
   String get plateauDashboardCurrentWeight => 'Mevcut Kilo';
@@ -27549,8 +25648,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get portionAmountInputThreeQuarters => 'Üç çeyrek';
 
   @override
-  String get postMealReviewCheckInDisabledRe =>
-      'Kontrol devre dışı. Beslenme → Desenler kısmından tekrar etkinleştirin.';
+  String get postMealReviewCheckInDisabledRe => 'Kontrol devre dışı. Beslenme → Desenler kısmından tekrar etkinleştirin.';
 
   @override
   String get postMealReviewCheckInSaved => 'Kontrol kaydedildi!';
@@ -27568,25 +25666,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get postMealReviewHowDidYouFeel => 'Yemekten önce nasıl hissettin?';
 
   @override
-  String get postMealReviewHowDoYouFeel =>
-      'Yemekten sonra nasıl hissediyorsun?';
+  String get postMealReviewHowDoYouFeel => 'Yemekten sonra nasıl hissediyorsun?';
 
   @override
   String get postMealReviewMealLogged => 'Öğün kaydedildi!';
 
   @override
-  String get postMealReviewQuickCheckInOptional =>
-      'Hızlı kontrol (isteğe bağlı)';
+  String get postMealReviewQuickCheckInOptional => 'Hızlı kontrol (isteğe bağlı)';
 
   @override
   String get postMealReviewSaveCheckIn => 'Kontrolü kaydet';
 
   @override
-  String postMealReviewSheetKcal(
-    Object extraCount,
-    Object foodSummary,
-    Object totalCalories,
-  ) {
+  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories) {
     return '$foodSummary$extraCount · $totalCalories kcal';
   }
 
@@ -27616,8 +25708,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get postWorkoutHrMin => 'Min';
 
   @override
-  String get postWorkoutHrNoHeartRateData =>
-      'Nabız verisi alınamadı. Canlı nabız ve antrenman sonrası grafiği görmek için bir nabız bandı (ör. Amazfit Helios) takın ve Sağlık izinlerini verin.';
+  String get postWorkoutHrNoHeartRateData => 'Nabız verisi alınamadı. Canlı nabız ve antrenman sonrası grafiği görmek için bir nabız bandı (ör. Amazfit Helios) takın ve Sağlık izinlerini verin.';
 
   @override
   String get postWorkoutHrPeak => 'Zirve';
@@ -27635,8 +25726,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get postWorkoutNutritionLog => 'Kaydet';
 
   @override
-  String get postWorkoutNutritionLogPostWorkoutMeal =>
-      'Antrenman Sonrası Öğününü Kaydet';
+  String get postWorkoutNutritionLogPostWorkoutMeal => 'Antrenman Sonrası Öğününü Kaydet';
 
   @override
   String get postWorkoutNutritionProtein => 'Protein';
@@ -27660,8 +25750,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get postureFindingsCardAddCorrectiveExercises =>
-      'Düzeltici egzersizler ekle';
+  String get postureFindingsCardAddCorrectiveExercises => 'Düzeltici egzersizler ekle';
 
   @override
   String get postureFindingsCardPostureFindings => 'Duruş bulguları';
@@ -27797,8 +25886,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get prSummaryCardLogYourWorkoutsAnd =>
-      'Antrenmanlarını kaydet, en iyi kaldırışlarını otomatik takip edelim!';
+  String get prSummaryCardLogYourWorkoutsAnd => 'Antrenmanlarını kaydet, en iyi kaldırışlarını otomatik takip edelim!';
 
   @override
   String get prSummaryCardNoPersonalRecordsYet => 'Henüz Kişisel Rekor Yok';
@@ -27818,8 +25906,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get practiceAttemptHoldTimeSeconds => 'Bekleme Süresi (saniye)';
 
   @override
-  String get practiceAttemptHowDidItFeel =>
-      'Nasıl hissettirdi? Gözlemlerin var mı?';
+  String get practiceAttemptHowDidItFeel => 'Nasıl hissettirdi? Gözlemlerin var mı?';
 
   @override
   String get practiceAttemptLogAttempt => 'Denemeyi Kaydet';
@@ -27831,8 +25918,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get practiceAttemptNotesOptional => 'Notlar (isteğe bağlı)';
 
   @override
-  String get practiceAttemptPleaseEnterRepsOr =>
-      'Lütfen tekrar sayısını veya bekleme süresini girin';
+  String get practiceAttemptPleaseEnterRepsOr => 'Lütfen tekrar sayısını veya bekleme süresini girin';
 
   @override
   String get practiceAttemptQuickSelectReps => 'Hızlı Tekrar Seçimi';
@@ -27849,27 +25935,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get preAuthQuizConsistencyBeatsIntensity =>
-      'İstikrar yoğunluktan önemlidir';
+  String get preAuthQuizConsistencyBeatsIntensity => 'İstikrar yoğunluktan önemlidir';
 
   @override
-  String get preAuthQuizControlsHowQuicklyWeights =>
-      'Ağırlıkların, tekrarların ve zorluğun her hafta ne kadar hızlı artacağını kontrol eder.';
+  String get preAuthQuizControlsHowQuicklyWeights => 'Ağırlıkların, tekrarların ve zorluğun her hafta ne kadar hızlı artacağını kontrol eder.';
 
   @override
-  String get preAuthQuizEveryExerciseWillBe =>
-      'Her egzersiz sahip olduğun ekipmana göre seçilecek. Alternatif egzersize gerek yok.';
+  String get preAuthQuizEveryExerciseWillBe => 'Her egzersiz sahip olduğun ekipmana göre seçilecek. Alternatif egzersize gerek yok.';
 
   @override
-  String get preAuthQuizFailedToSaveOnboarding =>
-      'Başlangıç verileri kaydedilemedi. Lütfen tekrar dene.';
+  String get preAuthQuizFailedToSaveOnboarding => 'Başlangıç verileri kaydedilemedi. Lütfen tekrar dene.';
 
   @override
   String get preAuthQuizFineTuningYourPlan => 'Planın ince ayarı yapılıyor';
 
   @override
-  String get preAuthQuizFitnessLevelHelpsSet =>
-      'Fitness seviyesi doğru başlangıç noktasını belirlemeye yardımcı olur; uygun ağırlıklar, tekrar aralıkları ve egzersiz karmaşıklığı.';
+  String get preAuthQuizFitnessLevelHelpsSet => 'Fitness seviyesi doğru başlangıç noktasını belirlemeye yardımcı olur; uygun ağırlıklar, tekrar aralıkları ve egzersiz karmaşıklığı.';
 
   @override
   String get preAuthQuizFuelYourTraining => 'Antrenmanını besle';
@@ -27884,8 +25965,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preAuthQuizMatchedToYourSetup => 'Ekipmanına uygun';
 
   @override
-  String get preAuthQuizNutritionTrackingIsOptional =>
-      'Beslenme takibi isteğe bağlıdır ancak etkilidir. AI, hedeflerine ve aktivite seviyene göre makrolarını hesaplar.';
+  String get preAuthQuizNutritionTrackingIsOptional => 'Beslenme takibi isteğe bağlıdır ancak etkilidir. AI, hedeflerine ve aktivite seviyene göre makrolarını hesaplar.';
 
   @override
   String get preAuthQuizSafetyFirst => 'Önce güvenlik';
@@ -27897,32 +25977,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preAuthQuizSkipLetAiDecide => 'Atla, AI karar versin';
 
   @override
-  String get preAuthQuizSomethingWentWrongPlease =>
-      'Bir şeyler ters gitti. Lütfen tekrar dene.';
+  String get preAuthQuizSomethingWentWrongPlease => 'Bir şeyler ters gitti. Lütfen tekrar dene.';
 
   @override
-  String get preAuthQuizTellingUsAboutInjuries =>
-      'Sakatlıklarını belirtmen, ağrıya veya gerilemeye neden olabilecek egzersizlerden kaçınmamızı sağlar.';
+  String get preAuthQuizTellingUsAboutInjuries => 'Sakatlıklarını belirtmen, ağrıya veya gerilemeye neden olabilecek egzersizlerden kaçınmamızı sağlar.';
 
   @override
-  String get preAuthQuizTheseOptionalDetailsMake =>
-      'Bu isteğe bağlı detaylar antrenmanlarını daha kişisel hale getirir. AI varsayılanlarını tercih edersen atlayabilirsin.';
+  String get preAuthQuizTheseOptionalDetailsMake => 'Bu isteğe bağlı detaylar antrenmanlarını daha kişisel hale getirir. AI varsayılanlarını tercih edersen atlayabilirsin.';
 
   @override
-  String get preAuthQuizWeLlBuildThe =>
-      'Programına en uygun antrenman düzenini oluşturacağız. Daha fazla gün her zaman daha iyi değildir; toparlanma önemlidir.';
+  String get preAuthQuizWeLlBuildThe => 'Programına en uygun antrenman düzenini oluşturacağız. Daha fazla gün her zaman daha iyi değildir; toparlanma önemlidir.';
 
   @override
-  String get preAuthQuizWeUseYourGoals =>
-      'Antrenman bölünmesini, egzersiz seçimini ve ilerleme hızınızı belirlemek için hedeflerinizi kullanıyoruz.';
+  String get preAuthQuizWeUseYourGoals => 'Antrenman bölünmesini, egzersiz seçimini ve ilerleme hızınızı belirlemek için hedeflerinizi kullanıyoruz.';
 
   @override
-  String get preAuthQuizWhichDaysWorkBest =>
-      'Hangi günler sizin için en uygun?';
+  String get preAuthQuizWhichDaysWorkBest => 'Hangi günler sizin için en uygun?';
 
   @override
-  String get preAuthQuizYourGoalsShapeEverything =>
-      'Hedefleriniz her şeyi şekillendirir';
+  String get preAuthQuizYourGoalsShapeEverything => 'Hedefleriniz her şeyi şekillendirir';
 
   @override
   String get preAuthQuizYourProgressionSpeed => 'İlerleme hızınız';
@@ -27945,8 +26018,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preAuthReferralSaveCode => 'Kodu kaydet';
 
   @override
-  String get preAuthReferralThatCodeDoesnT =>
-      'Bu kod hatalı görünüyor, tekrar deneyin.';
+  String get preAuthReferralThatCodeDoesnT => 'Bu kod hatalı görünüyor, tekrar deneyin.';
 
   @override
   String preSetCoachingBannerCoachingInsight(Object message) {
@@ -27980,8 +26052,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preWorkoutCheckinHowWasYourSleep => 'Uykun nasıldı?';
 
   @override
-  String get preWorkoutCheckinQuickCheckBeforeYour =>
-      'Antrenman öncesi hızlı kontrol';
+  String get preWorkoutCheckinQuickCheckBeforeYour => 'Antrenman öncesi hızlı kontrol';
 
   @override
   String get preWorkoutCheckinSkipCheckIn => 'Kontrolü atla';
@@ -27993,8 +26064,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preferencesAccentColor => 'Vurgu Rengi';
 
   @override
-  String get preferencesAutoDetectedOverrideIf =>
-      'Otomatik algılandı, seyahat ediyorsanız geçersiz kılın';
+  String get preferencesAutoDetectedOverrideIf => 'Otomatik algılandı, seyahat ediyorsanız geçersiz kılın';
 
   @override
   String get preferencesChooseYourAppAccent => 'Uygulama vurgu renginizi seçin';
@@ -28006,8 +26076,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get preferencesKilogramsOrPounds => 'Kilogram veya Pound';
 
   @override
-  String get preferencesManageGymsEquipmentAnd =>
-      'Spor salonlarını, ekipmanları ve konumları yönetin';
+  String get preferencesManageGymsEquipmentAnd => 'Spor salonlarını, ekipmanları ve konumları yönetin';
 
   @override
   String get preferencesPreferences => 'TERCİHLER';
@@ -28052,12 +26121,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get previewTileMockGoodProgressKeepIt => 'İyi ilerleme, aynen devam!';
 
   @override
-  String get previousWorkoutsCompleteYourFirstWorkout =>
-      'Burada görmek için ilk antrenmanınızı tamamlayın';
+  String get previousWorkoutsCompleteYourFirstWorkout => 'Burada görmek için ilk antrenmanınızı tamamlayın';
 
   @override
-  String get previousWorkoutsNoCompletedWorkoutsYet =>
-      'Henüz tamamlanmış antrenman yok';
+  String get previousWorkoutsNoCompletedWorkoutsYet => 'Henüz tamamlanmış antrenman yok';
 
   @override
   String get previousWorkoutsPreviousWorkouts => 'Önceki Antrenmanlar';
@@ -28066,8 +26133,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get privacyDataPrivacyData => 'Gizlilik ve Veri';
 
   @override
-  String get profileAddEquipmentThatWill =>
-      'Antrenmanlarınız oluşturulurken kullanılacak ekipmanları ekleyin.';
+  String get profileAddEquipmentThatWill => 'Antrenmanlarınız oluşturulurken kullanılacak ekipmanları ekleyin.';
 
   @override
   String get profileAiPrivacy => 'AI Gizliliği';
@@ -28108,8 +26174,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get profileScreenPartAdd => 'Ekle';
 
   @override
-  String get profileScreenPartAddEquipmentAboveTo =>
-      'Başlamak için yukarıdan ekipman ekleyin';
+  String get profileScreenPartAddEquipmentAboveTo => 'Başlamak için yukarıdan ekipman ekleyin';
 
   @override
   String get profileScreenPartEnterEquipmentName => 'Ekipman adını girin...';
@@ -28118,12 +26183,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get profileScreenPartNoCustomEquipmentYet => 'Henüz özel ekipman yok';
 
   @override
-  String get profileScreenPartNoSyncedWorkoutsYet =>
-      'Henüz senkronize edilmiş antrenman yok';
+  String get profileScreenPartNoSyncedWorkoutsYet => 'Henüz senkronize edilmiş antrenman yok';
 
   @override
-  String get profileScreenPartPrimaryGoalMusclePrioriti =>
-      'Birincil hedef ve kas öncelikleri';
+  String get profileScreenPartPrimaryGoalMusclePrioriti => 'Birincil hedef ve kas öncelikleri';
 
   @override
   String get profileScreenPartSeeAll => 'Hepsini gör';
@@ -28138,12 +26201,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get profileWorkoutHistoryImport => 'Antrenman Geçmişi İçe Aktarma';
 
   @override
-  String get programBuilderPartAddYourWarmUp =>
-      'Isınma ve esneme hareketlerinizi her seansa ekleyin.';
+  String get programBuilderPartAddYourWarmUp => 'Isınma ve esneme hareketlerinizi her seansa ekleyin.';
 
   @override
-  String get programBuilderPartApplyMyStapleExercises =>
-      'Temel egzersizlerimi uygula';
+  String get programBuilderPartApplyMyStapleExercises => 'Temel egzersizlerimi uygula';
 
   @override
   String programBuilderPartExercisePickerAddTo(Object dayName) {
@@ -28214,8 +26275,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get programDurationSelectorHowFarAheadTo =>
-      'Antrenmanlar ne kadar önceden planlansın';
+  String get programDurationSelectorHowFarAheadTo => 'Antrenmanlar ne kadar önceden planlansın';
 
   @override
   String get programDurationSelectorProgramDuration => 'Program Süresi';
@@ -28233,8 +26293,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programHistoryProgramHistory => 'Program Geçmişi';
 
   @override
-  String get programHistoryProgramRestoredSuccessfully =>
-      'Program başarıyla geri yüklendi!';
+  String get programHistoryProgramRestoredSuccessfully => 'Program başarıyla geri yüklendi!';
 
   @override
   String get programHistoryRestoreProgram => 'Program Geri Yüklensin mi?';
@@ -28271,8 +26330,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programHistoryUnknownError => 'Bilinmeyen hata';
 
   @override
-  String get programHistoryWhenYouCustomizeYour =>
-      'Programınızı özelleştirdiğinizde, anlık görüntüler burada kaydedilecektir.';
+  String get programHistoryWhenYouCustomizeYour => 'Programınızı özelleştirdiğinizde, anlık görüntüler burada kaydedilecektir.';
 
   @override
   String get programLibrary => '•  ';
@@ -28297,8 +26355,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programLibraryClearFilters => 'Filtreleri temizle';
 
   @override
-  String get programLibraryCouldNotImportThis =>
-      'Bu program içe aktarılamadı. Lütfen tekrar deneyin.';
+  String get programLibraryCouldNotImportThis => 'Bu program içe aktarılamadı. Lütfen tekrar deneyin.';
 
   @override
   String get programLibraryImportCustomize => 'İçe aktar ve özelleştir';
@@ -28310,8 +26367,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programLibraryLevel => 'Seviye';
 
   @override
-  String get programLibraryNoProgramsMatchThese =>
-      'Bu filtrelerle eşleşen program yok.';
+  String get programLibraryNoProgramsMatchThese => 'Bu filtrelerle eşleşen program yok.';
 
   @override
   String get programLibraryProgramLibrary => 'Program Kütüphanesi';
@@ -28338,19 +26394,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programMenuButtonBrowsePrograms => 'Programlara Göz At';
 
   @override
-  String get programMenuButtonChangeDaysEquipmentDiffic =>
-      'Günleri, ekipmanı, zorluk derecesini ve daha fazlasını değiştir';
+  String get programMenuButtonChangeDaysEquipmentDiffic => 'Günleri, ekipmanı, zorluk derecesini ve daha fazlasını değiştir';
 
   @override
   String get programMenuButtonCustomizeProgram => 'Programı Özelleştir';
 
   @override
-  String get programMenuButtonCustomizeYourWorkoutProgram =>
-      'Antrenman programınızı özelleştirin veya mevcut ayarlarınızla yeniden oluşturun.';
+  String get programMenuButtonCustomizeYourWorkoutProgram => 'Antrenman programınızı özelleştirin veya mevcut ayarlarınızla yeniden oluşturun.';
 
   @override
-  String get programMenuButtonFailedToClearWorkouts =>
-      'Antrenmanlar temizlenemedi';
+  String get programMenuButtonFailedToClearWorkouts => 'Antrenmanlar temizlenemedi';
 
   @override
   String programMenuButtonGeneratedFreshWorkouts(Object generatedCount) {
@@ -28358,42 +26411,34 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get programMenuButtonGetFreshWorkoutsWith =>
-      'Mevcut ayarlarınızla yeni antrenmanlar alın';
+  String get programMenuButtonGetFreshWorkoutsWith => 'Mevcut ayarlarınızla yeni antrenmanlar alın';
 
   @override
   String get programMenuButtonMySpace => 'Alanım';
 
   @override
-  String get programMenuButtonPleaseLogInTo =>
-      'Antrenmanları yeniden oluşturmak için lütfen giriş yapın';
+  String get programMenuButtonPleaseLogInTo => 'Antrenmanları yeniden oluşturmak için lütfen giriş yapın';
 
   @override
   String get programMenuButtonProgramOptions => 'Program Seçenekleri';
 
   @override
-  String get programMenuButtonProgramUpdatedYourNew =>
-      'Program güncellendi! Yeni antrenmanlarınız hazır.';
+  String get programMenuButtonProgramUpdatedYourNew => 'Program güncellendi! Yeni antrenmanlarınız hazır.';
 
   @override
-  String get programMenuButtonRegenerateThisWeek =>
-      'Bu Haftayı Yeniden Oluştur';
+  String get programMenuButtonRegenerateThisWeek => 'Bu Haftayı Yeniden Oluştur';
 
   @override
-  String get programMenuButtonRegenerateWorkouts =>
-      'Antrenmanlar Yeniden Oluşturulsun mu?';
+  String get programMenuButtonRegenerateWorkouts => 'Antrenmanlar Yeniden Oluşturulsun mu?';
 
   @override
-  String get programMenuButtonSeeYourWorkoutDays =>
-      'Antrenman günlerinizi, deneyim seviyenizi ve hedeflerinizi görün';
+  String get programMenuButtonSeeYourWorkoutDays => 'Antrenman günlerinizi, deneyim seviyenizi ve hedeflerinizi görün';
 
   @override
-  String get programMenuButtonThisWillDeleteYour =>
-      'Bu işlem, yaklaşan tamamlanmamış antrenmanlarınızı silecek ve mevcut program ayarlarınızı kullanarak yenilerini oluşturacaktır.\n\nTamamlanan antrenmanlar etkilenmeyecektir.';
+  String get programMenuButtonThisWillDeleteYour => 'Bu işlem, yaklaşan tamamlanmamış antrenmanlarınızı silecek ve mevcut program ayarlarınızı kullanarak yenilerini oluşturacaktır.\n\nTamamlanan antrenmanlar etkilenmeyecektir.';
 
   @override
-  String get programMenuButtonTryCelebrityWorkoutsSport =>
-      'Ünlü antrenmanlarını, spor eğitimlerini ve daha fazlasını deneyin';
+  String get programMenuButtonTryCelebrityWorkoutsSport => 'Ünlü antrenmanlarını, spor eğitimlerini ve daha fazlasını deneyin';
 
   @override
   String get programMenuButtonViewMyPreferences => 'Tercihlerimi Görüntüle';
@@ -28417,19 +26462,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programMetaProgression => 'İlerleme';
 
   @override
-  String get programSummaryAdaptsWorkoutsBasedOn =>
-      'Antrenmanları gelişiminize göre uyarlar';
+  String get programSummaryAdaptsWorkoutsBasedOn => 'Antrenmanları gelişiminize göre uyarlar';
 
   @override
   String get programSummaryAdvancedLabel => 'İleri seviye';
 
   @override
-  String get programSummaryAutomaticallyIncreasesChalle =>
-      'Zorluk derecesini zamanla otomatik olarak artırır';
+  String get programSummaryAutomaticallyIncreasesChalle => 'Zorluk derecesini zamanla otomatik olarak artırır';
 
   @override
-  String get programSummaryAvoidsExercisesThatStress =>
-      'Sınırlarınızı zorlayan egzersizlerden kaçınır';
+  String get programSummaryAvoidsExercisesThatStress => 'Sınırlarınızı zorlayan egzersizlerden kaçınır';
 
   @override
   String get programSummaryBeginnerLabel => 'Başlangıç seviyesi';
@@ -28471,8 +26513,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programSummaryLoseWeight => 'Kilo ver';
 
   @override
-  String get programSummaryMacrosAndMealsAligned =>
-      'Makrolar ve öğünler antrenmanınızla uyumlu hale getirilir';
+  String get programSummaryMacrosAndMealsAligned => 'Makrolar ve öğünler antrenmanınızla uyumlu hale getirilir';
 
   @override
   String programSummaryNItems(Object arg0) {
@@ -28483,12 +26524,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programSummaryNutritionIntegration => 'Beslenme Entegrasyonu';
 
   @override
-  String get programSummaryPersonalizedForYourGoals =>
-      'Hedefleriniz ve ekipmanınız için kişiselleştirilmiştir';
+  String get programSummaryPersonalizedForYourGoals => 'Hedefleriniz ve ekipmanınız için kişiselleştirilmiştir';
 
   @override
-  String get programSummaryProgressiveOverload =>
-      'Kademeli Yükleme (Progressive Overload)';
+  String get programSummaryProgressiveOverload => 'Kademeli Yükleme (Progressive Overload)';
 
   @override
   String get programSummaryStartTraining => 'Antrenmana Başla';
@@ -28506,8 +26545,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programSummaryYourProgramIsReady => 'Programınız Hazır';
 
   @override
-  String get programTemplateBuilderAProgramNeedsAt =>
-      'Bir programın en az bir antrenman günü olmalıdır.';
+  String get programTemplateBuilderAProgramNeedsAt => 'Bir programın en az bir antrenman günü olmalıdır.';
 
   @override
   String get programTemplateBuilderAddExercise => 'Egzersiz ekle';
@@ -28516,16 +26554,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programTemplateBuilderBuildFromScratch => 'Sıfırdan oluştur';
 
   @override
-  String get programTemplateBuilderCopyDayToAnother =>
-      'Günü başka bir güne kopyala';
+  String get programTemplateBuilderCopyDayToAnother => 'Günü başka bir güne kopyala';
 
   @override
-  String get programTemplateBuilderCouldNotSaveThe =>
-      'Şablon kaydedilemedi. Lütfen tekrar deneyin.';
+  String get programTemplateBuilderCouldNotSaveThe => 'Şablon kaydedilemedi. Lütfen tekrar deneyin.';
 
   @override
-  String get programTemplateBuilderDropInASplit =>
-      'Daha önce yazdığınız bir programı buraya bırakın, biz ayrıştıralım.';
+  String get programTemplateBuilderDropInASplit => 'Daha önce yazdığınız bir programı buraya bırakın, biz ayrıştıralım.';
 
   @override
   String get programTemplateBuilderEditProgram => 'Programı Düzenle';
@@ -28534,16 +26569,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programTemplateBuilderEmpty => 'Boş';
 
   @override
-  String get programTemplateBuilderGiveYourProgramA =>
-      'Programınıza bir isim verin.';
+  String get programTemplateBuilderGiveYourProgramA => 'Programınıza bir isim verin.';
 
   @override
-  String get programTemplateBuilderImportFromLibrary =>
-      'Kütüphaneden içe aktar';
+  String get programTemplateBuilderImportFromLibrary => 'Kütüphaneden içe aktar';
 
   @override
-  String get programTemplateBuilderLayOutEachTraining =>
-      'Her antrenman gününü egzersiz egzersiz planlayın.';
+  String get programTemplateBuilderLayOutEachTraining => 'Her antrenman gününü egzersiz egzersiz planlayın.';
 
   @override
   String get programTemplateBuilderMakeRestDay => 'Dinlenme günü yap';
@@ -28598,15 +26630,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String programTemplateBuilderScreenWeeksWhenScheduled(
-    Object repeatWeeksHint,
-  ) {
+  String programTemplateBuilderScreenWeeksWhenScheduled(Object repeatWeeksHint) {
     return 'Planlandığında $repeatWeeksHint hafta.';
   }
 
   @override
-  String get programTemplateBuilderStartFromAStructured =>
-      'Yapılandırılmış bir programdan başlayın ve kendinize göre düzenleyin.';
+  String get programTemplateBuilderStartFromAStructured => 'Yapılandırılmış bir programdan başlayın ve kendinize göre düzenleyin.';
 
   @override
   String get programsAll => 'Tümü';
@@ -28639,15 +26668,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programsIntroFlexibleDuration => 'Esnek Süre';
 
   @override
-  String get programsIntroProfessionalExerciseTutorial =>
-      'Profesyonel egzersiz eğitimleri';
+  String get programsIntroProfessionalExerciseTutorial => 'Profesyonel egzersiz eğitimleri';
 
   @override
   String get programsIntroProgramsFrom1To => '1 ila 16 haftalık programlar';
 
   @override
-  String get programsIntroStrengthCardioMobilityM =>
-      'Güç, kardiyo, mobilite ve daha fazlası';
+  String get programsIntroStrengthCardioMobilityM => 'Güç, kardiyo, mobilite ve daha fazlası';
 
   @override
   String get programsIntroVideoDemos => 'Video Gösterimleri';
@@ -28668,8 +26695,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get programsSearchPrograms => 'Programları ara...';
 
   @override
-  String get programsTapAnyProgramTo =>
-      'Daha fazla bilgi için herhangi bir programa dokunun';
+  String get programsTapAnyProgramTo => 'Daha fazla bilgi için herhangi bir programa dokunun';
 
   @override
   String get programsTryAgain => 'Tekrar Dene';
@@ -28678,12 +26704,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressAll => 'Tümü';
 
   @override
-  String get progressChartsCompleteSomeWorkoutsTo =>
-      'Zaman içindeki hacim gelişiminizi görmek için birkaç antrenman tamamlayın.';
+  String get progressChartsCompleteSomeWorkoutsTo => 'Zaman içindeki hacim gelişiminizi görmek için birkaç antrenman tamamlayın.';
 
   @override
-  String get progressChartsCompleteWeightedExercisesTo =>
-      'Güç gelişiminizi görmek için ağırlıklı egzersizleri tamamlayın.';
+  String get progressChartsCompleteWeightedExercisesTo => 'Güç gelişiminizi görmek için ağırlıklı egzersizleri tamamlayın.';
 
   @override
   String get progressChartsFailedToLoadData => 'Veriler Yüklenemedi';
@@ -28730,8 +26754,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressDeletePhoto => 'Fotoğrafı Sil?';
 
   @override
-  String get progressFailedToProcessPhoto =>
-      'Fotoğraf işlenemedi. Lütfen tekrar deneyin.';
+  String get progressFailedToProcessPhoto => 'Fotoğraf işlenemedi. Lütfen tekrar deneyin.';
 
   @override
   String get progressFitness => 'FİTNESS';
@@ -28767,15 +26790,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressScores => 'Skorlar';
 
   @override
-  String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      'Güç gelişiminizi görmek için bu kası hedefleyen antrenmanları tamamlayın.';
+  String get progressScreenExtCompleteWorkoutsTargetingTh => 'Güç gelişiminizi görmek için bu kası hedefleyen antrenmanları tamamlayın.';
 
   @override
   String get progressScreenExtDetails => 'Detaylar';
 
   @override
-  String get progressScreenExtNoDataForThis =>
-      'Bu kas grubu için henüz veri yok';
+  String get progressScreenExtNoDataForThis => 'Bu kas grubu için henüz veri yok';
 
   @override
   String get progressScreenExtProgressToNextLevel => 'Bir sonraki seviyeye geç';
@@ -28792,8 +26813,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressScreenUiAddPhoto => 'Fotoğraf Ekle';
 
   @override
-  String get progressScreenUiAi100RatingBody =>
-      'AI /100 puanı, vücut yağı halkaları ve duruş geri bildirimi';
+  String get progressScreenUiAi100RatingBody => 'AI /100 puanı, vücut yağı halkaları ve duruş geri bildirimi';
 
   @override
   String get progressScreenUiBodyAnalyzer => 'Vücut Analizörü';
@@ -28823,19 +26843,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressScreenUiLogMeasurements => 'Ölçümleri Kaydet';
 
   @override
-  String get progressScreenUiMasterEasierVariantsThen =>
-      'Daha kolay varyasyonlarda ustalaşın, ardından daha zor olanlara geçin';
+  String get progressScreenUiMasterEasierVariantsThen => 'Daha kolay varyasyonlarda ustalaşın, ardından daha zor olanlara geçin';
 
   @override
   String get progressScreenUiMuscleAnalytics => 'Kas Analitiği';
 
   @override
-  String get progressScreenUiNoProgressPhotosYet =>
-      'Henüz Gelişim Fotoğrafı Yok';
+  String get progressScreenUiNoProgressPhotosYet => 'Henüz Gelişim Fotoğrafı Yok';
 
   @override
-  String get progressScreenUiPerExerciseProgressPrs =>
-      'Egzersiz bazlı gelişim ve PR\'lar';
+  String get progressScreenUiPerExerciseProgressPrs => 'Egzersiz bazlı gelişim ve PR\'lar';
 
   @override
   String get progressScreenUiPhotoProgress => 'Fotoğraflı Gelişim';
@@ -28847,16 +26864,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressScreenUiTakeFirstPhoto => 'İlk Fotoğrafı Çek';
 
   @override
-  String get progressScreenUiTakePhotosFromDifferent =>
-      'Zaman içindeki görsel gelişiminizi takip etmek için farklı açılardan fotoğraflar çekin.';
+  String get progressScreenUiTakePhotosFromDifferent => 'Zaman içindeki görsel gelişiminizi takip etmek için farklı açılardan fotoğraflar çekin.';
 
   @override
-  String get progressScreenUiTrackYourBodyMeasurements =>
-      'Tartının ötesindeki detaylı gelişimi görmek için vücut ölçümlerinizi takip edin.';
+  String get progressScreenUiTrackYourBodyMeasurements => 'Tartının ötesindeki detaylı gelişimi görmek için vücut ölçümlerinizi takip edin.';
 
   @override
-  String get progressScreenUiTrainingVolumeBalance =>
-      'Antrenman hacmi ve dengesi';
+  String get progressScreenUiTrainingVolumeBalance => 'Antrenman hacmi ve dengesi';
 
   @override
   String progressScreenWeight(Object formattedWeight) {
@@ -28880,15 +26894,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get progressShareGalleryShareYourTransformation =>
-      'Dönüşümünüzü Paylaşın';
+  String get progressShareGalleryShareYourTransformation => 'Dönüşümünüzü Paylaşın';
 
   @override
   String get progressShareGalleryTapToOpen => 'açmak için dokunun';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy =>
-      'BİR\nDÖNÜŞÜM\nÇALIŞMASI';
+  String get progressShareTemplatesANtransformationNstudy => 'BİR\nDÖNÜŞÜM\nÇALIŞMASI';
 
   @override
   String get progressShareTemplatesBreaking => 'SON DAKİKA';
@@ -28902,8 +26914,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesFromILlStart =>
-      '\"PAZARTESİ BAŞLAYACAĞIM\"DAN';
+  String get progressShareTemplatesFromILlStart => '\"PAZARTESİ BAŞLAYACAĞIM\"DAN';
 
   @override
   String progressShareTemplatesHowSheLost(Object weightLostText) {
@@ -28917,10 +26928,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressShareTemplatesInTheBooks => 'KAYITLARDA';
 
   @override
-  String progressShareTemplatesLocalLegendShedsIn(
-    Object durationText,
-    Object weightLostText,
-  ) {
+  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText) {
     return 'YEREL EFSANE $durationText İÇİNDE $weightLostText VERDİ';
   }
 
@@ -28958,8 +26966,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressShareTemplatesReportedBy => 'BİLDİREN';
 
   @override
-  String get progressShareTemplatesSourcesCloseToThe =>
-      'Konuya yakın kaynaklar, değişimin istikrarlı antrenman, bilinçli beslenme ve bacak gününü atlamamaktan kaynaklandığını doğruluyor. Uzmanlar bunu \"eşi benzeri görülmemiş bir özveri\" olarak adlandırıyor.';
+  String get progressShareTemplatesSourcesCloseToThe => 'Konuya yakın kaynaklar, değişimin istikrarlı antrenman, bilinçli beslenme ve bacak gününü atlamamaktan kaynaklandığını doğruluyor. Uzmanlar bunu \"eşi benzeri görülmemiş bir özveri\" olarak adlandırıyor.';
 
   @override
   String get progressShareTemplatesTheDailyGains => 'GÜNLÜK KAZANIMLAR';
@@ -29020,10 +27027,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String progressShareTemplatesWorkoutsDayStreak(
-    Object currentStreak,
-    Object totalWorkouts,
-  ) {
+  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts) {
     return '$totalWorkouts antrenman · $currentStreak günlük seri';
   }
 
@@ -29061,8 +27065,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressThisActionCannotBe => 'Bu işlem geri alınamaz.';
 
   @override
-  String get progressTrackYourFitnessJourney =>
-      'Gelişim fotoğrafları, vücut ölçümleri ve güç skorları ile fitness yolculuğunu takip et. Ne kadar yol katettiğini gör!';
+  String get progressTrackYourFitnessJourney => 'Gelişim fotoğrafları, vücut ölçümleri ve güç skorları ile fitness yolculuğunu takip et. Ne kadar yol katettiğini gör!';
 
   @override
   String get progressUploadFailed => 'Yükleme Başarısız';
@@ -29074,8 +27077,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressUseCamera => 'Kamerayı kullan';
 
   @override
-  String get progressWeCouldnTSave =>
-      'Fotoğrafını kaydedemedik. Lütfen tekrar dene.';
+  String get progressWeCouldnTSave => 'Fotoğrafını kaydedemedik. Lütfen tekrar dene.';
 
   @override
   String progressionChainCardStepOf(Object chain, Object currentStepOrder) {
@@ -29096,8 +27098,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionPaceAutoDeloadWeeks => 'Otomatik Deload Haftaları';
 
   @override
-  String get progressionPaceControlHowQuicklyThe =>
-      'Yapay zekanın antrenman ağırlıklarını ne kadar hızlı artıracağını kontrol et. Daha yavaş ilerleme yeni başlayanlar için daha güvenliyken, daha hızlı ilerleme deneyimli sporcular için uygundur.';
+  String get progressionPaceControlHowQuicklyThe => 'Yapay zekanın antrenman ağırlıklarını ne kadar hızlı artıracağını kontrol et. Daha yavaş ilerleme yeni başlayanlar için daha güvenliyken, daha hızlı ilerleme deneyimli sporcular için uygundur.';
 
   @override
   String get progressionPaceDeloadFrequency => 'Deload Sıklığı';
@@ -29109,16 +27110,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionPaceFineTuneSettings => 'İnce Ayar Ayarları';
 
   @override
-  String get progressionPaceHowManyWeeksBefore =>
-      'Ağırlık artırmadan önce kaç hafta';
+  String get progressionPaceHowManyWeeksBefore => 'Ağırlık artırmadan önce kaç hafta';
 
   @override
-  String get progressionPaceHowMuchToIncrease =>
-      'Her ilerlemede ne kadar ağırlık artırılacak';
+  String get progressionPaceHowMuchToIncrease => 'Her ilerlemede ne kadar ağırlık artırılacak';
 
   @override
-  String get progressionPacePeriodicallyReduceIntensity =>
-      'Toparlanma için yoğunluğu periyodik olarak azalt';
+  String get progressionPacePeriodicallyReduceIntensity => 'Toparlanma için yoğunluğu periyodik olarak azalt';
 
   @override
   String get progressionPaceProgressionPace => 'İlerleme Hızı';
@@ -29158,15 +27156,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionSelectorAutoAdjusts => 'Otomatik ayarlanır';
 
   @override
-  String get progressionSelectorChooseHowWeightChanges =>
-      'Ağırlığın setler boyunca nasıl değişeceğini seç';
+  String get progressionSelectorChooseHowWeightChanges => 'Ağırlığın setler boyunca nasıl değişeceğini seç';
 
   @override
   String get progressionSelectorSetProgression => 'İlerlemeyi Ayarla';
 
   @override
-  String get progressionSelectorSubtitle =>
-      'Ağırlığın setler arasında nasıl değiştiğini seçin';
+  String get progressionSelectorSubtitle => 'Ağırlığın setler arasında nasıl değiştiğini seçin';
 
   @override
   String get progressionSelectorTitle => 'Set İlerlemesi';
@@ -29175,8 +27171,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionSelectorWhenToUse => 'Ne zaman kullanılır';
 
   @override
-  String get progressionStepCardCompletePreviousStepTo =>
-      'Kilidi açmak için önceki adımı tamamla';
+  String get progressionStepCardCompletePreviousStepTo => 'Kilidi açmak için önceki adımı tamamla';
 
   @override
   String get progressionStepCardCompleted => 'Tamamlandı';
@@ -29193,15 +27188,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionStripTarget => 'Hedef ';
 
   @override
-  String get progressionSuggestionCardCompleteAFewMore =>
-      'İlerlemelerin kilidini açmak için birkaç \"kolay\" antrenman daha tamamla';
+  String get progressionSuggestionCardCompleteAFewMore => 'İlerlemelerin kilidini açmak için birkaç \"kolay\" antrenman daha tamamla';
 
   @override
   String get progressionSuggestionCardCurrent => 'Mevcut';
 
   @override
-  String get progressionSuggestionCardExerciseUnlocked =>
-      'Egzersizin Kilidi Açıldı!';
+  String get progressionSuggestionCardExerciseUnlocked => 'Egzersizin Kilidi Açıldı!';
 
   @override
   String get progressionSuggestionCardKeepCurrent => 'Mevcutu Koru';
@@ -29221,10 +27214,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String progressionSuggestionCardValue2(
-    Object currentExercise,
-    Object suggestedExercise,
-  ) {
+  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise) {
     return '$currentExercise -> $suggestedExercise';
   }
 
@@ -29234,8 +27224,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get progressionSuggestionCardWhyThisProgression =>
-      'Neden bu ilerleme?';
+  String get progressionSuggestionCardWhyThisProgression => 'Neden bu ilerleme?';
 
   @override
   String get proposedChangeCardApplied => 'Uygulandı';
@@ -29247,8 +27236,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get proposedChangeCardDismissed => 'Reddedildi';
 
   @override
-  String get proposedChangeCardExpiredAskAgainFor =>
-      'Süresi doldu — yeni bir öneri için tekrar sor';
+  String get proposedChangeCardExpiredAskAgainFor => 'Süresi doldu — yeni bir öneri için tekrar sor';
 
   @override
   String get proposedChangeCardNotNow => 'Şimdi değil';
@@ -29313,11 +27301,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get publicRecipeSaveToMyRecipes => 'Tariflerime kaydet';
 
   @override
-  String publicRecipeScreenByViewsSaves(
-    Object authorDisplayName,
-    Object saveCount,
-    Object viewCount,
-  ) {
+  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount) {
     return '$authorDisplayName tarafından · $viewCount görüntüleme · $saveCount kaydetme';
   }
 
@@ -29335,8 +27319,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get queuePositionCardPleaseWaitWhileWe =>
-      'Lütfen bir destek temsilcisine bağlanırken bekle';
+  String get queuePositionCardPleaseWaitWhileWe => 'Lütfen bir destek temsilcisine bağlanırken bekle';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -29353,19 +27336,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsCustomizeQuickActions => 'Hızlı Eylemleri Özelleştir';
 
   @override
-  String get quickActionsDisplayExtraShortcutsOn =>
-      'Ana ekranda ekstra kısayolları göster';
+  String get quickActionsDisplayExtraShortcutsOn => 'Ana ekranda ekstra kısayolları göster';
 
   @override
-  String get quickActionsFailedToLogWater =>
-      'Su kaydedilemedi. Lütfen tekrar dene.';
+  String get quickActionsFailedToLogWater => 'Su kaydedilemedi. Lütfen tekrar dene.';
 
   @override
   String get quickActionsNoActionsFound => 'Eylem bulunamadı';
 
   @override
-  String get quickActionsPleaseLogInTo =>
-      'Hidrasyon takibi için lütfen giriş yap';
+  String get quickActionsPleaseLogInTo => 'Hidrasyon takibi için lütfen giriş yap';
 
   @override
   String get quickActionsResetToDefault => 'Varsayılana Sıfırla';
@@ -29449,12 +27429,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsRowEnter15000Ml => '1–5000 ml girin';
 
   @override
-  String get quickActionsRowFailedToLogWater =>
-      'Su girişi yapılamadı. Lütfen tekrar deneyin.';
+  String get quickActionsRowFailedToLogWater => 'Su girişi yapılamadı. Lütfen tekrar deneyin.';
 
   @override
-  String get quickActionsRowFastEndedSuccessfully =>
-      'Oruç başarıyla sonlandırıldı';
+  String get quickActionsRowFastEndedSuccessfully => 'Oruç başarıyla sonlandırıldı';
 
   @override
   String get quickActionsRowFasting => 'Oruç';
@@ -29510,8 +27488,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsRowPhotoLog => 'Fotoğraf Günlüğü';
 
   @override
-  String get quickActionsRowPleaseLogInTo =>
-      'Hidrasyon takibi için lütfen giriş yapın';
+  String get quickActionsRowPleaseLogInTo => 'Hidrasyon takibi için lütfen giriş yapın';
 
   @override
   String get quickActionsRowQuick => 'Hızlı';
@@ -29526,8 +27503,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsRowSip => 'Yudum';
 
   @override
-  String get quickActionsRowSipToXlJug =>
-      'XL sürahiye kadar yudumlayın veya tam miktar girin';
+  String get quickActionsRowSipToXlJug => 'XL sürahiye kadar yudumlayın veya tam miktar girin';
 
   @override
   String get quickActionsRowSmallCup => 'Küçük fincan';
@@ -29539,8 +27515,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsRowSportsBottle => 'Sporcu matarası';
 
   @override
-  String get quickActionsRowTakeAProgressPhoto =>
-      'Değişiminizi görmek için bir ilerleme fotoğrafı çekin';
+  String get quickActionsRowTakeAProgressPhoto => 'Değişiminizi görmek için bir ilerleme fotoğrafı çekin';
 
   @override
   String get quickActionsRowTallGlass => 'Uzun bardak';
@@ -29570,8 +27545,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickActionsSheetEnd => 'Bitir';
 
   @override
-  String get quickActionsSheetFastEndedSuccessfully =>
-      'Oruç başarıyla sonlandırıldı';
+  String get quickActionsSheetFastEndedSuccessfully => 'Oruç başarıyla sonlandırıldı';
 
   @override
   String get quickActionsSheetFasting => 'Oruç';
@@ -29587,8 +27561,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quickActionsSheetTakeAProgressPhoto =>
-      'Değişiminizi görmek için bir ilerleme fotoğrafı çekin';
+  String get quickActionsSheetTakeAProgressPhoto => 'Değişiminizi görmek için bir ilerleme fotoğrafı çekin';
 
   @override
   String get quickActionsSheetTrackYourProgress => 'İlerlemeni Takip Et';
@@ -29606,8 +27579,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickAdjustAdaptWorkout => 'Antrenmanı uyarla';
 
   @override
-  String get quickAdjustAdjustTodaySWorkout =>
-      'Bugünkü antrenmanı yerinde düzenle.';
+  String get quickAdjustAdjustTodaySWorkout => 'Bugünkü antrenmanı yerinde düzenle.';
 
   @override
   String get quickAdjustDrained => 'Tükenmiş';
@@ -29679,16 +27651,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickLogMeasurementsNotLoggedYet => 'Henüz kaydedilmedi';
 
   @override
-  String get quickLogMeasurementsPleaseSignInTo =>
-      'Ölçümleri kaydetmek için lütfen giriş yapın';
+  String get quickLogMeasurementsPleaseSignInTo => 'Ölçümleri kaydetmek için lütfen giriş yapın';
 
   @override
-  String get quickLogMeasurementsTapToViewFull =>
-      'Tüm geçmişi ve trendleri görmek için dokunun';
+  String get quickLogMeasurementsTapToViewFull => 'Tüm geçmişi ve trendleri görmek için dokunun';
 
   @override
-  String get quickLogMeasurementsTrackYourBodyChanges =>
-      'Vücudunuzdaki değişimleri zaman içinde takip edin';
+  String get quickLogMeasurementsTrackYourBodyChanges => 'Vücudunuzdaki değişimleri zaman içinde takip edin';
 
   @override
   String get quickLogMeasurementsUpdate => 'Güncelle';
@@ -29726,12 +27695,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickLogOverlaySnack => 'Atıştırmalık';
 
   @override
-  String get quickLogOverlayTapAMealType =>
-      'Kaydetmek için bir öğün türüne dokunun veya daha fazla seçenek için uygulamaya gidin';
+  String get quickLogOverlayTapAMealType => 'Kaydetmek için bir öğün türüne dokunun veya daha fazla seçenek için uygulamaya gidin';
 
   @override
-  String get quickLogWeightLogMoreWeightsTo =>
-      'Trendleri görmek için daha fazla ağırlık kaydedin';
+  String get quickLogWeightLogMoreWeightsTo => 'Trendleri görmek için daha fazla ağırlık kaydedin';
 
   @override
   String get quickLogWeightLogged => 'Kaydedildi!';
@@ -29743,8 +27710,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickStartCardCouldNotLoadWorkout => 'Antrenman yüklenemedi';
 
   @override
-  String get quickStartCardGenerateAWorkoutProgram =>
-      'Başlamak için bir antrenman programı oluşturun!';
+  String get quickStartCardGenerateAWorkoutProgram => 'Başlamak için bir antrenman programı oluşturun!';
 
   @override
   String quickStartCardInDays(Object daysUntilNext) {
@@ -29752,8 +27718,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quickStartCardLoadingTodaySWorkout =>
-      'Bugünkü antrenman yükleniyor...';
+  String get quickStartCardLoadingTodaySWorkout => 'Bugünkü antrenman yükleniyor...';
 
   @override
   String quickStartCardNext(Object name) {
@@ -29785,16 +27750,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickStatsCardActiveFeatures => 'Aktif Özellikler';
 
   @override
-  String get quickStatsCardConfigureYourHormonalHealth =>
-      'Kişiselleştirilmiş içgörüler almak için hormonal sağlık tercihlerinizi yapılandırın.';
+  String get quickStatsCardConfigureYourHormonalHealth => 'Kişiselleştirilmiş içgörüler almak için hormonal sağlık tercihlerinizi yapılandırın.';
 
   @override
-  String get quickStatsCardCycleSyncedNutrition =>
-      'Döngüyle Senkronize Beslenme';
+  String get quickStatsCardCycleSyncedNutrition => 'Döngüyle Senkronize Beslenme';
 
   @override
-  String get quickStatsCardCycleSyncedWorkouts =>
-      'Döngüyle Senkronize Antrenmanlar';
+  String get quickStatsCardCycleSyncedWorkouts => 'Döngüyle Senkronize Antrenmanlar';
 
   @override
   String get quickStatsCardCycleTracking => 'Döngü Takibi';
@@ -29835,8 +27797,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutConflictTitle => 'Antrenman Zaten Planlanmış';
 
   @override
-  String get quickWorkoutDiscoverSubtitle =>
-      'Profilinize dayalı kişiselleştirilmiş öneriler';
+  String get quickWorkoutDiscoverSubtitle => 'Profilinize dayalı kişiselleştirilmiş öneriler';
 
   @override
   String get quickWorkoutDiscoverWorkouts => 'Antrenmanları Keşfet';
@@ -29911,19 +27872,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutSheetInjuriesOptional => 'Sakatlıklar (İsteğe bağlı)';
 
   @override
-  String get quickWorkoutSheetInstantGenerationPoweredBy =>
-      'Egzersiz bilimi araştırmalarıyla desteklenen anlık oluşturma.';
+  String get quickWorkoutSheetInstantGenerationPoweredBy => 'Egzersiz bilimi araştırmalarıyla desteklenen anlık oluşturma.';
 
   @override
   String get quickWorkoutSheetMoodOptional => 'Ruh Hali (İsteğe bağlı)';
 
   @override
-  String get quickWorkoutSheetNoAdditionalSuggestionsAvai =>
-      'Başka öneri bulunmuyor.';
+  String get quickWorkoutSheetNoAdditionalSuggestionsAvai => 'Başka öneri bulunmuyor.';
 
   @override
-  String get quickWorkoutSheetPairOpposingMusclesTo =>
-      'Zaman kazanmak için karşıt kasları eşleştirin';
+  String get quickWorkoutSheetPairOpposingMusclesTo => 'Zaman kazanmak için karşıt kasları eşleştirin';
 
   @override
   String quickWorkoutSheetPartQuickWorkoutSheetStateExt1X(Object qty) {
@@ -29931,41 +27889,30 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration) {
     return '$_selectedDuration dakikalık antrenman oluştur';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
-    Object phaseDisplayName,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName) {
     return 'Mezodöngü: $phaseDisplayName';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
-    Object _selectedDuration,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration) {
     return '$_selectedDuration dk';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
-    Object totalWeeks,
-    Object weekNumber,
-  ) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber) {
     return '$weekNumber/$totalWeeks. Hafta';
   }
 
   @override
-  String get quickWorkoutSheetPerfectForBusyDays =>
-      'Yoğun günler için mükemmel';
+  String get quickWorkoutSheetPerfectForBusyDays => 'Yoğun günler için mükemmel';
 
   @override
-  String get quickWorkoutSheetPersonalizedSuggestionsBased =>
-      'Profilinize dayalı kişiselleştirilmiş öneriler';
+  String get quickWorkoutSheetPersonalizedSuggestionsBased => 'Profilinize dayalı kişiselleştirilmiş öneriler';
 
   @override
   String get quickWorkoutSheetQuickWorkout => 'Hızlı Antrenman';
@@ -29980,8 +27927,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutSheetSupersets => 'Supersetler';
 
   @override
-  String get quickWorkoutSheetTapToAddTap =>
-      'Eklemek için dokunun (eşleştirmek için tekrar dokunun)';
+  String get quickWorkoutSheetTapToAddTap => 'Eklemek için dokunun (eşleştirmek için tekrar dokunun)';
 
   @override
   String get quickWorkoutSheetUnfavorite => 'Favorilerden çıkar';
@@ -29990,8 +27936,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutSheetWithPlates => 'Plakalarla';
 
   @override
-  String get quickWorkoutSheetWorkoutAlreadyScheduled =>
-      'Antrenman Zaten Planlanmış';
+  String get quickWorkoutSheetWorkoutAlreadyScheduled => 'Antrenman Zaten Planlanmış';
 
   @override
   String get quickWorkoutSheetWorkoutFocus => 'Antrenman Odağı';
@@ -30000,8 +27945,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutSubtitle => 'Yoğun günler için ideal';
 
   @override
-  String get quickWorkoutTapToAddPairs =>
-      'Dambıl çiftleri eklemek için dokunun';
+  String get quickWorkoutTapToAddPairs => 'Dambıl çiftleri eklemek için dokunun';
 
   @override
   String get quickWorkoutTitle => 'Hızlı Antrenman';
@@ -30016,10 +27960,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quitWorkoutAddANoteOptional => 'Not ekle (isteğe bağlı)...';
 
   @override
-  String quitWorkoutDialogCompleteSetsDone(
-    Object progressPercent,
-    Object totalCompletedSets,
-  ) {
+  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets) {
     return '%$progressPercent tamamlandı • $totalCompletedSets set yapıldı';
   }
 
@@ -30105,8 +28046,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quizBodyMetricsWeLlUseThis =>
-      'Bunu kişiselleştirilmiş hedeflerini hesaplamak için kullanacağız';
+  String get quizBodyMetricsWeLlUseThis => 'Bunu kişiselleştirilmiş hedeflerini hesaplamak için kullanacağız';
 
   @override
   String get quizBodyMetricsWeight => 'Kilo';
@@ -30124,15 +28064,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizContinueButtonSeeMyPlan => 'Planımı Gör';
 
   @override
-  String get quizDaysSelectorAiGeneratesWorkoutsWithin =>
-      'AI, seçtiğin aralıkta antrenmanlar oluşturur';
+  String get quizDaysSelectorAiGeneratesWorkoutsWithin => 'AI, seçtiğin aralıkta antrenmanlar oluşturur';
 
   @override
   String get quizDaysSelectorBest => 'En iyi';
 
   @override
-  String get quizDaysSelectorConsistencyBeatsIntensity =>
-      'Süreklilik yoğunluktan önemlidir - sürdürebileceğin bir düzen seç';
+  String get quizDaysSelectorConsistencyBeatsIntensity => 'Süreklilik yoğunluktan önemlidir - sürdürebileceğin bir düzen seç';
 
   @override
   String quizDaysSelectorDays(int arg0) {
@@ -30154,12 +28092,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizDaysSelectorFri => 'Cum';
 
   @override
-  String get quizDaysSelectorHowLongAreYour =>
-      'Antrenmanların ne kadar sürüyor?';
+  String get quizDaysSelectorHowLongAreYour => 'Antrenmanların ne kadar sürüyor?';
 
   @override
-  String get quizDaysSelectorHowManyDaysPer =>
-      'Haftada kaç gün antrenman yapabilirsin?';
+  String get quizDaysSelectorHowManyDaysPer => 'Haftada kaç gün antrenman yapabilirsin?';
 
   @override
   String get quizDaysSelectorMin => 'Min';
@@ -30188,12 +28124,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizDaysSelectorWed => 'Çar';
 
   @override
-  String get quizDaysSelectorWhichDaysWorkBest =>
-      'Hangi günler senin için daha uygun?';
+  String get quizDaysSelectorWhichDaysWorkBest => 'Hangi günler senin için daha uygun?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint =>
-      'daha sonra başka salonlar ekleyebilirsin';
+  String get quizEquipmentAddMoreGymsLaterHint => 'daha sonra başka salonlar ekleyebilirsin';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Apartman dostu';
@@ -30232,23 +28166,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentBodyweightOnly2 => 'Sadece vücut ağırlığı';
 
   @override
-  String get quizEquipmentBodyweightPullUpBar =>
-      'Vücut ağırlığı + Barfiks demiri';
+  String get quizEquipmentBodyweightPullUpBar => 'Vücut ağırlığı + Barfiks demiri';
 
   @override
   String get quizEquipmentCableMachine => 'Kablo makinesi';
 
   @override
-  String get quizEquipmentCouldnTLoadIdentified =>
-      'Tanımlanan ekipman yüklenemedi. Aşağıdaki listeden seç.';
+  String get quizEquipmentCouldnTLoadIdentified => 'Tanımlanan ekipman yüklenemedi. Aşağıdaki listeden seç.';
 
   @override
-  String get quizEquipmentCouldnTOpenThe =>
-      'Kamera açılamadı. Ekipmanını aşağıdan seç.';
+  String get quizEquipmentCouldnTOpenThe => 'Kamera açılamadı. Ekipmanını aşağıdan seç.';
 
   @override
-  String get quizEquipmentDedicatedSpaceWithDumbbells =>
-      'Dambıl, halter ve sehpa içeren özel alan';
+  String get quizEquipmentDedicatedSpaceWithDumbbells => 'Dambıl, halter ve sehpa içeren özel alan';
 
   @override
   String get quizEquipmentDoYouHaveA => 'Ağırlık sehpan var mı?';
@@ -30272,8 +28202,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentFullGymAccess => 'Spor salonu erişimi';
 
   @override
-  String get quizEquipmentFullGymWithMachines =>
-      'Makineler, kablolar ve serbest ağırlıklar içeren tam spor salonu';
+  String get quizEquipmentFullGymWithMachines => 'Makineler, kablolar ve serbest ağırlıklar içeren tam spor salonu';
 
   @override
   String get quizEquipmentGym => 'Spor salonu';
@@ -30305,15 +28234,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentMedicineBall => 'Sağlık topu';
 
   @override
-  String get quizEquipmentMinimalEquipmentBodyweight =>
-      'Minimal ekipman - vücut ağırlığı, mat';
+  String get quizEquipmentMinimalEquipmentBodyweight => 'Minimal ekipman - vücut ağırlığı, mat';
 
   @override
   String get quizEquipmentNeededForBarbell => 'Halter için gerekli';
 
   @override
-  String get quizEquipmentNoEquipmentIdentifiedPick =>
-      'Ekipman tanımlanamadı. Aşağıdaki listeden seç.';
+  String get quizEquipmentNoEquipmentIdentifiedPick => 'Ekipman tanımlanamadı. Aşağıdaki listeden seç.';
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
@@ -30330,8 +28257,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentQuickPresets => 'Hızlı ön ayarlar';
 
   @override
-  String get quizEquipmentImportSubtitle =>
-      'Zaten sahip olduğun salon fotoğrafları';
+  String get quizEquipmentImportSubtitle => 'Zaten sahip olduğun salon fotoğrafları';
 
   @override
   String get quizEquipmentImportTitle => 'Fotoğraflardan İçe Aktar';
@@ -30346,30 +28272,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentSnapTitle => 'Salonunu çek';
 
   @override
-  String get quizEquipmentRequiredForBarbellSquat =>
-      'Şunlar için gerekli: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get quizEquipmentRequiredForBarbellSquat => 'Şunlar için gerekli: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
   String get quizEquipmentResistanceBands => 'Direnç bantları';
 
   @override
-  String get quizEquipmentSelectAllThatApply =>
-      'Geçerli olanların hepsini seç - antrenmanlarını sahip olduklarına göre tasarlayacağız';
+  String get quizEquipmentSelectAllThatApply => 'Geçerli olanların hepsini seç - antrenmanlarını sahip olduklarına göre tasarlayacağız';
 
   @override
-  String get quizEquipmentSelectingYourWorkoutEnviron =>
-      'Antrenman ortamını seçmek, senin için doğru egzersizleri ve ekipmanları önermemize yardımcı olur.';
+  String get quizEquipmentSelectingYourWorkoutEnviron => 'Antrenman ortamını seçmek, senin için doğru egzersizleri ve ekipmanları önermemize yardımcı olur.';
 
   @override
   String get quizEquipmentSquatRack => 'Squat rack';
 
   @override
-  String get quizEquipmentTakeAFewPhotos =>
-      'Birkaç fotoğraf çek, AI ekipmanını tanımlasın.';
+  String get quizEquipmentTakeAFewPhotos => 'Birkaç fotoğraf çek, AI ekipmanını tanımlasın.';
 
   @override
-  String get quizEquipmentTravelFriendlyDumbbellsC =>
-      'Seyahat dostu - dambıllar, kardiyo makineleri';
+  String get quizEquipmentTravelFriendlyDumbbellsC => 'Seyahat dostu - dambıllar, kardiyo makineleri';
 
   @override
   String get quizEquipmentTrxSuspension => 'Trx suspension';
@@ -30390,12 +28311,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentU1f9f3 => '🧳';
 
   @override
-  String get quizEquipmentUnlocksBenchPressIncline =>
-      'Şunların kilidini açar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get quizEquipmentUnlocksBenchPressIncline => 'Şunların kilidini açar: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get quizEquipmentUnlocksChestSupportedKb =>
-      'Şunların kilidini açar: Chest-Supported KB Row, KB Floor Press alternatifleri';
+  String get quizEquipmentUnlocksChestSupportedKb => 'Şunların kilidini açar: Chest-Supported KB Row, KB Floor Press alternatifleri';
 
   @override
   String quizEquipmentUsersSnappedEquipment(Object apiBaseUrl, Object userId) {
@@ -30403,8 +28322,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quizEquipmentWhatEquipmentDoYou =>
-      'Hangi ekipmanlara erişimin var?';
+  String get quizEquipmentWhatEquipmentDoYou => 'Hangi ekipmanlara erişimin var?';
 
   @override
   String get quizEquipmentWhereDoYouWorkout => 'Nerede antrenman yapıyorsun?';
@@ -30416,8 +28334,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizEquipmentYesAddIt => 'Evet, Ekle';
 
   @override
-  String get quizEquipmentYouCanCustomizeEquipment =>
-      'Ortamı seçtikten sonra ekipmanları özelleştirebilir veya bu adımı atlayıp manuel olarak seçebilirsin.';
+  String get quizEquipmentYouCanCustomizeEquipment => 'Ortamı seçtikten sonra ekipmanları özelleştirebilir veya bu adımı atlayıp manuel olarak seçebilirsin.';
 
   @override
   String get quizFastingApplyCustomProtocol => 'Özel Protokol Uygula';
@@ -30426,10 +28343,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizFastingChooseAFastingProtocol => 'Bir oruç protokolü seç';
 
   @override
-  String quizFastingCustomProtocol(
-    Object _customEatingHours,
-    Object _customFastingHours,
-  ) {
+  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours) {
     return 'Özel $_customFastingHours:$_customEatingHours protokolü';
   }
 
@@ -30450,12 +28364,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quizFastingIntermittentFastingCanHelp =>
-      'Aralıklı oruç, hedeflerine daha hızlı ulaşmana yardımcı olabilir';
+  String get quizFastingIntermittentFastingCanHelp => 'Aralıklı oruç, hedeflerine daha hızlı ulaşmana yardımcı olabilir';
 
   @override
-  String get quizFastingOptionalYouCanSet =>
-      'İsteğe bağlı - bunu daha sonra ayarlayabilirsin';
+  String get quizFastingOptionalYouCanSet => 'İsteğe bağlı - bunu daha sonra ayarlayabilirsin';
 
   @override
   String get quizFastingPopular => 'Popüler';
@@ -30480,8 +28392,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizFastingUiBedtime => 'Uyku vakti';
 
   @override
-  String get quizFastingUiHelpsOptimizeYourFasting =>
-      'Oruç aralığını optimize etmeye yardımcı olur';
+  String get quizFastingUiHelpsOptimizeYourFasting => 'Oruç aralığını optimize etmeye yardımcı olur';
 
   @override
   String quizFastingUiMealScheduleInH(Object eatingHours) {
@@ -30489,16 +28400,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String quizFastingUiMealsSpacedHoursApart(
-    Object hoursBetweenMeals,
-    Object meals,
-  ) {
+  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals) {
     return 'Yaklaşık $hoursBetweenMeals saat arayla $meals öğün';
   }
 
   @override
-  String get quizFastingUiTipConsiderLargerNutrient =>
-      'İpucu: Daha büyük ve besin değeri yüksek öğünleri düşün';
+  String get quizFastingUiTipConsiderLargerNutrient => 'İpucu: Daha büyük ve besin değeri yüksek öğünleri düşün';
 
   @override
   String get quizFastingUiWakeUp => 'Uyanma vakti';
@@ -30525,8 +28432,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizFitnessLevelAdvancedDesc => 'İleri seviye açıklaması';
 
   @override
-  String get quizFitnessLevelBeHonestWeLl =>
-      'Dürüst ol - geliştikçe ayarlayacağız';
+  String get quizFitnessLevelBeHonestWeLl => 'Dürüst ol - geliştikçe ayarlayacağız';
 
   @override
   String get quizFitnessLevelBeginner => 'Başlangıç';
@@ -30535,23 +28441,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizFitnessLevelBeginnerDesc => 'Başlangıç açıklaması';
 
   @override
-  String get quizFitnessLevelBrandNewToLifting =>
-      'Ağırlık kaldırmaya yeni başlayan';
+  String get quizFitnessLevelBrandNewToLifting => 'Ağırlık kaldırmaya yeni başlayan';
 
   @override
   String get quizFitnessLevelBuildingConsistency => 'İstikrar oluşturma';
 
   @override
-  String get quizFitnessLevelDailyActivityLevelOutside =>
-      'Günlük aktivite seviyen (spor salonu dışında)?';
+  String get quizFitnessLevelDailyActivityLevelOutside => 'Günlük aktivite seviyen (spor salonu dışında)?';
 
   @override
-  String get quizFitnessLevelHelpsCalculateYourCalorie =>
-      'Kalori ihtiyacını hesaplamaya yardımcı olur';
+  String get quizFitnessLevelHelpsCalculateYourCalorie => 'Kalori ihtiyacını hesaplamaya yardımcı olur';
 
   @override
-  String get quizFitnessLevelHowLongHaveYou =>
-      'Ne kadar süredir ağırlık antrenmanı yapıyorsun?';
+  String get quizFitnessLevelHowLongHaveYou => 'Ne kadar süredir ağırlık antrenmanı yapıyorsun?';
 
   @override
   String get quizFitnessLevelIntermediate => 'Orta seviye';
@@ -30584,33 +28486,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizFitnessLevelSedentary => 'Hareketsiz';
 
   @override
-  String get quizFitnessLevelSedentaryDesc =>
-      'Hareketsiz yaşam tarzı açıklaması';
+  String get quizFitnessLevelSedentaryDesc => 'Hareketsiz yaşam tarzı açıklaması';
 
   @override
   String get quizFitnessLevelSolidFoundation => 'Sağlam temel';
 
   @override
-  String get quizFitnessLevelThisHelpsUsPick =>
-      'Bu, doğru egzersizleri seçmemize yardımcı olur';
+  String get quizFitnessLevelThisHelpsUsPick => 'Bu, doğru egzersizleri seçmemize yardımcı olur';
 
   @override
   String get quizFitnessLevelVeryActive => 'Çok aktif';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc =>
-      'Çok aktif yaşam tarzı açıklaması';
+  String get quizFitnessLevelVeryActiveDesc => 'Çok aktif yaşam tarzı açıklaması';
 
   @override
   String get quizFitnessLevelVeteranLifter => 'Deneyimli sporcu';
 
   @override
-  String get quizFitnessLevelWhatSYourCurrent =>
-      'Mevcut fitness seviyen nedir?';
+  String get quizFitnessLevelWhatSYourCurrent => 'Mevcut fitness seviyen nedir?';
 
   @override
-  String get quizLimitationsAnyInjuriesOrLimitations =>
-      'Herhangi bir sakatlığın veya kısıtlaman var mı?';
+  String get quizLimitationsAnyInjuriesOrLimitations => 'Herhangi bir sakatlığın veya kısıtlaman var mı?';
 
   @override
   String get quizLimitationsDescribeYourLimitation => 'Kısıtlamanı tanımla';
@@ -30619,12 +28516,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizLimitationsEGCarpalTunnel => 'Örn: Karpal tünel, fıtık vb.';
 
   @override
-  String get quizLimitationsWeLlAvoidExercises =>
-      'Bu bölgeleri zorlayan egzersizlerden kaçınacağız';
+  String get quizLimitationsWeLlAvoidExercises => 'Bu bölgeleri zorlayan egzersizlerden kaçınacağız';
 
   @override
-  String get quizMotivationBeHealthierOverall =>
-      'Genel olarak daha sağlıklı olmak';
+  String get quizMotivationBeHealthierOverall => 'Genel olarak daha sağlıklı olmak';
 
   @override
   String get quizMotivationBuildConfidence => 'Özgüven kazanmak';
@@ -30651,14 +28546,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizMotivationSportsPerformance => 'Spor performansı';
 
   @override
-  String get quizMotivationWhatSDrivingYou =>
-      'Seni antrenman yapmaya iten şey nedir?';
+  String get quizMotivationWhatSDrivingYou => 'Seni antrenman yapmaya iten şey nedir?';
 
   @override
-  String quizMuscleFocusAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints) {
     return '$availablePoints/$maxTotalPoints kullanılabilir';
   }
 
@@ -30675,15 +28566,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizMuscleFocusUpperBody => 'Üst Vücut';
 
   @override
-  String get quizNutritionGateCalorieMacroTargets =>
-      'Kalori ve makro hedefleri';
+  String get quizNutritionGateCalorieMacroTargets => 'Kalori ve makro hedefleri';
 
   @override
   String get quizNutritionGateDietaryPreferences => 'Beslenme tercihleri';
 
   @override
-  String get quizNutritionGateGetPersonalizedCalorieAnd =>
-      'Fitness hedeflerini desteklemek için kişiselleştirilmiş kalori ve makro hedefleri al';
+  String get quizNutritionGateGetPersonalizedCalorieAnd => 'Fitness hedeflerini desteklemek için kişiselleştirilmiş kalori ve makro hedefleri al';
 
   @override
   String get quizNutritionGateMealTimingGuidance => 'Öğün zamanlama rehberliği';
@@ -30692,8 +28581,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizNutritionGateNotNow => 'Şimdi Değil';
 
   @override
-  String get quizNutritionGateOptimizeWhenYouEat =>
-      'Daha iyi sonuçlar için ne zaman yediğini optimize et';
+  String get quizNutritionGateOptimizeWhenYouEat => 'Daha iyi sonuçlar için ne zaman yediğini optimize et';
 
   @override
   String get quizNutritionGateOptional => 'İsteğe bağlı';
@@ -30702,23 +28590,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizNutritionGateRecommendedForYou => 'Senin için önerilen';
 
   @override
-  String get quizNutritionGateRespectsYourRestrictionsAnd =>
-      'Kısıtlamalarına ve tercihlerine saygı duyar';
+  String get quizNutritionGateRespectsYourRestrictionsAnd => 'Kısıtlamalarına ve tercihlerine saygı duyar';
 
   @override
-  String get quizNutritionGateTailoredToYourGoals =>
-      'Hedeflerine ve aktivite seviyene göre uyarlandı';
+  String get quizNutritionGateTailoredToYourGoals => 'Hedeflerine ve aktivite seviyene göre uyarlandı';
 
   @override
-  String get quizNutritionGateWantNutritionGuidanceToo =>
-      'Beslenme rehberliği de ister misin?';
+  String get quizNutritionGateWantNutritionGuidanceToo => 'Beslenme rehberliği de ister misin?';
 
   @override
   String get quizNutritionGateYesSetNutrition => 'Evet, Beslenmeyi Ayarla';
 
   @override
-  String get quizNutritionGoalsAnyDietaryRestrictions =>
-      'Herhangi bir beslenme kısıtlaman var mı?';
+  String get quizNutritionGoalsAnyDietaryRestrictions => 'Herhangi bir beslenme kısıtlaman var mı?';
 
   @override
   String quizNutritionGoalsG(Object protein) {
@@ -30736,39 +28620,30 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get quizNutritionGoalsHelpsPersonalizeMealSuggest =>
-      'Öğün önerilerini kişiselleştirmeye yardımcı olur';
+  String get quizNutritionGoalsHelpsPersonalizeMealSuggest => 'Öğün önerilerini kişiselleştirmeye yardımcı olur';
 
   @override
-  String get quizNutritionGoalsIncludeAllMealsAnd =>
-      'Tüm öğünleri ve atıştırmalıkları dahil et';
+  String get quizNutritionGoalsIncludeAllMealsAnd => 'Tüm öğünleri ve atıştırmalıkları dahil et';
 
   @override
-  String quizNutritionGoalsKcalGProteinPer(
-    Object calPerMeal,
-    Object proteinPerMeal,
-  ) {
+  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal) {
     return 'Öğün başına ~$calPerMeal kcal ve ${proteinPerMeal}g protein';
   }
 
   @override
-  String get quizNutritionGoalsMealsSnacksPerDay =>
-      'Günlük öğün + atıştırmalık sayısı?';
+  String get quizNutritionGoalsMealsSnacksPerDay => 'Günlük öğün + atıştırmalık sayısı?';
 
   @override
   String get quizNutritionGoalsSelectAllThatApply => 'Sana uyan her şeyi seç';
 
   @override
-  String get quizNutritionGoalsWhatAreYourNutrition =>
-      'Beslenme hedeflerin neler?';
+  String get quizNutritionGoalsWhatAreYourNutrition => 'Beslenme hedeflerin neler?';
 
   @override
-  String get quizNutritionGoalsYourEstimatedDailyTargets =>
-      'Tahmini Günlük Hedeflerin';
+  String get quizNutritionGoalsYourEstimatedDailyTargets => 'Tahmini Günlük Hedeflerin';
 
   @override
-  String get quizPersonalizationGateAFewQuickMeasurements =>
-      'Birkaç hızlı ölçüm';
+  String get quizPersonalizationGateAFewQuickMeasurements => 'Birkaç hızlı ölçüm';
 
   @override
   String get quizPersonalizationGateCurrentWeight => 'MEVCUT KİLO';
@@ -30795,20 +28670,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizPersonalizationGateQuickStart => 'Hızlı başlangıç';
 
   @override
-  String get quizPersonalizationGateUsedToPersonalizeYour =>
-      'Planını ve projeksiyonunu kişiselleştirmek için kullanılır';
+  String get quizPersonalizationGateUsedToPersonalizeYour => 'Planını ve projeksiyonunu kişiselleştirmek için kullanılır';
 
   @override
-  String get quizPrimaryGoalAdjustsRestPeriodsExercise =>
-      'Dinlenme sürelerini, egzersiz zorluğunu ve genel antrenman hacmini odağına göre ayarlar.';
+  String get quizPrimaryGoalAdjustsRestPeriodsExercise => 'Dinlenme sürelerini, egzersiz zorluğunu ve genel antrenman hacmini odağına göre ayarlar.';
 
   @override
-  String get quizPrimaryGoalAiPicksExercisesThat =>
-      'Yapay zeka, hedefinle en iyi eşleşen egzersizleri seçer; güç için bileşik hareketler, hipertrofi için izolasyon hareketleri.';
+  String get quizPrimaryGoalAiPicksExercisesThat => 'Yapay zeka, hedefinle en iyi eşleşen egzersizleri seçer; güç için bileşik hareketler, hipertrofi için izolasyon hareketleri.';
 
   @override
-  String get quizPrimaryGoalCanChangeAnytime =>
-      'İstediğin Zaman Değiştirebilirsin';
+  String get quizPrimaryGoalCanChangeAnytime => 'İstediğin Zaman Değiştirebilirsin';
 
   @override
   String get quizPrimaryGoalExerciseSelection => 'Egzersiz Seçimi';
@@ -30823,43 +28694,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizPrimaryGoalRepRanges => 'Tekrar Aralıkları';
 
   @override
-  String get quizPrimaryGoalSetsTheNumberOf =>
-      'Egzersiz başına tekrar sayısını belirler. Hipertrofi 8-12 tekrar, Güç 3-6 tekrar, Dayanıklılık 12+ tekrar kullanır.';
+  String get quizPrimaryGoalSetsTheNumberOf => 'Egzersiz başına tekrar sayısını belirler. Hipertrofi 8-12 tekrar, Güç 3-6 tekrar, Dayanıklılık 12+ tekrar kullanır.';
 
   @override
   String get quizPrimaryGoalWorkoutIntensity => 'Antrenman Yoğunluğu';
 
   @override
-  String get quizPrimaryGoalYouCanUpdateYour =>
-      'Hedeflerin değiştiğinde antrenman odağını Ayarlar\'dan güncelleyebilirsin.';
+  String get quizPrimaryGoalYouCanUpdateYour => 'Hedeflerin değiştiğinde antrenman odağını Ayarlar\'dan güncelleyebilirsin.';
 
   @override
   String get quizProgressionConstraintsBalanced => 'Dengeli';
 
   @override
-  String get quizProgressionConstraintsBuildStrengthGraduallyLowe =>
-      'Gücü kademeli olarak artır, sakatlık riskini düşür';
+  String get quizProgressionConstraintsBuildStrengthGraduallyLowe => 'Gücü kademeli olarak artır, sakatlık riskini düşür';
 
   @override
   String get quizProgressionConstraintsFastAggressive => 'Hızlı ve Agresif';
 
   @override
-  String get quizProgressionConstraintsHowFastDoYou =>
-      'Ne kadar hızlı ilerlemek istiyorsun?';
+  String get quizProgressionConstraintsHowFastDoYou => 'Ne kadar hızlı ilerlemek istiyorsun?';
 
   @override
   String get quizProgressionConstraintsProgressionPace => 'İlerleme Hızı';
 
   @override
-  String get quizProgressionConstraintsPushHardFasterGains =>
-      'Sıkı çalış, daha hızlı kazanımlar (ileri seviye)';
+  String get quizProgressionConstraintsPushHardFasterGains => 'Sıkı çalış, daha hızlı kazanımlar (ileri seviye)';
 
   @override
   String get quizProgressionConstraintsSlowSteady => 'Yavaş ve İstikrarlı';
 
   @override
-  String get quizProgressionConstraintsSteadyProgressWithManageabl =>
-      'Yönetilebilir zorlukla istikrarlı ilerleme';
+  String get quizProgressionConstraintsSteadyProgressWithManageabl => 'Yönetilebilir zorlukla istikrarlı ilerleme';
 
   @override
   String get quizTrainingPreferencesAllOptional => 'Hepsi isteğe bağlı';
@@ -30868,23 +28733,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizTrainingPreferencesBiggestObstacles => 'En Büyük Engeller';
 
   @override
-  String get quizTrainingPreferencesNotSureTapTo =>
-      'Emin değil misin? Daha fazla bilgi için dokun';
+  String get quizTrainingPreferencesNotSureTapTo => 'Emin değil misin? Daha fazla bilgi için dokun';
 
   @override
   String get quizTrainingPreferencesProgressionPace => 'İlerleme Hızı';
 
   @override
-  String get quizTrainingPreferencesProgressiveOverloadRirInt =>
-      'Progressive overload ve RIR entegre edildi';
+  String get quizTrainingPreferencesProgressiveOverloadRirInt => 'Progressive overload ve RIR entegre edildi';
 
   @override
-  String get quizTrainingPreferencesTrainingPreferences =>
-      'Antrenman Tercihleri';
+  String get quizTrainingPreferencesTrainingPreferences => 'Antrenman Tercihleri';
 
   @override
-  String get quizTrainingPreferencesTrainingSplitsExplained =>
-      'Antrenman Bölünmeleri Açıklandı';
+  String get quizTrainingPreferencesTrainingSplitsExplained => 'Antrenman Bölünmeleri Açıklandı';
 
   @override
   String quizTrainingPreferencesValue(Object selectedCount) {
@@ -30898,27 +28759,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizTrainingStyleArnoldSplit => 'Arnold Split';
 
   @override
-  String get quizTrainingStyleAutomaticallyOptimizedForYo =>
-      'Programın için otomatik olarak optimize edildi (Önerilen)';
+  String get quizTrainingStyleAutomaticallyOptimizedForYo => 'Programın için otomatik olarak optimize edildi (Önerilen)';
 
   @override
   String get quizTrainingStyleBestFor56 => 'Haftada 5-6 gün için en iyisi';
 
   @override
-  String get quizTrainingStyleBodyPartSplit =>
-      'Bölgesel Antrenman (Body Part Split)';
+  String get quizTrainingStyleBodyPartSplit => 'Bölgesel Antrenman (Body Part Split)';
 
   @override
-  String get quizTrainingStyleChestBackShouldersArms =>
-      'Göğüs/Sırt, Omuz/Kol, Bacak (6 gün)';
+  String get quizTrainingStyleChestBackShouldersArms => 'Göğüs/Sırt, Omuz/Kol, Bacak (6 gün)';
 
   @override
-  String get quizTrainingStyleChooseHowYouWant =>
-      'Antrenmanlarını nasıl yapılandırmak istediğini seç';
+  String get quizTrainingStyleChooseHowYouWant => 'Antrenmanlarını nasıl yapılandırmak istediğini seç';
 
   @override
-  String get quizTrainingStyleDoYouPreferThe =>
-      'Her hafta aynı egzersizleri mi yoksa çeşitliliği mi tercih edersin?';
+  String get quizTrainingStyleDoYouPreferThe => 'Her hafta aynı egzersizleri mi yoksa çeşitliliği mi tercih edersin?';
 
   @override
   String get quizTrainingStyleExerciseVariety => 'Egzersiz Çeşitliliği';
@@ -30930,34 +28786,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quizTrainingStyleLetAiDecide => 'Yapay Zeka Karar Versin';
 
   @override
-  String get quizTrainingStyleOneMuscleGroupPer =>
-      'Günde bir kas grubu (5+ gün)';
+  String get quizTrainingStyleOneMuscleGroupPer => 'Günde bir kas grubu (5+ gün)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyAdaptiveTra =>
-      'Power Hypertrophy Adaptive Training (5 gün)';
+  String get quizTrainingStylePowerHypertrophyAdaptiveTra => 'Power Hypertrophy Adaptive Training (5 gün)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyUpperL =>
-      'Güç + Hipertrofi, Üst + Alt (4 gün)';
+  String get quizTrainingStylePowerHypertrophyUpperL => 'Güç + Hipertrofi, Üst + Alt (4 gün)';
 
   @override
   String get quizTrainingStylePushPullLegsPpl => 'Push / Pull / Legs (PPL)';
 
   @override
-  String get quizTrainingStylePushPullLegsUpper =>
-      'Push/Pull/Legs/Üst/Alt (5 gün)';
+  String get quizTrainingStylePushPullLegsUpper => 'Push/Pull/Legs/Üst/Alt (5 gün)';
 
   @override
   String get quizTrainingStyleScheduleConflict => 'Program çakışması';
 
   @override
-  String get quizTrainingStyleSplitBetweenUpperAnd =>
-      'Üst ve alt vücut arasında bölünme (4 gün)';
+  String get quizTrainingStyleSplitBetweenUpperAnd => 'Üst ve alt vücut arasında bölünme (4 gün)';
 
   @override
-  String get quizTrainingStyleTrainAllMusclesEach =>
-      'Her antrenmanda tüm kasları çalıştır (2-4 gün)';
+  String get quizTrainingStyleTrainAllMusclesEach => 'Her antrenmanda tüm kasları çalıştır (2-4 gün)';
 
   @override
   String get quizTrainingStyleTrainingSplit => 'Antrenman Bölünmesi';
@@ -30983,19 +28833,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get racePredictorCardRacePredictor => 'Yarış tahmini';
 
   @override
-  String get racePredictorCardRunAMeasuredKm =>
-      'İlk tahmininiz için ölçülü bir veya iki kilometre koşun';
+  String get racePredictorCardRunAMeasuredKm => 'İlk tahmininiz için ölçülü bir veya iki kilometre koşun';
 
   @override
   String get racePredictorDetailAskCoach => 'Koça sor';
 
   @override
-  String get racePredictorDetailHowPredictionsAreCalculated =>
-      'Tahminler nasıl hesaplanır';
+  String get racePredictorDetailHowPredictionsAreCalculated => 'Tahminler nasıl hesaplanır';
 
   @override
-  String get racePredictorDetailLogAtLeastThree =>
-      'En az üç koşu kaydedin (biri ölçülü bir kilometre olmalı) ve tahmininiz görüntülensin.';
+  String get racePredictorDetailLogAtLeastThree => 'En az üç koşu kaydedin (biri ölçülü bir kilometre olmalı) ve tahmininiz görüntülensin.';
 
   @override
   String get racePredictorDetailNeedMoreData => 'Daha fazla veriye ihtiyaç var';
@@ -31018,15 +28865,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ratingPromptBannerGot30Seconds => '30 saniyeniz var mı?';
 
   @override
-  String get ratingPromptBannerHelpUsOutRate =>
-      'Bize yardımcı olun — App Store\'da Zealova\'yı puanlayın.';
+  String get ratingPromptBannerHelpUsOutRate => 'Bize yardımcı olun — App Store\'da Zealova\'yı puanlayın.';
 
   @override
   String get ratingPromptDonTAskAgain => 'Bir daha sorma';
 
   @override
-  String get ratingPromptEnjoyingZealovaSoFar =>
-      'Zealova\'yı beğeniyor musunuz?';
+  String get ratingPromptEnjoyingZealovaSoFar => 'Zealova\'yı beğeniyor musunuz?';
 
   @override
   String get ratingPromptLovingIt => 'Çok seviyorum';
@@ -31044,15 +28889,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get readinessCheckinCardGotIt => 'Anlaşıldı!';
 
   @override
-  String get readinessCheckinCardHowAreYouFeeling =>
-      'Bugün nasıl hissediyorsun?';
+  String get readinessCheckinCardHowAreYouFeeling => 'Bugün nasıl hissediyorsun?';
 
   @override
   String get readinessCheckinCardMuscleSoreness => 'Kas Ağrısı';
 
   @override
-  String get readinessCheckinCardQuickCheckInHelps =>
-      'Hızlı check-in, antrenmanınızı optimize etmeye yardımcı olur';
+  String get readinessCheckinCardQuickCheckInHelps => 'Hızlı check-in, antrenmanınızı optimize etmeye yardımcı olur';
 
   @override
   String readinessCheckinCardReadiness(Object readinessScore) {
@@ -31072,12 +28915,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get readinessCheckinCardSubmitting => 'Gönderiliyor...';
 
   @override
-  String get readinessCheckinCardTodaySReadiness =>
-      'Bugünkü Hazırlık Durumunuz';
+  String get readinessCheckinCardTodaySReadiness => 'Bugünkü Hazırlık Durumunuz';
 
   @override
-  String get readinessTileBuildingBaselineCheckIn =>
-      'Temel oluşturuluyor — 14 gün boyunca günlük check-in yapın';
+  String get readinessTileBuildingBaselineCheckIn => 'Temel oluşturuluyor — 14 gün boyunca günlük check-in yapın';
 
   @override
   String get readinessTileRecoveryReadiness => 'Toparlanma Hazırlığı';
@@ -31105,8 +28946,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeBuilderAddIngredient => 'Malzeme Ekle';
 
   @override
-  String get recipeBuilderCalculatePortionToLog =>
-      'Kaydedilecek Porsiyonu Hesapla';
+  String get recipeBuilderCalculatePortionToLog => 'Kaydedilecek Porsiyonu Hesapla';
 
   @override
   String get recipeBuilderConverter => 'Dönüştürücü';
@@ -31130,8 +28970,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeBuilderNoIngredientsYet => 'Henüz malzeme yok';
 
   @override
-  String get recipeBuilderNutritionPerServing =>
-      'PORSİYON BAŞINA BESİN DEĞERLERİ';
+  String get recipeBuilderNutritionPerServing => 'PORSİYON BAŞINA BESİN DEĞERLERİ';
 
   @override
   String get recipeBuilderPrepTime => 'Hazırlık Süresi';
@@ -31187,16 +29026,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String recipeBuilderSheetLoggedServingSOf(
-    Object portionEaten,
-    Object recipeName,
-  ) {
+  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName) {
     return '\"$recipeName\" tarifinden $portionEaten porsiyon kaydedildi: ';
   }
 
   @override
-  String get recipeBuilderSheetNutritionPerAmountAbove =>
-      'BESİN DEĞERLERİ (yukarıdaki miktar için)';
+  String get recipeBuilderSheetNutritionPerAmountAbove => 'BESİN DEĞERLERİ (yukarıdaki miktar için)';
 
   @override
   String recipeBuilderSheetPartIngredientEntryFailedToAnalyze(Object e) {
@@ -31254,8 +29089,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeCreateEG4Oz => 'ör. 4 oz ızgara tavuk göğsü';
 
   @override
-  String get recipeCreateEGPostWorkout =>
-      'ör. Antrenman sonrası, Hazırlık, Smoothie';
+  String get recipeCreateEGPostWorkout => 'ör. Antrenman sonrası, Hazırlık, Smoothie';
 
   @override
   String get recipeCreateEditCustom => '✏️ Özel düzenle';
@@ -31314,8 +29148,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeDetailImprovize => 'Doğaçlama yap';
 
   @override
-  String get recipeDetailImprovizedEditAndSave =>
-      'Doğaçlama yapıldı! Versiyonunu düzenle ve kaydet.';
+  String get recipeDetailImprovizedEditAndSave => 'Doğaçlama yapıldı! Versiyonunu düzenle ve kaydet.';
 
   @override
   String get recipeDetailImprovizing => 'Doğaçlama yapılıyor…';
@@ -31330,8 +29163,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeDetailLog => 'Kaydet';
 
   @override
-  String get recipeDetailLogged1ServingAs =>
-      '1 porsiyon öğle yemeği olarak kaydedildi';
+  String get recipeDetailLogged1ServingAs => '1 porsiyon öğle yemeği olarak kaydedildi';
 
   @override
   String get recipeDetailNoIngredients => 'Malzeme yok';
@@ -31419,8 +29251,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeFromFridgeFromYourFridge => 'Buzdolabından';
 
   @override
-  String get recipeFromFridgeNoRecipesFoundFor =>
-      'Bu malzemeler için tarif bulunamadı. Daha fazla ürün eklemeyi dene.';
+  String get recipeFromFridgeNoRecipesFoundFor => 'Bu malzemeler için tarif bulunamadı. Daha fazla ürün eklemeyi dene.';
 
   @override
   String get recipeFromFridgeScanComplete => 'Tarama tamamlandı';
@@ -31462,16 +29293,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeFromFridgeSuggestions => 'Öneriler';
 
   @override
-  String get recipeFromFridgeTapFindRecipesTo =>
-      'Bu malzemeleri kullanarak öneri almak için \"Tarif bul\"a dokun';
+  String get recipeFromFridgeTapFindRecipesTo => 'Bu malzemeleri kullanarak öneri almak için \"Tarif bul\"a dokun';
 
   @override
-  String get recipeFromFridgeTypeIngredientEggsSpinach =>
-      'Malzeme yaz (yumurta, ıspanak…)';
+  String get recipeFromFridgeTypeIngredientEggsSpinach => 'Malzeme yaz (yumurta, ıspanak…)';
 
   @override
-  String get recipeFromFridgeTypeIngredientsOrSnap =>
-      'Malzemeleri yaz veya fotoğrafını çek';
+  String get recipeFromFridgeTypeIngredientsOrSnap => 'Malzemeleri yaz veya fotoğrafını çek';
 
   @override
   String get recipeHistoryCompare => 'Karşılaştır';
@@ -31480,8 +29308,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeHistoryNoDifferences => 'Fark yok';
 
   @override
-  String get recipeHistoryNoEditsYetVersioning =>
-      'Henüz düzenleme yok — sürüm oluşturma ilk değişikliğinden sonra başlar.';
+  String get recipeHistoryNoEditsYetVersioning => 'Henüz düzenleme yok — sürüm oluşturma ilk değişikliğinden sonra başlar.';
 
   @override
   String get recipeHistoryNowPickASecond => 'Şimdi ikinci bir sürüm seç';
@@ -31516,16 +29343,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeHistoryUpdated => 'Güncellendi';
 
   @override
-  String get recipeImportAimAtARecipe =>
-      'Bir tarif kartına, yemek kitabı sayfasına veya ekran görüntüsüne odaklan. Çerçeveyi doldur, sabit tut.';
+  String get recipeImportAimAtARecipe => 'Bir tarif kartına, yemek kitabı sayfasına veya ekran görüntüsüne odaklan. Çerçeveyi doldur, sabit tut.';
 
   @override
-  String get recipeImportAlignRecipeInsideFrame =>
-      'Tarifi çerçevenin içine hizala';
+  String get recipeImportAlignRecipeInsideFrame => 'Tarifi çerçevenin içine hizala';
 
   @override
-  String get recipeImportChooseFromGalleryInstead =>
-      'Bunun yerine galeriden seç';
+  String get recipeImportChooseFromGalleryInstead => 'Bunun yerine galeriden seç';
 
   @override
   String get recipeImportFailed => 'Başarısız';
@@ -31540,8 +29364,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeImportParseText => 'Metni ayrıştır';
 
   @override
-  String get recipeImportPasteARecipeTitle =>
-      'Bir tarif yapıştır (başlık, malzemeler, adımlar)…';
+  String get recipeImportPasteARecipeTitle => 'Bir tarif yapıştır (başlık, malzemeler, adımlar)…';
 
   @override
   String get recipeImportPhoto => 'Fotoğraf';
@@ -31555,8 +29378,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recipeImportTapTheLargeWhite =>
-      'Çekim yapmak için aşağıdaki büyük beyaz daireye dokun';
+  String get recipeImportTapTheLargeWhite => 'Çekim yapmak için aşağıdaki büyük beyaz daireye dokun';
 
   @override
   String get recipeImportText => 'Metin';
@@ -31568,12 +29390,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipePreferencesRecipePreferences => 'Tarif Tercihleri';
 
   @override
-  String get recipePreferencesSelectCuisinesYouEnjoy =>
-      'Sevdiğin mutfakları seç (değiştirmek için dokun)';
+  String get recipePreferencesSelectCuisinesYouEnjoy => 'Sevdiğin mutfakları seç (değiştirmek için dokun)';
 
   @override
-  String get recipePreferencesYourBodyTypeHelps =>
-      'Vücut tipin, metabolizmana göre optimize edilmiş tarifler önermemize yardımcı olur';
+  String get recipePreferencesYourBodyTypeHelps => 'Vücut tipin, metabolizmana göre optimize edilmiş tarifler önermemize yardımcı olur';
 
   @override
   String recipeSaveJobsListenerCouldnTSaveRecipe(Object job) {
@@ -31604,8 +29424,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeSaveJobsView => 'Görüntüle';
 
   @override
-  String get recipeScheduleAddASlotFor =>
-      'Yemeyi planladığın her porsiyon için bir zaman dilimi ekle';
+  String get recipeScheduleAddASlotFor => 'Yemeyi planladığın her porsiyon için bir zaman dilimi ekle';
 
   @override
   String get recipeScheduleAddSlot => 'Zaman dilimi ekle';
@@ -31642,15 +29461,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recipeScheduleSilentAutoLogAdvanced =>
-      'Sessiz otomatik kayıt (gelişmiş)';
+  String get recipeScheduleSilentAutoLogAdvanced => 'Sessiz otomatik kayıt (gelişmiş)';
 
   @override
   String get recipeSearchBarRecentSearches => 'Son aramalar';
 
   @override
-  String get recipeSearchBarSearchYourRecipesIngredien =>
-      'Tariflerini, malzemelerini, etiketlerini ara…';
+  String get recipeSearchBarSearchYourRecipesIngredien => 'Tariflerini, malzemelerini, etiketlerini ara…';
 
   @override
   String get recipeShareCopiedToClipboard => 'Panoya kopyalandı';
@@ -31717,8 +29534,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionsAnySpecificRequirementsE =>
-      'Belirli bir isteğiniz var mı? (örn. 400 kalori altı, yüksek lif)';
+  String get recipeSuggestionsAnySpecificRequirementsE => 'Belirli bir isteğiniz var mı? (örn. 400 kalori altı, yüksek lif)';
 
   @override
   String get recipeSuggestionsGenerateSuggestions => 'Öneriler Oluştur';
@@ -31739,8 +29555,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeSuggestionsRecipeSuggestions => 'Tarif Önerileri';
 
   @override
-  String get recipeSuggestionsSaveRecipesYouLike =>
-      'Beğendiğiniz tarifleri kaydedin ve burada bulun';
+  String get recipeSuggestionsSaveRecipesYouLike => 'Beğendiğiniz tarifleri kaydedin ve burada bulun';
 
   @override
   String get recipeSuggestionsSaved => 'Kaydedildi';
@@ -31754,8 +29569,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeSuggestionsSuggestions => 'Öneriler';
 
   @override
-  String get recipeSuggestionsTapGenerateSuggestionsTo =>
-      'Tercihlerine göre yapay zeka destekli tarif fikirleri almak için \"Öneriler Oluştur\"a dokun';
+  String get recipeSuggestionsTapGenerateSuggestionsTo => 'Tercihlerine göre yapay zeka destekli tarif fikirleri almak için \"Öneriler Oluştur\"a dokun';
 
   @override
   String get recipeSuggestionsWhatMealAreYou => 'Hangi öğünü planlıyorsun?';
@@ -31855,12 +29669,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipesTakePhoto => 'Fotoğraf çek';
 
   @override
-  String get recipesTapBuildToCreate =>
-      'İlk tarifini oluşturmak için Oluştur\'a dokun veya yukarıdaki buzdolabı / içe aktarma yollarını dene.';
+  String get recipesTapBuildToCreate => 'İlk tarifini oluşturmak için Oluştur\'a dokun veya yukarıdaki buzdolabı / içe aktarma yollarını dene.';
 
   @override
-  String get recipesUpTo5Photos =>
-      '5 fotoğrafa kadar — buzdolabı, kiler, dondurucu';
+  String get recipesUpTo5Photos => '5 fotoğrafa kadar — buzdolabı, kiler, dondurucu';
 
   @override
   String get recommendationExplainGotIt => 'Anladım';
@@ -31876,8 +29688,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recordAssessmentAnyNotesAboutThis =>
-      'Bu değerlendirme hakkında notlar...';
+  String get recordAssessmentAnyNotesAboutThis => 'Bu değerlendirme hakkında notlar...';
 
   @override
   String get recordAssessmentEnterMeasurement => 'Ölçümü gir';
@@ -31956,19 +29767,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recovery1rmCalculatorPlayground => '1RM Hesaplayıcı Oyun Alanı';
 
   @override
-  String get recoveryColorCodedRed40 =>
-      'Renk kodlu: kırmızı <40% | sarı 40-70% | yeşil >70%';
+  String get recoveryColorCodedRed40 => 'Renk kodlu: kırmızı <40% | sarı 40-70% | yeşil >70%';
 
   @override
-  String get recoveryCompareEpleyBrzyckiAnd =>
-      'Epley, Brzycki ve Mayhew tahminlerini karşılaştır';
+  String get recoveryCompareEpleyBrzyckiAnd => 'Epley, Brzycki ve Mayhew tahminlerini karşılaştır';
 
   @override
   String get recoveryLabel => 'Toparlanma';
 
   @override
-  String get recoveryPerMuscleExponentialDecay =>
-      'Kas bazlı üstel azalma oranı (k değerleri)';
+  String get recoveryPerMuscleExponentialDecay => 'Kas bazlı üstel azalma oranı (k değerleri)';
 
   @override
   String get recoveryPerMuscleRecoveryGrid => 'Kas Bazlı Toparlanma Tablosu';
@@ -31979,8 +29787,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recoveryRecoveryConstantsEditor =>
-      'Toparlanma Sabitleri Düzenleyicisi';
+  String get recoveryRecoveryConstantsEditor => 'Toparlanma Sabitleri Düzenleyicisi';
 
   @override
   String get recoveryReps => 'Tekrar';
@@ -32038,8 +29845,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get referralsQualified => 'Nitelikli';
 
   @override
-  String get referralsRedeemItHereBoth =>
-      'Buradan kullanın — ikiniz de XP ve bir sandık kazanın.';
+  String get referralsRedeemItHereBoth => 'Buradan kullanın — ikiniz de XP ve bir sandık kazanın.';
 
   @override
   String referralsScreenMoreQualifiedReferral(Object neededForNext) {
@@ -32062,15 +29868,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get referralsYouVeUnlockedEvery =>
-      'Tüm referans ödüllerinin kilidini açtınız. Efsane.';
+  String get referralsYouVeUnlockedEvery => 'Tüm referans ödüllerinin kilidini açtınız. Efsane.';
 
   @override
   String get referralsYourReferralCode => 'REFERANS KODUNUZ';
 
   @override
-  String get refuelWindowCardAskCoachAboutRecovery =>
-      'Toparlanma yakıtı hakkında koça danışın';
+  String get refuelWindowCardAskCoachAboutRecovery => 'Toparlanma yakıtı hakkında koça danışın';
 
   @override
   String get refuelWindowCardCarbs => 'Karbonhidrat';
@@ -32091,8 +29895,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetAddingVariety => 'Çeşitlilik ekleniyor';
 
   @override
-  String get regenerateSheetAiGenerationTakes =>
-      'AI oluşturma genellikle 15–30 saniye sürer';
+  String get regenerateSheetAiGenerationTakes => 'AI oluşturma genellikle 15–30 saniye sürer';
 
   @override
   String get regenerateSheetAiSuggestions => 'AI Önerileri';
@@ -32101,8 +29904,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetAlmostThere => 'Az kaldı…';
 
   @override
-  String get regenerateSheetAnalyzingYourPreferences =>
-      'Tercihleriniz analiz ediliyor…';
+  String get regenerateSheetAnalyzingYourPreferences => 'Tercihleriniz analiz ediliyor…';
 
   @override
   String get regenerateSheetApply => 'Uygula';
@@ -32111,8 +29913,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetApplyThisWorkout => 'Bu antrenmanı uygula';
 
   @override
-  String get regenerateSheetBalancingMuscleGroups =>
-      'Kas grupları dengeleniyor';
+  String get regenerateSheetBalancingMuscleGroups => 'Kas grupları dengeleniyor';
 
   @override
   String get regenerateSheetBootingUpTheAi => 'AI başlatılıyor';
@@ -32121,8 +29922,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetBuildingYourPlan => 'Planın oluşturuluyor';
 
   @override
-  String get regenerateSheetBuildingYourWorkout =>
-      'Antrenmanınız oluşturuluyor…';
+  String get regenerateSheetBuildingYourWorkout => 'Antrenmanınız oluşturuluyor…';
 
   @override
   String get regenerateSheetCheckingEquipment => 'Ekipman kontrol ediliyor';
@@ -32134,30 +29934,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetConnectingToTheAi => 'AI\'ya bağlanılıyor';
 
   @override
-  String get regenerateSheetConsideringFocusAreas =>
-      'Odak alanları değerlendiriliyor';
+  String get regenerateSheetConsideringFocusAreas => 'Odak alanları değerlendiriliyor';
 
   @override
   String get regenerateSheetCustomize => 'Özelleştir';
 
   @override
-  String get regenerateSheetCustomizeOrLetAi =>
-      'Özelleştirin veya AI öneride bulunsun';
+  String get regenerateSheetCustomizeOrLetAi => 'Özelleştirin veya AI öneride bulunsun';
 
   @override
-  String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Özelleştirin ya da AI önersin';
+  String get regenerateSheetCustomizeOrLetAiSuggest => 'Özelleştirin ya da AI önersin';
 
   @override
-  String get regenerateSheetDescribeYourIdealWorkout =>
-      'İdeal antrenmanınızı tanımlayın';
+  String get regenerateSheetDescribeYourIdealWorkout => 'İdeal antrenmanınızı tanımlayın';
 
   @override
   String get regenerateSheetDesigningYourWorkout => 'Antrenmanın tasarlanıyor';
 
   @override
-  String get regenerateSheetDialingInSetsAndReps =>
-      'Set ve tekrar sayıları ayarlanıyor';
+  String get regenerateSheetDialingInSetsAndReps => 'Set ve tekrar sayıları ayarlanıyor';
 
   @override
   String get regenerateSheetDoThisToday => 'Bunu bugün yap';
@@ -32169,12 +29964,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetEnterAPromptAbove => 'Yukarıya bir komut girin…';
 
   @override
-  String get regenerateSheetFilteringByEquipment =>
-      'Ekipmana göre filtreleniyor';
+  String get regenerateSheetFilteringByEquipment => 'Ekipmana göre filtreleniyor';
 
   @override
-  String get regenerateSheetFilteringByYourEquipment =>
-      'Ekipmanına göre filtreleniyor';
+  String get regenerateSheetFilteringByYourEquipment => 'Ekipmanına göre filtreleniyor';
 
   @override
   String get regenerateSheetFinalizingDetails => 'Detaylar tamamlanıyor…';
@@ -32214,8 +30007,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get regenerateSheetLoadingInjuriesAndGoals =>
-      'Sakatlıklar ve hedefler yükleniyor';
+  String get regenerateSheetLoadingInjuriesAndGoals => 'Sakatlıklar ve hedefler yükleniyor';
 
   @override
   String get regenerateSheetLoadingPreferences => 'Tercihler';
@@ -32227,23 +30019,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetMatchingIntensity => 'Yoğunluk eşleştiriliyor';
 
   @override
-  String get regenerateSheetMatchingYourFitnessLevel =>
-      'Fitness seviyene göre eşleştiriliyor';
+  String get regenerateSheetMatchingYourFitnessLevel => 'Fitness seviyene göre eşleştiriliyor';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Henüz öneri yok';
 
   @override
-  String get regenerateSheetOptimizingForYourGoals =>
-      'Hedefleriniz için optimize ediliyor';
+  String get regenerateSheetOptimizingForYourGoals => 'Hedefleriniz için optimize ediliyor';
 
   @override
-  String get regenerateSheetPairingPushAndPull =>
-      'İtiş ve çekiş hareketleri eşleştiriliyor';
+  String get regenerateSheetPairingPushAndPull => 'İtiş ve çekiş hareketleri eşleştiriliyor';
 
   @override
-  String get regenerateSheetPersonalizingExercises =>
-      'Egzersizler kişiselleştiriliyor';
+  String get regenerateSheetPersonalizingExercises => 'Egzersizler kişiselleştiriliyor';
 
   @override
   String get regenerateSheetPickingYourExercises => 'Egzersizlerin seçiliyor';
@@ -32261,8 +30049,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetReadingYourProfile => 'Profilin okunuyor';
 
   @override
-  String get regenerateSheetRegenerateCurrentWorkout =>
-      'Mevcut Antrenmanı Yenile';
+  String get regenerateSheetRegenerateCurrentWorkout => 'Mevcut Antrenmanı Yenile';
 
   @override
   String get regenerateSheetRegenerateWorkout => 'Antrenmanı yeniden oluştur';
@@ -32274,31 +30061,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateSheetReset => 'Sıfırla';
 
   @override
-  String get regenerateSheetRespectingYourInjuryList =>
-      'Sakatlık listen dikkate alınıyor';
+  String get regenerateSheetRespectingYourInjuryList => 'Sakatlık listen dikkate alınıyor';
 
   @override
-  String get regenerateSheetRestoredFromLastRegen =>
-      'Son oluşturmadan geri yüklendi';
+  String get regenerateSheetRestoredFromLastRegen => 'Son oluşturmadan geri yüklendi';
 
   @override
-  String get regenerateSheetRestoredFromLastRegeneration =>
-      'Son yenilemenizden geri yüklendi';
+  String get regenerateSheetRestoredFromLastRegeneration => 'Son yenilemenizden geri yüklendi';
 
   @override
   String get regenerateSheetSavingToYourPlan => 'Planına kaydediliyor';
 
   @override
-  String get regenerateSheetScanningTheExerciseLibrary =>
-      'Egzersiz kütüphanesi taranıyor';
+  String get regenerateSheetScanningTheExerciseLibrary => 'Egzersiz kütüphanesi taranıyor';
 
   @override
-  String get regenerateSheetSchedulingYourWorkout =>
-      'Antrenmanınız planlanıyor';
+  String get regenerateSheetSchedulingYourWorkout => 'Antrenmanınız planlanıyor';
 
   @override
-  String get regenerateSheetSequencingCompoundLifts =>
-      'Bileşik egzersizler sıralanıyor';
+  String get regenerateSheetSequencingCompoundLifts => 'Bileşik egzersizler sıralanıyor';
 
   @override
   String get regenerateSheetShapingTheSession => 'Antrenman şekillendiriliyor';
@@ -32312,16 +30093,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get regenerateSheetTodayNotInSchedule =>
-      'Bugün normal antrenman günlerinizde değil';
+  String get regenerateSheetTodayNotInSchedule => 'Bugün normal antrenman günlerinizde değil';
 
   @override
-  String get regenerateSheetTodayNotInUsualDays =>
-      'Bugün olağan günlerinde değil';
+  String get regenerateSheetTodayNotInUsualDays => 'Bugün olağan günlerinde değil';
 
   @override
-  String get regenerateSheetTuningRestPeriods =>
-      'Dinlenme süreleri ayarlanıyor';
+  String get regenerateSheetTuningRestPeriods => 'Dinlenme süreleri ayarlanıyor';
 
   @override
   String get regenerateSheetUpdatingYourSchedule => 'Programın güncelleniyor';
@@ -32339,19 +30117,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateWithNewContinueCurrent => 'Mevcut olanı sürdür';
 
   @override
-  String get regenerateWithNewEitherWayFutureWorkouts =>
-      'Her iki durumda da, gelecekteki antrenmanlarınız güncellenmiş ekipmanınızı kullanacaktır.';
+  String get regenerateWithNewEitherWayFutureWorkouts => 'Her iki durumda da, gelecekteki antrenmanlarınız güncellenmiş ekipmanınızı kullanacaktır.';
 
   @override
   String get regenerateWithNewEquipmentUpdated => 'Ekipman güncellendi';
 
   @override
-  String get regenerateWithNewRegenerateThisWorkout =>
-      'Bu antrenmanı yeniden oluştur';
+  String get regenerateWithNewRegenerateThisWorkout => 'Bu antrenmanı yeniden oluştur';
 
   @override
-  String get regenerateWorkoutSheetAiGenerationTypicallyTakes =>
-      'AI oluşturma genellikle 15-30 saniye sürer';
+  String get regenerateWorkoutSheetAiGenerationTypicallyTakes => 'AI oluşturma genellikle 15-30 saniye sürer';
 
   @override
   String get regenerateWorkoutSheetAiSuggestions => 'AI Önerileri';
@@ -32360,38 +30135,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateWorkoutSheetApplyThisWorkout => 'Bu Antrenmanı Uygula';
 
   @override
-  String get regenerateWorkoutSheetCouldnTKeepYour =>
-      'Orijinal antrenmanınız korunamadı — sadece yeni olan görünür durumda.';
+  String get regenerateWorkoutSheetCouldnTKeepYour => 'Orijinal antrenmanınız korunamadı — sadece yeni olan görünür durumda.';
 
   @override
   String get regenerateWorkoutSheetCustomize => 'Özelleştir';
 
   @override
-  String get regenerateWorkoutSheetCustomizeOrLetAi =>
-      'Özelleştirin veya AI\'nın önermesine izin verin';
+  String get regenerateWorkoutSheetCustomizeOrLetAi => 'Özelleştirin veya AI\'nın önermesine izin verin';
 
   @override
-  String get regenerateWorkoutSheetDefaultedToReplaceYour =>
-      'Değiştir olarak ayarlandı — önceki antrenmanınızın üzerine yazıldı.';
+  String get regenerateWorkoutSheetDefaultedToReplaceYour => 'Değiştir olarak ayarlandı — önceki antrenmanınızın üzerine yazıldı.';
 
   @override
-  String get regenerateWorkoutSheetDescribeYourIdealWorkout =>
-      'İdeal antrenmanınızı tanımlayın';
+  String get regenerateWorkoutSheetDescribeYourIdealWorkout => 'İdeal antrenmanınızı tanımlayın';
 
   @override
   String get regenerateWorkoutSheetDoThisToday => 'Bunu bugün yap';
 
   @override
-  String get regenerateWorkoutSheetEGAQuick =>
-      'ör. \"Ekipmansız hızlı bir üst vücut antrenmanı\"';
+  String get regenerateWorkoutSheetEGAQuick => 'ör. \"Ekipmansız hızlı bir üst vücut antrenmanı\"';
 
   @override
-  String get regenerateWorkoutSheetEnterAPromptAbove =>
-      'Yukarıya bir komut girin veya AI destekli antrenman önerileri almak için yenilemeye dokunun';
+  String get regenerateWorkoutSheetEnterAPromptAbove => 'Yukarıya bir komut girin veya AI destekli antrenman önerileri almak için yenilemeye dokunun';
 
   @override
-  String get regenerateWorkoutSheetGeneratingSuggestions =>
-      'Öneriler oluşturuluyor...';
+  String get regenerateWorkoutSheetGeneratingSuggestions => 'Öneriler oluşturuluyor...';
 
   @override
   String get regenerateWorkoutSheetGetSuggestions => 'Öneri Al';
@@ -32400,66 +30168,48 @@ class AppLocalizationsTr extends AppLocalizations {
   String get regenerateWorkoutSheetNoSuggestionsYet => 'Henüz öneri yok';
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message) {
     return 'Öneri uygulanamadı: $message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e) {
     return 'Öneri uygulanamadı: $e';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
-    Object message,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message) {
     return 'Yeniden oluşturulamadı: $message';
   }
 
   @override
-  String
-  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
-    Object e,
-  ) {
+  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e) {
     return 'Yeniden oluşturulamadı: $e';
   }
 
   @override
-  String get regenerateWorkoutSheetPreviewNotSupportedBy =>
-      'Önizleme sunucu tarafından desteklenmiyor. Lütfen uygulamayı güncelleyin veya destek ekibiyle iletişime geçin.';
+  String get regenerateWorkoutSheetPreviewNotSupportedBy => 'Önizleme sunucu tarafından desteklenmiyor. Lütfen uygulamayı güncelleyin veya destek ekibiyle iletişime geçin.';
 
   @override
-  String get regenerateWorkoutSheetRegenerateCurrentWorkout =>
-      'Mevcut Antrenmanı Yeniden Oluştur';
+  String get regenerateWorkoutSheetRegenerateCurrentWorkout => 'Mevcut Antrenmanı Yeniden Oluştur';
 
   @override
-  String get regenerateWorkoutSheetRegenerateWorkout =>
-      'Antrenmanı Yeniden Oluştur';
+  String get regenerateWorkoutSheetRegenerateWorkout => 'Antrenmanı Yeniden Oluştur';
 
   @override
   String get regenerateWorkoutSheetReset => 'Sıfırla';
 
   @override
-  String get regenerateWorkoutSheetRestoredFromYourLast =>
-      'Son yeniden oluşturmanızdan geri yüklendi';
+  String get regenerateWorkoutSheetRestoredFromYourLast => 'Son yeniden oluşturmanızdan geri yüklendi';
 
   @override
-  String get regenerateWorkoutSheetTodayIsnTIn =>
-      'Bugün normal antrenman günlerinizde değil — yine de ekleyeceğiz.';
+  String get regenerateWorkoutSheetTodayIsnTIn => 'Bugün normal antrenman günlerinizde değil — yine de ekleyeceğiz.';
 
   @override
   String get regenerateWorkoutSheetWhen => 'NE ZAMAN?';
 
   @override
-  String get regionVariantDropdownCouldNotSwapVariant =>
-      'Varyant değiştirilemedi. Lütfen tekrar deneyin.';
+  String get regionVariantDropdownCouldNotSwapVariant => 'Varyant değiştirilemedi. Lütfen tekrar deneyin.';
 
   @override
   String regionVariantDropdownKcalG(Object v) {
@@ -32481,41 +30231,34 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get repPreferencesAvoidHighRepSets =>
-      'Yüksek Tekrarlı Setlerden Kaçın';
+  String get repPreferencesAvoidHighRepSets => 'Yüksek Tekrarlı Setlerden Kaçın';
 
   @override
-  String get repPreferencesChooseYourPrimaryTraining =>
-      'Birincil antrenman hedefinizi seçin';
+  String get repPreferencesChooseYourPrimaryTraining => 'Birincil antrenman hedefinizi seçin';
 
   @override
-  String get repPreferencesConfigureYourSetVolume =>
-      'Set hacminizi yapılandırın';
+  String get repPreferencesConfigureYourSetVolume => 'Set hacminizi yapılandırın';
 
   @override
   String get repPreferencesEnforceRepCeiling => 'Tekrar Sınırını Uygula';
 
   @override
-  String get repPreferencesHowShouldWeProgress =>
-      'Egzersizlerinizi nasıl ilerletmeliyiz?';
+  String get repPreferencesHowShouldWeProgress => 'Egzersizlerinizi nasıl ilerletmeliyiz?';
 
   @override
-  String get repPreferencesPreventBoring15Rep =>
-      'Sıkıcı 15+ tekrar setlerini önle';
+  String get repPreferencesPreventBoring15Rep => 'Sıkıcı 15+ tekrar setlerini önle';
 
   @override
   String get repPreferencesProgressionStyle => 'İlerleme Stili';
 
   @override
-  String get repPreferencesRepProgressionPreferences =>
-      'Tekrar ve İlerleme Tercihleri';
+  String get repPreferencesRepProgressionPreferences => 'Tekrar ve İlerleme Tercihleri';
 
   @override
   String get repPreferencesRepRange => 'Tekrar Aralığı';
 
   @override
-  String get repPreferencesSectionConfigureYourSetVolume =>
-      'Her egzersiz için set hacminizi yapılandırın';
+  String get repPreferencesSectionConfigureYourSetVolume => 'Her egzersiz için set hacminizi yapılandırın';
 
   @override
   String get repPreferencesSectionEndurance1520 => 'Dayanıklılık (15-20)';
@@ -32533,8 +30276,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get repPreferencesSectionMaxSets => 'Maks Set';
 
   @override
-  String get repPreferencesSectionMaximumNumberOfSets =>
-      'Her egzersiz için maksimum set sayısı';
+  String get repPreferencesSectionMaximumNumberOfSets => 'Her egzersiz için maksimum set sayısı';
 
   @override
   String get repPreferencesSectionMin => 'Min';
@@ -32546,20 +30288,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get repPreferencesSectionMinimal12 => 'Minimal (1-2)';
 
   @override
-  String get repPreferencesSectionMinimumSetsToEnsure =>
-      'Yeterli hacmi sağlamak için minimum set sayısı';
+  String get repPreferencesSectionMinimumSetsToEnsure => 'Yeterli hacmi sağlamak için minimum set sayısı';
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
-    Object maxSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets) {
     return 'Maksimum Set: $maxSets';
   }
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
-    Object minSets,
-  ) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets) {
     return 'Minimum Set: $minSets';
   }
 
@@ -32567,12 +30304,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get repPreferencesSectionRecommended => 'Önerilen';
 
   @override
-  String get repPreferencesSectionRepRangePreference =>
-      'Tekrar Aralığı Tercihi';
+  String get repPreferencesSectionRepRangePreference => 'Tekrar Aralığı Tercihi';
 
   @override
-  String get repPreferencesSectionSetYourPreferredReps =>
-      'Set başına tercih ettiğiniz tekrar sayısını ayarlayın';
+  String get repPreferencesSectionSetYourPreferredReps => 'Set başına tercih ettiğiniz tekrar sayısını ayarlayın';
 
   @override
   String get repPreferencesSectionSetsPerExercise => 'Egzersiz Başına Set';
@@ -32584,39 +30319,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get repPreferencesSectionStrength15 => 'Güç (1-5)';
 
   @override
-  String get repPreferencesSectionTheAiWillGenerate =>
-      'AI, antrenmanları bu set aralığında oluşturacaktır. Daha fazla set = daha fazla hacim = daha fazla kas uyarımı.';
+  String get repPreferencesSectionTheAiWillGenerate => 'AI, antrenmanları bu set aralığında oluşturacaktır. Daha fazla set = daha fazla hacim = daha fazla kas uyarımı.';
 
   @override
-  String get repPreferencesSectionTheAiWillTry =>
-      'AI, ağırlığı ayarlayarak veya ilerlemeler önererek egzersizleri bu aralıkta tutmaya çalışacaktır.';
+  String get repPreferencesSectionTheAiWillTry => 'AI, ağırlığı ayarlayarak veya ilerlemeler önererek egzersizleri bu aralıkta tutmaya çalışacaktır.';
 
   @override
   String get repPreferencesSetsPerExercise => 'Egzersiz Başına Set';
 
   @override
-  String get repPreferencesStrictlyEnforceYourMaximum =>
-      'Maksimum tekrar sınırınızı kesin olarak uygulayın';
+  String get repPreferencesStrictlyEnforceYourMaximum => 'Maksimum tekrar sınırınızı kesin olarak uygulayın';
 
   @override
   String get repPreferencesTrainingFocus => 'Antrenman Odağı';
 
   @override
-  String get repPreferencesYourPreferredRepsPer =>
-      'Set başına tercih ettiğiniz tekrar sayısı';
+  String get repPreferencesYourPreferredRepsPer => 'Set başına tercih ettiğiniz tekrar sayısı';
 
   @override
-  String get repProgressionCardFineTuneRepRanges =>
-      'Tekrar aralıklarını ve ilerleme stilini ince ayar yapın';
+  String get repProgressionCardFineTuneRepRanges => 'Tekrar aralıklarını ve ilerleme stilini ince ayar yapın';
 
   @override
   String get repProgressionCardRepProgression => 'Tekrar ve İlerleme';
 
   @override
-  String repProgressionCardReps(
-    Object preferredMaxReps,
-    Object preferredMinReps,
-  ) {
+  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps) {
     return '$preferredMinReps-$preferredMaxReps tekrar';
   }
 
@@ -32627,12 +30354,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportInjuryCurrentPainLevel => 'Mevcut Ağrı Seviyesi';
 
   @override
-  String get reportInjuryDescribeHowTheInjury =>
-      'Sakatlığın nasıl meydana geldiğini, semptomları vb. açıklayın.';
+  String get reportInjuryDescribeHowTheInjury => 'Sakatlığın nasıl meydana geldiğini, semptomları vb. açıklayın.';
 
   @override
-  String get reportInjuryInjuryReportedSuccessfully =>
-      'Sakatlık başarıyla bildirildi';
+  String get reportInjuryInjuryReportedSuccessfully => 'Sakatlık başarıyla bildirildi';
 
   @override
   String get reportInjuryInjuryTypeOptional => 'Sakatlık Türü (İsteğe bağlı)';
@@ -32661,23 +30386,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportInjurySeverity => 'Şiddet';
 
   @override
-  String get reportInjuryThisIsForTracking =>
-      'Bu sadece takip amaçlıdır. Lütfen doğru teşhis ve tedavi için bir sağlık uzmanına danışın.';
+  String get reportInjuryThisIsForTracking => 'Bu sadece takip amaçlıdır. Lütfen doğru teşhis ve tedavi için bir sağlık uzmanına danışın.';
 
   @override
   String get reportInjuryWhenDidItOccur => 'Ne zaman meydana geldi?';
 
   @override
-  String get reportMessageAdditionalDetailsOptional =>
-      'Ek detaylar (isteğe bağlı)';
+  String get reportMessageAdditionalDetailsOptional => 'Ek detaylar (isteğe bağlı)';
 
   @override
-  String get reportMessageHelpUsImproveOur =>
-      'AI koçumuzu geliştirmemize yardımcı olun';
+  String get reportMessageHelpUsImproveOur => 'AI koçumuzu geliştirmemize yardımcı olun';
 
   @override
-  String get reportMessageReportSubmittedThankYou =>
-      'Bildirim gönderildi. Geri bildiriminiz için teşekkürler!';
+  String get reportMessageReportSubmittedThankYou => 'Bildirim gönderildi. Geri bildiriminiz için teşekkürler!';
 
   @override
   String get reportMessageReportThisResponse => 'Bu yanıtı bildir';
@@ -32691,8 +30412,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportMessageSubmitReport => 'Bildirimi Gönder';
 
   @override
-  String get reportMessageTellUsMoreAbout =>
-      'Sorun hakkında bize daha fazla bilgi verin...';
+  String get reportMessageTellUsMoreAbout => 'Sorun hakkında bize daha fazla bilgi verin...';
 
   @override
   String get reportMessageWhatSWrongWith => 'Bu yanıtta ne yanlış?';
@@ -32712,8 +30432,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get reportPainCouldNotSavePlease =>
-      'Kaydedilemedi — lütfen tekrar deneyin.';
+  String get reportPainCouldNotSavePlease => 'Kaydedilemedi — lütfen tekrar deneyin.';
 
   @override
   String get reportPainPainOnThisExercise => 'Bu egzersizde ağrı mı var?';
@@ -32758,8 +30477,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportShareShowWatermark => 'Filigranı Göster';
 
   @override
-  String get reportStrainAiWillSuggestLighter =>
-      'AI daha hafif antrenmanlar önerecek';
+  String get reportStrainAiWillSuggestLighter => 'AI daha hafif antrenmanlar önerecek';
 
   @override
   String get reportStrainReportStrain => 'Zorlanma Bildir';
@@ -32771,8 +30489,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportStrainSelectAtLeastOne => 'En az bir kas grubu seçin';
 
   @override
-  String get reportStrainStrainReportSubmitted =>
-      'Zorlanma bildirimi gönderildi';
+  String get reportStrainStrainReportSubmitted => 'Zorlanma bildirimi gönderildi';
 
   @override
   String get reportStrainSubmitReport => 'Bildirimi Gönder';
@@ -32787,8 +30504,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportsHub1RepMaxes => '1RM';
 
   @override
-  String get reportsHubBadgesUnlockedAlongYour =>
-      'Yolculuğunuz boyunca kazandığınız rozetler';
+  String get reportsHubBadgesUnlockedAlongYour => 'Yolculuğunuz boyunca kazandığınız rozetler';
 
   @override
   String get reportsHubBodyMeasurements => 'Vücut Ölçüleri';
@@ -32805,8 +30521,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportsHubDetail => 'DETAY';
 
   @override
-  String get reportsHubEstimated1rmsForEvery =>
-      'Her ana egzersiz için tahmini 1RM';
+  String get reportsHubEstimated1rmsForEvery => 'Her ana egzersiz için tahmini 1RM';
 
   @override
   String get reportsHubEveryLiftPrYou => 'Ulaştığınız her PR, sıralı';
@@ -32832,8 +30547,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get reportsHubNotEnoughDataYet =>
-      'Henüz yeterli veri yok — bir sonraki antrenmanınızdan sonra tekrar deneyin';
+  String get reportsHubNotEnoughDataYet => 'Henüz yeterli veri yok — bir sonraki antrenmanınızdan sonra tekrar deneyin';
 
   @override
   String get reportsHubPeriodInsights => 'Dönemsel İçgörüler';
@@ -32845,8 +30559,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportsHubProgressCharts => 'Gelişim Grafikleri';
 
   @override
-  String get reportsHubProgressionCurveForEvery =>
-      'Yaptığınız her egzersiz için gelişim eğrisi';
+  String get reportsHubProgressionCurveForEvery => 'Yaptığınız her egzersiz için gelişim eğrisi';
 
   @override
   String get reportsHubReadinessRecovery => 'Hazır Bulunuşluk & Toparlanma';
@@ -32855,8 +30568,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportsHubReportsInsights => 'Raporlar & İçgörüler';
 
   @override
-  String get reportsHubScorePerMuscleGroup =>
-      'Kas grubu başına puan, trendler & ısı haritası';
+  String get reportsHubScorePerMuscleGroup => 'Kas grubu başına puan, trendler & ısı haritası';
 
   @override
   String reportsHubScreenEverythingYouVeEarned(Object appName) {
@@ -32864,8 +30576,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get reportsHubSleepFatigueStressReadin =>
-      'Uyku, yorgunluk, stres, hazır bulunuşluk puanı';
+  String get reportsHubSleepFatigueStressReadin => 'Uyku, yorgunluk, stres, hazır bulunuşluk puanı';
 
   @override
   String get reportsHubTraining => 'ANTRENMAN';
@@ -32874,20 +30585,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get reportsHubViewReport => 'Raporu görüntüle';
 
   @override
-  String get reportsHubVolumeStrengthAndConsiste =>
-      'Zaman içindeki hacim, güç ve tutarlılık';
+  String get reportsHubVolumeStrengthAndConsiste => 'Zaman içindeki hacim, güç ve tutarlılık';
 
   @override
-  String get reportsHubWeightBodyFatCircumferenc =>
-      'Kilo, vücut yağı, çevre ölçümü trendleri';
+  String get reportsHubWeightBodyFatCircumferenc => 'Kilo, vücut yağı, çevre ölçümü trendleri';
 
   @override
-  String get reportsHubWorkoutsTimeCaloriesBy =>
-      'Antrenmanlar, süre, kaloriler: 1H / 1A / 3A / 6A / 1Y / YTD / Özel';
+  String get reportsHubWorkoutsTimeCaloriesBy => 'Antrenmanlar, süre, kaloriler: 1H / 1A / 3A / 6A / 1Y / YTD / Özel';
 
   @override
-  String get requestRefundAdditionalCommentsOptional =>
-      'Ek Yorumlar (İsteğe Bağlı)';
+  String get requestRefundAdditionalCommentsOptional => 'Ek Yorumlar (İsteğe Bağlı)';
 
   @override
   String get requestRefundCheckYourEmail => 'E-postanızı kontrol edin';
@@ -32899,8 +30606,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get requestRefundOneTime2 => 'Tek seferlik';
 
   @override
-  String get requestRefundPleaseSelectTheReason =>
-      'Lütfen durumunuzu en iyi tanımlayan nedeni seçin';
+  String get requestRefundPleaseSelectTheReason => 'Lütfen durumunuzu en iyi tanımlayan nedeni seçin';
 
   @override
   String get requestRefundReasonForRefund => 'İade Nedeni';
@@ -32912,8 +30618,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get requestRefundRefundRequestSubmitted => 'İade Talebi Gönderildi';
 
   @override
-  String get requestRefundRefundRequestsAreTypically =>
-      'İade talepleri genellikle 5-7 iş günü içinde işleme alınır. Talebiniz incelendikten sonra bir e-posta onayı alacaksınız.';
+  String get requestRefundRefundRequestsAreTypically => 'İade talepleri genellikle 5-7 iş günü içinde işleme alınır. Talebiniz incelendikten sonra bir e-posta onayı alacaksınız.';
 
   @override
   String get requestRefundRequestId => 'Talep Kimliği';
@@ -32922,8 +30627,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get requestRefundRequestRefund => 'İade Talep Et';
 
   @override
-  String get requestRefundSaveThisIdFor =>
-      'Bu kimliği kayıtlarınız için saklayın';
+  String get requestRefundSaveThisIdFor => 'Bu kimliği kayıtlarınız için saklayın';
 
   @override
   String requestRefundScreenPer(Object _billingPeriod) {
@@ -32942,19 +30646,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get requestRefundSubscriptionBeingRefunded => 'İade Edilen Abonelik';
 
   @override
-  String get requestRefundTellUsMoreAbout =>
-      'Deneyiminiz hakkında bize daha fazla bilgi verin...';
+  String get requestRefundTellUsMoreAbout => 'Deneyiminiz hakkında bize daha fazla bilgi verin...';
 
   @override
-  String get requestRefundWeWillSendYou =>
-      'İade talebinizle ilgili detayları içeren bir e-posta onayı göndereceğiz. İşlem genellikle 5-7 iş günü sürer.';
+  String get requestRefundWeWillSendYou => 'İade talebinizle ilgili detayları içeren bir e-posta onayı göndereceğiz. İşlem genellikle 5-7 iş günü sürer.';
 
   @override
   String get rescheduleFailedToLoadSuggestions => 'Öneriler yüklenemedi';
 
   @override
-  String get rescheduleFailedToRescheduleWorkout =>
-      'Antrenman yeniden planlanamadı';
+  String get rescheduleFailedToRescheduleWorkout => 'Antrenman yeniden planlanamadı';
 
   @override
   String get reschedulePickADifferentDay => 'Farklı bir gün seçin';
@@ -32968,8 +30669,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get rescheduleWorkoutSwappedSuccessfully =>
-      'Antrenman başarıyla değiştirildi';
+  String get rescheduleWorkoutSwappedSuccessfully => 'Antrenman başarıyla değiştirildi';
 
   @override
   String get restRateLastSet => 'Son Seti Puanla';
@@ -32981,15 +30681,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restSuggestionAiRestCoach => 'AI dinlenme koçu';
 
   @override
-  String get restSuggestionCalculatingOptimalRestTime =>
-      'İdeal dinlenme süresi hesaplanıyor';
+  String get restSuggestionCalculatingOptimalRestTime => 'İdeal dinlenme süresi hesaplanıyor';
 
   @override
   String get restSuggestionCardAiRestCoach => 'YAPAY ZEKA DİNLENME KOÇU';
 
   @override
-  String get restSuggestionCardCalculatingOptimalRestTime =>
-      'İdeal dinlenme süresi hesaplanıyor...';
+  String get restSuggestionCardCalculatingOptimalRestTime => 'İdeal dinlenme süresi hesaplanıyor...';
 
   @override
   String get restSuggestionCardQuickRest => 'Hızlı Dinlenme';
@@ -33021,8 +30719,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restTimerCardBaseRest => 'Temel Dinlenme';
 
   @override
-  String get restTimerCardControlRestPeriodsBetween =>
-      'Setler arası dinlenme sürelerini kontrol et';
+  String get restTimerCardControlRestPeriodsBetween => 'Setler arası dinlenme sürelerini kontrol et';
 
   @override
   String get restTimerCardCustomRestTimer => 'Özel Dinlenme Zamanlayıcısı';
@@ -33055,8 +30752,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get restTimerCardVariablesBaseRpeMultipli =>
-      'Değişkenler: temel, RPE, çarpan, kademe';
+  String get restTimerCardVariablesBaseRpeMultipli => 'Değişkenler: temel, RPE, çarpan, kademe';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33067,8 +30763,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restTimerOverlayAiWeightCoach => 'YAPAY ZEKA AĞIRLIK KOÇU';
 
   @override
-  String get restTimerOverlayAnalyzingYourPerformance =>
-      'Performansınız analiz ediliyor...';
+  String get restTimerOverlayAnalyzingYourPerformance => 'Performansınız analiz ediliyor...';
 
   @override
   String restTimerOverlayAsk(Object coachName) {
@@ -33079,8 +30774,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restTimerOverlayCoachReview => 'KOÇ DEĞERLENDİRMESİ';
 
   @override
-  String get restTimerOverlayGetTipsForYour =>
-      'Bir sonraki setin için ipuçları al';
+  String get restTimerOverlayGetTipsForYour => 'Bir sonraki setin için ipuçları al';
 
   @override
   String get restTimerOverlayGotIt => 'Anladım';
@@ -33101,8 +30795,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restTimerOverlayRirRepsInReserve => 'RIR (Yedekteki Tekrar)';
 
   @override
-  String get restTimerOverlayRpeRateOfPerceived =>
-      'RPE (Algılanan Zorluk Derecesi)';
+  String get restTimerOverlayRpeRateOfPerceived => 'RPE (Algılanan Zorluk Derecesi)';
 
   @override
   String restTimerOverlayS(Object restSecondsRemaining) {
@@ -33169,8 +30862,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get retuneProposalPreviewUnavailable => 'Önizleme kullanılamıyor.';
 
   @override
-  String get retuneProposalProgramRetunedNextPlan =>
-      'Program yeniden ayarlandı. Bir sonraki plan değişiklikleri yansıtacak.';
+  String get retuneProposalProgramRetunedNextPlan => 'Program yeniden ayarlandı. Bir sonraki plan değişiklikleri yansıtacak.';
 
   @override
   String get retuneProposalRetuneProposal => 'Yeniden ayarlama önerisi';
@@ -33193,8 +30885,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rewardsConfirm => 'Onayla';
 
   @override
-  String get rewardsKeepLevelingUpTo =>
-      'Ödüllerin kilidini açmak için seviye atlamaya devam et!';
+  String get rewardsKeepLevelingUpTo => 'Ödüllerin kilidini açmak için seviye atlamaya devam et!';
 
   @override
   String get rewardsNoRewardsAvailableYet => 'Henüz ödül yok';
@@ -33283,8 +30974,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get roiSummaryCardCalories => 'Kalori';
 
   @override
-  String get roiSummaryCardCompleteYourFirstWorkout =>
-      'İlerlemeni takip etmeye başlamak için ilk antrenmanını tamamla!';
+  String get roiSummaryCardCompleteYourFirstWorkout => 'İlerlemeni takip etmeye başlamak için ilk antrenmanını tamamla!';
 
   @override
   String get roiSummaryCardInvested => 'Yatırılan';
@@ -33301,12 +30991,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get routeMapOpenstreetmapContributors =>
-      '© OpenStreetMap katkıda bulunanlar';
+  String get routeMapOpenstreetmapContributors => '© OpenStreetMap katkıda bulunanlar';
 
   @override
-  String get rpeCardAutomaticallyAdjustBasedOn =>
-      'RPE geri bildirimine göre otomatik ayarla';
+  String get rpeCardAutomaticallyAdjustBasedOn => 'RPE geri bildirimine göre otomatik ayarla';
 
   @override
   String get rpeCardRpeAutoRegulation => 'RPE Otomatik Düzenleme';
@@ -33336,8 +31024,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rpePillRpeRateOfPerceived => 'RPE — Algılanan Zorluk Derecesi';
 
   @override
-  String get rpeRirHelpsAdjustNextSet =>
-      'Bir sonraki seti ayarlamaya yardımcı olur';
+  String get rpeRirHelpsAdjustNextSet => 'Bir sonraki seti ayarlamaya yardımcı olur';
 
   @override
   String get rpeRirHowHardWasThatSet => 'O set ne kadar zordu';
@@ -33361,8 +31048,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rtpAdvancePhase => 'Kilometre taşlarına ulaştım';
 
   @override
-  String get rtpDisclaimer =>
-      'Kişisel rehberlik çerçevesi. Her aşamaya geçmeden önce sağlık hizmeti sağlayıcısından onay gereklidir.';
+  String get rtpDisclaimer => 'Kişisel rehberlik çerçevesi. Her aşamaya geçmeden önce sağlık hizmeti sağlayıcısından onay gereklidir.';
 
   @override
   String get rtpGraduated => 'Tamamlandı';
@@ -33412,8 +31098,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get saunaLogSaunaTime => 'Sauna Süresini Kaydet';
 
   @override
-  String get savedHubCheckYourConnectionAnd =>
-      'Bağlantını kontrol et ve tekrar dene.';
+  String get savedHubCheckYourConnectionAnd => 'Bağlantını kontrol et ve tekrar dene.';
 
   @override
   String get savedHubCouldnTLoadYour => 'Kayıtlı öğelerin yüklenemedi.';
@@ -33422,27 +31107,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get savedHubNothingSavedYet => 'Henüz bir şey kaydedilmedi';
 
   @override
-  String get savedHubSaveAMealOr =>
-      'Daha sonra hızlıca eklemek için yemek günlüğünden bir öğün veya yiyecek kaydet.';
+  String get savedHubSaveAMealOr => 'Daha sonra hızlıca eklemek için yemek günlüğünden bir öğün veya yiyecek kaydet.';
 
   @override
   String get savedHubSaved => 'Kaydedildi';
 
   @override
-  String get savedHubScanARestaurantMenu =>
-      'Bir restoran menüsünü veya açık büfeyi tara — kaydedilen taramalar burada görünür.';
+  String get savedHubScanARestaurantMenu => 'Bir restoran menüsünü veya açık büfeyi tara — kaydedilen taramalar burada görünür.';
 
   @override
-  String get savedHubSignInToSee =>
-      'Kayıtlı tariflerini burada görmek için giriş yap.';
+  String get savedHubSignInToSee => 'Kayıtlı tariflerini burada görmek için giriş yap.';
 
   @override
-  String get savedHubSignInToSee2 =>
-      'Kayıtlı yiyeceklerini burada görmek için giriş yap.';
+  String get savedHubSignInToSee2 => 'Kayıtlı yiyeceklerini burada görmek için giriş yap.';
 
   @override
-  String get savedHubTapOnAnyRecipe =>
-      'Buraya kaydetmek için Keşfet veya kütüphanendeki herhangi bir tarifte ♥ simgesine dokun.';
+  String get savedHubTapOnAnyRecipe => 'Buraya kaydetmek için Keşfet veya kütüphanendeki herhangi bir tarifte ♥ simgesine dokun.';
 
   @override
   String get savedHubTryAgain => 'Tekrar dene';
@@ -33465,8 +31145,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduleMealInterval => 'Aralık';
 
   @override
-  String get scheduleMealPickACadenceWe =>
-      'Bir düzen seç; AI tarif kaydını senin için halledelim.';
+  String get scheduleMealPickACadenceWe => 'Bir düzen seç; AI tarif kaydını senin için halledelim.';
 
   @override
   String get scheduleMealPickADate => 'Bir tarih seç';
@@ -33505,11 +31184,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String scheduleMismatchDialogRequiresDaysPerWeek(
-    Object currentDayCount,
-    Object requiredDays,
-    Object splitName,
-  ) {
+  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName) {
     return '$splitName haftada $requiredDays gün gerektiriyor, ancak şu anda $currentDayCount gün seçili.';
   }
 
@@ -33557,10 +31232,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String scheduleScreenGenerating(
-    Object _generatedCount,
-    Object _totalToGenerate,
-  ) {
+  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate) {
     return 'Oluşturuluyor $_generatedCount/$_totalToGenerate...';
   }
 
@@ -33622,8 +31294,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduleWorkoutSchedulingWorkout => 'Antrenman planlanıyor...';
 
   @override
-  String get scheduleWorkoutThisWorkoutWillBe =>
-      'Bu antrenman onların yanına eklenecek.';
+  String get scheduleWorkoutThisWorkoutWillBe => 'Bu antrenman onların yanına eklenecek.';
 
   @override
   String get scoreBreakdownConsistency => 'Tutarlılık';
@@ -33655,8 +31326,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreChangeAnnouncementSleep => 'Uyku';
 
   @override
-  String get scoreChangeAnnouncementSleepNowCountsToward =>
-      'Uyku artık günlük puanına dahil ediliyor.';
+  String get scoreChangeAnnouncementSleepNowCountsToward => 'Uyku artık günlük puanına dahil ediliyor.';
 
   @override
   String get scoreChangeAnnouncementTrain => 'Antrenman';
@@ -33689,8 +31359,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainAddedSugar => 'İlave şeker';
 
   @override
-  String get scoreExplainAddedSugarIsThe =>
-      'İlave şeker, Batı tipi beslenmede metabolik sendromun en güçlü diyet belirleyicisidir.';
+  String get scoreExplainAddedSugarIsThe => 'İlave şeker, Batı tipi beslenmede metabolik sendromun en güçlü diyet belirleyicisidir.';
 
   @override
   String scoreExplainAddedSugarValue(Object value) {
@@ -33698,20 +31367,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainAiPicksATrafficLight =>
-      'Yapay zeka, kişisel sağlık hedeflerinize göre her öğün için trafik ışığı sisteminde bir not belirler.';
+  String get scoreExplainAiPicksATrafficLight => 'Yapay zeka, kişisel sağlık hedeflerinize göre her öğün için trafik ışığı sisteminde bir not belirler.';
 
   @override
-  String get scoreExplainAimForADailyAverage =>
-      'Günlük ortalamayı 4\'ün altında tutmayı hedefleyin. Anti-enflamatuar gıdalar 1–3 arası, yüksek enflamasyonlu gıdalar 7–10 arası puan alır.';
+  String get scoreExplainAimForADailyAverage => 'Günlük ortalamayı 4\'ün altında tutmayı hedefleyin. Anti-enflamatuar gıdalar 1–3 arası, yüksek enflamasyonlu gıdalar 7–10 arası puan alır.';
 
   @override
-  String get scoreExplainCertainPortionsOfAvocado =>
-      'Avokado, tatlı patates, badem gibi belirli porsiyonlar — küçük porsiyonlarda tamam, büyük porsiyonlarda zorlayıcı.';
+  String get scoreExplainCertainPortionsOfAvocado => 'Avokado, tatlı patates, badem gibi belirli porsiyonlar — küçük porsiyonlarda tamam, büyük porsiyonlarda zorlayıcı.';
 
   @override
-  String get scoreExplainChronicLowGradeInflammation =>
-      'Beslenmeden kaynaklanan kronik düşük dereceli enflamasyon; metabolik hastalıklar, eklem ağrısı ve bilişsel gerileme ile bağlantılıdır.';
+  String get scoreExplainChronicLowGradeInflammation => 'Beslenmeden kaynaklanan kronik düşük dereceli enflamasyon; metabolik hastalıklar, eklem ağrısı ve bilişsel gerileme ile bağlantılıdır.';
 
   @override
   String get scoreExplainCurrentLabelAntiInfl => 'ANTİ-ENFL.';
@@ -33750,35 +31415,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainCurrentLabelWhole => 'WHOLE';
 
   @override
-  String get scoreExplainDailyAverageAbove6 =>
-      '6\'nın üzerindeki bir günlük ortalama, daha iyi uzun vadeli metabolik sağlık ile ilişkilidir.';
+  String get scoreExplainDailyAverageAbove6 => '6\'nın üzerindeki bir günlük ortalama, daha iyi uzun vadeli metabolik sağlık ile ilişkilidir.';
 
   @override
-  String get scoreExplainDessertsSugaryDrinksCandy =>
-      'Tatlılar, şekerli içecekler, şekerlemeler, birçok kahvaltılık gevrek. İnsülini yükseltir, enerjiyi düşürür.';
+  String get scoreExplainDessertsSugaryDrinksCandy => 'Tatlılar, şekerli içecekler, şekerlemeler, birçok kahvaltılık gevrek. İnsülini yükseltir, enerjiyi düşürür.';
 
   @override
-  String get scoreExplainEachMealGets =>
-      'Her öğün; besin yoğunluğu, işlenme seviyesi ve hedeflerinizle uyumuna göre 1–10 arası bir sağlık skoru alır.';
+  String get scoreExplainEachMealGets => 'Her öğün; besin yoğunluğu, işlenme seviyesi ve hedeflerinizle uyumuna göre 1–10 arası bir sağlık skoru alır.';
 
   @override
-  String get scoreExplainEngineeredFoodProductsChip =>
-      'İşlenmiş gıda ürünleri: cipsler, gazlı içecekler, hazır erişteler, paketli tatlılar, çoğu fast food.';
+  String get scoreExplainEngineeredFoodProductsChip => 'İşlenmiş gıda ürünleri: cipsler, gazlı içecekler, hazır erişteler, paketli tatlılar, çoğu fast food.';
 
   @override
   String get scoreExplainFodmapRating => 'FODMAP derecesi';
 
   @override
-  String get scoreExplainFodmapsAreShortChain =>
-      'FODMAP\'ler, bağırsak bakterileri tarafından fermente edilen ve emilimi zor olan kısa zincirli karbonhidratlardır.';
+  String get scoreExplainFodmapsAreShortChain => 'FODMAP\'ler, bağırsak bakterileri tarafından fermente edilen ve emilimi zor olan kısa zincirli karbonhidratlardır.';
 
   @override
-  String get scoreExplainFriedFoodsProcessedMeats =>
-      'Kızarmış yiyecekler, işlenmiş etler, şekerli içecekler, rafine tohum yağları, paketli atıştırmalıklar.';
+  String get scoreExplainFriedFoodsProcessedMeats => 'Kızarmış yiyecekler, işlenmiş etler, şekerli içecekler, rafine tohum yağları, paketli atıştırmalıklar.';
 
   @override
-  String get scoreExplainGlycemicLoadCombines =>
-      'Glisemik yük, karbonhidrat miktarını ve kalitesini birleştirir. Bir öğünün kan şekerini ne kadar yükselteceğini tahmin eder.';
+  String get scoreExplainGlycemicLoadCombines => 'Glisemik yük, karbonhidrat miktarını ve kalitesini birleştirir. Bir öğünün kan şekerini ne kadar yükselteceğini tahmin eder.';
 
   @override
   String scoreExplainGlycemicLoadValue(Object v) {
@@ -33806,23 +31464,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainHigh20 => 'Yüksek (20+)';
 
   @override
-  String get scoreExplainHighInflammationUltraProce =>
-      'Yüksek enflamasyon, ultra işlenmiş veya makrolarından çok uzak. Mümkünse İyi bir seçenekle değiştir.';
+  String get scoreExplainHighInflammationUltraProce => 'Yüksek enflamasyon, ultra işlenmiş veya makrolarından çok uzak. Mümkünse İyi bir seçenekle değiştir.';
 
   @override
-  String get scoreExplainHighProteinOrFiber =>
-      'Yüksek protein veya lif, tam gıdalar, düşük ilave şeker, anti-enflamatuar içerikler.';
+  String get scoreExplainHighProteinOrFiber => 'Yüksek protein veya lif, tam gıdalar, düşük ilave şeker, anti-enflamatuar içerikler.';
 
   @override
-  String get scoreExplainHitsYourGoalMacros =>
-      'Hedef makrolarına uygun, çoğunlukla tam gıdalar, düşük-orta enflamasyon. Özgürce seç.';
+  String get scoreExplainHitsYourGoalMacros => 'Hedef makrolarına uygun, çoğunlukla tam gıdalar, düşük-orta enflamasyon. Özgürce seç.';
 
   @override
   String get scoreExplainHowThisDishRates => 'Bu yemeğin senin için puanı';
 
   @override
-  String get scoreExplainImportantIfYouHaveDiabetes =>
-      'Diyabetiniz, insülin direnciniz varsa veya enerji seviyelerinizi yönetiyorsanız önemlidir.';
+  String get scoreExplainImportantIfYouHaveDiabetes => 'Diyabetiniz, insülin direnciniz varsa veya enerji seviyelerinizi yönetiyorsanız önemlidir.';
 
   @override
   String scoreExplainInflammationScoreValue(Object v) {
@@ -33830,12 +31484,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainLargePopulationStudies =>
-      'Geniş çaplı popülasyon çalışmaları, ultra işlenmiş gıda tüketimini kanser, kardiyovasküler hastalıklar ve erken ölüm ile ilişkilendirmektedir.';
+  String get scoreExplainLargePopulationStudies => 'Geniş çaplı popülasyon çalışmaları, ultra işlenmiş gıda tüketimini kanser, kardiyovasküler hastalıklar ve erken ölüm ile ilişkilendirmektedir.';
 
   @override
-  String get scoreExplainLeafyGreensBerriesWild =>
-      'Yeşil yapraklı sebzeler, orman meyveleri, yabani somon, zerdeçal, sızma zeytinyağı, kuruyemişler, baklagiller.';
+  String get scoreExplainLeafyGreensBerriesWild => 'Yeşil yapraklı sebzeler, orman meyveleri, yabani somon, zerdeçal, sızma zeytinyağı, kuruyemişler, baklagiller.';
 
   @override
   String get scoreExplainLow => 'Düşük';
@@ -33847,8 +31499,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainLowUnder5G => 'Düşük (5 g\'ın altında)';
 
   @override
-  String get scoreExplainMeatEggsRiceOats =>
-      'Et, yumurta, pirinç, yulaf, laktozsuz süt ürünleri, havuç, kabak, ıspanak, orman meyveleri, portakal.';
+  String get scoreExplainMeatEggsRiceOats => 'Et, yumurta, pirinç, yulaf, laktozsuz süt ürünleri, havuç, kabak, ıspanak, orman meyveleri, portakal.';
 
   @override
   String get scoreExplainMedium => 'Orta';
@@ -33857,8 +31508,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainMedium1019 => 'Orta (10 – 19)';
 
   @override
-  String get scoreExplainMinimalBloodSugarSpike =>
-      'Minimum kan şekeri artışı. Nişastasız sebzeler, yumurta, et, orman meyveleri, çoğu süt ürünü.';
+  String get scoreExplainMinimalBloodSugarSpike => 'Minimum kan şekeri artışı. Nişastasız sebzeler, yumurta, et, orman meyveleri, çoğu süt ürünü.';
 
   @override
   String get scoreExplainModerate => 'Orta';
@@ -33867,51 +31517,40 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainModerate514G => 'Orta (5 – 14 g)';
 
   @override
-  String get scoreExplainModerateSpikeOatsWhole =>
-      'Orta düzey artış. Yulaf, tam buğday ekmeği, muz, tatlı patates, basmati pirinç.';
+  String get scoreExplainModerateSpikeOatsWhole => 'Orta düzey artış. Yulaf, tam buğday ekmeği, muz, tatlı patates, basmati pirinç.';
 
   @override
-  String get scoreExplainMostSavouryDishesPlain =>
-      'Çoğu tuzlu yemek, sade süt ürünleri, bütün meyveler. Kan şekeri üzerinde anlamlı bir etkisi yok.';
+  String get scoreExplainMostSavouryDishesPlain => 'Çoğu tuzlu yemek, sade süt ürünleri, bütün meyveler. Kan şekeri üzerinde anlamlı bir etkisi yok.';
 
   @override
-  String get scoreExplainOnionGarlicWheatRye =>
-      'Soğan, sarımsak, buğday, çavdar, süt/dondurma, elma, armut, bal, fasulye, karnabahar.';
+  String get scoreExplainOnionGarlicWheatRye => 'Soğan, sarımsak, buğday, çavdar, süt/dondurma, elma, armut, bal, fasulye, karnabahar.';
 
   @override
-  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
-      'Sadece IBS veya teşhis edilmiş bir bağırsak rahatsızlığınız varsa geçerlidir. Aksi takdirde dikkate almayabilirsiniz.';
+  String get scoreExplainOnlyRelevantIfYouHaveIbs => 'Sadece IBS veya teşhis edilmiş bir bağırsak rahatsızlığınız varsa geçerlidir. Aksi takdirde dikkate almayabilirsiniz.';
 
   @override
-  String get scoreExplainRatingsArePersonalised =>
-      'Derecelendirmeler hedeflerinize, intoleranslarınıza ve beslenme geçmişinize göre kişiselleştirilmiştir.';
+  String get scoreExplainRatingsArePersonalised => 'Derecelendirmeler hedeflerinize, intoleranslarınıza ve beslenme geçmişinize göre kişiselleştirilmiştir.';
 
   @override
-  String get scoreExplainRawOrBasicCooked =>
-      'Çiğ veya temel pişirme yöntemleriyle hazırlanmış gıdalar: et, yumurta, sebzeler, sade yoğurt, peynir, tam tahıllar.';
+  String get scoreExplainRawOrBasicCooked => 'Çiğ veya temel pişirme yöntemleriyle hazırlanmış gıdalar: et, yumurta, sebzeler, sade yoğurt, peynir, tam tahıllar.';
 
   @override
-  String get scoreExplainReasonableChoiceCouldBe =>
-      'Makul bir seçim — bir veya iki eksende geliştirilebilir (daha fazla lif, daha az işleme).';
+  String get scoreExplainReasonableChoiceCouldBe => 'Makul bir seçim — bir veya iki eksende geliştirilebilir (daha fazla lif, daha az işleme).';
 
   @override
-  String get scoreExplainReasonableChoiceWithA =>
-      'Takaslı makul bir seçim — porsiyona dikkat et veya daha temiz bir yan ürünle eşleştir.';
+  String get scoreExplainReasonableChoiceWithA => 'Takaslı makul bir seçim — porsiyona dikkat et veya daha temiz bir yan ürünle eşleştir.';
 
   @override
-  String get scoreExplainScoreDetailUnavailable =>
-      'Bu öğün için skor detayı mevcut değil.';
+  String get scoreExplainScoreDetailUnavailable => 'Bu öğün için skor detayı mevcut değil.';
 
   @override
   String get scoreExplainSkip => 'Atla';
 
   @override
-  String get scoreExplainSteepSpikeCrashWhite =>
-      'Keskin artış + düşüş. Beyaz pirinç kaseleri, şekerli içecekler, hamur işleri, büyük makarna tabakları.';
+  String get scoreExplainSteepSpikeCrashWhite => 'Keskin artış + düşüş. Beyaz pirinç kaseleri, şekerli içecekler, hamur işleri, büyük makarna tabakları.';
 
   @override
-  String get scoreExplainSweetenedYogurtASmall =>
-      'Şekerli yoğurt, küçük bir hamur işi, yarım sporcu içeceği. Makul bir ödül — günlük değil.';
+  String get scoreExplainSweetenedYogurtASmall => 'Şekerli yoğurt, küçük bir hamur işi, yarım sporcu içeceği. Makul bir ödül — günlük değil.';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -33922,34 +31561,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoreExplainUltraProcessed => 'Ultra işlenmiş';
 
   @override
-  String get scoreExplainUltraProcessedDeepFried =>
-      'Ultra işlenmiş, derin yağda kızartılmış, düşük lifli veya çok yüksek ilave şeker/sodyum içerikli.';
+  String get scoreExplainUltraProcessedDeepFried => 'Ultra işlenmiş, derin yağda kızartılmış, düşük lifli veya çok yüksek ilave şeker/sodyum içerikli.';
 
   @override
   String get scoreExplainUltraProcessedNova4 => 'Ultra-işlenmiş (NOVA 4)';
 
   @override
-  String get scoreExplainWeUseTheNovaClassification =>
-      'São Paulo Üniversitesi tarafından geliştirilen NOVA sınıflandırma sistemini kullanıyoruz.';
+  String get scoreExplainWeUseTheNovaClassification => 'São Paulo Üniversitesi tarafından geliştirilen NOVA sınıflandırma sistemini kullanıyoruz.';
 
   @override
-  String get scoreExplainWhiteRicePlainEggs =>
-      'Beyaz pirinç, sade yumurta, sert peynir, küçük porsiyonlarda yağsız kırmızı et.';
+  String get scoreExplainWhiteRicePlainEggs => 'Beyaz pirinç, sade yumurta, sert peynir, küçük porsiyonlarda yağsız kırmızı et.';
 
   @override
-  String get scoreExplainWhoRecommendsAdults =>
-      'WHO, yetişkinlerin ilave şeker tüketimini günlük < 25 g (toplam enerjinin %5\'i) ile sınırlamasını önermektedir.';
+  String get scoreExplainWhoRecommendsAdults => 'WHO, yetişkinlerin ilave şeker tüketimini günlük < 25 g (toplam enerjinin %5\'i) ile sınırlamasını önermektedir.';
 
   @override
-  String get scoreExplainWholeMinimallyProcessed =>
-      'Tam / minimum düzeyde işlenmiş';
+  String get scoreExplainWholeMinimallyProcessed => 'Tam / minimum düzeyde işlenmiş';
 
   @override
   String get scoreExplainWhyThisScore => 'Bu puan neden verildi';
 
   @override
-  String get scoringCard6FactorWeightedSelection =>
-      '6 faktörlü ağırlıklı seçim algoritması';
+  String get scoringCard6FactorWeightedSelection => '6 faktörlü ağırlıklı seçim algoritması';
 
   @override
   String get scoringCardExerciseScoringBreakdown => 'Egzersiz Puanlama Dökümü';
@@ -33988,22 +31621,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scoringHowScoresAreCalculated => 'Puanlar Nasıl Hesaplanır';
 
   @override
-  String get scoringYourOverallFitnessScore =>
-      'Genel fitness puanınız, fitness yolculuğunuza kapsamlı bir bakış sunmak için bu faktörleri birleştirir.';
+  String get scoringYourOverallFitnessScore => 'Genel fitness puanınız, fitness yolculuğunuza kapsamlı bir bakış sunmak için bu faktörleri birleştirir.';
 
   @override
   String get sectionHeaderWhatSThis => 'Bu nedir?';
 
   @override
-  String get sectionedHeroAreaCalendarDisplayOptions =>
-      'Takvim görüntüleme seçenekleri';
+  String get sectionedHeroAreaCalendarDisplayOptions => 'Takvim görüntüleme seçenekleri';
 
   @override
   String get sectionedHeroAreaMon => 'Pzt';
 
   @override
-  String get sectionedHeroAreaShowSyncedWorkouts =>
-      'Senkronize edilen antrenmanları göster';
+  String get sectionedHeroAreaShowSyncedWorkouts => 'Senkronize edilen antrenmanları göster';
 
   @override
   String get sectionedHeroAreaStartWeekOnMonday => 'Haftayı Pazartesi başlat';
@@ -34055,8 +31685,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get seniorFitnessSettingsSaved => 'Ayarlar kaydedildi';
 
   @override
-  String get seniorFitnessTheseSettingsHelpCustomize =>
-      'Bu ayarlar, daha uzun toparlanma süreleri ve eklem dostu egzersizler dahil olmak üzere, kıdemli fitness ihtiyaçlarına göre antrenmanları özelleştirmeye yardımcı olur.';
+  String get seniorFitnessTheseSettingsHelpCustomize => 'Bu ayarlar, daha uzun toparlanma süreleri ve eklem dostu egzersizler dahil olmak üzere, kıdemli fitness ihtiyaçlarına göre antrenmanları özelleştirmeye yardımcı olur.';
 
   @override
   String get seniorNavFood => 'Beslenme';
@@ -34090,8 +31719,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setAdjustmentConfirm => 'Onayla';
 
   @override
-  String get setAdjustmentEGShoulderFeels =>
-      'Örn: omuzlarım gergin hissediyor...';
+  String get setAdjustmentEGShoulderFeels => 'Örn: omuzlarım gergin hissediyor...';
 
   @override
   String get setAdjustmentSheet1Set => '+1 Set';
@@ -34100,8 +31728,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setAdjustmentSheet1Set2 => '-1 Set';
 
   @override
-  String get setAdjustmentSheetAdditionalNotesOptional =>
-      'Ek notlar (isteğe bağlı)';
+  String get setAdjustmentSheetAdditionalNotesOptional => 'Ek notlar (isteğe bağlı)';
 
   @override
   String get setAdjustmentSheetApply => 'Uygula';
@@ -34110,37 +31737,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setAdjustmentSheetCopyLast => 'Sonuncuyu Kopyala';
 
   @override
-  String get setAdjustmentSheetDoneWithThisExercise =>
-      'Bu egzersizi bitirdin mi?';
+  String get setAdjustmentSheetDoneWithThisExercise => 'Bu egzersizi bitirdin mi?';
 
   @override
   String get setAdjustmentSheetEditSets => 'Setleri Düzenle';
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
-    Object originalSetCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount) {
     return '+$originalSetCount eklendi';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
-    Object completedCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount) {
     return '$completedCount tamamlandı';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
-    Object remainingCount,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount) {
     return '$remainingCount kaldı';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
-    Object length,
-  ) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length) {
     return '$length kaldırıldı';
   }
 
@@ -34150,9 +31768,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
-    Object completedSets,
-  ) {
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets) {
     return '$completedSets set tamamlandı';
   }
 
@@ -34169,8 +31785,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setAdjustmentSheetWeight => 'Ağırlık';
 
   @override
-  String get setAdjustmentSheetWhyAreYouReducing =>
-      'Neden set sayısını azaltıyorsun?';
+  String get setAdjustmentSheetWhyAreYouReducing => 'Neden set sayısını azaltıyorsun?';
 
   @override
   String get setAdjustmentSheetWhyAreYouStopping => 'Neden erken bırakıyorsun?';
@@ -34237,8 +31852,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setRowPartRirHowManyMore => 'RIR = Kaç tekrar daha yapabilirdin?';
 
   @override
-  String get setRowPartRpeMeasuresHowHard =>
-      'RPE, bir setin 6-10 ölçeğinde ne kadar zor hissettirdiğini ölçer:';
+  String get setRowPartRpeMeasuresHowHard => 'RPE, bir setin 6-10 ölçeğinde ne kadar zor hissettirdiğini ölçer:';
 
   @override
   String setRowPartRpeRirSelectorStateLeft(Object value) {
@@ -34246,8 +31860,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get setRowPartThisHelpsUsAdjust =>
-      'Bu, bir sonraki setini ayarlamamıza yardımcı olur';
+  String get setRowPartThisHelpsUsAdjust => 'Bu, bir sonraki setini ayarlamamıza yardımcı olur';
 
   @override
   String setRowPartWeightIncrementsValue(Object actualPercent) {
@@ -34373,10 +31986,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String setTrackingSectionSetTapToExpand(
-    Object currentSetNumber,
-    Object totalSets,
-  ) {
+  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets) {
     return 'Set $currentSetNumber/$totalSets • Genişletmek için dokunun';
   }
 
@@ -34391,8 +32001,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get setTrackingSheetsAmountToAdjustWeight =>
-      'Ağırlık ayarlama miktarı';
+  String get setTrackingSheetsAmountToAdjustWeight => 'Ağırlık ayarlama miktarı';
 
   @override
   String get setTrackingSheetsDropSet => 'Drop Set';
@@ -34404,26 +32013,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setTrackingSheetsGotIt => 'Anladım';
 
   @override
-  String get setTrackingSheetsImmediatelyReduceWeightAfte =>
-      'Tükenişten hemen sonra ağırlığı azaltın ve tekrarlara devam edin. Kas gelişimi için harikadır!';
+  String get setTrackingSheetsImmediatelyReduceWeightAfte => 'Tükenişten hemen sonra ağırlığı azaltın ve tekrarlara devam edin. Kas gelişimi için harikadır!';
 
   @override
   String get setTrackingSheetsLastSession => 'Son Antrenman';
 
   @override
-  String get setTrackingSheetsLightWeightToPrepare =>
-      'Kasları hazırlamak için hafif ağırlık. Antrenman hacmine dahil edilmez.';
+  String get setTrackingSheetsLightWeightToPrepare => 'Kasları hazırlamak için hafif ağırlık. Antrenman hacmine dahil edilmez.';
 
   @override
-  String get setTrackingSheetsMarkWhenYouCouldn =>
-      'Hedef tekrarları tamamlayamadığınızda işaretleyin. Yoğunluğu takip etmeye yardımcı olur.';
+  String get setTrackingSheetsMarkWhenYouCouldn => 'Hedef tekrarları tamamlayamadığınızda işaretleyin. Yoğunluğu takip etmeye yardımcı olur.';
 
   @override
   String get setTrackingSheetsPersonalRecord => 'Kişisel Rekor';
 
   @override
-  String get setTrackingSheetsRateOfPerceivedExertion =>
-      'Algılanan Zorluk Derecesi (RPE), bir setin ne kadar zor hissettirdiğini ölçer:';
+  String get setTrackingSheetsRateOfPerceivedExertion => 'Algılanan Zorluk Derecesi (RPE), bir setin ne kadar zor hissettirdiğini ölçer:';
 
   @override
   String get setTrackingSheetsReps => 'Tekrar';
@@ -34456,23 +32061,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setTrackingSheetsWhatIsRpe => 'RPE nedir?';
 
   @override
-  String get setTrackingTableALowerRir0 =>
-      'Düşük bir RIR (0–1), sınırlarınızı zorladığınız anlamına gelir. Yüksek bir RIR (4–6+ gibi) ise setin daha kolay hissettirdiğini ve enerjinizin kaldığını gösterir.';
+  String get setTrackingTableALowerRir0 => 'Düşük bir RIR (0–1), sınırlarınızı zorladığınız anlamına gelir. Yüksek bir RIR (4–6+ gibi) ise setin daha kolay hissettirdiğini ve enerjinizin kaldığını gösterir.';
 
   @override
-  String get setTrackingTableALowerRir02 =>
-      'Düşük bir RIR (0–1), sınırlarınıza yakın çalıştığınız anlamına gelir. Yüksek bir RIR (3–4 gibi) ise daha fazla tekrar yapabilecek enerjiniz olduğunu gösterir.';
+  String get setTrackingTableALowerRir02 => 'Düşük bir RIR (0–1), sınırlarınıza yakın çalıştığınız anlamına gelir. Yüksek bir RIR (3–4 gibi) ise daha fazla tekrar yapabilecek enerjiniz olduğunu gösterir.';
 
   @override
   String get setTrackingTableAddSet => 'Set Ekle';
 
   @override
-  String get setTrackingTableBeginnersGetExtraBuffer =>
-      'Yeni başlayanlar form öğrenimi için ekstra paya sahiptir. İleri seviye sporcular tükenişe daha güvenli bir şekilde yaklaşabilirler.';
+  String get setTrackingTableBeginnersGetExtraBuffer => 'Yeni başlayanlar form öğrenimi için ekstra paya sahiptir. İleri seviye sporcular tükenişe daha güvenli bir şekilde yaklaşabilirler.';
 
   @override
-  String get setTrackingTableCompoundLiftsSquatsPresse =>
-      'Bileşik egzersizler (squat, press) izolasyon hareketlerine (curl, raise) göre daha temkinli tutulur. Hipertrofi, güç antrenmanına göre tükenişe daha yakındır.';
+  String get setTrackingTableCompoundLiftsSquatsPresse => 'Bileşik egzersizler (squat, press) izolasyon hareketlerine (curl, raise) göre daha temkinli tutulur. Hipertrofi, güç antrenmanına göre tükenişe daha yakındır.';
 
   @override
   String get setTrackingTableEasiest => 'En Kolay';
@@ -34484,15 +32085,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setTrackingTableHardest => 'En Zor';
 
   @override
-  String get setTrackingTableHowYourTargetRir =>
-      'Hedef RIR değeriniz nasıl hesaplanır';
+  String get setTrackingTableHowYourTargetRir => 'Hedef RIR değeriniz nasıl hesaplanır';
 
   @override
   String get setTrackingTableLeft => 'Sol';
 
   @override
-  String get setTrackingTableMachinesCablesAreSafer =>
-      'Makineler ve kablolarla zorlamak daha güvenlidir. Barbell ve kettlebell, sakatlık riski nedeniyle daha fazla yedek enerji gerektirir.';
+  String get setTrackingTableMachinesCablesAreSafer => 'Makineler ve kablolarla zorlamak daha güvenlidir. Barbell ve kettlebell, sakatlık riski nedeniyle daha fazla yedek enerji gerektirir.';
 
   @override
   String get setTrackingTableManyRepsInReserve => 'Çok sayıda yedek tekrar';
@@ -34517,12 +32116,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setTrackingTableRight => 'Sağ';
 
   @override
-  String get setTrackingTableRirDecreasesAcrossSets =>
-      'RIR setler boyunca azalır; ilk setler hazırlık yaparken son set en zorlayıcı olanıdır.';
+  String get setTrackingTableRirDecreasesAcrossSets => 'RIR setler boyunca azalır; ilk setler hazırlık yaparken son set en zorlayıcı olanıdır.';
 
   @override
-  String get setTrackingTableRirStandsForReps =>
-      'RIR, \'Reps in Reserve\' (Yedek Tekrar) anlamına gelir; bir setin ne kadar zorlayıcı olduğunu tanımlamanın basit bir yoludur.';
+  String get setTrackingTableRirStandsForReps => 'RIR, \'Reps in Reserve\' (Yedek Tekrar) anlamına gelir; bir setin ne kadar zorlayıcı olduğunu tanımlamanın basit bir yoludur.';
 
   @override
   String get setTrackingTableSet => 'Set';
@@ -34531,26 +32128,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get setTrackingTableTarget => 'HEDEF';
 
   @override
-  String get setTrackingTableTrainingGoalExerciseType =>
-      'Antrenman Hedefi + Egzersiz Türü';
+  String get setTrackingTableTrainingGoalExerciseType => 'Antrenman Hedefi + Egzersiz Türü';
 
   @override
   String get setTrackingTableWhatIsRir => 'RIR nedir?';
 
   @override
-  String get setTrackingTableWhatYouSeeAbove =>
-      'Yukarıda gördüğünüz bir RIR ölçeğidir';
+  String get setTrackingTableWhatYouSeeAbove => 'Yukarıda gördüğünüz bir RIR ölçeğidir';
 
   @override
-  String get setTrackingTableYouAreNotRequired =>
-      'RIR takibi yapmanız zorunlu değildir ancak şiddetle tavsiye ederiz. Tükenişe olan yakınlığınızı anlamak, uygulamanın mevcut güç seviyelerinize ve yorgunluk oranlarınıza daha iyi uyum sağlamasına yardımcı olacaktır.';
+  String get setTrackingTableYouAreNotRequired => 'RIR takibi yapmanız zorunlu değildir ancak şiddetle tavsiye ederiz. Tükenişe olan yakınlığınızı anlamak, uygulamanın mevcut güç seviyelerinize ve yorgunluk oranlarınıza daha iyi uyum sağlamasına yardımcı olacaktır.';
 
   @override
   String get setTrackingTableYourFitnessLevel => 'Fitness Seviyeniz';
 
   @override
-  String get setTrackingTableYourRirTargetIs =>
-      'RIR hedefiniz üç faktör kullanılarak kişiselleştirilir:';
+  String get setTrackingTableYourRirTargetIs => 'RIR hedefiniz üç faktör kullanılarak kişiselleştirilir:';
 
   @override
   String get settings24UpcomingFeatures => '24 yaklaşan özellik';
@@ -34587,8 +32180,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get settingsCardChangingDaysWillReschedule =>
-      'Günleri değiştirmek, yaklaşan antrenmanlarınızı otomatik olarak yeniden planlayacaktır.';
+  String get settingsCardChangingDaysWillReschedule => 'Günleri değiştirmek, yaklaşan antrenmanlarınızı otomatik olarak yeniden planlayacaktır.';
 
   @override
   String settingsCardExercises(Object length) {
@@ -34604,8 +32196,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardFailedToUpdate => 'Güncellenemedi';
 
   @override
-  String get settingsCardHowMuchExerciseVariety =>
-      'Her hafta ne kadar egzersiz çeşitliliği?';
+  String get settingsCardHowMuchExerciseVariety => 'Her hafta ne kadar egzersiz çeşitliliği?';
 
   @override
   String settingsCardLifts(Object length) {
@@ -34645,16 +32236,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String settingsCardPartAccentColorGridValue(
-    Object currentOffset,
-    Object region,
-  ) {
+  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region) {
     return '$region • $currentOffset';
   }
 
   @override
-  String get settingsCardPartChangingDaysWillReschedule =>
-      'Günleri değiştirmek, yaklaşan antrenmanlarınızı otomatik olarak yeniden planlayacaktır.';
+  String get settingsCardPartChangingDaysWillReschedule => 'Günleri değiştirmek, yaklaşan antrenmanlarınızı otomatik olarak yeniden planlayacaktır.';
 
   @override
   String get settingsCardPartClearAll => 'Hepsini temizle';
@@ -34699,12 +32286,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardPartSearchEquipment => 'Ekipman ara...';
 
   @override
-  String get settingsCardPartSelectAllEquipmentYou =>
-      'Erişiminiz olan tüm ekipmanları seçin';
+  String get settingsCardPartSelectAllEquipmentYou => 'Erişiminiz olan tüm ekipmanları seçin';
 
   @override
-  String get settingsCardPartSelectWhichDaysYou =>
-      'Hangi günlerde antrenman yapmak istediğinizi seçin';
+  String get settingsCardPartSelectWhichDaysYou => 'Hangi günlerde antrenman yapmak istediğinizi seçin';
 
   @override
   String get settingsCardPartSun => 'Paz';
@@ -34734,8 +32319,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardPartWorkoutDays => 'Antrenman Günleri';
 
   @override
-  String get settingsCardPleaseSelectAtLeastOne =>
-      'Lütfen en az bir antrenman günü seçin';
+  String get settingsCardPleaseSelectAtLeastOne => 'Lütfen en az bir antrenman günü seçin';
 
   @override
   String settingsCardQueued(Object length) {
@@ -34746,8 +32330,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardSaveChanges => 'Değişiklikleri Kaydet';
 
   @override
-  String get settingsCardSelectWhichDaysYou =>
-      'Hangi günlerde antrenman yapmak istediğinizi seçin';
+  String get settingsCardSelectWhichDaysYou => 'Hangi günlerde antrenman yapmak istediğinizi seçin';
 
   @override
   String get settingsCardSunday => 'Pazar';
@@ -34762,12 +32345,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardUiBodyWeight => 'VÜCUT AĞIRLIĞI';
 
   @override
-  String get settingsCardUiChooseAnAccentColor =>
-      'Düğmeler ve vurgular için bir renk seçin';
+  String get settingsCardUiChooseAnAccentColor => 'Düğmeler ve vurgular için bir renk seçin';
 
   @override
-  String get settingsCardUiChooseHowToStructure =>
-      'Haftalık antrenmanlarınızı nasıl yapılandıracağınızı seçin';
+  String get settingsCardUiChooseHowToStructure => 'Haftalık antrenmanlarınızı nasıl yapılandıracağınızı seçin';
 
   @override
   String get settingsCardUiChooseTimezone => 'Zaman Dilimi Seçin';
@@ -34776,28 +32357,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardUiExerciseConsistency => 'Egzersiz İstikrarı';
 
   @override
-  String get settingsCardUiForLoggingLiftsSets =>
-      'Kaldırışları, setleri ve egzersiz ağırlıklarını kaydetmek için';
+  String get settingsCardUiForLoggingLiftsSets => 'Kaldırışları, setleri ve egzersiz ağırlıklarını kaydetmek için';
 
   @override
-  String get settingsCardUiForWaistChestHips =>
-      'Bel, göğüs, kalça, kol ve bacak ölçüleri için';
+  String get settingsCardUiForWaistChestHips => 'Bel, göğüs, kalça, kol ve bacak ölçüleri için';
 
   @override
-  String get settingsCardUiForWeighingYourselfBmi =>
-      'Tartılmak ve BMI hesaplamaları için';
+  String get settingsCardUiForWeighingYourselfBmi => 'Tartılmak ve BMI hesaplamaları için';
 
   @override
-  String get settingsCardUiHowFastShouldWe =>
-      'Ağırlıklarınızı ne kadar hızlı artırmalıyız?';
+  String get settingsCardUiHowFastShouldWe => 'Ağırlıklarınızı ne kadar hızlı artırmalıyız?';
 
   @override
-  String get settingsCardUiHowHardShouldYour =>
-      'Antrenmanlarınız ne kadar zor olmalı?';
+  String get settingsCardUiHowHardShouldYour => 'Antrenmanlarınız ne kadar zor olmalı?';
 
   @override
-  String get settingsCardUiHowShouldTheAi =>
-      'AI antrenmanlarınız için egzersizleri nasıl seçmeli?';
+  String get settingsCardUiHowShouldTheAi => 'AI antrenmanlarınız için egzersizleri nasıl seçmeli?';
 
   @override
   String get settingsCardUiProgressionPace => 'İlerleme Hızı';
@@ -34812,12 +32387,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCardUiUnits => 'Birimler';
 
   @override
-  String get settingsCardUiWeightWorkoutAndBody =>
-      'Ağırlık, antrenman ve vücut ölçü birimleri';
+  String get settingsCardUiWeightWorkoutAndBody => 'Ağırlık, antrenman ve vücut ölçü birimleri';
 
   @override
-  String get settingsCardUiWhatTypeOfWorkouts =>
-      'Ne tür antrenmanları tercih edersiniz?';
+  String get settingsCardUiWhatTypeOfWorkouts => 'Ne tür antrenmanları tercih edersiniz?';
 
   @override
   String get settingsCardUiWorkoutType => 'Antrenman Türü';
@@ -34877,6 +32450,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsEquipment => 'Ekipman';
 
   @override
+  String settingsEquipmentItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsExercisePrefs => 'Egzersiz Tercihleri';
 
   @override
@@ -34931,12 +32515,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsRateApp => 'Uygulamayı Puanla';
 
   @override
-  String get settingsRecipeSchedulesSharingV =>
-      'Tarif programları + paylaşım + sürüm oluşturma';
+  String get settingsRecipeSchedulesSharingV => 'Tarif programları + paylaşım + sürüm oluşturma';
 
   @override
-  String get settingsReplayToursOrReset =>
-      'Turları tekrar oynat veya ipuçlarını sıfırla';
+  String get settingsReplayToursOrReset => 'Turları tekrar oynat veya ipuçlarını sıfırla';
 
   @override
   String get settingsResearchScience => 'Araştırma ve Bilim';
@@ -34976,27 +32558,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsScreenExtReplay => 'Tekrar Oynat';
 
   @override
-  String get settingsScreenExtReplayIndividualTours =>
-      'BİREYSEL TURLARI TEKRAR OYNAT';
+  String get settingsScreenExtReplayIndividualTours => 'BİREYSEL TURLARI TEKRAR OYNAT';
 
   @override
-  String get settingsScreenExtReplayOnboardingWalkthrough =>
-      'Başlangıç rehberini tekrar oynat';
+  String get settingsScreenExtReplayOnboardingWalkthrough => 'Başlangıç rehberini tekrar oynat';
 
   @override
-  String get settingsScreenExtReplayTheOnboardingWalkthro =>
-      'Başlangıç rehberini, ekran turlarını tekrar oynatın veya satır içi ipuçlarını sıfırlayın.';
+  String get settingsScreenExtReplayTheOnboardingWalkthro => 'Başlangıç rehberini, ekran turlarını tekrar oynatın veya satır içi ipuçlarını sıfırlayın.';
 
   @override
-  String get settingsScreenExtResetInlineHints =>
-      'Satır içi ipuçlarını sıfırla';
+  String get settingsScreenExtResetInlineHints => 'Satır içi ipuçlarını sıfırla';
 
   @override
   String get settingsScreenExtSearchSettings => 'Ayarları ara...';
 
   @override
-  String get settingsScreenExtSmallEmptyStateHints =>
-      'Uygulama genelindeki küçük boş durum ipuçları. Yardım metnini tekrar görmek için bunları sıfırlayın.';
+  String get settingsScreenExtSmallEmptyStateHints => 'Uygulama genelindeki küçük boş durum ipuçları. Yardım metnini tekrar görmek için bunları sıfırlayın.';
 
   @override
   String get settingsScreenExtTutorialsHints => 'Eğitimler ve İpuçları';
@@ -35012,14 +32589,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get settingsScreenExtYourAiPoweredPersonal =>
-      'AI destekli kişisel fitness koçunuz. Kişiselleştirilmiş antrenman planları alın, ilerlemenizi takip edin ve fitness hedeflerinize ulaşın.';
+  String get settingsScreenExtYourAiPoweredPersonal => 'AI destekli kişisel fitness koçunuz. Kişiselleştirilmiş antrenman planları alın, ilerlemenizi takip edin ve fitness hedeflerinize ulaşın.';
 
   @override
-  String settingsScreenMailtoSubjectSupportRequest(
-    Object appName,
-    Object supportEmail,
-  ) {
+  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail) {
     return 'mailto:$supportEmail?subject=$appName Destek Talebi';
   }
 
@@ -35035,8 +32608,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsScreenUiNoSettingsFound => 'Ayarlar bulunamadı';
 
   @override
-  String get settingsScreenUiTryDifferentKeywordsLike =>
-      '\"tema\", \"bildirimler\" veya \"AI sesi\" gibi farklı anahtar kelimeler deneyin';
+  String get settingsScreenUiTryDifferentKeywordsLike => '\"tema\", \"bildirimler\" veya \"AI sesi\" gibi farklı anahtar kelimeler deneyin';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -35050,8 +32622,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsSearchSettings => 'Ayarları ara';
 
   @override
-  String get settingsSetProgressionResearch =>
-      'İlerlemeyi ve araştırmayı ayarla';
+  String get settingsSetProgressionResearch => 'İlerlemeyi ve araştırmayı ayarla';
 
   @override
   String get settingsSharingExportEmail => 'Paylaşım, dışa aktarma, e-posta';
@@ -35093,8 +32664,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsTitle => 'Ayarlar';
 
   @override
-  String get settingsTitleChangeBeginnerNovic =>
-      'Başlık değişikliği: Başlangıç → Orta';
+  String get settingsTitleChangeBeginnerNovic => 'Başlık değişikliği: Başlangıç → Orta';
 
   @override
   String get settingsTraining => 'ANTRENMAN';
@@ -35115,8 +32685,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsVoicePersonality => 'Ses ve kişilik';
 
   @override
-  String get settingsWithCascadeOverlayDialog =>
-      'Kademeli katman + diyalog ile';
+  String get settingsWithCascadeOverlayDialog => 'Kademeli katman + diyalog ile';
 
   @override
   String get settingsWorkoutMode => 'Antrenman Modu';
@@ -35140,8 +32709,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareableGallerySortTooltip => 'Şablonları sırala';
 
   @override
-  String get shareArtifactCardCouldNotCreateShare =>
-      'Paylaşım bağlantısı oluşturulamadı.';
+  String get shareArtifactCardCouldNotCreateShare => 'Paylaşım bağlantısı oluşturulamadı.';
 
   @override
   String get shareArtifactCardOpenInApp => 'Uygulamada aç';
@@ -35222,8 +32790,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareStatsInstagram => 'Instagram';
 
   @override
-  String get shareStatsLogAWorkoutTo =>
-      'Paylaşım şablonlarının kilidini açmak için bir antrenman kaydedin.';
+  String get shareStatsLogAWorkoutTo => 'Paylaşım şablonlarının kilidini açmak için bir antrenman kaydedin.';
 
   @override
   String get shareStatsSaveOnly => 'Sadece Kaydet';
@@ -35340,8 +32907,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get shareWorkoutSheetPinchToZoomTap =>
-      'Yakınlaştırmak için çimdikle • Kapatmak için herhangi bir yere dokun';
+  String get shareWorkoutSheetPinchToZoomTap => 'Yakınlaştırmak için çimdikle • Kapatmak için herhangi bir yere dokun';
 
   @override
   String get shareWorkoutSheetReset => 'Sıfırla';
@@ -35359,8 +32925,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sharedWorkoutDetailAcceptChallenge => 'MEYDAN OKUMAYI KABUL ET';
 
   @override
-  String get sharedWorkoutDetailExerciseDetailsNotAvailable =>
-      'Egzersiz detayları mevcut değil';
+  String get sharedWorkoutDetailExerciseDetailsNotAvailable => 'Egzersiz detayları mevcut değil';
 
   @override
   String get sharedWorkoutDetailScheduleForLater => 'Daha Sonraya Planla';
@@ -35442,15 +33007,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get skillProgressionsBrowseSkills => 'Becerilere Göz At';
 
   @override
-  String get skillProgressionsChooseASkillProgression =>
-      'Vücut ağırlığı hareketlerinde adım adım ustalaşmaya başlamak için bir beceri ilerlemesi seçin.';
+  String get skillProgressionsChooseASkillProgression => 'Vücut ağırlığı hareketlerinde adım adım ustalaşmaya başlamak için bir beceri ilerlemesi seçin.';
 
   @override
   String get skillProgressionsDiscoverMoreSkills => 'Daha Fazla Beceri Keşfet';
 
   @override
-  String get skillProgressionsMasterBodyweightSkillsStep =>
-      'Vücut ağırlığı becerilerinde adım adım ustalaş';
+  String get skillProgressionsMasterBodyweightSkillsStep => 'Vücut ağırlığı becerilerinde adım adım ustalaş';
 
   @override
   String get skillProgressionsMyProgress => 'İlerlemem';
@@ -35471,8 +33034,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get skillProgressionsTryAgain => 'Tekrar Dene';
 
   @override
-  String get skillsMasterBodyweightSkillsStep =>
-      'Rehberli ilerleme zincirleriyle vücut ağırlığı becerilerinde adım adım ustalaş.';
+  String get skillsMasterBodyweightSkillsStep => 'Rehberli ilerleme zincirleriyle vücut ağırlığı becerilerinde adım adım ustalaş.';
 
   @override
   String get skillsSkillProgressions => 'Beceri İlerlemeleri';
@@ -35501,12 +33063,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sleepDetailConnectHealth => 'Sağlık\'ı Bağla';
 
   @override
-  String get sleepDetailConnectHealthToSee =>
-      'Uykunu görmek için Sağlık\'ı bağla';
+  String get sleepDetailConnectHealthToSee => 'Uykunu görmek için Sağlık\'ı bağla';
 
   @override
-  String get sleepDetailCouldNotLoadSleep =>
-      'Uyku verileri yüklenemedi. Geri çek ve tekrar dene.';
+  String get sleepDetailCouldNotLoadSleep => 'Uyku verileri yüklenemedi. Geri çek ve tekrar dene.';
 
   @override
   String get sleepDetailCouldNotSaveSleep => 'Uyku hedefi kaydedilemedi.';
@@ -35536,8 +33096,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sleepDetailNightsWithNaps => 'Şekerlemeli geceler';
 
   @override
-  String get sleepDetailNoSleepTrackedIn =>
-      'Son 7 gecede uyku verisi kaydedilmedi.';
+  String get sleepDetailNoSleepTrackedIn => 'Son 7 gecede uyku verisi kaydedilmedi.';
 
   @override
   String get sleepDetailRegularity => 'Düzen';
@@ -35601,8 +33160,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sleepDetailTrendUnavailable => 'Trend kullanılamıyor.';
 
   @override
-  String get sleepDetailTwoOrMoreSynced =>
-      'Trend grafiği için iki veya daha fazla senkronize gece gereklidir.';
+  String get sleepDetailTwoOrMoreSynced => 'Trend grafiği için iki veya daha fazla senkronize gece gereklidir.';
 
   @override
   String get sleepHypnogramAwake => 'Uyanık';
@@ -35622,20 +33180,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get smartInsightCardSmartInsight => 'Akıllı içgörü';
 
   @override
-  String get snappedEquipmentCouldnTReuseThat =>
-      'Bu çekim yeniden kullanılamadı. Tekrar dene.';
+  String get snappedEquipmentCouldnTReuseThat => 'Bu çekim yeniden kullanılamadı. Tekrar dene.';
 
   @override
-  String get snappedEquipmentNoMatchingExercisesFor =>
-      'Bu ekipman için eşleşen egzersiz bulunamadı.';
+  String get snappedEquipmentNoMatchingExercisesFor => 'Bu ekipman için eşleşen egzersiz bulunamadı.';
 
   @override
-  String get snappedEquipmentNoSnappedEquipmentYet =>
-      'Henüz çekilmiş ekipman yok';
+  String get snappedEquipmentNoSnappedEquipmentYet => 'Henüz çekilmiş ekipman yok';
 
   @override
-  String get snappedEquipmentTapTheCameraButton =>
-      'Önünüzdeki ekipmanı tanımlamak için kamera düğmesine dokunun.';
+  String get snappedEquipmentTapTheCameraButton => 'Önünüzdeki ekipmanı tanımlamak için kamera düğmesine dokunun.';
 
   @override
   String get socialAutoScrollFeed => 'Akışı Otomatik Kaydır';
@@ -35656,20 +33210,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialMyPostsOnly => 'Sadece Gönderilerim';
 
   @override
-  String get socialPrivacyAllowChallengeInvites =>
-      'Meydan Okuma Davetlerine İzin Ver';
+  String get socialPrivacyAllowChallengeInvites => 'Meydan Okuma Davetlerine İzin Ver';
 
   @override
-  String get socialPrivacyAllowFriendRequests =>
-      'Arkadaşlık İsteklerine İzin Ver';
+  String get socialPrivacyAllowFriendRequests => 'Arkadaşlık İsteklerine İzin Ver';
 
   @override
-  String get socialPrivacyAllowGeneratingShareableWor =>
-      'Herkesin açabileceği paylaşılabilir antrenman URL\'leri oluşturmaya izin ver';
+  String get socialPrivacyAllowGeneratingShareableWor => 'Herkesin açabileceği paylaşılabilir antrenman URL\'leri oluşturmaya izin ver';
 
   @override
-  String get socialPrivacyAppearInPublicAnd =>
-      'Herkese açık ve arkadaş liderlik tablolarında görün';
+  String get socialPrivacyAppearInPublicAnd => 'Herkese açık ve arkadaş liderlik tablolarında görün';
 
   @override
   String get socialPrivacyChallengeInvites => 'Meydan Okuma Davetleri';
@@ -35684,23 +33234,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialPrivacyFriendRequests => 'Arkadaşlık İstekleri';
 
   @override
-  String get socialPrivacyLetOthersInviteYou =>
-      'Başkalarının sizi meydan okumalara davet etmesine izin ver';
+  String get socialPrivacyLetOthersInviteYou => 'Başkalarının sizi meydan okumalara davet etmesine izin ver';
 
   @override
-  String get socialPrivacyLetOthersSeeWhen =>
-      'Başkalarının mesajlarını okuduğunuzu görmesine izin ver';
+  String get socialPrivacyLetOthersSeeWhen => 'Başkalarının mesajlarını okuduğunuzu görmesine izin ver';
 
   @override
-  String get socialPrivacyLetOthersSendYou =>
-      'Başkalarının size arkadaşlık isteği göndermesine izin ver';
+  String get socialPrivacyLetOthersSendYou => 'Başkalarının size arkadaşlık isteği göndermesine izin ver';
 
   @override
   String get socialPrivacyPrivateAccount => 'Gizli Hesap';
 
   @override
-  String get socialPrivacyPublicShareLinks =>
-      'Herkese Açık Paylaşım Bağlantıları';
+  String get socialPrivacyPublicShareLinks => 'Herkese Açık Paylaşım Bağlantıları';
 
   @override
   String get socialPrivacyReactions => 'Tepkiler';
@@ -35709,8 +33255,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialPrivacyReadReceipts => 'Okundu Bilgisi';
 
   @override
-  String get socialPrivacyRequireApprovalForFollow =>
-      'Takip istekleri için onay gerektir';
+  String get socialPrivacyRequireApprovalForFollow => 'Takip istekleri için onay gerektir';
 
   @override
   String get socialPrivacyShowOnLeaderboards => 'Liderlik Tablolarında Göster';
@@ -35722,31 +33267,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialPrivacySocialPrivacy => 'SOSYAL & GİZLİLİK';
 
   @override
-  String get socialPrivacyWhenFriendsCompleteWorkouts =>
-      'Arkadaşlar antrenman tamamladığında veya dönüm noktalarına ulaştığında';
+  String get socialPrivacyWhenFriendsCompleteWorkouts => 'Arkadaşlar antrenman tamamladığında veya dönüm noktalarına ulaştığında';
 
   @override
-  String get socialPrivacyWhenSomeoneCommentsOn =>
-      'Biri gönderilerinize yorum yaptığında';
+  String get socialPrivacyWhenSomeoneCommentsOn => 'Biri gönderilerinize yorum yaptığında';
 
   @override
-  String get socialPrivacyWhenSomeoneInvitesYou =>
-      'Biri sizi meydan okumaya davet ettiğinde';
+  String get socialPrivacyWhenSomeoneInvitesYou => 'Biri sizi meydan okumaya davet ettiğinde';
 
   @override
-  String get socialPrivacyWhenSomeoneReactsTo =>
-      'Biri gönderilerinize tepki verdiğinde';
+  String get socialPrivacyWhenSomeoneReactsTo => 'Biri gönderilerinize tepki verdiğinde';
 
   @override
-  String get socialPrivacyWhenSomeoneSendsYou =>
-      'Biri size arkadaşlık isteği gönderdiğinde';
+  String get socialPrivacyWhenSomeoneSendsYou => 'Biri size arkadaşlık isteği gönderdiğinde';
 
   @override
   String get socialRanks => 'Dereceler';
 
   @override
-  String get socialScreenPartEnterAGroupName =>
-      'Bir grup adı girin ve en az 2 üye seçin';
+  String get socialScreenPartEnterAGroupName => 'Bir grup adı girin ve en az 2 üye seçin';
 
   @override
   String get socialScreenPartFailedToCreateGroup => 'Grup oluşturulamadı';
@@ -35758,8 +33297,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialScreenPartFailedToLoadFriends => 'Arkadaşlar yüklenemedi';
 
   @override
-  String get socialScreenPartFailedToStartConversation =>
-      'Sohbet başlatılamadı';
+  String get socialScreenPartFailedToStartConversation => 'Sohbet başlatılamadı';
 
   @override
   String get socialScreenPartGroupName => 'Grup adı';
@@ -35790,8 +33328,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get socialScreenPartNoFriendsToAdd => 'Eklenecek arkadaş yok';
 
   @override
-  String get socialScreenPartNoFriendsToMessage =>
-      'Mesaj gönderilecek arkadaş yok';
+  String get socialScreenPartNoFriendsToMessage => 'Mesaj gönderilecek arkadaş yok';
 
   @override
   String get socialScreenPartNotLoggedIn => 'Giriş yapılmadı';
@@ -35844,27 +33381,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get soundSettingsCountdownSounds => 'Geri Sayım Sesleri';
 
   @override
-  String get soundSettingsCustomizeWorkoutSounds =>
-      'Antrenman seslerini özelleştir';
+  String get soundSettingsCustomizeWorkoutSounds => 'Antrenman seslerini özelleştir';
 
   @override
   String get soundSettingsExerciseCompletion => 'Egzersiz Tamamlama';
 
   @override
-  String get soundSettingsPlaySoundWhenAll =>
-      'Tüm egzersiz setleri bittiğinde ses çal';
+  String get soundSettingsPlaySoundWhenAll => 'Tüm egzersiz setleri bittiğinde ses çal';
 
   @override
-  String get soundSettingsPlaySoundWhenEntire =>
-      'Tüm antrenman bittiğinde ses çal';
+  String get soundSettingsPlaySoundWhenEntire => 'Tüm antrenman bittiğinde ses çal';
 
   @override
-  String get soundSettingsPlaySoundWhenRest =>
-      'Dinlenme süresi bittiğinde ses çal';
+  String get soundSettingsPlaySoundWhenRest => 'Dinlenme süresi bittiğinde ses çal';
 
   @override
-  String get soundSettingsPlaySoundsDuringCountdown =>
-      'Geri sayım sırasında sesleri çal (3, 2, 1)';
+  String get soundSettingsPlaySoundsDuringCountdown => 'Geri sayım sırasında sesleri çal (3, 2, 1)';
 
   @override
   String get soundSettingsRestTimerEnd => 'Dinlenme Süresi Sonu';
@@ -35879,8 +33411,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get soundSettingsSoundVolume => 'Ses Düzeyi';
 
   @override
-  String get soundSettingsTapToSelectLong =>
-      'Seçmek için dokun. Önizlemek için basılı tut.';
+  String get soundSettingsTapToSelectLong => 'Seçmek için dokun. Önizlemek için basılı tut.';
 
   @override
   String get soundSettingsWorkoutCompletion => 'Antrenman Tamamlama';
@@ -35913,12 +33444,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stackedBannerPanelFailedToClaimCrate => 'Kasa alınamadı';
 
   @override
-  String get stackedBannerPanelFollowUsOnInstagram =>
-      'Bizi Instagram\'da takip et';
+  String get stackedBannerPanelFollowUsOnInstagram => 'Bizi Instagram\'da takip et';
 
   @override
-  String get stackedBannerPanelGetHelpShareWins =>
-      'Discord\'da yardım al, başarılarını paylaş ve özellik iste';
+  String get stackedBannerPanelGetHelpShareWins => 'Discord\'da yardım al, başarılarını paylaş ve özellik iste';
 
   @override
   String get stackedBannerPanelJoinTheCommunity => 'Topluluğa Katıl';
@@ -35932,11 +33461,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelMinExercises(
-    Object durationMinutes,
-    Object exercisesCount,
-    Object missedDescription,
-  ) {
+  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription) {
     return '$missedDescription · ${durationMinutes}dk · $exercisesCount egzersiz';
   }
 
@@ -35955,18 +33480,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stackedBannerPanelOpenAll => 'Hepsini Aç';
 
   @override
-  String get stackedBannerPanelOpenThemBeforeDismissing =>
-      'Kapatmadan önce açmak ister misin?';
+  String get stackedBannerPanelOpenThemBeforeDismissing => 'Kapatmadan önce açmak ister misin?';
 
   @override
   String get stackedBannerPanelOpeningCrate => 'Kasa açılıyor...';
 
   @override
-  String stackedBannerPanelRenewsInDaysFor(
-    Object days,
-    Object formattedAmount,
-    Object tierLabel,
-  ) {
+  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel) {
     return '$tierLabel $days gün içinde $formattedAmount tutarıyla yenilenir';
   }
 
@@ -35974,8 +33494,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stackedBannerPanelSubscriptionRenewing => 'Abonelik Yenileniyor';
 
   @override
-  String get stackedBannerPanelTapToRevisitYour =>
-      'Spor salonu kişiliğini tekrar görmek için dokun';
+  String get stackedBannerPanelTapToRevisitYour => 'Spor salonu kişiliğini tekrar görmek için dokun';
 
   @override
   String stackedBannerPanelValue(Object eventName, Object timeStr) {
@@ -35988,10 +33507,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelWorkoutsLifted(
-    Object totalWorkouts,
-    Object volumeStr,
-  ) {
+  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr) {
     return '$totalWorkouts antrenman · $volumeStr kaldırıldı';
   }
 
@@ -36016,8 +33532,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get stackedBannerPanelYouHaveUnopenedCrates =>
-      'Açılmamış kasaların var!';
+  String get stackedBannerPanelYouHaveUnopenedCrates => 'Açılmamış kasaların var!';
 
   @override
   String stackedBannerPanelYouReAwayFrom(Object remaining, Object workoutWord) {
@@ -36063,8 +33578,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleChoiceDuration => 'Süre';
 
   @override
-  String get stapleChoiceEGFocusOn =>
-      'örn. Tepede sıkıştırmaya odaklan, yavaş negatif';
+  String get stapleChoiceEGFocusOn => 'örn. Tepede sıkıştırmaya odaklan, yavaş negatif';
 
   @override
   String get stapleChoiceEveryDay => 'Her Gün';
@@ -36088,8 +33602,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleChoiceNotes => 'Notlar';
 
   @override
-  String get stapleChoiceReplaceAnExerciseIn =>
-      'Bugünkü antrenmandaki bir egzersizi değiştir';
+  String get stapleChoiceReplaceAnExerciseIn => 'Bugünkü antrenmandaki bir egzersizi değiştir';
 
   @override
   String get stapleChoiceReps => 'Tekrar';
@@ -36119,8 +33632,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleChoiceSheetIncline => 'Eğim';
 
   @override
-  String get stapleChoiceSheetNoExercisesInWorkout =>
-      'Antrenmanda egzersiz yok';
+  String get stapleChoiceSheetNoExercisesInWorkout => 'Antrenmanda egzersiz yok';
 
   @override
   String get stapleChoiceSheetNoWorkoutAvailable => 'Uygun antrenman yok';
@@ -36159,8 +33671,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleChoiceWorkoutDays => 'Antrenman Günleri';
 
   @override
-  String get stapleChoiceYourExerciseWonT =>
-      'Egzersizin temel bir hareket olarak kaydedilmeyecek.';
+  String get stapleChoiceYourExerciseWonT => 'Egzersizin temel bir hareket olarak kaydedilmeyecek.';
 
   @override
   String get stapleExercisesBikeSettings => 'Bisiklet Ayarları';
@@ -36181,8 +33692,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleExercisesEllipticalSettings => 'Eliptik Ayarları';
 
   @override
-  String get stapleExercisesHighlightedYourWorkoutDay =>
-      'Vurgulananlar = antrenman günlerin';
+  String get stapleExercisesHighlightedYourWorkoutDay => 'Vurgulananlar = antrenman günlerin';
 
   @override
   String get stapleExercisesIncline => 'Eğim';
@@ -36272,8 +33782,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleExercisesTargetDays => 'Hedef Günler';
 
   @override
-  String get stapleExercisesTheseCoreLiftsWill =>
-      'Bu temel egzersizler, çeşitlilik ayarınız ne olursa olsun antrenmanlarınızdan ASLA çıkarılmayacaktır.';
+  String get stapleExercisesTheseCoreLiftsWill => 'Bu temel egzersizler, çeşitlilik ayarınız ne olursa olsun antrenmanlarınızdan ASLA çıkarılmayacaktır.';
 
   @override
   String get stapleExercisesTreadmillSettings => 'Koşu Bandı Ayarları';
@@ -36282,8 +33791,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleExercisesWeight => 'Ağırlık';
 
   @override
-  String get stapleExercisesWeightSetsRepsRest =>
-      'Ağırlık / Set / Tekrar / Dinlenme';
+  String get stapleExercisesWeightSetsRepsRest => 'Ağırlık / Set / Tekrar / Dinlenme';
 
   @override
   String get startFast12h => '12h';
@@ -36295,8 +33803,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get startFastChooseAPlan => 'Bir Plan Seçin';
 
   @override
-  String get startFastChooseProtocolStartTime =>
-      'Protokol ve başlangıç zamanını seçin';
+  String get startFastChooseProtocolStartTime => 'Protokol ve başlangıç zamanını seçin';
 
   @override
   String get startFastDuration => 'Süre';
@@ -36328,8 +33835,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get statsAchievementsTemplateAchievements => 'BAŞARILAR';
 
   @override
-  String get statsAchievementsTemplateAchievementsUnlocked =>
-      'Kilit Açılan Başarılar';
+  String get statsAchievementsTemplateAchievementsUnlocked => 'Kilit Açılan Başarılar';
 
   @override
   String get statsAchievementsTemplateDayStreak => 'Günlük Seri';
@@ -36361,8 +33867,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get statsOverviewTemplateWorkouts => 'ANTRENMANLAR';
 
   @override
-  String get statsPrsTemplateKeepPushingToSet =>
-      'Rekor kırmak için zorlamaya devam et!';
+  String get statsPrsTemplateKeepPushingToSet => 'Rekor kırmak için zorlamaya devam et!';
 
   @override
   String get statsPrsTemplateNoPrsYet => 'Henüz rekor yok';
@@ -36397,8 +33902,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get statsRewardsLeaderboard => 'Liderlik Tablosu';
 
   @override
-  String get statsRewardsOverlayAnyTwoMetrics =>
-      'Herhangi iki metriği üst üste bindir ve korelasyonu gör';
+  String get statsRewardsOverlayAnyTwoMetrics => 'Herhangi iki metriği üst üste bindir ve korelasyonu gör';
 
   @override
   String get statsRewardsProgress => 'İLERLEME';
@@ -36508,11 +34012,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stepGoalCardGoalReachedGreatJob => 'Hedefe ulaşıldı! Harika iş!';
 
   @override
-  String stepGoalCardStepGoalProgressOf(
-    Object currentSteps,
-    Object goalSteps,
-    Object percentage,
-  ) {
+  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage) {
     return 'Adım hedefi ilerlemesi: $currentSteps / $goalSteps adım, %$percentage tamamlandı';
   }
 
@@ -36525,8 +34025,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get stepGoalEditorAutomaticallyIncreasesYourG =>
-      'Geliştikçe hedefinizi otomatik olarak artırır';
+  String get stepGoalEditorAutomaticallyIncreasesYourG => 'Geliştikçe hedefinizi otomatik olarak artırır';
 
   @override
   String get stepGoalEditorQuickSelect => 'HIZLI SEÇİM';
@@ -36548,10 +34047,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetStepGoalSliderFrom(
-    Object _maxGoal,
-    Object _minGoal,
-  ) {
+  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal) {
     return 'Adım hedefi kaydırıcısı, $_minGoal ile $_maxGoal adım arası';
   }
 
@@ -36567,8 +34063,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stepGoalEditorUseProgressiveGoal => 'Kademeli Hedef Kullan';
 
   @override
-  String get stepGoalEditorWhenYouHitYour =>
-      'Hedefinize 5 gün üst üste ulaştığınızda, hedefi 500 adım artıracağız. 3 gün kaçırmak, hedefi temel seviyeye sıfırlayacaktır.';
+  String get stepGoalEditorWhenYouHitYour => 'Hedefinize 5 gün üst üste ulaştığınızda, hedefi 500 adım artıracağız. 3 gün kaçırmak, hedefi temel seviyeye sıfırlayacaktır.';
 
   @override
   String stepsCounterCardConnect(Object sourceLabel) {
@@ -36605,8 +34100,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get storyCreateUploading => 'Yükleniyor...';
 
   @override
-  String get storyCreateYourStoryWillBe =>
-      'Hikayeniz 24 saat boyunca görüntülenebilir olacak';
+  String get storyCreateYourStoryWillBe => 'Hikayeniz 24 saat boyunca görüntülenebilir olacak';
 
   @override
   String get storyViewerNoStories => 'Hikaye yok';
@@ -36615,15 +34109,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get strainCoachCardConnect => 'Bağlan';
 
   @override
-  String get strainCoachCardConnectHealthForAn =>
-      'Yoğunluk çağrısı için sağlığı bağlayın.';
+  String get strainCoachCardConnectHealthForAn => 'Yoğunluk çağrısı için sağlığı bağlayın.';
 
   @override
   String get strainCoachCardTodaySIntensity => 'BUGÜNKÜ YOĞUNLUK';
 
   @override
-  String get strainDashboardCompleteSomeWorkoutsTo =>
-      'Zorlanma önleme içgörülerinizi görmek için birkaç antrenman tamamlayın.';
+  String get strainDashboardCompleteSomeWorkoutsTo => 'Zorlanma önleme içgörülerinizi görmek için birkaç antrenman tamamlayın.';
 
   @override
   String get strainDashboardFailedToLoadData => 'Veri Yüklenemedi';
@@ -36677,8 +34169,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get streakBadgesHitYourGoalTo =>
-      'Seri başlatmak için hedefinize ulaşın!';
+  String get streakBadgesHitYourGoalTo => 'Seri başlatmak için hedefinize ulaşın!';
 
   @override
   String streakBadgesMoreDaysToBronze(Object currentStreak) {
@@ -36744,8 +34235,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get streakMilestoneStreakMilestone => 'SERİ DÖNÜM NOKTASI!';
 
   @override
-  String get streakMilestoneYouVeReachedThe =>
-      'En üst seri dönüm noktasına ulaştınız!';
+  String get streakMilestoneYouVeReachedThe => 'En üst seri dönüm noktasına ulaştınız!';
 
   @override
   String streakSavedDialogWeUsedStreakShield(Object savedStreakCount) {
@@ -36780,23 +34270,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get strengthOverviewCardCheckIn => 'Giriş yap';
 
   @override
-  String get strengthOverviewCardCompleteWorkoutsWithResista =>
-      'Güç gelişiminizi takip etmek için direnç egzersizleriyle antrenmanları tamamlayın.';
+  String get strengthOverviewCardCompleteWorkoutsWithResista => 'Güç gelişiminizi takip etmek için direnç egzersizleriyle antrenmanları tamamlayın.';
 
   @override
-  String get strengthOverviewCardDragU2630ToReorder =>
-      'Yeniden sıralamak için ☰ sürükleyin · Üstte tutmak için iğneye dokunun';
+  String get strengthOverviewCardDragU2630ToReorder => 'Yeniden sıralamak için ☰ sürükleyin · Üstte tutmak için iğneye dokunun';
 
   @override
-  String get strengthOverviewCardHowAreYouFeeling =>
-      'Bugün nasıl hissediyorsunuz?';
+  String get strengthOverviewCardHowAreYouFeeling => 'Bugün nasıl hissediyorsunuz?';
 
   @override
   String get strengthOverviewCardHowScoresWork => 'Skorlar nasıl çalışır';
 
   @override
-  String get strengthOverviewCardHowStrengthScoresWork =>
-      'Güç Skorları Nasıl Çalışır';
+  String get strengthOverviewCardHowStrengthScoresWork => 'Güç Skorları Nasıl Çalışır';
 
   @override
   String get strengthOverviewCardLevels => 'Seviyeler';
@@ -36817,8 +34303,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get strengthOverviewCardOptimal => 'Optimal';
 
   @override
-  String get strengthOverviewCardOverallScoreHeroRing =>
-      'Genel Skor (Hero Ring)';
+  String get strengthOverviewCardOverallScoreHeroRing => 'Genel Skor (Hero Ring)';
 
   @override
   String get strengthOverviewCardReadiness => 'Hazırbulunuşluk';
@@ -36827,19 +34312,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get strengthOverviewCardRecalculate => 'Yeniden hesapla';
 
   @override
-  String get strengthOverviewCardScoreIsCalculatedFrom =>
-      'Skor, son 90 gün içindeki her kas grubu için en iyi setiniz (ağırlık x tekrar) üzerinden hesaplanır. Daha yüksek vücut ağırlığı oranı = daha yüksek skor.';
+  String get strengthOverviewCardScoreIsCalculatedFrom => 'Skor, son 90 gün içindeki her kas grubu için en iyi setiniz (ağırlık x tekrar) üzerinden hesaplanır. Daha yüksek vücut ağırlığı oranı = daha yüksek skor.';
 
   @override
-  String get strengthOverviewCardScoresUpdateAutomaticallyAf =>
-      'Skorlar her antrenmandan sonra otomatik olarak güncellenir. Sadece takip edilen direnç egzersizleri sayılır; içe aktarılan kardiyo antrenmanları skorları etkilemez.';
+  String get strengthOverviewCardScoresUpdateAutomaticallyAf => 'Skorlar her antrenmandan sonra otomatik olarak güncellenir. Sadece takip edilen direnç egzersizleri sayılır; içe aktarılan kardiyo antrenmanları skorları etkilemez.';
 
   @override
   String get strengthOverviewCardStrengthScore => 'Güç Skoru';
 
   @override
-  String get strengthOverviewCardTheRingDisplaysA =>
-      'Halka, tüm kas grubu skorlarınızın ağırlıklı ortalamasını görüntüler. 1RM, son 90 günde kaydedilen en iyi setinizden Brzycki/Epley/Lombardi formülü ortalaması kullanılarak tahmin edilir.';
+  String get strengthOverviewCardTheRingDisplaysA => 'Halka, tüm kas grubu skorlarınızın ağırlıklı ortalamasını görüntüler. 1RM, son 90 günde kaydedilen en iyi setinizden Brzycki/Epley/Lombardi formülü ortalaması kullanılarak tahmin edilir.';
 
   @override
   String get strengthOverviewCardTrainingStatus => 'Antrenman Durumu';
@@ -36850,20 +34332,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get strengthOverviewCardValuesAreForIntermediate =>
-      'Değerler orta seviye sporcular içindir ve antrenman seviyenize göre otomatik olarak ayarlanır. Durum ayrıca hazırbulunuşluk girişinizi de hesaba katar.';
+  String get strengthOverviewCardValuesAreForIntermediate => 'Değerler orta seviye sporcular içindir ve antrenman seviyenize göre otomatik olarak ayarlanır. Durum ayrıca hazırbulunuşluk girişinizi de hesaba katar.';
 
   @override
-  String get strengthOverviewCardVolumeGuidelinesSetsWeek =>
-      'Hacim Kılavuzları (set/hafta)';
+  String get strengthOverviewCardVolumeGuidelinesSetsWeek => 'Hacim Kılavuzları (set/hafta)';
 
   @override
-  String get strengthOverviewCardYourOverallFitnessScore =>
-      'Genel fitness skorunuz ağırlıklandırılmıştır:\nGüç %40 + İstikrar %30 + Beslenme %20 + Hazırbulunuşluk %10';
+  String get strengthOverviewCardYourOverallFitnessScore => 'Genel fitness skorunuz ağırlıklandırılmıştır:\nGüç %40 + İstikrar %30 + Beslenme %20 + Hazırbulunuşluk %10';
 
   @override
-  String get strengthOverviewCardYourStrengthScore0 =>
-      'Güç skorunuz (0-100), belirlenmiş standartlara kıyasla vücut ağırlığınıza göre ne kadar kaldırabileceğinizi ölçer.';
+  String get strengthOverviewCardYourStrengthScore0 => 'Güç skorunuz (0-100), belirlenmiş standartlara kıyasla vücut ağırlığınıza göre ne kadar kaldırabileceğinizi ölçer.';
 
   @override
   String get strengthRecentPersonalRecords => 'Son Kişisel Rekorlar';
@@ -36899,8 +34377,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stretchPhaseFinish => 'Bitir';
 
   @override
-  String get stretchPhaseGreatJobTimeTo =>
-      'Harika iş! Esneme ve toparlanma zamanı.';
+  String get stretchPhaseGreatJobTimeTo => 'Harika iş! Esneme ve toparlanma zamanı.';
 
   @override
   String get stretchPhasePause => 'Duraklat';
@@ -36920,46 +34397,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get subscriptionManagementBillingInformation => 'Fatura Bilgileri';
 
   @override
-  String get subscriptionManagementCouldNotOpenSubscription =>
-      'Abonelik ayarları açılamadı';
+  String get subscriptionManagementCouldNotOpenSubscription => 'Abonelik ayarları açılamadı';
 
   @override
-  String get subscriptionManagementFailedToLoadSubscription =>
-      'Abonelik yüklenemedi';
+  String get subscriptionManagementFailedToLoadSubscription => 'Abonelik yüklenemedi';
 
   @override
-  String get subscriptionManagementGetUnlimitedWorkoutsAi =>
-      'Sınırsız antrenman, AI koçluğu ve daha fazlasını alın';
+  String get subscriptionManagementGetUnlimitedWorkoutsAi => 'Sınırsız antrenman, AI koçluğu ve daha fazlasını alın';
 
   @override
   String get subscriptionManagementManageSubscription => 'Aboneliği Yönet';
 
   @override
-  String get subscriptionManagementNoBillingInformationAvailab =>
-      'Fatura bilgisi mevcut değil';
+  String get subscriptionManagementNoBillingInformationAvailab => 'Fatura bilgisi mevcut değil';
 
   @override
-  String get subscriptionManagementPurchasesRestoredSuccessfull =>
-      'Satın alımlar başarıyla geri yüklendi';
+  String get subscriptionManagementPurchasesRestoredSuccessfull => 'Satın alımlar başarıyla geri yüklendi';
 
   @override
   String get subscriptionManagementRequestRefund => 'İade Talebinde Bulun';
 
   @override
-  String get subscriptionManagementRestorePurchases =>
-      'Satın Alımları Geri Yükle';
+  String get subscriptionManagementRestorePurchases => 'Satın Alımları Geri Yükle';
 
   @override
-  String get subscriptionManagementScreenAccessNeverExpires =>
-      'Erişim süresi asla dolmaz';
+  String get subscriptionManagementScreenAccessNeverExpires => 'Erişim süresi asla dolmaz';
 
   @override
-  String get subscriptionManagementScreenCancelAutoRenewal =>
-      'Otomatik yenilemeyi iptal et';
+  String get subscriptionManagementScreenCancelAutoRenewal => 'Otomatik yenilemeyi iptal et';
 
   @override
-  String get subscriptionManagementScreenCancelSubscription =>
-      'Aboneliği İptal Et';
+  String get subscriptionManagementScreenCancelSubscription => 'Aboneliği İptal Et';
 
   @override
   String subscriptionManagementScreenFailedToPauseSubscription(Object e) {
@@ -36978,25 +34446,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get subscriptionManagementScreenLifetime => 'ÖMÜR BOYU';
 
   @override
-  String get subscriptionManagementScreenManageSubscription =>
-      'ABONELİĞİ YÖNET';
+  String get subscriptionManagementScreenManageSubscription => 'ABONELİĞİ YÖNET';
 
   @override
-  String get subscriptionManagementScreenPauseSubscription =>
-      'Aboneliği Duraklat';
+  String get subscriptionManagementScreenPauseSubscription => 'Aboneliği Duraklat';
 
   @override
-  String get subscriptionManagementScreenResumeSubscription =>
-      'Aboneliği Devam Ettir';
+  String get subscriptionManagementScreenResumeSubscription => 'Aboneliği Devam Ettir';
 
   @override
-  String get subscriptionManagementScreenStartBillingAgain =>
-      'Faturalandırmayı tekrar başlat';
+  String get subscriptionManagementScreenStartBillingAgain => 'Faturalandırmayı tekrar başlat';
 
   @override
-  String subscriptionManagementScreenSubscriptionPausedForDays(
-    Object durationDays,
-  ) {
+  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays) {
     return 'Abonelik $durationDays günlüğüne duraklatıldı';
   }
 
@@ -37004,23 +34466,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get subscriptionManagementScreenTakeABreakFor => '3 aya kadar ara ver';
 
   @override
-  String get subscriptionManagementScreenTrialEnded =>
-      'Deneme süresi sona erdi';
+  String get subscriptionManagementScreenTrialEnded => 'Deneme süresi sona erdi';
 
   @override
   String get subscriptionManagementSubmitARefundRequest => 'İade talebi gönder';
 
   @override
-  String get subscriptionManagementSubscriptionPaused =>
-      'Abonelik Duraklatıldı';
+  String get subscriptionManagementSubscriptionPaused => 'Abonelik Duraklatıldı';
 
   @override
-  String get subscriptionManagementSubscriptionResumedSuccessfu =>
-      'Abonelik başarıyla devam ettirildi';
+  String get subscriptionManagementSubscriptionResumedSuccessfu => 'Abonelik başarıyla devam ettirildi';
 
   @override
-  String get subscriptionManagementSyncWithAppStore =>
-      'App Store / Play Store ile senkronize et';
+  String get subscriptionManagementSyncWithAppStore => 'App Store / Play Store ile senkronize et';
 
   @override
   String get subscriptionManagementUnknownError => 'Bilinmeyen hata';
@@ -37035,8 +34493,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestFeatureCategory => 'Kategori';
 
   @override
-  String get suggestFeatureDescribeYourFeatureIdea =>
-      'Özellik fikrinizi detaylıca açıklayın...';
+  String get suggestFeatureDescribeYourFeatureIdea => 'Özellik fikrinizi detaylıca açıklayın...';
 
   @override
   String get suggestFeatureDescription => 'Açıklama';
@@ -37045,8 +34502,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestFeatureEGSocialWorkout => 'ör. Sosyal antrenman paylaşımı';
 
   @override
-  String get suggestFeatureFeatureSuggestionSubmittedS =>
-      'Özellik önerisi başarıyla gönderildi!';
+  String get suggestFeatureFeatureSuggestionSubmittedS => 'Özellik önerisi başarıyla gönderildi!';
 
   @override
   String get suggestFeatureFeatureTitle => 'Özellik Başlığı';
@@ -37063,8 +34519,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestFeatureSuggestAFeature => 'Özellik Öner';
 
   @override
-  String get suggestFeatureYouHaveReachedThe =>
-      'Maksimum 2 özellik önerisi sınırına ulaştınız';
+  String get suggestFeatureYouHaveReachedThe => 'Maksimum 2 özellik önerisi sınırına ulaştınız';
 
   @override
   String get suggestedReplyChipsBodyweightVersion => 'Vücut ağırlığı versiyonu';
@@ -37073,8 +34528,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedReplyChipsCycleadjusted => 'döngüAyarlı';
 
   @override
-  String get suggestedReplyChipsHowShouldITrain =>
-      'Bu aşamada nasıl antrenman yapmalıyım?';
+  String get suggestedReplyChipsHowShouldITrain => 'Bu aşamada nasıl antrenman yapmalıyım?';
 
   @override
   String get suggestedReplyChipsILlDoIt => 'Bu akşam yine de yapacağım';
@@ -37098,8 +34552,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedReplyChipsPlanTomorrow => 'Yarını planla';
 
   @override
-  String get suggestedReplyChipsPreworkoutfuelgap =>
-      'antrenmanÖncesiYakıtBoşluğu';
+  String get suggestedReplyChipsPreworkoutfuelgap => 'antrenmanÖncesiYakıtBoşluğu';
 
   @override
   String get suggestedReplyChipsQuickCheck => 'Hızlı kontrol';
@@ -37141,8 +34594,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestionCardWhyThisGoal => 'Neden bu hedef?';
 
   @override
-  String get suggestionCarouselCouldNotLoadSuggestions =>
-      'Öneriler yüklenemedi';
+  String get suggestionCarouselCouldNotLoadSuggestions => 'Öneriler yüklenemedi';
 
   @override
   String get suggestionCarouselSuggestedGoals => 'Önerilen Hedefler';
@@ -37301,8 +34753,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get summaryExerciseOrderAndTime => 'Egzersiz Sırası ve Zamanı';
 
   @override
-  String get summaryExerciseTableNoNotesOrPhotos =>
-      'Bu sette kayıtlı not veya fotoğraf yok.';
+  String get summaryExerciseTableNoNotesOrPhotos => 'Bu sette kayıtlı not veya fotoğraf yok.';
 
   @override
   String get summaryExerciseTableNoNotesSavedOn => 'Bu sette kayıtlı not yok.';
@@ -37403,12 +34854,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get summaryNoCompletedSets =>
-      'Bu antrenman için tamamlanmış set kaydedilmedi.';
+  String get summaryNoCompletedSets => 'Bu antrenman için tamamlanmış set kaydedilmedi.';
 
   @override
-  String get summaryNoDetailedData =>
-      'Bu antrenman için detaylı takip verisi mevcut değil.';
+  String get summaryNoDetailedData => 'Bu antrenman için detaylı takip verisi mevcut değil.';
 
   @override
   String get summaryNoPlanData => 'Plan verisi yok';
@@ -37438,8 +34887,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get summaryPerExerciseDeepDive => 'Egzersiz Bazlı Detaylı İnceleme';
 
   @override
-  String get summaryPerExerciseDeepDiveLabel =>
-      'EGZERSİZ BAZINDA DERİNLEMESİNE ANALİZ';
+  String get summaryPerExerciseDeepDiveLabel => 'EGZERSİZ BAZINDA DERİNLEMESİNE ANALİZ';
 
   @override
   String get summaryPerformanceComparison => 'Performans Karşılaştırması';
@@ -37537,8 +34985,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetAlgorithmCardAddPair => 'Çift Ekle';
 
   @override
-  String get supersetAlgorithmCardAddYourGoTo =>
-      'Sık kullandığınız egzersiz kombinasyonlarını ekleyin';
+  String get supersetAlgorithmCardAddYourGoTo => 'Sık kullandığınız egzersiz kombinasyonlarını ekleyin';
 
   @override
   String get supersetAlgorithmCardEGBenchPress => 'ör. Bench Press';
@@ -37547,15 +34994,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetAlgorithmCardEGBentOver => 'ör. Bent Over Rows';
 
   @override
-  String get supersetAlgorithmCardEnterTwoExercisesYou =>
-      'Birlikte süperset yapmak istediğiniz iki egzersizi girin';
+  String get supersetAlgorithmCardEnterTwoExercisesYou => 'Birlikte süperset yapmak istediğiniz iki egzersizi girin';
 
   @override
   String get supersetAlgorithmCardFavoritePairs => 'FAVORİ ÇİFTLER';
 
   @override
-  String get supersetAlgorithmCardFineTuneSupersetGeneration =>
-      'Süperset oluşturmayı ince ayar yapın';
+  String get supersetAlgorithmCardFineTuneSupersetGeneration => 'Süperset oluşturmayı ince ayar yapın';
 
   @override
   String get supersetAlgorithmCardFirstExercise => 'İlk Egzersiz';
@@ -37586,8 +35031,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get supersetExercisePickerAddExercisesToYour =>
-      'Önce antrenmanınıza egzersiz ekleyin';
+  String get supersetExercisePickerAddExercisesToYour => 'Önce antrenmanınıza egzersiz ekleyin';
 
   @override
   String get supersetExercisePickerSearchExercises => 'Egzersiz ara...';
@@ -37602,8 +35046,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetIndicatorNoRestBetween => 'Arada dinlenme yok';
 
   @override
-  String get supersetIndicatorSelectTwoExercisesTo =>
-      'Eşleştirmek için iki egzersiz seçin';
+  String get supersetIndicatorSelectTwoExercisesTo => 'Eşleştirmek için iki egzersiz seçin';
 
   @override
   String supersetIndicatorSs(Object groupNumber) {
@@ -37631,14 +35074,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetPairSheetCreateSupersetPair => 'Superset Çifti Oluştur';
 
   @override
-  String get supersetPairSheetPairTwoExercisesFor =>
-      'Verimli antrenman için iki egzersizi eşleştirin';
+  String get supersetPairSheetPairTwoExercisesFor => 'Verimli antrenman için iki egzersizi eşleştirin';
 
   @override
-  String supersetPairSheetPartSupersetPairSheetStateValue(
-    Object name,
-    Object name1,
-  ) {
+  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1) {
     return '$name + $name1';
   }
 
@@ -37646,15 +35085,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetPairSheetRestAfterSuperset => 'Superset sonrası dinlenme';
 
   @override
-  String get supersetPairSheetRestBetweenExercises =>
-      'Egzersizler arası dinlenme';
+  String get supersetPairSheetRestBetweenExercises => 'Egzersizler arası dinlenme';
 
   @override
   String get supersetPairSheetRestSettings => 'Dinlenme Ayarları';
 
   @override
-  String get supersetPairSheetReuseThisPairIn =>
-      'Bu çifti gelecekteki antrenmanlarda tekrar kullan';
+  String get supersetPairSheetReuseThisPairIn => 'Bu çifti gelecekteki antrenmanlarda tekrar kullan';
 
   @override
   String get supersetPairSheetSaveToFavorites => 'Favorilere Kaydet';
@@ -37675,19 +35112,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetPairSheetTapToSelect => 'Seçmek için dokunun';
 
   @override
-  String get supersetPairSubtitle =>
-      'Minimum dinlenme ile aralarında geçiş yapmak için iki egzersizi eşleştirin';
+  String get supersetPairSubtitle => 'Minimum dinlenme ile aralarında geçiş yapmak için iki egzersizi eşleştirin';
 
   @override
-  String get supersetReorderASupersetNeedsAt =>
-      'Bir superset en az 2 egzersiz gerektirir';
+  String get supersetReorderASupersetNeedsAt => 'Bir superset en az 2 egzersiz gerektirir';
 
   @override
   String get supersetReorderApplyChanges => 'Değişiklikleri Uygula';
 
   @override
-  String get supersetReorderDragToReorderSwipe =>
-      'Sıralamak için sürükleyin, kaldırmak için sola kaydırın';
+  String get supersetReorderDragToReorderSwipe => 'Sıralamak için sürükleyin, kaldırmak için sola kaydırın';
 
   @override
   String get supersetReorderNoChanges => 'Değişiklik Yok';
@@ -37702,10 +35136,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetReorderReset => 'Sıfırla';
 
   @override
-  String supersetReorderSheetEdit(
-    Object _originalTypeLabel,
-    Object groupNumber,
-  ) {
+  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber) {
     return '$_originalTypeLabel $groupNumber Düzenle';
   }
 
@@ -37722,28 +35153,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get supersetSaveToFavorites => 'Favorilere Kaydet';
 
   @override
-  String get supersetSaveToFavoritesSubtitle =>
-      'Bu kombinasyonu tekrar hızlıca kullanmak için kaydedin';
+  String get supersetSaveToFavoritesSubtitle => 'Bu kombinasyonu tekrar hızlıca kullanmak için kaydedin';
 
   @override
-  String get supersetSettingsAutoGenerateSupersets =>
-      'Supersetleri otomatik oluştur';
+  String get supersetSettingsAutoGenerateSupersets => 'Supersetleri otomatik oluştur';
 
   @override
-  String get supersetSettingsChestBackBicepsTriceps =>
-      'Göğüs/sırt, biceps/triceps eşleşmeleri';
+  String get supersetSettingsChestBackBicepsTriceps => 'Göğüs/sırt, biceps/triceps eşleşmeleri';
 
   @override
-  String get supersetSettingsControlHowSupersetsAre =>
-      'Antrenmanlarınızda supersetlerin nasıl oluşturulacağını kontrol edin';
+  String get supersetSettingsControlHowSupersetsAre => 'Antrenmanlarınızda supersetlerin nasıl oluşturulacağını kontrol edin';
 
   @override
-  String get supersetSettingsIncludeSupersetPairsIn =>
-      'AI tarafından oluşturulan antrenmanlara superset çiftlerini dahil et';
+  String get supersetSettingsIncludeSupersetPairsIn => 'AI tarafından oluşturulan antrenmanlara superset çiftlerini dahil et';
 
   @override
-  String get supersetSettingsPreferAntagonistPairs =>
-      'Antagonist çiftleri tercih et';
+  String get supersetSettingsPreferAntagonistPairs => 'Antagonist çiftleri tercih et';
 
   @override
   String get supersetSettingsSupersetSettings => 'SUPERSET AYARLARI';
@@ -37764,8 +35189,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncDetailsDiscard => 'Vazgeç';
 
   @override
-  String get syncDetailsDiscardThisChange =>
-      'Bu değişikliği silmek istiyor musunuz?';
+  String get syncDetailsDiscardThisChange => 'Bu değişikliği silmek istiyor musunuz?';
 
   @override
   String get syncDetailsDiscarded => 'Silindi';
@@ -37796,8 +35220,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncDetailsSyncDetails => 'Eşitleme Detayları';
 
   @override
-  String get syncDetailsThisErrorWonT =>
-      'Bu hata yeniden denemeyle düzelmeyecek. Düzenle ve tekrar giriş yap veya Vazgeç seçeneğini kullan.';
+  String get syncDetailsThisErrorWonT => 'Bu hata yeniden denemeyle düzelmeyecek. Düzenle ve tekrar giriş yap veya Vazgeç seçeneğini kullan.';
 
   @override
   String get syncStatusSyncNow => 'Şimdi Eşitle';
@@ -37821,8 +35244,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedSummaryMaxHr => 'Maks. Nabız';
 
   @override
-  String get syncedSummaryNoActivityMetricsWere =>
-      'Bu oturum için herhangi bir aktivite verisi kaydedilmedi.';
+  String get syncedSummaryNoActivityMetricsWere => 'Bu oturum için herhangi bir aktivite verisi kaydedilmedi.';
 
   @override
   String get syncedSummarySyncedActivity => 'Eşitlenen Aktivite';
@@ -37884,22 +35306,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutDetailCadence => 'Kadans';
 
   @override
-  String get syncedWorkoutDetailCapturedAroundYourSession =>
-      'Oturumunuz sırasında kaydedildi';
+  String get syncedWorkoutDetailCapturedAroundYourSession => 'Oturumunuz sırasında kaydedildi';
 
   @override
   String get syncedWorkoutDetailDate => 'Tarih';
 
   @override
-  String get syncedWorkoutDetailDeleteThisSyncedWorkout =>
-      'Bu eşitlenen antrenmanı silmek istiyor musunuz?';
+  String get syncedWorkoutDetailDeleteThisSyncedWorkout => 'Bu eşitlenen antrenmanı silmek istiyor musunuz?';
 
   @override
   String get syncedWorkoutDetailDistance => 'Mesafe';
 
   @override
-  String get syncedWorkoutDetailDuplicateOfAnotherImport =>
-      'Başka bir içe aktarmanın kopyası — birincil kaynak tercih edilir.';
+  String get syncedWorkoutDetailDuplicateOfAnotherImport => 'Başka bir içe aktarmanın kopyası — birincil kaynak tercih edilir.';
 
   @override
   String get syncedWorkoutDetailDuration => 'Süre';
@@ -37926,8 +35345,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutDetailHrvPre => 'HRV (öncesi)';
 
   @override
-  String get syncedWorkoutDetailItWillReAppear =>
-      'Health Connect ile bir sonraki eşitlemenizde tekrar görünecektir.';
+  String get syncedWorkoutDetailItWillReAppear => 'Health Connect ile bir sonraki eşitlemenizde tekrar görünecektir.';
 
   @override
   String get syncedWorkoutDetailManage => 'Yönet';
@@ -37948,15 +35366,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutDetailPeak => 'Zirve';
 
   @override
-  String get syncedWorkoutDetailPullingRicherDataFrom =>
-      'Health Connect\'ten daha zengin veriler alınıyor...';
+  String get syncedWorkoutDetailPullingRicherDataFrom => 'Health Connect\'ten daha zengin veriler alınıyor...';
 
   @override
   String get syncedWorkoutDetailRestingHr => 'Dinlenme Nabzı';
 
   @override
-  String get syncedWorkoutDetailRpeRateOfPerceived =>
-      'RPE · Algılanan Zorluk Derecesi';
+  String get syncedWorkoutDetailRpeRateOfPerceived => 'RPE · Algılanan Zorluk Derecesi';
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
@@ -38101,8 +35517,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutsHistoryMiles => 'Mil';
 
   @override
-  String get syncedWorkoutsHistoryNoSyncedWorkoutsYet =>
-      'Henüz senkronize edilmiş antrenman yok';
+  String get syncedWorkoutsHistoryNoSyncedWorkoutsYet => 'Henüz senkronize edilmiş antrenman yok';
 
   @override
   String syncedWorkoutsHistoryScreenM(Object bestElev) {
@@ -38133,8 +35548,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutsHistorySessions => 'Oturumlar';
 
   @override
-  String get syncedWorkoutsHistorySyncedWorkouts =>
-      'Senkronize Edilen Antrenmanlar';
+  String get syncedWorkoutsHistorySyncedWorkouts => 'Senkronize Edilen Antrenmanlar';
 
   @override
   String get syncedWorkoutsHistoryYourRecords => 'Rekorların';
@@ -38181,15 +35595,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get syncedWorkoutsSummarySynced => 'SENKRONİZE EDİLDİ';
 
   @override
-  String get syncedWorkoutsSummaryTodaySSyncedWorkouts =>
-      'Bugünün senkronize antrenmanları';
+  String get syncedWorkoutsSummaryTodaySSyncedWorkouts => 'Bugünün senkronize antrenmanları';
 
   @override
   String get tappableCellSelectBias => 'Eğilim Seç';
 
   @override
-  String get templateAddOneOrUse =>
-      'Bir tane ekle veya aşağıdaki hazır şablonlardan birini kullan';
+  String get templateAddOneOrUse => 'Bir tane ekle veya aşağıdaki hazır şablonlardan birini kullan';
 
   @override
   String get templateEditorAddTemplate => 'Şablon Ekle';
@@ -38207,12 +35619,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get templateEditorSupersets => 'Süper Setler';
 
   @override
-  String get templateListAMondayInThe =>
-      'Programdaki bir Pazartesi, bir sonraki Pazartesiye denk gelir.';
+  String get templateListAMondayInThe => 'Programdaki bir Pazartesi, bir sonraki Pazartesiye denk gelir.';
 
   @override
-  String get templateListAddYourWarmUp =>
-      'Her oturuma ısınma ve esneme hareketlerini ekle.';
+  String get templateListAddYourWarmUp => 'Her oturuma ısınma ve esneme hareketlerini ekle.';
 
   @override
   String get templateListAlignToCalendarWeekdays => 'Takvim günlerine hizala';
@@ -38221,19 +35631,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get templateListApplyMyStaples => 'Temel hareketlerimi uygula';
 
   @override
-  String get templateListCouldNotDeletePlease =>
-      'Silinemedi. Lütfen tekrar dene.';
+  String get templateListCouldNotDeletePlease => 'Silinemedi. Lütfen tekrar dene.';
 
   @override
-  String get templateListCouldNotSchedulePlease =>
-      'Planlanamadı. Lütfen tekrar dene.';
+  String get templateListCouldNotSchedulePlease => 'Planlanamadı. Lütfen tekrar dene.';
 
   @override
   String get templateListCreateAProgram => 'Program oluştur';
 
   @override
-  String get templateListDay1OfThe =>
-      'Programın 1. günü, seçtiğin tarihte başlar.';
+  String get templateListDay1OfThe => 'Programın 1. günü, seçtiğin tarihte başlar.';
 
   @override
   String get templateListDeleteProgram => 'Program silinsin mi?';
@@ -38292,8 +35699,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get templateListStartDay1On => '1. günü başlangıç tarihimde başlat';
 
   @override
-  String get templateListTapADayTo =>
-      'Farklı bir zaman ayarlamak için bir güne dokun.';
+  String get templateListTapADayTo => 'Farklı bir zaman ayarlamak için bir güne dokun.';
 
   @override
   String get templateListWeCouldNotLoad => 'Programların yüklenemedi.';
@@ -38316,8 +35722,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get templatePickerStartWithAPre =>
-      'Önceden tasarlanmış bir düzenle başla';
+  String get templatePickerStartWithAPre => 'Önceden tasarlanmış bir düzenle başla';
 
   @override
   String get templatePickerTemplates => 'Şablonlar';
@@ -38338,8 +35743,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tierComparisonFeature => 'ÖZELLİK';
 
   @override
-  String get tierComparisonLongPressTheEasy =>
-      'Bunu tekrar açmak için Kolay / İleri Seviye düğmesine basılı tut.';
+  String get tierComparisonLongPressTheEasy => 'Bunu tekrar açmak için Kolay / İleri Seviye düğmesine basılı tut.';
 
   @override
   String get tierComparisonWhichTierIsRight => 'Hangi seviye benim için uygun?';
@@ -38360,8 +35764,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tileFactoryFoodPatterns => 'Beslenme Düzenleri';
 
   @override
-  String get tileFactorySeeWhichFoodsFuel =>
-      'Hangi yiyeceklerin sana enerji verdiğini ve hangilerinin seni yavaşlattığını gör';
+  String get tileFactorySeeWhichFoodsFuel => 'Hangi yiyeceklerin sana enerji verdiğini ve hangilerinin seni yavaşlattığını gör';
 
   @override
   String get tilePickerAdd => 'Ekle';
@@ -38399,8 +35802,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get timedExerciseTimerTapPauseToRest =>
-      'Dinlenmek için duraklat\'a dokunun, ardından devam edin';
+  String get timedExerciseTimerTapPauseToRest => 'Dinlenmek için duraklat\'a dokunun, ardından devam edin';
 
   @override
   String get timelineBusy => 'Meşgul';
@@ -38418,8 +35820,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timelineEntryDetailEditDurationMin => 'Süreyi düzenle (dk)';
 
   @override
-  String get timelineEntryDetailFailedToDeleteRefresh =>
-      'Silinemedi — tekrar denemek için yenileyin.';
+  String get timelineEntryDetailFailedToDeleteRefresh => 'Silinemedi — tekrar denemek için yenileyin.';
 
   @override
   String get timelineEntryDetailFailedToUpdate => 'Güncellenemedi';
@@ -38428,8 +35829,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timelineEntryDetailReLog => 'Yeniden kaydet';
 
   @override
-  String get timelineEntryDetailReLogQueuedComing =>
-      'Yeniden kaydetme sıraya alındı — birazdan gerçekleşecek';
+  String get timelineEntryDetailReLogQueuedComing => 'Yeniden kaydetme sıraya alındı — birazdan gerçekleşecek';
 
   @override
   String get timelineEntryDetailRefresh => 'Yenile';
@@ -38438,8 +35838,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timelineEntryDetailRelog => 'reLog';
 
   @override
-  String get timelineEntryDetailShareSheetComingSoon =>
-      'Paylaşım sayfası yakında geliyor';
+  String get timelineEntryDetailShareSheetComingSoon => 'Paylaşım sayfası yakında geliyor';
 
   @override
   String get timelineEntryDetailUpdated => 'Güncellendi ✓';
@@ -38453,8 +35852,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timelineLoadEarlierDays => 'Daha önceki günleri yükle';
 
   @override
-  String get timelineLogYourFirstWorkout =>
-      'İlk antrenmanınızı, öğününüzü veya su tüketiminizi sohbetten ya da + düğmesiyle kaydedin — buraya düşecektir.';
+  String get timelineLogYourFirstWorkout => 'İlk antrenmanınızı, öğününüzü veya su tüketiminizi sohbetten ya da + düğmesiyle kaydedin — buraya düşecektir.';
 
   @override
   String get timelineNothingLogged => 'Henüz bir kayıt yok.';
@@ -38524,8 +35922,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get timerRestMixinGotIt => 'Anladım';
 
   @override
-  String get timerRestMixinRateOfPerceivedExertion =>
-      'RPE (Algılanan Zorluk Derecesi), bir setin ne kadar zorlayıcı hissettirdiğini ölçer:';
+  String get timerRestMixinRateOfPerceivedExertion => 'RPE (Algılanan Zorluk Derecesi), bir setin ne kadar zorlayıcı hissettirdiğini ölçer:';
 
   @override
   String get timerRestMixinWhatIsRpe => 'RPE nedir?';
@@ -38545,8 +35942,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get todayFertilityWindowFertilityWindow => 'Doğurganlık penceresi';
 
   @override
-  String get todayFertilityWindowLowConfidenceEstimate =>
-      'Düşük güvenilirlik · tahmin';
+  String get todayFertilityWindowLowConfidenceEstimate => 'Düşük güvenilirlik · tahmin';
 
   @override
   String get todayScoreCardConnect => 'Bağlan';
@@ -38617,8 +36013,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get todayScoreSetupTrackYourFirstSleep =>
-      'İlk uyku verinizi takip edin';
+  String get todayScoreSetupTrackYourFirstSleep => 'İlk uyku verinizi takip edin';
 
   @override
   String get todayScoreSetupYouReAllSet => 'Her şey hazır';
@@ -38640,8 +36035,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get todayWorkoutCardCouldNotLoadWorkout => 'Antrenman yüklenemedi';
 
   @override
-  String get todayWorkoutCardGenerateAWorkoutProgram =>
-      'Başlamak için bir antrenman programı oluşturun!';
+  String get todayWorkoutCardGenerateAWorkoutProgram => 'Başlamak için bir antrenman programı oluşturun!';
 
   @override
   String get todayWorkoutCardGenerateWorkouts => 'Antrenman Oluştur';
@@ -38652,8 +36046,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get todayWorkoutCardLoadingTodaySWorkout =>
-      'Bugünün antrenmanı yükleniyor...';
+  String get todayWorkoutCardLoadingTodaySWorkout => 'Bugünün antrenmanı yükleniyor...';
 
   @override
   String todayWorkoutCardNext(Object name) {
@@ -38670,8 +36063,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get todayWorkoutCardStartWorkout => 'ANTRENMANI BAŞLAT';
 
   @override
-  String get todayWorkoutCardTakeItEasyToday =>
-      'Bugün kendinizi yormayın! Kaslarınız toparlanıyor.';
+  String get todayWorkoutCardTakeItEasyToday => 'Bugün kendinizi yormayın! Kaslarınız toparlanıyor.';
 
   @override
   String get todayWorkoutCardViewUpcoming => 'Yaklaşanları Görüntüle';
@@ -38695,15 +36087,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get todaysHealthCardRestingHr => 'Dinlenme Nabzı';
 
   @override
-  String get todaysHealthCardSyncStepsHeartRate =>
-      'Adım, nabız ve uyku verilerini senkronize et';
+  String get todaysHealthCardSyncStepsHeartRate => 'Adım, nabız ve uyku verilerini senkronize et';
 
   @override
   String get todaysHealthCardTodaySHealth => 'Bugünün Sağlık Verileri';
 
   @override
-  String get trainingFocusAllocateUpTo5 =>
-      'Belirli kas gruplarına öncelik vermek için 5 adede kadar odak noktası belirleyin';
+  String get trainingFocusAllocateUpTo5 => 'Belirli kas gruplarına öncelik vermek için 5 adede kadar odak noktası belirleyin';
 
   @override
   String get trainingFocusFocusPoints => 'Odak Noktaları';
@@ -38715,10 +36105,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingFocusPrimaryTrainingGoal => 'BİRİNCİL ANTRENMAN HEDEFİ';
 
   @override
-  String trainingFocusScreenAvailable(
-    Object availablePoints,
-    Object maxTotalPoints,
-  ) {
+  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints) {
     return '$availablePoints/$maxTotalPoints kullanılabilir';
   }
 
@@ -38737,8 +36124,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingLoadAcute7d => 'Akut (7g)';
 
   @override
-  String get trainingLoadAskCoachAboutYour =>
-      'Antrenman yükünüz hakkında koça danışın';
+  String get trainingLoadAskCoachAboutYour => 'Antrenman yükünüz hakkında koça danışın';
 
   @override
   String get trainingLoadChartBuildingBaseline => 'Temel oluşturuluyor';
@@ -38749,8 +36135,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get trainingLoadChartNoCardioActivityYet =>
-      'Henüz kardiyo aktivitesi yok — temel oluşturmaya başlamak için bir koşu, sürüş veya kürek antrenmanı kaydedin.';
+  String get trainingLoadChartNoCardioActivityYet => 'Henüz kardiyo aktivitesi yok — temel oluşturmaya başlamak için bir koşu, sürüş veya kürek antrenmanı kaydedin.';
 
   @override
   String get trainingLoadChronic28d => 'Kronik (28g)';
@@ -38772,20 +36157,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingMethodsTrainingMethods => 'Antrenman Yöntemleri';
 
   @override
-  String get trainingPreferencesAddPastWorkoutsFor =>
-      'Daha iyi AI ağırlık önerileri için geçmiş antrenmanları ekleyin';
+  String get trainingPreferencesAddPastWorkoutsFor => 'Daha iyi AI ağırlık önerileri için geçmiş antrenmanları ekleyin';
 
   @override
-  String get trainingPreferencesBoostedInSelectionCan =>
-      'Seçimde öne çıkarıldı, değiştirilebilir';
+  String get trainingPreferencesBoostedInSelectionCan => 'Seçimde öne çıkarıldı, değiştirilebilir';
 
   @override
-  String get trainingPreferencesCustomizeHowWorkoutsAre =>
-      'Antrenmanların nasıl oluşturulacağını özelleştirin';
+  String get trainingPreferencesCustomizeHowWorkoutsAre => 'Antrenmanların nasıl oluşturulacağını özelleştirin';
 
   @override
-  String get trainingPreferencesEquipmentAvailableForWorkou =>
-      'Antrenmanlar için mevcut ekipmanlar';
+  String get trainingPreferencesEquipmentAvailableForWorkou => 'Antrenmanlar için mevcut ekipmanlar';
 
   @override
   String get trainingPreferencesExerciseConsistency => 'Egzersiz İstikrarı';
@@ -38800,24 +36181,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingPreferencesFavoriteExercises => 'Favori Egzersizler';
 
   @override
-  String get trainingPreferencesFirstDayOfThe =>
-      'Takvimlerde haftanın ilk günü';
+  String get trainingPreferencesFirstDayOfThe => 'Takvimlerde haftanın ilk günü';
 
   @override
-  String get trainingPreferencesGuaranteedNeverRotateOut =>
-      'Garantili, asla rotasyondan çıkarılmaz';
+  String get trainingPreferencesGuaranteedNeverRotateOut => 'Garantili, asla rotasyondan çıkarılmaz';
 
   @override
-  String get trainingPreferencesHowFastToIncrease =>
-      'Ağırlıklar ne kadar hızlı artırılmalı';
+  String get trainingPreferencesHowFastToIncrease => 'Ağırlıklar ne kadar hızlı artırılmalı';
 
   @override
-  String get trainingPreferencesHowMuchExercisesChange =>
-      'Egzersizler her hafta ne kadar değişmeli';
+  String get trainingPreferencesHowMuchExercisesChange => 'Egzersizler her hafta ne kadar değişmeli';
 
   @override
-  String get trainingPreferencesImportWorkoutHistory =>
-      'Antrenman Geçmişini İçe Aktar';
+  String get trainingPreferencesImportWorkoutHistory => 'Antrenman Geçmişini İçe Aktar';
 
   @override
   String get trainingPreferencesMusclesToAvoid => 'Kaçınılacak Kaslar';
@@ -38835,27 +36211,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingPreferencesProgressionPace => 'İlerleme Hızı';
 
   @override
-  String get trainingPreferencesPushPullLegsFull =>
-      'Push/Pull/Legs, Full Body vb.';
+  String get trainingPreferencesPushPullLegsFull => 'Push/Pull/Legs, Full Body vb.';
 
   @override
-  String get trainingPreferencesQueueExercisesForNext =>
-      'Bir sonraki antrenman için egzersizleri sıraya al';
+  String get trainingPreferencesQueueExercisesForNext => 'Bir sonraki antrenman için egzersizleri sıraya al';
 
   @override
-  String get trainingPreferencesSkipOrReduceMuscle =>
-      'Kas gruplarını atla veya azalt';
+  String get trainingPreferencesSkipOrReduceMuscle => 'Kas gruplarını atla veya azalt';
 
   @override
-  String get trainingPreferencesSkipSpecificExercises =>
-      'Belirli egzersizleri atla';
+  String get trainingPreferencesSkipSpecificExercises => 'Belirli egzersizleri atla';
 
   @override
   String get trainingPreferencesStapleExercises => 'Temel Egzersizler';
 
   @override
-  String get trainingPreferencesStrengthCardioOrMixed =>
-      'Güç, kardiyo veya karma';
+  String get trainingPreferencesStrengthCardioOrMixed => 'Güç, kardiyo veya karma';
 
   @override
   String get trainingPreferencesTraining => 'ANTRENMAN';
@@ -38867,16 +36238,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingPreferencesTrainingSplit => 'Antrenman Bölünmesi';
 
   @override
-  String get trainingPreferencesVaryOrKeepSame =>
-      'Egzersizleri çeşitlendir veya aynı tut';
+  String get trainingPreferencesVaryOrKeepSame => 'Egzersizleri çeşitlendir veya aynı tut';
 
   @override
-  String get trainingPreferencesViewAndEditYour =>
-      'Maksimum ağırlıklarını görüntüle ve düzenle';
+  String get trainingPreferencesViewAndEditYour => 'Maksimum ağırlıklarını görüntüle ve düzenle';
 
   @override
-  String get trainingPreferencesVisualizeStrengthVolumeOv =>
-      'Zaman içindeki güç ve hacim gelişimini görselleştir';
+  String get trainingPreferencesVisualizeStrengthVolumeOv => 'Zaman içindeki güç ve hacim gelişimini görselleştir';
 
   @override
   String get trainingPreferencesWeekStartsOn => 'Haftanın Başlangıcı';
@@ -38888,12 +36256,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingPreferencesWhereYouTrain => 'Antrenman yaptığın yer';
 
   @override
-  String get trainingPreferencesWhichDaysYouTrain =>
-      'Antrenman yaptığın günler';
+  String get trainingPreferencesWhichDaysYouTrain => 'Antrenman yaptığın günler';
 
   @override
-  String get trainingPreferencesWorkAtAPercentage =>
-      'Maksimum değerinin bir yüzdesiyle çalış';
+  String get trainingPreferencesWorkAtAPercentage => 'Maksimum değerinin bir yüzdesiyle çalış';
 
   @override
   String get trainingPreferencesWorkoutDays => 'Antrenman Günleri';
@@ -38905,19 +36271,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingPreferencesWorkoutType => 'Antrenman Türü';
 
   @override
-  String get trainingProgramSelectorChooseYourTrainingSplit =>
-      'Antrenman bölünmeni seç';
+  String get trainingProgramSelectorChooseYourTrainingSplit => 'Antrenman bölünmeni seç';
 
   @override
   String get trainingProgramSelectorCustomProgram => 'Özel Program';
 
   @override
-  String get trainingProgramSelectorDescribeWhatYouWant =>
-      'Ne için antrenman yapmak istediğini tanımla, Zealova senin için kişiselleştirilmiş bir program oluştursun.';
+  String get trainingProgramSelectorDescribeWhatYouWant => 'Ne için antrenman yapmak istediğini tanımla, Zealova senin için kişiselleştirilmiş bir program oluştursun.';
 
   @override
-  String get trainingProgramSelectorEGTrainFor =>
-      'ör. \"HYROX yarışması için antrenman yap\"';
+  String get trainingProgramSelectorEGTrainFor => 'ör. \"HYROX yarışması için antrenman yap\"';
 
   @override
   String get trainingProgramSelectorExamples => 'Örnekler';
@@ -38929,8 +36292,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingProgramSelectorTrainingProgram => 'Antrenman Programı';
 
   @override
-  String get trainingSetupCardAddEquipmentNotIn =>
-      'Standart listede olmayan ekipman ekle';
+  String get trainingSetupCardAddEquipmentNotIn => 'Standart listede olmayan ekipman ekle';
 
   @override
   String get trainingSetupCardEnvironment => 'Ortam';
@@ -38945,8 +36307,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trainingSetupCardFocusAreas => 'Odak Bölgeleri';
 
   @override
-  String get trainingSetupCardHowMuchExerciseVariety =>
-      'Her hafta ne kadar egzersiz çeşitliliği olsun?';
+  String get trainingSetupCardHowMuchExerciseVariety => 'Her hafta ne kadar egzersiz çeşitliliği olsun?';
 
   @override
   String get trainingSetupCardMyCustomEquipment => 'Özel Ekipmanlarım';
@@ -38975,8 +36336,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get transitionCountdownOverlayGetReady => 'HAZIRLAN';
 
   @override
-  String get transitionCountdownOverlayNextExerciseStartingSoon =>
-      'Sıradaki egzersiz yakında başlıyor';
+  String get transitionCountdownOverlayNextExerciseStartingSoon => 'Sıradaki egzersiz yakında başlıyor';
 
   @override
   String get transitionCountdownOverlayStartNow => 'Şimdi Başla';
@@ -38988,8 +36348,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trendAiInsightAiInsight => 'AI Analizi';
 
   @override
-  String get trendAiInsightCouldnTGenerateAn =>
-      'Şu anda bir analiz oluşturulamadı.';
+  String get trendAiInsightCouldnTGenerateAn => 'Şu anda bir analiz oluşturulamadı.';
 
   @override
   String get trendAiInsightReadingYourTrends => 'Trendlerin okunuyor…';
@@ -38998,12 +36357,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trendChartNoDataInThis => 'Bu aralıkta veri yok';
 
   @override
-  String get trendChartPinchToZoomTap =>
-      'Yakınlaştırmak için çimdikle · sıfırlamak için dokun';
+  String get trendChartPinchToZoomTap => 'Yakınlaştırmak için çimdikle · sıfırlamak için dokun';
 
   @override
-  String get trendChartTryAWiderTime =>
-      'Daha geniş bir zaman aralığı dene veya yeni bir kayıt gir';
+  String get trendChartTryAWiderTime => 'Daha geniş bir zaman aralığı dene veya yeni bir kayıt gir';
 
   @override
   String get trialProgress1DayLeft => '1 gün kaldı';
@@ -39022,8 +36379,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get trophiesCardKeepShowingUpBadges =>
-      'Devam et — kilometre taşlarına ulaştıkça rozetlerin kilidi açılır.';
+  String get trophiesCardKeepShowingUpBadges => 'Devam et — kilometre taşlarına ulaştıkça rozetlerin kilidi açılır.';
 
   @override
   String trophiesCardNewBadgesThisPeriod(Object length) {
@@ -39031,8 +36387,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get trophiesCardNoNewBadgesThis =>
-      'Bu dönemde henüz yeni bir rozet yok.';
+  String get trophiesCardNoNewBadgesThis => 'Bu dönemde henüz yeni bir rozet yok.';
 
   @override
   String trophiesCardWrapped(Object appName) {
@@ -39046,8 +36401,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trophiesEarnedAchievementsUnlocked => 'Kazanılan Başarılar';
 
   @override
-  String get trophiesEarnedAllMilestonesCleared =>
-      'Tüm kilometre taşları tamamlandı';
+  String get trophiesEarnedAllMilestonesCleared => 'Tüm kilometre taşları tamamlandı';
 
   @override
   String get trophiesEarnedAllTime => 'TÜM ZAMANLAR';
@@ -39065,8 +36419,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trophiesEarnedMilestoneReached => 'Kilometre taşına ulaşıldı';
 
   @override
-  String get trophiesEarnedMilestoneReachedNice =>
-      'Kilometre taşına ulaşıldı — harika!';
+  String get trophiesEarnedMilestoneReachedNice => 'Kilometre taşına ulaşıldı — harika!';
 
   @override
   String get trophiesEarnedMilestones => 'Kilometre Taşları';
@@ -39099,8 +36452,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trophiesEarnedNoNewRecords => 'Yeni rekor yok';
 
   @override
-  String get trophiesEarnedNoNewRecordsThis =>
-      'Bu seansta yeni bir rekor yok — işte üzerinde çalıştığın hedefler:';
+  String get trophiesEarnedNoNewRecordsThis => 'Bu seansta yeni bir rekor yok — işte üzerinde çalıştığın hedefler:';
 
   @override
   String get trophiesEarnedPersonalRecords => 'Kişisel Rekorlar';
@@ -39133,16 +36485,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trophiesEarnedTrophiesAchievements => 'Kupalar ve Başarılar';
 
   @override
-  String get trophiesEarnedViewAllCardioPRs =>
-      'Tüm kardiyo PR\'larını görüntüle';
+  String get trophiesEarnedViewAllCardioPRs => 'Tüm kardiyo PR\'larını görüntüle';
 
   @override
-  String get trophiesEarnedViewAllCardioPrs =>
-      'Tüm kardiyo PR\'larını görüntüle';
+  String get trophiesEarnedViewAllCardioPrs => 'Tüm kardiyo PR\'larını görüntüle';
 
   @override
-  String get trophiesEarnedYouVeClearedEvery =>
-      'Tüm kilometre taşlarını tamamladın — istikrarlı kal, yenileri görünecektir!';
+  String get trophiesEarnedYouVeClearedEvery => 'Tüm kilometre taşlarını tamamladın — istikrarlı kal, yenileri görünecektir!';
 
   @override
   String get trophiesEarnedYourFitnessJourney => 'Fitness yolculuğun';
@@ -39172,12 +36521,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trophyCelebrationOverlayKeepTheMomentumGoing => 'Momentumu koru';
 
   @override
-  String get trophyCelebrationOverlayMilestoneReached =>
-      'Kilometre taşına ulaşıldı!';
+  String get trophyCelebrationOverlayMilestoneReached => 'Kilometre taşına ulaşıldı!';
 
   @override
-  String get trophyCelebrationOverlayTapAnywhereToContinue =>
-      'Devam etmek için herhangi bir yere dokun';
+  String get trophyCelebrationOverlayTapAnywhereToContinue => 'Devam etmek için herhangi bir yere dokun';
 
   @override
   String get trophyCelebrationOverlayTrophiesEarned => 'KAZANILAN KUPALAR!';
@@ -39188,8 +36535,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get trophyCeremonyOverlayCongratsOnEarningThis =>
-      'Bu kupayı kazandığın için tebrikler!';
+  String get trophyCeremonyOverlayCongratsOnEarningThis => 'Bu kupayı kazandığın için tebrikler!';
 
   @override
   String trophyCeremonyOverlayLv(Object level) {
@@ -39236,8 +36582,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get trophyRoomScreenProgressHiddenUntilDiscover =>
-      'İlerleme keşfedilene kadar gizli';
+  String get trophyRoomScreenProgressHiddenUntilDiscover => 'İlerleme keşfedilene kadar gizli';
 
   @override
   String get trophyRoomScreenTrophyRoom => 'Kupa Odası';
@@ -39249,46 +36594,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trustAndExpectationsABitOfHonesty => 'Biraz dürüstlük';
 
   @override
-  String get trustAndExpectationsBeforeWeBuildYour =>
-      'Planını oluşturmadan önce';
+  String get trustAndExpectationsBeforeWeBuildYour => 'Planını oluşturmadan önce';
 
   @override
-  String get trustAndExpectationsDeleteAnythingAnytime =>
-      'İstediğini, istediğin zaman sil.';
+  String get trustAndExpectationsDeleteAnythingAnytime => 'İstediğini, istediğin zaman sil.';
 
   @override
-  String get trustAndExpectationsEncryptedInTransitAnd =>
-      'İletim sırasında ve depolamada şifrelenmiştir.';
+  String get trustAndExpectationsEncryptedInTransitAnd => 'İletim sırasında ve depolamada şifrelenmiştir.';
 
   @override
-  String get trustAndExpectationsReadOurFullPrivacy =>
-      'Gizlilik politikamızın tamamını oku';
+  String get trustAndExpectationsReadOurFullPrivacy => 'Gizlilik politikamızın tamamını oku';
 
   @override
-  String get trustAndExpectationsRealChangeShowsUp =>
-      'Gerçek değişim 3. haftada ortaya çıkar.';
+  String get trustAndExpectationsRealChangeShowsUp => 'Gerçek değişim 3. haftada ortaya çıkar.';
 
   @override
   String get trustAndExpectationsSoundsGood => 'Kulağa hoş geliyor';
 
   @override
-  String get trustAndExpectationsTls13Aes =>
-      'TLS 1.3 + AES-256. Bankanla aynı standartlar.';
+  String get trustAndExpectationsTls13Aes => 'TLS 1.3 + AES-256. Bankanla aynı standartlar.';
 
   @override
-  String get trustAndExpectationsTwoThingsYouShould =>
-      'Bilmen gereken iki şey.';
+  String get trustAndExpectationsTwoThingsYouShould => 'Bilmen gereken iki şey.';
 
   @override
-  String get trustAndExpectationsWeNeverSellYour =>
-      'Verilerini asla satmıyoruz.';
+  String get trustAndExpectationsWeNeverSellYour => 'Verilerini asla satmıyoruz.';
 
   @override
   String get trustAndExpectationsWeWonTSugarcoat => 'Lafı dolandırmayacağız.';
 
   @override
-  String get trustAndExpectationsWeek1WillFeel =>
-      '1. hafta yavaş hissettirecek.';
+  String get trustAndExpectationsWeek1WillFeel => '1. hafta yavaş hissettirecek.';
 
   @override
   String typingIndicatorIsTyping(Object agentName) {
@@ -39336,8 +36672,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get unifiedHomeWidgetsDrink16ozPostWorkout =>
-      'Antrenman sonrası 16oz su iç';
+  String get unifiedHomeWidgetsDrink16ozPostWorkout => 'Antrenman sonrası 16oz su iç';
 
   @override
   String unifiedHomeWidgetsEndTheDayAtGoal(Object arg0) {
@@ -39376,8 +36711,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unifiedHomeWidgetsNoData => 'Veri yok';
 
   @override
-  String get unifiedHomeWidgetsNoWorkoutWasScheduled =>
-      'Planlanmış antrenman yok';
+  String get unifiedHomeWidgetsNoWorkoutWasScheduled => 'Planlanmış antrenman yok';
 
   @override
   String get unifiedHomeWidgetsNutrition => 'BESLENME';
@@ -39386,8 +36720,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unifiedHomeWidgetsOver => 'Üzerinde';
 
   @override
-  String get unifiedHomeWidgetsOvernightWaterReset =>
-      'Gece su takibi sıfırlandı';
+  String get unifiedHomeWidgetsOvernightWaterReset => 'Gece su takibi sıfırlandı';
 
   @override
   String get unifiedHomeWidgetsProtein => 'Protein';
@@ -39399,16 +36732,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unifiedHomeWidgetsRefuelHydration => 'Hidrasyonu yenile';
 
   @override
-  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled =>
-      'Dinlenme günü, antrenman planlanmadı';
+  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled => 'Dinlenme günü, antrenman planlanmadı';
 
   @override
-  String get unifiedHomeWidgetsRestDayNothingScheduled =>
-      'Dinlenme günü, planlanan bir şey yok';
+  String get unifiedHomeWidgetsRestDayNothingScheduled => 'Dinlenme günü, planlanan bir şey yok';
 
   @override
-  String get unifiedHomeWidgetsSeeYourStepsCalories =>
-      'Adımlarını, kalorilerini ve uykunu ana ekranında gör';
+  String get unifiedHomeWidgetsSeeYourStepsCalories => 'Adımlarını, kalorilerini ve uykunu ana ekranında gör';
 
   @override
   String get unifiedHomeWidgetsSleep => 'Uyku';
@@ -39423,30 +36753,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unifiedHomeWidgetsWater => 'Su';
 
   @override
-  String get unifiedHomeWidgetsWorkoutCompleteGreatJob =>
-      'Antrenman tamamlandı, harika iş çıkardın';
+  String get unifiedHomeWidgetsWorkoutCompleteGreatJob => 'Antrenman tamamlandı, harika iş çıkardın';
 
   @override
   String get unresolvedExercisesApplyMapping => 'Eşleştirmeyi uygula';
 
   @override
-  String get unresolvedExercisesBulkFixUnresolvedExercises =>
-      'Çözümlenmemiş egzersizleri düzelt';
+  String get unresolvedExercisesBulkFixUnresolvedExercises => 'Çözümlenmemiş egzersizleri düzelt';
 
   @override
-  String get unresolvedExercisesBulkMapRawNamesFrom =>
-      'İçe aktarılan ham isimleri kütüphane egzersizleriyle eşleştir.';
+  String get unresolvedExercisesBulkMapRawNamesFrom => 'İçe aktarılan ham isimleri kütüphane egzersizleriyle eşleştir.';
 
   @override
   String get unresolvedExercisesBulkMore => 'Daha fazla…';
 
   @override
-  String get unresolvedExercisesBulkNoAutoSuggestionOpen =>
-      'Otomatik öneri yok — manuel seçmek için aç.';
+  String get unresolvedExercisesBulkNoAutoSuggestionOpen => 'Otomatik öneri yok — manuel seçmek için aç.';
 
   @override
-  String get unresolvedExercisesBulkNothingToFixEvery =>
-      'Düzeltilecek bir şey yok — her içe aktarılan egzersiz eşleşti!';
+  String get unresolvedExercisesBulkNothingToFixEvery => 'Düzeltilecek bir şey yok — her içe aktarılan egzersiz eşleşti!';
 
   @override
   String unresolvedExercisesBulkSheetCouldNotLoad(Object error) {
@@ -39459,10 +36784,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String unresolvedExercisesBulkSheetMappedRowsTo(
-    Object canonicalName,
-    Object rowsAffected,
-  ) {
+  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected) {
     return '$rowsAffected satır \"$canonicalName\" olarak eşlendi.';
   }
 
@@ -39486,12 +36808,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unresolvedExercisesMapExercise => 'Egzersizi eşleştir';
 
   @override
-  String get unresolvedExercisesNoAutomaticSuggestionsFor =>
-      'Bu isim için otomatik öneri yok.';
+  String get unresolvedExercisesNoAutomaticSuggestionsFor => 'Bu isim için otomatik öneri yok.';
 
   @override
-  String get unresolvedExercisesOrTypeACanonical =>
-      'Veya standart bir isim yaz';
+  String get unresolvedExercisesOrTypeACanonical => 'Veya standart bir isim yaz';
 
   @override
   String get unresolvedExercisesSearchLibrary => 'Kütüphanede ara…';
@@ -39508,8 +36828,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get upNextCardCouldNotLoadSchedule => 'Program yüklenemedi';
 
   @override
-  String get upNextCardNoUpcomingItemsTap =>
-      'Yaklaşan öğe yok. Programa eklemek için + düğmesine dokun';
+  String get upNextCardNoUpcomingItemsTap => 'Yaklaşan öğe yok. Programa eklemek için + düğmesine dokun';
 
   @override
   String get upNextCardTapToRetry => 'Yeniden denemek için dokun';
@@ -39529,8 +36848,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get upcomingWorkoutsAiWillCreateYour => 'AI antrenmanını oluşturacak';
 
   @override
-  String get upcomingWorkoutsCreatingYourPersonalizedWor =>
-      'Kişiselleştirilmiş antrenmanını oluşturuyoruz';
+  String get upcomingWorkoutsCreatingYourPersonalizedWor => 'Kişiselleştirilmiş antrenmanını oluşturuyoruz';
 
   @override
   String get upcomingWorkoutsEditGymProfile => 'Spor Salonu Profilini Düzenle';
@@ -39542,8 +36860,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get upcomingWorkoutsLater => 'Daha sonra';
 
   @override
-  String get upcomingWorkoutsNoWorkoutDaysScheduled =>
-      'Planlanmış antrenman günü yok';
+  String get upcomingWorkoutsNoWorkoutDaysScheduled => 'Planlanmış antrenman günü yok';
 
   @override
   String get upcomingWorkoutsNotEnoughEquipment => 'Yeterli ekipman yok';
@@ -39559,8 +36876,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get upcomingWorkoutsTapADateTo =>
-      'Antrenmanını oluşturmak için bir tarihe dokun';
+  String get upcomingWorkoutsTapADateTo => 'Antrenmanını oluşturmak için bir tarihe dokun';
 
   @override
   String get upcomingWorkoutsTapToGenerate => 'Oluşturmak için dokun';
@@ -39569,8 +36885,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get upcomingWorkoutsUpcomingWorkouts => 'Yaklaşan Antrenmanlar';
 
   @override
-  String get upcomingWorkoutsUpdateYourWorkoutSchedule =>
-      'Antrenman programını Ayarlar\'dan güncelle';
+  String get upcomingWorkoutsUpdateYourWorkoutSchedule => 'Antrenman programını Ayarlar\'dan güncelle';
 
   @override
   String get upgradePromptDismiss => 'Kapat';
@@ -39628,19 +36943,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get vacationModeStartDate => 'Başlangıç tarihi';
 
   @override
-  String get vacationModeSuppressingNonCriticalNotif =>
-      'Kritik olmayan bildirimler gizleniyor';
+  String get vacationModeSuppressingNonCriticalNotif => 'Kritik olmayan bildirimler gizleniyor';
 
   @override
   String get vacationModeVacationMode => 'Tatil Modu';
 
   @override
-  String get vacationModeVacationModeSettingsSaved =>
-      'Tatil modu ayarları kaydedildi';
+  String get vacationModeVacationModeSettingsSaved => 'Tatil modu ayarları kaydedildi';
 
   @override
-  String get vacationModeVacationStartMustBe =>
-      'Tatil başlangıcı bitiş tarihinden önce veya aynı gün olmalıdır';
+  String get vacationModeVacationStartMustBe => 'Tatil başlangıcı bitiş tarihinden önce veya aynı gün olmalıdır';
 
   @override
   String get vacationModeWhatVacationModeDoes => 'Tatil modu ne işe yarar';
@@ -39695,19 +37007,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get vo2maxDetailTrendWillAppearAfter =>
-      'Trend, birkaç ölçüm kaydedildikten sonra görünecektir.';
+  String get vo2maxDetailTrendWillAppearAfter => 'Trend, birkaç ölçüm kaydedildikten sonra görünecektir.';
 
   @override
   String get vo2maxDetailVo2max => 'VO2max';
 
   @override
-  String get voiceAnnouncementsAnnouncingExerciseNamesDuri =>
-      'Geçişler sırasında egzersiz isimlerini seslendir';
+  String get voiceAnnouncementsAnnouncingExerciseNamesDuri => 'Geçişler sırasında egzersiz isimlerini seslendir';
 
   @override
-  String get voiceAnnouncementsMicFabOnActive =>
-      'Aktif antrenmanda mikrofon düğmesi — \"225 for 5\"';
+  String get voiceAnnouncementsMicFabOnActive => 'Aktif antrenmanda mikrofon düğmesi — \"225 for 5\"';
 
   @override
   String get voiceAnnouncementsTestVoice => 'Sesi Test Et';
@@ -39722,8 +37031,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get voiceAnnouncementsVoiceSetLogging => 'Sesli set kaydı';
 
   @override
-  String get voiceAnnouncementsWhenEnabledYouWill =>
-      'Etkinleştirildiğinde şunları duyacaksınız:';
+  String get voiceAnnouncementsWhenEnabledYouWill => 'Etkinleştirildiğinde şunları duyacaksınız:';
 
   @override
   String get voiceMicFabHearing => 'Dinleniyor…';
@@ -39732,10 +37040,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get volumeAlertCardAcknowledge => 'Anlaşıldı';
 
   @override
-  String volumeAlertCardIncrease(
-    Object formattedIncrease,
-    Object muscleGroupDisplay,
-  ) {
+  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay) {
     return '$muscleGroupDisplay: $formattedIncrease artış';
   }
 
@@ -39754,15 +37059,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get volumeChartAverage => 'Ortalama';
 
   @override
-  String get volumeChartCompleteSomeWorkoutsTo =>
-      'Hacim trendlerinizi görmek için antrenmanları tamamlayın.';
+  String get volumeChartCompleteSomeWorkoutsTo => 'Hacim trendlerinizi görmek için antrenmanları tamamlayın.';
 
   @override
   String get volumeChartDangerousIncrease => 'Tehlikeli Artış';
 
   @override
-  String get volumeChartLogAFewWeighted =>
-      'Hacim trendinizi görmek için birkaç ağırlıklı set kaydedin.';
+  String get volumeChartLogAFewWeighted => 'Hacim trendinizi görmek için birkaç ağırlıklı set kaydedin.';
 
   @override
   String volumeChartMuscleGroupVolume(Object muscleGroup) {
@@ -39804,8 +37107,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get volumeHistoryCompleteWorkoutsToSee =>
-      'Hacim trendlerini görmek için antrenmanları tamamlayın';
+  String get volumeHistoryCompleteWorkoutsToSee => 'Hacim trendlerini görmek için antrenmanları tamamlayın';
 
   @override
   String get volumeHistoryFailedToLoad => 'Yüklenemedi';
@@ -39830,12 +37132,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get volumeHistoryVolumeHistory => 'Hacim Geçmişi';
 
   @override
-  String get volumeProgressionCardDefineCustomProgressionVia =>
-      'Özel ilerlemeyi JSON ile tanımlayın (ileri seviye)';
+  String get volumeProgressionCardDefineCustomProgressionVia => 'Özel ilerlemeyi JSON ile tanımlayın (ileri seviye)';
 
   @override
-  String get volumeProgressionCardHowTrainingVolumeIncreases =>
-      'Antrenman hacmi zamanla nasıl artar';
+  String get volumeProgressionCardHowTrainingVolumeIncreases => 'Antrenman hacmi zamanla nasıl artar';
 
   @override
   String volumeProgressionCardValue(Object v) {
@@ -39843,8 +37143,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardVolumeProgressionCurves =>
-      'Hacim İlerleme Eğrileri';
+  String get volumeProgressionCardVolumeProgressionCurves => 'Hacim İlerleme Eğrileri';
 
   @override
   String volumeProgressionCardW(Object v) {
@@ -39852,8 +37151,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardWavePatternVolumeCycles =>
-      'Dalga düzeni: hacim haftalık olarak artar ve azalır';
+  String get volumeProgressionCardWavePatternVolumeCycles => 'Dalga düzeni: hacim haftalık olarak artar ve azalır';
 
   @override
   String get warmupControllerPause => 'Duraklat';
@@ -39879,8 +37177,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get warmupCooldownCardPreciseDurationControl1 =>
-      'Hassas süre kontrolü (1-15 dak)';
+  String get warmupCooldownCardPreciseDurationControl1 => 'Hassas süre kontrolü (1-15 dak)';
 
   @override
   String get warmupCooldownCardWarmupCooldown => 'Isınma ve Soğuma';
@@ -39918,23 +37215,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get warmupSettingsCooldownStretchDuration => 'Soğuma Esneme Süresi';
 
   @override
-  String get warmupSettingsEnableCooldownStretch =>
-      'Soğuma Esnemesini Etkinleştir';
+  String get warmupSettingsEnableCooldownStretch => 'Soğuma Esnemesini Etkinleştir';
 
   @override
   String get warmupSettingsEnableWarmupPhase => 'Isınma Aşamasını Etkinleştir';
 
   @override
-  String get warmupSettingsHowLongToStretch =>
-      'Antrenman sonrası ne kadar esnemeli';
+  String get warmupSettingsHowLongToStretch => 'Antrenman sonrası ne kadar esnemeli';
 
   @override
-  String get warmupSettingsHowLongToWarm =>
-      'Antrenman öncesi ne kadar ısınmalı';
+  String get warmupSettingsHowLongToWarm => 'Antrenman öncesi ne kadar ısınmalı';
 
   @override
-  String get warmupSettingsIncompleteExerciseWarning =>
-      'Tamamlanmamış Egzersiz Uyarısı';
+  String get warmupSettingsIncompleteExerciseWarning => 'Tamamlanmamış Egzersiz Uyarısı';
 
   @override
   String warmupSettingsSectionMin(Object label, Object minutes) {
@@ -39942,16 +37235,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get warmupSettingsShowStretchScreenAfter =>
-      'Antrenman sonrası esneme ekranını göster';
+  String get warmupSettingsShowStretchScreenAfter => 'Antrenman sonrası esneme ekranını göster';
 
   @override
-  String get warmupSettingsShowWarmupScreenBefore =>
-      'Antrenman öncesi ısınma ekranını göster';
+  String get warmupSettingsShowWarmupScreenBefore => 'Antrenman öncesi ısınma ekranını göster';
 
   @override
-  String get warmupSettingsTipsForEffectiveWarm =>
-      'Etkili ısınma için ipuçları:';
+  String get warmupSettingsTipsForEffectiveWarm => 'Etkili ısınma için ipuçları:';
 
   @override
   String get warmupSettingsWarmupCooldown => 'ISINMA VE SOĞUMA';
@@ -39960,16 +37250,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get warmupSettingsWarmupDuration => 'Isınma Süresi';
 
   @override
-  String get warmupSettingsWarnBeforeFinishingWith =>
-      'Kaydedilmemiş setlerle bitirmeden önce uyar';
+  String get warmupSettingsWarnBeforeFinishingWith => 'Kaydedilmemiş setlerle bitirmeden önce uyar';
 
   @override
-  String get watchInstallBannerCouldNotOpenPlay =>
-      'Saatte Play Store açılamadı. Lütfen manuel olarak yükleyin.';
+  String get watchInstallBannerCouldNotOpenPlay => 'Saatte Play Store açılamadı. Lütfen manuel olarak yükleyin.';
 
   @override
-  String get watchInstallBannerFailedToConnectTo =>
-      'Saate bağlanılamadı. Lütfen tekrar deneyin.';
+  String get watchInstallBannerFailedToConnectTo => 'Saate bağlanılamadı. Lütfen tekrar deneyin.';
 
   @override
   String get watchInstallBannerInstallOnWatch => 'Saate Yükle';
@@ -39978,8 +37265,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get watchInstallBannerNotNow => 'Şimdi Değil';
 
   @override
-  String get watchInstallBannerTrackWorkoutsFromYour =>
-      'Antrenmanlarını bileğinden takip et';
+  String get watchInstallBannerTrackWorkoutsFromYour => 'Antrenmanlarını bileğinden takip et';
 
   @override
   String get watchInstallBannerWatchDetected => 'Saat Algılandı';
@@ -39991,22 +37277,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wearOsComingFeatures => 'Gelecek özellikler:';
 
   @override
-  String get wearOsLogSetsDirectlyFromWatch =>
-      'Setleri doğrudan saatten kaydedin';
+  String get wearOsLogSetsDirectlyFromWatch => 'Setleri doğrudan saatten kaydedin';
 
   @override
   String get wearOsQuickFoodLoggingViaVoice => 'Sesle hızlı yemek kaydı';
 
   @override
-  String get wearOsRealTimeHeartRateTracking =>
-      'Gerçek zamanlı kalp atış hızı takibi';
+  String get wearOsRealTimeHeartRateTracking => 'Gerçek zamanlı kalp atış hızı takibi';
 
   @override
   String get wearOsSmartwatch => 'Akıllı Saat';
 
   @override
-  String get wearOsTrackWorkoutsFromYour =>
-      'Antrenmanlarını bileğinden takip et';
+  String get wearOsTrackWorkoutsFromYour => 'Antrenmanlarını bileğinden takip et';
 
   @override
   String get wearOsWearOs => 'WEAR OS';
@@ -40091,8 +37374,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCalendarTileThisWeek => 'Bu Hafta';
 
   @override
-  String get weeklyCheckinAnalyzingYourProgress =>
-      'İlerlemen analiz ediliyor...';
+  String get weeklyCheckinAnalyzingYourProgress => 'İlerlemen analiz ediliyor...';
 
   @override
   String get weeklyCheckinAppearsOnceAWeek => 'Haftada bir görünür';
@@ -40101,15 +37383,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinApplyChanges => 'Değişiklikleri Uygula';
 
   @override
-  String get weeklyCheckinConservativeModerateOrAgg =>
-      'Muhafazakar, Orta veya Agresif; her biri farklı kalori hedefleri ve beklenen haftalık değişim sunar.';
+  String get weeklyCheckinConservativeModerateOrAgg => 'Muhafazakar, Orta veya Agresif; her biri farklı kalori hedefleri ve beklenen haftalık değişim sunar.';
 
   @override
   String get weeklyCheckinDisable => 'Devre Dışı Bırak';
 
   @override
-  String get weeklyCheckinDisableWeeklyCheckIn =>
-      'Haftalık Kontrolü Devre Dışı Bırak?';
+  String get weeklyCheckinDisableWeeklyCheckIn => 'Haftalık Kontrolü Devre Dışı Bırak?';
 
   @override
   String get weeklyCheckinDonTShowThis => 'Bunu tekrar gösterme';
@@ -40127,23 +37407,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinKeepIt => 'Bunu Koru';
 
   @override
-  String get weeklyCheckinPickAPlanTo =>
-      'Hedeflerini güncellemek için bir plan seç veya olduğu gibi bırakmak için atla. Hiçbir şey otomatik olarak değişmez.';
+  String get weeklyCheckinPickAPlanTo => 'Hedeflerini güncellemek için bir plan seç veya olduğu gibi bırakmak için atla. Hiçbir şey otomatik olarak değişmez.';
 
   @override
-  String get weeklyCheckinPleaseTryAgainLater =>
-      'Lütfen daha sonra tekrar dene';
+  String get weeklyCheckinPleaseTryAgainLater => 'Lütfen daha sonra tekrar dene';
 
   @override
-  String get weeklyCheckinReviewProgressChooseYour =>
-      'İlerlemeyi incele ve yolunu seç';
+  String get weeklyCheckinReviewProgressChooseYour => 'İlerlemeyi incele ve yolunu seç';
 
   @override
   String get weeklyCheckinSheetAdherence => 'Uyum';
 
   @override
-  String get weeklyCheckinSheetAdherenceSustainability =>
-      'Uyum ve Sürdürülebilirlik';
+  String get weeklyCheckinSheetAdherenceSustainability => 'Uyum ve Sürdürülebilirlik';
 
   @override
   String get weeklyCheckinSheetAvgCalories => 'Ort. Kalori';
@@ -40152,8 +37428,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetAvgProtein => 'Ort. Protein';
 
   @override
-  String get weeklyCheckinSheetBasedOnActualIntake =>
-      'Gerçek alım ve kilo değişimlerine göre';
+  String get weeklyCheckinSheetBasedOnActualIntake => 'Gerçek alım ve kilo değişimlerine göre';
 
   @override
   String get weeklyCheckinSheetBuildingYourProfile => 'Profilin Oluşturuluyor';
@@ -40183,8 +37458,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetDaysLogged => 'Kaydedilen Günler';
 
   @override
-  String get weeklyCheckinSheetEmaSmoothedCalculation =>
-      'EMA ile düzeltilmiş hesaplama';
+  String get weeklyCheckinSheetEmaSmoothedCalculation => 'EMA ile düzeltilmiş hesaplama';
 
   @override
   String weeklyCheckinSheetEveryWeekAnalysesYour(Object appName) {
@@ -40201,20 +37475,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetKeepLogging => 'Kaydetmeye Devam Et!';
 
   @override
-  String get weeklyCheckinSheetKeepLoggingYourMeals =>
-      'Kişiselleştirilmiş TDEE hesaplamalarının kilidini açmak için öğünlerini ve kilonu kaydetmeye devam et.';
+  String get weeklyCheckinSheetKeepLoggingYourMeals => 'Kişiselleştirilmiş TDEE hesaplamalarının kilidini açmak için öğünlerini ve kilonu kaydetmeye devam et.';
 
   @override
-  String get weeklyCheckinSheetLogMealsConsistentlyFor =>
-      'En iyi sonuçlar için öğünlerini düzenli kaydet';
+  String get weeklyCheckinSheetLogMealsConsistentlyFor => 'En iyi sonuçlar için öğünlerini düzenli kaydet';
 
   @override
-  String get weeklyCheckinSheetMetabolicAdaptationDetected =>
-      'Metabolik Adaptasyon Tespit Edildi';
+  String get weeklyCheckinSheetMetabolicAdaptationDetected => 'Metabolik Adaptasyon Tespit Edildi';
 
   @override
-  String get weeklyCheckinSheetNeed60DataQuality =>
-      'Doğru hesaplamalar için %60 veri kalitesi gerekir';
+  String get weeklyCheckinSheetNeed60DataQuality => 'Doğru hesaplamalar için %60 veri kalitesi gerekir';
 
   @override
   String get weeklyCheckinSheetNewTargets => 'Yeni Hedefler';
@@ -40225,10 +37495,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(
-    Object current,
-    Object target,
-  ) {
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target) {
     return '$current / $target gün';
   }
 
@@ -40258,9 +37525,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
-    Object dataQualityPercent,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent) {
     return '%$dataQualityPercent';
   }
 
@@ -40270,9 +37535,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
-    Object formattedWeeklyRate,
-  ) {
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate) {
     return 'Kilo eğilimi: $formattedWeeklyRate';
   }
 
@@ -40289,8 +37552,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetRecommendedAdjustment => 'Önerilen Ayarlama';
 
   @override
-  String get weeklyCheckinSheetSelectARecommendationBased =>
-      'Tercihine göre bir öneri seç';
+  String get weeklyCheckinSheetSelectARecommendationBased => 'Tercihine göre bir öneri seç';
 
   @override
   String weeklyCheckinSheetSuggestedAction(Object action) {
@@ -40309,12 +37571,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetThisWeek => 'Bu Hafta';
 
   @override
-  String get weeklyCheckinSheetTipsForBetterResults =>
-      'Daha İyi Sonuçlar İçin İpuçları';
+  String get weeklyCheckinSheetTipsForBetterResults => 'Daha İyi Sonuçlar İçin İpuçları';
 
   @override
-  String get weeklyCheckinSheetWeNeedABit =>
-      'Kişiselleştirilmiş TDEE\'ni hesaplamak için biraz daha veriye ihtiyacımız var.';
+  String get weeklyCheckinSheetWeNeedABit => 'Kişiselleştirilmiş TDEE\'ni hesaplamak için biraz daha veriye ihtiyacımız var.';
 
   @override
   String get weeklyCheckinSheetWeightChange => 'Kilo Değişimi';
@@ -40329,8 +37589,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinSheetYourAdaptiveTdee => 'Adaptif TDEE\'n';
 
   @override
-  String get weeklyCheckinSheetYourCurrentTargetsAre =>
-      'Mevcut hedeflerin ilerlemenle uyumlu. Harika iş çıkarmaya devam et!';
+  String get weeklyCheckinSheetYourCurrentTargetsAre => 'Mevcut hedeflerin ilerlemenle uyumlu. Harika iş çıkarmaya devam et!';
 
   @override
   String get weeklyCheckinSkipThisWeek => 'Bu haftayı atla';
@@ -40357,12 +37616,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinWhatIsWeeklyCheck => 'Haftalık Kontrol nedir?';
 
   @override
-  String get weeklyCheckinYouCanReEnable =>
-      'Bunu istediğiniz zaman Beslenme Ayarları\'ndan tekrar etkinleştirebilirsiniz.';
+  String get weeklyCheckinYouCanReEnable => 'Bunu istediğiniz zaman Beslenme Ayarları\'ndan tekrar etkinleştirebilirsiniz.';
 
   @override
-  String get weeklyCheckinYouCanTurnThis =>
-      'Bunu istediğiniz zaman Beslenme Ayarları → Haftalık Kontrol Hatırlatıcıları kısmından kapatabilirsiniz.';
+  String get weeklyCheckinYouCanTurnThis => 'Bunu istediğiniz zaman Beslenme Ayarları → Haftalık Kontrol Hatırlatıcıları kısmından kapatabilirsiniz.';
 
   @override
   String get weeklyCheckinYouChooseOrSkip => 'Seçim sizin — veya atlayın';
@@ -40374,8 +37631,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyCheckinYouSee23 => '2–3 plan seçeneği görürsünüz';
 
   @override
-  String get weeklyCheckinYourLoggedMealsAnd =>
-      'Kaydettiğiniz öğünler ve kilo verileriniz, gerçek TDEE değerinizi hesaplamak için kullanılır; herhangi bir formülden daha doğrudur.';
+  String get weeklyCheckinYourLoggedMealsAnd => 'Kaydettiğiniz öğünler ve kilo verileriniz, gerçek TDEE değerinizi hesaplamak için kullanılır; herhangi bir formülden daha doğrudur.';
 
   @override
   String weeklyGoalsCardNewPr(Object prsThisWeek) {
@@ -40383,8 +37639,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get weeklyGoalsCardSetAChallengeTo =>
-      'Sınırlarınızı zorlamak için bir hedef belirleyin!';
+  String get weeklyGoalsCardSetAChallengeTo => 'Sınırlarınızı zorlamak için bir hedef belirleyin!';
 
   @override
   String get weeklyGoalsCardWeeklyGoals => 'Haftalık Hedefler';
@@ -40393,17 +37648,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyHighlightsTemplateAiHighlights => 'YAPAY ZEKA ÖZETİ';
 
   @override
-  String get weeklyHighlightsTemplateAnotherWeekInThe =>
-      'Bir hafta daha geride kaldı. İstikrar, gerçek başarıdır.';
+  String get weeklyHighlightsTemplateAnotherWeekInThe => 'Bir hafta daha geride kaldı. İstikrar, gerçek başarıdır.';
 
   @override
   String get weeklyHighlightsTemplateThisWeek => 'BU HAFTA';
 
   @override
-  String weeklyPercentileHeroOfActiveUsersTap(
-    Object totalActive,
-    Object yourRank,
-  ) {
+  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank) {
     return 'Aktif kullanıcılar arasında #$yourRank / $totalActive · Keşfet için dokunun';
   }
 
@@ -40413,12 +37664,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get weeklyPlanCardCreateYourWeeklyPlan =>
-      'Haftalık Planınızı Oluşturun';
+  String get weeklyPlanCardCreateYourWeeklyPlan => 'Haftalık Planınızı Oluşturun';
 
   @override
-  String get weeklyPlanCardGetAHolisticPlan =>
-      'Antrenmanları, beslenmeyi ve orucu koordine eden bütünsel bir plan alın';
+  String get weeklyPlanCardGetAHolisticPlan => 'Antrenmanları, beslenmeyi ve orucu koordine eden bütünsel bir plan alın';
 
   @override
   String get weeklyPlanCardTodaySPlan => 'Bugünün Planı';
@@ -40427,8 +37676,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyPlanCardWeeklyPlan => 'Haftalık Plan';
 
   @override
-  String get weeklyPlanCreateAHolisticPlan =>
-      'Hafta için antrenmanlarınızı, beslenmenizi ve oruç programınızı koordine eden bütünsel bir plan oluşturun.';
+  String get weeklyPlanCreateAHolisticPlan => 'Hafta için antrenmanlarınızı, beslenmenizi ve oruç programınızı koordine eden bütünsel bir plan oluşturun.';
 
   @override
   String get weeklyPlanErrorLoadingPlan => 'Plan yüklenirken hata oluştu';
@@ -40470,8 +37718,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get weeklyPrsTemplateShowingUpIsThe =>
-      'Gelmek bile bir kazançtır. Gelecek hafta sizin olacak.';
+  String get weeklyPrsTemplateShowingUpIsThe => 'Gelmek bile bir kazançtır. Gelecek hafta sizin olacak.';
 
   @override
   String get weeklyRecap => '🛡️';
@@ -40480,8 +37727,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyRecapBonusRound => 'Bonus Tur';
 
   @override
-  String get weeklyRecapCatchNutrientsWinBonus =>
-      'Besinleri yakalayın, bonus XP kazanın';
+  String get weeklyRecapCatchNutrientsWinBonus => 'Besinleri yakalayın, bonus XP kazanın';
 
   @override
   String weeklyRecapDialogRankShieldsActivated(Object count) {
@@ -40521,8 +37767,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyRecapPassedBy => 'Geçen';
 
   @override
-  String get weeklyRecapRankShieldActivatedStreak =>
-      'Sıralama Kalkanı etkinleştirildi — seri korundu';
+  String get weeklyRecapRankShieldActivatedStreak => 'Sıralama Kalkanı etkinleştirildi — seri korundu';
 
   @override
   String get weeklyRecapRewardsUnlocked => 'ÖDÜLLERİN KİLİDİ AÇILDI';
@@ -40553,10 +37798,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String weeklyReportCardOfWorkoutsThisWeek(
-    Object completed,
-    Object scheduled,
-  ) {
+  String weeklyReportCardOfWorkoutsThisWeek(Object completed, Object scheduled) {
     return 'Bu hafta $scheduled antrenmandan $completed tanesi tamamlandı';
   }
 
@@ -40578,8 +37820,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklySummaryGenerateSummary => 'Özet Oluştur';
 
   @override
-  String get weeklySummaryGenerateYourFirstWeekly =>
-      'Yapay zeka destekli içgörülerle gelişiminizi görmek için ilk haftalık özetinizi oluşturun';
+  String get weeklySummaryGenerateYourFirstWeekly => 'Yapay zeka destekli içgörülerle gelişiminizi görmek için ilk haftalık özetinizi oluşturun';
 
   @override
   String get weeklySummaryHighlights => 'Öne Çıkanlar';
@@ -40603,10 +37844,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String weeklySummaryScreenWorkoutsCompleted(
-    Object workoutsCompleted,
-    Object workoutsScheduled,
-  ) {
+  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled) {
     return '$workoutsCompleted/$workoutsScheduled antrenman tamamlandı';
   }
 
@@ -40623,19 +37861,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklySummaryWeeklySummaries => 'Haftalık Özetler';
 
   @override
-  String get weeklySummaryWeeklySummaryGenerated =>
-      'Haftalık özet oluşturuldu!';
+  String get weeklySummaryWeeklySummaryGenerated => 'Haftalık özet oluşturuldu!';
 
   @override
-  String get weeklyVolumeBarsWeeklyVolumePerMuscle =>
-      'Kas başına haftalık hacim';
+  String get weeklyVolumeBarsWeeklyVolumePerMuscle => 'Kas başına haftalık hacim';
 
   @override
   String get weeklyWrappedFromYourCoach => 'KOÇUNUZDAN';
 
   @override
-  String get weeklyWrappedNoWorkoutsScheduledYet =>
-      'Henüz planlanmış antrenman yok. Ana sayfadan bir plan oluşturun.';
+  String get weeklyWrappedNoWorkoutsScheduledYet => 'Henüz planlanmış antrenman yok. Ana sayfadan bir plan oluşturun.';
 
   @override
   String get weeklyWrappedPrs => 'PR\'ler';
@@ -40650,8 +37885,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weeklyWrappedYourWeek => 'Haftanız';
 
   @override
-  String get weightFastingChartNoWeightDataAvailable =>
-      'Kilo verisi mevcut değil';
+  String get weightFastingChartNoWeightDataAvailable => 'Kilo verisi mevcut değil';
 
   @override
   String get weightFastingChartWeightTrends => 'Kilo Eğilimleri';
@@ -40660,15 +37894,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weightIncrementsBarbell => 'Halter';
 
   @override
-  String get weightIncrementsBasedOnStandardCommercial =>
-      'Standart ticari spor salonu ekipmanlarına göre:';
+  String get weightIncrementsBasedOnStandardCommercial => 'Standart ticari spor salonu ekipmanlarına göre:';
 
   @override
   String get weightIncrementsCardConfigureIncrements => 'Artışları Yapılandır';
 
   @override
-  String get weightIncrementsCardCustomizeStepPerEquipme =>
-      'Ekipman türü başına +/- adımını özelleştirin';
+  String get weightIncrementsCardCustomizeStepPerEquipme => 'Ekipman türü başına +/- adımını özelleştirin';
 
   @override
   String get weightIncrementsCardWeightIncrements => 'Ağırlık Artışları';
@@ -40677,8 +37909,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weightIncrementsCustomIncrement => 'Özel Artış';
 
   @override
-  String get weightIncrementsCustomizeStepSizePer =>
-      'Ekipman başına +/- adım boyutunu özelleştirin';
+  String get weightIncrementsCustomizeStepSizePer => 'Ekipman başına +/- adım boyutunu özelleştirin';
 
   @override
   String get weightIncrementsEG25 => 'ör. 2.5';
@@ -40703,8 +37934,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get weightIncrementsSourcesRogueLifeFitness =>
-      'Kaynaklar: Rogue, Life Fitness, Eleiko';
+  String get weightIncrementsSourcesRogueLifeFitness => 'Kaynaklar: Rogue, Life Fitness, Eleiko';
 
   @override
   String get weightIncrementsUseDefaults => 'Varsayılanları Kullan';
@@ -40716,15 +37946,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weightProjectionCurrent => 'Mevcut';
 
   @override
-  String get weightProjectionHowFastDoYou =>
-      'Ne kadar hızlı vermek istiyorsunuz?';
+  String get weightProjectionHowFastDoYou => 'Ne kadar hızlı vermek istiyorsunuz?';
 
   @override
   String get weightProjectionPerWeek => 'Haftalık';
 
   @override
-  String get weightProjectionSafeRate05 =>
-      'Güvenli oran: Haftada 0.5–1 kg. Planınız kanıta dayalı yönergeleri takip eder.';
+  String get weightProjectionSafeRate05 => 'Güvenli oran: Haftada 0.5–1 kg. Planınız kanıta dayalı yönergeleri takip eder.';
 
   @override
   String get weightProjectionScreenContinueToYourPlan => 'Planınıza Devam Edin';
@@ -40735,8 +37963,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get weightProjectionScreenLetSKeepYou =>
-      'Sizi orada tutalım! Genel fitness, güç ve enerji seviyelerinizi geliştirirken mevcut fiziğinizi korumaya odaklanacağız.';
+  String get weightProjectionScreenLetSKeepYou => 'Sizi orada tutalım! Genel fitness, güç ve enerji seviyelerinizi geliştirirken mevcut fiziğinizi korumaya odaklanacağız.';
 
   @override
   String get weightProjectionScreenYouReAtYour => 'İdeal Kilonuzdasınız!';
@@ -40781,8 +38008,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get weightTrendCardLoadingWeight => 'Kilo yükleniyor...';
 
   @override
-  String get weightTrendCardLogYourWeightTo =>
-      'Trendleri görmek için kilonuzu kaydedin';
+  String get weightTrendCardLogYourWeightTo => 'Trendleri görmek için kilonuzu kaydedin';
 
   @override
   String get weightTrendCardMaintaining => 'Korunuyor';
@@ -40836,16 +38062,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get welcomeAffirmationLetSBegin => 'Başlayalım';
 
   @override
-  String get welcomeAffirmationMostUsersHitTheir =>
-      'Çoğu kullanıcı ilk hedefine 30 gün içinde ulaşır';
+  String get welcomeAffirmationMostUsersHitTheir => 'Çoğu kullanıcı ilk hedefine 30 gün içinde ulaşır';
 
   @override
-  String get welcomeAffirmationYouReAboutTo =>
-      'Sen de onlardan biri olmak üzeresin.';
+  String get welcomeAffirmationYouReAboutTo => 'Sen de onlardan biri olmak üzeresin.';
 
   @override
-  String get welcomeAffirmationYouReInThe =>
-      'Doğru yerdesin.\nHadi planını birlikte oluşturalım.';
+  String get welcomeAffirmationYouReInThe => 'Doğru yerdesin.\nHadi planını birlikte oluşturalım.';
 
   @override
   String get wellnessCheckinCardAddANoteOptional => 'Not ekle (isteğe bağlı)';
@@ -40854,8 +38077,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wellnessCheckinCardCheckedInU2713 => 'Kaydedildi ✓';
 
   @override
-  String get wellnessCheckinCardDailyWellnessCheckIn =>
-      'Günlük Sağlık Kontrolü';
+  String get wellnessCheckinCardDailyWellnessCheckIn => 'Günlük Sağlık Kontrolü';
 
   @override
   String wellnessCheckinCardEnergy(Object energyLevel) {
@@ -40899,23 +38121,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsChangeWorkoutDate => 'Antrenman tarihini değiştir';
 
   @override
-  String get workoutActionsCompleteTheWorkoutFirst =>
-      'Paylaşım bağlantısı oluşturmak için önce antrenmanı tamamlayın';
+  String get workoutActionsCompleteTheWorkoutFirst => 'Paylaşım bağlantısı oluşturmak için önce antrenmanı tamamlayın';
 
   @override
   String get workoutActionsCoolDownStretches => 'Soğuma Esnemeleri';
 
   @override
-  String get workoutActionsCouldNotCreateShare =>
-      'Paylaşım bağlantısı oluşturulamadı';
+  String get workoutActionsCouldNotCreateShare => 'Paylaşım bağlantısı oluşturulamadı';
 
   @override
-  String get workoutActionsCreateCoolDownStretches =>
-      'Soğuma esnemeleri oluştur';
+  String get workoutActionsCreateCoolDownStretches => 'Soğuma esnemeleri oluştur';
 
   @override
-  String get workoutActionsCreateWarmupExercises =>
-      'Isınma egzersizleri oluştur';
+  String get workoutActionsCreateWarmupExercises => 'Isınma egzersizleri oluştur';
 
   @override
   String get workoutActionsCurrent => 'MEVCUT';
@@ -40927,23 +38145,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsDeleteWorkout2 => 'Antrenman silinsin mi?';
 
   @override
-  String get workoutActionsFailedToGenerateStretches =>
-      'Esnemeler oluşturulamadı';
+  String get workoutActionsFailedToGenerateStretches => 'Esnemeler oluşturulamadı';
 
   @override
   String get workoutActionsFailedToGenerateWarmup => 'Isınma oluşturulamadı';
 
   @override
-  String get workoutActionsFailedToRegenerateWorkout =>
-      'Antrenman yeniden oluşturulamadı';
+  String get workoutActionsFailedToRegenerateWorkout => 'Antrenman yeniden oluşturulamadı';
 
   @override
-  String get workoutActionsFailedToRescheduleWorkout =>
-      'Antrenman yeniden planlanamadı';
+  String get workoutActionsFailedToRescheduleWorkout => 'Antrenman yeniden planlanamadı';
 
   @override
-  String get workoutActionsFinishThisWorkoutTo =>
-      'Paylaşmak için bu antrenmanı bitirin';
+  String get workoutActionsFinishThisWorkoutTo => 'Paylaşmak için bu antrenmanı bitirin';
 
   @override
   String get workoutActionsGenerateStretches => 'Esnemeleri Oluştur';
@@ -40952,8 +38166,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsGenerateWarmup => 'Isınmayı Oluştur';
 
   @override
-  String get workoutActionsLinkCopiedToClipboard =>
-      'Bağlantı panoya kopyalandı';
+  String get workoutActionsLinkCopiedToClipboard => 'Bağlantı panoya kopyalandı';
 
   @override
   String get workoutActionsNoVersionHistory => 'Sürüm geçmişi yok';
@@ -40962,8 +38175,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsRegenerate => 'Yeniden Oluştur';
 
   @override
-  String get workoutActionsRegenerateWorkout =>
-      'Antrenman yeniden oluşturulsun mu?';
+  String get workoutActionsRegenerateWorkout => 'Antrenman yeniden oluşturulsun mu?';
 
   @override
   String get workoutActionsRemoveThisWorkout => 'Bu antrenmanı kaldır';
@@ -41001,11 +38213,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutActionsSheetValue(
-    Object _regenerateMessage,
-    Object _regenerateStep,
-    Object _regenerateTotalSteps,
-  ) {
+  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps) {
     return '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)';
   }
 
@@ -41018,19 +38226,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsThisActionCannotBe => 'Bu işlem geri alınamaz.';
 
   @override
-  String get workoutActionsThisWillCreateA =>
-      'Bu, bugün için yeni bir antrenman planı oluşturacaktır. Mevcut antrenman sürüm geçmişine kaydedilecektir.';
+  String get workoutActionsThisWillCreateA => 'Bu, bugün için yeni bir antrenman planı oluşturacaktır. Mevcut antrenman sürüm geçmişine kaydedilecektir.';
 
   @override
-  String get workoutActionsThisWorkoutCannotBe =>
-      'Bu antrenman henüz paylaşılamaz';
+  String get workoutActionsThisWorkoutCannotBe => 'Bu antrenman henüz paylaşılamaz';
 
   @override
   String get workoutActionsVersionHistory => 'Sürüm Geçmişi';
 
   @override
-  String get workoutActionsViewAndRestorePrevious =>
-      'Önceki sürümleri görüntüle ve geri yükle';
+  String get workoutActionsViewAndRestorePrevious => 'Önceki sürümleri görüntüle ve geri yükle';
 
   @override
   String get workoutActionsWarmupExercises => 'Isınma Egzersizleri';
@@ -41042,19 +38247,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutActionsWorkoutOptions => 'Antrenman Seçenekleri';
 
   @override
-  String get workoutActionsWorkoutRegenerated =>
-      'Antrenman yeniden oluşturuldu';
+  String get workoutActionsWorkoutRegenerated => 'Antrenman yeniden oluşturuldu';
 
   @override
   String get workoutActionsWorkoutRescheduled => 'Antrenman yeniden planlandı';
 
   @override
-  String get workoutAiCoachAddAMessageOptional =>
-      'Bir mesaj ekle (isteğe bağlı)...';
+  String get workoutAiCoachAddAMessageOptional => 'Bir mesaj ekle (isteğe bağlı)...';
 
   @override
-  String get workoutAiCoachAskMeAnythingAbout =>
-      'Antrenmanın hakkında bana her şeyi sorabilirsin!';
+  String get workoutAiCoachAskMeAnythingAbout => 'Antrenmanın hakkında bana her şeyi sorabilirsin!';
 
   @override
   String get workoutAiCoachChangeCoach => 'Koçu değiştir';
@@ -41161,9 +38363,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenExt1GreatWillBeIncluded(
-    Object suggestedNextVariant,
-  ) {
+  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant) {
     return 'Harika! $suggestedNextVariant gelecekteki antrenmanlara dahil edilecek.';
   }
 
@@ -41178,12 +38378,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenFailedToExtendWorkout =>
-      'Antrenman uzatılamadı. Lütfen tekrar deneyin.';
+  String get workoutCompleteScreenFailedToExtendWorkout => 'Antrenman uzatılamadı. Lütfen tekrar deneyin.';
 
   @override
-  String get workoutCompleteScreenFeelingStrongerToday =>
-      'Bugün kendini daha güçlü hissediyorsun!';
+  String get workoutCompleteScreenFeelingStrongerToday => 'Bugün kendini daha güçlü hissediyorsun!';
 
   @override
   String get workoutCompleteScreenGoBack => 'Geri Dön';
@@ -41212,10 +38410,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenMinSaunaCal(
-    Object _saunaCalories,
-    Object _saunaMinutes,
-  ) {
+  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes) {
     return '$_saunaMinutes dk sauna · ~$_saunaCalories kal';
   }
 
@@ -41223,34 +38418,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutCompleteScreenMood => 'Ruh Hali';
 
   @override
-  String get workoutCompleteScreenNewPersonalRecords =>
-      'YENİ KİŞİSEL REKORLAR!';
+  String get workoutCompleteScreenNewPersonalRecords => 'YENİ KİŞİSEL REKORLAR!';
 
   @override
   String get workoutCompleteScreenNoData => 'Veri yok';
 
   @override
-  String get workoutCompleteScreenNoWorkoutDataTo =>
-      'Henüz paylaşılacak antrenman verisi yok';
+  String get workoutCompleteScreenNoWorkoutDataTo => 'Henüz paylaşılacak antrenman verisi yok';
 
   @override
   String get workoutCompleteScreenNotYet => 'Henüz Değil';
 
   @override
-  String get workoutCompleteScreenNoticeImprovementsInYour =>
-      'Gücünde veya dayanıklılığında gelişmeler fark ettin mi?';
+  String get workoutCompleteScreenNoticeImprovementsInYour => 'Gücünde veya dayanıklılığında gelişmeler fark ettin mi?';
 
   @override
-  String get workoutCompleteScreenPleaseRateYourWorkout =>
-      'Lütfen antrenmanını puanla';
+  String get workoutCompleteScreenPleaseRateYourWorkout => 'Lütfen antrenmanını puanla';
 
   @override
-  String get workoutCompleteScreenRateIndividualExercises =>
-      'Egzersizleri Ayrı Ayrı Puanla';
+  String get workoutCompleteScreenRateIndividualExercises => 'Egzersizleri Ayrı Ayrı Puanla';
 
   @override
-  String get workoutCompleteScreenRatingsHelpOurAi =>
-      'Puanlamalar, yapay zekamızın daha iyi antrenmanlar oluşturmasına yardımcı olur. Yine de atlamak istiyor musun?';
+  String get workoutCompleteScreenRatingsHelpOurAi => 'Puanlamalar, yapay zekamızın daha iyi antrenmanlar oluşturmasına yardımcı olur. Yine de atlamak istiyor musun?';
 
   @override
   String get workoutCompleteScreenReadyToLevelUp => 'SEVİYE ATLAMAYA HAZIR!';
@@ -41277,31 +38466,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutCompleteScreenTotalWorkout => 'TOPLAM ANTRENMAN';
 
   @override
-  String get workoutCompleteScreenTrackYourMoodTo =>
-      'İlerlemeni görmek için ruh halini takip et';
+  String get workoutCompleteScreenTrackYourMoodTo => 'İlerlemeni görmek için ruh halini takip et';
 
   @override
   String get workoutCompleteScreenTrophiesEarned => 'Kazanılan Kupalar!';
 
   @override
-  String get workoutCompleteScreenTrophiesMilestones =>
-      'Kupalar ve Kilometre Taşları';
+  String get workoutCompleteScreenTrophiesMilestones => 'Kupalar ve Kilometre Taşları';
 
   @override
   String get workoutCompleteScreenU1f4aa => '💪';
 
   @override
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
-    Object streak,
-    Object totalWorkouts,
-  ) {
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts) {
     return '$streak günlük seri, toplam $totalWorkouts antrenman';
   }
 
   @override
-  String workoutCompleteScreenUi1MarkedAsTooEasy(
-    Object consecutiveEasySessions,
-  ) {
+  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions) {
     return 'Üst üste $consecutiveEasySessions kez \"çok kolay\" olarak işaretlendi';
   }
 
@@ -41321,20 +38503,15 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2SetsReps(
-    Object currentReps,
-    Object currentSets,
-  ) {
+  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets) {
     return '$currentSets set, $currentReps tekrar';
   }
 
   @override
-  String get workoutCompleteScreenUnableToChallengeFriends =>
-      'Şu anda arkadaşlarına meydan okunamıyor';
+  String get workoutCompleteScreenUnableToChallengeFriends => 'Şu anda arkadaşlarına meydan okunamıyor';
 
   @override
-  String get workoutCompleteScreenUnableToExtendWorkout =>
-      'Antrenman uzatılamadı';
+  String get workoutCompleteScreenUnableToExtendWorkout => 'Antrenman uzatılamadı';
 
   @override
   String get workoutCompleteScreenViewAllMetrics => 'Tüm Metrikleri Görüntüle';
@@ -41351,12 +38528,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenYouDonTHave =>
-      'Henüz hiç arkadaşın yok. Önce birkaç arkadaş ekle!';
+  String get workoutCompleteScreenYouDonTHave => 'Henüz hiç arkadaşın yok. Önce birkaç arkadaş ekle!';
 
   @override
-  String get workoutCompleteScreenYouVeMasteredThese =>
-      'Bu egzersizlerde ustalaştın. Daha zor bir varyasyon denemeye ne dersin?';
+  String get workoutCompleteScreenYouVeMasteredThese => 'Bu egzersizlerde ustalaştın. Daha zor bir varyasyon denemeye ne dersin?';
 
   @override
   String get workoutCompleteSkipRating => 'Puanlamayı atla';
@@ -41377,8 +38552,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutCompleteWorkoutComplete => 'Antrenman Tamamlandı!';
 
   @override
-  String get workoutCompleteYourRatingsHelpUs =>
-      'Puanlamaların, gelecekteki antrenmanlarını kişiselleştirmemize yardımcı oluyor';
+  String get workoutCompleteYourRatingsHelpUs => 'Puanlamaların, gelecekteki antrenmanlarını kişiselleştirmemize yardımcı oluyor';
 
   @override
   String get workoutDayDetailAvgHr => 'Ort. Nabız';
@@ -41411,8 +38585,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDayDetailMusclesWorked => 'Çalışan Kaslar';
 
   @override
-  String get workoutDayDetailRecoveryIsJustAs =>
-      'Toparlanma, antrenman kadar önemlidir. Kasların dinlenirken büyür!';
+  String get workoutDayDetailRecoveryIsJustAs => 'Toparlanma, antrenman kadar önemlidir. Kasların dinlenirken büyür!';
 
   @override
   String get workoutDayDetailRestDay => 'Dinlenme Günü';
@@ -41428,8 +38601,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutDayDetailSyncedFromHealth =>
-      'Health uygulamasından senkronize edildi';
+  String get workoutDayDetailSyncedFromHealth => 'Health uygulamasından senkronize edildi';
 
   @override
   String get workoutDayDetailVolume => 'Hacim';
@@ -41438,12 +38610,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDayDetailWorkoutMissed => 'Antrenman Kaçırıldı';
 
   @override
-  String get workoutDaysChangingWorkoutDaysWill =>
-      'Antrenman günlerini değiştirmek programını güncelleyecektir. Gelecekteki antrenmanlar yeniden oluşturulacaktır.';
+  String get workoutDaysChangingWorkoutDaysWill => 'Antrenman günlerini değiştirmek programını güncelleyecektir. Gelecekteki antrenmanlar yeniden oluşturulacaktır.';
 
   @override
-  String get workoutDaysSelectWhichDaysYou =>
-      'Hangi günlerde antrenman yapmak istediğini seç';
+  String get workoutDaysSelectWhichDaysYou => 'Hangi günlerde antrenman yapmak istediğini seç';
 
   @override
   String workoutDaysSelectorDaysWeek(Object length) {
@@ -41451,8 +38621,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutDaysSelectorSelectWhichDaysYou =>
-      'Hangi günlerde antrenman yapmak istediğini seç';
+  String get workoutDaysSelectorSelectWhichDaysYou => 'Hangi günlerde antrenman yapmak istediğini seç';
 
   @override
   String get workoutDaysSelectorWorkoutDays => 'Antrenman Günleri';
@@ -41469,8 +38638,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailAddSaunaTime => 'Sauna Süresi Ekle';
 
   @override
-  String get workoutDetailAiAiGenerationParameters =>
-      'Yapay Zeka Oluşturma Parametreleri';
+  String get workoutDetailAiAiGenerationParameters => 'Yapay Zeka Oluşturma Parametreleri';
 
   @override
   String get workoutDetailAiAiInsights => 'YAPAY ZEKA İÇGÖRÜLERİ';
@@ -41482,8 +38650,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailAiGeneratingInsights => 'İçgörüler oluşturuluyor...';
 
   @override
-  String get workoutDetailAiGeneratingNewInsights =>
-      'Yeni içgörüler oluşturuluyor...';
+  String get workoutDetailAiGeneratingNewInsights => 'Yeni içgörüler oluşturuluyor...';
 
   @override
   String workoutDetailAiInsightsMin(Object durationMinutes) {
@@ -41501,8 +38668,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailAiLoadingAiReasoning =>
-      'Yapay zeka mantığı yükleniyor...';
+  String get workoutDetailAiLoadingAiReasoning => 'Yapay zeka mantığı yükleniyor...';
 
   @override
   String get workoutDetailAiProgramPreferences => 'Program Tercihleri';
@@ -41511,19 +38677,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailAiRegenerateInsights => 'İçgörüleri yeniden oluştur';
 
   @override
-  String get workoutDetailAiTapToSeeAi =>
-      'Egzersiz seçimi için yapay zeka mantığını görmek üzere dokun';
+  String get workoutDetailAiTapToSeeAi => 'Egzersiz seçimi için yapay zeka mantığını görmek üzere dokun';
 
   @override
-  String get workoutDetailAiTheseParametersWereUsed =>
-      'Bu parametreler, yapay zeka tarafından fitness seviyene, hedeflerine ve mevcut ekipmanına uygun kişiselleştirilmiş egzersizler oluşturmak için kullanılmıştır.';
+  String get workoutDetailAiTheseParametersWereUsed => 'Bu parametreler, yapay zeka tarafından fitness seviyene, hedeflerine ve mevcut ekipmanına uygun kişiselleştirilmiş egzersizler oluşturmak için kullanılmıştır.';
 
   @override
   String get workoutDetailAiUserProfile => 'Kullanıcı Profili';
 
   @override
-  String get workoutDetailAiViewAllParametersSent =>
-      'Yapay Zekaya Gönderilen Tüm Parametreleri Görüntüle';
+  String get workoutDetailAiViewAllParametersSent => 'Yapay Zekaya Gönderilen Tüm Parametreleri Görüntüle';
 
   @override
   String get workoutDetailAiWhyTheseExercises => 'NEDEN BU EGZERSİZLER?';
@@ -41553,8 +38716,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailHelpersHell => 'Cehennem';
 
   @override
-  String get workoutDetailHelpersUpdatingExercises =>
-      'Egzersizler Güncelleniyor';
+  String get workoutDetailHelpersUpdatingExercises => 'Egzersizler Güncelleniyor';
 
   @override
   String get workoutDetailMoreInfo => 'DAHA FAZLA BİLGİ';
@@ -41579,38 +38741,31 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenCannotMergeSupersets =>
-      'Superset\'ler Birleştirilemiyor';
+  String get workoutDetailScreenCannotMergeSupersets => 'Superset\'ler Birleştirilemiyor';
 
   @override
-  String get workoutDetailScreenCannotRemoveTheLast =>
-      'Son egzersiz kaldırılamaz';
+  String get workoutDetailScreenCannotRemoveTheLast => 'Son egzersiz kaldırılamaz';
 
   @override
   String get workoutDetailScreenChallenge => 'MEYDAN OKUMA';
 
   @override
-  String get workoutDetailScreenDiscardTheEquipmentChange =>
-      'Ekipman değişikliğini tamamen iptal et.';
+  String get workoutDetailScreenDiscardTheEquipmentChange => 'Ekipman değişikliğini tamamen iptal et.';
 
   @override
   String get workoutDetailScreenEquipmentUpdated => 'Ekipman güncellendi';
 
   @override
-  String get workoutDetailScreenFailedToBlockExercise =>
-      'Egzersiz engellenemedi';
+  String get workoutDetailScreenFailedToBlockExercise => 'Egzersiz engellenemedi';
 
   @override
-  String get workoutDetailScreenFailedToRemoveExercise =>
-      'Egzersiz kaldırılamadı';
+  String get workoutDetailScreenFailedToRemoveExercise => 'Egzersiz kaldırılamadı';
 
   @override
-  String get workoutDetailScreenFailedToUpdateFavorite =>
-      'Favori güncellenemedi';
+  String get workoutDetailScreenFailedToUpdateFavorite => 'Favori güncellenemedi';
 
   @override
-  String get workoutDetailScreenKeepThisSessionUnchanged =>
-      'Bu oturumu değiştirme. Yeni ekipman gelecek antrenmanlara uygulanacak.';
+  String get workoutDetailScreenKeepThisSessionUnchanged => 'Bu oturumu değiştirme. Yeni ekipman gelecek antrenmanlara uygulanacak.';
 
   @override
   String get workoutDetailScreenLetSGo => 'Hadi Başlayalım';
@@ -41641,8 +38796,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailScreenRevertToOriginal => 'Orijinale Geri Dön?';
 
   @override
-  String get workoutDetailScreenSaveForNextWorkout =>
-      'Bir sonraki antrenman için kaydet';
+  String get workoutDetailScreenSaveForNextWorkout => 'Bir sonraki antrenman için kaydet';
 
   @override
   String get workoutDetailScreenSaveToProfile => 'Profile Kaydet?';
@@ -41651,24 +38805,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutDetailScreenSupersetCreated => 'Superset oluşturuldu!';
 
   @override
-  String get workoutDetailScreenSwapThoseExercisesIn =>
-      'Bu oturumdaki egzersizleri değiştir. Tamamlanan setlerin kayıtlı kalacak.';
+  String get workoutDetailScreenSwapThoseExercisesIn => 'Bu oturumdaki egzersizleri değiştir. Tamamlanan setlerin kayıtlı kalacak.';
 
   @override
-  String get workoutDetailScreenTapAnotherExerciseTo =>
-      'Superset olarak bağlamak için başka bir egzersize dokun';
+  String get workoutDetailScreenTapAnotherExerciseTo => 'Superset olarak bağlamak için başka bir egzersize dokun';
 
   @override
-  String get workoutDetailScreenThisIsAnOptional =>
-      'Bu isteğe bağlı, ileri seviye bir egzersizdir. Hazır hissettiğinde dene!';
+  String get workoutDetailScreenThisIsAnOptional => 'Bu isteğe bağlı, ileri seviye bir egzersizdir. Hazır hissettiğinde dene!';
 
   @override
-  String get workoutDetailScreenThisWillRestoreAll =>
-      'Bu işlem, ekipman değişiklikleri uygulanmadan önceki tüm egzersizleri orijinal durumuna döndürecektir.';
+  String get workoutDetailScreenThisWillRestoreAll => 'Bu işlem, ekipman değişiklikleri uygulanmadan önceki tüm egzersizleri orijinal durumuna döndürecektir.';
 
   @override
-  String get workoutDetailScreenThisWillUnlinkThese =>
-      'Bu işlem, bu egzersizlerin bağlantısını kaldırarak ayrı ayrı yapılmalarını sağlayacaktır.';
+  String get workoutDetailScreenThisWillUnlinkThese => 'Bu işlem, bu egzersizlerin bağlantısını kaldırarak ayrı ayrı yapılmalarını sağlayacaktır.';
 
   @override
   String workoutDetailScreenUi1AddToCreateA(Object name, Object newSetType) {
@@ -41721,8 +38870,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenWouldYouLikeTo =>
-      'Bu ekipman yapılandırmasını gelecekteki antrenmanlar için profilinize kaydetmek ister misiniz?';
+  String get workoutDetailScreenWouldYouLikeTo => 'Bu ekipman yapılandırmasını gelecekteki antrenmanlar için profilinize kaydetmek ister misiniz?';
 
   @override
   String get workoutDetailScreenYesSave => 'Evet, Kaydet';
@@ -41755,8 +38903,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutFlowMixinKeepGoing => 'Devam et';
 
   @override
-  String get workoutGalleryCompleteAWorkoutAnd =>
-      'Galerini başlatmak için bir antrenmanı tamamla\nve paylaş';
+  String get workoutGalleryCompleteAWorkoutAnd => 'Galerini başlatmak için bir antrenmanı tamamla\nve paylaş';
 
   @override
   String get workoutGalleryDeleteImage => 'Görseli Sil?';
@@ -41768,8 +38915,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutGalleryShareAgain => 'Tekrar Paylaş';
 
   @override
-  String get workoutGalleryThisWillRemoveThe =>
-      'Bu işlem görseli galerinden kaldıracaktır.';
+  String get workoutGalleryThisWillRemoveThe => 'Bu işlem görseli galerinden kaldıracaktır.';
 
   @override
   String get workoutGalleryWorkoutGallery => 'Antrenman Galerisi';
@@ -41781,20 +38927,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutGenerate => 'Antrenman üret';
 
   @override
-  String get workoutGenerationAnalyzingYourFitnessProfile =>
-      'Fitness profilin analiz ediliyor';
+  String get workoutGenerationAnalyzingYourFitnessProfile => 'Fitness profilin analiz ediliyor';
 
   @override
-  String get workoutGenerationDesigningYourTrainingSplit =>
-      'Antrenman programın tasarlanıyor';
+  String get workoutGenerationDesigningYourTrainingSplit => 'Antrenman programın tasarlanıyor';
 
   @override
-  String get workoutGenerationFinalizingYourPlan =>
-      'Planın son haline getiriliyor';
+  String get workoutGenerationFinalizingYourPlan => 'Planın son haline getiriliyor';
 
   @override
-  String get workoutGenerationGeneratingYourPersonalizedP =>
-      'Kişiselleştirilmiş planın oluşturuluyor';
+  String get workoutGenerationGeneratingYourPersonalizedP => 'Kişiselleştirilmiş planın oluşturuluyor';
 
   @override
   String get workoutGenerationGeneratingYourPlan => 'Planın Oluşturuluyor';
@@ -41803,12 +38945,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutGenerationGenerationFailed => 'Oluşturma Başarısız';
 
   @override
-  String get workoutGenerationOptimizingWorkoutStructure =>
-      'Antrenman yapısı optimize ediliyor';
+  String get workoutGenerationOptimizingWorkoutStructure => 'Antrenman yapısı optimize ediliyor';
 
   @override
-  String get workoutGenerationSelectingExercisesForYour =>
-      'Hedeflerine uygun egzersizler seçiliyor';
+  String get workoutGenerationSelectingExercisesForYour => 'Hedeflerine uygun egzersizler seçiliyor';
 
   @override
   String get workoutGenerationSomethingWentWrong => 'Bir şeyler ters gitti';
@@ -41829,12 +38969,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutHistoryImportAddToHistory => 'Geçmişe Ekle';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout =>
-      'Geçmiş antrenman verilerini ekle, böylece AI güç seviyene uygun ağırlıklarla antrenmanlar oluşturabilsin.';
+  String get workoutHistoryImportAddYourPastWorkout => 'Geçmiş antrenman verilerini ekle, böylece AI güç seviyene uygun ağırlıklarla antrenmanlar oluşturabilsin.';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout2 =>
-      'AI\'nın senin için daha iyi antrenmanlar oluşturmasına yardımcı olmak için yukarıya geçmiş antrenman verilerini ekle.';
+  String get workoutHistoryImportAddYourPastWorkout2 => 'AI\'nın senin için daha iyi antrenmanlar oluşturmasına yardımcı olmak için yukarıya geçmiş antrenman verilerini ekle.';
 
   @override
   String get workoutHistoryImportAppleHealth => 'Apple Health';
@@ -41878,8 +39016,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutHistoryImportExerciseName => 'Egzersiz Adı';
 
   @override
-  String get workoutHistoryImportExportFromHevy =>
-      'Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton ve daha fazlasından dışa aktarın.';
+  String get workoutHistoryImportExportFromHevy => 'Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton ve daha fazlasından dışa aktarın.';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -41902,8 +39039,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutHistoryImportImportFromFile => 'Dosyadan içe aktar';
 
   @override
-  String get workoutHistoryImportImportWorkoutHistory =>
-      'Antrenman Geçmişini İçe Aktar';
+  String get workoutHistoryImportImportWorkoutHistory => 'Antrenman Geçmişini İçe Aktar';
 
   @override
   String get workoutHistoryImportInvalid => 'Geçersiz';
@@ -41928,22 +39064,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutHistoryImportNoWorkoutHistoryYet =>
-      'Henüz antrenman geçmişi yok';
+  String get workoutHistoryImportNoWorkoutHistoryYet => 'Henüz antrenman geçmişi yok';
 
   @override
   String get workoutHistoryImportNsuns => 'nSuns';
 
   @override
-  String get workoutHistoryImportOtherGenericSpreadsheet =>
-      'Diğer / genel elektronik tablo';
+  String get workoutHistoryImportOtherGenericSpreadsheet => 'Diğer / genel elektronik tablo';
 
   @override
   String get workoutHistoryImportPeloton => 'Peloton';
 
   @override
-  String get workoutHistoryImportPleaseEnterExerciseName =>
-      'Lütfen bir egzersiz adı girin';
+  String get workoutHistoryImportPleaseEnterExerciseName => 'Lütfen bir egzersiz adı girin';
 
   @override
   String get workoutHistoryImportPoundsLb => 'Pound (lb)';
@@ -41960,8 +39093,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutHistoryImportRenaissancePeriodization =>
-      'Renaissance Periodization';
+  String get workoutHistoryImportRenaissancePeriodization => 'Renaissance Periodization';
 
   @override
   String get workoutHistoryImportReps => 'Tekrar';
@@ -41975,11 +39107,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutHistoryImportScreenSetsRepsKg(
-    Object reps,
-    Object sets,
-    Object weightKg,
-  ) {
+  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg) {
     return '$sets set × $reps tekrar @ $weightKg kg';
   }
 
@@ -42002,12 +39130,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutHistoryImportStronglifts => 'StrongLifts';
 
   @override
-  String get workoutHistoryImportSupportsCsvXlsxXlsm =>
-      'CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP desteklenir.';
+  String get workoutHistoryImportSupportsCsvXlsxXlsm => 'CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP desteklenir.';
 
   @override
-  String get workoutHistoryImportTheAiUsesThis =>
-      'Yapay zeka, uygun ağırlıkları belirlemek için bu verileri kullanır';
+  String get workoutHistoryImportTheAiUsesThis => 'Yapay zeka, uygun ağırlıkları belirlemek için bu verileri kullanır';
 
   @override
   String get workoutHistoryImportViewAll => 'Tümünü Görüntüle';
@@ -42022,8 +39148,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutHistoryImportWendler531 => 'Wendler 5/3/1';
 
   @override
-  String get workoutHistoryImportWhichUnitIsThe =>
-      'Ağırlık sütunu hangi birimde? Ayrıca kaynak uygulamayı biliyorsanız lütfen seçin; bu, benzer formatları (Hevy ve Strong CSV\'leri gibi) ayırt etmeye yardımcı olur.';
+  String get workoutHistoryImportWhichUnitIsThe => 'Ağırlık sütunu hangi birimde? Ayrıca kaynak uygulamayı biliyorsanız lütfen seçin; bu, benzer formatları (Hevy ve Strong CSV\'leri gibi) ayırt etmeye yardımcı olur.';
 
   @override
   String get workoutHistoryImportYourStrengthData => 'Güç Verileriniz';
@@ -42064,8 +39189,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutImportHowHardWasThis => 'Bu antrenman ne kadar zordu?';
 
   @override
-  String get workoutImportImportAsSeparateWorkout =>
-      'Ayrı bir antrenman olarak içe aktar';
+  String get workoutImportImportAsSeparateWorkout => 'Ayrı bir antrenman olarak içe aktar';
 
   @override
   String get workoutImportImportWorkout => 'Antrenmanı İçe Aktar';
@@ -42083,15 +39207,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutImportPreviewHeadsUp => 'Dikkat';
 
   @override
-  String get workoutImportPreviewLooksRightImport =>
-      'Doğru görünüyor — İçe Aktar';
+  String get workoutImportPreviewLooksRightImport => 'Doğru görünüyor — İçe Aktar';
 
   @override
   String get workoutImportPreviewNo => 'Hayır';
 
   @override
-  String get workoutImportPreviewNoSampleRowsProduced =>
-      'Örnek satır oluşturulamadı (dosya boş veya tanınmıyor olabilir).';
+  String get workoutImportPreviewNoSampleRowsProduced => 'Örnek satır oluşturulamadı (dosya boş veya tanınmıyor olabilir).';
 
   @override
   String get workoutImportPreviewPreviewImport => 'İçe aktarmayı önizle';
@@ -42121,19 +39243,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutImportPreviewTemplate => 'Şablon';
 
   @override
-  String get workoutImportPreviewTheseWillStillImport =>
-      'Bunlar yine de içe aktarılacaktır; işlem bittikten sonra bunları standart isimlerle eşleştirebilirsiniz.';
+  String get workoutImportPreviewTheseWillStillImport => 'Bunlar yine de içe aktarılacaktır; işlem bittikten sonra bunları standart isimlerle eşleştirebilirsiniz.';
 
   @override
   String get workoutImportPreviewUnmatchedExercises => 'Eşleşmeyen egzersizler';
 
   @override
-  String get workoutImportProgressImportIsStillIn =>
-      'İçe aktarma devam ediyor — lütfen bekleyin.';
+  String get workoutImportProgressImportIsStillIn => 'İçe aktarma devam ediyor — lütfen bekleyin.';
 
   @override
-  String get workoutImportProgressImportingWorkoutHistory =>
-      'Antrenman geçmişi içe aktarılıyor';
+  String get workoutImportProgressImportingWorkoutHistory => 'Antrenman geçmişi içe aktarılıyor';
 
   @override
   String workoutImportProgressSheetJobId(Object jobId) {
@@ -42141,8 +39260,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutImportProgressThisUsuallyFinishesIn =>
-      'Bu işlem genellikle 10–30 saniye sürer.';
+  String get workoutImportProgressThisUsuallyFinishesIn => 'Bu işlem genellikle 10–30 saniye sürer.';
 
   @override
   String get workoutImportRunning => 'Koşu';
@@ -42172,12 +39290,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutImportSummaryActivateProgram => 'Programı etkinleştir';
 
   @override
-  String get workoutImportSummaryCardioSessionsAdded =>
-      'Kardiyo seansları eklendi';
+  String get workoutImportSummaryCardioSessionsAdded => 'Kardiyo seansları eklendi';
 
   @override
-  String get workoutImportSummaryCreatorProgramDetected =>
-      'Oluşturucu programı algılandı';
+  String get workoutImportSummaryCreatorProgramDetected => 'Oluşturucu programı algılandı';
 
   @override
   String get workoutImportSummaryDuplicatesSkipped => 'Yinelenenler atlandı';
@@ -42205,31 +39321,25 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutImportSummaryStrengthSetsAdded =>
-      'Güç antrenmanı setleri eklendi';
+  String get workoutImportSummaryStrengthSetsAdded => 'Güç antrenmanı setleri eklendi';
 
   @override
-  String get workoutImportSummaryTheseRowsWereImported =>
-      'Bu satırlar içe aktarıldı ancak henüz bir kütüphane egzersiziyle eşleştirilmedi. Bunları eşleştirmek, ağırlık önerilerini ve grafikleri iyileştirir.';
+  String get workoutImportSummaryTheseRowsWereImported => 'Bu satırlar içe aktarıldı ancak henüz bir kütüphane egzersiziyle eşleştirilmedi. Bunları eşleştirmek, ağırlık önerilerini ve grafikleri iyileştirir.';
 
   @override
-  String get workoutImportSummaryUnknownErrorPleaseTry =>
-      'Bilinmeyen bir hata oluştu — lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.';
+  String get workoutImportSummaryUnknownErrorPleaseTry => 'Bilinmeyen bir hata oluştu — lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.';
 
   @override
   String get workoutImportSummaryWarnings => 'Uyarılar';
 
   @override
-  String get workoutImportSummaryWeCouldnTFinish =>
-      'İçe aktarma işleminizi tamamlayamadık.';
+  String get workoutImportSummaryWeCouldnTFinish => 'İçe aktarma işleminizi tamamlayamadık.';
 
   @override
-  String get workoutImportSummaryWeParsedAMulti =>
-      'Çok haftalı bir program şablonu ayrıştırdık. Etkinleştirdiğinizde, antrenmanlar önümüzdeki Pazartesi gününden itibaren planlanacaktır.';
+  String get workoutImportSummaryWeParsedAMulti => 'Çok haftalı bir program şablonu ayrıştırdık. Etkinleştirdiğinizde, antrenmanlar önümüzdeki Pazartesi gününden itibaren planlanacaktır.';
 
   @override
-  String get workoutImportSummaryWeightSuggestionsAcrossThe =>
-      'Uygulama genelindeki ağırlık önerileri, bir dakika içinde bu geçmişi yansıtmaya başlayacaktır.';
+  String get workoutImportSummaryWeightSuggestionsAcrossThe => 'Uygulama genelindeki ağırlık önerileri, bir dakika içinde bu geçmişi yansıtmaya başlayacaktır.';
 
   @override
   String get workoutImportSwimming => 'Yüzme';
@@ -42286,8 +39396,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutMiniPlayerYourWorkoutProgressWill =>
-      'Antrenman ilerlemeniz kaydedilmeyecektir.';
+  String get workoutMiniPlayerYourWorkoutProgressWill => 'Antrenman ilerlemeniz kaydedilmeyecektir.';
 
   @override
   String get workoutOptionsDismissQuickWorkout => 'Hızlı Antrenmanı Kapat?';
@@ -42324,20 +39433,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutOptionsSkipWorkout => 'Antrenmanı Atla?';
 
   @override
-  String get workoutOptionsThisWillMarkThe =>
-      'Bu, antrenmanı setleri takip etmeden tamamlandı olarak işaretleyecektir.';
+  String get workoutOptionsThisWillMarkThe => 'Bu, antrenmanı setleri takip etmeden tamamlandı olarak işaretleyecektir.';
 
   @override
-  String get workoutOptionsThisWorkoutWillBe =>
-      'Bu antrenman atlandı olarak işaretlenecektir.';
+  String get workoutOptionsThisWorkoutWillBe => 'Bu antrenman atlandı olarak işaretlenecektir.';
 
   @override
-  String get workoutPermissionsPrimeGotItLetU2019s =>
-      'Anlaşıldı, hadi başlayalım';
+  String get workoutPermissionsPrimeGotItLetU2019s => 'Anlaşıldı, hadi başlayalım';
 
   @override
-  String get workoutPermissionsPrimeLetsUsAutoConnect =>
-      'Yakınlarda varsa bir BLE kalp atış hızı bandını otomatik olarak bağlamamızı sağlar.';
+  String get workoutPermissionsPrimeLetsUsAutoConnect => 'Yakınlarda varsa bir BLE kalp atış hızı bandını otomatik olarak bağlamamızı sağlar.';
 
   @override
   String get workoutPermissionsPrimeMicrophone => 'Mikrofon';
@@ -42346,15 +39451,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutPermissionsPrimeNearbyDevices => 'Yakındaki cihazlar';
 
   @override
-  String get workoutPermissionsPrimeTapTheMicMid =>
-      'Set sırasında soru sormak veya sesli not almak için mikrofona dokunun.';
+  String get workoutPermissionsPrimeTapTheMicMid => 'Set sırasında soru sormak veya sesli not almak için mikrofona dokunun.';
 
   @override
   String get workoutPermissionsPrimeTwoQuickHeadsUps => 'İki kısa hatırlatma';
 
   @override
-  String get workoutPermissionsPrimeYouMaySeeThese =>
-      'Antrenmanınız sırasında bu sistem uyarılarını görebilirsiniz. Her ikisi de isteğe bağlıdır; ikisini de atlayabilirsiniz, antrenman yine de çalışacaktır.';
+  String get workoutPermissionsPrimeYouMaySeeThese => 'Antrenmanınız sırasında bu sistem uyarılarını görebilirsiniz. Her ikisi de isteğe bağlıdır; ikisini de atlayabilirsiniz, antrenman yine de çalışacaktır.';
 
   @override
   String get workoutPlanDrawerAddExercise => 'Egzersiz Ekle';
@@ -42379,8 +39482,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutPlanDrawerRemoveExerciseTooltip =>
-      'Egzersizi kaldır araç ipucu';
+  String get workoutPlanDrawerRemoveExerciseTooltip => 'Egzersizi kaldır araç ipucu';
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
@@ -42397,15 +39499,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutPlanDrawerWorkoutPlan => 'Antrenman Planı';
 
   @override
-  String get workoutPlannerCalendarDisplayOptions =>
-      'Takvim görüntüleme seçenekleri';
+  String get workoutPlannerCalendarDisplayOptions => 'Takvim görüntüleme seçenekleri';
 
   @override
   String get workoutPlannerMon => 'Pzt';
 
   @override
-  String get workoutPlannerShowSyncedWorkouts =>
-      'Senkronize edilen antrenmanları göster';
+  String get workoutPlannerShowSyncedWorkouts => 'Senkronize edilen antrenmanları göster';
 
   @override
   String get workoutPlannerStartWeekOnMonday => 'Haftayı Pazartesi başlat';
@@ -42476,16 +39576,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutReviewYourWorkout => 'Antrenmanınız';
 
   @override
-  String get workoutSettingsAddPastWorkoutsFor =>
-      'Daha iyi AI ağırlık önerileri için geçmiş antrenmanları ekleyin';
+  String get workoutSettingsAddPastWorkoutsFor => 'Daha iyi AI ağırlık önerileri için geçmiş antrenmanları ekleyin';
 
   @override
-  String get workoutSettingsAutoDeloadDeloadFrequency =>
-      'Otomatik deload, deload sıklığı ve ilerleme haftaları';
+  String get workoutSettingsAutoDeloadDeloadFrequency => 'Otomatik deload, deload sıklığı ve ilerleme haftaları';
 
   @override
-  String get workoutSettingsCustomizeWhichExercisesAppe =>
-      'Antrenmanlarda hangi egzersizlerin görüneceğini özelleştirin';
+  String get workoutSettingsCustomizeWhichExercisesAppe => 'Antrenmanlarda hangi egzersizlerin görüneceğini özelleştirin';
 
   @override
   String get workoutSettingsExercisePreferences => 'EGZERSİZ TERCİHLERİ';
@@ -42494,32 +39591,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSettingsFatigueDetection => 'Yorgunluk Algılama';
 
   @override
-  String get workoutSettingsFavoritesAvoidedAndQueue =>
-      'Favoriler, kaçınılanlar ve sıra';
+  String get workoutSettingsFavoritesAvoidedAndQueue => 'Favoriler, kaçınılanlar ve sıra';
 
   @override
-  String get workoutSettingsHowFastToIncrease =>
-      'Ağırlıkların ne kadar hızlı artacağı';
+  String get workoutSettingsHowFastToIncrease => 'Ağırlıkların ne kadar hızlı artacağı';
 
   @override
-  String get workoutSettingsHowHeavyAndHow =>
-      'Ne kadar ağır ve ne kadar hızlı ilerlediğiniz';
+  String get workoutSettingsHowHeavyAndHow => 'Ne kadar ağır ve ne kadar hızlı ilerlediğiniz';
 
   @override
-  String get workoutSettingsHowMuchExercisesChange =>
-      'Egzersizlerin her hafta ne kadar değişeceği';
+  String get workoutSettingsHowMuchExercisesChange => 'Egzersizlerin her hafta ne kadar değişeceği';
 
   @override
-  String get workoutSettingsHowWeightsAreDisplayed =>
-      'Ağırlıkların nasıl görüntülendiği ve kaydedildiği';
+  String get workoutSettingsHowWeightsAreDisplayed => 'Ağırlıkların nasıl görüntülendiği ve kaydedildiği';
 
   @override
-  String get workoutSettingsImportWorkoutHistory =>
-      'Antrenman Geçmişini İçe Aktar';
+  String get workoutSettingsImportWorkoutHistory => 'Antrenman Geçmişini İçe Aktar';
 
   @override
-  String get workoutSettingsIncompleteExerciseWarning =>
-      'Tamamlanmamış Egzersiz Uyarısı';
+  String get workoutSettingsIncompleteExerciseWarning => 'Tamamlanmamış Egzersiz Uyarısı';
 
   @override
   String get workoutSettingsLiveCoaching => 'CANLI KOÇLUK';
@@ -42557,8 +39647,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSettingsPushPullLegsFull => 'Push/Pull/Legs, Tüm Vücut vb.';
 
   @override
-  String get workoutSettingsStrengthCardioOrMixed =>
-      'Güç, kardiyo veya karışık';
+  String get workoutSettingsStrengthCardioOrMixed => 'Güç, kardiyo veya karışık';
 
   @override
   String get workoutSettingsTrainingIntensity => 'Antrenman Yoğunluğu';
@@ -42567,19 +39656,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSettingsTrainingSplit => 'Antrenman Bölünmesi';
 
   @override
-  String get workoutSettingsUnitForLoggingExercise =>
-      'Antrenman sırasında ağırlık kaydetme birimi';
+  String get workoutSettingsUnitForLoggingExercise => 'Antrenman sırasında ağırlık kaydetme birimi';
 
   @override
   String get workoutSettingsUnitsTracking => 'BİRİMLER VE TAKİP';
 
   @override
-  String get workoutSettingsViewAndEditYour =>
-      'Maksimum kaldırışlarınızı görüntüleyin ve düzenleyin';
+  String get workoutSettingsViewAndEditYour => 'Maksimum kaldırışlarınızı görüntüleyin ve düzenleyin';
 
   @override
-  String get workoutSettingsVisualizeStrengthVolumeOv =>
-      'Zaman içindeki güç ve hacmi görselleştirin';
+  String get workoutSettingsVisualizeStrengthVolumeOv => 'Zaman içindeki güç ve hacmi görselleştirin';
 
   @override
   String get workoutSettingsWeeklyVariety => 'Haftalık Çeşitlilik';
@@ -42588,19 +39674,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSettingsWeightIncrements => 'Ağırlık Artışları';
 
   @override
-  String get workoutSettingsWhatHappensDuringA =>
-      'Antrenman sırasında neler olduğu';
+  String get workoutSettingsWhatHappensDuringA => 'Antrenman sırasında neler olduğu';
 
   @override
   String get workoutSettingsWhatYouTrainAnd => 'Ne zaman ve ne çalıştığınız';
 
   @override
-  String get workoutSettingsWhichDaysYouTrain =>
-      'Hangi günlerde antrenman yaptığınız';
+  String get workoutSettingsWhichDaysYouTrain => 'Hangi günlerde antrenman yaptığınız';
 
   @override
-  String get workoutSettingsWorkAtAPercentage =>
-      'Maksimumunuzun bir yüzdesiyle çalışın';
+  String get workoutSettingsWorkAtAPercentage => 'Maksimumunuzun bir yüzdesiyle çalışın';
 
   @override
   String get workoutSettingsWorkoutDays => 'Antrenman Günleri';
@@ -42615,12 +39698,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSettingsWorkoutWeightUnit => 'Antrenman Ağırlık Birimi';
 
   @override
-  String get workoutSheetsMixinAiCoachHiddenFor =>
-      'AI Coach bu seans için gizlendi';
+  String get workoutSheetsMixinAiCoachHiddenFor => 'AI Coach bu seans için gizlendi';
 
   @override
-  String get workoutSheetsMixinAiTargetsWillBe =>
-      'AI hedefleri geçmişinize göre oluşturulacak.';
+  String get workoutSheetsMixinAiTargetsWillBe => 'AI hedefleri geçmişinize göre oluşturulacak.';
 
   @override
   String get workoutSheetsMixinBarType => 'Bar Tipi';
@@ -42629,8 +39710,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSheetsMixinBreakSuperset => 'Superset\'i Boz';
 
   @override
-  String get workoutSheetsMixinChangeRepsProgression =>
-      'Tekrar İlerlemesini Değiştir';
+  String get workoutSheetsMixinChangeRepsProgression => 'Tekrar İlerlemesini Değiştir';
 
   @override
   String get workoutSheetsMixinCreateSuperset => 'Superset Oluştur';
@@ -42666,16 +39746,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutSheetsMixinNoPreviousDataFor =>
-      'Bu egzersiz için önceki veri bulunamadı.';
+  String get workoutSheetsMixinNoPreviousDataFor => 'Bu egzersiz için önceki veri bulunamadı.';
 
   @override
-  String get workoutSheetsMixinOrDragExercisesTogether =>
-      'Veya daha fazlasını eklemek için egzersizleri sürükleyip birleştirin';
+  String get workoutSheetsMixinOrDragExercisesTogether => 'Veya daha fazlasını eklemek için egzersizleri sürükleyip birleştirin';
 
   @override
-  String get workoutSheetsMixinSelectTheTypeOf =>
-      'Kullandığınız bar tipini seçin';
+  String get workoutSheetsMixinSelectTheTypeOf => 'Kullandığınız bar tipini seçin';
 
   @override
   String get workoutSheetsMixinSetTargets => 'Hedefleri Belirle';
@@ -42684,12 +39761,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSheetsMixinSupersetRemoved => 'Superset kaldırıldı';
 
   @override
-  String get workoutSheetsMixinSupersetsHelpYouSave =>
-      'Superset\'ler, egzersizler arasında minimum dinlenme ile geçiş yaparak zaman kazanmanıza yardımcı olur.';
+  String get workoutSheetsMixinSupersetsHelpYouSave => 'Superset\'ler, egzersizler arasında minimum dinlenme ile geçiş yaparak zaman kazanmanıza yardımcı olur.';
 
   @override
-  String get workoutSheetsMixinTheAiCoachWill =>
-      'AI Coach bu antrenman seansı için gizlenecek. Ayarlar kısmından tekrar erişebilirsiniz.';
+  String get workoutSheetsMixinTheAiCoachWill => 'AI Coach bu antrenman seansı için gizlenecek. Ayarlar kısmından tekrar erişebilirsiniz.';
 
   @override
   String workoutSheetsMixinUiChangedTo(Object displayName) {
@@ -42708,15 +39783,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSheetsMixinWarmUp => 'Isınma';
 
   @override
-  String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Isınmak sakatlanmaları önlemeye ve performansı artırmaya yardımcı olur.\n\nÖnerilen: Çalışma setlerinden önce 1-2 hafif set.';
+  String get workoutSheetsMixinWarmingUpHelpsPrevent => 'Isınmak sakatlanmaları önlemeye ve performansı artırmaya yardımcı olur.\n\nÖnerilen: Çalışma setlerinden önce 1-2 hafif set.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';
 
   @override
-  String get workoutShowcaseViralFormatsTap =>
-      'Antrenman ve öğünler için 200+ viral format — önizlemek için dokun';
+  String get workoutShowcaseViralFormatsTap => 'Antrenman ve öğünler için 200+ viral format — önizlemek için dokun';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM TAHMİNİ';
@@ -42743,8 +39816,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcaseAllSetsLogged => '✓ Tüm setler kaydedildi';
 
   @override
-  String get workoutShowcaseAllSetsLoggedProgression =>
-      'Tüm setler kaydedildi — ilerleme devam ediyor';
+  String get workoutShowcaseAllSetsLoggedProgression => 'Tüm setler kaydedildi — ilerleme devam ediyor';
 
   @override
   String get workoutShowcaseAskCoach => 'Koça sor';
@@ -42848,8 +39920,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcaseFormatWrapped => 'Özet';
 
   @override
-  String get workoutShowcaseHowYourWeightReps =>
-      'Ağırlık ve tekrar sayınızın setler boyunca gelişimi.';
+  String get workoutShowcaseHowYourWeightReps => 'Ağırlık ve tekrar sayınızın setler boyunca gelişimi.';
 
   @override
   String get workoutShowcaseInfo => 'Bilgi';
@@ -42858,8 +39929,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcaseInstructions => 'Talimatlar';
 
   @override
-  String get workoutShowcaseIntroSubtitle =>
-      'Zealova her seti yönlendirir — ve ağırlıklarını otomatik yükseltir 💪';
+  String get workoutShowcaseIntroSubtitle => 'Zealova her seti yönlendirir — ve ağırlıklarını otomatik yükseltir 💪';
 
   @override
   String get workoutShowcaseIntroTitle => 'İlk antrenmanına başlayalım';
@@ -42894,11 +39964,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcaseNewPr => 'YENİ PR';
 
   @override
-  String workoutShowcaseNextTargetRaised(
-    Object delta,
-    Object set,
-    Object weight,
-  ) {
+  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight) {
     return 'Set $set kaydedildi — sonraki hedef $weight lb\'ye yükseldi (+$delta lb)';
   }
 
@@ -42909,12 +39975,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcasePlan => 'Plan';
 
   @override
-  String get workoutShowcasePlanAutoAdjustsNext =>
-      'Plan bir sonraki seansı otomatik ayarlar — ağırlık ve tekrarlar gerçek performansınıza göre yeniden kalibre edilir.';
+  String get workoutShowcasePlanAutoAdjustsNext => 'Plan bir sonraki seansı otomatik ayarlar — ağırlık ve tekrarlar gerçek performansınıza göre yeniden kalibre edilir.';
 
   @override
-  String get workoutShowcasePoweredByZealova =>
-      'Zealova tarafından desteklenmektedir';
+  String get workoutShowcasePoweredByZealova => 'Zealova tarafından desteklenmektedir';
 
   @override
   String get workoutShowcaseProgressionModel => 'İlerleme modeli';
@@ -42952,11 +40016,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutShowcaseScreenTotalPrs(
-    Object duration,
-    Object prs,
-    Object volume,
-  ) {
+  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume) {
     return 'TOPLAM  $duration · $volume · $prs PR';
   }
 
@@ -43054,23 +40114,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutShowcaseZealova => 'ZEALOVA';
 
   @override
-  String get workoutStateCardsAiPoweredPersonalizedProgra =>
-      'AI destekli kişiselleştirilmiş program';
+  String get workoutStateCardsAiPoweredPersonalizedProgra => 'AI destekli kişiselleştirilmiş program';
 
   @override
-  String get workoutStateCardsCreatingYourWorkouts =>
-      'Antrenmanlarınız Oluşturuluyor';
+  String get workoutStateCardsCreatingYourWorkouts => 'Antrenmanlarınız Oluşturuluyor';
 
   @override
-  String get workoutStateCardsGeneratingYourWorkouts =>
-      'Antrenmanlarınız oluşturuluyor...';
+  String get workoutStateCardsGeneratingYourWorkouts => 'Antrenmanlarınız oluşturuluyor...';
 
   @override
   String get workoutStateCardsGetStarted => 'Başla';
 
   @override
-  String get workoutStateCardsGetYourPersonalizedWorkout =>
-      'Kişiselleştirilmiş antrenman planını al';
+  String get workoutStateCardsGetYourPersonalizedWorkout => 'Kişiselleştirilmiş antrenman planını al';
 
   @override
   String get workoutStateCardsReadyToStart => 'Başlamaya hazır mısın?';
@@ -43079,8 +40135,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutStateCardsTryAgain => 'Tekrar Dene';
 
   @override
-  String get workoutStateCardsYourPersonalizedWorkoutPlan =>
-      'Kişiselleştirilmiş antrenman planınız oluşturuluyor';
+  String get workoutStateCardsYourPersonalizedWorkoutPlan => 'Kişiselleştirilmiş antrenman planınız oluşturuluyor';
 
   @override
   String get workoutStatsStripCalories => 'Kalori';
@@ -43097,8 +40152,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutStatsStripVolume => 'Hacim';
 
   @override
-  String get workoutSummaryAddASetOr =>
-      'Bu özeti oluşturmak için bir set ekleyin veya bir egzersizi düzenleyin.';
+  String get workoutSummaryAddASetOr => 'Bu özeti oluşturmak için bir set ekleyin veya bir egzersizi düzenleyin.';
 
   @override
   String get workoutSummaryAddExercise => 'Egzersiz Ekle';
@@ -43122,8 +40176,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedAvgSets => 'Ort (Setler)';
 
   @override
-  String get workoutSummaryAdvancedBasedOnEpleyFormula =>
-      'En iyi setlerinizden Epley formülüne göre';
+  String get workoutSummaryAdvancedBasedOnEpleyFormula => 'En iyi setlerinizden Epley formülüne göre';
 
   @override
   String get workoutSummaryAdvancedCardioSession => 'Kardiyo seansı';
@@ -43132,8 +40185,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedConfidence => 'Güven';
 
   @override
-  String get workoutSummaryAdvancedDetailedTrackingDataIs =>
-      'Bu antrenman için detaylı takip verisi mevcut değil.';
+  String get workoutSummaryAdvancedDetailedTrackingDataIs => 'Bu antrenman için detaylı takip verisi mevcut değil.';
 
   @override
   String get workoutSummaryAdvancedDuration => 'Süre';
@@ -43148,14 +40200,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedEstimated1rm => 'Tahmini 1RM';
 
   @override
-  String get workoutSummaryAdvancedExerciseOrderTime =>
-      'Egzersiz Sırası ve Zaman';
+  String get workoutSummaryAdvancedExerciseOrderTime => 'Egzersiz Sırası ve Zaman';
 
   @override
-  String workoutSummaryAdvancedExercises(
-    Object completedCount,
-    Object totalPlanned,
-  ) {
+  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned) {
     return '$completedCount / $totalPlanned egzersiz';
   }
 
@@ -43210,8 +40258,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedMoreDetails => 'Daha fazla detay';
 
   @override
-  String get workoutSummaryAdvancedMuscleMapNotApplicable =>
-      'Kas haritası uygulanamaz';
+  String get workoutSummaryAdvancedMuscleMapNotApplicable => 'Kas haritası uygulanamaz';
 
   @override
   String get workoutSummaryAdvancedMusclesHit => 'ÇALIŞAN KASLAR';
@@ -43225,8 +40272,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedNo => 'Hayır';
 
   @override
-  String get workoutSummaryAdvancedNoCompletedSetsLogged =>
-      'Bu antrenman için kaydedilmiş tamamlanmış set yok.';
+  String get workoutSummaryAdvancedNoCompletedSetsLogged => 'Bu antrenman için kaydedilmiş tamamlanmış set yok.';
 
   @override
   String get workoutSummaryAdvancedNoVolumeDataYet => 'Henüz hacim verisi yok';
@@ -43241,16 +40287,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedPerExercise => 'Egzersiz Başına';
 
   @override
-  String get workoutSummaryAdvancedPerExerciseDeepDive =>
-      'Egzersiz Bazlı Derinlemesine Analiz';
+  String get workoutSummaryAdvancedPerExerciseDeepDive => 'Egzersiz Bazlı Derinlemesine Analiz';
 
   @override
-  String get workoutSummaryAdvancedPerExerciseDeepDive2 =>
-      'EGZERSİZ BAZLI DERİNLEMESİNE ANALİZ';
+  String get workoutSummaryAdvancedPerExerciseDeepDive2 => 'EGZERSİZ BAZLI DERİNLEMESİNE ANALİZ';
 
   @override
-  String get workoutSummaryAdvancedPerformanceComparison =>
-      'Performans Karşılaştırması';
+  String get workoutSummaryAdvancedPerformanceComparison => 'Performans Karşılaştırması';
 
   @override
   String get workoutSummaryAdvancedPlan => 'Plan';
@@ -43398,8 +40441,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryGeneralCalories => 'Kalori';
 
   @override
-  String get workoutSummaryGeneralConnectAHeartRate =>
-      'Bölgelerinizi takip etmek için\nbir kalp atış hızı monitörü bağlayın';
+  String get workoutSummaryGeneralConnectAHeartRate => 'Bölgelerinizi takip etmek için\nbir kalp atış hızı monitörü bağlayın';
 
   @override
   String get workoutSummaryGeneralDifficulty => 'Zorluk';
@@ -43417,11 +40459,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Nabız';
 
   @override
-  String workoutSummaryGeneralLbXReps(
-    Object reps,
-    String unit,
-    Object weightLbs,
-  ) {
+  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs) {
     return '$weightLbs $unit x $reps tekrar';
   }
 
@@ -43437,8 +40475,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryGeneralPersonalRecords => 'Kişisel Rekorlar';
 
   @override
-  String get workoutSummaryGeneralPostWorkoutFeedback =>
-      'ANTRENMAN SONRASI GERİ BİLDİRİM';
+  String get workoutSummaryGeneralPostWorkoutFeedback => 'ANTRENMAN SONRASI GERİ BİLDİRİM';
 
   @override
   String get workoutSummaryGeneralRating => 'Puan';
@@ -43458,24 +40495,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryGeneralVolumeLb => 'Hacim (lb)';
 
   @override
-  String get workoutSummaryManuallyMarkedDone =>
-      'Manuel olarak tamamlandı işaretlendi';
+  String get workoutSummaryManuallyMarkedDone => 'Manuel olarak tamamlandı işaretlendi';
 
   @override
-  String get workoutSummaryNoSetsLoggedFor =>
-      'Bu antrenman için kayıtlı set yok';
+  String get workoutSummaryNoSetsLoggedFor => 'Bu antrenman için kayıtlı set yok';
 
   @override
-  String get workoutSummaryNoWorkoutDataTo =>
-      'Henüz paylaşılacak antrenman verisi yok';
+  String get workoutSummaryNoWorkoutDataTo => 'Henüz paylaşılacak antrenman verisi yok';
 
   @override
-  String get workoutSummaryPleaseCheckYourConnection =>
-      'Lütfen bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get workoutSummaryPleaseCheckYourConnection => 'Lütfen bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
-  String get workoutSummaryRevertMarkAsNot =>
-      'Geri al - Tamamlanmadı olarak işaretle';
+  String get workoutSummaryRevertMarkAsNot => 'Geri al - Tamamlanmadı olarak işaretle';
 
   @override
   String get workoutSummaryReverting => 'Geri alınıyor...';
@@ -43484,15 +40516,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryScreenAllTime => 'TÜM ZAMANLAR';
 
   @override
-  String get workoutSummaryScreenAreasToWatch =>
-      'Dikkat Edilmesi Gereken Bölgeler';
+  String get workoutSummaryScreenAreasToWatch => 'Dikkat Edilmesi Gereken Bölgeler';
 
   @override
   String get workoutSummaryScreenFailedToLoadSummary => 'Özet yüklenemedi';
 
   @override
-  String get workoutSummaryScreenFirstTimePerformingThis =>
-      'Bu antrenman türünü ilk kez yapıyorsun!';
+  String get workoutSummaryScreenFirstTimePerformingThis => 'Bu antrenman türünü ilk kez yapıyorsun!';
 
   @override
   String get workoutSummaryScreenHighlights => 'Öne Çıkanlar';
@@ -43506,14 +40536,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryScreenPleaseCheckYourConnection =>
-      'Lütfen bağlantınızı kontrol edin ve tekrar deneyin.';
+  String get workoutSummaryScreenPleaseCheckYourConnection => 'Lütfen bağlantınızı kontrol edin ve tekrar deneyin.';
 
   @override
-  String workoutSummaryScreenRepsAcrossSets(
-    Object totalReps,
-    Object totalSets,
-  ) {
+  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets) {
     return '$totalSets sette $totalReps tekrar';
   }
 
@@ -43531,11 +40557,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutSummaryScreenUiKgXRepsEst(
-    Object estimated1rmKg,
-    Object reps,
-    Object weightKg,
-  ) {
+  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg) {
     return '$weightKg kg x $reps tekrar  |  Tahmini 1RM: $estimated1rmKg kg';
   }
 
@@ -43545,8 +40567,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get workoutSummarySetsUpdatedSuccessfully =>
-      'Setler başarıyla güncellendi';
+  String get workoutSummarySetsUpdatedSuccessfully => 'Setler başarıyla güncellendi';
 
   @override
   String get workoutSummaryShareWorkout => 'Antrenmanı Paylaş';
@@ -43570,12 +40591,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutTopOverlayPaused => 'DURAKLATILDI';
 
   @override
-  String get workoutTypeSelectorEnterCustomWorkoutType =>
-      'Özel antrenman türü gir (ör. \"Mobility\")';
+  String get workoutTypeSelectorEnterCustomWorkoutType => 'Özel antrenman türü gir (ör. \"Mobility\")';
 
   @override
-  String get workoutTypeSelectorHowYouWantTo =>
-      'Nasıl antrenman yapmak istiyorsun? Aşağıdaki Hedef Bölgelerden vücut bölgelerini seç.';
+  String get workoutTypeSelectorHowYouWantTo => 'Nasıl antrenman yapmak istiyorsun? Aşağıdaki Hedef Bölgelerden vücut bölgelerini seç.';
 
   @override
   String get workoutTypeSelectorTrainingStyle => 'Antrenman Stili';
@@ -43590,15 +40609,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutUiBuildersDrink => 'Su iç';
 
   @override
-  String get workoutUiBuildersHeardRepsButNot =>
-      'Tekrarlar duyuldu ancak ağırlık duyulmadı. \"225 for 5\" şeklinde dene.';
+  String get workoutUiBuildersHeardRepsButNot => 'Tekrarlar duyuldu ancak ağırlık duyulmadı. \"225 for 5\" şeklinde dene.';
 
   @override
   String get workoutUiBuildersHowTo => 'Nasıl yapılır';
 
   @override
-  String get workoutUiBuildersLoadingYourPersonalizedWarm =>
-      'Kişiselleştirilmiş ısınma egzersizlerin yükleniyor';
+  String get workoutUiBuildersLoadingYourPersonalizedWarm => 'Kişiselleştirilmiş ısınma egzersizlerin yükleniyor';
 
   @override
   String workoutUiBuildersMixinUi2HeardKg(Object parsed) {
@@ -43606,10 +40623,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String workoutUiBuildersMixinUi2LoggedReps(
-    Object reps,
-    Object weightDisplay,
-  ) {
+  String workoutUiBuildersMixinUi2LoggedReps(Object reps, Object weightDisplay) {
     return '$weightDisplay × $reps tekrar kaydedildi';
   }
 
@@ -43648,20 +40662,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Gelişmiş';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchLb =>
-      'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±5 lb artışlar, plaka tablosu.';
+  String get workoutUiModeEverythingWarmupStretchLb => 'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±5 lb artışlar, plaka tablosu.';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchPh =>
-      'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±2.5 kg artışlar, plaka tablosu.';
+  String get workoutUiModeEverythingWarmupStretchPh => 'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±2.5 kg artışlar, plaka tablosu.';
 
   @override
-  String get workoutUiModePickTheLevelOf =>
-      'Setleri kaydederken istediğin detay seviyesini seç. Bunu istediğin zaman değiştirebilirsin.';
+  String get workoutUiModePickTheLevelOf => 'Setleri kaydederken istediğin detay seviyesini seç. Bunu istediğin zaman değiştirebilirsin.';
 
   @override
-  String get workoutUiModePolishedDefaultSteppersAi =>
-      'İyileştirilmiş varsayılan. Adım sayarlar, AI koçu, dinlenme zamanlayıcısı, sesli + fotoğraflı notlar, geçmiş setleri düzenlemek için dokun. Çoğu seans için mükemmel.';
+  String get workoutUiModePolishedDefaultSteppersAi => 'İyileştirilmiş varsayılan. Adım sayarlar, AI koçu, dinlenme zamanlayıcısı, sesli + fotoğraflı notlar, geçmiş setleri düzenlemek için dokun. Çoğu seans için mükemmel.';
 
   @override
   String get workoutUiModeSelected => 'Seçildi';
@@ -43675,15 +40685,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutUiModeWorkoutMode => 'Antrenman Modu';
 
   @override
-  String get workoutsBenchSquatDeadliftBest =>
-      'Bench, squat, deadlift — en iyi sonuçlar için sadece en yüksek setlerini gir';
+  String get workoutsBenchSquatDeadliftBest => 'Bench, squat, deadlift — en iyi sonuçlar için sadece en yüksek setlerini gir';
 
   @override
   String get workoutsCollapseWeekView => 'Haftalık görünümü daralt';
 
   @override
-  String get workoutsCompleteYourFirstWorkout =>
-      'Burada görmek için ilk antrenmanını tamamla';
+  String get workoutsCompleteYourFirstWorkout => 'Burada görmek için ilk antrenmanını tamamla';
 
   @override
   String get workoutsCsvOrJsonFile => 'CSV veya JSON dosyası';
@@ -43707,12 +40715,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutsGym => 'Spor Salonu';
 
   @override
-  String get workoutsHealthConnectAppleHealth =>
-      'Health Connect / Apple Health';
+  String get workoutsHealthConnectAppleHealth => 'Health Connect / Apple Health';
 
   @override
-  String get workoutsHevyStrongLiftinFitbod =>
-      'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, özel CSV';
+  String get workoutsHevyStrongLiftinFitbod => 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, özel CSV';
 
   @override
   String get workoutsImportWorkouts => 'Antrenmanları içe aktar';
@@ -43724,8 +40730,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutsMoreOptions => 'Daha fazla seçenek';
 
   @override
-  String get workoutsNoCompletedWorkoutsYet =>
-      'Henüz tamamlanmış antrenman yok';
+  String get workoutsNoCompletedWorkoutsYet => 'Henüz tamamlanmış antrenman yok';
 
   @override
   String get workoutsPlan => 'Plan';
@@ -43742,19 +40747,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutsStrength => 'GÜÇ';
 
   @override
-  String get workoutsSyncSessionsFromYour =>
-      'Seansları saatinden senkronize et (arka planda zaten senkronize ediliyor)';
+  String get workoutsSyncSessionsFromYour => 'Seansları saatinden senkronize et (arka planda zaten senkronize ediliyor)';
 
   @override
-  String get workoutsTourHitStartOnToday =>
-      'Setleri, tekrarları ve ağırlığı akış içi dinlenme zamanlayıcısı ile kaydetmek için Bugünün Antrenmanı\'nda Başlat\'a bas.';
+  String get workoutsTourHitStartOnToday => 'Setleri, tekrarları ve ağırlığı akış içi dinlenme zamanlayıcısı ile kaydetmek için Bugünün Antrenmanı\'nda Başlat\'a bas.';
 
   @override
   String get workoutsTourMakeItYours => 'Kendine göre ayarla';
 
   @override
-  String get workoutsTourPinFavoritesHideExercises =>
-      'Favorilerini sabitle, kaçındığın egzersizleri gizle veya sırada olmasını istediğin hareketleri ekle.';
+  String get workoutsTourPinFavoritesHideExercises => 'Favorilerini sabitle, kaçındığın egzersizleri gizle veya sırada olmasını istediğin hareketleri ekle.';
 
   @override
   String get workoutsTourSetYourPreferences => 'Tercihlerini ayarla';
@@ -43763,8 +40765,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutsTourStartAWorkout => 'Antrenmana başla';
 
   @override
-  String get workoutsTourUseCustomBrowseOr =>
-      'Antrenman oluşturmak, değiştirmek veya tekrarlamak için Özel, Gözat veya Favoriler\'i kullanın.';
+  String get workoutsTourUseCustomBrowseOr => 'Antrenman oluşturmak, değiştirmek veya tekrarlamak için Özel, Gözat veya Favoriler\'i kullanın.';
 
   @override
   String get workoutsTypeAFewPrs => 'Birkaç PR değerini manuel olarak girin';
@@ -43773,16 +40774,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutsUpcoming => 'Yaklaşan';
 
   @override
-  String get workoutsYouCanEditUndo =>
-      'İçe aktarılan her şeyi sonradan düzenleyebilir, geri alabilir veya yeniden eşleyebilirsiniz; hiçbir işlem kalıcı değildir.';
+  String get workoutsYouCanEditUndo => 'İçe aktarılan her şeyi sonradan düzenleyebilir, geri alabilir veya yeniden eşleyebilirsiniz; hiçbir işlem kalıcı değildir.';
 
   @override
-  String get workoutsYourNextWorkoutIs =>
-      'Bir sonraki antrenmanınız her seanstan sonra otomatik olarak oluşturulur';
+  String get workoutsYourNextWorkoutIs => 'Bir sonraki antrenmanınız her seanstan sonra otomatik olarak oluşturulur';
 
   @override
-  String get wrappedBannerTapToRevealYour =>
-      'Spor kişiliğinizi görmek için dokunun';
+  String get wrappedBannerTapToRevealYour => 'Spor kişiliğinizi görmek için dokunun';
 
   @override
   String get wrappedBannerViewMyWrapped => 'Wrapped\'imi Görüntüle';
@@ -43864,12 +40862,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsDaily => 'Günlük';
 
   @override
-  String get xpGoalsDialog250LevelsAcross11Tiers =>
-      'XP hedefleri diyaloğu 11 kademede 250 seviye';
+  String get xpGoalsDialog250LevelsAcross11Tiers => 'XP hedefleri diyaloğu 11 kademede 250 seviye';
 
   @override
-  String get xpGoalsDialogBeginnerToTranscendent =>
-      'Başlangıçtan aşkın seviyeye';
+  String get xpGoalsDialogBeginnerToTranscendent => 'Başlangıçtan aşkın seviyeye';
 
   @override
   String get xpGoalsDialogCompleteWorkoutXp => 'Antrenmanı Tamamla: +100 XP';
@@ -43878,19 +40874,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsDialogDailyGoals => 'Günlük hedefler';
 
   @override
-  String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'AI Koçla İlk Sohbet: +15 XP';
+  String get xpGoalsDialogFirstChatWithAiCoachXp => 'AI Koçla İlk Sohbet: +15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'İlk Öğün/Kilo/Ölçüm: her biri +50 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp => 'İlk Öğün/Kilo/Ölçüm: her biri +50 XP';
 
   @override
   String get xpGoalsDialogFirstPrXp => 'İlk PR: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp =>
-      'İlk İlerleme Fotoğrafı: +75 XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'İlk İlerleme Fotoğrafı: +75 XP';
 
   @override
   String get xpGoalsDialogFirstProteinGoalXp => 'İlk Protein Hedefi: +100 XP';
@@ -43905,8 +40898,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsDialogLevels => 'Seviyeler';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp =>
-      'Vücut Ölçümlerini Kaydet: +20 XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'Vücut Ölçümlerini Kaydet: +20 XP';
 
   @override
   String get xpGoalsDialogLogMealXp => 'Öğün Kaydet: +25 XP';
@@ -43945,8 +40937,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsScreenChatWithAiCoach => 'AI Koç ile Sohbet Et';
 
   @override
-  String get xpGoalsScreenCheckYourConnectionAnd =>
-      'Bağlantınızı kontrol edin ve tekrar deneyin';
+  String get xpGoalsScreenCheckYourConnectionAnd => 'Bağlantınızı kontrol edin ve tekrar deneyin';
 
   @override
   String get xpGoalsScreenComplete1Workout => '1 antrenman tamamla';
@@ -43958,12 +40949,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsScreenConsumableLegend => 'Tüketilebilir öğe açıklaması';
 
   @override
-  String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
-      'Aylık başarılar yüklenirken hata oluştu';
+  String get xpGoalsScreenErrorLoadingMonthlyAchievem => 'Aylık başarılar yüklenirken hata oluştu';
 
   @override
-  String get xpGoalsScreenErrorLoadingWeeklyProgress =>
-      'Haftalık ilerleme yüklenirken hata oluştu';
+  String get xpGoalsScreenErrorLoadingWeeklyProgress => 'Haftalık ilerleme yüklenirken hata oluştu';
 
   @override
   String get xpGoalsScreenFailedToLoadLevels => 'Seviyeler yüklenemedi';
@@ -44025,14 +41014,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get xpGoalsScreenReward => 'ÖDÜL';
 
   @override
-  String get xpGoalsScreenSetFirstPersonalRecord =>
-      'İlk Kişisel Rekorunu Belirle';
+  String get xpGoalsScreenSetFirstPersonalRecord => 'İlk Kişisel Rekorunu Belirle';
 
   @override
-  String xpGoalsScreenUi1CheckpointsComplete(
-    Object completedCount,
-    Object length,
-  ) {
+  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length) {
     return '$completedCount/$length kontrol noktası tamamlandı';
   }
 
@@ -44082,8 +41067,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsScreenViewAllLevelsRewards =>
-      'Tüm Seviyeleri ve Ödülleri Görüntüle';
+  String get xpGoalsScreenViewAllLevelsRewards => 'Tüm Seviyeleri ve Ödülleri Görüntüle';
 
   @override
   String xpGoalsScreenXp(Object effectiveXP) {
@@ -44155,8 +41139,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get xpLeaderboardNoLeaderboardDataYet =>
-      'Henüz liderlik tablosu verisi yok.\nSıralamada yükselmek için XP kazanmaya başlayın!';
+  String get xpLeaderboardNoLeaderboardDataYet => 'Henüz liderlik tablosu verisi yok.\nSıralamada yükselmek için XP kazanmaya başlayın!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {
@@ -44252,8 +41235,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get xpProgressCardStartYourFitnessJourney =>
-      'Fitness yolculuğuna başla!';
+  String get xpProgressCardStartYourFitnessJourney => 'Fitness yolculuğuna başla!';
 
   @override
   String get xpProgressCardStreak => 'Seri';
@@ -44309,15 +41291,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get chatLanguageResetSystem =>
-      '🌐 AI Coach dili sıfırlandı — uygulama dili kullanılıyor';
+  String get chatLanguageResetSystem => '🌐 AI Coach dili sıfırlandı — uygulama dili kullanılıyor';
 
   @override
   String get settingsChatLanguageTitle => 'AI Coach Dili';
 
   @override
-  String get settingsChatLanguageDescription =>
-      'Yapay Zeka Koçu yanıtları için dil (uygulama arayüzünden bağımsızdır)';
+  String get settingsChatLanguageDescription => 'Yapay Zeka Koçu yanıtları için dil (uygulama arayüzünden bağımsızdır)';
 
   @override
   String get settingsChatLanguageSameAsApp => 'Uygulama diliyle aynı';
@@ -44338,8 +41318,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Döngü Takibi';
 
   @override
-  String get settingsCycleTrackingSubtitle =>
-      'Adet dönemi, doğurganlık ve tahminler';
+  String get settingsCycleTrackingSubtitle => 'Adet dönemi, doğurganlık ve tahminler';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44355,8 +41334,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd =>
-      'Bildirimler duraklatıldı. Devam etmek için istediğiniz zaman kapatın.';
+  String get vacationModeBannerPausedNoEnd => 'Bildirimler duraklatıldı. Devam etmek için istediğiniz zaman kapatın.';
 
   @override
   String get vacationModeBannerScheduled => 'planlanmış';
@@ -44370,8 +41348,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get vacationModeBannerOn => 'Bildirimler açık';
 
   @override
-  String get vacationModeBannerOnSubtitle =>
-      'Kritik olmayan hatırlatıcıları duraklatmak için aşağıda tatil modunu etkinleştirin.';
+  String get vacationModeBannerOnSubtitle => 'Kritik olmayan hatırlatıcıları duraklatmak için aşağıda tatil modunu etkinleştirin.';
 
   @override
   String get difficultyEasy => 'Acemi';
@@ -44427,8 +41404,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsEmptyTitle => 'Henüz hiçbir şey paylaşılmadı';
 
   @override
-  String get importsEmptyBody =>
-      'İstediğiniz yerde Paylaş\'a basın (Fotoğraflar, YouTube, ChatGPT, sesli not) otomatik olarak buraya gelecektir.';
+  String get importsEmptyBody => 'İstediğiniz yerde Paylaş\'a basın (Fotoğraflar, YouTube, ChatGPT, sesli not) otomatik olarak buraya gelecektir.';
 
   @override
   String get importsActionOpen => 'Açık';
@@ -44443,12 +41419,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsSnackRetrying => 'İçe aktarma yeniden deneniyor…';
 
   @override
-  String get importsSnackRetryFailed =>
-      'Tekrar denenemedi; daha sonra tekrar deneyin.';
+  String get importsSnackRetryFailed => 'Tekrar denenemedi; daha sonra tekrar deneyin.';
 
   @override
-  String get importsSnackReclassifyQueued =>
-      'Sıraya alınanları yeniden sınıflandır — yeniden yönlendirmek için öğeyi yeniden paylaşın.';
+  String get importsSnackReclassifyQueued => 'Sıraya alınanları yeniden sınıflandır — yeniden yönlendirmek için öğeyi yeniden paylaşın.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44456,8 +41430,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody =>
-      'Kayıtlar, içe aktarma geçmişinizden kaldırılır. İçe aktarılan antrenmanlar/yemek tarifleri/yemek günlükleri kalır.';
+  String get importsDeleteConfirmBody => 'Kayıtlar, içe aktarma geçmişinizden kaldırılır. İçe aktarılan antrenmanlar/yemek tarifleri/yemek günlükleri kalır.';
 
   @override
   String get importsActionCancel => 'İptal etmek';
@@ -44511,8 +41484,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Sınırlar';
 
   @override
-  String get importsLimitsFooter =>
-      'Günlük limitler herkes için aynıdır. İthalat kalitesini yüksek tutar ve kontrolden çıkan maliyetlere karşı koruma sağlar.';
+  String get importsLimitsFooter => 'Günlük limitler herkes için aynıdır. İthalat kalitesini yüksek tutar ve kontrolden çıkan maliyetlere karşı koruma sağlar.';
 
   @override
   String get importsPrivacySectionTitle => 'İthalat';
@@ -44521,23 +41493,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Yönlendirmeden önce daima sor';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle =>
-      'Otomatik rota geri sayımını atlayın; her paylaşım seçiciyi açar.';
+  String get importsPrivacyAlwaysAskSubtitle => 'Otomatik rota geri sayımını atlayın; her paylaşım seçiciyi açar.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Paylaşılan geçmişi temizle';
 
   @override
-  String get importsPrivacyClearHistorySubtitle =>
-      'İçe Aktarılanlar listenizdeki her kaydı kaldırır. İçe aktarılan antrenmanlar, tarifler ve yemek günlükleri kalır.';
+  String get importsPrivacyClearHistorySubtitle => 'İçe Aktarılanlar listenizdeki her kaydı kaldırır. İçe aktarılan antrenmanlar, tarifler ve yemek günlükleri kalır.';
 
   @override
-  String get importsPrivacyClearConfirmTitle =>
-      'Paylaşılan geçmiş temizlensin mi?';
+  String get importsPrivacyClearConfirmTitle => 'Paylaşılan geçmiş temizlensin mi?';
 
   @override
-  String get importsPrivacyClearConfirmBody =>
-      'İçe Aktarılanlar listenizdeki her satır kaldırılır. İçe aktardığınız antrenmanlar, tarifler ve yemek günlükleri oldukları yerde kalır.';
+  String get importsPrivacyClearConfirmBody => 'İçe Aktarılanlar listenizdeki her satır kaldırılır. İçe aktardığınız antrenmanlar, tarifler ve yemek günlükleri oldukları yerde kalır.';
 
   @override
   String get importsPrivacyClearAction => 'Temizlemek';
@@ -44546,8 +41514,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Paylaşılan geçmiş temizlendi.';
 
   @override
-  String get importsPrivacyClearFailedSnack =>
-      'Temizlenemedi; daha sonra tekrar deneyin.';
+  String get importsPrivacyClearFailedSnack => 'Temizlenemedi; daha sonra tekrar deneyin.';
 
   @override
   String get bottomNavLeaderboard => 'Sıralamalar';
@@ -44559,8 +41526,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverResetsSunday => 'Pazar günü sıfırlanır';
 
   @override
-  String get discoverNoEntriesYet =>
-      'Henüz giriş yok · Tırmanmak için bu hafta antrenman kaydet';
+  String get discoverNoEntriesYet => 'Henüz giriş yok · Tırmanmak için bu hafta antrenman kaydet';
 
   @override
   String get discoverViewTop10 => 'İlk 10\'u gör';
@@ -44578,8 +41544,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroModesPillOffline => 'ÇEVRİMDIŞI';
 
   @override
-  String get heroModesBodyOffline =>
-      'Bugünün antrenmanı yüklenemedi. Tekrar denemek için dokunun.';
+  String get heroModesBodyOffline => 'Bugünün antrenmanı yüklenemedi. Tekrar denemek için dokunun.';
 
   @override
   String get heroModesActionRetry => 'YENİDEN';
@@ -44588,8 +41553,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroModesPillSlowConnection => 'TAKING A WHILE';
 
   @override
-  String get heroModesBodySlowConnection =>
-      'Taking longer than usual to load — retrying automatically.';
+  String get heroModesBodySlowConnection => 'Taking longer than usual to load — retrying automatically.';
 
   @override
   String get heroModesPillLive => 'CANLI';
@@ -44598,50 +41562,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroModesPillPaused => 'DURDURULDU';
 
   @override
-  String get heroModesBodyPaused =>
-      'Plan duraklatıldı. Hazır olduğunda devam et.';
+  String get heroModesBodyPaused => 'Plan duraklatıldı. Hazır olduğunda devam et.';
 
   @override
   String get heroModesPillWindDown => 'YARIN · SAKİNLEŞME';
 
   @override
-  String get heroModesBodyWindDown =>
-      'Önce uyu. Yarınki seans seni bekleyecek.';
+  String get heroModesBodyWindDown => 'Önce uyu. Yarınki seans seni bekleyecek.';
 
   @override
   String get heroModesPillLighter => 'DAHA HAFİF ÖNERİLDİ';
 
   @override
-  String get heroModesBodyLighter =>
-      'Uyku iyi değildi. Bugün daha hafif bir versiyon deneyelim mi?';
+  String get heroModesBodyLighter => 'Uyku iyi değildi. Bugün daha hafif bir versiyon deneyelim mi?';
 
   @override
   String get heroModesPillEquipmentGap => 'EKİPMAN EKSİK';
 
   @override
-  String get heroModesBodyEquipmentGap =>
-      'Mevcut salon profilinde bazı ekipmanlar yok.';
+  String get heroModesBodyEquipmentGap => 'Mevcut salon profilinde bazı ekipmanlar yok.';
 
   @override
   String get heroModesPillFasted => 'AÇ KARNINA';
 
   @override
-  String get heroModesBodyFasted =>
-      'Aç antrenman tamam. Şiddeti orta tut; 30 dk içinde yakıt al.';
+  String get heroModesBodyFasted => 'Aç antrenman tamam. Şiddeti orta tut; 30 dk içinde yakıt al.';
 
   @override
   String get heroModesPillFuelGap => 'YAKIT EKSİK';
 
   @override
-  String get heroModesBodyFuelGap =>
-      'Son öğün üzerinden zaman geçti. ~200 kcal karbonhidrat ye?';
+  String get heroModesBodyFuelGap => 'Son öğün üzerinden zaman geçti. ~200 kcal karbonhidrat ye?';
 
   @override
   String get heroModesPillComeback => 'GERİ DÖNÜŞ';
 
   @override
-  String get heroModesBodyComeback =>
-      'Bu kas grubu için uzun zaman sonraki ilk seans. Yavaş başla.';
+  String get heroModesBodyComeback => 'Bu kas grubu için uzun zaman sonraki ilk seans. Yavaş başla.';
 
   @override
   String get heroModesPillPrWindow => 'REKOR PENCERESİ';
@@ -44656,29 +41613,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroModesPillBodyAsksRest => 'VÜCUT DİNLENME İSTİYOR';
 
   @override
-  String get heroModesBodyBodyAsksRest =>
-      '5 zor gün, uyku düşüyor. Bugün gelecek haftaya yatırım.';
+  String get heroModesBodyBodyAsksRest => '5 zor gün, uyku düşüyor. Bugün gelecek haftaya yatırım.';
 
   @override
   String get heroModesPillRefuelWindow => 'DOLDURMA PENCERESİ';
 
   @override
-  String get heroModesBodyRefuelWindow =>
-      '30 dk pencere: protein + karbonhidrat işi kilitler.';
+  String get heroModesBodyRefuelWindow => '30 dk pencere: protein + karbonhidrat işi kilitler.';
 
   @override
   String get heroModesPillBonus => 'BONUS';
 
   @override
-  String get heroModesBodyBonus =>
-      '20 dakikan var mı? Hızlı bir seans sıkıştır.';
+  String get heroModesBodyBonus => '20 dakikan var mı? Hızlı bir seans sıkıştır.';
 
   @override
   String get heroModesPillYesterday => 'DÜN';
 
   @override
-  String get heroModesBodyYesterday =>
-      'Dünkü seans hâlâ açık. Bugüne taşıyalım mı?';
+  String get heroModesBodyYesterday => 'Dünkü seans hâlâ açık. Bugüne taşıyalım mı?';
 
   @override
   String get metricsDashboardKeyMetrics => 'KEY METRICS';
@@ -44741,8 +41694,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricsDashboardHrHigh => 'High';
 
   @override
-  String get metricsDashboardHrDisclaimer =>
-      'Informational only, not medical advice. Talk to a clinician about any concerns.';
+  String get metricsDashboardHrDisclaimer => 'Informational only, not medical advice. Talk to a clinician about any concerns.';
 
   @override
   String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
@@ -44767,8 +41719,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricsDashboardGetStartedTitle => 'Start tracking';
 
   @override
-  String get metricsDashboardGetStartedCta =>
-      'Connect a wearable or log a meal to see your metrics.';
+  String get metricsDashboardGetStartedCta => 'Connect a wearable or log a meal to see your metrics.';
 
   @override
   String quizMinutesLeft(int minutes) {
@@ -44840,15 +41791,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get introDemoPrChip => '🏆 YENİ PR · 225 lb';
 
   @override
-  String get introDemoCoachPrLine =>
-      'Koç: “225 — bu 10 lb\'lik bir PR. Gelecek hafta 230\'a çıkıyoruz.”';
+  String get introDemoCoachPrLine => 'Koç: “225 — bu 10 lb\'lik bir PR. Gelecek hafta 230\'a çıkıyoruz.”';
 
   @override
   String get introDemoPhotoLogging => 'FOTOĞRAFLA KAYIT';
 
   @override
-  String get introDemoLoggedLine =>
-      '✓ Bugüne kaydedildi — 1 fotoğraf, 2 saniye';
+  String get introDemoLoggedLine => '✓ Bugüne kaydedildi — 1 fotoğraf, 2 saniye';
 
   @override
   String get introDemoKcalChip => '540 kcal';
@@ -44905,8 +41854,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get planAnalyzingSubtitleV7 =>
-      '~20 saniye · koçun her seti tek tek seçiyor';
+  String get planAnalyzingSubtitleV7 => '~20 saniye · koçun her seti tek tek seçiyor';
 
   @override
   String get signInV7DontLoseIt => 'KAYBETME.';
@@ -44942,26 +41890,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallFounderHeadline => 'GÜCÜMÜN YETMEDİĞİ KOÇU KENDİM YAPTIM.';
 
   @override
-  String get paywallFounderQuote =>
-      '“İyi bir kişisel antrenör ayda \$400. Bunu karşılayamazdım, ben de iki yılımı bir tane geliştirmeye verdim: 2.300 egzersiz, gerçek ilerleme mantığı, haftana gerçekten bakan bir koç. Her gün kullanıyorum.”';
+  String get paywallFounderQuote => '“İyi bir kişisel antrenör ayda \$400. Bunu karşılayamazdım, ben de iki yılımı bir tane geliştirmeye verdim: 2.300 egzersiz, gerçek ilerleme mantığı, haftana gerçekten bakan bir koç. Her gün kullanıyorum.”';
 
   @override
   String get paywallFounderName => 'Chetan · kurucu';
 
   @override
-  String get paywallFounderSub =>
-      'ilk günden beri Zealova ile antrenman yapıyor';
+  String get paywallFounderSub => 'ilk günden beri Zealova ile antrenman yapıyor';
 
   @override
-  String get paywallTesterQuote =>
-      '“Cuma bacak antrenmanını hep atladığımı fark etti ve… onları öylece cumartesiye taşıdı.”';
+  String get paywallTesterQuote => '“Cuma bacak antrenmanını hep atladığımı fark etti ve… onları öylece cumartesiye taşıdı.”';
 
   @override
   String get paywallTesterName => 'Keertan · ilk test kullanıcısı';
 
   @override
-  String get paywallTesterQuote2 =>
-      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
+  String get paywallTesterQuote2 => '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
   String get paywallTesterName2 => 'Toby · macro tracker';
@@ -45020,8 +41964,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallV7DownsellHeadline => 'PLANIN SİLİNSİN Mİ?';
 
   @override
-  String get paywallV7DownsellSub =>
-      'Tek seferlik kurucu üye fiyatı, aynı 7 günlük ücretsiz deneme. Bu teklif bir daha gelmez.';
+  String get paywallV7DownsellSub => 'Tek seferlik kurucu üye fiyatı, aynı 7 günlük ücretsiz deneme. Bu teklif bir daha gelmez.';
 
   @override
   String metricSetupPanelKicker(num count) {
@@ -45080,8 +42023,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricTileNothingLoggedShort => 'Kayıt yok';
 
   @override
-  String get metricTileNoPlanYetFinishSetup =>
-      'Henüz plan yok · kurulumu tamamla';
+  String get metricTileNoPlanYetFinishSetup => 'Henüz plan yok · kurulumu tamamla';
 
   @override
   String get metricTileNeedsHrv => 'HRV gerekli';
@@ -45102,12 +42044,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricGridEditTiles => 'KARTLARI DÜZENLE';
 
   @override
-  String get metricGridChangesSaveInstantly =>
-      'DEĞİŞİKLİKLER ANINDA KAYDEDİLİR';
+  String get metricGridChangesSaveInstantly => 'DEĞİŞİKLİKLER ANINDA KAYDEDİLİR';
 
   @override
-  String get metricGridEditHint =>
-      'SIRALAMAK İÇİN SÜRÜKLE · BOYUT İÇİN DOKUN · KALDIRMAK İÇİN −';
+  String get metricGridEditHint => 'SIRALAMAK İÇİN SÜRÜKLE · BOYUT İÇİN DOKUN · KALDIRMAK İÇİN −';
 
   @override
   String get metricGridDone => 'BİTTİ';
@@ -45151,8 +42091,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get metricGridAddMetric => 'ÖLÇÜM EKLE';
 
   @override
-  String get metricGridConnectBody =>
-      'Adım, uyku ve hazırlık otomatik dolar — senin adına hiçbir şey tahmin edilmez.';
+  String get metricGridConnectBody => 'Adım, uyku ve hazırlık otomatik dolar — senin adına hiçbir şey tahmin edilmez.';
 
   @override
   String get metricGridConnectCta => 'HEALTH BAĞLA';
