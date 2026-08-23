@@ -17,8 +17,8 @@ import '../../data/providers/recipe_providers.dart';
 import '../../data/repositories/recipe_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import '../nutrition/recipes/discover_screen.dart';
 import '../../widgets/design_system/zealova.dart';
-import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 class MealRemindersSettingsScreen extends ConsumerStatefulWidget {
@@ -90,8 +90,9 @@ class _MealRemindersSettingsScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: PillAppBar(
-        title: AppLocalizations.of(context).mealRemindersSettingsMealReminders,
+      appBar: ZealovaAppBar(
+        kicker: 'SETTINGS',
+        title: AppLocalizations.of(context).settingsMealReminders,
       ),
       body: ListView(
         children: [
@@ -224,8 +225,31 @@ class _SchedulesList extends ConsumerWidget {
         if (list.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(AppLocalizations.of(context).mealRemindersSettingsNoSchedulesYetAdd,
-                style: TextStyle(color: muted)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(context).mealRemindersSettingsNoSchedulesYetAdd,
+                    style: TextStyle(color: muted)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DiscoverScreen(userId: userId, isDark: isDark),
+                    ),
+                  ),
+                  icon: Icon(Icons.restaurant_menu, color: accent),
+                  label: Text(
+                    'Browse recipes',
+                    style: TextStyle(color: accent),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: accent.withOpacity(0.4)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
           );
         }
         return Column(

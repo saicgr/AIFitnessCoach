@@ -142,17 +142,77 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              _errorCode == null
-                  ? AppLocalizations.of(context).barcodeScannerOverlayPointYourCameraAt
-                  : 'Grant camera access to scan a barcode.',
-              style: TextStyle(fontSize: 14, color: textMuted),
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _footerMessage(context),
+                  style: TextStyle(fontSize: 14, color: textMuted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _showManualEntryDialog,
+                  child: Text(
+                    'ENTER BARCODE NUMBER',
+                    style: TextStyle(color: teal, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Footer copy driven off the same `_errorCode` the error view uses.
+  String _footerMessage(BuildContext context) {
+    switch (_errorCode) {
+      case null:
+        return AppLocalizations.of(context).barcodeScannerOverlayPointYourCameraAt;
+      case MobileScannerErrorCode.unsupported:
+        return "This device can't scan barcodes — enter the number below.";
+      case MobileScannerErrorCode.permissionDenied:
+        return 'Grant camera access to scan a barcode.';
+      default:
+        return 'Enter the barcode number below instead.';
+    }
+  }
+
+  Future<void> _showManualEntryDialog() async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Enter barcode number'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          maxLength: 14,
+          decoration: const InputDecoration(hintText: 'e.g. 012345678905'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(AppLocalizations.of(context).buttonCancel),
+          ),
+          TextButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              if (RegExp(r'^\d{8,14}$').hasMatch(text)) {
+                Navigator.pop(dialogContext, text);
+              }
+            },
+            child: const Text('LOG'),
+          ),
+        ],
+      ),
+    );
+    if (value != null && mounted) {
+      widget.onBarcodeDetected(value);
+    }
   }
 
   /// Row #129: replaces `MobileScanner`'s bare error text with the real
@@ -167,6 +227,7 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
     Color teal,
   ) {
     final isPermissionDenied = code == MobileScannerErrorCode.permissionDenied;
+    final isUnsupported = code == MobileScannerErrorCode.unsupported;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -200,7 +261,7 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
                 ),
                 child: const Text('OPEN SETTINGS'),
               )
-            else
+            else if (!isUnsupported)
               OutlinedButton(
                 onPressed: () {
                   setState(() => _errorCode = null);

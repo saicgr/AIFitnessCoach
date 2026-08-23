@@ -617,7 +617,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
                               : Icons.circle_outlined,
                           color: isSelected
                               ? colors.accent
-                              : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                              : colors.textMuted,
                           size: 24,
                         ),
                       ],

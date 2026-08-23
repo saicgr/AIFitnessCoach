@@ -28,6 +28,7 @@ import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../../../data/models/grocery_list.dart';
 import '../grocery/grocery_list_screen.dart';
 import '../meal_planner/meal_planner_screen.dart';
+import '../menu_log_from_saved.dart' show inferMealTypeForNow;
 import 'recipe_create_screen.dart';
 import 'recipe_history_screen.dart';
 import 'recipe_schedule_screen.dart';
@@ -888,7 +889,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       await ref.read(nutritionRepositoryProvider).logRecipe(
             userId: widget.userId,
             recipeId: r.id,
-            mealType: 'lunch',
+            mealType: inferMealTypeForNow(),
             servings: 1.0,
           );
       if (mounted) {

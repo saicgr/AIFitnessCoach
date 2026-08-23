@@ -306,8 +306,12 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
   }
 
 
-  /// Maps backend icon name strings to Material IconData for monthly achievements.
-  IconData _monthlyIcon(String name) {
+  /// Maps backend icon name strings to Material IconData — shared by monthly
+  /// achievements AND weekly checkpoints (row 361: weekly checkpoints used to
+  /// arrive as a literal emoji glyph rendered via `Text(cp.icon)`, so
+  /// switching from the Daily tab's custom icon set to Weekly swapped in
+  /// colour emoji instead. Both now send the same icon-name vocabulary.
+  IconData _backendIcon(String name) {
     const map = <String, IconData>{
       'calendar': Icons.calendar_today,
       'flag': Icons.flag,
@@ -324,6 +328,9 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
       'local_fire_department': Icons.local_fire_department,
       'trending_up': Icons.trending_up,
       'bolt': Icons.bolt,
+      'egg_alt': Icons.egg_alt,
+      'people': Icons.people,
+      'straighten': Icons.straighten,
     };
     return map[name] ?? Icons.emoji_events;
   }

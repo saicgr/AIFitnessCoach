@@ -36,7 +36,9 @@ import 'package:go_router/go_router.dart';
 // HealthSyncNotifier / HealthSyncState live in a `part` of this library, so
 // they come in through the parent import — never import the part file.
 import 'package:fitwiz/data/providers/health_tab_request_provider.dart';
+import 'package:fitwiz/core/providers/user_provider.dart' show currentUserProvider;
 import 'package:fitwiz/core/stats/state_valence.dart';
+import 'package:fitwiz/data/models/user.dart' as app_user;
 import 'package:fitwiz/data/repositories/vitals_repository.dart';
 import 'package:fitwiz/data/services/health_service.dart';
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
@@ -59,12 +61,29 @@ class _StubHealthSync extends HealthSyncNotifier {
   }
 }
 
-Widget _wrap(Widget child, {required bool connected}) {
+// `_HealthSubTabView`'s BODY chip reads `currentUserProvider` (to show stored
+// height/weight pre-connect, E2E register #110), and the real provider chain
+// behind it (`authStateProvider` -> `authRepositoryProvider`) constructs an
+// `AuthRepository` that eagerly reads `Supabase.instance.client` in its
+// initializer list. In the real app Supabase is always initialized in
+// `main()` before any screen builds, so this is safe in production — but a
+// widget test's `ProviderScope` never touches Supabase, so any test that
+// builds the BODY chip MUST override `currentUserProvider` (the same pattern
+// ~14 other widget test files already use for this exact provider) or it
+// throws "You must initialize the supabase instance before calling
+// Supabase.instance". Defaults to no user, so BODY renders the same labelled
+// empty state as every other disconnected chip.
+Widget _wrap(
+  Widget child, {
+  required bool connected,
+  AsyncValue<app_user.User?> currentUser = const AsyncValue.data(null),
+}) {
   return ProviderScope(
     overrides: [
       healthSyncProvider.overrideWith((ref) => _StubHealthSync(
             connected: connected,
           )),
+      currentUserProvider.overrideWithValue(currentUser),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -83,12 +102,14 @@ Widget _wrap(Widget child, {required bool connected}) {
 ({Widget widget, ProviderContainer container}) _wrapWithContainer(
   Widget child, {
   required bool connected,
+  AsyncValue<app_user.User?> currentUser = const AsyncValue.data(null),
 }) {
   final container = ProviderContainer(
     overrides: [
       healthSyncProvider.overrideWith((ref) => _StubHealthSync(
             connected: connected,
           )),
+      currentUserProvider.overrideWithValue(currentUser),
     ],
   );
   return (
@@ -282,7 +303,12 @@ void main() {
       ));
       await tester.pump();
 
-      for (final label in ['OVERVIEW', 'SLEEP', 'RECOVERY', 'VITALS', 'BODY']) {
+      // The Recovery chip's label is "Heart Health", not "Recovery" — it opens
+      // HeartHealthDetailScreen, whose own heading already reads "Heart
+      // health" (a fused score distinct from the Overview tab's actual
+      // recovery ring); reusing "Recovery" showed two different numbers under
+      // the same word for the same account (see `HealthSubTab.label`).
+      for (final label in ['OVERVIEW', 'SLEEP', 'HEART HEALTH', 'VITALS', 'BODY']) {
         expect(find.text(label), findsWidgets, reason: 'rail chip $label');
       }
     });
@@ -416,7 +442,11 @@ void main() {
       // The label is what makes it a LABELLED empty state — "SLEEP" appears
       // twice: once as the rail chip, once as the empty state's own heading.
       expect(find.text('SLEEP'), findsNWidgets(2));
-      expect(find.text('Connect Health to see your activity'), findsOneWidget);
+      // Was the generic "...to see your activity" line shared by every chip
+      // — fixed (E2E register #109) so each chip names what IT specifically
+      // would show once connected; Sleep's own headline names sleep, not a
+      // one-size-fits-all "activity".
+      expect(find.text('Connect Health to see your sleep'), findsOneWidget);
       expect(find.widgetWithText(HealthCtaPill, 'CONNECT HEALTH'),
           findsOneWidget);
 
@@ -437,8 +467,13 @@ void main() {
           findsOneWidget,
           reason: '${tab.slug} must offer the connect CTA when disconnected',
         );
+        // Each chip names what IT would show once connected (E2E register
+        // #109) rather than sharing one generic "...to see your activity"
+        // line across all five — so the expected text is per-chip, not a
+        // single hardcoded string.
+        final l10n = AppLocalizations.of(tester.element(find.byType(HealthShellScreen)));
         expect(
-          find.text('Connect Health to see your activity'),
+          find.text(tab.emptyStateHeadline(l10n)),
           findsOneWidget,
           reason: '${tab.slug} must explain itself, not render blanks',
         );

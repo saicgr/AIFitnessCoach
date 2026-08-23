@@ -58,11 +58,18 @@ class FitnessIndexDetailScreen extends ConsumerWidget {
                   if (!embedded) ...[
                     const GlassBackButton(),
                     const SizedBox(width: 12),
-                    Text('Fitness index',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: textPrimary)),
+                    // Flexible + ellipsis: at larger Dynamic Type sizes this
+                    // title otherwise grows wide enough to push the
+                    // AskCoachButton past the right edge instead of
+                    // yielding to it.
+                    Flexible(
+                      child: Text('Fitness index',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary)),
+                    ),
                   ],
                   const Spacer(),
                   AskCoachButton(

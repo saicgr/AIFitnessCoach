@@ -60,10 +60,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
+
+    // Read BEFORE constructing the TabController so a leftover query can
+    // steer the initial tab (see below) — `ref.listen` only fires on
+    // CHANGE, so the initial value has to be read here regardless.
+    final existingQuery = ref.read(exerciseSearchProvider);
+
     _tabController = TabController(
       length: 5,
       vsync: this,
-      initialIndex: widget.initialTab ?? 0,
+      // Row 282 — re-mounting fresh (e.g. back-navigation from an exercise
+      // detail page recreating this screen) with a leftover, non-empty
+      // `exerciseSearchProvider` query used to always land on Discover
+      // (index 0), showing "FOR YOU" program cards under a populated,
+      // apparently-live search box with nothing it could be filtering.
+      // Without an explicit deep-link tab, a live query only makes sense on
+      // Exercises (index 1) — land there so the field and the results list
+      // agree again.
+      initialIndex: widget.initialTab ?? (existingQuery.isNotEmpty ? 1 : 0),
     );
     ref.read(posthogServiceProvider).capture(
       eventName: 'library_viewed',
@@ -79,9 +93,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     });
 
     // Seed from the provider so re-entering the tab with a live query shows it
-    // in the field instead of an empty box over a filtered list. `ref.listen`
-    // only fires on CHANGE, so the initial value has to be read here.
-    final existingQuery = ref.read(exerciseSearchProvider);
+    // in the field instead of an empty box over a filtered list.
     if (existingQuery.isNotEmpty) {
       _lastSearchText = existingQuery;
       _searchController.text = existingQuery;

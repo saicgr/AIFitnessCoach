@@ -52,6 +52,8 @@
 /// per bio-signal) and is left alone.
 library;
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -527,8 +529,15 @@ class _HealthMasthead extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _HealthSourceChip(isConnected: isConnected),
-          const SizedBox(width: 8),
+          // Disconnected, the empty state below already carries the one
+          // "Connect Health" CTA (`HealthCtaPill` in `_HealthTabEmpty`) — a
+          // second one here, ~1,000px away, would just be the same action
+          // offered twice on one screen. The chip earns its place back the
+          // moment there is a connection to report.
+          if (isConnected) ...[
+            _HealthSourceChip(isConnected: isConnected),
+            const SizedBox(width: 8),
+          ],
           // The mockup's only masthead control is a 34 pt hairline gear; the
           // shipped chip is kept BESIDE it rather than replaced by it, because
           // the chip carries live state (disconnected / connected / syncing)
@@ -563,10 +572,16 @@ class _HealthSourceChip extends ConsumerWidget {
     final tc = ThemeColors.of(context);
     final l10n = AppLocalizations.of(context);
     final syncing = ref.watch(healthSyncProvider).isSyncing;
+    // Named, not bare "Connected": this chip sits in the same header as a
+    // Vitals card that can independently ask to "Connect a wearable", and an
+    // unlabelled dot reads as a claim about that wearable rather than about
+    // the phone's own health store.
+    final healthSourceName =
+        Platform.isAndroid ? 'Health Connect' : 'Apple Health';
     final label = syncing
         ? l10n.syncStatusSyncing
         : (isConnected
-            ? l10n.healthSyncConnected
+            ? '$healthSourceName · ${l10n.healthSyncConnected}'
             : l10n.combinedHealthConnectHealth);
     final fg = isConnected ? tc.textSecondary : tc.accent;
 

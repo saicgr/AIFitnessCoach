@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/habit.dart';
@@ -57,7 +56,7 @@ const int _kHabitDots = 7;
 ///
 /// Each habit (the auto-tracked Workouts / Food Log / Water plus any custom
 /// habits from `habitsProvider`/`customHabitsHomeProvider`) renders as a slim
-/// hairline row: a leading emoji glyph, the habit name + today's progress, a
+/// hairline row: a leading themed icon, the habit name + today's progress, a
 /// run of 7 filled/empty dots showing the week's completion (from the habit's
 /// real `last30Days` tail), and a static "+" to log — deliberately NOT a
 /// checkbox/pill action button like the coach's "To do today" rows, so a
@@ -301,7 +300,7 @@ class HabitsSection extends ConsumerWidget {
   }
 }
 
-/// A single slim hairline habit row: leading emoji glyph + name & progress +
+/// A single slim hairline habit row: leading themed icon + name & progress +
 /// a compact run of recent-completion dots (newest = rightmost). Tap navigates
 /// to the habit's surface; the trailing log glyph opens its logging surface.
 class _HabitDotRow extends StatelessWidget {
@@ -337,7 +336,7 @@ class _HabitDotRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
         child: Row(
           children: [
-            // Leading glyph — emoji for auto-tracked, themed Icon otherwise.
+            // Leading glyph — themed Icon for both auto-tracked and custom habits.
             SizedBox(
               width: 22,
               child: Center(child: _leadingGlyph(c, isDark)),
@@ -389,25 +388,7 @@ class _HabitDotRow extends StatelessWidget {
   }
 
   Widget _leadingGlyph(ThemeColors c, bool isDark) {
-    final emoji = _emojiFor(habit.id);
-    if (emoji != null) {
-      return Text(emoji, style: const TextStyle(fontSize: 15));
-    }
     return Icon(habit.icon, size: 16, color: c.textSecondary);
-  }
-
-  /// Auto-tracked habits get a recognisable emoji glyph (matches the spec);
-  /// custom habits fall through to their themed [IconData].
-  String? _emojiFor(String? id) {
-    switch (id) {
-      case 'auto_workouts':
-        return '🏋️';
-      case 'auto_food_log':
-        return '🍽️';
-      case 'auto_water':
-        return '💧';
-    }
-    return null;
   }
 
   /// "Water · 6 of 8"-style label. Auto-tracked habits use a localized name +

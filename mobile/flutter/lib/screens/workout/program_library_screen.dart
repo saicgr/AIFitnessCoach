@@ -5001,7 +5001,11 @@ class _HeroStatChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
-      child: Text(label, style: ZType.data(11, color: ThemeColors.of(context).textPrimary)),
+      child: Text(
+        label,
+        style: ZType.data(12.5, color: ThemeColors.of(context).textPrimary)
+            .copyWith(letterSpacing: 0.4),
+      ),
     );
   }
 }

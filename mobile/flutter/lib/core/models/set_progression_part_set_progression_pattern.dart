@@ -90,7 +90,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.pyramidUp:
         return 'Each set gets heavier while reps decrease. '
             'You build up to your heaviest weight by the final set.\n\n'
-            'Best for: Strength\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Set 1: Light (warm-up feel)\n'
             '• Set 2: Moderate effort\n'
             '• Set 3: Heaviest (peak)\n\n'
@@ -98,14 +98,14 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.straightSets:
         return 'Keep the same weight and reps across all sets. '
             'Simple, effective, and proven.\n\n'
-            'Best for: Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Every set at the same intensity\n'
             '• Maximizes effective reps\n\n'
             'Gold standard for muscle growth. Recommended by Renaissance Periodization.';
       case SetProgressionPattern.reversePyramid:
         return 'Start with your heaviest set when you\'re freshest, '
             'then reduce weight and increase reps.\n\n'
-            'Best for: Strength + Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Set 1: Heaviest (peak effort)\n'
             '• Set 2: Moderate (-12%)\n'
             '• Set 3: Lighter (-10%)\n\n'
@@ -113,7 +113,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.dropSets:
         return 'Complete a set, immediately reduce weight ~20% and continue '
             'with only 10 seconds to change the pin.\n\n'
-            'Best for: Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• All sets to failure (AMRAP)\n'
             '• ~20% weight reduction each drop\n'
             '• 10s rest to change weight\n\n'
@@ -121,14 +121,14 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.topSetBackOff:
         return 'Work up to one heavy top set, then drop weight for '
             'volume back-off sets.\n\n'
-            'Best for: Strength + Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Set 1: Heavy top set (RPE 9)\n'
             '• Sets 2-3: Lighter back-offs\n\n'
             'Top set drives strength. Back-offs build size.';
       case SetProgressionPattern.restPause:
         return 'Perform a set to failure, rest 15 seconds, then continue '
             'for more reps. Repeat 2-3 times.\n\n'
-            'Best for: Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Same weight throughout\n'
             '• All segments to failure (AMRAP)\n'
             '• 15s micro-rests between segments\n\n'
@@ -136,7 +136,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.myoReps:
         return 'Perform a lighter activation set of 12-15 reps, then do '
             'mini-sets of 5 reps with only 5 seconds rest.\n\n'
-            'Best for: Hypertrophy\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• Activation: ~80% of working weight × 15\n'
             '• Mini-sets: 5 reps each, 5s rest\n'
             '• Stop when you lose a rep\n\n'
@@ -144,7 +144,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.endurance:
         return 'Maintain the same weight across all sets while targeting high reps (15-30). '
             'Focus on muscular endurance and time under tension.\n\n'
-            'Best for: Endurance\n'
+            'Best for: ${goalTags.join(' + ')}\n'
             '• All sets at same weight\n'
             '• High reps (15-30)\n'
             '• Short rest (30-60s)\n\n'
@@ -394,16 +394,31 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.pyramidUp:
         // Set i weight = peak - (totalSets-1-i)*inc
         // → peak = enteredWeight + (totalSets-1-completedSetIndex)*inc
+        //
+        // NOTE (E2E #131): an earlier fix capped this peak at
+        // enteredWeight*1.25 to stop Advanced mode's pyramid from
+        // "running away" versus Easy mode's flat prescribed number. That
+        // cap was a category error: `enteredWeight` here is (by this
+        // pattern's own design, see generateTargets/_generatePyramidUp)
+        // the FIRST/lightest working set, and the whole point of a
+        // pyramid is to ramp *above* it across `totalSets` — a 5-set
+        // pyramid at a 2.5 increment is supposed to reach 20 + 4×2.5 = 30,
+        // not be truncated to 25. Capping the shared math here also
+        // corrupted the legitimate mid-workout re-derivation call
+        // (deriveWorkingWeight from an actually-completed set), which
+        // relies on this exact uncapped formula.
+        // The real #131 divergence was at the call site
+        // (set_logging_mixin_ui.dart applyProgressionTargets): before any
+        // set is completed it always passes completedSetIndex=0, so any
+        // exercise with enough working sets/increment will ramp well past
+        // the AI-prescribed number Easy mode shows. That is a call-site /
+        // product-design question (how many sets, how big an increment,
+        // whether Easy and Advanced should share one prescription object)
+        // and doesn't belong as a blanket percentage cap inside this
+        // pure, reusable pattern-math function.
         final stepsFromTop = totalSets - 1 - completedSetIndex;
         final rawPeak = enteredWeight + stepsFromTop * increment;
-        // Safety cap: the peak must never run away from the actual
-        // prescribed weight as set count grows — this mirrors the
-        // 25%-max-jump convention already used below for intra-workout
-        // adaptation. Without it, a high set count silently doubled the
-        // displayed working weight versus what Easy mode shows for the
-        // exact same exercise/session (E2E register row #131).
-        final maxPeak = enteredWeight > 0 ? enteredWeight * 1.25 : rawPeak;
-        result = _snap(rawPeak > maxPeak ? maxPeak : rawPeak, increment);
+        result = _snap(rawPeak, increment);
       case SetProgressionPattern.myoReps:
         result = _snap(enteredWeight / 0.8, increment);
       default:

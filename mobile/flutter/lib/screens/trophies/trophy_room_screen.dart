@@ -161,6 +161,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
               SliverAppBar(
                 expandedHeight: 220,
                 pinned: true,
+                primary: false,
                 backgroundColor: bgColor,
                 surfaceTintColor: Colors.transparent,
                 automaticallyImplyLeading: false,
@@ -431,43 +432,53 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     Color cardBorder,
     Color accentColor,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: TrophyStatusFilter.values.map((filter) {
-            final isSelected = _statusFilter == filter;
-            return Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: FilterChip(
-                avatar: Icon(
-                  filter.icon,
-                  size: 16,
-                  color: isSelected ? accentColor : textMuted,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ShaderMask(
+        shaderCallback: (rect) => const LinearGradient(
+          begin: Alignment.centerRight,
+          end: Alignment.centerLeft,
+          colors: [Colors.transparent, Colors.black],
+          stops: [0.0, 0.08],
+        ).createShader(rect),
+        blendMode: BlendMode.dstIn,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(left: 16, right: 24),
+          child: Row(
+            children: TrophyStatusFilter.values.map((filter) {
+              final isSelected = _statusFilter == filter;
+              return Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: FilterChip(
+                  avatar: Icon(
+                    filter.icon,
+                    size: 16,
+                    color: isSelected ? accentColor : textMuted,
+                  ),
+                  label: Text(filter.displayName),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    HapticService.light();
+                    setState(() => _statusFilter = filter);
+                  },
+                  backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  selectedColor: accentColor.withValues(alpha: 0.2),
+                  checkmarkColor: accentColor,
+                  labelStyle: TextStyle(
+                    fontSize: 13,
+                    color: isSelected ? accentColor : textMuted,
+                  ),
+                  side: BorderSide(
+                    color: isSelected
+                        ? accentColor.withValues(alpha: 0.5)
+                        : cardBorder,
+                  ),
+                  showCheckmark: false,
                 ),
-                label: Text(filter.displayName),
-                selected: isSelected,
-                onSelected: (_) {
-                  HapticService.light();
-                  setState(() => _statusFilter = filter);
-                },
-                backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                selectedColor: accentColor.withValues(alpha: 0.2),
-                checkmarkColor: accentColor,
-                labelStyle: TextStyle(
-                  fontSize: 13,
-                  color: isSelected ? accentColor : textMuted,
-                ),
-                side: BorderSide(
-                  color: isSelected
-                      ? accentColor.withValues(alpha: 0.5)
-                      : cardBorder,
-                ),
-                showCheckmark: false,
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

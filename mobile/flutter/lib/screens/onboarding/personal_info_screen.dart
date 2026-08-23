@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
@@ -20,6 +22,7 @@ import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Personal Info — name + date-of-birth, collected post-sign-in.
 ///
@@ -121,15 +124,26 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         !_saving;
   }
 
+  // A birth-date field lives or dies on the year, and the stock Material
+  // date picker's calendar header formats the selected date WITHOUT one
+  // ("Thu, Aug 16") — that format is baked into the framework's
+  // `MaterialLocalizations.formatMediumDate` and isn't overridable per
+  // field. A dedicated day/month/year wheel sheet sidesteps it entirely:
+  // the year is always on screen, and (per the "year-first" navigation the
+  // field wants) it leads the row.
   Future<void> _pickDateOfBirth() async {
+    HapticFeedback.selectionClick();
     final now = DateTime.now();
+    final minDate = DateTime(now.year - 100);
+    final maxDate = DateTime(now.year - 16, now.month, now.day);
     final initial = _dateOfBirth ?? DateTime(now.year - 25, now.month, now.day);
-    final picked = await showDatePicker(
+    final picked = await showGlassSheet<DateTime>(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year - 100),
-      lastDate: DateTime(now.year - 16, now.month, now.day),
-      helpText: 'Date of birth',
+      builder: (sheetContext) => _DateOfBirthPickerSheet(
+        initial: initial,
+        minDate: minDate,
+        maxDate: maxDate,
+      ),
     );
     if (picked != null) {
       setState(() => _dateOfBirth = picked);
@@ -836,6 +850,227 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                         ),
                 ),
               ).animate().fadeIn(delay: 360.ms),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Year / month / day wheel sheet for date of birth — year leads (users
+/// navigate a birth date by year first) and stays on screen the whole time,
+/// unlike the stock Material date picker's calendar header. See
+/// [_PersonalInfoScreenState._pickDateOfBirth].
+class _DateOfBirthPickerSheet extends StatefulWidget {
+  final DateTime initial;
+  final DateTime minDate;
+  final DateTime maxDate;
+
+  const _DateOfBirthPickerSheet({
+    required this.initial,
+    required this.minDate,
+    required this.maxDate,
+  });
+
+  @override
+  State<_DateOfBirthPickerSheet> createState() =>
+      _DateOfBirthPickerSheetState();
+}
+
+class _DateOfBirthPickerSheetState extends State<_DateOfBirthPickerSheet> {
+  late int _year;
+  late int _month;
+  late int _day;
+  late final List<int> _years;
+  late final FixedExtentScrollController _yearController;
+  late final FixedExtentScrollController _monthController;
+  late final FixedExtentScrollController _dayController;
+
+  static const double _kWheelItemExtent = 36;
+
+  @override
+  void initState() {
+    super.initState();
+    _year = widget.initial.year;
+    _month = widget.initial.month;
+    _day = widget.initial.day;
+    _years = [
+      for (var y = widget.minDate.year; y <= widget.maxDate.year; y++) y,
+    ];
+    // Persistent (not rebuilt per setState) so an in-flight scroll fling on
+    // one wheel is never handed a freshly-constructed controller mid-gesture
+    // — only [_dayController] is ever repositioned programmatically, when a
+    // month/year change shortens the day range out from under it.
+    _yearController =
+        FixedExtentScrollController(initialItem: _years.indexOf(_year));
+    _monthController = FixedExtentScrollController(initialItem: _month - 1);
+    _dayController = FixedExtentScrollController(initialItem: _day - 1);
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _monthController.dispose();
+    _dayController.dispose();
+    super.dispose();
+  }
+
+  int _daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
+
+  /// The exact selection, clamped into [minDate, maxDate] — the wheels let
+  /// day/month range further than a boundary year actually allows (e.g. any
+  /// month in the last eligible year), so the clamp is what keeps the
+  /// min-age-16 / max-age-100 gate exact rather than just year-accurate.
+  DateTime get _selected {
+    final day = _day.clamp(1, _daysInMonth(_year, _month));
+    var date = DateTime(_year, _month, day);
+    if (date.isAfter(widget.maxDate)) date = widget.maxDate;
+    if (date.isBefore(widget.minDate)) date = widget.minDate;
+    return date;
+  }
+
+  void _onYearChanged(int index) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _year = _years[index];
+      _clampDayController();
+    });
+  }
+
+  void _onMonthChanged(int index) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _month = index + 1;
+      _clampDayController();
+    });
+  }
+
+  void _onDayChanged(int index) {
+    HapticFeedback.selectionClick();
+    setState(() => _day = index + 1);
+  }
+
+  /// Snaps the day wheel back onto a real day when switching to a shorter
+  /// month/year (e.g. off Feb 29, or off day 31 onto April) — otherwise the
+  /// wheel would sit on an index the new month doesn't have.
+  void _clampDayController() {
+    final maxDay = _daysInMonth(_year, _month);
+    if (_day > maxDay) {
+      _day = maxDay;
+      _dayController.jumpToItem(_day - 1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final locale = Localizations.localeOf(context).toString();
+    final maxDay = _daysInMonth(_year, _month);
+
+    return GlassSheet(
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      MaterialLocalizations.of(context).cancelButtonLabel,
+                      style: TextStyle(color: textSecondary),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context).personalInfoDateOfBirth,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, _selected),
+                    child: Text(
+                      MaterialLocalizations.of(context).okButtonLabel,
+                      style: TextStyle(
+                        color: context.accentColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 216,
+                child: Row(
+                  children: [
+                    // Year leads — the one part of a birth date that always
+                    // matters, and the part users navigate by first.
+                    Expanded(
+                      flex: 4,
+                      child: CupertinoPicker(
+                        itemExtent: _kWheelItemExtent,
+                        scrollController: _yearController,
+                        onSelectedItemChanged: _onYearChanged,
+                        children: [
+                          for (final y in _years)
+                            Center(
+                              child: Text(
+                                '$y',
+                                style: TextStyle(color: textPrimary, fontSize: 18),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: CupertinoPicker(
+                        itemExtent: _kWheelItemExtent,
+                        scrollController: _monthController,
+                        onSelectedItemChanged: _onMonthChanged,
+                        children: [
+                          for (var m = 1; m <= 12; m++)
+                            Center(
+                              child: Text(
+                                DateFormat.MMM(locale).format(DateTime(2000, m)),
+                                style: TextStyle(color: textPrimary, fontSize: 18),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: CupertinoPicker(
+                        itemExtent: _kWheelItemExtent,
+                        scrollController: _dayController,
+                        onSelectedItemChanged: _onDayChanged,
+                        children: [
+                          for (var d = 1; d <= maxDay; d++)
+                            Center(
+                              child: Text(
+                                '$d',
+                                style: TextStyle(color: textPrimary, fontSize: 18),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

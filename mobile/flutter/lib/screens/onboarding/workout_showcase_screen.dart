@@ -16,6 +16,7 @@ import 'widgets/demo_intro_splash.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Workout Showcase — Onboarding v5
 ///
@@ -4474,7 +4475,7 @@ class _SetTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBg = ThemeColors.of(context).elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =

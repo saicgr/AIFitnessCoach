@@ -101,9 +101,12 @@ void main() {
     });
 
     test('xpEarned calculates correct XP with multiplier', () {
+      // E2E #357: login XP mirrors the server's process_daily_login formula
+      // (xp_bonus_templates.daily_login base_xp=25 * LEAST(streak, 7)), not
+      // a flat, under-advertised +5. At streak=1 that's 25 XP.
       final goals = DailyGoals(
         date: DateTime.now(),
-        loggedIn: true, // 5 XP
+        loggedIn: true, // 25 XP (streak 1: 25 * min(1, 7))
         completedWorkout: true, // 100 XP
         loggedMeal: true, // 25 XP
         loggedWeight: true, // 15 XP
@@ -112,21 +115,24 @@ void main() {
       );
 
       // Without multiplier
-      expect(goals.xpEarned(1, 1.0), equals(215));
+      expect(goals.xpEarned(1, 1.0), equals(235));
 
       // With 2x multiplier
-      expect(goals.xpEarned(1, 2.0), equals(430));
+      expect(goals.xpEarned(1, 2.0), equals(470));
     });
 
-    test('xpEarned login XP is fixed at 5', () {
+    test('xpEarned login XP scales with streak (E2E #357)', () {
+      // Login XP is 25 * LEAST(streak, 7), matching process_daily_login /
+      // xp_bonus_templates.daily_login exactly -- no anti-fraud halving and
+      // no hardcoded flat amount that disagreed with what was actually paid.
       final goalsLoginOnly = DailyGoals(
         date: DateTime.now(),
         loggedIn: true,
       );
 
-      // Login gives fixed 5 XP, not streak-based
-      expect(goalsLoginOnly.xpEarned(1, 1.0), equals(5));
-      expect(goalsLoginOnly.xpEarned(7, 1.0), equals(5)); // Same with 7-day streak
+      expect(goalsLoginOnly.xpEarned(1, 1.0), equals(25));
+      expect(goalsLoginOnly.xpEarned(7, 1.0), equals(175)); // capped multiplier of 7
+      expect(goalsLoginOnly.xpEarned(30, 1.0), equals(175)); // clamp(1,7) caps at 7
     });
 
     test('isStale returns true for previous day', () {
@@ -190,29 +196,30 @@ void main() {
   group('XP Calculation Logic', () {
     test('daily goals XP values match guide', () {
       // From DailyGoals.xpEarned:
-      // Login: 5 XP (fixed)
+      // Login: 25 XP at streak 1 (E2E #357: 25 * LEAST(streak, 7), matching
+      //        process_daily_login -- no longer a flat, under-advertised 5)
       // Workout: 100 XP
       // Meal: 25 XP
       // Weight: 15 XP
       // Protein: 50 XP
       // Measurements: 20 XP
 
-      const expectedLoginXP = 5;
+      const expectedLoginXP = 25;
       const expectedWorkoutXP = 100;
       const expectedMealXP = 25;
       const expectedWeightXP = 15;
       const expectedProteinXP = 50;
       const expectedMeasurementsXP = 20;
 
-      expect(expectedLoginXP, equals(5));
+      expect(expectedLoginXP, equals(25));
       expect(expectedWorkoutXP, equals(100));
       expect(expectedMealXP, equals(25));
       expect(expectedWeightXP, equals(15));
       expect(expectedProteinXP, equals(50));
       expect(expectedMeasurementsXP, equals(20));
 
-      // Total daily XP (all goals)
-      const totalDailyXP = 215;
+      // Total daily XP (all goals, streak 1)
+      const totalDailyXP = 235;
       expect(
         expectedLoginXP +
             expectedWorkoutXP +

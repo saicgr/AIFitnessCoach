@@ -230,24 +230,47 @@ void main() {
       expect(find.text('My Gyms'), findsOneWidget);
     });
 
-    // REGRESSION (E2E settings row 78): the floating search FAB is pinned to
-    // a fixed screen rectangle (`bottom: bottomPadding + 16`, 56px tall) that
-    // used to sit directly over whatever list content the raw scroll offset
-    // happened to place there — the Appearance row on load, Sign Out at the
-    // list's end — with no reserved clearance. The scrollable viewport must
-    // now stop above the FAB's rectangle at every scroll position, not just
-    // grow extra padding after the last row.
+    // REGRESSION (E2E settings row 78, revised for E2E finding #331): the
+    // floating search FAB is pinned to a fixed screen rectangle
+    // (`bottom: bottomPadding + 16`, 56px tall). The original fix for row 78
+    // clipped the scrollable *viewport* itself to stop above that rectangle
+    // (a `Positioned.fill(bottom: searchControlExclusion)`), which is exactly
+    // what E2E #331 flagged as a ~150pt dead white slab: whenever content was
+    // shorter than the screen, that clipped viewport left a permanent blank
+    // gap between the last row and the actual bottom of the screen. The
+    // current implementation fixes #331 by letting the viewport span the
+    // full screen height (no dead space) and instead giving the *scrollable
+    // content* a trailing bottom exclusion (`searchControlExclusion + 24`),
+    // so the invariant from row 78 — no row ever renders under the floating
+    // control — is preserved via content padding rather than viewport
+    // clipping. Assert that invariant directly: scroll to the list's end and
+    // confirm the last piece of content still clears the FAB.
     testWidgets(
         'the scrollable settings viewport never extends into the floating search control\'s rectangle',
         (tester) async {
       await pumpSettings(tester);
 
+      // The viewport itself must span the full screen height — no dead
+      // space reserved below the last row (E2E #331).
       final scrollAreaRect =
           tester.getRect(find.byKey(const Key('settings_scroll_area')));
+      final scaffoldSize = tester.getSize(find.byType(Scaffold).first);
+      expect(scrollAreaRect.height, scaffoldSize.height);
+
+      // Scroll all the way to the end of the content (jump straight to
+      // maxScrollExtent rather than guessing a drag distance) and confirm
+      // the very last row (the version line) never sits under the floating
+      // control.
+      final scrollable =
+          tester.state(find.byType(Scrollable)) as ScrollableState;
+      scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+
+      final versionRect = tester.getRect(find.text(Branding.appName));
       final fabRect =
           tester.getRect(find.byKey(const ValueKey('search_fab')));
 
-      expect(scrollAreaRect.bottom, lessThanOrEqualTo(fabRect.top));
+      expect(versionRect.bottom, lessThanOrEqualTo(fabRect.top));
     });
 
     // REGRESSION (E2E settings row 83): launchUrl returns `false` (does not

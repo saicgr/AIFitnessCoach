@@ -10,8 +10,10 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -334,7 +336,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         if (files.isEmpty) return;
         final accepted = files.take(remaining).toList();
         for (final f in accepted) {
-          final bytes = await File(f.path).readAsBytes();
+          final bytes = await _stripExifBytes(f.path);
           if (!mounted) return;
           await _appendPhoto(base64Encode(bytes), f.path);
         }
@@ -347,7 +349,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         final f = await ImagePicker()
             .pickImage(source: source, imageQuality: 75, maxWidth: 1280);
         if (f == null) return;
-        final bytes = await File(f.path).readAsBytes();
+        final bytes = await _stripExifBytes(f.path);
         if (!mounted) return;
         await _appendPhoto(base64Encode(bytes), f.path);
       }
@@ -356,6 +358,29 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       if (!mounted) return;
       setState(() => _error =
           'Could not load photo: ${e.toString().replaceFirst('Exception: ', '')}');
+    }
+  }
+
+  /// Re-encodes the picked photo with EXIF (including GPS location) dropped
+  /// before it is base64-encoded and sent to the pantry-detection vision
+  /// endpoint. Falls back to the original file's bytes if compression fails.
+  Future<Uint8List> _stripExifBytes(String path) async {
+    try {
+      final bytes = await FlutterImageCompress.compressWithFile(
+        path,
+        minWidth: 1280,
+        quality: 80,
+        format: CompressFormat.jpeg,
+        autoCorrectionAngle: true,
+        keepExif: false,
+      );
+      if (bytes == null || bytes.isEmpty) {
+        return File(path).readAsBytes();
+      }
+      return bytes;
+    } catch (e) {
+      debugPrint('🍳 [Fridge] EXIF strip failed, using original bytes: $e');
+      return File(path).readAsBytes();
     }
   }
 
@@ -689,32 +714,35 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       barrierColor: Colors.black.withValues(alpha: 0.92),
       barrierDismissible: true,
       barrierLabel: 'photo',
-      pageBuilder: (ctx, _, __) => Stack(
-        children: [
-          Center(
-            child: InteractiveViewer(
-              child: Image.file(File(path), fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+      pageBuilder: (ctx, _, __) => Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.file(File(path), fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+              ),
             ),
-          ),
-          Positioned(
-            top: 56,
-            right: 22,
-            child: GestureDetector(
-              onTap: () => Navigator.of(ctx).pop(),
-              child: const Icon(Icons.close, color: Colors.white, size: 24),
+            Positioned(
+              top: 56,
+              right: 22,
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                child: const Icon(Icons.close, color: Colors.white, size: 24),
+              ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 40,
-            child: Center(
-              child: Text('Your snap · $count ingredients detected',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13)),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 40,
+              child: Center(
+                child: Text('Your snap · $count ingredients detected',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1010,11 +1038,11 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             const SizedBox(height: 12),
             Row(
               children: [
-                _howStep(tc, '📷', 'Snap', 'one photo of the open fridge'),
+                _howStep(tc, Icons.camera_alt_rounded, 'Snap', 'one photo of the open fridge'),
                 const SizedBox(width: 8),
-                _howStep(tc, '🧠', 'We scan', 'AI finds every ingredient'),
+                _howStep(tc, Icons.psychology_alt_rounded, 'We scan', 'AI finds every ingredient'),
                 const SizedBox(width: 8),
-                _howStep(tc, '🍽️', 'You cook', 'recipes from what you own'),
+                _howStep(tc, Icons.restaurant_rounded, 'You cook', 'recipes from what you own'),
               ],
             ),
           ],
@@ -1057,7 +1085,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     );
   }
 
-  Widget _howStep(ThemeColors tc, String emoji, String title, String sub) {
+  Widget _howStep(ThemeColors tc, IconData icon, String title, String sub) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
@@ -1068,7 +1096,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         ),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 22)),
+            Icon(icon, size: 22, color: tc.textPrimary),
             const SizedBox(height: 6),
             Text(title,
                 style: TextStyle(
@@ -1344,7 +1372,10 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                             text: '${_items.length} ingredients ',
                             style: TextStyle(
                                 color: tc.accent, fontWeight: FontWeight.w600)),
-                        const TextSpan(text: 'found in your photo'),
+                        TextSpan(
+                            text: _imagesB64.length > 1
+                                ? 'found across ${_imagesB64.length} photos'
+                                : 'found in your photo'),
                       ],
                     ),
                   ),
@@ -1527,13 +1558,12 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 
   Widget _buildFiltersCard(ThemeColors tc) {
     // Mood counts as an "active" selection in the collapsed summary so the
-    // one-line card always tells the whole story ("🌶️ Spicy · High protein").
+    // one-line card always tells the whole story ("Spicy · High protein").
     final moodEntry = _mood == null
         ? null
         : _moods.where((m) => m.key == _mood).toList();
-    final moodLabel = (moodEntry?.isEmpty ?? true)
-        ? null
-        : '${moodEntry!.first.emoji} ${moodEntry.first.label}';
+    final moodLabel =
+        (moodEntry?.isEmpty ?? true) ? null : moodEntry!.first.label;
     final active = [if (moodLabel != null) moodLabel, ..._activeFilters];
     final summary = active.isEmpty
         ? 'none — showing everything'
@@ -1624,7 +1654,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                       children: [
                         for (final m in _moods)
                           FridgePref(
-                            label: '${m.emoji} ${m.label}',
+                            label: m.label,
                             selected: _mood == m.key,
                             onTap: () => _pickMood(m.key),
                           ),

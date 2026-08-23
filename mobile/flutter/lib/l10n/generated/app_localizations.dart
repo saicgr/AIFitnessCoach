@@ -9956,7 +9956,7 @@ abstract class AppLocalizations {
   /// No description provided for @customWorkoutBuilderBuildCustomWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Build Custom Workout'**
+  /// **'Custom Workout'**
   String get customWorkoutBuilderBuildCustomWorkout;
 
   /// No description provided for @customWorkoutBuilderCustomWorkoutCreated.
@@ -42738,7 +42738,7 @@ abstract class AppLocalizations {
   /// No description provided for @nutritionSettingsDisableAiFoodTips.
   ///
   /// In en, this message translates to:
-  /// **'Disable AI Food Tips'**
+  /// **'AI Food Tips'**
   String get nutritionSettingsDisableAiFoodTips;
 
   /// No description provided for @nutritionSettingsManageYourFoodLibrary.
@@ -58718,6 +58718,24 @@ abstract class AppLocalizations {
   /// **'Equipment'**
   String get settingsEquipment;
 
+  /// No description provided for @settingsEquipmentItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {1 item} other {{count} items}}'**
+  ///
+  /// Concrete (not per-locale-generated): no arb translation exists yet for
+  /// any locale, so this mirrors the English plural form for every locale
+  /// rather than leaving 40 generated subclasses with an unimplemented
+  /// abstract member.
+  String settingsEquipmentItemCount(num count) {
+    return intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+  }
+
   /// No description provided for @settingsExercisePrefs.
   ///
   /// In en, this message translates to:
@@ -61640,7 +61658,7 @@ abstract class AppLocalizations {
   /// No description provided for @storiesRingYourStory.
   ///
   /// In en, this message translates to:
-  /// **'Your Story'**
+  /// **'Story'**
   String get storiesRingYourStory;
 
   /// No description provided for @storyCreateAddACaption.
@@ -73518,13 +73536,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutUiModeEverythingWarmupStretchLb.
   ///
   /// In en, this message translates to:
-  /// **'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.'**
+  /// **'Everything in Easy, plus: warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.'**
   String get workoutUiModeEverythingWarmupStretchLb;
 
   /// No description provided for @workoutUiModeEverythingWarmupStretchPh.
   ///
   /// In en, this message translates to:
-  /// **'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.'**
+  /// **'Everything in Easy, plus: warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.'**
   String get workoutUiModeEverythingWarmupStretchPh;
 
   /// No description provided for @workoutUiModePickTheLevelOf.

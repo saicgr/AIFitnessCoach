@@ -33,6 +33,14 @@ const List<_BristolItem> _bristolScale = [
 /// Healthy band for the at-a-glance accent treatment (types 3–4 are ideal).
 bool _isIdeal(int type) => type == 3 || type == 4;
 
+/// The selected-type feedback line's "ideal" colour, on the Light-mode card
+/// (`tc.elevated`, effectively white). `AppColors.success`/`AppColorsLight
+/// .success` is the app-wide success token used everywhere else (923+ call
+/// sites) and reads near white as body text — around 2.5:1, below WCAG 2.2
+/// SC 1.4.3's 4.5:1 floor for body copy — so this line uses its own darker
+/// green rather than reaching for the shared token. ~5:1 on white.
+const Color _kBristolIdealGreenLight = Color(0xFF15803D);
+
 /// Compact gut-health summary block for the Daily tab — a sibling to
 /// [HydrationSummaryBlock]. Tap (or the "+") opens the one-tap Bristol picker.
 class GutHealthCard extends ConsumerWidget {
@@ -114,7 +122,9 @@ class GutHealthCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: hasLog && lastItem != null && _isIdeal(lastItem.type)
-                        ? AppColors.success  // accent-allowlist: success state
+                        ? (tc.isDark
+                            ? AppColors.success // accent-allowlist: success state
+                            : _kBristolIdealGreenLight)
                         : textSecondary,
                   ),
                 ),
@@ -175,7 +185,6 @@ class _GutHealthSheetState extends ConsumerState<_GutHealthSheet> {
     'after meal',
     'bloated',
     'cramping',
-    'urgent',
     'high fibre',
     'dairy',
     'travel',
@@ -275,21 +284,29 @@ class _GutHealthSheetState extends ConsumerState<_GutHealthSheet> {
                 ],
               ),
 
-              // Inline hint for the selected type.
-              if (_bristol != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  _bristolScale
-                      .firstWhere((b) => b.type == _bristol)
-                      .hint,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: _isIdeal(_bristol!)
-                        ? AppColors.success  // accent-allowlist: success state
-                        : tc.textSecondary,
-                  ),
-                ),
-              ],
+              // Inline hint for the selected type. Height is reserved up
+              // front (not only once a type is picked) so tapping a tile
+              // never reflows the rest of the sheet underneath it.
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 34,
+                child: _bristol == null
+                    ? null
+                    : Text(
+                        _bristolScale
+                            .firstWhere((b) => b.type == _bristol)
+                            .hint,
+                        maxLines: 2,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: _isIdeal(_bristol!)
+                              ? (tc.isDark
+                                  ? AppColors.success // accent-allowlist: success state
+                                  : _kBristolIdealGreenLight)
+                              : tc.textSecondary,
+                        ),
+                      ),
+              ),
 
               const SizedBox(height: 20),
               _SectionLabel('URGENCY (OPTIONAL)'),
@@ -409,20 +426,35 @@ class _BristolTile extends StatelessWidget {
             width: selected ? 1.5 : 1,
           ),
         ),
-        child: Column(
+        child: Stack(
           children: [
-            Text('TYPE ${item.type}',
-                style: ZType.lbl(9, color: fg, letterSpacing: 1)),
-            const SizedBox(height: 6),
-            Icon(item.icon, size: 22, color: fg),
-            const SizedBox(height: 6),
-            Text(
-              item.label.toUpperCase(),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 0.5),
+            Column(
+              children: [
+                Text('TYPE ${item.type}',
+                    style: ZType.lbl(9, color: fg, letterSpacing: 1)),
+                const SizedBox(height: 6),
+                Icon(item.icon, size: 22, color: fg),
+                const SizedBox(height: 6),
+                Text(
+                  item.label.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 0.5),
+                ),
+              ],
             ),
+            // Selection is never colour-only: the border/tint pair reads at
+            // roughly 3:1 against the card, below the 3:1 UI-component floor
+            // some readers need — the check mark carries the state through
+            // shape as well.
+            if (selected)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(Icons.check_circle_rounded,
+                    size: 14, color: tc.accent),
+              ),
           ],
         ),
       ),

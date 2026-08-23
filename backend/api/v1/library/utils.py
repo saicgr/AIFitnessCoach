@@ -394,7 +394,23 @@ def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> 
       2 — Name starts with search query; tiebreak by word count, length
       3 — Search appears as a complete word in the name
       4 — Partial (substring) match
-      5 — Everything else (trigram matches returned by SQL)
+      4.3 — Multi-word query: every token appears in the name as its own
+            word, just not contiguously as a phrase (e.g. "Cable Twisting
+            Biceps Curl" for query "cable twist")
+      4.6 — Multi-word query: some (not all) tokens appear as whole words;
+            ranked by how many tokens matched (more = better)
+      5 — Everything else (trigram matches returned by SQL, or no token
+          overlap at all for a multi-word query)
+
+    Row 283 — a two-token query ("Cable Twist", "Cable Pulldown") used to
+    dump every trigram hit sharing so much as ONE token into a single tier-5
+    bucket, tied off only by string length — so e.g. "Torso Twist" (11
+    chars, shares NO token with "Cable Twist") could out-rank "Cable Crunch"
+    (12 chars, also shares no token) purely by being one character shorter,
+    and neither ranked below the tier-4.3 exact-tokens matches they should
+    have lost to. The 4.3/4.6 tiers above make "all tokens present" beat
+    "some tokens present" beat "no token overlap", instead of leaving
+    multi-word relevance entirely to SQL's trigram similarity + string length.
     """
     if not search_query:
         return exercises
@@ -424,6 +440,25 @@ def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> 
 
         if search_lower in name_lower:
             return (4, 0, len(name_lower), name_lower)
+
+        query_tokens = [t for t in search_lower.split() if t]
+        if len(query_tokens) > 1:
+            n = len(query_tokens)
+            matched_positions = [
+                i for i, t in enumerate(query_tokens)
+                if re.search(r'\b' + re.escape(t) + r'\b', name_lower)
+            ]
+            if len(matched_positions) == n:
+                return (4.3, len(name_lower.split()), len(name_lower), name_lower)
+            if matched_positions:
+                # Earlier query tokens are usually the more load-bearing
+                # qualifier ("Cable" in "Cable Twist" names the equipment) —
+                # weight a match on an earlier token higher so e.g. "Cable
+                # Crunch" (matches token 0) outranks "Torso Twist" (matches
+                # only token 1) instead of tying and falling back to a
+                # meaningless string-length tiebreak.
+                weight = sum(n - i for i in matched_positions)
+                return (4.6, -weight, len(name_lower), name_lower)
 
         return (5, 0, len(name_lower), name_lower)
 

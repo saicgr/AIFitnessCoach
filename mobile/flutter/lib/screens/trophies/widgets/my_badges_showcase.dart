@@ -61,7 +61,7 @@ class MyBadgesShowcase extends StatelessWidget {
             for (int i = 0; i < recent.length; i++) ...[
               Expanded(
                 child: _RarityTile(
-                  icon: recent[i].trophy.icon,
+                  categoryIcon: recent[i].trophy.trophyCategory.iconData,
                   name: recent[i].trophy.name,
                   tier: recent[i].trophy.trophyTier,
                 ),
@@ -82,12 +82,12 @@ class MyBadgesShowcase extends StatelessWidget {
 
 
 class _RarityTile extends StatelessWidget {
-  final String icon;
+  final IconData categoryIcon;
   final String name;
   final TrophyTier tier;
 
   const _RarityTile({
-    required this.icon,
+    required this.categoryIcon,
     required this.name,
     required this.tier,
   });
@@ -122,7 +122,7 @@ class _RarityTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(icon, style: const TextStyle(fontSize: 23)),
+                Icon(categoryIcon, size: 23, color: metal),
               ],
             ),
           ),

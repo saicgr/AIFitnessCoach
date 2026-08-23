@@ -89,8 +89,9 @@ class _ExerciseDetailsSheetContentState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with title and close button
-              // (drag handle is rendered by the GlassSheet wrapper — do not duplicate here)
+              // Header with title.
+              // (both the drag handle AND its close button are rendered by
+              // the GlassSheet wrapper — do not duplicate either here)
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -105,10 +106,6 @@ class _ExerciseDetailsSheetContentState
                               color: textPrimary,
                             ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: textMuted),
                     ),
                   ],
                 ),

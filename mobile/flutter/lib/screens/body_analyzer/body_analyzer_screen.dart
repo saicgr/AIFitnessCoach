@@ -391,7 +391,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Upload 1–4 progress photos (front, back, side). Gemini Vision '
+                'Upload 1–4 progress photos (front, back, side). AI '
                 'fuses them with your latest measurements for a detailed '
                 '/100 rating, composition rings, and personalized program '
                 'retune suggestions.',

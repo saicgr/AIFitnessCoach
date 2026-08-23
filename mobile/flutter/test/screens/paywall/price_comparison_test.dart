@@ -69,18 +69,27 @@ void main() {
     expect(find.text('YR'), findsOneWidget);
   });
 
+  // REGRESSION (pricing source-of-truth refresh, verified 2026-08-23 — see
+  // the doc comment on `PaywallPriceComparison`): Gravl and Bevel's monthly
+  // prices were stale/incorrect ($14.99 for both) and have been corrected to
+  // their real published tiers (Gravl $10.99/mo, $59.99/yr; Bevel $5.99/mo,
+  // $49.99/yr). Assert the current, verified prices rather than the old
+  // placeholder figures.
   testWidgets('toggling to Yearly switches to annual prices', (tester) async {
     await tester.pumpWidget(buildPrice());
     await tester.pumpAndSettle();
 
-    // Gravl is visible while collapsed (monthly).
-    expect(find.text(r'$14.99'), findsWidgets); // Gravl & Bevel share 14.99/mo
+    // Gravl and Bevel are visible while collapsed (monthly), each at its own
+    // correct price — no longer sharing a stale $14.99 placeholder.
+    expect(find.text(r'$10.99'), findsOneWidget); // Gravl monthly
+    expect(find.text(r'$5.99'), findsOneWidget); // Bevel monthly
     await tester.tap(find.text('YR'));
     await tester.pumpAndSettle();
 
-    // Annual prices now shown for the visible rivals.
-    expect(find.text(r'$69.99'), findsOneWidget); // Gravl yearly
-    expect(find.text(r'$59.99'), findsOneWidget); // Zealova yearly
+    // Annual prices now shown for the visible rivals. Gravl's yearly price
+    // ($59.99) happens to match Zealova's own yearly price, so both render.
+    expect(find.text(r'$59.99'), findsNWidgets(2)); // Gravl yearly & Zealova yearly
+    expect(find.text(r'$49.99'), findsOneWidget); // Bevel yearly
   });
 
   testWidgets('benefit strip renders the four non-attributed benefits', (

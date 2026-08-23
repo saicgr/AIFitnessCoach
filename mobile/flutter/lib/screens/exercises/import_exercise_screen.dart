@@ -309,7 +309,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             title: AppLocalizations.of(context).importExerciseSnapItWeLl,
             body:
                 'Take or pick a clear photo of a machine, setup, or posture. '
-                'Gemini Vision will infer the exercise name, muscles, '
+                'AI will infer the exercise name, muscles, '
                 'equipment, and instructions.',
           ),
           const SizedBox(height: 16),

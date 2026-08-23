@@ -264,6 +264,17 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
     }
   }
 
+  /// Blends the deterministic step animation (`_currentStep`, which advances
+  /// every ~1s on its own timer) with real progress/completion events from
+  /// the stream — whichever is further along wins. `_progress` alone sits at
+  /// 0.0 until the server's first SSE event, which can arrive seconds after
+  /// the stage captions have already cycled past "Analyzing..." — showing a
+  /// static 0% ring under a caption implying the plan is nearly done.
+  double get _displayProgress {
+    final stepProgress = _currentStep / _steps.length;
+    return _progress > stepProgress ? _progress : stepProgress;
+  }
+
   void _retry() {
     setState(() {
       _isGenerating = true;
@@ -396,7 +407,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                 ),
                 // Progress arc
                 TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: _progress),
+                  tween: Tween(begin: 0, end: _displayProgress),
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeOutCubic,
                   builder: (context, value, _) {
@@ -414,7 +425,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_progress >= 1.0)
+                    if (_displayProgress >= 1.0)
                       Icon(
                         Icons.check_circle_rounded,
                         color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
@@ -428,7 +439,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                       ),
                     const SizedBox(height: 8),
                     Text(
-                      '${(_progress * 100).toInt()}%',
+                      '${(_displayProgress * 100).toInt()}%',
                       style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.w800,

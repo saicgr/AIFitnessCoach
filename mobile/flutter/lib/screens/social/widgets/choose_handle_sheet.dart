@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -103,11 +103,11 @@ class _ChooseHandleSheetState extends ConsumerState<ChooseHandleSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final cardBg = tc.elevated;
+    final cardBorder = tc.cardBorder;
 
     return GlassSheet(
       child: Padding(

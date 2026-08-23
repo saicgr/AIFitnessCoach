@@ -36,7 +36,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
     _Step('Analyzing your fitness profile', Icons.person_search),
     _Step('Setting up your AI coach', Icons.smart_toy_rounded),
     _Step('Selecting exercises', Icons.fitness_center),
-    _Step('Building your plan', Icons.auto_awesome),
+    _Step('Matching exercises to your gym', Icons.auto_awesome),
     _Step('Finalizing workout', Icons.rocket_launch),
   ];
 

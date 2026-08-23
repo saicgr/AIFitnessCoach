@@ -357,6 +357,15 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     _questionController.forward(from: 0);
   }
 
+  /// Visual step index for the segmented progress bar: [_currentQuestion]
+  /// re-numbered to skip the gap left by Screen 3 (Workout Days) when
+  /// [_featureFlagWorkoutDays] is off, so one tap always advances the bar by
+  /// exactly one segment. Pairs with [_totalQuestions] for `segments`.
+  int get _progressStepIndex {
+    if (_featureFlagWorkoutDays || _currentQuestion < 4) return _currentQuestion;
+    return _currentQuestion - 1;
+  }
+
   /// Calculate progress value with phase-aware behavior
   /// Phase 1 (0-5): Show 0-100% progress
   /// Phase 2 & 3 (6+): Stay at 100% to show Phase 1 completion
@@ -878,9 +887,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             headerExtra: isFoldableOpen ? _getStepHeaderExtra(context, _currentQuestion) : null,
             progressBar: QuizProgressBar(
               progress: _progress,
-              // v7: discrete System-A ticks, one per quiz step.
-              segments: 11,
-              currentStep: _currentQuestion,
+              // v7: discrete System-A ticks, one per reachable quiz step.
+              segments: _totalQuestions,
+              currentStep: _progressStepIndex,
             ),
             headerOverlay: QuizHeader(
               currentQuestion: _currentQuestion,
@@ -1410,13 +1419,17 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Widget _buildGoalQuestion({bool showHeader = true}) {
+    // Every colour is one of AppColors' documented categorical hues (never
+    // an ad-hoc literal), and each of the 6 goals gets its own — three of
+    // them used to share the exact same brand-accent orange, which defeats
+    // the point of a "distinct colour per option for visual scanning".
     final goals = [
       {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.onboardingAccent},
-      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.onboardingAccent},
-      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.onboardingAccent},
-      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': context.accentColor},
+      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.coral},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
+      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.purple},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
+      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.info},  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
       {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.green},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
-      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': const Color(0xFF3B82F6)}, // Bright blue  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
+      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': AppColors.yellow},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     ];
 
     return QuizMultiSelect(

@@ -602,14 +602,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            // Inset the animated texture below the header + logo band.
-            // The scenes anchor from top:0 of their own box, so filling the
-            // whole zone painted the calendar-grid tiles right behind the
-            // semi-transparent logo (they showed THROUGH it). Starting the
-            // background lower keeps the header and logo on clean background.
-            // Its top scrim stop is transparent, so there's no hard edge.
+            // Inset the animated texture below the header + logo band AND
+            // the title line. The scenes anchor from top:0 of their own box,
+            // so filling the whole zone painted the calendar-grid tiles
+            // right behind the semi-transparent logo (they showed THROUGH
+            // it) and behind the title's letterforms further down. Starting
+            // the background below the title keeps header, logo, and
+            // headline on clean background. Its top scrim stop is
+            // transparent, so there's no hard edge.
             Positioned(
-              top: 150,
+              top: 230,
               left: 0,
               right: 0,
               bottom: 0,

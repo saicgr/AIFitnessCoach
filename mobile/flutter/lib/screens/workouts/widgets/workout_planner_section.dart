@@ -312,6 +312,7 @@ class WorkoutTuneMenu extends ConsumerWidget {
       tooltip: AppLocalizations.of(context).workoutPlannerCalendarDisplayOptions,
       icon: Icon(Icons.tune, size: 18, color: tint),
       position: PopupMenuPosition.under,
+      offset: const Offset(0, 8),
       padding: EdgeInsets.zero,
       onSelected: (action) {
         HapticService.selection();

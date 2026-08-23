@@ -242,7 +242,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
               icon: Icons.bookmark_border_rounded,
               title: 'No saved workouts yet',
               subtitle:
-                  'Save a workout from chat or a friend\'s post, or build your own from the Custom tab.',
+                  'Save a workout from chat or a friend\'s post, or build your own from Library → Custom.',
               color: textSecondary,
               mutedColor: textMuted,
             ),

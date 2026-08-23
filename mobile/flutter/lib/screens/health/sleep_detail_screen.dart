@@ -101,13 +101,20 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
                     ),
                   ],
                   const Spacer(),
+                  // Flexible + ellipsis: at larger Dynamic Type sizes this
+                  // caption otherwise grows wide enough to push the
+                  // AskCoachButton past the right edge instead of yielding
+                  // to it.
                   if (nightCaption != null)
-                    Text(
-                      nightCaption,
-                      style: ZType.lbl(
-                        11,
-                        color: textMuted.withValues(alpha: 0.7),
-                        letterSpacing: 0.8,
+                    Flexible(
+                      child: Text(
+                        nightCaption,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZType.lbl(
+                          11,
+                          color: textMuted.withValues(alpha: 0.7),
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ),
                   const SizedBox(width: 8),

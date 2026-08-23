@@ -214,6 +214,20 @@ class AppThemeLight {
         margin: EdgeInsets.zero,
       ),
 
+      // Overflow / dropdown menus — same rounded-surface token as cards, so
+      // a PopupMenuButton never renders as a hard-edged slab.
+      popupMenuTheme: PopupMenuThemeData(
+        color: AppColorsLight.elevated,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: AppColorsLight.cardBorder.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+      ),
+
       // Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

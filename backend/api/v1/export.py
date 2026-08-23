@@ -80,9 +80,12 @@ _FORMAT_MAP = {
 }
 
 
-def _run_exporter(exporter, user_id: str, start_date, end_date) -> bytes:
+def _run_exporter(exporter, user_id: str, start_date, end_date, app_version=None) -> bytes:
     """Call exporter and normalize output to bytes."""
-    out = exporter(user_id, start_date=start_date, end_date=end_date)
+    kwargs = {"start_date": start_date, "end_date": end_date}
+    if exporter in (export_user_data, export_user_data_json):
+        kwargs["app_version"] = app_version
+    out = exporter(user_id, **kwargs)
     if isinstance(out, str):
         return out.encode("utf-8")
     return out
@@ -168,10 +171,11 @@ async def export_my_data(
     start = time.time()
     try:
         mime, filename_template, exporter, _ext = _FORMAT_MAP[format]
+        app_version = request.headers.get("x-app-version")
         # Generate payload synchronously first — we still need to *know* the
         # size before deciding streaming vs async. The heavy DB fetches
         # happen here regardless of path; we just pick the delivery mode.
-        payload = _run_exporter(exporter, user_id, start_date, end_date)
+        payload = _run_exporter(exporter, user_id, start_date, end_date, app_version=app_version)
     except ValueError as e:
         # e.g. user not found — bubble up as 404 rather than 500.
         raise HTTPException(status_code=404, detail=str(e))

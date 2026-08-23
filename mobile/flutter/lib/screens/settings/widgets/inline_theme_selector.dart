@@ -111,24 +111,23 @@ class ThemeButton extends StatelessWidget {
                 ]
               : null,
         ),
-        // Only the selected mode shows its label — unselected buttons are
-        // icon-only so the full "Appearance" title fits on one line next to
-        // the selector on narrower devices.
+        // Every segment carries its label — an icon-only "System" option
+        // left that mode unnamed anywhere on screen. The row's label sits in
+        // an Expanded Text above, so it yields width to this control instead
+        // of overflowing.
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 16, color: iconColor),
-            if (isSelected) ...[
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: textColor,
               ),
-            ],
+            ),
           ],
         ),
       ),

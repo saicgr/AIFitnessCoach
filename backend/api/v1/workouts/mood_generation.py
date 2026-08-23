@@ -102,6 +102,11 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
             goals = user.get("goals", [])
             equipment = user.get("equipment", [])
 
+            staple_exercises = await get_user_staple_exercises(body.user_id)
+            staple_names = get_staple_names(staple_exercises) if staple_exercises else None
+            exercise_queue = await get_user_exercise_queue(body.user_id)
+            queued_names = [q["name"] for q in exercise_queue if q.get("name")] if exercise_queue else None
+
             params = mood_workout_service.get_workout_params(
                 mood=mood,
                 user_fitness_level=fitness_level,
@@ -138,6 +143,8 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 user_goals=goals,
                 user_equipment=equipment,
                 duration_minutes=params["duration_minutes"],
+                staple_exercise_names=staple_names,
+                queued_exercise_names=queued_names,
             )
 
             yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'message': 'Creating your ' + mood.value + ' workout...'})}\n\n"

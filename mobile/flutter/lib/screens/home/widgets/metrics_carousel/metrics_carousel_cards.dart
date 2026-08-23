@@ -262,8 +262,15 @@ class TrainingCard extends ConsumerWidget {
                             ),
                           )
                         : Center(
-                            child: Text('0',
-                                style: ZType.disp(30, color: c.textMuted)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('0',
+                                    style: ZType.disp(30, color: c.textMuted)),
+                                Text('SESSIONS',
+                                    style: ZType.data(7.5, color: c.textMuted)),
+                              ],
+                            ),
                           ),
                   ),
                 ),
@@ -292,7 +299,7 @@ class TrainingCard extends ConsumerWidget {
                           children: [
                             TextSpan(text: '${stats.streakDays}'),
                             TextSpan(
-                              text: ' days',
+                              text: stats.streakDays == 1 ? ' day' : ' days',
                               style: TextStyle(
                                 fontFamily: 'Space Mono',
                                 fontSize: 11,

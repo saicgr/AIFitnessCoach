@@ -50,6 +50,14 @@ part 'settings_card_part_workout_days_selector_sheet_state.dart';
 part 'settings_card_ui.dart';
 
 
+/// Pluralizes a simple counter row label — row 287 had "1 exercises" on both
+/// the Favorite and Staple Exercises rows (string concatenation never
+/// special-cased a count of one), while the sibling Queue row read "2
+/// queued" correctly only because its noun happens not to need pluralizing
+/// at 1. Shared here so every counter row in this card uses the same rule.
+String _pluralCount(int count, String singular) =>
+    count == 1 ? '1 $singular' : '$count ${singular}s';
+
 /// A card container for grouping related settings items.
 ///
 /// Handles theme toggles and provides consistent styling for settings groups.
@@ -535,7 +543,7 @@ class SettingsCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${favoritesState.favorites.length} exercises',
+                  _pluralCount(favoritesState.favorites.length, 'exercise'),
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,
@@ -587,7 +595,7 @@ class SettingsCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${staplesState.staples.length} exercises',
+                  _pluralCount(staplesState.staples.length, 'exercise'),
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,

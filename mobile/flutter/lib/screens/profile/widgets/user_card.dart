@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -415,20 +416,20 @@ class _AddInjuryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.green.withValues(alpha: 0.10),  // accent-allowlist: success/positive state — must stay green regardless of accent
+          color: context.accentColor.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.green.withValues(alpha: 0.45)),  // accent-allowlist: success/positive state — must stay green regardless of accent
+          border: Border.all(color: context.accentColor.withValues(alpha: 0.45)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_rounded, size: 13, color: AppColors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
+            Icon(Icons.add_rounded, size: 13, color: context.accentColor),
             const SizedBox(width: 3),
             Text(
               hasInjuries ? 'Add' : 'Add injury',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
+                color: context.accentColor,
                 letterSpacing: 0.1,
                 fontWeight: FontWeight.w600,
               ),

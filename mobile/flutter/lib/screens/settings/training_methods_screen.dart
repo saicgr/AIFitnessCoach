@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -27,7 +27,7 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).trainingMethodsTrainingMethods,
       ),
       body: ListView(
@@ -206,7 +206,8 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
                                 Icon(Icons.timer_outlined, size: 14, color: textMuted),
                                 const SizedBox(width: 6),
                                 Text(
-                                  AppLocalizations.of(context)!.trainingMethodsScreenRest(pattern.restDisplayHint),
+                                  AppLocalizations.of(context)!.trainingMethodsScreenRest(
+                                      pattern.restDisplayHint.replaceFirst(RegExp(r'\s*rest$', caseSensitive: false), '')),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textMuted,

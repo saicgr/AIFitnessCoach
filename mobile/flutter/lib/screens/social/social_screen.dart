@@ -489,11 +489,12 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     // Monochrome text color
     final textColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    // Show username if available, otherwise show truncated user ID
+    // Show username if available, otherwise show truncated user ID. The
+    // full username is handed to the Flexible/Text below, which ellipsizes
+    // only if it doesn't actually fit — no fixed character cap here.
     String displayText;
     if (username != null && username.isNotEmpty) {
-      // Truncate long usernames
-      displayText = username.length > 10 ? '${username.substring(0, 10)}...' : username;
+      displayText = username;
     } else if (userId != null && userId.length >= 6) {
       displayText = userId.substring(0, 6);
     } else {

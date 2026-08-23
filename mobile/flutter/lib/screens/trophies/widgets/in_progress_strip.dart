@@ -78,8 +78,8 @@ class _InProgressRow extends StatelessWidget {
                       track: tc.hairlineStrong,
                     ),
                   ),
-                  Text(progress.trophy.icon,
-                      style: const TextStyle(fontSize: 15)),
+                  Icon(progress.trophy.trophyCategory.iconData,
+                      size: 15, color: metal),
                   PositionedDirectional(
                     end: -4,
                     bottom: -2,

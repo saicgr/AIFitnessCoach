@@ -282,7 +282,23 @@ void main() {
       expect(social, contains('communityYourProfile'),
           reason: 'the avatar must carry a semantics label — it is an '
               'icon-only control and the only route to the profile hub');
-      expect(social, contains('l10n.navCommunity.toUpperCase()'));
+      // E2E finding #436: the AppBar `title:` ("COMMUNITY") was removed, not
+      // relocalized — with the avatar (~45pt), the username chip, and three
+      // icon buttons already competing for a 402pt-wide bar, a redundant
+      // title was what truncated to "CO…" in the first place. The DONE note
+      // on #436 confirms this is the shipped fix ("verified: one accent, no
+      // AppBar title present"), and the tab's name is still available from
+      // the bottom nav bar label, so `AppBar.title` must stay unset here.
+      expect(social, isNot(contains('l10n.navCommunity.toUpperCase()')));
+      final shellStart = social.indexOf('return Scaffold(');
+      final appBarStart = social.indexOf('appBar: AppBar(', shellStart);
+      expect(appBarStart, greaterThan(-1));
+      final appBarEnd = social.indexOf('body: Column(', appBarStart);
+      final appBarBody = social.substring(appBarStart, appBarEnd);
+      expect(appBarBody, isNot(contains('title:')),
+          reason: 'no widget should reintroduce a masthead title Text — the '
+              'nav bar already labels this tab, and a second label is the '
+              'truncation bug #436 fixed by removing');
     });
 
     // ── The behavioural half. Group 2's other tests are source scans; this

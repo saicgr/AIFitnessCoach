@@ -125,16 +125,14 @@ class QuizDaysSelector extends StatelessWidget {
             final isSelected = workoutDurationMax == maxDuration;
             final isRecommended = maxDuration == 60;
 
-            // Outer Stack with clipBehavior:none allows the BEST badge to
-            // float ABOVE the chip's rounded boundary — the chip's ClipRRect
-            // would otherwise crop anything outside its rounded rect.
+            // Badge sits in a fixed-height slot below the chip, same anchor
+            // as the days-per-week recommendation badge below.
             return Expanded(
               child: Padding(
                 padding: EdgeInsetsDirectional.only(end: index < _durationOptions.length - 1 ? 6 : 0,
                 ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // The chip itself
                     Padding(
@@ -228,50 +226,15 @@ class QuizDaysSelector extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // BEST badge — floats outside the ClipRRect's clip rect,
-                    // anchored to the top of the parent Stack.
-                    if (isRecommended)
-                      Positioned(
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                context.accentColor,
-                                context.accentColor,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.accentColor
-                                    .withValues(alpha: 0.4),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star_rounded,
-                                  size: 9, color: Colors.white),
-                              SizedBox(width: 3),
-                              Text(
-                                AppLocalizations.of(context)!.quizDaysSelectorBest,
-                                style: const TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      height: 16,
+                      child: isRecommended
+                          ? RecommendationBadge(
+                              label: AppLocalizations.of(context)!.quizDaysSelectorBest,
+                            )
+                          : null,
+                    ),
                   ],
                 ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
               ),
@@ -395,40 +358,12 @@ class QuizDaysSelector extends StatelessWidget {
               const SizedBox(height: 4),
               SizedBox(
                 width: 44,
-                height: 14,
+                height: 16,
                 child: isRecommended
                     ? FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [context.accentColor, context.accentColor.withValues(alpha: 0.85)],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.star_rounded,
-                                  size: 9, color: Colors.white),
-                              const SizedBox(width: 3),
-                              Text(
-                                l10n.quizEquipmentRecommended,
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontSize: 8,
-                                  height: 1.2,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: RecommendationBadge(
+                          label: l10n.quizEquipmentRecommended,
                         ),
                       )
                     : null,
@@ -706,6 +641,52 @@ class QuizDaysSelector extends StatelessWidget {
           ),
         ),
       ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+    );
+  }
+}
+
+/// Star + label pill used to mark a recommended option. Anchored below the
+/// option it decorates wherever it is used, so every "recommended" marker on
+/// a given screen sits in the same place relative to its option.
+class RecommendationBadge extends StatelessWidget {
+  final String label;
+
+  const RecommendationBadge({super.key, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [context.accentColor, context.accentColor],
+        ),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: context.accentColor.withValues(alpha: 0.4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 9, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            maxLines: 1,
+            style: const TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -3,13 +3,83 @@
 /// "DONE — LOG IT". Steps come from the suggestion's `instructions` list.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
+import '../../../data/services/haptic_service.dart';
 import 'fridge_dish_card.dart';
+
+/// Explicit duration mentioned in a step ("simmer for 8-10 minutes"). Takes
+/// the upper end of a range so the timer never cuts a step short.
+final RegExp _kDurationPattern = RegExp(
+  r'(\d+)\s*(?:[-–]|to)?\s*(\d+)?\s*(hours?|hrs?|hr|minutes?|mins?|min|seconds?|secs?|sec)\b',
+  caseSensitive: false,
+);
+
+/// Steps that are time-based by their cooking verb even when no explicit
+/// duration is written out ("Boil pasta ... until al dente" never says a
+/// number). A sensible, adjustable-by-the-user default rather than no timer
+/// at all — checked in insertion order, first match wins.
+const Map<String, int> _kVerbDefaultMinutes = {
+  'simmer': 15,
+  'boil': 8,
+  'bake': 20,
+  'roast': 25,
+  'braise': 45,
+  'poach': 6,
+  'sauté': 5,
+  'saute': 5,
+  'stir-fry': 5,
+  'steam': 10,
+  'grill': 8,
+  'marinate': 15,
+  'chill': 15,
+  'rest': 5,
+  'steep': 5,
+  'proof': 30,
+  'knead': 8,
+};
+
+/// The step's timer duration, or null when the step isn't time-based at all
+/// (e.g. "Season with salt and pepper").
+Duration? stepDuration(String step) {
+  final match = _kDurationPattern.firstMatch(step);
+  if (match != null) {
+    final a = int.parse(match.group(1)!);
+    final b = match.group(2) != null ? int.parse(match.group(2)!) : null;
+    final n = b != null && b > a ? b : a;
+    final unit = match.group(3)!.toLowerCase();
+    if (unit.startsWith('h')) return Duration(minutes: n * 60);
+    if (unit.startsWith('s')) return Duration(seconds: n);
+    return Duration(minutes: n);
+  }
+  final lower = step.toLowerCase();
+  for (final entry in _kVerbDefaultMinutes.entries) {
+    if (lower.contains(entry.key)) return Duration(minutes: entry.value);
+  }
+  return null;
+}
+
+/// Recipe ingredients (matched-in-pantry + missing) that this step actually
+/// names, so the step surfaces the handful relevant to it instead of the
+/// whole recipe's list. No quantities: [PantrySuggestion] never carries
+/// per-ingredient amounts at suggestion time (they're only ever built lazily
+/// on save), so showing a number here would be fabricated data.
+List<String> stepIngredients(String step, PantrySuggestion s) {
+  final lower = step.toLowerCase();
+  bool mentioned(String item) {
+    final name = item.toLowerCase();
+    return lower.contains(name) || lower.contains(name.replaceAll(RegExp(r's$'), ''));
+  }
+  return [...s.matchedPantryItems, ...s.missingIngredients]
+      .where(mentioned)
+      .toSet()
+      .toList();
+}
 
 class FridgeCookMode extends StatefulWidget {
   final PantrySuggestion suggestion;
@@ -57,6 +127,9 @@ class _FridgeCookModeState extends State<FridgeCookMode> {
     final total = _steps.length;
     final isLast = _i == total - 1;
     final progress = total == 0 ? 0.0 : (_i + 1) / total;
+    final currentStep = total == 0 ? null : _steps[_i];
+    final duration = currentStep == null ? null : stepDuration(currentStep);
+    final ingredients = currentStep == null ? const <String>[] : stepIngredients(currentStep, s);
 
     return Scaffold(
       backgroundColor: tc.background,
@@ -140,6 +213,29 @@ class _FridgeCookModeState extends State<FridgeCookMode> {
                   ),
                 ),
               ),
+              if (ingredients.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: ingredients
+                      .map((i) => _IngredientChip(label: i, tc: tc))
+                      .toList(),
+                ),
+              ],
+              if (duration != null) ...[
+                const SizedBox(height: 14),
+                _StepTimer(key: ValueKey(_i), duration: duration, tc: tc),
+              ],
+              if (!isLast && total > 0) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'NEXT: ${_steps[_i + 1]}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: tc.textMuted, fontSize: 12.5),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -193,6 +289,132 @@ class _FridgeCookModeState extends State<FridgeCookMode> {
             style: ZType.lbl(14,
                 color: primary ? tc.accentContrast : tc.textPrimary, letterSpacing: 1.5),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One ingredient named by the current step — no quantity (see
+/// [stepIngredients]), just enough to say "this is what that line means".
+class _IngredientChip extends StatelessWidget {
+  final String label;
+  final ThemeColors tc;
+  const _IngredientChip({required this.label, required this.tc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: tc.cardBorder),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: tc.textSecondary, fontSize: 12.5),
+      ),
+    );
+  }
+}
+
+/// Tappable countdown for a time-based step. Keyed by step index in the
+/// parent so navigating steps mounts a fresh timer instead of carrying a
+/// running one onto unrelated instructions.
+class _StepTimer extends StatefulWidget {
+  final Duration duration;
+  final ThemeColors tc;
+  const _StepTimer({super.key, required this.duration, required this.tc});
+
+  @override
+  State<_StepTimer> createState() => _StepTimerState();
+}
+
+class _StepTimerState extends State<_StepTimer> {
+  late Duration _remaining = widget.duration;
+  Timer? _ticker;
+  bool _running = false;
+  bool _done = false;
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  void _toggle() {
+    if (_done) {
+      // Restart.
+      setState(() {
+        _remaining = widget.duration;
+        _done = false;
+      });
+    }
+    if (_running) {
+      _ticker?.cancel();
+      setState(() => _running = false);
+      return;
+    }
+    setState(() => _running = true);
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_remaining.inSeconds <= 1) {
+        _ticker?.cancel();
+        HapticService.restTimerComplete();
+        setState(() {
+          _remaining = Duration.zero;
+          _running = false;
+          _done = true;
+        });
+        return;
+      }
+      setState(() => _remaining -= const Duration(seconds: 1));
+    });
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes;
+    final sec = d.inSeconds % 60;
+    return '$m:${sec.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = widget.tc;
+    return GestureDetector(
+      onTap: _toggle,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: _running ? tc.accent.withValues(alpha: 0.14) : tc.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _running ? tc.accent : tc.cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _done
+                  ? Icons.check_circle
+                  : (_running ? Icons.pause_circle_outline : Icons.timer_outlined),
+              size: 20,
+              color: _done ? tc.accent : (_running ? tc.accent : tc.textSecondary),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _done ? 'TIMER DONE — TAP TO RESTART' : _fmt(_remaining),
+              style: ZType.lbl(13,
+                  color: _running || _done ? tc.accent : tc.textSecondary,
+                  letterSpacing: 1),
+            ),
+            if (!_done) ...[
+              const SizedBox(width: 8),
+              Text(
+                _running ? 'PAUSE' : 'START TIMER',
+                style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
+              ),
+            ],
+          ],
         ),
       ),
     );

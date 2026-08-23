@@ -23,6 +23,11 @@ class ScoringCard extends ConsumerWidget {
     final total = weights.values.fold(0.0, (a, b) => a + b);
     final totalPct = (total * 100).round();
     final isWarning = totalPct > 100 || totalPct < 90;
+    // Largest-remainder apportionment so the six per-factor percentages
+    // below always sum to exactly `totalPct` — independently flooring (or
+    // even independently rounding) each one can land one short of the Total
+    // banner above it (row 446: 43/16/11/11/9/9 under a green "Total: 100%").
+    final displayPcts = _apportionedPercentages(weights, totalPct);
 
     return BeastCard(
       theme: theme,
@@ -152,7 +157,7 @@ class ScoringCard extends ConsumerWidget {
                   ),
                   SizedBox(
                     width: 36,
-                    child: Text('${(e.value * 100).toInt()}%',
+                    child: Text('${displayPcts[e.key]}%',
                         style: TextStyle(fontSize: 11, color: color, fontFamily: 'monospace', fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -163,4 +168,23 @@ class ScoringCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Largest-remainder apportionment: converts each factor's fractional weight
+/// into a whole percentage so the set always sums to exactly [totalPct] —
+/// flooring or rounding each one independently can drop (or add) a point
+/// relative to the displayed total.
+Map<String, int> _apportionedPercentages(Map<String, double> weights, int totalPct) {
+  if (weights.isEmpty) return const {};
+  final raw = {for (final e in weights.entries) e.key: e.value * 100};
+  final floors = {for (final e in raw.entries) e.key: e.value.floor()};
+  final floorSum = floors.values.fold<int>(0, (a, b) => a + b);
+  final remainder = (totalPct - floorSum).clamp(0, weights.length);
+  final byRemainderDesc = weights.keys.toList()
+    ..sort((a, b) => (raw[b]! - floors[b]!).compareTo(raw[a]! - floors[a]!));
+  final result = Map<String, int>.from(floors);
+  for (var i = 0; i < remainder; i++) {
+    result[byRemainderDesc[i]] = result[byRemainderDesc[i]]! + 1;
+  }
+  return result;
 }

@@ -720,7 +720,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.fitness_center,
             iconColor: isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             title: AppLocalizations.of(context).trainingSetupCardEquipment,
-            value: gymProfileName,
+            value: AppLocalizations.of(context)
+                .settingsEquipmentItemCount(gymProfile?.equipment.length ?? 0),
             route: '/settings/equipment',
             sectionKeys: const ['custom_content', 'warmup_settings', 'superset'],
           ),

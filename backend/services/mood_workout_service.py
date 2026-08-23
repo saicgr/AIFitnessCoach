@@ -200,6 +200,8 @@ class MoodWorkoutService:
         user_goals: List[str],
         user_equipment: List[str],
         duration_minutes: int,
+        staple_exercise_names: Optional[List[str]] = None,
+        queued_exercise_names: Optional[List[str]] = None,
     ) -> str:
         """
         Build a Gemini prompt for mood-based workout generation.
@@ -210,6 +212,8 @@ class MoodWorkoutService:
             user_goals: User's fitness goals
             user_equipment: Available equipment
             duration_minutes: Target workout duration
+            staple_exercise_names: User's staple exercises — non-negotiable, must be included
+            queued_exercise_names: User's queued exercises — include when they fit the mood/equipment
 
         Returns:
             Formatted prompt string for Gemini
@@ -244,6 +248,20 @@ class MoodWorkoutService:
         # Calculate main workout duration (excluding warmup/cooldown which are added separately)
         main_workout_duration = params['main_workout_duration']
 
+        staple_instruction = ""
+        if staple_exercise_names:
+            staple_instruction = f"""
+
+USER'S STAPLE EXERCISES (non-negotiable — include every one that fits the equipment above):
+{chr(10).join(f'  - {name}' for name in staple_exercise_names)}"""
+
+        queue_instruction = ""
+        if queued_exercise_names:
+            queue_instruction = f"""
+
+USER'S QUEUED EXERCISES (prioritise these if they fit the mood/equipment):
+{chr(10).join(f'  - {name}' for name in queued_exercise_names)}"""
+
         prompt = f"""Generate a {main_workout_duration}-minute quick workout for a user who is feeling {mood.value.upper()} {config.emoji}.
 
 {config.ai_prompt_suffix}
@@ -252,6 +270,7 @@ USER PROFILE:
 - Fitness Level: {user_fitness_level}
 - Goals: {goals_str}
 - Available Equipment: {equipment_str}
+{staple_instruction}{queue_instruction}
 
 WORKOUT REQUIREMENTS:
 - Duration: {main_workout_duration} minutes (MAIN EXERCISES ONLY - warmup/cooldown added separately)

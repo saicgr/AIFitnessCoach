@@ -80,7 +80,16 @@ class _StoriesRingState extends ConsumerState<StoriesRing> {
     });
 
     return storiesAsync.when(
-      loading: () => _buildShimmerRow(isDark),
+      loading: () {
+        final cached = storiesAsync.valueOrNull;
+        final expectedCount = cached == null
+            ? 2
+            : 1 +
+                <String>{
+                  for (final story in cached) story['user_id'] as String? ?? '',
+                }.length;
+        return _buildShimmerRow(isDark, itemCount: expectedCount);
+      },
       error: (_, __) => _buildRowWithYourStory(context, isDark, colors, {}),
       data: (stories) {
         // Group stories by user
@@ -342,13 +351,13 @@ class _StoriesRingState extends ConsumerState<StoriesRing> {
   }
 
   /// Shimmer loading placeholder for stories
-  Widget _buildShimmerRow(bool isDark) {
+  Widget _buildShimmerRow(bool isDark, {int itemCount = 5}) {
     return SizedBox(
       height: 80,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        itemCount: 5,
+        itemCount: itemCount,
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

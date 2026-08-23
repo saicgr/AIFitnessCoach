@@ -330,6 +330,30 @@ def validate_and_cap_exercise_parameters(
                     if isinstance(st["target_reps"], int) and st["target_reps"] > per_set_ceiling:
                         st["target_reps"] = per_set_ceiling
 
+        # Reconcile the scalar `sets` with the actual set_targets array —
+        # Gemini emits both independently and they can disagree (e.g.
+        # sets=4 alongside 2 warmup + 3 working set_targets). The client
+        # renders set_targets ("SET n OF total"), so that array is the
+        # ground truth of what the session actually runs; `sets` must
+        # describe the SAME thing (working sets only, warmups excluded) or
+        # the plan row and the live session permanently disagree.
+        targets = validated_ex.get("set_targets")
+        if isinstance(targets, list) and targets:
+            working_positions = [
+                idx for idx, st in enumerate(targets)
+                if isinstance(st, dict)
+                and (st.get("set_type") or "working").lower() != "warmup"
+            ]
+            if len(working_positions) > capped_sets:
+                for idx in sorted(working_positions[capped_sets:], reverse=True):
+                    del targets[idx]
+                for i, st in enumerate(targets):
+                    if isinstance(st, dict):
+                        st["set_number"] = i + 1
+                working_positions = working_positions[:capped_sets]
+            if working_positions:
+                validated_ex["sets"] = len(working_positions)
+
         # Log when significant capping occurs
         if original_reps > capped_reps + 5 or original_sets > capped_sets + 1:
             logger.warning(
@@ -437,6 +461,29 @@ def enforce_set_rep_limits(
                 if isinstance(st, dict) and "target_reps" in st:
                     if isinstance(st["target_reps"], int) and st["target_reps"] > per_set_ceiling:
                         st["target_reps"] = per_set_ceiling
+
+        # Reconcile the scalar `sets` with the actual set_targets array —
+        # this function caps `sets` alone; without also capping the
+        # set_targets working-set count, the client's "SET n OF total"
+        # (built from set_targets) silently disagrees with the plan's
+        # `sets` value (E2E finding #87).
+        targets = enforced_ex.get("set_targets")
+        if isinstance(targets, list) and targets:
+            working_positions = [
+                idx for idx, st in enumerate(targets)
+                if isinstance(st, dict)
+                and (st.get("set_type") or "working").lower() != "warmup"
+            ]
+            capped_sets = enforced_ex.get("sets", max_sets)
+            if len(working_positions) > capped_sets:
+                for idx in sorted(working_positions[capped_sets:], reverse=True):
+                    del targets[idx]
+                for i, st in enumerate(targets):
+                    if isinstance(st, dict):
+                        st["set_number"] = i + 1
+                working_positions = working_positions[:capped_sets]
+            if working_positions:
+                enforced_ex["sets"] = len(working_positions)
 
         enforced_exercises.append(enforced_ex)
 

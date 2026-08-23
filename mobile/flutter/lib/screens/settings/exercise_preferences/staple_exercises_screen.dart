@@ -19,6 +19,7 @@ import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 part 'staple_exercises_screen_part_staple_exercise_tile.dart';
 
 
@@ -826,12 +827,9 @@ class StapleExercisesScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: dayTargetMode == entry.$1
-                                      ? context.accentColor.withValues(alpha: 0.15)
+                                      ? context.accentColor
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: dayTargetMode == entry.$1
-                                      ? Border.all(color: context.accentColor.withValues(alpha: 0.3))
-                                      : null,
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
@@ -839,7 +837,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: dayTargetMode == entry.$1 ? FontWeight.w600 : FontWeight.w400,
-                                    color: dayTargetMode == entry.$1 ? textColor : textMuted,
+                                    color: dayTargetMode == entry.$1 ? Colors.white : textMuted,
                                   ),
                                 ),
                               ),
@@ -977,11 +975,20 @@ class StapleExercisesScreen extends ConsumerWidget {
         userReps: reps,
         userRestSeconds: rest,
         userWeightLbs: weight,
+        // Row 286 — the backend has NO "follow workout days" encoding for
+        // `target_days`: `_staple_matches_day` treats `null` as "no
+        // restriction, applies every day" (a materially broader behavior
+        // than the "Workout Days" caption promises), so `workoutDays` mode
+        // must persist the concrete day list the sheet already displays —
+        // leaving it `null` silently changed the exercise from "your
+        // scheduled training days" to "literally every day".
         targetDays: dayTargetMode == 'everyDay'
             ? [0, 1, 2, 3, 4, 5, 6]
             : dayTargetMode == 'custom' && selectedDays.isNotEmpty
                 ? selectedDays
-                : null,
+                : dayTargetMode == 'workoutDays' && userWorkoutDays.isNotEmpty
+                    ? userWorkoutDays
+                    : null,
         cardioParams: cardioParams,
       );
 

@@ -15,6 +15,7 @@ import '../../ai_settings/ai_settings_screen.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Health sync preferences model.
 class HealthSyncPreferences {
   final bool syncSteps;
@@ -609,7 +610,13 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                           await _disconnect();
                         }
                       },
-                      activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
+                      // Accent, not the fixed success green: "connected"
+                      // is already carried by the icon badge above turning
+                      // green and by the row's own label, so the switch
+                      // itself matches every other on/off control on this
+                      // screen (e.g. auto-import below) instead of adding a
+                      // second, uncoordinated colour.
+                      activeThumbColor: context.accentColor,
                     ),
                 ],
               ),
@@ -684,6 +691,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).healthSyncStepsDistance,
             isEnabled: syncPrefs.syncSteps,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncSteps(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -692,6 +700,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
             isEnabled: syncPrefs.syncCalories,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncCalories(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -700,6 +709,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             isEnabled: syncPrefs.syncWeight,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncWeight(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -708,6 +718,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
             isEnabled: syncPrefs.syncBodyFat,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncBodyFat(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -716,6 +727,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
             isEnabled: syncPrefs.syncHeartRate,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncHeartRate(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -724,6 +736,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).sleepDetailSleep,
             isEnabled: syncPrefs.syncSleep,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncSleep(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -746,6 +759,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).workoutListTitle,
             isEnabled: syncPrefs.syncWorkoutsToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncWorkoutsToHealth(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -754,6 +768,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).healthSyncMealsNutrition,
             isEnabled: syncPrefs.syncMealsToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncMealsToHealth(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -762,6 +777,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             label: AppLocalizations.of(context).workoutSummaryAdvancedHydration,
             isEnabled: syncPrefs.syncHydrationToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncHydrationToHealth(v),
+            textPrimary: textPrimary,
             textSecondary: textSecondary,
             textMuted: textMuted,
           ),
@@ -815,6 +831,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
     required String label,
     required bool isEnabled,
     required ValueChanged<bool> onChanged,
+    required Color textPrimary,
     required Color textSecondary,
     required Color textMuted,
   }) {
@@ -827,9 +844,16 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           Expanded(
             child: Text(
               label,
+              // Active rows read in the primary tone — the same weight as
+              // the "Data to sync" / "Write to health app" headings above
+              // them — so a row that is genuinely off (muted, like the icon
+              // and switch already are) is the only thing that reads dim.
+              // `textSecondary` sat this close to `textMuted` that an
+              // enabled row and a disabled one were indistinguishable by
+              // label colour alone.
               style: TextStyle(
                 fontSize: 14,
-                color: isEnabled ? textSecondary : textMuted,
+                color: isEnabled ? textPrimary : textMuted,
               ),
             ),
           ),
@@ -897,7 +921,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               setState(() => _bgHealthSyncEnabled = v);
               BackgroundSyncService.setBackgroundHealthSync(v);
             },
-            activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
+            activeThumbColor: context.accentColor,  // matches every other on/off switch on this screen
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
@@ -946,7 +970,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                 onChanged: (v) => ref
                     .read(aiSettingsProvider.notifier)
                     .updateHealthDataConsent(v),
-                activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
+                activeThumbColor: context.accentColor,  // matches every other on/off switch on this screen
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ],
@@ -1003,7 +1027,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             onPressed: () => Navigator.pop(context, false),
             child: Text(AppLocalizations.of(context).proposedChangeCardNotNow,
                 style: TextStyle(
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                    color: ThemeColors.of(context).textMuted)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),

@@ -562,7 +562,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       builder: (context, constraints) {
         final tp = TextPainter(
           text: TextSpan(text: text, style: style),
-          maxLines: 1,
+          maxLines: 2,
           textDirection: Directionality.of(context),
         )..layout(maxWidth: constraints.maxWidth);
         final overflows = tp.didExceedMaxLines;
@@ -585,7 +585,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                       child: Text(
                         text,
                         style: style,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -842,10 +842,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ),
         ] else if (insight.body.isNotEmpty) ...[
           const SizedBox(height: 4),
-          // Collapsed to 3 lines by default with an inline Show more / Show less
+          // Collapsed to 2 lines by default with an inline Show more / Show less
           // so the CTAs + nudge chips below sit at first glance, while the FULL
           // tip is one tap away inline (no truncation/loss). The toggle only
-          // appears when the body actually exceeds 3 lines.
+          // appears when the body actually exceeds 2 lines.
           _expandableBody(
             c, insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
           ),

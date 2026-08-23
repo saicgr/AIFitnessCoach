@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/theme_colors.dart';
 import '../l10n/generated/app_localizations.dart';
 
 /// A press-and-hold confirmation button.
@@ -235,9 +236,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
               // SCREEN background, and that background does follow the
               // system theme here — so it needs an actual light/dark-aware
               // token, not the button's hardcoded white.
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              final textSecondary =
-                  isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+              final textSecondary = ThemeColors.of(context).textSecondary;
               return Text(
                 'Hold for $_holdSecondsLabel',
                 style: TextStyle(

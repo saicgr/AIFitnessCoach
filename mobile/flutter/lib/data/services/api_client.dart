@@ -11,6 +11,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/providers/locale_provider.dart';
@@ -488,6 +489,24 @@ class ApiClient with WidgetsBindingObserver {
       }
     } catch (_) {}
     return DateTime.now().timeZoneName;
+  }
+
+  // In-memory app version cache — the value never changes for the lifetime
+  // of a running process, so this is fetched once and reused.
+  static String? _cachedAppVersion;
+
+  /// Returns the app's own package version (e.g. "1.2.67"), matching what
+  /// Settings shows in its footer. Cached in memory after the first call.
+  static Future<String?> _getCachedAppVersion() async {
+    if (_cachedAppVersion != null) return _cachedAppVersion;
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (info.version.isNotEmpty) {
+        _cachedAppVersion = info.version;
+        return _cachedAppVersion;
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// How many minutes before expiry to proactively refresh the token.
@@ -1052,6 +1071,26 @@ class ApiClient with WidgetsBindingObserver {
             }
           } catch (e) {
             debugPrint('⚠️ [API] Could not attach timezone header: $e');
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+
+    // X-App-Version interceptor — attaches the running app's own package
+    // version to every request so backend features that stamp "which app
+    // version made this request" (e.g. the data-export _metadata.csv) reflect
+    // the real build instead of a stale literal.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          try {
+            final version = await _getCachedAppVersion();
+            if (version != null && version.isNotEmpty) {
+              options.headers['X-App-Version'] = version;
+            }
+          } catch (e) {
+            debugPrint('⚠️ [API] Could not attach app version header: $e');
           }
           return handler.next(options);
         },

@@ -31,7 +31,11 @@ logger = get_logger(__name__)
 # Export version for compatibility checking on import.
 # Bumped to 2.0 when we expanded coverage to satisfy GDPR Art. 20 in full.
 EXPORT_VERSION = "2.0"
-APP_VERSION = "1.0.0"
+# Fallback only for callers that can't supply the requesting client's actual
+# app version (e.g. the out-of-app DSAR flow, which has no live client to
+# ask). In-app exports pass the real version through the `app_version` param
+# below, sourced from the mobile client's own package version.
+DEFAULT_APP_VERSION = "unknown"
 
 # Tables that may not exist in every environment (e.g. brand-new schemas
 # where a migration hasn't been applied). Missing tables return an empty
@@ -294,6 +298,7 @@ def export_user_data(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     categories: Optional[str] = None,
+    app_version: Optional[str] = None,
 ) -> bytes:
     """
     Export all user data to a ZIP file containing CSV files.
@@ -304,6 +309,9 @@ def export_user_data(
         end_date: Optional end date filter (YYYY-MM-DD format)
         categories: Optional comma-separated category keys (see
             EXPORT_CATEGORIES). None/empty → include all.
+        app_version: The requesting client's own app version (e.g. from an
+            `X-App-Version` header), stamped into `_metadata.csv`. Falls
+            back to [DEFAULT_APP_VERSION] when the caller has none to give.
 
     Returns the ZIP file as bytes.
     """
@@ -470,7 +478,10 @@ def export_user_data(
             export_counts[table_name] = len(rows)
 
         # 10. Metadata file (for import validation)
-        metadata_csv = _export_metadata(user_id, export_counts, start_date, end_date)
+        metadata_csv = _export_metadata(
+            user_id, export_counts, start_date, end_date,
+            app_version=app_version or DEFAULT_APP_VERSION,
+        )
         zip_file.writestr("_metadata.csv", metadata_csv)
 
         # 11. README clarifying what each file contains. Helpful for users
@@ -525,6 +536,7 @@ def export_user_data_json(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     categories: Optional[str] = None,
+    app_version: Optional[str] = None,
 ) -> dict:
     """
     Export all user data as a JSON-serializable dict.
@@ -590,7 +602,7 @@ def export_user_data_json(
     export["metadata"] = {
         "export_version": EXPORT_VERSION,
         "exported_at": datetime.utcnow().isoformat() + "Z",
-        "app_version": APP_VERSION,
+        "app_version": app_version or DEFAULT_APP_VERSION,
         "original_user_id": user_id,
         "filter_start_date": start_date,
         "filter_end_date": end_date,
@@ -1294,6 +1306,7 @@ def _export_metadata(
     counts: Dict[str, int],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    app_version: str = DEFAULT_APP_VERSION,
 ) -> str:
     """Export metadata for import validation."""
     output = io.StringIO()
@@ -1305,7 +1318,7 @@ def _export_metadata(
     # Metadata rows
     writer.writerow(["export_version", EXPORT_VERSION])
     writer.writerow(["exported_at", datetime.utcnow().isoformat() + "Z"])
-    writer.writerow(["app_version", APP_VERSION])
+    writer.writerow(["app_version", app_version])
     writer.writerow(["original_user_id", user_id])
 
     # Date filter info

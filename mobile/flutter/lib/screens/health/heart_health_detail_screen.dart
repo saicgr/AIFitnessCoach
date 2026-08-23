@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/stats/state_valence.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/heart_health_repository.dart';
 import '../../widgets/glass_back_button.dart';
@@ -80,11 +81,19 @@ class _HeartHealthDetailScreenState
                   // chip — the score here is the Heart Health composite, a
                   // different metric from the Overview tab's Recovery ring,
                   // and nothing else on screen names it.
-                  Text('Heart health',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary)),
+                  //
+                  // Flexible + ellipsis: at larger Dynamic Type sizes this
+                  // title otherwise grows wide enough to push the
+                  // AskCoachButton past the right edge instead of yielding to
+                  // it.
+                  Flexible(
+                    child: Text('Heart health',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
+                  ),
                   const Spacer(),
                   AskCoachButton(
                     contextLabel: 'Heart health · habit score',
@@ -139,7 +148,7 @@ class _HeartHealthDetailScreenState
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
     final hasScore = data.hasScore;
     final scoreColor = hasScore ? _scoreColor(data.score!) : textMuted;
 

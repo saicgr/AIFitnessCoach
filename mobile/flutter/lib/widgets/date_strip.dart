@@ -70,6 +70,11 @@ class DateStrip extends ConsumerStatefulWidget {
 class _DateStripState extends ConsumerState<DateStrip> {
   late final PageController _controller;
 
+  /// Which page is currently in view — used only to decide whether today's
+  /// week has scrolled out of sight (e.g. the carousel auto-focused a day in
+  /// a different display week) so a "TODAY" jump affordance can appear.
+  late int _visiblePage;
+
   /// Extra pages ahead of the current week. Future-scrolling only makes
   /// sense for hosts that opted into future days (Workouts tab — upcoming
   /// scheduled sessions live there); nutrition/health strips stay capped at
@@ -81,6 +86,7 @@ class _DateStripState extends ConsumerState<DateStrip> {
     super.initState();
     // The current week sits at page `_weeksForward`; lower pages (shown to
     // the RIGHT under `reverse: true`) are future weeks, higher are past.
+    _visiblePage = _weeksForward;
     _controller = PageController(initialPage: _weeksForward);
   }
 
@@ -157,6 +163,17 @@ class _DateStripState extends ConsumerState<DateStrip> {
 
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Today's week can scroll out of view when the selected day (e.g. a
+    // carousel auto-focused next-training-day card) lands in a different
+    // display week — Sunday → Monday alone crosses a week boundary under a
+    // Monday-first config. When that happens today is not reachable by
+    // looking at the strip at all, so surface an explicit jump back to it.
+    final visibleWeekStart = todayWeekStart.subtract(
+      Duration(days: 7 * (_visiblePage - _weeksForward)),
+    );
+    final todayInView = !today.isBefore(visibleWeekStart) &&
+        today.isBefore(visibleWeekStart.add(const Duration(days: 7)));
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 4, 4),
       child: SizedBox(
@@ -171,6 +188,7 @@ class _DateStripState extends ConsumerState<DateStrip> {
                 physics: const PageScrollPhysics(
                   parent: BouncingScrollPhysics(),
                 ),
+                onPageChanged: (page) => setState(() => _visiblePage = page),
                 itemBuilder: (context, pageIndex) {
                   final weekStart = todayWeekStart.subtract(
                     Duration(days: 7 * (pageIndex - _weeksForward)),
@@ -189,6 +207,32 @@ class _DateStripState extends ConsumerState<DateStrip> {
                 },
               ),
             ),
+            if (!todayInView)
+              GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  widget.onDaySelected(today);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'TODAY',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
+                    ),
+                  ),
+                ),
+              ),
             // Calendar icon — jump > weeksBack with the system date picker.
             IconButton(
               icon: Icon(

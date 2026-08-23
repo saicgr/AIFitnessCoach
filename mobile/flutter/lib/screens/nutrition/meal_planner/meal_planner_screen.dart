@@ -441,9 +441,9 @@ class _MealSlotCard extends StatelessWidget {
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final emoji = switch (mealType) {
-      MealSlot.breakfast => '🌅', MealSlot.lunch => '☀️',
-      MealSlot.dinner => '🌙', MealSlot.snack => '🍎',
+    final icon = switch (mealType) {
+      MealSlot.breakfast => Icons.free_breakfast_rounded, MealSlot.lunch => Icons.lunch_dining_rounded,
+      MealSlot.dinner => Icons.dinner_dining_rounded, MealSlot.snack => Icons.cookie_rounded,
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -456,7 +456,7 @@ class _MealSlotCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Text(emoji, style: const TextStyle(fontSize: 15)),
+            Icon(icon, size: 15, color: text),
             const SizedBox(width: 8),
             Text(mealType.value.toUpperCase(),
                 style: ZType.lbl(12, color: text, letterSpacing: 1.6)),

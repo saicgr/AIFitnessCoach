@@ -354,7 +354,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ),
                     const SizedBox(height: 10),
                     _GlassMenuOption(
-                      icon: Icons.qr_code_2_outlined,
+                      icon: Icons.receipt_long_outlined,
                       label: AppLocalizations.of(context).logMealSheetNutritionLabel,
                       subtitle: AppLocalizations.of(context).logMealSheetReadMacrosOffA,
                       color: violet,

@@ -49,19 +49,24 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
   // Engagement-only options. Order is intentional: aspirational first,
   // health-driven in the middle, energy last. IDs are stable storage keys
   // — never reorder-rename without a migration of `preAuth_primaryWhy`.
+  // Every colour below is one of AppColors' documented categorical hues
+  // (never an ad-hoc literal) so this list stays a real semantic palette
+  // instead of accumulating one-off hex values screen by screen. 'event'
+  // and 'health' used to both render as near-identical reds — moved to
+  // magenta vs red so adjacent rows read as distinct at a glance.
   static const List<_WhyOption> _options = [
     _WhyOption('feel_confident', 'Feel confident in my body',
-        Icons.spa_rounded, Color(0xFF8B5CF6)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
+        Icons.spa_rounded, AppColors.purple),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
     _WhyOption('keep_up', 'Keep up with my family',
-        Icons.family_restroom_rounded, Color(0xFF3B82F6)),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
+        Icons.family_restroom_rounded, AppColors.info),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
     _WhyOption('event', 'Get ready for an event',
-        Icons.celebration_rounded, Color(0xFFFF6B6B)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
+        Icons.celebration_rounded, AppColors.magenta),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
     _WhyOption('health', 'A health wake-up call',
-        Icons.monitor_heart_rounded, Color(0xFFEF4444)),  // accent-allowlist: error/destructive - same value as AppColors.error
+        Icons.monitor_heart_rounded, AppColors.red),  // accent-allowlist: error/destructive - same value as AppColors.error
     _WhyOption('feel_strong', 'Feel strong and capable',
-        Icons.bolt_rounded, Color(0xFFF59E0B)),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
+        Icons.bolt_rounded, AppColors.warning),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
     _WhyOption('energy', 'More energy, less stress',
-        Icons.wb_sunny_rounded, Color(0xFF14B8A6)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
+        Icons.wb_sunny_rounded, AppColors.cyan),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
   ];
 
   // Multi-select: people are usually driven by more than one reason. All picks
@@ -362,12 +367,16 @@ class _WhyOptionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              // Square (rounded-corner) checkbox — this screen is
+              // multi-select (people pick every reason that applies), so
+              // the target shape must read as a checkbox, not the
+              // single-select radio circle.
               Container(
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
                   color: selected ? t.checkBg : Colors.transparent,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(6),
                   border: selected
                       ? null
                       : Border.all(color: t.checkBorderUnselected, width: 2),

@@ -351,10 +351,10 @@ class _NutritionSettingsScreenState
                         context,
                         title: AppLocalizations.of(context).nutritionSettingsDisableAiFoodTips,
                         subtitle:
-                            'Hide nutrition suggestions after logging meals',
-                        value: !preferences.showAiFeedbackAfterLogging,
+                            'Show nutrition suggestions after logging meals',
+                        value: preferences.showAiFeedbackAfterLogging,
                         onChanged: (value) =>
-                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
+                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: value),
                         icon: Icons.lightbulb_outline_rounded,
                         iconColor: context.accentColor,
                         textPrimary: textPrimary,

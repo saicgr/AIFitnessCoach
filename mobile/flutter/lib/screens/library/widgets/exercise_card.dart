@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -84,7 +85,11 @@ class ExerciseCard extends ConsumerWidget {
     HapticService.light();
     showGlassSheet(
       context: context,
-      builder: (context) => _AddToWorkoutSheet(exerciseName: exercise.name),
+      builder: (context) => _AddToWorkoutSheet(
+        exerciseName: exercise.name,
+        libraryId: exercise.id,
+        muscleGroup: exercise.muscleGroup,
+      ),
     );
   }
 
@@ -130,6 +135,9 @@ class ExerciseCard extends ConsumerWidget {
     );
     final isQueued = ref.watch(
       exerciseQueueProvider.select((s) => s.isQueued(exercise.name)),
+    );
+    final isStaple = ref.watch(
+      staplesProvider.select((s) => s.isStaple(exercise.name)),
     );
 
     return ZHairlineRow(
@@ -239,9 +247,25 @@ class ExerciseCard extends ConsumerWidget {
           ),
           const SizedBox(width: 5),
           _RowAction(
-            icon: isQueued ? Icons.playlist_add_check : Icons.add,
-            active: isQueued,
-            tooltip: 'Add to workout',
+            // STAPLE and QUEUE are two independent states (row 279) — each
+            // gets its own icon so the glyph alone (not just the tooltip)
+            // tells them apart, matching the detail page's separate STAPLE
+            // (push_pin) and QUEUE (playlist_add_check) actions.
+            icon: isStaple && isQueued
+                ? Icons.bookmark_added
+                : isStaple
+                    ? Icons.push_pin
+                    : isQueued
+                        ? Icons.playlist_add_check
+                        : Icons.add,
+            active: isStaple || isQueued,
+            tooltip: isStaple && isQueued
+                ? 'Staple & queued'
+                : isStaple
+                    ? 'Staple'
+                    : isQueued
+                        ? 'Queued'
+                        : 'Add to workout',
             onTap: () => _showAddToWorkout(context),
           ),
           const SizedBox(width: 5),
@@ -675,9 +699,13 @@ class _AltMessage extends StatelessWidget {
 /// Bottom sheet to select which workout to add the exercise to
 class _AddToWorkoutSheet extends ConsumerStatefulWidget {
   final String exerciseName;
+  final String? libraryId;
+  final String? muscleGroup;
 
   const _AddToWorkoutSheet({
     required this.exerciseName,
+    this.libraryId,
+    this.muscleGroup,
   });
 
   @override
@@ -704,6 +732,111 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
           ],
         ),
         backgroundColor: context.accentColor,
+      ),
+    );
+  }
+
+  void _toggleStaple() {
+    HapticService.light();
+    final wasStaple =
+        ref.read(staplesProvider).isStaple(widget.exerciseName);
+    ref.read(staplesProvider.notifier).toggleStaple(
+          widget.exerciseName,
+          libraryId: widget.libraryId,
+          muscleGroup: widget.muscleGroup,
+        );
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              wasStaple ? Icons.push_pin_outlined : Icons.push_pin,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(wasStaple
+                  ? 'Removed "${widget.exerciseName}" from staples'
+                  : 'Added "${widget.exerciseName}" to staples'),
+            ),
+          ],
+        ),
+        backgroundColor: context.accentColor,
+      ),
+    );
+  }
+
+  /// Row 279 — the Library list row's single "+" glyph conflated STAPLE and
+  /// QUEUE with no way to set (or even see) one independently of the other.
+  /// Surfacing STAPLE here, alongside QUEUE, gives the row's popup the same
+  /// two toggleable states the exercise detail page exposes separately.
+  Widget _buildStapleOption(
+    BuildContext context, {
+    required Color elevated,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final isStaple = ref.watch(staplesProvider).isStaple(widget.exerciseName);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Material(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: _toggleStaple,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: context.accentColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                    color: context.accentColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isStaple ? 'Remove staple' : 'Make a staple',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isStaple
+                            ? 'Included in every AI-generated workout'
+                            : 'AI will include in every generated workout',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isStaple)
+                  Icon(Icons.check_circle, color: context.accentColor)
+                else
+                  Icon(Icons.chevron_right, color: textSecondary),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -896,6 +1029,14 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                 ),
               ],
             ),
+          ),
+
+          // Staple option
+          _buildStapleOption(
+            context,
+            elevated: elevated,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
           ),
 
           // Add to Queue option

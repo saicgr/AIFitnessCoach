@@ -44,8 +44,18 @@ class AppTourSpotlightPainter extends CustomPainter {
       return;
     }
 
-    // Inflate rect with padding
-    final inflated = spotlightRect.inflate(spotlightPadding);
+    // Inflate rect with padding, then keep it inset from the canvas edges so
+    // a target flush against the screen edge (e.g. the last bottom-nav tab)
+    // still gets a full ring — otherwise the outer stroke draws past the
+    // edge and that side of the highlight is clipped away.
+    const edgeMargin = 6.0;
+    final rawInflated = spotlightRect.inflate(spotlightPadding);
+    final inflated = Rect.fromLTRB(
+      rawInflated.left.clamp(edgeMargin, size.width - edgeMargin),
+      rawInflated.top.clamp(edgeMargin, size.height - edgeMargin),
+      rawInflated.right.clamp(edgeMargin, size.width - edgeMargin),
+      rawInflated.bottom.clamp(edgeMargin, size.height - edgeMargin),
+    );
     final rRect = RRect.fromRectAndRadius(inflated, Radius.circular(cornerRadius));
 
     // Draw full overlay minus the cutout hole

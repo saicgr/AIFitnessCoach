@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../workout/widgets/body_map_selector.dart';
 import 'strain_dashboard_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -16,14 +17,22 @@ class ReportStrainScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
+  // Snake_case region keys from [BodyMapSelector] — the same joint-level
+  // catalog (neck, lower_back, wrists, knees, ...) the pre-workout check-in's
+  // sore-area chips already use, instead of this screen's own coarser
+  // muscle-only list (which had no Knees or Lower back at all, the app's own
+  // most common `active_injuries` complaints).
   final List<String> _selectedMuscles = [];
+
+  /// Optional side qualifier, applied to every selected area in this report.
+  /// `null` = not specified (most soreness is bilateral or the user doesn't
+  /// care to say), so this is additive to the region keys, never required.
+  String? _side; // 'left' | 'right' | null
   int _fatigueLevel = 5;
   int _sorenessLevel = 5;
   bool _needsRest = false;
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
-
-  static const _muscles = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quadriceps', 'Hamstrings', 'Calves', 'Core', 'Glutes'];
 
   @override
   void dispose() { _notesController.dispose(); super.dispose(); }
@@ -47,14 +56,20 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
         severity = 'severe';
       }
 
-      // Submit one strain report per selected muscle group
-      for (final muscle in _selectedMuscles) {
+      // Submit one strain report per selected region. Keys are already the
+      // shared snake_case body-area vocabulary (`lower_back`, `knees`, ...).
+      // `body_part` is free text with no side column of its own (checked
+      // against the live schema), so an optional side is folded straight
+      // into the key (`knees_left`) rather than a field the backend would
+      // silently ignore.
+      for (final region in _selectedMuscles) {
+        final bodyPart = _side == null ? region : '${region}_$_side';
         await apiClient.post(
           '/strain-prevention/record-strain',
           data: {
             'user_id': userId,
-            'body_part': muscle.toLowerCase(),
-            'muscle_group': muscle.toLowerCase(),
+            'body_part': bodyPart,
+            'muscle_group': bodyPart,
             'severity': severity,
             'pain_level': _sorenessLevel,
             'request_rest_day': _needsRest,
@@ -81,7 +96,16 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
       backgroundColor: bg,
       appBar: PillAppBar(title: AppLocalizations.of(context).reportStrainReportStrain),
       body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _section('Affected Muscles', _buildMuscleGrid(d, tp, tm, el)),
+        _section('Affected Areas', BodyMapSelector(
+          selected: _selectedMuscles,
+          onChanged: (next) => setState(() {
+            _selectedMuscles
+              ..clear()
+              ..addAll(next);
+          }),
+        )),
+        const SizedBox(height: 12),
+        _buildSideSelector(d, tp, tm, el),
         const SizedBox(height: 24),
         _section('Fatigue Level', _buildSlider('How tired are these muscles?', _fatigueLevel, (v) => setState(() => _fatigueLevel = v), d, tp, tm)),
         const SizedBox(height: 24),
@@ -98,11 +122,39 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
 
   Widget _section(String title, Widget child) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).brightness == Brightness.dark ? AppColors.textPrimary : AppColorsLight.textPrimary)), const SizedBox(height: 12), child]);
 
-  Widget _buildMuscleGrid(bool d, Color tp, Color tm, Color el) => Wrap(spacing: 8, runSpacing: 8, children: _muscles.map((m) { final s = _selectedMuscles.contains(m); return GestureDetector(onTap: () { HapticFeedback.lightImpact(); setState(() { if (s) {
-    _selectedMuscles.remove(m);
-  } else {
-    _selectedMuscles.add(m);
-  } }); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: s ? context.accentColor.withOpacity(0.15) : el, borderRadius: BorderRadius.circular(12), border: Border.all(color: s ? context.accentColor : Colors.transparent)), child: Text(m, style: TextStyle(color: s ? context.accentColor : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)))); }).toList());
+  /// Optional left/right qualifier for every region selected above — most of
+  /// the app's own common complaints (knee, lower back) are one-sided, and
+  /// nothing here previously let a user say which side. Folded into the
+  /// submitted `body_part` key (`knees_left`) rather than left unstated.
+  Widget _buildSideSelector(bool d, Color tp, Color tm, Color el) {
+    Widget chip(String? value, String label) {
+      final s = _side == value;
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _side = value);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: s ? context.accentColor.withOpacity(0.15) : el,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: s ? context.accentColor : Colors.transparent),
+          ),
+          child: Text(label, style: TextStyle(fontSize: 12.5, color: s ? context.accentColor : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)),
+        ),
+      );
+    }
+    return Row(children: [
+      Text('Side (optional)', style: TextStyle(fontSize: 12, color: tm)),
+      const SizedBox(width: 10),
+      chip(null, 'Both'),
+      const SizedBox(width: 8),
+      chip('left', 'Left'),
+      const SizedBox(width: 8),
+      chip('right', 'Right'),
+    ]);
+  }
 
   Widget _buildSlider(String hint, int value, ValueChanged<int> onChanged, bool d, Color tp, Color tm) {
     final color = value <= 3 ? AppColors.success : value <= 6 ? AppColors.orange : AppColors.error; // accent-allowlist: error/success state + fatigue/soreness severity scale

@@ -704,12 +704,13 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           // user on large accessibility text gets a taller slot instead of a
           // RenderFlex overflow stripe on the last screen before sign-up.
           SizedBox(
-            height: MediaQuery.textScalerOf(context).scale(12) * 1.3 + 3,
+            height: MediaQuery.textScalerOf(context).scale(12) * 1.3 * 2 + 3,
             child: Builder(
               builder: (context) {
                 final reason = _missingReason();
                 if (reason == null) return const SizedBox.shrink();
                 return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
                       Icons.info_outline_rounded,
@@ -720,7 +721,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     Expanded(
                       child: Text(
                         reason,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,

@@ -5798,7 +5798,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customWorkoutBuilderAddExercise => 'Add Exercise';
 
   @override
-  String get customWorkoutBuilderBuildCustomWorkout => 'Build Custom Workout';
+  String get customWorkoutBuilderBuildCustomWorkout => 'Custom Workout';
 
   @override
   String get customWorkoutBuilderCustomWorkoutCreated =>
@@ -25298,7 +25298,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nutritionSettingsCompactTrackerView => 'Compact Tracker View';
 
   @override
-  String get nutritionSettingsDisableAiFoodTips => 'Disable AI Food Tips';
+  String get nutritionSettingsDisableAiFoodTips => 'AI Food Tips';
 
   @override
   String get nutritionSettingsManageYourFoodLibrary =>
@@ -28240,7 +28240,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Adapts workouts based on your progress';
 
   @override
-  String get programSummaryAdvancedLabel => 'Advanced label';
+  String get programSummaryAdvancedLabel => 'Advanced';
 
   @override
   String get programSummaryAutomaticallyIncreasesChalle =>
@@ -28251,7 +28251,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Avoids exercises that stress your limitations';
 
   @override
-  String get programSummaryBeginnerLabel => 'Beginner label';
+  String get programSummaryBeginnerLabel => 'Beginner';
 
   @override
   String get programSummaryBodyweight => 'Bodyweight';
@@ -28281,7 +28281,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get programSummaryInjuryAwareness => 'Injury Awareness';
 
   @override
-  String get programSummaryIntermediateLabel => 'Intermediate label';
+  String get programSummaryIntermediateLabel => 'Intermediate';
 
   @override
   String get programSummaryLevel => 'Level';
@@ -36338,7 +36338,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get storiesRingYourStory => 'Your Story';
+  String get storiesRingYourStory => 'Story';
 
   @override
   String get storyCreateAddACaption => 'Add a caption...';
@@ -43356,11 +43356,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workoutUiModeEverythingWarmupStretchLb =>
-      'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.';
+      'Everything in Easy, plus: warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.';
 
   @override
   String get workoutUiModeEverythingWarmupStretchPh =>
-      'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.';
+      'Everything in Easy, plus: warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.';
 
   @override
   String get workoutUiModePickTheLevelOf =>

@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime
 
 from services.data_export import (
-    export_user_data, EXPORT_VERSION, APP_VERSION,
+    export_user_data, EXPORT_VERSION, DEFAULT_APP_VERSION,
     _export_profile, _export_body_metrics, _export_workouts,
     _export_workout_logs, _export_exercise_sets, _export_strength_records,
     _export_achievements, _export_streaks, _export_metadata
@@ -433,7 +433,7 @@ class TestExportMetadata:
         rows = {row["key"]: row["value"] for row in reader}
 
         assert rows["export_version"] == EXPORT_VERSION
-        assert rows["app_version"] == APP_VERSION
+        assert rows["app_version"] == DEFAULT_APP_VERSION
 
     def test_export_metadata_includes_counts(self):
         """Test metadata includes counts."""
@@ -643,7 +643,7 @@ class TestConstants:
 
     def test_app_version_defined(self):
         """Test app version is defined."""
-        assert APP_VERSION is not None
+        assert DEFAULT_APP_VERSION is not None
 
 
 if __name__ == "__main__":

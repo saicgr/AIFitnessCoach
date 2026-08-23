@@ -445,10 +445,13 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                       ),
                       child: cp.completed
                           ? const Icon(Icons.check, size: 15, color: Colors.black)
-                          : cp.icon.isNotEmpty
-                              ? Text(cp.icon, style: const TextStyle(fontSize: 12))
-                              : Icon(Icons.checklist_rounded,
-                                  size: 14, color: textMuted),
+                          : Icon(
+                              cp.icon.isNotEmpty
+                                  ? _backendIcon(cp.icon)
+                                  : Icons.checklist_rounded,
+                              size: 14,
+                              color: textMuted,
+                            ),
                     ),
                     const SizedBox(width: 11),
                     // Name and progress
@@ -598,7 +601,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                       child: achievement.completed
                           ? const Icon(Icons.check, size: 15, color: Colors.black)
                           : Icon(
-                              _monthlyIcon(achievement.icon),
+                              _backendIcon(achievement.icon),
                               size: 14,
                               color: textMuted,
                             ),

@@ -171,12 +171,16 @@ class _GlassOptionCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Square (rounded-corner) checkbox — this widget is
+                  // multi-select ("Select all that apply"), so the target
+                  // shape must read as a checkbox, not the single-select
+                  // radio circle.
                   Container(
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
                       color: isSelected ? t.checkBg : Colors.transparent,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(6),
                       border: isSelected
                           ? null
                           : Border.all(

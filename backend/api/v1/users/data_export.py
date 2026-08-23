@@ -4,7 +4,7 @@ Data export and import endpoints.
 from core.db import get_supabase_db
 import io
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Header, UploadFile, File
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
@@ -24,6 +24,7 @@ async def export_user_data(
     end_date: Optional[str] = None,
     categories: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
+    x_app_version: Optional[str] = Header(None, alias="X-App-Version"),
 ):
     """
     Export all user data in the specified format.
@@ -63,7 +64,8 @@ async def export_user_data(
         if format == "json":
             from services.data_export import export_user_data_json
             data = export_user_data_json(
-                user_id, start_date=start_date, end_date=end_date, categories=categories
+                user_id, start_date=start_date, end_date=end_date, categories=categories,
+                app_version=x_app_version,
             )
             from fastapi.responses import JSONResponse
             elapsed = time.time() - start_time
@@ -111,7 +113,8 @@ async def export_user_data(
             # Default: CSV ZIP
             from services.data_export import export_user_data as do_export
             zip_bytes = do_export(
-                user_id, start_date=start_date, end_date=end_date, categories=categories
+                user_id, start_date=start_date, end_date=end_date, categories=categories,
+                app_version=x_app_version,
             )
             elapsed = time.time() - start_time
             logger.info(f"CSV export complete for user {user_id} in {elapsed:.2f}s, size: {len(zip_bytes)} bytes")

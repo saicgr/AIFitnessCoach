@@ -25,15 +25,16 @@ import '../../l10n/generated/app_localizations.dart';
 
 /// Infer a meal type from the current hour.
 ///
-/// Mirrors `_inferMealType` in `recipes/fridge_recipe_detail_sheet.dart` so a
-/// dish lands in the same bucket no matter which surface logged it. A saved
-/// menu is reopened to log what you're eating NOW, so "now" is the right basis.
+/// Mirrors `_inferMealType` in `recipes/fridge_recipe_detail_sheet.dart` (and
+/// `_getDefaultMealType` in `log_meal_sheet_ui_1.dart`) so a dish lands in the
+/// same bucket no matter which surface logged it. A saved menu is reopened to
+/// log what you're eating NOW, so "now" is the right basis.
 String inferMealTypeForNow([DateTime? now]) {
   final h = (now ?? DateTime.now()).hour;
-  if (h < 11) return 'breakfast';
-  if (h < 16) return 'lunch';
-  if (h < 21) return 'dinner';
-  return 'snack';
+  if (h < 10) return 'breakfast';
+  if (h < 14) return 'lunch';
+  if (h < 17) return 'snack';
+  return 'dinner';
 }
 
 /// Persist the dishes ticked off a saved menu.

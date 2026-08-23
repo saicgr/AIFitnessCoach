@@ -6,7 +6,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
@@ -32,17 +31,21 @@ class FridgeRecipeDetailSheet extends ConsumerStatefulWidget {
 class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailSheet> {
   bool _saving = false;
   bool _logging = false;
+  bool _saved = false;
+  bool _logged = false;
 
   PantrySuggestion get s => widget.suggestion;
 
   /// Infer a meal type from the current hour so the log lands sensibly without
-  /// forcing the user to pick.
+  /// forcing the user to pick. Boundaries match `_getDefaultMealType` in
+  /// `log_meal_sheet_ui_1.dart` (the standard log sheet's own default) — an
+  /// evening log (e.g. 9:42pm) must land as dinner, not snack.
   String _inferMealType() {
     final h = DateTime.now().hour;
-    if (h < 11) return 'breakfast';
-    if (h < 16) return 'lunch';
-    if (h < 21) return 'dinner';
-    return 'snack';
+    if (h < 10) return 'breakfast';
+    if (h < 14) return 'lunch';
+    if (h < 17) return 'snack';
+    return 'dinner';
   }
 
   Future<void> _logMeal() async {
@@ -73,13 +76,18 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
   }
 
   Future<void> _onLogPressed() async {
-    if (_logging) return;
+    if (_logging || _logged) return;
     setState(() => _logging = true);
     try {
       await _logMeal();
       if (!mounted) return;
+      setState(() {
+        _logging = false;
+        _logged = true;
+      });
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
       Navigator.of(context).pop();
-      _snack('Logged ${s.name} ✓');
     } catch (e) {
       if (!mounted) return;
       setState(() => _logging = false);
@@ -88,7 +96,7 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
   }
 
   Future<void> _onSavePressed() async {
-    if (_saving) return;
+    if (_saving || _saved) return;
     setState(() => _saving = true);
     try {
       final ingredients = <RecipeIngredientCreate>[
@@ -114,8 +122,10 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
             ),
           );
       if (!mounted) return;
-      setState(() => _saving = false);
-      _snack('Saved to your recipes ✓');
+      setState(() {
+        _saving = false;
+        _saved = true;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -200,19 +210,23 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
                     children: [
                       Expanded(
                         child: _btn(
-                          label: _saving ? 'SAVING…' : 'SAVE',
+                          label: _saving
+                              ? 'SAVING…'
+                              : (_saved ? '✓ SAVED' : 'SAVE'),
                           primary: false,
                           tc: tc,
-                          onTap: _saving ? null : _onSavePressed,
+                          onTap: (_saving || _saved) ? null : _onSavePressed,
                         ),
                       ),
                       const SizedBox(width: 9),
                       Expanded(
                         child: _btn(
-                          label: _logging ? 'LOGGING…' : 'LOG MEAL',
+                          label: _logging
+                              ? 'LOGGING…'
+                              : (_logged ? '✓ LOGGED' : 'LOG MEAL'),
                           primary: false,
                           tc: tc,
-                          onTap: _logging ? null : _onLogPressed,
+                          onTap: (_logging || _logged) ? null : _onLogPressed,
                         ),
                       ),
                     ],

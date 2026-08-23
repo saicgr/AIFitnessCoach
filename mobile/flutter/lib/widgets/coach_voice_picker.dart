@@ -21,21 +21,21 @@ class CoachVoicePicker extends ConsumerWidget {
       id: 'default',
       label: 'Default',
       subtitle: "Your device's default voice",
-      emoji: '🗣️',
+      icon: Icons.record_voice_over,
       cosmeticId: null,
     ),
     _VoiceOption(
       id: 'coach_voice_chad',
       label: 'Coach Chad',
       subtitle: 'Deeper, high-energy voice',
-      emoji: '💪',
+      icon: Icons.local_fire_department,
       cosmeticId: 'coach_voice_chad',
     ),
     _VoiceOption(
       id: 'coach_voice_serena',
       label: 'Coach Serena',
       subtitle: 'Calm, precise voice',
-      emoji: '✨',
+      icon: Icons.spa,
       cosmeticId: 'coach_voice_serena',
     ),
   ];
@@ -156,9 +156,16 @@ class CoachVoicePicker extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Opacity(
-              opacity: locked ? 0.45 : 1.0,
-              child: Text(opt.emoji, style: const TextStyle(fontSize: 22)),
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: border),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(opt.icon, size: 15,
+                  color: locked ? textMuted : (selected ? context.accentColor : textMuted)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -201,14 +208,14 @@ class _VoiceOption {
   final String id;
   final String label;
   final String subtitle;
-  final String emoji;
+  final IconData icon;
   final String? cosmeticId;
 
   const _VoiceOption({
     required this.id,
     required this.label,
     required this.subtitle,
-    required this.emoji,
+    required this.icon,
     this.cosmeticId,
   });
 }

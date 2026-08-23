@@ -1043,7 +1043,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       // Bottom padding kept tight: the enclosing SafeArea already insets
       // for the home indicator, so extra padding here just floats the CTA
       // block up and leaves a dead gap above the bezel.
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1146,11 +1146,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           // it entirely — a separate, deliberate, disclosed choice Apple
           // permits for no-free-tier apps.
           if (!(_experiments.hardGate && Platform.isIOS)) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => _handleMaybeLater(context, ref),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 44),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   AppLocalizations.of(context).notifsLaterButton,
                   style: TextStyle(

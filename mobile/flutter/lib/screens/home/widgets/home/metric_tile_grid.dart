@@ -33,6 +33,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
@@ -68,6 +69,12 @@ const double kMetricPageViewportFraction = 0.94;
 /// dot per reachable page, never a dot for a page nothing can swipe to.
 const Key kMetricTilePageDotsKey = ValueKey('metricTilePageDots');
 
+/// SharedPreferences key for the one-time "page 2 exists" header hint —
+/// shown once on a default (page-2-empty) account so the customisation is
+/// discoverable outside of edit mode, without ever auto-assigning a tile
+/// there (see the page-2 rules above).
+const String _kMetricPageTwoHintSeenKey = 'metric_grid_page_two_hint_seen';
+
 /// Re-packs the tiles that survive a collapsed page into full rows.
 ///
 /// Rows of at most three, sized by how many are in the row — 1 → L, 2 → M,
@@ -92,6 +99,28 @@ List<HomeMetricTile> repackMetricSurvivors(List<HomeMetricTile> survivors) {
     }
   }
   return out;
+}
+
+/// Repacks only a ragged trailing row produced by read-time capability
+/// filtering (survivors of dark tiles simply dropping out of [tiles] rather
+/// than going through a page collapse — see [mountedMetricTilesProvider]).
+///
+/// Every full row is left exactly as the user arranged it; only the LAST row,
+/// when it does not fill all [kMetricGridColumns] columns, is re-sized with
+/// [repackMetricSurvivors] so the tiles that remain read as a deliberate row
+/// instead of a hole. Render-only, like [repackMetricSurvivors] itself.
+List<HomeMetricTile> repackRaggedTrailingRow(List<HomeMetricTile> tiles) {
+  if (tiles.isEmpty) return tiles;
+  final rows = packMetricTileRows(tiles);
+  final lastRow = rows.last;
+  final usedByLastRow =
+      lastRow.fold<int>(0, (a, t) => a + metricTileSpan(t.size));
+  if (usedByLastRow >= kMetricGridColumns) return tiles;
+  final headCount = tiles.length - lastRow.length;
+  return [
+    ...tiles.take(headCount),
+    ...repackMetricSurvivors(tiles.skip(headCount).toList()),
+  ];
 }
 
 /// A preset's chip label in the reader's language. The preset table itself is
@@ -166,6 +195,30 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
   int _page = 0;
   bool _editing = false;
 
+  // Starts true (hint hidden) so a not-yet-loaded prefs read can never flash
+  // the hint on screen for a user who has already dismissed it; flips to
+  // false only if the load proves it is unseen.
+  bool _pageTwoHintSeen = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPageTwoHintSeen();
+  }
+
+  Future<void> _loadPageTwoHintSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_kMetricPageTwoHintSeenKey) ?? false;
+    if (mounted && !seen) setState(() => _pageTwoHintSeen = false);
+  }
+
+  Future<void> _dismissPageTwoHint() async {
+    if (_pageTwoHintSeen) return;
+    setState(() => _pageTwoHintSeen = true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kMetricPageTwoHintSeenKey, true);
+  }
+
   @override
   void dispose() {
     _pager.dispose();
@@ -186,8 +239,11 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
     // hovering over nothing (same call the strip made when Health was dark).
     if (tiles.isEmpty && !_editing) return const SizedBox.shrink();
 
-    final pageOne = tilesOnPage(tiles, 1);
-    final pageTwo = tilesOnPage(tiles, 2);
+    // Capability filtering can drop a tile out of the last row without going
+    // through the (now-dead) page-collapse path — see
+    // [repackRaggedTrailingRow].
+    final pageOne = repackRaggedTrailingRow(tilesOnPage(tiles, 1));
+    final pageTwo = repackRaggedTrailingRow(tilesOnPage(tiles, 2));
 
     // ── The first-run branch. This is the only place both _StaticGrid and
     // the connect card are reached from, so nothing can render one of them
@@ -242,6 +298,10 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
             const SizedBox(height: 10),
             const MetricTileGridEditor(),
           ] else ...[
+            if (pageTwo.isEmpty && !_pageTwoHintSeen) ...[
+              const SizedBox(height: 8),
+              _pageTwoHint(c),
+            ],
             const SizedBox(height: 10),
             if (pageTwo.isEmpty)
               _pageBody(pageOne, dark1, collapsed1)
@@ -419,7 +479,47 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
     if (_editing) return;
     HapticService.medium();
     setState(() => _editing = true);
+    // Edit mode's drop strip teaches page 2 directly, so the outer hint has
+    // done its job the moment the user gets here.
+    _dismissPageTwoHint();
   }
+
+  /// One-time hint taught on the header, hardcoded English like the section
+  /// kicker above (not an l10n key) — tells a default account that a second,
+  /// opt-in page of metrics exists, without ever seeding it (see the page-2
+  /// rules in the file doc comment). Tapping it opens edit mode directly;
+  /// the small close glyph dismisses it for good.
+  Widget _pageTwoHint(ThemeColors c) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _startEditing,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: c.accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.swipe_rounded, size: 14, color: c.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Tap edit to add a second page of metrics',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11.5, color: c.textSecondary),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _dismissPageTwoHint,
+                behavior: HitTestBehavior.opaque,
+                child: Icon(Icons.close_rounded, size: 14, color: c.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
 
   void _open(String route) {
     HapticService.light();

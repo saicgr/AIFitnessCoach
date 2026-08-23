@@ -1,6 +1,7 @@
 """Secondary endpoints for xp.  Sub-router included by main module.
 XP Events API - Daily Login, Streaks, Double XP Events
 """
+import os
 from typing import Optional, List
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -43,6 +44,9 @@ from .xp_models import (
 )
 
 router = APIRouter()
+
+_IS_PRODUCTION = os.getenv("RENDER", "false").lower() == "true" or os.getenv("ENV", "dev") == "production"
+
 
 @router.post("/use-consumable")
 async def use_consumable(
@@ -549,23 +553,32 @@ async def get_weekly_checkpoints(
 
         # Map DB field names → Flutter model field names and enrich checkpoints
         # with display metadata (id, description, icon) the DB doesn't store.
+        #
+        # Row 361 — `icon` used to be a literal emoji glyph, which the client
+        # rendered as-is (Text(cp.icon)) inside the same circular frame the
+        # Daily tab fills with the app's custom Material icon set (via the
+        # `_backendIcon` name→IconData map also used for monthly
+        # achievements) — so switching from Daily to Weekly swapped every
+        # goal's icon system out from under it. `icon` is now an icon-NAME
+        # key from that same shared vocabulary, matching every other
+        # gamification surface (monthly achievements, XP source icons).
         _CHECKPOINT_META = {
-            "workouts":       ("workouts",        "Complete Workouts",    "Complete your scheduled workouts this week",     "🏋️"),
-            "perfect_week":   ("perfect_week",     "Perfect Week",         "Complete ALL scheduled workouts",               "⭐"),
-            "protein":        ("protein",          "Protein Goals",        "Hit your protein target 5+ days",               "🥩"),
-            "calories":       ("calories",         "Calorie Goals",        "Stay within your calorie target 5+ days",       "🍽️"),
-            "hydration":      ("hydration",        "Hydration",            "Hit your water goal 5+ days",                   "💧"),
-            "weight":         ("weight",           "Weight Logging",       "Log your weight 3+ times this week",            "⚖️"),
-            "habits":         ("habits",           "Habit Completion",     "Complete 70%+ of your daily habits",            "✅"),
-            "workout_streak": ("workout_streak",   "Workout Streak",       "Maintain a 7+ day workout streak",              "🔥"),
-            "social":         ("social",           "Social Engagement",    "Engage with 5+ community posts",                "👥"),
-            "measurements":   ("measurements",     "Body Measurements",    "Log your body measurements 2+ times",           "📏"),
+            "workouts":       ("workouts",        "Complete Workouts",    "Complete your scheduled workouts this week",     "fitness_center"),
+            "perfect_week":   ("perfect_week",     "Perfect Week",         "Complete ALL scheduled workouts",               "star"),
+            "protein":        ("protein",          "Protein Goals",        "Hit your protein target 5+ days",               "egg_alt"),
+            "calories":       ("calories",         "Calorie Goals",        "Stay within your calorie target 5+ days",       "local_fire_department"),
+            "hydration":      ("hydration",        "Hydration",            "Hit your water goal 5+ days",                   "water_drop"),
+            "weight":         ("weight",           "Weight Logging",       "Log your weight 3+ times this week",            "monitor"),
+            "habits":         ("habits",           "Habit Completion",     "Complete 70%+ of your daily habits",            "checklist"),
+            "workout_streak": ("workout_streak",   "Workout Streak",       "Maintain a 7+ day workout streak",              "trending_up"),
+            "social":         ("social",           "Social Engagement",    "Engage with 5+ community posts",                "people"),
+            "measurements":   ("measurements",     "Body Measurements",    "Log your body measurements 2+ times",           "straighten"),
         }
 
         checkpoints = []
         for cp in raw.get("checkpoints", []):
             key = cp.get("name", "")
-            meta = _CHECKPOINT_META.get(key, (key, key.replace("_", " ").title(), "", "📋"))
+            meta = _CHECKPOINT_META.get(key, (key, key.replace("_", " ").title(), "", "checklist"))
             checkpoints.append({
                 "id":          meta[0],
                 "name":        meta[1],
@@ -1821,4 +1834,75 @@ async def cancel_merch_claim_endpoint(
         raise
     except Exception as e:
         logger.error(f"[XP] Error cancelling merch claim: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# QA/DEBUG ONLY — testing reward gates above the levels normal play reaches
+# =============================================================================
+
+class DebugSetLevelRequest(BaseModel):
+    target_level: int
+
+
+@router.post("/debug/set-level")
+async def debug_set_level(
+    body: DebugSetLevelRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Non-production only. Jumps the calling user to `target_level` by awarding
+    the exact XP delta through the real `award_xp` RPC — never writes
+    `current_level` directly. Reaching Level 50+ through normal play takes on
+    the order of a year of daily use, which previously meant testing any
+    reward gate above Level 3 required hand-editing `current_level` in
+    Postgres — a path that skips `award_xp`'s `distribute_level_rewards`
+    call, so the "unlock" being tested was never actually granted the way a
+    real player's would be. This endpoint reaches the same level through the
+    same code path real XP does.
+    """
+    if _IS_PRODUCTION:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not 1 <= body.target_level <= 250:
+        raise HTTPException(status_code=400, detail="target_level must be between 1 and 250")
+
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        xp_result = await run_db(lambda: db.client.table("user_xp")
+            .select("total_xp")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute())
+        current_total_xp = (xp_result.data.get("total_xp", 0) if xp_result and xp_result.data else 0)
+
+        target_total_xp = sum(_get_xp_for_level(l) for l in range(1, body.target_level))
+        delta = target_total_xp - current_total_xp
+        if delta <= 0:
+            return {
+                "success": True,
+                "message": "Already at or above target level",
+                "current_total_xp": current_total_xp,
+            }
+
+        result = await run_db(lambda: db.client.rpc(
+            "award_xp",
+            {
+                "p_user_id": user_id,
+                "p_xp_amount": delta,
+                "p_source": "qa_debug_level_set",
+                "p_source_id": None,
+                "p_description": f"QA debug: jump to level {body.target_level}",
+                "p_is_verified": True,
+                "p_bypass_trust": True,
+            }
+        ).execute())
+
+        return result.data if result and result.data else {"success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error in debug_set_level: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")

@@ -10,6 +10,7 @@ import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Screen for managing the exercise queue.
 /// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class ExerciseQueueScreen extends ConsumerWidget {
@@ -499,6 +500,7 @@ class _AddedToUpcomingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final success = ThemeColors.of(context).success;
     final workoutDate = item.usedInWorkoutDate;
     final destination = [
       if (workoutDate != null) _formatDate(workoutDate),
@@ -518,11 +520,11 @@ class _AddedToUpcomingTile extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.1),
+            color: success.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
-            child: Icon(Icons.check, color: AppColors.success),
+          child: Center(
+            child: Icon(Icons.check, color: success),
           ),
         ),
         title: Text(

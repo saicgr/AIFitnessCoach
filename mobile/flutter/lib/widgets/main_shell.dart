@@ -321,7 +321,12 @@ class MainShell extends ConsumerWidget {
     final currentPath = GoRouter.of(
       context,
     ).routerDelegate.currentConfiguration.uri.path;
-    final pathWantsHidden = currentPath.startsWith('/fasting');
+    // `/profile` (the You hub) is a route of the Community branch, not a
+    // tab root of its own — it renders its own Overview/Profile/Rewards
+    // tabs, so keeping the global nav bar + Quick Log FAB visible over it
+    // both mis-highlights Community (E2E row 496) and covers the hub's own
+    // bottom cards (E2E row 497).
+    final pathWantsHidden = currentPath.startsWith('/fasting') || currentPath.startsWith('/profile');
     final providerWantsHidden = !ref.watch(floatingNavBarVisibleProvider);
     // NOTE: index 2 used to hide the nav whenever the keyboard was up, so the
     // Coach tab's chat composer could dock to the keyboard instead of floating

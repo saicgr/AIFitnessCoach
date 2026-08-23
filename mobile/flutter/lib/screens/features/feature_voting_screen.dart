@@ -204,31 +204,40 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
           ),
           const SizedBox(width: 4),
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                children: _categories.map((c) {
-                  final selected = c.value == _category;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _FilterChipPill(
-                      label: c.label,
-                      selected: selected,
-                      accent: accent,
-                      isDark: isDark,
-                      onTap: () {
-                        HapticService.light();
-                        setState(() => _category = c.value);
-                        ref.read(featuresProvider.notifier).setCategory(c.value);
-                      },
-                    ),
-                  );
-                }).toList(),
+            child: ShaderMask(
+              shaderCallback: (rect) => const LinearGradient(
+                begin: Alignment.centerRight,
+                end: Alignment.centerLeft,
+                colors: [Colors.transparent, Colors.black],
+                stops: [0.0, 0.08],
+              ).createShader(rect),
+              blendMode: BlendMode.dstIn,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(left: 4, right: 12),
+                child: Row(
+                  children: _categories.map((c) {
+                    final selected = c.value == _category;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: _FilterChipPill(
+                        label: c.label,
+                        selected: selected,
+                        accent: accent,
+                        isDark: isDark,
+                        onTap: () {
+                          HapticService.light();
+                          setState(() => _category = c.value);
+                          ref.read(featuresProvider.notifier).setCategory(c.value);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -389,13 +398,7 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
                           ),
                           const Spacer(),
                           if (feature.releaseDate != null)
-                            _Countdown(label: feature.formattedCountdown)
-                          else
-                            _StatusBadge(
-                              label: feature.statusDisplayName,
-                              status: feature.status,
-                              isDark: isDark,
-                            ),
+                            _Countdown(label: feature.formattedCountdown),
                         ],
                       ),
                     ],
@@ -588,54 +591,6 @@ class _CategoryBadge extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: accent,
           letterSpacing: 0.2,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String label;
-  final String status;
-  final bool isDark;
-
-  const _StatusBadge({
-    required this.label,
-    required this.status,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Status uses semantic tones (not the user accent) so lifecycle reads
-    // consistently regardless of the chosen accent.
-    Color color;
-    switch (status) {
-      case 'planned':
-        color = isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: feature-request lifecycle status -- planned/warning
-        break;
-      case 'in_progress':
-        color = isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: feature-request lifecycle status -- in-progress/info
-        break;
-      case 'released':
-        color = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: feature-request lifecycle status -- released/success
-        break;
-      default:
-        color = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
         ),
       ),
     );

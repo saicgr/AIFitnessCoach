@@ -33,7 +33,7 @@ class _StapleExerciseTile extends ConsumerWidget {
     );
   }
 
-  Color _badgeColor(String? reason) {
+  Color _badgeColor(BuildContext context, String? reason) {
     switch (reason) {
       case 'core_compound':
         return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
@@ -44,7 +44,7 @@ class _StapleExerciseTile extends ConsumerWidget {
       case 'strength_focus':
         return Colors.orange;  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
       default:
-        return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
+        return ThemeColors.of(context).orange;
     }
   }
 
@@ -98,7 +98,7 @@ class _StapleExerciseTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = _badgeColor(staple.reason);
+    final color = _badgeColor(context, staple.reason);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

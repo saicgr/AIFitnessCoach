@@ -153,11 +153,28 @@ class LoggedMealsSection extends StatelessWidget {
       mealId == 'snack' ? 'snacks' : mealId;
 
   static const _mealTypes = [
-    {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '\u{1F373}'},
-    {'id': 'lunch', 'label': 'Lunch', 'emoji': '\u{1F957}'},
-    {'id': 'dinner', 'label': 'Dinner', 'emoji': '\u{1F37D}\u{FE0F}'},
-    {'id': 'snack', 'label': 'Snacks', 'emoji': '\u{1F34E}'},
+    {'id': 'breakfast', 'label': 'Breakfast'},
+    {'id': 'lunch', 'label': 'Lunch'},
+    {'id': 'dinner', 'label': 'Dinner'},
+    {'id': 'snack', 'label': 'Snacks'},
   ];
+
+  /// Vector glyph for a meal section — matches the rest of the screen's
+  /// icon language instead of platform emoji.
+  static IconData mealIcon(String mealId) {
+    switch (mealId) {
+      case 'breakfast':
+        return Icons.free_breakfast_rounded;
+      case 'lunch':
+        return Icons.lunch_dining_rounded;
+      case 'dinner':
+        return Icons.dinner_dining_rounded;
+      case 'snack':
+        return Icons.cookie_rounded;
+      default:
+        return Icons.restaurant_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +213,7 @@ class LoggedMealsSection extends StatelessWidget {
               _MealSection(
                 mealId: mealId,
                 label: mealInfo['label']!,
-                emoji: mealInfo['emoji']!,
+                icon: mealIcon(mealId),
                 typeMeals: typeMeals,
                 owner: this,
               ),
@@ -2699,10 +2716,10 @@ class LoggedMealsSection extends StatelessWidget {
     final accent = accentEnum.getColor(isDarkTheme);
 
     final mealTypes = [
-      {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '\u{1F373}'},
-      {'id': 'lunch', 'label': 'Lunch', 'emoji': '\u{2600}\u{FE0F}'},
-      {'id': 'dinner', 'label': 'Dinner', 'emoji': '\u{1F319}'},
-      {'id': 'snack', 'label': 'Snack', 'emoji': '\u{1F34E}'},
+      {'id': 'breakfast', 'label': 'Breakfast'},
+      {'id': 'lunch', 'label': 'Lunch'},
+      {'id': 'dinner', 'label': 'Dinner'},
+      {'id': 'snack', 'label': 'Snack'},
     ];
 
     showGlassSheet(
@@ -2723,7 +2740,7 @@ class LoggedMealsSection extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ...mealTypes.map((type) => ListTile(
-                leading: Text(type['emoji']!, style: const TextStyle(fontSize: 20)),
+                leading: Icon(mealIcon(type['id']!), color: textPrimary),
                 title: Text(
                   type['label']!,
                   style: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
@@ -4195,14 +4212,14 @@ class _EditHistoryLinkState extends State<_EditHistoryLink> {
 class _MealSection extends StatefulWidget {
   final String mealId;
   final String label;
-  final String emoji;
+  final IconData icon;
   final List<FoodLog> typeMeals;
   final LoggedMealsSection owner;
 
   const _MealSection({
     required this.mealId,
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.typeMeals,
     required this.owner,
   });
@@ -4305,8 +4322,8 @@ class _MealSectionState extends State<_MealSection> {
                             children: [
                               Row(
                                 children: [
-                                  Text(widget.emoji,
-                                      style: const TextStyle(fontSize: 14)),
+                                  Icon(widget.icon,
+                                      size: 14, color: textPrimary),
                                   const SizedBox(width: 7),
                                   Flexible(
                                     child: Text(
@@ -4333,8 +4350,8 @@ class _MealSectionState extends State<_MealSection> {
                           )
                         : Row(
                             children: [
-                              Text(widget.emoji,
-                                  style: const TextStyle(fontSize: 16)),
+                              Icon(widget.icon,
+                                  size: 16, color: textPrimary),
                               const SizedBox(width: 9),
                               Text(
                                 widget.label.toUpperCase(),
