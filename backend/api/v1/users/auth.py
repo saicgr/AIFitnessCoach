@@ -142,8 +142,10 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
         is_admin = admin_service.should_be_admin(email)
         is_support = admin_service.should_be_support_user(email)
 
-        # Note: goals and equipment are VARCHAR columns, not JSONB,
-        # so we need to pass them as JSON strings
+        # Note: equipment is a VARCHAR column, not JSONB, so it needs to be
+        # passed as a JSON string. goals is a real jsonb column (migration
+        # 2425, finding #40) — write an actual empty list, not a JSON string,
+        # or jsonb_typeof(goals) becomes 'string' instead of 'array'.
         new_user_data = {
             "auth_id": supabase_user_id,
             "email": email,
@@ -155,7 +157,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             "coach_selected": False,  # Explicitly set for new users to trigger coach selection
             "paywall_completed": False,  # Explicitly set for new users to trigger paywall flow
             "fitness_level": "beginner",
-            "goals": "[]",  # VARCHAR column - needs JSON string
+            "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
             "equipment": "[]",  # VARCHAR column - needs JSON string
             "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},  # JSONB - can be dict
@@ -294,7 +296,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
             "coach_selected": False,
             "paywall_completed": False,
             "fitness_level": "beginner",
-            "goals": "[]",
+            "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
             "equipment": "[]",
             "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},
@@ -396,7 +398,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
             "coach_selected": False,
             "paywall_completed": False,
             "fitness_level": "beginner",
-            "goals": "[]",
+            "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
             "equipment": "[]",
             "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},
@@ -502,7 +504,7 @@ async def auth_sync(request: Request,
             "coach_selected": False,
             "paywall_completed": False,
             "fitness_level": "beginner",
-            "goals": "[]",
+            "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
             "equipment": "[]",
             "equipment_v2": [],
             "preferences": {"name": full_name, "email": email},

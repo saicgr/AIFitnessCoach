@@ -180,7 +180,7 @@ def _create_user(admin, index: int, run_id: str) -> tuple[str, str]:
         "coach_selected": True,
         "paywall_completed": True,
         "fitness_level": "beginner",
-        "goals": "[]",
+        "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
         "equipment": "[]",
         "equipment_v2": [],
         # The cleanup anchor in structured form, in addition to the email domain.

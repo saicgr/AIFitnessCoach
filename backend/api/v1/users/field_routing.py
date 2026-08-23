@@ -84,7 +84,7 @@ COLUMNS_ADDED_SINCE_SNAPSHOT = frozenset({
 USER_UPDATE_ROUTING: Dict[str, Route] = {
     # -- handled bespoke in api/v1/users/profile.py::update_user --------------
     "fitness_level": Special("column write + gym-profile sync"),
-    "goals": Special("JSON-encoded into the VARCHAR goals column"),
+    "goals": Special("coerced to a real list for the jsonb goals column (migration 2425)"),
     "equipment": Special("dual-write equipment + equipment_v2, change detection"),
     "custom_equipment": Special("JSON-encoded into the VARCHAR column"),
     "preferences": Special("merged with extended fields into the JSONB blob"),
@@ -183,7 +183,7 @@ USER_UPDATE_ROUTING: Dict[str, Route] = {
 
 USER_PREFERENCES_ROUTING: Dict[str, Route] = {
     # -- handled bespoke in api/v1/users/onboarding.py::save_user_preferences -
-    "goals": Special("JSON-encoded into the VARCHAR goals column"),
+    "goals": Special("coerced to a real list for the jsonb goals column (migration 2425)"),
     "fitness_level": Special("column write"),
     "primary_goal": Special("column write"),
     "muscle_focus_points": Special("column write"),

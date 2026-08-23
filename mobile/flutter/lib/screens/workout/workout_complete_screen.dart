@@ -401,8 +401,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
   /// Median of a list of rest_seconds values (sorted; average of the two
   /// middle values for even counts). Returns null for an empty list.
+  ///
+  /// E2E #139: this used to filter with `v > 0`, which silently dropped
+  /// genuine skip-to-zero rest intervals (a user who hit "Skip Rest"
+  /// immediately really did rest 0 seconds — that's real data, not a
+  /// missing sample) and left an all-skipped session showing a blank
+  /// "MEDIAN REST -- --". Callers are responsible for excluding
+  /// absent/untracked samples *before* calling this (see
+  /// [_effectiveMedianRestSeconds]) so every value reaching here is a
+  /// genuine logged rest, including legitimate zeros.
   static double? medianOfRestSeconds(List<int> restSeconds) {
-    final values = restSeconds.where((v) => v > 0).toList()..sort();
+    final values = restSeconds.where((v) => v >= 0).toList()..sort();
     if (values.isEmpty) return null;
     final mid = values.length ~/ 2;
     if (values.length.isOdd) {
@@ -422,8 +431,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
     final intervals = widget.restIntervals;
     if (intervals != null && intervals.isNotEmpty) {
+      // Only intervals that actually recorded a rest_seconds value are
+      // genuine samples. A missing key means the interval was never
+      // tracked/completed (e.g. the app was killed mid-rest) -- that's
+      // "no data", not "rested 0 seconds", so it must NOT be coerced to 0
+      // and fed into the median (that would corrupt a real all-nonzero
+      // session with fake zeros). A rest_seconds value that IS present and
+      // equal to 0 means the user skipped rest instantly -- a genuine
+      // zero -- and must be counted.
       final secs = <int>[
-        for (final i in intervals) ((i['rest_seconds'] as num?)?.toInt() ?? 0),
+        for (final i in intervals)
+          if (i['rest_seconds'] != null) (i['rest_seconds'] as num).toInt(),
       ];
       final m = medianOfRestSeconds(secs);
       if (m != null) return m;

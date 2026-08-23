@@ -245,8 +245,11 @@ class TestGoogleAuthEndpoint:
         call_args = mock_db_instance.create_user.call_args[0][0]
         assert call_args["auth_id"] == "new-supabase-user-id"
         assert call_args["email"] == "newuser@example.com"
-        assert call_args["goals"] == "[]"  # Should be string, not list
-        assert call_args["equipment"] == "[]"  # Should be string, not list
+        # goals is a real jsonb column (migration 2425, finding #40) — the
+        # write site must pass an actual empty list, not a JSON string, or
+        # jsonb_typeof(goals) becomes 'string' instead of 'array'.
+        assert call_args["goals"] == []
+        assert call_args["equipment"] == "[]"  # Still VARCHAR - needs JSON string
 
 
 class TestRowToUser:

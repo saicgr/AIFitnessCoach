@@ -86,7 +86,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
                 "coach_selected": False,
                 "paywall_completed": False,
                 "fitness_level": "beginner",
-                "goals": "[]",
+                "goals": [],  # jsonb column (migration 2425) - real empty list, not a string
                 "equipment": "[]",
                 "equipment_v2": [],  # text[] dual-write during migration
                 "preferences": {"name": full_name, "email": email},

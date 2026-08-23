@@ -1171,9 +1171,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         16,
         16,
         16,
-        // Bottom safe-area inset matches the AI Picks tab (see ext file)
-        // so the last result card never lands behind the home-indicator.
-        MediaQuery.viewPaddingOf(context).bottom + 16,
+        // E2E #135: matches the AI Picks tab (see ext file) — extra 84pt
+        // clears the floating "Snap equipment" pill, which is pinned
+        // bottom:16 over this list too and otherwise covers the Swap button
+        // on the last visible card. The +16 alone (previous value) left the
+        // pill overlapping results on this tab even though AI Picks had
+        // already been fixed.
+        MediaQuery.viewPaddingOf(context).bottom + 84,
       ),
       itemCount: _similarExercises.length,
       itemBuilder: (context, index) {
@@ -1197,6 +1201,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         // Badge text based on rank / source. Custom exercises get their own
         // "YOURS" badge so the user knows it's their own gear, independent of
         // rank heuristics.
+        //
+        // E2E #135: `rank <= 3` doubled up "Top Pick" on results 2 AND 3 —
+        // only rank 2 should read "Top Pick" (rank 1 is "Best Match", rank 3+
+        // falls through to the equipment/Alternative badge), matching the
+        // dedup already applied to the AI Picks tab (see ext file).
         String badge;
         Color badgeColor;
         if (isCustom) {
@@ -1205,7 +1214,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         } else if (rank == 1) {
           badge = 'Best Match';
           badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
-        } else if (rank <= 3) {
+        } else if (rank == 2) {
           badge = 'Top Pick';
           badgeColor = context.accentColor;
         } else {

@@ -93,8 +93,22 @@ class WorkoutAdapter {
     // sets/reps per exercise when no logs exist for it, which would publish
     // a workout the user never did. Gate on real evidence of logged work
     // across the whole session, not just non-empty planned exercises.
+    //
+    // E2E #152: this used to be `sets.isNotEmpty` on the RAW parsed
+    // sets_json, which counts the zero-stamped placeholder sets the
+    // "Complete workout now" safety net pads onto untouched exercises
+    // (is_completed: false, reps: 0). A session that is 100% placeholders
+    // (e.g. workout_log 2730ddef — 23 sets_json entries, all
+    // is_completed:false / reps:0) passed that check and fell through to
+    // planned-exercise fallback values, fabricating a "SETS 23" headline
+    // for a workout the user never did. Use the same real-work definition
+    // `_buildExerciseList` already applies per-exercise at the
+    // `is_completed != false` filter above: a set only counts if it is not
+    // explicitly marked incomplete AND it carries actual evidence of work
+    // (reps, hold time, or distance).
     final hasLoggedWork = (loggedSets != null && loggedSets.isNotEmpty) ||
-        setsJsonByExercise.values.any((sets) => sets.isNotEmpty) ||
+        setsJsonByExercise.values
+            .any((sets) => sets.any(_setHasRecordedWork)) ||
         (totalSets != null && totalSets > 0) ||
         (totalReps != null && totalReps > 0) ||
         (totalVolumeKgFromCaller != null && totalVolumeKgFromCaller > 0);
@@ -489,6 +503,28 @@ class WorkoutAdapter {
         isPr: prNames.contains(ex.name.toLowerCase().trim()),
       );
     }).toList();
+  }
+
+  /// Whether a raw `sets_json` entry is real, evidenced work rather than a
+  /// zero-stamped placeholder.
+  ///
+  /// A set counts only when it is not explicitly marked incomplete AND it
+  /// carries actual evidence of work — reps, hold time, or distance. A
+  /// weight/target alone is a prescription, not proof the set happened
+  /// (see the `is_completed: false` safety-net padding behind E2E #152).
+  static bool _setHasRecordedWork(Map<String, dynamic> s) {
+    if (s['is_completed'] == false) return false;
+    final reps = (s['reps'] as num?)?.toInt() ??
+        (s['reps_completed'] as num?)?.toInt() ??
+        0;
+    if (reps > 0) return true;
+    final durationSeconds = (s['set_duration_seconds'] as num?)?.toDouble() ??
+        (s['duration_seconds'] as num?)?.toDouble() ??
+        0;
+    if (durationSeconds > 0) return true;
+    final distanceMeters = (s['distance_meters'] as num?)?.toDouble() ?? 0;
+    if (distanceMeters > 0) return true;
+    return false;
   }
 
   /// Parse the raw `metadata['sets_json']` blob (List<dynamic> or JSON

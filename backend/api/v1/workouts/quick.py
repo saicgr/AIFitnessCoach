@@ -43,7 +43,23 @@ from .progression_utils import (
     get_user_progression_context,
     get_user_rep_preferences,
 )
-from .user_preference_utils import get_user_progression_pace
+# Favourites + queue (E2E #190). Quick Generate's candidate pool used to be
+# built purely from build_library_pool + Gemini, with zero awareness of the
+# user's favorite_exercises or exercise_queue — the same signals /generate,
+# /generate-stream and mood generation already honour via
+# apply_favorites_boost / extract_queued_exercises in exercise_rag. Reusing
+# those exact helpers here (instead of a second bespoke implementation) keeps
+# "favorite" and "queued" meaning the same thing on every workout-producing
+# path the user can reach, including the button they actually tap.
+from .user_preference_utils import (
+    get_user_progression_pace,
+    get_user_favorite_exercises,
+    get_user_exercise_queue,
+)
+from services.exercise_rag.selection_pipeline import (
+    apply_favorites_boost,
+    extract_queued_exercises,
+)
 # Injury safety (E2E register row 85). Quick Workout used to have NO
 # deterministic gate — `body.injuries` reached the Gemini PROMPT only, and the
 # client's chips never pre-filled from the profile (Title-Case singular labels
@@ -158,6 +174,10 @@ async def generate_quick_workout_prompt(
     # RAG-first refactor (2026-05-08): if provided, constrains Gemini to use
     # ONLY these pre-filtered library exercises (no hallucinations).
     library_exercises: Optional[List[dict]] = None,
+    # E2E #190 — favorite_exercises / exercise_queue reach the prompt now,
+    # same as /generate's favorite/queued instructions to Gemini.
+    favorite_exercises: Optional[List[str]] = None,
+    queued_exercise_names: Optional[List[str]] = None,
 ) -> str:
     """Build a prompt specifically for quick workouts."""
 
@@ -215,6 +235,21 @@ FOCUS: BALANCED QUICK WORKOUT
     injuries_instruction = ""
     if injuries:
         injuries_instruction = f"\n\nINJURIES TO WORK AROUND: {', '.join(injuries)}\n- Avoid exercises that stress these areas\n- Suggest safe alternatives that don't aggravate these injuries"
+
+    # E2E #190 — favourites/queue were previously invisible to Quick Generate.
+    favorites_instruction = ""
+    if favorite_exercises:
+        favorites_instruction = (
+            f"\n\nUSER FAVORITES — strongly prefer including these if they fit "
+            f"the focus/equipment/duration: {', '.join(favorite_exercises)}"
+        )
+    queued_instruction = ""
+    if queued_exercise_names:
+        queued_instruction = (
+            f"\n\nUSER QUEUED THESE EXERCISES FOR TODAY — you MUST include all "
+            f"of them in the workout (they are already confirmed to fit the "
+            f"focus/equipment): {', '.join(queued_exercise_names)}"
+        )
 
     equipment_str = ", ".join(equipment) if equipment else "bodyweight only"
 
@@ -288,7 +323,7 @@ CRITICAL REQUIREMENTS for {duration}-minute workout:
     triceps, lats, traps, forearms. NEVER include single-leg deadlifts, squats,
     lunges, swings, or any leg/glute/hamstring movements in an upper_body workout.
     Same rule applies for lower_body, push, pull, legs, core.
-{avoided_instruction}{injuries_instruction}
+{avoided_instruction}{injuries_instruction}{favorites_instruction}{queued_instruction}
 
 FIELD GUIDELINES:
 - "name": A creative, energetic workout name (e.g. "Quick Cardio Blast")
@@ -414,11 +449,15 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 rep_preferences,
                 progression_context,
                 injury_context,
+                favorite_exercises,
+                exercise_queue,
             ) = await asyncio.gather(
                 get_user_progression_pace(body.user_id),
                 get_user_rep_preferences(body.user_id),
                 get_user_progression_context(body.user_id, days=30),
                 get_active_injuries_with_muscles(body.user_id),
+                get_user_favorite_exercises(body.user_id),
+                get_user_exercise_queue(body.user_id, focus_area=body.focus),
             )
         except Exception as _e:
             logger.warning(f"[Quick Workout] progression fetch partially failed: {_e}")
@@ -429,6 +468,13 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             # degrade because a progression signal failed. Re-read it directly
             # (the reader owns its own error handling).
             injury_context = await get_active_injuries_with_muscles(body.user_id)
+            favorite_exercises = []
+            exercise_queue = []
+
+        if favorite_exercises:
+            logger.info(f"❤️ [Quick Workout] User has {len(favorite_exercises)} favorite exercises: {favorite_exercises[:5]}")
+        if exercise_queue:
+            logger.info(f"📋 [Quick Workout] User has {len(exercise_queue)} queued exercises")
 
         # Union of the request's chips and the PROFILE's stored limitations,
         # canonicalized through the one shared normaliser so 'Knee'/'knees' and
@@ -450,10 +496,10 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
         # RAG-first: pre-fetch library exercises so Gemini can ONLY use
         # library-backed names (no hallucinations).
         _library_pool = []
+        _focus_for_lib = body.focus or "full_body"
         try:
             from services.exercise_library_service import get_exercise_library_service
             _lib_svc = get_exercise_library_service()
-            _focus_for_lib = body.focus or "full_body"
             _eq_for_lib = (
                 equipment if (isinstance(equipment, list) and equipment)
                 else ["body weight"]
@@ -476,6 +522,30 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
         except Exception as _lib_err:
             logger.warning(f"[Quick RAG-first] Library lookup failed: {_lib_err}")
 
+        # Favourites boost + queue prioritisation (E2E #190). Quick Generate's
+        # pool used to reach Gemini with no awareness of favorite_exercises or
+        # exercise_queue at all. Reuse the SAME helpers /generate's RAG path
+        # uses (apply_favorites_boost, extract_queued_exercises) instead of a
+        # second bespoke ranking:
+        #  - the library pool has no `similarity` field (it isn't RAG output),
+        #    so give every candidate a neutral baseline before boosting —
+        #    apply_favorites_boost only multiplies + re-sorts by it.
+        #  - queued exercises are pulled to the FRONT of the pool so they
+        #    always land inside the prompt's top-60 menu below, mirroring
+        #    /generate treating the queue as a guaranteed-inclusion signal
+        #    rather than just a ranking nudge.
+        _queued_names_in_pool: List[str] = []
+        if _library_pool:
+            for _ex in _library_pool:
+                _ex.setdefault("similarity", 0.5)
+            if favorite_exercises:
+                apply_favorites_boost(_library_pool, favorite_exercises)
+            if exercise_queue:
+                _queued_included, _queued_names_in_pool, _remaining, _ = extract_queued_exercises(
+                    _library_pool, exercise_queue, _focus_for_lib
+                )
+                _library_pool = _queued_included + _remaining
+
         # Build the prompt
         prompt = await generate_quick_workout_prompt(
             duration=body.duration,
@@ -488,6 +558,8 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             progression_philosophy=progression_philosophy,
             progression_pace=progression_pace,
             library_exercises=_library_pool if _library_pool else None,
+            favorite_exercises=favorite_exercises or None,
+            queued_exercise_names=_queued_names_in_pool or None,
         )
 
         # Generate with Gemini (with retry + semaphore via utility)
@@ -605,6 +677,45 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                     focus_areas=[body.focus] if body.focus else None,
                     workout_type=body.focus,
                 )
+
+            # Queue guarantee (E2E #190). The prompt above ASKS Gemini to
+            # include every queued exercise, but an LLM instruction is not a
+            # guarantee — /generate's RAG path treats the queue as guaranteed
+            # inclusion (extract_queued_exercises pulls it out of candidates
+            # unconditionally), so Quick Generate must match that, not just
+            # nudge harder. Force-add any queued exercise that's present in
+            # the focus/equipment-filtered library pool and still missing
+            # from Gemini's picks. Still respects the user's avoid-list; the
+            # terminal injury guard right below still gets the final safety
+            # say on anything added here.
+            if exercise_queue and _queued_names_in_pool:
+                _avoided_lower_set = {ae.lower() for ae in (avoided_exercises or [])}
+                _existing_lower = {(ex.get("name") or "").strip().lower() for ex in exercises}
+                _pool_by_name = {
+                    (p.get("name") or "").strip().lower(): p for p in _library_pool
+                }
+                for _qname in _queued_names_in_pool:
+                    _qkey = _qname.strip().lower()
+                    if _qkey in _existing_lower or _qkey in _avoided_lower_set:
+                        continue
+                    _pool_ex = _pool_by_name.get(_qkey)
+                    if not _pool_ex:
+                        continue
+                    exercises.append({
+                        "name": _pool_ex.get("name"),
+                        "sets": _pool_ex.get("sets", 3),
+                        "reps": _pool_ex.get("reps", 10),
+                        "rest_seconds": _pool_ex.get("rest_seconds", 45),
+                        "muscle_group": _pool_ex.get("muscle_group", ""),
+                        "target_muscle": _pool_ex.get("muscle_group", ""),
+                        "equipment": _pool_ex.get("equipment", ""),
+                        "from_queue": True,
+                    })
+                    _existing_lower.add(_qkey)
+                    logger.info(
+                        f"📋 [Quick Workout] Force-included queued exercise "
+                        f"Gemini omitted: {_pool_ex.get('name')}"
+                    )
 
             # ── TERMINAL INJURY-SAFETY GUARD (register row 85) ────────────────
             # MUST stay the last mutation of `exercises` before persist — the
