@@ -968,23 +968,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     ];
 
+    // Search also matches a row's own rendered (localized) title directly —
+    // not just the English-only `_settingsSearchIndex` keywords — so a query
+    // in the exact words the row already shows (e.g. "Idioma" on the Spanish
+    // UI) always finds it, even where the keyword index has no translated
+    // synonym for that locale.
+    final effectiveMatches = _searchQuery.isEmpty
+        ? _matchingSections
+        : <String>{
+            ..._matchingSections,
+            for (final section in sections)
+              for (final row in section.rows)
+                if (row.title.toLowerCase().contains(_searchQuery))
+                  ...row.sectionKeys,
+          };
+
     // The floating search control (collapsed FAB or expanded bar) is a
     // 56px-tall element pinned at `bottom: bottomPadding + 16` in raw screen
     // coordinates — NOT relative to the scroll content. On real phone
     // heights, ordinary settings rows (the Appearance row on load, Sign Out
     // once scrolled to the end) land exactly in that fixed rectangle and
     // render underneath it with no visual separation (E2E row 78). Give the
-    // scrollable viewport a real bottom exclusion — not just extra padding
-    // at the tail — so no row, at any scroll position, is ever laid out
-    // behind the floating control; reaching it always requires a genuine
-    // scroll instead of it being visually parked there.
+    // scroll content itself a real bottom exclusion — as trailing padding,
+    // not a viewport clip — so no row, at any scroll position, is ever laid
+    // out behind the floating control, while the viewport still spans the
+    // full screen height (no dead space below the last row).
     final searchControlExclusion = bottomPadding + 16 + 56 + 12;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
-          Positioned.fill(bottom: searchControlExclusion, child: SafeArea(
+          SafeArea(
             key: const Key('settings_scroll_area'),
             bottom: false,
             child: SingleChildScrollView(
@@ -992,7 +1007,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 left: 16,
                 right: 16,
                 top: 72,
-                bottom: 24,
+                bottom: searchControlExclusion + 24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1001,7 +1016,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   for (final section in sections) ...[
                     // Check if any row in this section matches search
                     if (_searchQuery.isEmpty ||
-                        section.rows.any((r) => r.sectionKeys.any((k) => _matchingSections.contains(k)))) ...[
+                        section.rows.any((r) => r.sectionKeys.any((k) => effectiveMatches.contains(k)))) ...[
                       _buildSectionLabel(section.label, textMuted),
                       const SizedBox(height: 8),
                       _buildGroupCard(
@@ -1103,7 +1118,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   // Beast Mode row (only visible when unlocked)
                   if (ref.watch(beastModeProvider) &&
                       (_searchQuery.isEmpty ||
-                          _matchingSections.contains('beast_mode'))) ...[
+                          effectiveMatches.contains('beast_mode'))) ...[
                     _buildGroupCard(
                       [
                         _SettingsRow(
@@ -1133,8 +1148,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   // Sign Out
                   if (_searchQuery.isEmpty ||
-                      _matchingSections.contains('logout') ||
-                      _matchingSections.contains('danger_zone')) ...[
+                      effectiveMatches.contains('logout') ||
+                      effectiveMatches.contains('danger_zone')) ...[
                     const LogoutSection(),
                     const SizedBox(height: 12),
                     Center(
@@ -1174,12 +1189,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 32),
 
                   // No results
-                  if (_searchQuery.isNotEmpty && _matchingSections.isEmpty)
-                    _buildNoResultsMessage(context, textMuted),
+                  if (_searchQuery.isNotEmpty && effectiveMatches.isEmpty)
+                    _buildNoResultsMessage(context, textMuted, [
+                      AppLocalizations.of(context).settingsAppearance,
+                      AppLocalizations.of(context).settingsSoundNotifs,
+                      AppLocalizations.of(context).authIntroAiCoach,
+                    ]),
                 ],
               ),
             ),
-          )),
+          ),
 
           // Top masthead — Signature Anton title + back chevron + help action.
           // Opaque background (matches every other settings sub-screen's

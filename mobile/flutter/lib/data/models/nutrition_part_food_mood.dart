@@ -868,7 +868,11 @@ class FoodItemRanking {
   /// Fix A — the unit noun shown in count/both mode. Prefers the descriptive
   /// serving label ("1/4 pizza") when present; for a multi-count measure
   /// ("2 scoops") it falls back to the generic unit so the stepper count never
-  /// double-renders (see [servingCaption]); else the existing pcs/servings.
+  /// double-renders (see [servingCaption]); else a noun derived from the
+  /// food's own name ("egg" for "Boiled Eggs") so a genuinely countable item
+  /// never reduces to the meaningless generic "pcs"; else 'serving(s)' — a
+  /// weight-based food (e.g. "1 pcs" of rice) reads far more sensibly as
+  /// "1 serving" than a fabricated piece count.
   String get servingNoun {
     final sl = servingLabel?.trim();
     if (sl != null && sl.isNotEmpty && !_isMultiCountMeasure(sl)) {
@@ -877,7 +881,27 @@ class FoodItemRanking {
       final m = RegExp(r'^1\s+(.+)$').firstMatch(sl);
       return m != null ? m.group(1)! : sl;
     }
-    return weightPerUnitG != null ? 'pcs' : 'servings';
+    if (weightPerUnitG == null) return 'servings';
+    final fromName = _nounFromName();
+    if (fromName != null) return fromName;
+    return (count ?? 1) == 1 ? 'serving' : 'servings';
+  }
+
+  /// Derives a natural singular noun from the food name for a countable item
+  /// with no descriptive serving label ("Boiled Eggs" -> "egg", "Chicken
+  /// Nuggets" -> "nugget"). Returns null when the last word isn't a plain
+  /// plural noun (parenthetical/qualifier-only names), so callers fall back
+  /// to "serving(s)" rather than showing something worse.
+  String? _nounFromName() {
+    final bare = name.replaceAll(RegExp(r'\([^)]*\)'), '').trim();
+    if (bare.isEmpty) return null;
+    final words = bare.split(RegExp(r'\s+'));
+    final last = words.last.toLowerCase();
+    if (!RegExp(r'^[a-z]+$').hasMatch(last)) return null;
+    if (!last.endsWith('s') || last.endsWith('ss') || last.length <= 3) {
+      return null;
+    }
+    return last.substring(0, last.length - 1);
   }
 
   /// True when the serving label is an "N measureWord" phrase with N >= 2 (e.g.

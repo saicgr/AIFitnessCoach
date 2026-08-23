@@ -17,6 +17,8 @@ import '../../data/providers/recipe_providers.dart';
 import '../../data/repositories/recipe_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import '../../widgets/design_system/zealova.dart';
+import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 class MealRemindersSettingsScreen extends ConsumerStatefulWidget {
@@ -88,16 +90,14 @@ class _MealRemindersSettingsScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        title: Text(AppLocalizations.of(context).mealRemindersSettingsMealReminders, style: TextStyle(color: text)),
-        iconTheme: IconThemeData(color: text),
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).mealRemindersSettingsMealReminders,
       ),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: Text(AppLocalizations.of(context).mealRemindersSettingsMealReminderNotifications, style: TextStyle(color: text)),
+          _reminderToggleRow(
+            title: AppLocalizations.of(context).mealRemindersSettingsMealReminderNotifications,
+            text: text,
             subtitle: _osNotificationsGranted == false
                 ? GestureDetector(
                     onTap: openAppSettings,
@@ -117,10 +117,10 @@ class _MealRemindersSettingsScreenState
                     setState(() => _mealReminders = v);
                     _setBool(_prefMealReminders, v);
                   },
-            activeThumbColor: accent,
           ),
-          SwitchListTile(
-            title: Text(AppLocalizations.of(context).mealRemindersSettingsPublicSharingDefault, style: TextStyle(color: text)),
+          _reminderToggleRow(
+            title: AppLocalizations.of(context).mealRemindersSettingsPublicSharingDefault,
+            text: text,
             subtitle: Text(
               'New recipes are shareable by default. You can always toggle per recipe.',
               style: TextStyle(color: muted, fontSize: 12),
@@ -130,10 +130,10 @@ class _MealRemindersSettingsScreenState
               setState(() => _publicDefault = v);
               _setBool(_prefPublicSharingDefault, v);
             },
-            activeThumbColor: accent,
           ),
-          SwitchListTile(
-            title: Text(AppLocalizations.of(context).mealRemindersSettingsAutoSnapshotRecipeVersions, style: TextStyle(color: text)),
+          _reminderToggleRow(
+            title: AppLocalizations.of(context).mealRemindersSettingsAutoSnapshotRecipeVersions,
+            text: text,
             subtitle: Text(
               'Every edit captures a new version for diff + revert.',
               style: TextStyle(color: muted, fontSize: 12),
@@ -143,7 +143,6 @@ class _MealRemindersSettingsScreenState
               setState(() => _autoSnapshot = v);
               _setBool(_prefAutoSnapshotVersions, v);
             },
-            activeThumbColor: accent,
           ),
           const Divider(),
           Padding(
@@ -162,6 +161,41 @@ class _MealRemindersSettingsScreenState
             )
           else
             _SchedulesList(userId: _userId!, isDark: isDark, accent: accent),
+        ],
+      ),
+    );
+  }
+
+  /// Row #311 — this screen used to render its three toggles with the stock
+  /// `SwitchListTile` (a small filled thumb inside a wide, pale-tinted
+  /// track), a visibly different treatment from the full-size iOS-style
+  /// switch every other settings screen (Nutrition Settings, Workout
+  /// Settings, AI Coach) renders via the shared [ZealovaToggle]. Rebuilt on
+  /// that shared component so this screen matches the rest of the app.
+  Widget _reminderToggleRow({
+    required String title,
+    required Color text,
+    required Widget subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(color: text, fontSize: 15)),
+                const SizedBox(height: 3),
+                subtitle,
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ZealovaToggle(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -272,12 +306,25 @@ class _ScheduleRow extends StatelessWidget {
             true;
       },
       onDismissed: (_) => onDelete(),
-      child: SwitchListTile(
-        title: Text('${schedule.mealType.value} reminder', style: TextStyle(color: text)),
-        subtitle: Text(modeLabel, style: TextStyle(color: muted, fontSize: 12)),
-        value: schedule.enabled,
-        onChanged: onToggle,
-        activeThumbColor: accent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${schedule.mealType.value} reminder',
+                      style: TextStyle(color: text, fontSize: 15)),
+                  const SizedBox(height: 3),
+                  Text(modeLabel, style: TextStyle(color: muted, fontSize: 12)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            ZealovaToggle(value: schedule.enabled, onChanged: onToggle),
+          ],
+        ),
       ),
     );
   }

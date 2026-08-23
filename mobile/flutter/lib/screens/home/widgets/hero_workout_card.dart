@@ -14,6 +14,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/models/workout_program_context.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
+import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/quick_workout_provider.dart';
 import '../../cycle/cycle_visuals.dart';
@@ -36,6 +37,7 @@ import '../../../data/providers/workout_card_state_provider.dart';
 import '../../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
 import '../../pillar/widgets/ask_coach_button.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../workout/providers/active_workout_session_provider.dart';
 // `workout_card_mode.dart` defines its own `CyclePhase` enum (with an
 // `unknown` member) used by the pure resolver. The hero card already
 // references the `hormonal_health.dart` `CyclePhase` for the phase chip
@@ -77,8 +79,43 @@ class HeroWorkoutCard extends ConsumerStatefulWidget {
 class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   bool _isSkipping = false;
   bool _isMarkingDone = false;
+  bool _isRepeating = false;
   String? _backgroundImageUrl;
   bool _isLoadingImage = true;
+
+  // finding #329 — one-shot auto-retry while the today-workout fetch is
+  // failing with a client-side timeout (backend reachable but slow).
+  Timer? _timeoutAutoRetryTimer;
+
+  // Row 91 — number of sets already logged in an on-disk checkpoint for this
+  // workout, so the card can badge "in progress" BEFORE the user taps START
+  // and hits the Resume / Start Fresh prompt. Null = no in-progress session.
+  int? _inProgressSetCount;
+
+  Future<void> _checkInProgressSession() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (!mounted) return;
+      final count = await ref
+          .read(activeWorkoutSessionProvider.notifier)
+          .peekCheckpointSetCount(workoutId: workoutId, userId: userId);
+      if (!mounted) return;
+      setState(() => _inProgressSetCount = count);
+    } catch (_) {
+      // Best-effort — the badge simply doesn't show if this fails.
+    }
+  }
+
+  void _scheduleTimeoutAutoRetry() {
+    if (_timeoutAutoRetryTimer != null) return;
+    _timeoutAutoRetryTimer = Timer(const Duration(seconds: 6), () {
+      _timeoutAutoRetryTimer = null;
+      if (!mounted) return;
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    });
+  }
 
   /// Per-type illustration map. Asset directory is fail-soft — when an
   /// asset is missing the CachedNetworkImage / Image widget falls through
@@ -135,6 +172,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   void initState() {
     super.initState();
     _resolveBackground();
+    _checkInProgressSession();
+  }
+
+  @override
+  void dispose() {
+    _timeoutAutoRetryTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -148,7 +192,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (oldWidget.workout.id != widget.workout.id) {
       _typeAssetPath = null;
       _backgroundImageUrl = null;
+      _inProgressSetCount = null;
       _resolveBackground();
+      _checkInProgressSession();
     }
   }
 
@@ -456,9 +502,41 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     }
   }
 
-  void _repeatWorkout() {
+  Future<void> _repeatWorkout() async {
     HapticService.medium();
-    context.push('/active-workout', extra: widget.workout);
+    final workoutId = widget.workout.id;
+    if (workoutId == null) {
+      context.push('/active-workout', extra: widget.workout);
+      return;
+    }
+
+    // Row 328: this used to push the MISSED workout straight into
+    // /active-workout with its original (yesterday-or-earlier)
+    // `scheduled_date` still in place. The tier screen that mounts behind
+    // the pre-workout reshape gate's check-in sheet (active_workout_entry.dart)
+    // read that stale date before the reshape ever ran, rendering the app's
+    // error boundary until Accept swapped in a freshly-reshaped (today-dated)
+    // workout via `activeWorkoutLiveProvider` — a race with the day-reschedule
+    // this button never actually performed. Reschedule to today FIRST, same
+    // as every other "Do Today" entry point (missed_workout_banner.dart /
+    // stacked_banner_panel.dart), so the screen underneath is never handed a
+    // stale date.
+    setState(() => _isRepeating = true);
+    final success = await ref
+        .read(schedulingActionProvider.notifier)
+        .rescheduleToDate(workoutId, DateTime.now());
+    if (!mounted) return;
+    setState(() => _isRepeating = false);
+
+    final today = DateTime.now();
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    context.push(
+      '/active-workout',
+      extra: success
+          ? widget.workout.copyWith(scheduledDate: todayStr)
+          : widget.workout,
+    );
   }
 
   Future<void> _markAsUndone() async {
@@ -923,6 +1001,39 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       ),
                     );
                   }),
+                  if (_inProgressSetCount != null) ...[
+                    const SizedBox(height: 8),
+                    // Row 91 — surfaces the in-progress checkpoint BEFORE the
+                    // user taps START, instead of only revealing it via the
+                    // Resume / Start Fresh dialog on the active-workout screen.
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: accentColor.withValues(alpha: 0.6)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.play_circle_fill, size: 13, color: accentColor),
+                          const SizedBox(width: 5),
+                          Text(
+                            'IN PROGRESS · $_inProgressSetCount SET${_inProgressSetCount == 1 ? '' : 'S'} LOGGED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              shadows: const [
+                                Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
 
                   // Start button - full width
@@ -1003,7 +1114,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
             ),
 
             // Loading indicator for skipping or marking done
-            if (_isSkipping || _isMarkingDone)
+            if (_isSkipping || _isMarkingDone || _isRepeating)
               Positioned.fill(
                 child: Container(
                   color: Colors.black.withValues(alpha: 0.6),

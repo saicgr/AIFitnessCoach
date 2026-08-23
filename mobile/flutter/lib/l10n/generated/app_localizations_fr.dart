@@ -15050,7 +15050,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ avec inscription';
+  String get guestHome1700WithSignup => '2300+ avec inscription';
 
   @override
   String get guestHomeAiCoachDemo => 'Démo du coach IA';
@@ -15169,7 +15169,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Affichage de $guestExerciseLimit exercices exemples. Inscrivez-vous gratuitement pour accéder à plus de 1700 exercices !';
+    return 'Affichage de $guestExerciseLimit exercices exemples. Inscrivez-vous gratuitement pour accéder à plus de 2300 exercices !';
   }
 
   @override
@@ -15195,7 +15195,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      'Débloquez plus de 1700 exercices';
+      'Débloquez plus de 2300 exercices';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Débloquer gratuitement';
@@ -27741,7 +27741,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Sélection parmi plus de 1 700 exercices';
+      'Sélection parmi plus de 2 300 exercices';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Examen de vos objectifs';
@@ -36705,6 +36705,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Tous les profils';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Modifier \"$exerciseName\"';
   }
@@ -44217,6 +44220,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Avancé';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Tout inclus : phases d\'échauffement/étirement, RPE/RIR, pyramides, supersets, drop sets, incréments de ±5 lb, tableau des disques.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Tout inclus : phases d\'échauffement/étirement, RPE/RIR, pyramides, supersets, drop sets, incréments de ±2,5 kg, tableau des disques.';
 
@@ -45161,6 +45168,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get heroModesActionRetry => 'RÉESSAYER';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'EN COURS';
 
   @override
@@ -45514,7 +45528,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Un bon coach personnel coûte \$400/mois. Je ne pouvais pas le justifier, alors j\'ai passé deux ans à en créer un : 1 722 exercices, une vraie logique de progression, un coach qui regarde vraiment votre semaine. Je l\'utilise chaque jour.”';
+      '“Un bon coach personnel coûte \$400/mois. Je ne pouvais pas le justifier, alors j\'ai passé deux ans à en créer un : 2 300 exercices, une vraie logique de progression, un coach qui regarde vraiment votre semaine. Je l\'utilise chaque jour.”';
 
   @override
   String get paywallFounderName => 'Chetan · fondateur';

@@ -758,6 +758,11 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
     final profileColor = profile.profileColor;
     final isActive = profile.isActive;
     final canDelete = _profiles.length > 1 && !isActive;
+    // Selection/active state uses ONE app accent regardless of which gym is
+    // picked — `profileColor` (per-gym, varies e.g. cyan vs orange) stays on
+    // the identity icon only, so it still disambiguates two similarly-named
+    // profiles without also carrying the "this one is active" meaning.
+    final selectionColor = ref.watch(accentColorProvider).getColor(widget.isDark);
 
     return Padding(
       key: ValueKey(profile.id),
@@ -781,14 +786,14 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isActive
-                    ? profileColor.withValues(alpha: widget.isDark ? 0.15 : 0.12)
+                    ? selectionColor.withValues(alpha: widget.isDark ? 0.15 : 0.12)
                     : widget.isDark
                     ? Colors.white.withValues(alpha: 0.06)
                     : Colors.white.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isActive
-                      ? profileColor.withValues(alpha: 0.6)
+                      ? selectionColor.withValues(alpha: 0.6)
                       : widget.isDark
                           ? colors.cardBorder.withValues(alpha: 0.5)
                           : Colors.black.withValues(alpha: 0.06),
@@ -797,7 +802,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: profileColor.withValues(alpha: 0.2),
+                          color: selectionColor.withValues(alpha: 0.2),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -853,6 +858,11 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                                       : FontWeight.w500,
                                   color: colors.textPrimary,
                                 ),
+                                // Two profiles can differ only in a name suffix
+                                // ("Commercial Gym North" vs "...South") — never
+                                // clip to one line and hide the only thing that
+                                // tells them apart.
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -902,7 +912,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                             fontSize: 12,
                             color: colors.textSecondary,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -917,7 +927,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: profileColor.withValues(alpha: 0.25),
+                        color: selectionColor.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -926,8 +936,8 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                           Icon(
                             Icons.check_circle_rounded,
                             color: widget.isDark
-                                ? profileColor
-                                : HSLColor.fromColor(profileColor)
+                                ? selectionColor
+                                : HSLColor.fromColor(selectionColor)
                                     .withLightness(0.35)
                                     .toColor(),
                             size: 12,
@@ -940,8 +950,8 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: widget.isDark
-                                  ? profileColor
-                                  : HSLColor.fromColor(profileColor)
+                                  ? selectionColor
+                                  : HSLColor.fromColor(selectionColor)
                                       .withLightness(0.35)
                                       .toColor(),
                             ),

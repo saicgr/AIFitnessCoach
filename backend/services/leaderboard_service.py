@@ -62,11 +62,16 @@ class LeaderboardService:
         and `country` keep the 10-workout gate to avoid demotivating brand-new
         users who'd sit at the bottom of huge leaderboards.
         """
+        # Row 241 — counting from `workouts` undercounts the moment a plan
+        # change (e.g. an injury-adapt regeneration) deletes/replaces that
+        # table's rows; `workout_logs` is the append-only record of finished
+        # sessions and survives plan edits, so it's the correct source for a
+        # lifetime unlock-progress gate.
         result = (
-            self.supabase.table("workouts")
+            self.supabase.table("workout_logs")
             .select("id", count="exact")
             .eq("user_id", user_id)
-            .eq("is_completed", True)
+            .eq("status", "completed")
             .execute()
         )
 

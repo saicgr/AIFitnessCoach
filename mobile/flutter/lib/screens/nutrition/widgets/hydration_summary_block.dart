@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/hydration_repository.dart';
+import '../../../data/repositories/nutrition_repository.dart'
+    show nutritionKeyFor;
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Compact hydration summary block for the Daily tab
@@ -16,9 +18,20 @@ class HydrationSummaryBlock extends ConsumerWidget {
   /// but kept separate so the two intents can diverge later.
   final VoidCallback? onAdd;
 
+  /// The Daily page's selected date and whether it's today's date.
+  /// `hydrationProvider.todaySummary` only ever holds today's total, so a
+  /// non-today page must read the date-scoped provider instead — otherwise
+  /// this card renders today's water on yesterday's page (E2E register #251).
+  final String userId;
+  final DateTime date;
+  final bool isViewingToday;
+
   const HydrationSummaryBlock({
     super.key,
     required this.isDark,
+    required this.userId,
+    required this.date,
+    required this.isViewingToday,
     this.onTap,
     this.onAdd,
   });
@@ -27,8 +40,17 @@ class HydrationSummaryBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     debugPrint('💧 HydrationSummaryBlock build called, isDark: $isDark');
     final state = ref.watch(hydrationProvider);
-    final currentMl = state.todaySummary?.totalMl ?? 0;
-    final goalMl = state.dailyGoalMl;
+    final int currentMl;
+    final int goalMl;
+    if (isViewingToday) {
+      currentMl = state.todaySummary?.totalMl ?? 0;
+      goalMl = state.dailyGoalMl;
+    } else {
+      final historical = ref.watch(hydrationSummaryForDateProvider(
+          '$userId|${nutritionKeyFor(date)}'));
+      currentMl = historical.valueOrNull?.totalMl ?? 0;
+      goalMl = historical.valueOrNull?.goalMl ?? state.dailyGoalMl;
+    }
     final percentage = goalMl > 0 ? (currentMl / goalMl).clamp(0.0, 1.0) : 0.0;
     final percentageInt = (percentage * 100).round();
 

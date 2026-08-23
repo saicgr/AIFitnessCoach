@@ -1493,7 +1493,9 @@ class _HeartHealthHubCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(heartHealthProvider);
     final (value, subtitle) = async.maybeWhen(
-      data: (d) => ('${d.score}', '${d.label} heart health habits'),
+      data: (d) => d.hasScore
+          ? ('${d.score}', '${d.label} heart health habits')
+          : ('–', 'Sleep, activity, strain, body comp'),
       orElse: () => ('–', 'Sleep, activity, strain, body comp'),
     );
     return _MetricHubCard(

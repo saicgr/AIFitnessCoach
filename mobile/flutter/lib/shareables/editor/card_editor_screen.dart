@@ -1132,15 +1132,23 @@ class _EditorCanvas extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const pad = 16.0;
+        // The floating top toolbar (back · aspect · undo/redo) floats OVER
+        // this canvas with no layout reservation, so a design that nearly
+        // fills the available height (a 9:16 story) centers close enough to
+        // y=0 that the card's OWN header content sits directly under the
+        // toolbar and the system clock (register #203). Reserve that band so
+        // the card is inset below the toolbar and vertically centered within
+        // the space that remains, not the whole canvas.
+        final topReserve = MediaQuery.of(context).padding.top + 56.0;
         final availW = constraints.maxWidth - pad * 2;
-        final availH = constraints.maxHeight - pad * 2;
+        final availH = constraints.maxHeight - pad * 2 - topReserve;
         final scale =
             math.min(availW / design.width, availH / design.height);
         final cardW = design.width * scale;
         final cardH = design.height * scale;
         final origin = Offset(
           (constraints.maxWidth - cardW) / 2,
-          (constraints.maxHeight - cardH) / 2,
+          topReserve + pad + (availH - cardH) / 2,
         );
         final geo = _CanvasGeometry(design, scale, origin);
 

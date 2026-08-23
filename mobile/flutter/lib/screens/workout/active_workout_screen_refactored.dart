@@ -1866,6 +1866,21 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Row 91 — intercept the system back gesture / hardware back so leaving
+    // an in-progress workout confirms first, same as the Easy tier
+    // (easy_active_workout_state.dart). `showQuitDialog` shows the confirm
+    // and calls `context.pop()` directly on confirm, which bypasses this
+    // `canPop: false` guard (see the Easy tier's identical note).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) showQuitDialog();
+      },
+      child: _buildPhaseContent(context),
+    );
+  }
+
+  Widget _buildPhaseContent(BuildContext context) {
     // Initialize weight unit from user preference on first build
     if (!_unitInitialized) {
       _unitInitialized = true;
@@ -2414,6 +2429,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         label: pattern.chipLabel,
         icon: pattern.icon,
       ),
+      WorkoutActionChips.breathing,
       WorkoutActionChips.superset,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
       WorkoutActionChips.incrementDisplay(label: incrementLabel),

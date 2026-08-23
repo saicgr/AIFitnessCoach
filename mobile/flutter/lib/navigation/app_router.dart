@@ -570,8 +570,21 @@ String? _handleAuthRedirect(
     return null;
   }
 
-  // Demo and plan preview screens - allow for anyone (no auth required)
-  if (loc == '/demo-workout' || loc == '/plan-preview') {
+  // Demo and plan preview screens - allow for anyone (no auth required).
+  // finding #386: `/demo-tasks`, `/demo-workout-showcase`, and
+  // `/demo-nutrition-showcase` used to fall through to the
+  // `preAuthFlowScreens` block below, which sends an already-logged-in,
+  // fully-onboarded user (the common case for a deep link opened from a
+  // running app) straight to `homeRoute` — so the three routes silently
+  // rendered Home instead of the showcase screen. `/demo-workout` never had
+  // this problem because it was already allow-listed here; give the other
+  // three demo/showcase routes the same unconditional treatment so a direct
+  // deep link always renders the declared screen, logged in or not.
+  if (loc == '/demo-workout' ||
+      loc == '/plan-preview' ||
+      loc == '/demo-tasks' ||
+      loc == '/demo-workout-showcase' ||
+      loc == '/demo-nutrition-showcase') {
     return null;
   }
 

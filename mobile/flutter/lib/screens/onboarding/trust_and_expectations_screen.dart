@@ -143,7 +143,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       tone: BulletTone.cool,
                       title: AppLocalizations.of(context).trustAndExpectationsDeleteAnythingAnytime,
                       detail:
-                          'One tap in Settings exports or wipes everything. '
+                          'Export or wipe everything from Settings > Privacy & Data. '
                           'GDPR + CCPA compliant.',
                     ),
                     const SizedBox(height: 14),

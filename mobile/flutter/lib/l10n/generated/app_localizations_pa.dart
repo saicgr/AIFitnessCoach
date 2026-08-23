@@ -14830,7 +14830,7 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'ਸਾਈਨ ਅੱਪ ਨਾਲ 1700+';
+  String get guestHome1700WithSignup => 'ਸਾਈਨ ਅੱਪ ਨਾਲ 2300+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach ਡੈਮੋ';
@@ -14943,7 +14943,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit ਨਮੂਨਾ ਕਸਰਤਾਂ ਦਿਖਾਈਆਂ ਜਾ ਰਹੀਆਂ ਹਨ। 1700+ ਕਸਰਤਾਂ ਤੱਕ ਪਹੁੰਚ ਕਰਨ ਲਈ ਮੁਫ਼ਤ ਸਾਈਨ ਅੱਪ ਕਰੋ!';
+    return '$guestExerciseLimit ਨਮੂਨਾ ਕਸਰਤਾਂ ਦਿਖਾਈਆਂ ਜਾ ਰਹੀਆਂ ਹਨ। 2300+ ਕਸਰਤਾਂ ਤੱਕ ਪਹੁੰਚ ਕਰਨ ਲਈ ਮੁਫ਼ਤ ਸਾਈਨ ਅੱਪ ਕਰੋ!';
   }
 
   @override
@@ -14968,7 +14968,7 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਇਸ ਕਸਰਤ ਲਈ ਵਿਸਤ੍ਰਿਤ ਨਿਰਦੇਸ਼ ਦੇਖਣ ਲਈ ਸਾਈਨ ਅੱਪ ਕਰੋ।';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '1700+ ਕਸਰਤਾਂ ਨੂੰ ਅਨਲੌਕ ਕਰੋ';
+  String get guestLibraryUnlock1700Exercises => '2300+ ਕਸਰਤਾਂ ਨੂੰ ਅਨਲੌਕ ਕਰੋ';
 
   @override
   String get guestLockedFeatureUnlockFree => 'ਮੁਫਤ ਅਨਲੌਕ ਕਰੋ';
@@ -27350,7 +27350,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      '1,700+ ਕਸਰਤਾਂ ਵਿੱਚੋਂ ਚੁਣਿਆ ਜਾ ਰਿਹਾ ਹੈ';
+      '2,300+ ਕਸਰਤਾਂ ਵਿੱਚੋਂ ਚੁਣਿਆ ਜਾ ਰਿਹਾ ਹੈ';
 
   @override
   String get planAnalyzingReviewingYourGoals =>
@@ -36210,6 +36210,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'ਸਾਰੀਆਂ ਪ੍ਰੋਫਾਈਲਾਂ';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" ਨੂੰ ਸੰਪਾਦਿਤ ਕਰੋ';
   }
@@ -43628,6 +43631,10 @@ class AppLocalizationsPa extends AppLocalizations {
   String get workoutUiModeAdvanced => 'ਐਡਵਾਂਸਡ';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'ਸਭ ਕੁਝ — ਵਾਰਮਅੱਪ/ਸਟ੍ਰੈਚ ਪੜਾਅ, RPE/RIR, ਪਿਰਾਮਿਡ, ਸੁਪਰਸੈੱਟ, ਡ੍ਰੌਪ ਸੈੱਟ, ±5 lb ਵਾਧਾ, ਪਲੇਟ ਚਾਰਟ।';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'ਸਭ ਕੁਝ — ਵਾਰਮਅੱਪ/ਸਟ੍ਰੈਚ ਪੜਾਅ, RPE/RIR, ਪਿਰਾਮਿਡ, ਸੁਪਰਸੈੱਟ, ਡ੍ਰੌਪ ਸੈੱਟ, ±2.5 kg ਵਾਧਾ, ਪਲੇਟ ਚਾਰਟ।';
 
@@ -44558,6 +44565,13 @@ class AppLocalizationsPa extends AppLocalizations {
   String get heroModesActionRetry => 'ਫਿਰ';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'ਲਾਈਵ';
 
   @override
@@ -44907,7 +44921,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“ਇੱਕ ਚੰਗਾ ਪਰਸਨਲ ਟ੍ਰੇਨਰ \$400/ਮਹੀਨਾ ਲੈਂਦਾ ਹੈ। ਮੈਂ ਇਹ ਖਰਚ ਨਹੀਂ ਚੁੱਕ ਸਕਦਾ ਸੀ, ਇਸ ਲਈ ਮੈਂ ਦੋ ਸਾਲ ਲਗਾ ਕੇ ਆਪਣਾ ਬਣਾਇਆ: 1,722 ਕਸਰਤਾਂ, ਅਸਲੀ ਪ੍ਰੋਗ੍ਰੈਸ਼ਨ ਲੌਜਿਕ, ਇੱਕ ਅਜਿਹਾ ਕੋਚ ਜੋ ਸੱਚਮੁੱਚ ਤੁਹਾਡੇ ਹਫ਼ਤੇ ਨੂੰ ਦੇਖਦਾ ਹੈ। ਮੈਂ ਇਸਨੂੰ ਹਰ ਰੋਜ਼ ਵਰਤਦਾ ਹਾਂ।”';
+      '“ਇੱਕ ਚੰਗਾ ਪਰਸਨਲ ਟ੍ਰੇਨਰ \$400/ਮਹੀਨਾ ਲੈਂਦਾ ਹੈ। ਮੈਂ ਇਹ ਖਰਚ ਨਹੀਂ ਚੁੱਕ ਸਕਦਾ ਸੀ, ਇਸ ਲਈ ਮੈਂ ਦੋ ਸਾਲ ਲਗਾ ਕੇ ਆਪਣਾ ਬਣਾਇਆ: 2,300 ਕਸਰਤਾਂ, ਅਸਲੀ ਪ੍ਰੋਗ੍ਰੈਸ਼ਨ ਲੌਜਿਕ, ਇੱਕ ਅਜਿਹਾ ਕੋਚ ਜੋ ਸੱਚਮੁੱਚ ਤੁਹਾਡੇ ਹਫ਼ਤੇ ਨੂੰ ਦੇਖਦਾ ਹੈ। ਮੈਂ ਇਸਨੂੰ ਹਰ ਰੋਜ਼ ਵਰਤਦਾ ਹਾਂ।”';
 
   @override
   String get paywallFounderName => 'Chetan · ਸੰਸਥਾਪਕ';

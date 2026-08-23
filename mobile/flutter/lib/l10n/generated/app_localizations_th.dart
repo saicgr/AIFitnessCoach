@@ -14812,7 +14812,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ รายการเมื่อสมัครใช้งาน';
+  String get guestHome1700WithSignup => '2300+ รายการเมื่อสมัครใช้งาน';
 
   @override
   String get guestHomeAiCoachDemo => 'สาธิต AI Coach';
@@ -14926,7 +14926,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'แสดงท่าออกกำลังกายตัวอย่าง $guestExerciseLimit ท่า สมัครฟรีเพื่อเข้าถึงท่าออกกำลังกายกว่า 1700+ ท่า!';
+    return 'แสดงท่าออกกำลังกายตัวอย่าง $guestExerciseLimit ท่า สมัครฟรีเพื่อเข้าถึงท่าออกกำลังกายกว่า 2300+ ท่า!';
   }
 
   @override
@@ -14952,7 +14952,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      'ปลดล็อกท่าออกกำลังกายกว่า 1700 ท่า';
+      'ปลดล็อกท่าออกกำลังกายกว่า 2300 ท่า';
 
   @override
   String get guestLockedFeatureUnlockFree => 'ปลดล็อกฟรี';
@@ -27318,7 +27318,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'กำลังดึงข้อมูลจากท่าออกกำลังกายกว่า 1,700 ท่า';
+      'กำลังดึงข้อมูลจากท่าออกกำลังกายกว่า 2,300 ท่า';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'กำลังตรวจสอบเป้าหมายของคุณ';
@@ -36148,6 +36148,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'โปรไฟล์ทั้งหมด';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'แก้ไข \"$exerciseName\"';
   }
@@ -43551,6 +43554,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workoutUiModeAdvanced => 'ขั้นสูง';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'ทุกอย่าง — ช่วงอบอุ่น/ยืดเหยียด, RPE/RIR, พีระมิด, ซูเปอร์เซต, ดรอปเซต, เพิ่มน้ำหนักทีละ 5 lb, ตารางแผ่นน้ำหนัก';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'ทุกอย่าง — ช่วงอบอุ่น/ยืดเหยียด, RPE/RIR, พีระมิด, ซูเปอร์เซต, ดรอปเซต, เพิ่มน้ำหนักทีละ 2.5 กก., ตารางแผ่นน้ำหนัก';
 
@@ -44478,6 +44485,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get heroModesActionRetry => 'ลองใหม่';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'สด';
 
   @override
@@ -44824,7 +44838,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“เทรนเนอร์ส่วนตัวดี ๆ ราคา \$400/เดือน ผมจ่ายไม่ไหว เลยใช้เวลาสองปีสร้างขึ้นมาเอง: ท่าออกกำลังกาย 1,722 ท่า ตรรกะการพัฒนาที่ใช้ได้จริง โค้ชที่ดูสัปดาห์ของคุณจริง ๆ ผมใช้มันทุกวัน”';
+      '“เทรนเนอร์ส่วนตัวดี ๆ ราคา \$400/เดือน ผมจ่ายไม่ไหว เลยใช้เวลาสองปีสร้างขึ้นมาเอง: ท่าออกกำลังกาย 2,300 ท่า ตรรกะการพัฒนาที่ใช้ได้จริง โค้ชที่ดูสัปดาห์ของคุณจริง ๆ ผมใช้มันทุกวัน”';
 
   @override
   String get paywallFounderName => 'Chetan · ผู้ก่อตั้ง';

@@ -1,8 +1,25 @@
 import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'user.g.dart';
+
+/// Single locale-seeded default weight unit, used as the LAST resort by both
+/// [User.preferredWeightUnit] and [User.preferredWorkoutWeightUnit] when
+/// neither the body-weight nor the workout-weight field is set. Before this,
+/// the two getters fell back to two DIFFERENT hardcoded literals ('kg' for
+/// body weight, 'lbs' for workout weight) — so a brand-new account with
+/// neither field set showed kg on the body-weight surfaces (Home) and lbs on
+/// workout surfaces (the active session) out of the box, regardless of the
+/// device's own region. Only the US (plus the other holdout countries that
+/// still use pounds day-to-day) defaults to 'lbs'; everywhere else defaults
+/// to 'kg'.
+String defaultWeightUnitForLocale() {
+  const imperialCountryCodes = {'US', 'LR', 'MM'};
+  final countryCode = PlatformDispatcher.instance.locale.countryCode;
+  return imperialCountryCodes.contains(countryCode) ? 'lbs' : 'kg';
+}
 
 @JsonSerializable()
 class User extends Equatable {
@@ -244,7 +261,10 @@ class User extends Equatable {
       weightKg! > 0;
 
   /// Get weight unit preference with fallback to 'kg'
-  /// Checks weightUnit field first, then preferences JSON, then defaults to 'kg'
+  /// Checks weightUnit field first, then preferences JSON, then the
+  /// workout-weight-unit field (so a user who only ever set THAT stays
+  /// consistent across body-weight and workout surfaces instead of getting
+  /// two different units), then a locale-seeded default.
   String get preferredWeightUnit {
     // Direct field first
     if (weightUnit != null && weightUnit!.isNotEmpty) {
@@ -259,8 +279,14 @@ class User extends Equatable {
         }
       } catch (_) {}
     }
-    // Default to kg
-    return 'kg';
+    // Fall back to the workout-weight unit if THAT was explicitly set —
+    // mirrors preferredWorkoutWeightUnit's own fallback to this getter, so
+    // whichever of the two the user (or an import/migration) actually set
+    // is the one that wins everywhere, not just on its own surface.
+    if (workoutWeightUnit != null && workoutWeightUnit!.isNotEmpty) {
+      return workoutWeightUnit!;
+    }
+    return defaultWeightUnitForLocale();
   }
 
   /// Check if user prefers metric (kg) for body weight
@@ -270,7 +296,10 @@ class User extends Equatable {
   bool get usesImperialWeight => preferredWeightUnit == 'lbs';
 
   /// Get workout weight unit preference (separate from body weight unit).
-  /// Falls back to body weight unit if not explicitly set.
+  /// Falls back to body weight unit if not explicitly set — and
+  /// [preferredWeightUnit] itself now falls back to this same field before
+  /// reaching the shared locale default, so the two stay in sync unless the
+  /// user has genuinely chosen different units for each.
   String get preferredWorkoutWeightUnit {
     if (workoutWeightUnit != null && workoutWeightUnit!.isNotEmpty) {
       return workoutWeightUnit!;

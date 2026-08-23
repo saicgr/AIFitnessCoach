@@ -430,6 +430,8 @@ class _NutrientRow extends StatelessWidget {
     switch (status) {
       case NutrientStatus.low:
         return const Color(0xFFFFC107); // Amber - below target  // accent-allowlist: nutrient/score severity scale
+      case NutrientStatus.adequate:
+        return const Color(0xFF8BC34A); // Light green - past the floor, short of target  // accent-allowlist: nutrient/score severity scale
       case NutrientStatus.optimal:
         return const Color(0xFF4CAF50); // Green - on target  // accent-allowlist: nutrient/score severity scale
       case NutrientStatus.high:

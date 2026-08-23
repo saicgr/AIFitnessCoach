@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
@@ -156,6 +157,15 @@ class BeastModeScreen extends ConsumerWidget {
     return Stack(
       children: [
         Opacity(opacity: 0.5, child: IgnorePointer(child: card)),
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              AppSnackBar.info(context, 'Premium required to customize this');
+              context.push('/paywall-pricing');
+            },
+          ),
+        ),
         Positioned(
           top: 8,
           right: 8,

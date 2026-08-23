@@ -851,10 +851,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                 MaterialTapTargetSize.shrinkWrap,
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, color: textMuted),
-                        ),
                       ],
                     ),
 

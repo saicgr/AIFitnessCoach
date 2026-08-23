@@ -382,14 +382,16 @@ class QuizDaysSelector extends StatelessWidget {
               // The slot keeps a constant 18px height either way so the row of
               // day tiles never changes height.
               //
-              // The label is the SAME localized string the duration chip's
-              // badge uses (`quizDaysSelectorBest`) at the same 8pt — a literal
-              // 'BEST' here would have shipped an English word next to a
-              // translated one on every non-English device, re-creating the
-              // exact "two treatments of one symbol" bug this is fixing. The
-              // badge is boxed to the 44px tile and scaled down by a FittedBox
-              // so a longer translation ("Meilleur", "Empfohlen") or a large
-              // accessibility text scale can never overflow the tile column.
+              // Two days (3 and 4) both carry this badge, unlike the duration
+              // chips above where exactly one option is `isRecommended`. A
+              // superlative ("Best") applied to two options at once is
+              // self-contradicting, so this badge uses the non-superlative
+              // `quizEquipmentRecommended` string ("Recommended") instead of
+              // `quizDaysSelectorBest` — that label stays reserved for the
+              // duration chip's genuine single winner. The badge is boxed to
+              // the 44px tile and scaled down by a FittedBox so a longer
+              // translation ("Empfohlen") or a large accessibility text scale
+              // can never overflow the tile column.
               const SizedBox(height: 4),
               SizedBox(
                 width: 44,
@@ -415,7 +417,7 @@ class QuizDaysSelector extends StatelessWidget {
                                   size: 9, color: Colors.white),
                               const SizedBox(width: 3),
                               Text(
-                                l10n.quizDaysSelectorBest,
+                                l10n.quizEquipmentRecommended,
                                 maxLines: 1,
                                 style: const TextStyle(
                                   fontSize: 8,

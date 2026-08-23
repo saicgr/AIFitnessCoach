@@ -18,12 +18,19 @@ class QuizProgressBar extends StatelessWidget {
   /// Zero-based index of the current step; ticks 0..currentStep light up.
   final int? currentStep;
 
+  /// Horizontal inset around the bar. Defaults to the 24px gutter every
+  /// existing caller relies on (the quiz header sits in an unpadded
+  /// Column); pass `EdgeInsets.zero` when the caller already applies its
+  /// own horizontal padding so the two don't stack.
+  final EdgeInsetsGeometry padding;
+
   const QuizProgressBar({
     super.key,
     required this.progress,
     this.duration = const Duration(milliseconds: 400),
     this.segments,
     this.currentStep,
+    this.padding = const EdgeInsets.symmetric(horizontal: 24),
   });
 
   @override
@@ -32,7 +39,7 @@ class QuizProgressBar extends StatelessWidget {
 
     if (segments != null && currentStep != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: padding,
         child: Row(
           children: List.generate(segments!, (i) {
             final on = i <= currentStep!;
@@ -64,7 +71,7 @@ class QuizProgressBar extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: padding,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: progress),
         duration: duration,

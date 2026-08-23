@@ -980,6 +980,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                           NutritionJournalTab(
                             userId: _userId ?? '',
                             isDark: isDark,
+                            selectedDate: _selectedDate,
                           ),
 
                           // Patterns Tab (macros, top foods, mood patterns, history)

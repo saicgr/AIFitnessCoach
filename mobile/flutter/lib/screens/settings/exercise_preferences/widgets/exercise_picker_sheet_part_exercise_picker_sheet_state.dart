@@ -1115,12 +1115,13 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
 
   void _openCreateExerciseSheet() {
     HapticFeedback.lightImpact();
+    // `CreateExerciseSheet` is fully self-chromed (its own blur, border, drag
+    // handle, and close button), so it is NOT wrapped in a `GlassSheet` here —
+    // wrapping would render a SECOND drag handle and a double blur/border.
     showGlassSheet(
       context: context,
       useRootNavigator: true,
-      builder: (context) => const GlassSheet(
-        child: CreateExerciseSheet(),
-      ),
+      builder: (context) => const CreateExerciseSheet(),
     );
   }
 

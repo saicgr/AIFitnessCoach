@@ -127,9 +127,15 @@ class ScoresState {
   // ==========================================================================
 
   /// Overall readiness score (0-100), or null when the user has not been
-  /// scored yet.
+  /// scored yet. Falls back to the fitness-score breakdown's readiness
+  /// component (same as [nutritionScoreOrNull]/[consistencyScoreOrNull])
+  /// so this reads the same input the weighted composite already used —
+  /// without it, the Overview breakdown showed "—" for a component the
+  /// composite score had already counted (E2E register #173).
   int? get readinessScoreOrNull =>
-      todayReadiness?.readinessScore ?? overview?.todayReadiness?.readinessScore;
+      todayReadiness?.readinessScore ??
+      overview?.todayReadiness?.readinessScore ??
+      fitnessScore?.readinessScore;
 
   /// Overall strength score (0-100), or null when un-scored.
   int? get overallStrengthScoreOrNull =>

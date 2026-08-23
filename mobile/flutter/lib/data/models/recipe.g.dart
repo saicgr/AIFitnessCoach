@@ -96,6 +96,11 @@ RecipeIngredientCreate _$RecipeIngredientCreateFromJson(
   notes: json['notes'] as String?,
   isOptional: json['is_optional'] as bool? ?? false,
   ingredientOrder: (json['ingredient_order'] as num?)?.toInt() ?? 0,
+  cookingMethod: json['cooking_method'] as String?,
+  nutritionSource: json['nutrition_source'] as String?,
+  nutritionConfidence: (json['nutrition_confidence'] as num?)?.toInt(),
+  isNegligible: json['is_negligible'] as bool? ?? false,
+  rawText: json['raw_text'] as String?,
 );
 
 Map<String, dynamic> _$RecipeIngredientCreateToJson(
@@ -122,6 +127,11 @@ Map<String, dynamic> _$RecipeIngredientCreateToJson(
   'notes': instance.notes,
   'is_optional': instance.isOptional,
   'ingredient_order': instance.ingredientOrder,
+  'cooking_method': instance.cookingMethod,
+  'nutrition_source': instance.nutritionSource,
+  'nutrition_confidence': instance.nutritionConfidence,
+  'is_negligible': instance.isNegligible,
+  'raw_text': instance.rawText,
 };
 
 Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(

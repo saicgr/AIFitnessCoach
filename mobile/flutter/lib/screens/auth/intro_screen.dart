@@ -208,43 +208,61 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
               : SystemUiOverlayStyle.light,
           child: Scaffold(
             backgroundColor: const Color(0xFF0B0B0C),
-            body: Stack(
-              fit: StackFit.expand,
+            // Column, not a full-bleed Stack: the scene layer gets an
+            // Expanded slot above and the footer sits in normal flow below
+            // it, instead of both occupying the whole screen with the
+            // footer stacked on top. That overlay used to let a scene
+            // taller than the footer's own scrim (scene 6's before/after
+            // card) render straight through it — the dots/headline sat ON
+            // the photo instead of below it — and left a shorter scene's
+            // (scene 5's tile grid) unused height as dead space under the
+            // content instead of handed to the footer. Confining the scene
+            // to this Expanded slot fixes both: it can never extend past
+            // it, and a scene's own vertical centering now measures against
+            // the real available height instead of the full screen.
+            body: Column(
               children: [
-                // ── The demo (any tap = primary CTA) ─────────────────
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _onGetStarted,
+                Expanded(
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      for (var i = 0; i < _scenes.length; i++) _scene(i, tMs),
-                    ],
-                  ),
-                ),
-
-                // ── Scrim ────────────────────────────────────────────
-                // Softer, and no longer the thing that has to make the overlay
-                // legible: it only darkens the lower half of the scene so the
-                // demo's own content stays readable. Legibility of the dots /
-                // hero / CTA is owned by the CONTENT-ANCHORED gradient on the
-                // bottom block below — screen-fraction stops could not know
-                // where that block starts, so on taller phones the dots landed
-                // in the semi-transparent zone and rendered over the photo.
-                IgnorePointer(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0.30, 0.62, 1.0],
-                        colors: [
-                          Colors.transparent,
-                          Color(0x99080502),
-                          Color(0xF2080502),
-                        ],
+                      // ── The demo (any tap = primary CTA) ─────────────
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _onGetStarted,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            for (var i = 0; i < _scenes.length; i++) _scene(i, tMs),
+                          ],
+                        ),
                       ),
-                    ),
+
+                      // ── Scrim ────────────────────────────────────────
+                      // Softer, and no longer the thing that has to make the overlay
+                      // legible: it only darkens the lower half of the scene so the
+                      // demo's own content stays readable. Legibility of the dots /
+                      // hero / CTA is owned by the CONTENT-ANCHORED gradient on the
+                      // bottom block below — screen-fraction stops could not know
+                      // where that block starts, so on taller phones the dots landed
+                      // in the semi-transparent zone and rendered over the photo.
+                      IgnorePointer(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              stops: [0.30, 0.62, 1.0],
+                              colors: [
+                                Colors.transparent,
+                                Color(0x99080502),
+                                Color(0xF2080502),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -252,11 +270,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                 // mockup lets each scene's own header own the top edge;
                 // returning users use the "I have an account" ghost link.)
 
-                // ── Bottom overlay: dots + headline + CTAs ───────────
+                // ── Bottom block: dots + headline + CTAs ─────────────
+                // In normal flow below the Expanded scene slot now, so it
+                // can no longer land on top of the demo photo.
                 SafeArea(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: DecoratedBox(
+                  top: false,
+                  child: DecoratedBox(
                       // Content-anchored scrim: sized to the overlay block
                       // itself, so every element inside it (dots included) has
                       // a legible base on ANY screen height. The dots used to
@@ -391,7 +410,6 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -660,7 +678,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _StatPill(
-                        value: '1,700+',
+                        value: '2,300+',
                         label: l10n.authIntroExercises,
                         color: context.accentColor,
                       ),

@@ -3,6 +3,7 @@ User profile CRUD endpoints: get, update, delete, reset, photo upload/delete.
 """
 from core.db import get_supabase_db
 import json
+import re
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Request
 from core.auth import get_current_user, get_verified_auth_token, verify_user_ownership, get_admin_user
@@ -704,7 +705,8 @@ async def update_user(user_id: str, user: UserUpdate,
             logger.info(f"Updating custom_equipment for user {user_id}")
         injuries_changed = False
         if user.active_injuries is not None:
-            update_data["active_injuries"] = _parse_list_field(user.active_injuries)
+            from api.v1.workouts.utils import strip_injury_sentinels
+            update_data["active_injuries"] = strip_injury_sentinels(_parse_list_field(user.active_injuries))
             # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2):
             # changing injuries from the profile pill must regenerate upcoming
             # workouts under the new safety constraints, mirroring equipment.
@@ -1897,6 +1899,76 @@ async def patch_me(
     except Exception as e:
         logger.error(
             f"PATCH /me failed for user {current_user.get('id')}: {e}",
+            exc_info=True,
+        )
+        raise safe_internal_error(e, "users")
+
+
+# ─── PATCH /me/username — user-chosen Community handle ────────────────────
+# `username` is auto-generated once at signup (core/username_generator.py)
+# from the display name or, failing that, the raw email local-part — and
+# until now there was NO way to change it: `username` isn't declared on
+# UserUpdate at all, so PUT /users/{id} 422s on it, and the generic
+# PATCH /me allowlist above doesn't cover it either (a blind allowlist copy
+# would skip the uniqueness/format check a public, shareable handle needs).
+# Dedicated endpoint, same "Special" reasoning as /me/preferences and
+# /me/contribute-food-data.
+_USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,20}$")
+_RESERVED_USERNAMES = {
+    "admin", "administrator", "support", "zealova", "moderator", "staff",
+    "help", "official", "system", "root",
+}
+
+
+class UsernamePayload(BaseModel):
+    username: str
+
+
+@router.patch("/me/username")
+async def update_my_username(
+    body: UsernamePayload,
+    current_user: dict = Depends(get_current_user),
+):
+    """Set the current user's own Community handle.
+
+    Validates format (3-20 chars, letters/digits/underscore — no spaces or
+    symbols, so the handle is safe to show as `@handle` and to type into a
+    search box) and case-insensitive uniqueness before writing. Returns 409
+    (not a raw DB constraint error) on a collision so the client can show
+    "that handle is taken" inline rather than a generic failure.
+    """
+    candidate = body.username.strip()
+    if not _USERNAME_RE.match(candidate):
+        raise HTTPException(
+            status_code=422,
+            detail="Handle must be 3-20 characters: letters, numbers, and underscores only.",
+        )
+    if candidate.lower() in _RESERVED_USERNAMES:
+        raise HTTPException(status_code=422, detail="That handle isn't available.")
+
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        existing = (
+            db.client.table("users")
+            .select("id")
+            .ilike("username", candidate)
+            .execute()
+        )
+        if existing.data and any(row.get("id") != user_id for row in existing.data):
+            raise HTTPException(status_code=409, detail="That handle is already taken.")
+
+        db.client.table("users").update({"username": candidate}).eq(
+            "id", user_id
+        ).execute()
+        logger.info("[PATCH /me/username] user %s set username to %s", user_id, candidate)
+        return {"username": candidate}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"PATCH /me/username failed for user {current_user.get('id')}: {e}",
             exc_info=True,
         )
         raise safe_internal_error(e, "users")

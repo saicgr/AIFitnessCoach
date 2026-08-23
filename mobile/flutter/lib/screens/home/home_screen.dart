@@ -305,6 +305,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // the header greeting/date and the TODAY/TOMORROW workout badge
       // staying stamped with the previous day (register #123).
       ref.read(currentLocalDayProvider.notifier).refreshNow();
+      // Same resume fix for the greeting bucket (register #295) — a
+      // Morning→Afternoon→Evening crossing while backgrounded must not
+      // wait for its own boundary timer either.
+      ref.read(currentGreetingBucketProvider.notifier).refreshNow();
       // Replay any fasting notification action (Pause/Resume, End Fast) that
       // fired in the background isolate while the app was not foregrounded.
       FastingOngoingNotificationService.instance.drainPendingBackgroundAction();

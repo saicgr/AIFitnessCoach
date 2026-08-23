@@ -191,6 +191,21 @@ class RecipeIngredientCreate {
   @JsonKey(name: 'ingredient_order')
   final int ingredientOrder;
 
+  // Cooking + nutrition source tracking — carried through from the
+  // per-row ingredient analyzer so the saved recipe keeps the same
+  // provenance/confidence badge and original input the analyze step
+  // already produced, instead of dropping them at save time.
+  @JsonKey(name: 'cooking_method')
+  final String? cookingMethod;
+  @JsonKey(name: 'nutrition_source')
+  final String? nutritionSource;
+  @JsonKey(name: 'nutrition_confidence')
+  final int? nutritionConfidence;
+  @JsonKey(name: 'is_negligible')
+  final bool isNegligible;
+  @JsonKey(name: 'raw_text')
+  final String? rawText;
+
   const RecipeIngredientCreate({
     required this.foodName,
     this.brand,
@@ -213,6 +228,11 @@ class RecipeIngredientCreate {
     this.notes,
     this.isOptional = false,
     this.ingredientOrder = 0,
+    this.cookingMethod,
+    this.nutritionSource,
+    this.nutritionConfidence,
+    this.isNegligible = false,
+    this.rawText,
   });
 
   factory RecipeIngredientCreate.fromJson(Map<String, dynamic> json) =>

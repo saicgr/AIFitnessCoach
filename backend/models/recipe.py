@@ -441,6 +441,10 @@ class IngredientAnalyzeResponse(BaseModel):
     iron_mg: Optional[float] = None
     sodium_mg: Optional[float] = None
     omega3_g: Optional[float] = None
+    # Fuller micronutrient breakdown when the resolver had it — same
+    # enrichment meal logging gets, so a saved recipe ingredient doesn't
+    # regress to only the 5 "key" fields above.
+    micronutrients: Optional[MicronutrientData] = None
 
 
 class BulkIngredientAnalyzeRequest(BaseModel):

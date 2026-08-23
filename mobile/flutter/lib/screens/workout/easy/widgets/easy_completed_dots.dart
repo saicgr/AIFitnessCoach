@@ -58,6 +58,13 @@ class EasyCompletedDots extends StatelessWidget {
   /// When provided, this takes precedence over onEditSet/onSkipToSet.
   final VoidCallback? onOpenHistory;
 
+  /// 1-indexed set numbers the plan marks as a warm-up ramp (from the
+  /// exercise's own `setTargets`, e.g. `{1}` for a single warm-up set).
+  /// Nothing else on this screen tells the user why one pill's weight
+  /// jumps from the next — a warmup pill gets a small "W" marker so the
+  /// ramp reads as intentional instead of an inconsistency.
+  final Set<int> warmupSetNumbers;
+
   const EasyCompletedDots({
     super.key,
     required this.completedSetsForCurrentExercise,
@@ -72,6 +79,7 @@ class EasyCompletedDots extends StatelessWidget {
     this.onReturnToCurrent,
     this.onSkipToSet,
     this.onOpenHistory,
+    this.warmupSetNumbers = const {},
   });
 
   String _wTok(double displayWeight) {
@@ -117,6 +125,7 @@ class EasyCompletedDots extends StatelessWidget {
           state: isEditingThis ? _PillState.current : _PillState.done,
           number: i + 1,
           valueLabel: _valueLabel(display, s.reps),
+          isWarmup: warmupSetNumbers.contains(i + 1),
           colors: colors,
           onTap: tapFor(onEditSet == null
               ? null
@@ -133,6 +142,7 @@ class EasyCompletedDots extends StatelessWidget {
           state: _PillState.current,
           number: i + 1,
           valueLabel: _valueLabel(currentWeightDisplay, currentReps),
+          isWarmup: warmupSetNumbers.contains(i + 1),
           colors: colors,
           onTap: tapFor(returnable
               ? () {
@@ -147,6 +157,7 @@ class EasyCompletedDots extends StatelessWidget {
           state: _PillState.upcoming,
           number: i + 1,
           valueLabel: null,
+          isWarmup: warmupSetNumbers.contains(i + 1),
           colors: colors,
           onTap: tapFor(onSkipToSet == null
               ? null
@@ -185,6 +196,7 @@ class _LedgerPill extends StatelessWidget {
   final _PillState state;
   final int number;
   final String? valueLabel; // null → bare number (upcoming)
+  final bool isWarmup;
   final ThemeColors colors;
   final VoidCallback? onTap;
 
@@ -192,6 +204,7 @@ class _LedgerPill extends StatelessWidget {
     required this.state,
     required this.number,
     required this.valueLabel,
+    this.isWarmup = false,
     required this.colors,
     required this.onTap,
   });
@@ -242,6 +255,16 @@ class _LedgerPill extends StatelessWidget {
             '$number',
             style: ZType.data(13, color: numColor, weight: FontWeight.w700),
           ),
+          // Marks a set the plan prescribes as a warm-up ramp — nothing else
+          // on this ledger explains why this pill's weight differs from the
+          // one before/after it, which otherwise reads as an inconsistency.
+          if (isWarmup) ...[
+            const SizedBox(width: 3),
+            Text(
+              'W',
+              style: ZType.data(10, color: numColor, weight: FontWeight.w700),
+            ),
+          ],
           if (valueLabel != null) ...[
             const SizedBox(width: 6),
             _ValueLabelText(label: valueLabel!, color: valColor),

@@ -68,7 +68,11 @@ class MoodWeeklySummary(BaseModel):
     """Summary stats for weekly mood data."""
     total_checkins: int
     avg_mood_score: float
-    trend: str  # "improving", "declining", "stable"
+    # Row 238 — None when there are zero check-ins for the week (was always
+    # falling through to "stable", which read as a real trend line computed
+    # from data that doesn't exist). Non-None is one of "improving",
+    # "declining", "stable".
+    trend: Optional[str] = None
 
 
 class MoodWeeklyResponse(BaseModel):
@@ -735,7 +739,12 @@ async def get_mood_weekly(user_id: str,
         first_half_avg = sum(first_half_scores) / len(first_half_scores) if first_half_scores else 0
         second_half_avg = sum(second_half_scores) / len(second_half_scores) if second_half_scores else 0
 
-        if second_half_avg > first_half_avg + 0.3:
+        # Row 238 — zero check-ins for the week must not read as a real
+        # "Stable" trend; both half-averages are 0 in that case so the old
+        # comparison always fell through to the stable branch.
+        if total_checkins == 0:
+            trend = None
+        elif second_half_avg > first_half_avg + 0.3:
             trend = "improving"
         elif second_half_avg < first_half_avg - 0.3:
             trend = "declining"

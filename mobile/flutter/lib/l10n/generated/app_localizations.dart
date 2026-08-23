@@ -7017,13 +7017,13 @@ abstract class AppLocalizations {
   /// No description provided for @coachVoicePickerUnlocksAtLevel50.
   ///
   /// In en, this message translates to:
-  /// **'Unlocks at Level 50 — keep leveling up!'**
+  /// **'Unlocks at Level 15 — keep leveling up!'**
   String get coachVoicePickerUnlocksAtLevel50;
 
   /// No description provided for @coachVoicePickerUnlocksAtLevel502.
   ///
   /// In en, this message translates to:
-  /// **'Unlocks at Level 50'**
+  /// **'Unlocks at Level 15'**
   String get coachVoicePickerUnlocksAtLevel502;
 
   /// No description provided for @coachVoicePickerYourDeviceSDefault.
@@ -21452,7 +21452,7 @@ abstract class AppLocalizations {
   /// No description provided for @feedCompleteWorkoutsToSee.
   ///
   /// In en, this message translates to:
-  /// **'Complete workouts to see them shared here!\nFollow friends to see their workouts too.'**
+  /// **'Share a workout to see it here!\nFollow friends to see their workouts too.'**
   String get feedCompleteWorkoutsToSee;
 
   /// No description provided for @feedCouldNotLoadYour.
@@ -25133,7 +25133,7 @@ abstract class AppLocalizations {
   /// No description provided for @guestHome1700WithSignup.
   ///
   /// In en, this message translates to:
-  /// **'1700+ with signup'**
+  /// **'2300+ with signup'**
   String get guestHome1700WithSignup;
 
   /// No description provided for @guestHomeAiCoachDemo.
@@ -25337,7 +25337,7 @@ abstract class AppLocalizations {
   /// No description provided for @guestLibraryScreenShowingSampleExercisesSign.
   ///
   /// In en, this message translates to:
-  /// **'Showing {guestExerciseLimit} sample exercises. Sign up free to access 1700+ exercises!'**
+  /// **'Showing {guestExerciseLimit} sample exercises. Sign up free to access 2300+ exercises!'**
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   );
@@ -25381,7 +25381,7 @@ abstract class AppLocalizations {
   /// No description provided for @guestLibraryUnlock1700Exercises.
   ///
   /// In en, this message translates to:
-  /// **'Unlock 1700+ Exercises'**
+  /// **'Unlock 2300+ Exercises'**
   String get guestLibraryUnlock1700Exercises;
 
   /// No description provided for @guestLockedFeatureUnlockFree.
@@ -45987,7 +45987,7 @@ abstract class AppLocalizations {
   /// No description provided for @planAnalyzingPullingFrom1700.
   ///
   /// In en, this message translates to:
-  /// **'Pulling from 1,700+ exercises'**
+  /// **'Pulling from 2,300+ exercises'**
   String get planAnalyzingPullingFrom1700;
 
   /// No description provided for @planAnalyzingReviewingYourGoals.
@@ -61042,6 +61042,12 @@ abstract class AppLocalizations {
   /// **'All Profiles'**
   String get stapleExercisesScreenAllProfiles;
 
+  /// No description provided for @stapleExercisesScreenCustomised.
+  ///
+  /// In en, this message translates to:
+  /// **'Customised'**
+  String get stapleExercisesScreenCustomised;
+
   /// No description provided for @stapleExercisesScreenEdit.
   ///
   /// In en, this message translates to:
@@ -73509,6 +73515,12 @@ abstract class AppLocalizations {
   /// **'Advanced'**
   String get workoutUiModeAdvanced;
 
+  /// No description provided for @workoutUiModeEverythingWarmupStretchLb.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.'**
+  String get workoutUiModeEverythingWarmupStretchLb;
+
   /// No description provided for @workoutUiModeEverythingWarmupStretchPh.
   ///
   /// In en, this message translates to:
@@ -75078,6 +75090,18 @@ abstract class AppLocalizations {
   /// **'RETRY'**
   String get heroModesActionRetry;
 
+  /// No description provided for @heroModesPillSlowConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'TAKING A WHILE'**
+  String get heroModesPillSlowConnection;
+
+  /// No description provided for @heroModesBodySlowConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking longer than usual to load — retrying automatically.'**
+  String get heroModesBodySlowConnection;
+
   /// No description provided for @heroModesPillLive.
   ///
   /// In en, this message translates to:
@@ -75705,7 +75729,7 @@ abstract class AppLocalizations {
   /// v7 paywall sequence
   ///
   /// In en, this message translates to:
-  /// **'“A good personal trainer is \$400/month. I couldn\'t justify that, so I spent two years building one: 1,722 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”'**
+  /// **'“A good personal trainer is \$400/month. I couldn\'t justify that, so I spent two years building one: 2,300 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”'**
   String get paywallFounderQuote;
 
   /// v7 paywall sequence

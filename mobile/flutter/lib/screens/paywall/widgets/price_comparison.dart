@@ -16,6 +16,26 @@ import '../../../core/theme/theme_colors.dart';
 /// intentionally NOT here — they cost less precisely because they do a sliver,
 /// so a "shortest bar" chart can't honestly include them. Their jobs show up in
 /// the feature marquee above instead.
+///
+/// PRICING SOURCE OF TRUTH — verified 2026-08-23 (see `_pricesVerifiedLabel`,
+/// shown in-UI so the comparison is visibly dated rather than an unstamped
+/// hardcoded claim). Re-verify and bump the date at least quarterly; this
+/// repo has been through a competitor trademark dispute before
+/// (`TRADEMARK_TAKEDOWN_RESPONSE.md`), so both the price AND the product name
+/// need to stay accurate, not just plausible:
+///   - Gravl: $10.99/mo, $59.99/yr — gravl.ai pricing page.
+///   - Google Health (formerly Fitbit Premium, AI Health Coach added
+///     2026-05-19): $9.99/mo, $99/yr — blog.google Health Coach launch post.
+///   - Bevel: $5.99/mo, $49.99/yr — help.bevel.health/en/articles/11583937.
+///   - MyFitnessPal Premium: $19.99/mo, $79.99/yr — official pricing.
+///   - Fitbod: $15.99/mo, $95.99/yr — fitbod.me/faqs.
+///   - Noom Weight: $69.99/mo month-to-month, $209/yr (~$17.42/mo
+///     equivalent — the MONTHLY column must show the real month-to-month
+///     price, not the annual-plan's per-month average).
+///   - MacroFactor: $11.99/mo, $71.99/yr.
+///   - Cronometer Gold: $10.99/mo, $59.99/yr.
+///   - Zero: $9.99/mo, $69.99/yr.
+///   - WaterMinder Premium: $2.99/mo, $19.99/yr.
 class PaywallPriceComparison extends StatefulWidget {
   final ThemeColors colors;
 
@@ -28,20 +48,27 @@ class PaywallPriceComparison extends StatefulWidget {
 class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
   bool _yearly = false;
 
-  // name, what it does, monthly, yearly (US 2026 list prices).
+  // name, what it does, monthly, yearly — see the source-of-truth doc
+  // comment above the class for the citation + verification date behind
+  // every figure here.
   static const _rivals = <_Rival>[
     // AI-coach rivals first — the most on-message for "your coach can do".
-    _Rival('Gravl', 'AI workouts', 14.99, 69.99),
+    _Rival('Gravl', 'AI workouts', 10.99, 59.99),
     _Rival('Google Health', 'AI coach', 9.99, 99.00),
-    _Rival('Bevel', 'longevity', 14.99, 99.99),
+    _Rival('Bevel', 'longevity', 5.99, 49.99),
     _Rival('MyFitnessPal', 'nutrition', 19.99, 79.99),
     _Rival('Fitbod', 'workouts', 15.99, 95.99),
-    _Rival('Noom', 'coaching', 17.42, 209.00),
+    _Rival('Noom', 'coaching', 69.99, 209.00),
     _Rival('MacroFactor', 'macros', 11.99, 71.99),
-    _Rival('Cronometer', 'micros', 10.99, 59.88),
+    _Rival('Cronometer', 'micros', 10.99, 59.99),
     _Rival('Zero', 'fasting', 9.99, 69.99),
-    _Rival('WaterMinder', 'hydration', 4.99, 4.99),
+    _Rival('WaterMinder', 'hydration', 2.99, 19.99),
   ];
+
+  /// Shown at the foot of the card so the comparison reads as a dated claim
+  /// (and an audit trail) rather than an unstamped hardcoded number — see
+  /// the source-of-truth doc comment above the class.
+  static const String _pricesVerifiedLabel = 'Prices verified Aug 2026';
 
   /// Collapsed by default — only the top AI-coach rivals show, keeping the
   /// screen non-scrolling. Users can expand to compare every single-job app.
@@ -209,6 +236,14 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
               height: 1.3,
               color: colors.textSecondary,
             ),
+          ),
+          const SizedBox(height: 4),
+          // Date-stamps the whole comparison so a stale figure reads as
+          // "this was true as of the date shown" rather than an
+          // unqualified, permanently-hardcoded claim.
+          Text(
+            _pricesVerifiedLabel,
+            style: TextStyle(fontSize: 9, color: colors.textMuted),
           ),
         ],
       ),

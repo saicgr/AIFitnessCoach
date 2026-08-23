@@ -597,6 +597,17 @@ async def log_food_from_image(
         user_tz = resolve_timezone(request, db, user_id)
         user_tz_logged_at = get_user_now_iso(user_tz)
 
+        # Row 106 — computed here (rather than after the insert, where it
+        # used to live) so it can be PERSISTED as `nutrition_confidence`.
+        # Calculate confidence based on image analysis factors — higher
+        # confidence for clearer images with identifiable foods.
+        confidence_score = 0.7  # Base confidence for image analysis
+        if len(food_items) == 1:
+            confidence_score = 0.8  # Single item is more accurate
+        elif len(food_items) > 5:
+            confidence_score = 0.6  # Complex meals have lower confidence
+        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+
         created_log = db.create_food_log(
             user_id=user_id,
             meal_type=meal_type,
@@ -614,6 +625,7 @@ async def log_food_from_image(
             source_type="image",
             input_type="image",
             user_query=caption if caption else None,
+            nutrition_confidence=confidence_level,
             **micronutrients,
         )
 
@@ -666,15 +678,9 @@ async def log_food_from_image(
             status_code=200,
         )
 
-        # Calculate confidence based on image analysis factors
-        # Higher confidence for clearer images with identifiable foods
-        confidence_score = 0.7  # Base confidence for image analysis
-        if len(food_items) == 1:
-            confidence_score = 0.8  # Single item is more accurate
-        elif len(food_items) > 5:
-            confidence_score = 0.6  # Complex meals have lower confidence
-
-        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+        # confidence_score / confidence_level are computed above, before the
+        # create_food_log() call, so the same values can be persisted as
+        # nutrition_confidence (row 106).
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
         sleep_risk = _compute_sleep_risk_flag(
@@ -977,6 +983,19 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         except Exception as inf_err:
             logger.warning(f"passive inference skipped: {inf_err}")
 
+        # Row 106 — computed here (rather than after the insert, where it used
+        # to live) so it can be PERSISTED as `nutrition_confidence`, not just
+        # returned in the response. The UI showed a "verified data" badge
+        # driven by this same confidence_level while the DB column stayed
+        # null — this is the single source both now read from.
+        # Text descriptions are generally more accurate than images.
+        confidence_score = 0.85  # Base confidence for text
+        if len(body.description) < 20:
+            confidence_score = 0.7  # Short descriptions have less context
+        elif "about" in body.description.lower() or "roughly" in body.description.lower():
+            confidence_score = 0.65  # Approximate language reduces confidence
+        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+
         # Save to database (blocking insert → pool)
         created_log = await _run_blocking(lambda: db.create_food_log(
             user_id=body.user_id,
@@ -994,6 +1013,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             source_type="text",
             input_type=body.input_type or "text",
             user_query=body.description,
+            # Row 106 — the user's own words, verbatim, so a food_logs row
+            # can always be traced back to what was actually typed even
+            # after food_items has been edited/re-parsed.
+            raw_input=body.description,
+            nutrition_confidence=confidence_level,
             **micronutrients,
             **inference_patch,
         ))
@@ -1064,14 +1088,9 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             status_code=200,
         )
 
-        # Text descriptions are generally more accurate than images
-        confidence_score = 0.85  # Base confidence for text
-        if len(body.description) < 20:
-            confidence_score = 0.7  # Short descriptions have less context
-        elif "about" in body.description.lower() or "roughly" in body.description.lower():
-            confidence_score = 0.65  # Approximate language reduces confidence
-
-        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+        # confidence_score / confidence_level are computed above, before the
+        # create_food_log() call, so the same values can be persisted as
+        # nutrition_confidence (row 106).
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
         # (health_goals lookup is blocking → pool; tz reused from above.)

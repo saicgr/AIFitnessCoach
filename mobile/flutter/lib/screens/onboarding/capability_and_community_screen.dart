@@ -19,7 +19,7 @@ import '../../l10n/generated/app_localizations.dart';
 /// worst placement (a feature list right before the paywall).
 ///
 /// 2026-06 repurpose: the four big stat cards now DUPLICATE the new paywall
-/// feature marquee + price anchor (1,722 exercises w/ video, latest AI, …) a
+/// feature marquee + price anchor (2,300+ exercises w/ video, latest AI, …) a
 /// few screens later — same pitch twice. So the stats collapse to ONE slim
 /// proof strip and the screen leads with the thing the paywall can't carry:
 /// **real humans behind it** (Discord + Instagram + a team that answers before
@@ -149,7 +149,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           _ProofStat(
-                            number: '1,700+',
+                            number: '2,300+',
                             label: 'exercises',
                             sub: 'HD video demos',
                             accent: _accent,

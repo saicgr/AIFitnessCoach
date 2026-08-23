@@ -15,6 +15,7 @@ from core.db import get_supabase_db
 from datetime import datetime, date, timedelta, timezone
 from typing import Any, Optional, List, Set, Dict
 import asyncio
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 import json
 
@@ -1117,6 +1118,80 @@ async def _sequential_generate_workouts(
             seen_exercise_sets.setdefault(key, gen_date)
             return result
 
+    # E2E register #209 — a batch regenerated together (e.g. on a gym switch)
+    # could ship the same workout title twice (two different dates both named
+    # "Balanced Muscle Gains"), since each date's title comes straight from
+    # Gemini's own free-text `name` field with no visibility into sibling
+    # titles in the same batch. Track every title seen in THIS run and
+    # deterministically retitle (not regenerate — only the name, via
+    # `generate_workout_name`, cheap and content-preserving) any later date
+    # that collides.
+    seen_names: Dict[str, date] = {}
+
+    async def _dedupe_name_if_collision(gen_date: date, result: Optional[Any]) -> Optional[Any]:
+        if not result or not getattr(result, "name", None):
+            return result
+        key = result.name.strip().lower()
+        if key not in seen_names:
+            seen_names[key] = gen_date
+            return result
+        logger.warning(
+            f"[BG-GEN] Title collision: {gen_date.isoformat()} ('{result.name}') "
+            f"matches {seen_names[key].isoformat()} — retitling from actual content"
+        )
+        try:
+            from services.workout_naming import generate_workout_name
+            from .focus_validation_utils import FOCUS_AREA_MUSCLES
+
+            exercises_list = []
+            raw_ex = getattr(result, "exercises_json", None)
+            if isinstance(raw_ex, str) and raw_ex:
+                try:
+                    exercises_list = json.loads(raw_ex)
+                except (ValueError, TypeError):
+                    exercises_list = []
+            elif isinstance(raw_ex, list):
+                exercises_list = raw_ex
+
+            muscle_counts: Counter = Counter(
+                (ex.get("muscle_group") or ex.get("target_muscle") or "").lower().strip()
+                for ex in exercises_list
+                if isinstance(ex, dict) and (ex.get("muscle_group") or ex.get("target_muscle"))
+            )
+            derived_focus = None
+            for cand_focus, keywords in FOCUS_AREA_MUSCLES.items():
+                if any(any(kw in m or m in kw for kw in keywords) for m in muscle_counts):
+                    derived_focus = cand_focus
+                    break
+
+            new_name = generate_workout_name(
+                focus=derived_focus,
+                workout_type=getattr(result, "type", None),
+                difficulty=getattr(result, "difficulty", None),
+                duration_minutes=getattr(result, "duration_minutes", None),
+                recent_names=list(seen_names.keys()),
+                user_id=user_id,
+                workout_id=f"{getattr(result, 'id', gen_date.isoformat())}-dedup",
+            )
+            new_key = (new_name or "").strip().lower()
+            if new_name and new_key != key:
+                wid = getattr(result, "id", None)
+                if wid:
+                    get_supabase_db().client.table("workouts").update(
+                        {"name": new_name}
+                    ).eq("id", wid).execute()
+                result.name = new_name
+                seen_names[new_key] = gen_date
+            else:
+                seen_names.setdefault(key, gen_date)
+        except Exception as rename_err:
+            logger.warning(
+                f"[BG-GEN] Title-dedup rename failed for {gen_date}: {rename_err}",
+                exc_info=True,
+            )
+            seen_names.setdefault(key, gen_date)
+        return result
+
     async def _gen_one(idx: int, gen_date: date, avoid_list: List[str]) -> Optional[Any]:
         logger.info(
             f"[BG-GEN] Generating workout {idx+1}/{len(sorted_dates)} for "
@@ -1145,6 +1220,7 @@ async def _sequential_generate_workouts(
     if sorted_dates and sorted_dates[0].isoformat() == today_str:
         result = await _gen_one(0, sorted_dates[0], list(all_batch_exercises))
         result = await _dedupe_if_collision(sorted_dates[0], result, 0, list(all_batch_exercises))
+        result = await _dedupe_name_if_collision(sorted_dates[0], result)
         if result and hasattr(result, "exercises") and result.exercises:
             new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
             all_batch_exercises.extend(new_ex)
@@ -1166,6 +1242,7 @@ async def _sequential_generate_workouts(
         # collide with a sibling still being checked.
         for i, (d, result) in enumerate(zip(batch, results)):
             result = await _dedupe_if_collision(d, result, today_done + batch_start + i, avoid_snapshot)
+            result = await _dedupe_name_if_collision(d, result)
             if result and hasattr(result, "exercises") and result.exercises:
                 new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
                 all_batch_exercises.extend(new_ex)

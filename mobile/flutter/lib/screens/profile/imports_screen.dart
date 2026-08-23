@@ -85,21 +85,24 @@ const _kNutritionSources = <_SourceSpec>[
 
 /// Workout-app tiles — route into the workout-history import flow with the
 /// source pre-selected in the options sheet. `id` here is the source-hint
-/// slug the backend's format detector / adapters understand; Gravl has no
-/// dedicated adapter yet, so its tile leaves the hint on auto-detect (the
-/// generic-CSV + AI fallback pipeline handles its export).
+/// slug the backend's format detector / adapters understand.
+///
+/// Register #341 — a Gravl tile used to sit here with no adapter, no
+/// detector fingerprint, no dropdown entry, and no mention on the
+/// destination screen, silently routing to the same generic-CSV + AI
+/// fallback every unsupported app already gets from "Import Workout
+/// History" directly. A dedicated tile that quietly does nothing
+/// Gravl-specific misrepresents it as a supported source, so it's removed
+/// until a real adapter (or at least a verified header fingerprint) exists
+/// — a user on Gravl still reaches the generic importer via "Import
+/// Workout History", which already handles the unsupported-format case
+/// honestly (its own "unknown CSV header" warning).
 const _kWorkoutSources = <_SourceSpec>[
   _SourceSpec(
     id: 'fitbod',
     label: 'Fitbod',
     sub: 'Workout log CSV',
     icon: Icons.auto_graph_rounded,
-  ),
-  _SourceSpec(
-    id: 'auto', // Gravl: no adapter slug — auto-detect + AI fallback.
-    label: 'Gravl',
-    sub: 'Workout export',
-    icon: Icons.timeline_outlined,
   ),
 ];
 
@@ -592,10 +595,10 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
           Expanded(child: tile(_kNutritionSources[3])),
         ]),
         const SizedBox(height: 10),
+        // Register #341 removed the Gravl tile (no adapter behind it), so
+        // this row is single-width now rather than a 2-up pairing.
         Row(children: [
           Expanded(child: workoutTile(_kWorkoutSources[0])),
-          const SizedBox(width: 10),
-          Expanded(child: workoutTile(_kWorkoutSources[1])),
         ]),
       ],
     );

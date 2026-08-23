@@ -541,6 +541,7 @@ class RecipeImportService:
                     sodium_mg=analyzed.sodium_mg, calcium_mg=analyzed.calcium_mg,
                     iron_mg=analyzed.iron_mg, omega3_g=analyzed.omega3_g,
                     vitamin_d_iu=analyzed.vitamin_d_iu,
+                    micronutrients=analyzed.micronutrients,
                     cooking_method=analyzed.cooking_method,
                     nutrition_source=analyzed.nutrition_source,
                     nutrition_confidence=analyzed.nutrition_confidence,

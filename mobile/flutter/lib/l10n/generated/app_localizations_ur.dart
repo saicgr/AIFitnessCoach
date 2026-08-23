@@ -14850,7 +14850,7 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'سائن اپ کے ساتھ 1700+';
+  String get guestHome1700WithSignup => 'سائن اپ کے ساتھ 2300+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach ڈیمو';
@@ -14964,7 +14964,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit نمونہ ورزشیں دکھائی جا رہی ہیں۔ 1700+ ورزشوں تک رسائی کے لیے مفت سائن اپ کریں!';
+    return '$guestExerciseLimit نمونہ ورزشیں دکھائی جا رہی ہیں۔ 2300+ ورزشوں تک رسائی کے لیے مفت سائن اپ کریں!';
   }
 
   @override
@@ -14989,7 +14989,7 @@ class AppLocalizationsUr extends AppLocalizations {
       'اس ورزش کی تفصیلی ہدایات دیکھنے کے لیے سائن اپ کریں۔';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '1700+ ورزشیں ان لاک کریں';
+  String get guestLibraryUnlock1700Exercises => '2300+ ورزشیں ان لاک کریں';
 
   @override
   String get guestLockedFeatureUnlockFree => 'مفت ان لاک کریں';
@@ -27398,7 +27398,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      '1,700+ ورزشوں سے انتخاب کیا جا رہا ہے';
+      '2,300+ ورزشوں سے انتخاب کیا جا رہا ہے';
 
   @override
   String get planAnalyzingReviewingYourGoals =>
@@ -36262,6 +36262,9 @@ class AppLocalizationsUr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'تمام پروفائلز';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" میں ترمیم کریں';
   }
@@ -43676,6 +43679,10 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'ایڈوانسڈ';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'سب کچھ — وارم اپ/اسٹریچ فیز، RPE/RIR، پیرامڈ، سپر سیٹس، ڈراپ سیٹس، ±5 lb اضافہ، پلیٹ چارٹ۔';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'سب کچھ — وارم اپ/اسٹریچ فیز، RPE/RIR، پیرامڈ، سپر سیٹس، ڈراپ سیٹس، ±2.5 کلو اضافہ، پلیٹ چارٹ۔';
 
@@ -44606,6 +44613,13 @@ class AppLocalizationsUr extends AppLocalizations {
   String get heroModesActionRetry => 'دوبارہ';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'براہ راست';
 
   @override
@@ -44954,7 +44968,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“ایک اچھا پرسنل ٹرینر مہینے کے \$400 لیتا ہے۔ میرے لیے یہ ممکن نہیں تھا، تو میں نے دو سال لگا کر خود ایک بنا ڈالا: 1,722 ورزشیں، حقیقی پروگریشن لاجک، اور ایک ایسا کوچ جو واقعی آپ کے پورے ہفتے پر نظر رکھتا ہے۔ میں اسے روزانہ استعمال کرتا ہوں۔”';
+      '“ایک اچھا پرسنل ٹرینر مہینے کے \$400 لیتا ہے۔ میرے لیے یہ ممکن نہیں تھا، تو میں نے دو سال لگا کر خود ایک بنا ڈالا: 2,300 ورزشیں، حقیقی پروگریشن لاجک، اور ایک ایسا کوچ جو واقعی آپ کے پورے ہفتے پر نظر رکھتا ہے۔ میں اسے روزانہ استعمال کرتا ہوں۔”';
 
   @override
   String get paywallFounderName => 'Chetan · بانی';

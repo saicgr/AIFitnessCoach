@@ -88,16 +88,31 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                       final isFavorite = currentExercise != null
                           ? favoritesState.isFavorite(currentExercise.name)
                           : false;
+                      // Row 150 — warmup is a consumed, one-shot phase: once
+                      // completed/skipped for this workout, "Back to Warmup"
+                      // must stop offering to replay it (it used to reappear
+                      // for the rest of the session and re-enter a warmup the
+                      // user had already passed).
+                      final warmupStillPending = warmupEnabled &&
+                          (warmupExercises?.isNotEmpty ?? false) &&
+                          !ref.watch(activeWorkoutWarmupDoneProvider);
 
                       return WorkoutTopBarV2(
                         workoutSeconds: timerController.workoutSeconds,
                         restSecondsRemaining: isResting ? timerController.restSecondsRemaining : null,
                         totalRestSeconds: isResting ? timerController.initialRestDuration : null,
                         isPaused: isPaused,
-                        showBackButton: warmupEnabled && (warmupExercises?.isNotEmpty ?? false),
-                        backButtonLabel: (warmupEnabled && (warmupExercises?.isNotEmpty ?? false)) ? 'Warmup' : null,
+                        showBackButton: warmupStillPending,
+                        // "Warmup" alone reads as a location/title ("where am
+                        // I?") rather than a nav affordance, and stays visible
+                        // for the rest of the session — including deep into
+                        // the main workout, right beside the current
+                        // exercise's own "Set N of M" body text. Spelling out
+                        // the destination makes it unambiguous that this is a
+                        // shortcut back, not the current screen.
+                        backButtonLabel: warmupStillPending ? 'Back to Warmup' : null,
                         onMenuTap: showWorkoutPlanDrawer,
-                        onBackTap: (warmupEnabled && (warmupExercises?.isNotEmpty ?? false)) ? goBackToWarmup : null,
+                        onBackTap: warmupStillPending ? goBackToWarmup : null,
                         onCloseTap: showQuitDialog,
                         onTimerTap: togglePause,
                         onMinimize: minimizeWorkout,
@@ -284,76 +299,19 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         ),
                         ),
 
-                        // Set counter row with skip on the right
+                        // Set counter row. Breathing used to live here as an
+                        // orphaned chip on its own line — it now lives in the
+                        // action chips row below with Form/Swap/Adjust/Pyramid
+                        // so all five read as the same kind of control.
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                          child: Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'Set ${(completedSets[viewingExerciseIndex]?.length ?? 0) + 1} of ${totalSetsPerExercise[viewingExerciseIndex] ?? 3}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: WorkoutDesign.subtitleStyle.copyWith(
-                                    color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Expanded+FittedBox instead of a bare Spacer —
-                              // the Breathing chip's label is LOCALIZED, so its
-                              // width isn't knowable at build time and a bare
-                              // Spacer collapsed to 0 overflows the row.
-                              Expanded(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerRight,
-                                  child:
-                              // Breathing guide button
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  breathingGuideOpened++;
-                                  showBreathingGuide(
-                                    context: context,
-                                    exercise: exercises[viewingExerciseIndex],
-                                  );
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? WorkoutDesign.surface : Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.air_rounded,
-                                        size: 16,
-                                        color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade700,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        AppLocalizations.of(context).workoutUiBuildersBreathing,
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Set ${(completedSets[viewingExerciseIndex]?.length ?? 0) + 1} of ${totalSetsPerExercise[viewingExerciseIndex] ?? 3}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: WorkoutDesign.subtitleStyle.copyWith(
+                              color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                            ),
                           ),
                         ),
 

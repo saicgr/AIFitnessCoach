@@ -692,8 +692,34 @@ async def inject_queued_exercise_into_next_workout(db, user_id: str, exercise_na
     except Exception:
         library_data = {"name": exercise_name}
 
-    # Use next workout
+    # Row 276: pick the earliest upcoming workout that actually trains the
+    # queued exercise's muscle group — the same filter
+    # `apply_staple_to_workouts` already applies for new staples — instead
+    # of always taking the very next workout regardless of its focus. A
+    # core/abs exercise landing as an odd extra movement in an unrelated
+    # back/leg/push session (ignoring session focus and length) is exactly
+    # what blindly using `workouts[0]` produces. Falls back to the next
+    # workout when no upcoming session trains that muscle, so a queued
+    # exercise still lands somewhere rather than being silently dropped.
+    target_muscle = _normalize_muscle(library_data.get("target_muscle") or library_data.get("body_part"))
     next_workout = workouts[0]
+    if target_muscle:
+        for candidate in workouts:
+            candidate_exercises = candidate.get("exercises_json") or []
+            if isinstance(candidate_exercises, str):
+                try:
+                    candidate_exercises = json.loads(candidate_exercises)
+                except (json.JSONDecodeError, TypeError):
+                    candidate_exercises = []
+            candidate_muscles = {
+                _normalize_muscle(ex.get("muscle_group") or ex.get("target_muscle"))
+                for ex in candidate_exercises
+                if isinstance(ex, dict)
+            }
+            if target_muscle in candidate_muscles:
+                next_workout = candidate
+                break
+
     staple_like = {
         "exercise_name": exercise_name,
         "section": "main",

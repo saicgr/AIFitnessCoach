@@ -18,9 +18,12 @@ import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../core/services/posthog_service.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
+import 'widgets/choose_handle_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'social_screen_part_messages_screen.dart';
 
@@ -84,7 +87,31 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     _tabController.addListener(_onTabChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'social_feed_viewed');
+      _maybePromptForHandle();
     });
+  }
+
+  /// First-entry-to-Community prompt to pick a real handle instead of
+  /// keeping the auto-generated one (name/email + a numeric suffix —
+  /// `core/username_generator.py`) that ships with every account and is
+  /// otherwise never surfaced for editing anywhere in the app. Gated by a
+  /// per-account SharedPreferences flag so it shows exactly once, ever,
+  /// regardless of whether the user picks a handle or dismisses it.
+  Future<void> _maybePromptForHandle() async {
+    final user = ref.read(authStateProvider).user;
+    if (user == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'community_handle_prompt_shown_${user.id}';
+    if (prefs.getBool(key) == true) return;
+    await prefs.setBool(key, true);
+    if (!mounted) return;
+    await showGlassSheet<bool>(
+      context: context,
+      builder: (_) => ChooseHandleSheet(
+        currentUsername: user.username,
+        displayName: user.name,
+      ),
+    );
   }
 
   void _onTabChanged() {

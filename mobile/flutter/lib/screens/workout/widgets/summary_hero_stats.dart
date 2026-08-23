@@ -43,8 +43,15 @@ class SummaryHeroStats extends ConsumerWidget {
     final values = <int>[];
     for (final e in raw) {
       if (e is Map) {
-        final s = (e['rest_seconds'] as num?)?.toInt() ?? 0;
-        if (s > 0) values.add(s);
+        // Row 139 — `rest_seconds` is a real 0 when the user hit Skip Rest
+        // almost immediately (timer_rest_mixin.dart's handleRestComplete
+        // overwrites it with the actual elapsed rest for both a normal
+        // finish AND a skip). Dropping `s == 0` here treated "skipped every
+        // rest" the same as "no rest data at all", blanking MEDIAN REST on a
+        // session where rests genuinely ran (and were skipped) throughout.
+        if (e.containsKey('rest_seconds')) {
+          values.add((e['rest_seconds'] as num?)?.toInt() ?? 0);
+        }
       }
     }
     if (values.isEmpty) return null;

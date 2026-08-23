@@ -2099,12 +2099,23 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
       _loadingDelayTimer?.cancel();
       final response = result.response;
-      if (response.foodItems.isEmpty && response.totalCalories == 0) {
+      // Finding #347 — a parse that comes back with an "unknown" placeholder
+      // item (calories/macros all zero) is just as unusable as an empty
+      // item list, but `foodItems.isEmpty` alone misses it because the
+      // placeholder item still counts as one item. Treat "no item carries
+      // any nutritional data" as the same failure so the user is never
+      // invited to log a 0-kcal meal.
+      final hasUsableMacros = response.foodItems.any((item) =>
+          (item.calories ?? 0) > 0 ||
+          (item.proteinG ?? 0) > 0 ||
+          (item.carbsG ?? 0) > 0 ||
+          (item.fatG ?? 0) > 0);
+      if (response.foodItems.isEmpty || (response.totalCalories == 0 && !hasUsableMacros)) {
         setState(() {
           _isLoading = false;
           _showLoadingIndicator = false;
           _error = kind == 'label'
-              ? 'Could not read this label. Try a clearer, well-lit photo.'
+              ? 'Could not read this label. Try a clearer, well-lit photo, or enter it manually.'
               : 'Could not read this screenshot. Try a clearer image.';
         });
         return;

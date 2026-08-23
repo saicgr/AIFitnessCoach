@@ -137,10 +137,20 @@ const List<String> _kSavedFoodsEmptySubtitles = <String>[
 class NutritionJournalTab extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
+  // The date the DAILY tab's own date strip is currently showing. Row #197:
+  // that strip and Journal's Calendar/Feed range used to be two completely
+  // disconnected date models, so switching tabs while Daily was scoped to a
+  // past day landed on a Feed still defaulting to ALL — e.g. the strip
+  // highlighting the 17th while Feed showed a "Yesterday · Aug 16" entry.
+  // Seeding Journal's initial day scope from this closes that gap for the
+  // common case (arriving from a non-today Daily date); passing null keeps
+  // today's default (unscoped ALL) behavior.
+  final DateTime? selectedDate;
   const NutritionJournalTab({
     super.key,
     required this.userId,
     required this.isDark,
+    this.selectedDate,
   });
 
   @override
@@ -190,6 +200,22 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   @override
   void initState() {
     super.initState();
+    // Row #197 — seed the initial day scope from whichever date the DAILY
+    // tab was showing, so first entry into Journal agrees with it instead of
+    // silently defaulting to ALL. Today is left alone (the ordinary ALL
+    // default still applies) — only a non-today arrival forces single-day
+    // scope, matching the existing Calendar-day-tap contract.
+    final incoming = widget.selectedDate;
+    if (incoming != null) {
+      final now = DateTime.now();
+      final isToday = incoming.year == now.year &&
+          incoming.month == now.month &&
+          incoming.day == now.day;
+      if (!isToday) {
+        _selectedDayKey = _dayKey(incoming);
+        _calMonth = DateTime(incoming.year, incoming.month, 1);
+      }
+    }
     _hydrateFromCache();
     _loadLogs();
     _loadSaved();
@@ -1434,10 +1460,16 @@ class _ScorePill extends StatelessWidget {
   final int score;
   const _ScorePill({required this.score});
 
+  // Row 196 — `healthScore` is a 1-10 value (see meal_score_widgets.dart's
+  // matching `_healthColor`), but these thresholds were written for a 0-100
+  // scale. Every real score fell in the "else" branch, so this pill rendered
+  // error-red for EVERY meal regardless of how healthy it actually was — a
+  // bare red "3" is exactly what an unlabelled 3/10 meal looked like, but a
+  // 9/10 meal rendered identically red. Bands now match the 1-10 scale used
+  // everywhere else this score is shown.
   Color _scoreColor() {
-    if (score >= 80) return AppColors.success;  // accent-allowlist: success state
-    if (score >= 60) return AppColors.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
-    if (score >= 40) return AppColors.macroFat;  // accent-allowlist: macro identity — fat is always this colour
+    if (score >= 7) return AppColors.success;  // accent-allowlist: success state
+    if (score >= 4) return AppColors.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
     return AppColors.error;  // accent-allowlist: error state
   }
 
@@ -1451,7 +1483,9 @@ class _ScorePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: c.withValues(alpha: 0.4)),
       ),
-      child: Text('$score',
+      // Row 196 — a bare "3" in a red circle read as an unread/error count.
+      // Label it so it's unambiguously the health score.
+      child: Text('Health $score/10',
           style: ZType.data(12, color: c, weight: FontWeight.w700)),
     );
   }

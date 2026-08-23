@@ -417,6 +417,20 @@ class _SampleRowsBlock extends StatelessWidget {
   const _SampleRowsBlock({required this.sampleRows});
   final List<Map<String, dynamic>> sampleRows;
 
+  // CanonicalSetRow/CanonicalCardioRow fields (backend/services/workout_import/
+  // canonical.py) that are DB plumbing, never user-facing.
+  static const _hiddenColumns = <String>{
+    'user_id', 'source_row_hash', 'exercise_id', 'import_job_id',
+    'source_app', 'sync_account_id', 'source_external_id',
+  };
+
+  // Fields worth showing FIRST when a row carries more than 6 columns.
+  static const _preferredColumnOrder = <String>[
+    'performed_at', 'exercise_name_canonical', 'exercise_name_raw',
+    'set_number', 'weight_kg', 'original_weight_value', 'original_weight_unit',
+    'reps', 'activity_type', 'duration_seconds', 'distance_m', 'calories',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -435,7 +449,18 @@ class _SampleRowsBlock extends StatelessWidget {
     for (final row in sampleRows.take(5)) {
       keys.addAll(row.keys);
     }
-    final columns = keys.take(6).toList();
+    // Never surface DB-internal columns (row 323) — a UUID like `user_id`
+    // fills every visible column while the fields the user actually cares
+    // about (exercise, weight, reps) scroll off past the 6-column cutoff.
+    keys.removeAll(_hiddenColumns);
+    // Put the user-meaningful fields first so THEY win the 6-column cutoff,
+    // not whatever happened to be inserted first by the adapter.
+    final columns = [
+      for (final k in _preferredColumnOrder)
+        if (keys.contains(k)) k,
+      for (final k in keys)
+        if (!_preferredColumnOrder.contains(k)) k,
+    ].take(6).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

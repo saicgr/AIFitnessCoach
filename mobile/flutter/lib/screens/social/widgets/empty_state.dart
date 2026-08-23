@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/chrome_constants.dart' show kQuickLogFabClearance;
+import '../../../core/constants/chrome_constants.dart'
+    show kQuickLogFabClearance, kFabClusterHorizontalReserve;
 import '../../../core/theme/theme_colors.dart';
 
 /// Empty State Widget - Shows when there's no content in a social section
@@ -76,18 +77,26 @@ class SocialEmptyState extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // Action button (if provided)
+            // Action button (if provided). This is the tab's only CTA, and
+            // this empty state can sit at the bottom-right FAB cluster's
+            // fixed vertical band regardless of scroll position, so a
+            // full-width button needs horizontal clearance, not just the
+            // vertical kQuickLogFabClearance padding above — see
+            // kFabClusterHorizontalReserve.
             if (actionLabel != null && onAction != null)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onAction,
-                  icon: const Icon(Icons.explore_outlined),
-                  label: Text(actionLabel!),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: accentColor,
-                    foregroundColor: colors.accentContrast,
+              Padding(
+                padding: const EdgeInsets.only(right: kFabClusterHorizontalReserve),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: onAction,
+                    icon: const Icon(Icons.explore_outlined),
+                    label: Text(actionLabel!),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: accentColor,
+                      foregroundColor: colors.accentContrast,
+                    ),
                   ),
                 ),
               ),

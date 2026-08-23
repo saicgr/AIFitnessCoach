@@ -2183,6 +2183,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }());
   }
 
+  /// Set the current user's Community handle via the dedicated
+  /// `PATCH /users/me/username` endpoint — NOT `updateUserProfile`, which
+  /// PUTs through the strongly-typed `UserUpdate` model that doesn't (and,
+  /// per its own uniqueness/format needs, shouldn't) declare a bare
+  /// `username` field. Awaits the server round-trip and applies local state
+  /// only on success — a public handle collides often enough (someone else
+  /// already has it) that an optimistic-then-rollback flow would flicker the
+  /// UI for an outcome the caller should just wait half a second for.
+  ///
+  /// Throws with the server's own message (e.g. "That handle is already
+  /// taken.") on a 409/422 so the caller can show it inline; throws a
+  /// generic message on any other failure.
+  Future<void> updateUsername(String username) async {
+    if (state.user == null) {
+      throw Exception('No user logged in');
+    }
+    try {
+      await _repository._apiClient.patch(
+        '${ApiConstants.users}/me/username',
+        data: {'username': username},
+      );
+      state = state.copyWith(
+        user: _applyOverrides(state.user!, {'username': username}),
+      );
+      debugPrint('✅ [Auth] Updated username: $username');
+    } on DioException catch (e) {
+      final detail = e.response?.data is Map
+          ? (e.response?.data as Map)['detail']?.toString()
+          : null;
+      throw Exception(detail ?? 'Failed to update handle: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to update handle: $e');
+    }
+  }
+
   /// Re-apply outgoing `updates` on top of a freshly-fetched user so the
   /// user's just-toggled preference isn't clobbered by stale server data.
   /// Also drives the optimistic-update path in [updateUserProfile] —

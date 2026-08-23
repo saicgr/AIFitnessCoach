@@ -427,6 +427,9 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
     final colors = ref.colors(context);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final canCreate =
+        _nameController.text.trim().isNotEmpty && _selectedMemberIds.length >= 2;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -435,6 +438,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
         actions: [
           PillAppBarAction(
             icon: Icons.check_rounded,
+            iconColor: canCreate ? null : textMuted,
             visible: !_isCreating,
             onTap: _createGroup,
           ),
@@ -461,6 +465,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              onChanged: (_) => setState(() {}),
             ),
           ),
           // Selected count
@@ -505,11 +510,39 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
       error: (_, __) => Center(child: Text(AppLocalizations.of(context).socialScreenPartFailedToLoadFriends)),
       data: (friends) {
         if (friends.isEmpty) {
+          // A group needs at least 2 members, so with zero friends this form
+          // can never be completed -- point straight at Find Friends instead
+          // of leaving an unsatisfiable name+picker screen up.
           return Center(
-            child: Text(
-              AppLocalizations.of(context).socialScreenPartNoFriendsToAdd,
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).socialScreenPartNoFriendsToAdd,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        AppPageRoute(builder: (context) => const FriendSearchScreen()),
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colors.accent,
+                      foregroundColor: colors.accentContrast,
+                    ),
+                    child: const Text('Find Friends'),
+                  ),
+                ],
               ),
             ),
           );

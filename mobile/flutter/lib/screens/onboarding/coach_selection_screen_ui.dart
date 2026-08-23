@@ -414,21 +414,26 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
   Widget _buildProgressIndicator(bool isDark) {
     final accentColor = _selectedCoach?.primaryColor ?? context.accentColor;
     final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    const currentStep = 4; // Coach is step 5 (0-based: 4), all complete
+    const currentStep = 4; // Coach is step 5 (0-based: 4) — the step the
+    // user is ON right now, not yet complete. Every dot used to be built
+    // with a hardcoded `isComplete: true`, so the current step rendered a
+    // checkmark identical to the finished steps — the indicator could never
+    // show where the user actually was. Each dot below now compares its own
+    // 0-based index against `currentStep` instead.
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
-          _buildStepDot(1, 'Sign In', true, accentColor, isDark, 0),
+          _buildStepDot(1, 'Sign In', 0 < currentStep, 0 == currentStep, accentColor, isDark, 0),
           _buildProgressLine(0, currentStep, accentColor, inactiveColor, 1),
-          _buildStepDot(2, 'About You', true, accentColor, isDark, 2),
+          _buildStepDot(2, 'About You', 1 < currentStep, 1 == currentStep, accentColor, isDark, 2),
           _buildProgressLine(1, currentStep, accentColor, inactiveColor, 3),
-          _buildStepDot(3, 'Split', true, accentColor, isDark, 4),
+          _buildStepDot(3, 'Split', 2 < currentStep, 2 == currentStep, accentColor, isDark, 4),
           _buildProgressLine(2, currentStep, accentColor, inactiveColor, 5),
-          _buildStepDot(4, 'Privacy', true, accentColor, isDark, 6),
+          _buildStepDot(4, 'Privacy', 3 < currentStep, 3 == currentStep, accentColor, isDark, 6),
           _buildProgressLine(3, currentStep, accentColor, inactiveColor, 7),
-          _buildStepDot(5, 'Coach', true, accentColor, isDark, 8),
+          _buildStepDot(5, 'Coach', 4 < currentStep, 4 == currentStep, accentColor, isDark, 8),
         ],
       ),
     );
@@ -455,9 +460,13 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
   }
 
 
-  Widget _buildStepDot(int step, String label, bool isComplete, Color activeColor, bool isDark, int animOrder) {
+  Widget _buildStepDot(int step, String label, bool isComplete, bool isCurrent, Color activeColor, bool isDark, int animOrder) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final delay = 100 + (animOrder * 80);
+    // Current step: unfilled but ringed + numbered in the accent color — the
+    // one state between "not reached yet" (muted) and "done" (solid +
+    // checkmark) that actually tells the user where they are.
+    final isHighlighted = isComplete || isCurrent;
 
     return Column(
       children: [
@@ -468,7 +477,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
             color: isComplete ? activeColor : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isComplete ? activeColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+              color: isHighlighted ? activeColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
               width: 2,
             ),
           ),
@@ -480,7 +489,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: textSecondary,
+                      color: isCurrent ? activeColor : textSecondary,
                     ),
                   ),
           ),
@@ -491,8 +500,8 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
           label,
           style: TextStyle(
             fontSize: 9,
-            color: isComplete ? activeColor : textSecondary,
-            fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
+            color: isHighlighted ? activeColor : textSecondary,
+            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
       ],

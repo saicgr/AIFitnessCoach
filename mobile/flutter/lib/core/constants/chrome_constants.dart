@@ -130,7 +130,7 @@ const double kQuickLogFabHeight = kFloatCircleDiameter;
 /// from, so the extra clearance applies everywhere the button floats, not
 /// just Home. Only the resting offset moved; size, styling, tap target and
 /// always-on-top behaviour are unchanged.
-const double kQuickLogFabGapAboveNav = 26.0;
+const double kQuickLogFabGapAboveNav = 46.0;
 
 /// Distance from the bottom safe-area inset to the BOTTOM of the quick-log FAB.
 /// This is the value `Positioned(bottom:)` must use, minus the inset itself.

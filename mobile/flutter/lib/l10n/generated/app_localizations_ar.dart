@@ -14692,7 +14692,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'أكثر من 1700 عند التسجيل';
+  String get guestHome1700WithSignup => 'أكثر من 2300 عند التسجيل';
 
   @override
   String get guestHomeAiCoachDemo => 'عرض تجريبي لـ AI Coach';
@@ -14807,7 +14807,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'عرض $guestExerciseLimit تمارين تجريبية. اشترك مجاناً للوصول إلى أكثر من 1700 تمرين!';
+    return 'عرض $guestExerciseLimit تمارين تجريبية. اشترك مجاناً للوصول إلى أكثر من 2300 تمرين!';
   }
 
   @override
@@ -14831,7 +14831,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get guestLibrarySignUpToView => 'سجل لعرض تعليمات مفصلة لهذا التمرين.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'افتح أكثر من 1700 تمرين';
+  String get guestLibraryUnlock1700Exercises => 'افتح أكثر من 2300 تمرين';
 
   @override
   String get guestLockedFeatureUnlockFree => 'افتح مجاناً';
@@ -27110,7 +27110,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => 'مطابقة نوع جسمك';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'السحب من أكثر من 1,700 تمرين';
+  String get planAnalyzingPullingFrom1700 => 'السحب من أكثر من 2,300 تمرين';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'مراجعة أهدافك';
@@ -35858,6 +35858,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'جميع الملفات الشخصية';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'تعديل \"$exerciseName\"';
   }
@@ -43207,6 +43210,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'متقدم';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'كل شيء — مراحل الإحماء/الإطالة، RPE/RIR، الهرمي، المجموعات المتتالية، المجموعات التنازلية، زيادات ±5 lb، مخطط الأوزان.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'كل شيء — مراحل الإحماء/الإطالة، RPE/RIR، الهرمي، المجموعات المتتالية، المجموعات التنازلية، زيادات ±2.5 كجم، مخطط الأوزان.';
 
@@ -44131,6 +44138,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get heroModesActionRetry => 'إعادة';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'مباشر';
 
   @override
@@ -44477,7 +44491,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“المدرب الشخصي الجيد يكلف \$400/شهر. لم أستطع تبرير ذلك، فقضيت سنتين في بناء مدرب خاص بي: 1,722 تمرينًا، ومنطق تقدّم حقيقي، ومدرب ينظر فعلًا إلى أسبوعك. أستخدمه كل يوم.”';
+      '“المدرب الشخصي الجيد يكلف \$400/شهر. لم أستطع تبرير ذلك، فقضيت سنتين في بناء مدرب خاص بي: 2,300 تمرينًا، ومنطق تقدّم حقيقي، ومدرب ينظر فعلًا إلى أسبوعك. أستخدمه كل يوم.”';
 
   @override
   String get paywallFounderName => 'Chetan · المؤسس';

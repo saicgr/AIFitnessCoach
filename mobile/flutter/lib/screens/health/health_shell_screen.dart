@@ -58,6 +58,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/chrome_constants.dart';
+import '../../core/providers/user_provider.dart'
+    show currentUserProvider, useKgProvider;
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/health_tab_request_provider.dart';
@@ -142,6 +144,42 @@ enum HealthSubTab {
         return l10n.healthTabVitals;
       case HealthSubTab.body:
         return l10n.insightsScreenPartBody;
+    }
+  }
+
+  /// What THIS chip specifically would show once connected — the empty
+  /// state's whole point is naming that, rather than repeating the same
+  /// "your activity" line under every tab (E2E register #109).
+  String emptyStateBody(AppLocalizations l10n) {
+    switch (this) {
+      case HealthSubTab.overview:
+        return l10n.combinedHealthConnectHealthBody;
+      case HealthSubTab.sleep:
+        return 'Sleep stages, time asleep and sleep score sync once connected.';
+      case HealthSubTab.recovery:
+        return 'Your heart health score, drawn from sleep, activity, cardio strain and body composition, syncs once connected.';
+      case HealthSubTab.vitals:
+        return 'Resting heart rate, HRV, blood oxygen and respiratory rate sync once connected.';
+      case HealthSubTab.body:
+        return 'Height, weight, body fat and other body composition metrics sync once connected.';
+    }
+  }
+
+  /// The connect-state headline, naming what THIS chip would show — the
+  /// generic "Connect Health to see your activity" line read identically on
+  /// Overview, Vitals and Body (E2E register #109).
+  String emptyStateHeadline(AppLocalizations l10n) {
+    switch (this) {
+      case HealthSubTab.overview:
+        return l10n.combinedHealthConnectHealthToSee;
+      case HealthSubTab.sleep:
+        return l10n.sleepDetailConnectHealthToSee;
+      case HealthSubTab.recovery:
+        return 'Connect Health to see your heart health';
+      case HealthSubTab.vitals:
+        return 'Connect Health to see resting heart rate and HRV';
+      case HealthSubTab.body:
+        return 'Connect Health to see body composition';
     }
   }
 }
@@ -601,6 +639,21 @@ class _HealthSubTabView extends ConsumerWidget {
     // No Health source → nothing on ANY chip has a value. Label the view the
     // user is standing on and offer the connect CTA.
     if (!isConnected) {
+      // BODY is the one chip where the app already holds real data without
+      // any wearable: height/weight/gender live in `public.users` and
+      // already render on Home and in Stats → Measurements (E2E register
+      // #110). Showing the generic activity empty state here throws that
+      // away — render what's stored, and offer Health as enrichment on top.
+      if (tab == HealthSubTab.body) {
+        final user = ref.watch(currentUserProvider).valueOrNull;
+        if (user?.heightCm != null || user?.weightKg != null) {
+          return _BodyMetricsPreConnectCard(
+            heightCm: user!.heightCm,
+            weightKg: user.weightKg,
+            gender: user.gender,
+          );
+        }
+      }
       return _HealthTabEmpty(tab: tab, showConnect: true);
     }
 
@@ -674,14 +727,14 @@ class _HealthTabEmpty extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               showConnect
-                  ? l10n.combinedHealthConnectHealthToSee
+                  ? tab.emptyStateHeadline(l10n)
                   : l10n.healthTabNoDataYet,
               textAlign: TextAlign.center,
               style: ZType.sans(16, color: tc.textPrimary, height: 1.25),
             ),
             const SizedBox(height: 8),
             Text(
-              l10n.combinedHealthConnectHealthBody,
+              tab.emptyStateBody(l10n),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -697,6 +750,107 @@ class _HealthTabEmpty extends ConsumerWidget {
                     ref.read(healthSyncProvider.notifier).connect(),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// BODY, pre-connection, when the app already holds height/weight/gender
+/// from onboarding (E2E register #110). Renders those stored metrics instead
+/// of the generic "connect to see your activity" prompt, then offers Health
+/// as enrichment (a fuller radar, body-fat trend, etc.) rather than gating
+/// data the app already has behind a connect step.
+class _BodyMetricsPreConnectCard extends ConsumerWidget {
+  final double? heightCm;
+  final double? weightKg;
+  final String? gender;
+
+  const _BodyMetricsPreConnectCard({
+    required this.heightCm,
+    required this.weightKg,
+    required this.gender,
+  });
+
+  String _formatHeight(double cm, bool useKg) {
+    if (useKg) return '${cm.round()} cm';
+    final totalInches = cm / 2.54;
+    final feet = (totalInches / 12).floor();
+    final inches = (totalInches - feet * 12).round();
+    return "$feet'$inches\"";
+  }
+
+  String _formatWeight(double kg, bool useKg) {
+    final value = useKg ? kg : kg * 2.20462;
+    final unit = useKg ? 'kg' : 'lb';
+    return '${value.toStringAsFixed(1)} $unit';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final useKg = ref.watch(useKgProvider);
+    final rows = <(String, String)>[
+      if (heightCm != null)
+        (l10n.quizPersonalizationGateHeight, _formatHeight(heightCm!, useKg)),
+      if (weightKg != null)
+        (l10n.insightsProgressTemplateWeight, _formatWeight(weightKg!, useKg)),
+      if (gender != null && gender!.isNotEmpty)
+        (l10n.coachSelectionGender, gender![0].toUpperCase() + gender!.substring(1)),
+    ];
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+            32, 32, 32, 32 + MediaQuery.paddingOf(context).bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.accessibility_new_rounded, size: 44, color: tc.textMuted),
+            const SizedBox(height: 14),
+            Text(
+              HealthSubTab.body.label(l10n).toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(12, color: tc.accent, letterSpacing: 2),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: tc.cardBorder),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  for (final row in rows) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(row.$1,
+                            style: ZType.sans(14, color: tc.textMuted)),
+                        Text(row.$2,
+                            style: ZType.sans(15, color: tc.textPrimary)
+                                .copyWith(fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                    if (row != rows.last) const SizedBox(height: 10),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Connect Health for body fat, fitness score and trends over time.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: tc.textMuted, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            HealthCtaPill(
+              label: l10n.combinedHealthConnectHealth,
+              onTap: () => ref.read(healthSyncProvider.notifier).connect(),
+            ),
           ],
         ),
       ),

@@ -178,45 +178,89 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
       stateText = widget.label.toUpperCase();
     }
 
-    return Semantics(
-      button: true,
-      enabled: widget.enabled,
-      label: AppLocalizations.of(
-        context,
-      )!.holdToConfirmButtonPressAndHoldTo(widget.label),
-      child: GestureDetector(
-        onTapDown: _holdStart,
-        onTapUp: _holdEnd,
-        onTapCancel: _holdEnd,
-        // Rebuild on every pulse tick so the breathing scale animates while
-        // holding (the fill/ring already rebuild via _controller's listener).
-        child: AnimatedBuilder(
-          animation: _pulse,
-          builder: (context, child) {
-            // Press-down to 0.985, then breathe by up to ~1.2% while holding;
-            // on commit it pops back to 1.0.
-            final double scale;
-            if (_committed) {
-              scale = 1.0;
-            } else if (holding) {
-              scale = 0.985 - 0.012 * _pulse.value;
-            } else {
-              scale = progress > 0 ? 0.985 : 1.0;
-            }
-            return Transform.scale(scale: scale, child: child);
-          },
-          child: _shell(
-            progress: _committed ? 1.0 : progress,
-            committed: _committed,
-            child: _centerLabel(
-              stateText,
-              progress: _committed ? 1.0 : progress,
-              committed: _committed,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          button: true,
+          enabled: widget.enabled,
+          label: AppLocalizations.of(
+            context,
+          )!.holdToConfirmButtonPressAndHoldTo(widget.label),
+          child: GestureDetector(
+            onTapDown: _holdStart,
+            onTapUp: _holdEnd,
+            onTapCancel: _holdEnd,
+            // Rebuild on every pulse tick so the breathing scale animates
+            // while holding (the fill/ring already rebuild via
+            // _controller's listener).
+            child: AnimatedBuilder(
+              animation: _pulse,
+              builder: (context, child) {
+                // Press-down to 0.985, then breathe by up to ~1.2% while
+                // holding; on commit it pops back to 1.0.
+                final double scale;
+                if (_committed) {
+                  scale = 1.0;
+                } else if (holding) {
+                  scale = 0.985 - 0.012 * _pulse.value;
+                } else {
+                  scale = progress > 0 ? 0.985 : 1.0;
+                }
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: _shell(
+                progress: _committed ? 1.0 : progress,
+                committed: _committed,
+                child: _centerLabel(
+                  stateText,
+                  progress: _committed ? 1.0 : progress,
+                  committed: _committed,
+                ),
+              ),
             ),
           ),
         ),
-      ),
+        // Hold-to-confirm is an uncommon primary action on iOS and nothing
+        // else on screen states how long the press needs to last — a user
+        // could tap once, see nothing happen, and assume the button is
+        // broken. Stated once, at rest; the ring + "KEEP HOLDING…" label
+        // take over as the live feedback once the hold actually starts.
+        if (!_committed && !holding) ...[
+          const SizedBox(height: 6),
+          Builder(
+            builder: (context) {
+              // Unlike the button body (which renders fixed white text on
+              // its own orange fill), this caption sits directly on the
+              // SCREEN background, and that background does follow the
+              // system theme here — so it needs an actual light/dark-aware
+              // token, not the button's hardcoded white.
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final textSecondary =
+                  isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+              return Text(
+                'Hold for $_holdSecondsLabel',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textSecondary.withValues(alpha: widget.enabled ? 1.0 : 0.5),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
     );
+  }
+
+  /// e.g. "2 seconds" for a 2000ms hold, "1.3 seconds" for 1300ms.
+  String get _holdSecondsLabel {
+    final seconds = widget.holdDuration.inMilliseconds / 1000;
+    final rounded = (seconds * 10).round() / 10;
+    final text = rounded == rounded.roundToDouble()
+        ? rounded.toStringAsFixed(0)
+        : rounded.toStringAsFixed(1);
+    return '$text second${rounded == 1 ? '' : 's'}';
   }
 
   /// The button body: a dim track with a bright animated gradient fill

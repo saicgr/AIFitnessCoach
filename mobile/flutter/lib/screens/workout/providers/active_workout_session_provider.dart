@@ -289,6 +289,28 @@ class ActiveWorkoutSessionNotifier
     return Duration(milliseconds: ageMs < 0 ? 0 : ageMs);
   }
 
+  /// Row 91 — peek the on-disk checkpoint's logged-set count without
+  /// adopting it, so a card that isn't the active-workout screen (the home /
+  /// workout-tab hero card) can badge "in progress" BEFORE the user taps
+  /// START and hits the Resume / Start Fresh prompt. Returns null when
+  /// there's no checkpoint for [workoutId] or it has no logged sets.
+  Future<int?> peekCheckpointSetCount({
+    required String? workoutId,
+    String? userId,
+  }) async {
+    if (workoutId == null) return null;
+    bindUser(userId);
+    final uid = _userId;
+    if (uid == null) return null;
+    final restored = await _WorkoutCheckpointStore.load(
+      userId: uid,
+      expectedWorkoutId: workoutId,
+    );
+    if (restored == null) return null;
+    final count = _setCount(restored.completedSets);
+    return count == 0 ? null : count;
+  }
+
   /// Delete the on-disk checkpoint for the CURRENTLY-BOUND user without
   /// touching the live in-memory session (unlike [clear], which also wipes
   /// `state` — the caller has typically already called `start(workoutId)`

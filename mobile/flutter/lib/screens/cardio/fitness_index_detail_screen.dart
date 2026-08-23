@@ -16,6 +16,18 @@ import '../common/app_refresh_indicator.dart';
 /// flexibility) with an overall, a goal-driven focus, and a k-anonymous peer
 /// percentile per axis. The radar animates in; axes with no data draw at the
 /// center with a muted label (honest, never fabricated).
+/// What each axis actually measures, keyed by `FitnessAxis.key`. Surfaced
+/// under the axis label so near-synonym axes (Cardio's VO2 max test vs
+/// Endurance's day-to-day training load) never look like the same metric
+/// disagreeing with itself when one has data and the other doesn't.
+const Map<String, String> _kAxisSource = {
+  'cardio': 'VO2 max from a synced cardio test',
+  'endurance': 'Training-load capacity from your cardio session history',
+  'body_comp': 'BMI from your latest body measurement',
+  'strength': 'Completed working sets in the last 7 days',
+  'flexibility': 'Logged mobility/stretch/yoga sets over 28 days',
+};
+
 class FitnessIndexDetailScreen extends ConsumerWidget {
   /// True when composed inside the Health tab's shell rather than pushed as
   /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
@@ -89,6 +101,12 @@ class FitnessIndexDetailScreen extends ConsumerWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
+    // A radar with fewer than 4 of 5 axes plotted collapses to a near-vertical
+    // line, not a shape — it conveys nothing. Fall back to the per-axis bar
+    // rows (already rendered below) until there's enough data for a polygon
+    // to actually read as one (E2E register #250).
+    final axesWithData = data.axes.where((a) => a.hasData).length;
+    final showRadar = axesWithData >= 4;
 
     return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(fitnessIndexProvider),
@@ -139,24 +157,34 @@ class FitnessIndexDetailScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: TweenAnimationBuilder<double>(
-                    duration: const Duration(milliseconds: 850),
-                    curve: Curves.easeOutCubic,
-                    tween: Tween(begin: 0, end: 1),
-                    builder: (context, t, _) => CustomPaint(
-                      painter: _FitnessRadarPainter(
-                        axes: data.axes,
-                        accent: accent,
-                        t: t,
-                        labelColor: textSecondary,
-                        valueColor: textPrimary,
-                        gridColor: textSecondary.withValues(alpha: 0.18),
+                if (showRadar)
+                  AspectRatio(
+                    aspectRatio: 1,
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 850),
+                      curve: Curves.easeOutCubic,
+                      tween: Tween(begin: 0, end: 1),
+                      builder: (context, t, _) => CustomPaint(
+                        painter: _FitnessRadarPainter(
+                          axes: data.axes,
+                          accent: accent,
+                          t: t,
+                          labelColor: textSecondary,
+                          valueColor: textPrimary,
+                          gridColor: textSecondary.withValues(alpha: 0.18),
+                        ),
                       ),
                     ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'Track ${5 - axesWithData} more area${5 - axesWithData == 1 ? '' : 's'} to unlock the radar view — here\'s what\'s tracked so far:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12.5, color: textSecondary),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -352,11 +380,21 @@ class _AxisRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(axis.label,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(axis.label,
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary)),
+                    if (_kAxisSource[axis.key] != null)
+                      Text(_kAxisSource[axis.key]!,
+                          style: TextStyle(
+                              fontSize: 11.5, color: textSecondary)),
+                  ],
+                ),
               ),
               Text(axis.hasData ? '${axis.value}' : 'No data',
                   style: TextStyle(

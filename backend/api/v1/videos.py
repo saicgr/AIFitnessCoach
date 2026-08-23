@@ -810,16 +810,22 @@ async def get_image_by_exercise_name(
                 _fb = _canonical_demo_fallback()
                 if _fb:
                     return _fb
-                raise HTTPException(
-                    status_code=404,
-                    detail={"error": "no_image", "exercise_id": row["id"]},
-                )
-            from api.v1.library.utils import resolve_image_url
-            return {
-                "url": resolve_image_url(row["image_s3_path"]),
-                "expires_in": None,
-                "exercise_name": row["exercise_name"],
-            }
+                # This specific row has no image, but a SIBLING row under the
+                # same exercise_name might (duplicate library imports, gendered
+                # variants) — Path 2 below already picks the best of those via
+                # `_pick_best`. A caller that resolved this id from a NAME
+                # (e.g. the workout summary's exerciseId lookup) would get a
+                # false "no image" here even though the plain name lookup the
+                # active session uses finds one, so fall through to Path 2
+                # keyed on this row's own canonical name instead of 404ing.
+                exercise_name = row.get("exercise_name") or exercise_name
+            else:
+                from api.v1.library.utils import resolve_image_url
+                return {
+                    "url": resolve_image_url(row["image_s3_path"]),
+                    "expires_in": None,
+                    "exercise_name": row["exercise_name"],
+                }
 
         # ---- Path 2: name-based lookup --------------------------------------
         base_name = exercise_name

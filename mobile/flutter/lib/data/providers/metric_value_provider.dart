@@ -13,6 +13,7 @@ import '../models/today_score.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/nutrition_repository.dart';
 import '../../core/providers/user_provider.dart' show hydrationUseOzProvider;
+import '../../core/utils/hydration_units.dart';
 import '../services/health_service.dart';
 import '../../screens/home/widgets/cards/readiness_score_card.dart'
     show readinessScoreSignalProvider;
@@ -35,8 +36,6 @@ import 'nutrition_preferences_provider.dart';
 import 'sleep_score_provider.dart';
 import 'today_score_provider.dart';
 import 'trend_series_provider.dart';
-
-const double _mlPerOz = 29.5735;
 
 /// Maps a home metric to its trend series (for sparkline/line tiles), or null
 /// when no trend series fits. Public so the home deck can deep-link a tile to
@@ -232,12 +231,11 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
         final useOz = ref.watch(hydrationUseOzProvider);
         final unit = useOz ? 'oz' : 'L';
         if (s == null) return base(empty: true, unit: unit);
-        final value = useOz ? s.totalMl / _mlPerOz : s.totalMl / 1000;
-        final goalValue = useOz ? s.goalMl / _mlPerOz : s.goalMl / 1000;
-        final displayValue =
-            useOz ? value.round().toString() : value.toStringAsFixed(1);
-        final goalLabel =
-            useOz ? goalValue.round().toString() : goalValue.toStringAsFixed(1);
+        final value = hydrationDisplayValue(s.totalMl.toDouble(), useOz: useOz);
+        final goalValue =
+            hydrationDisplayValue(s.goalMl.toDouble(), useOz: useOz);
+        final displayValue = formatHydrationDisplay(value, useOz: useOz);
+        final goalLabel = formatHydrationDisplay(goalValue, useOz: useOz);
         return base(
           value: value,
           displayValue: displayValue,

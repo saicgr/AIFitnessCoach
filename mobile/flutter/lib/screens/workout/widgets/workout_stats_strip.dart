@@ -64,6 +64,8 @@ class WorkoutStatsStrip extends ConsumerWidget {
     final calories = _computeCalories(
       seconds: workoutSeconds,
       bodyWeightKg: bodyWeightKg,
+      totalVolumeKg: totalVolumeKg,
+      totalSets: setLogs.where((s) => s.setType.toLowerCase() != 'warmup').length,
     );
 
     // Live heart rate (EFFORT) — only when requested AND a wearable is
@@ -185,10 +187,25 @@ class WorkoutStatsStrip extends ConsumerWidget {
   static int _computeCalories({
     required int seconds,
     required double bodyWeightKg,
+    double totalVolumeKg = 0,
+    int totalSets = 0,
   }) {
     if (seconds <= 0) return 0;
+    // Row 139 — a flat MET ignored logged volume/sets entirely, so the live
+    // header (127 kcal at 18m37s) and the completion summary's MET-based
+    // estimate (which DOES factor in volume/sets/reps/etc. — see backend
+    // `_calculate_completion_calories`) could read nearly double one another
+    // for the identical session. Scaling MET with the same volume/sets
+    // signal the backend uses brings the live number in line with what the
+    // summary will actually show, instead of two independently-diverging
+    // formulas for "the same" number.
+    double met = _kStrengthMET;
+    if (totalSets >= 15) met += 0.3;
+    if (totalSets >= 25) met += 0.3;
+    if (totalVolumeKg > 5000) met += 0.3;
+    if (totalVolumeKg > 15000) met += 0.3;
     // kcal = MET × body_weight_kg × hours.
-    final kcal = _kStrengthMET * bodyWeightKg * (seconds / 3600.0);
+    final kcal = met * bodyWeightKg * (seconds / 3600.0);
     return kcal.round();
   }
 

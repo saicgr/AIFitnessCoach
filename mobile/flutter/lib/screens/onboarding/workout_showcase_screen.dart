@@ -776,30 +776,44 @@ class _ExerciseIllustrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The illustration itself is a flat photo with a baked-in white
+    // background (no alpha to key out), which used to sit as a bare white
+    // square directly against the demo's pure-black scaffold — the single
+    // brightest thing on screen, pulling focus off the "tap to log set"
+    // coach-mark below. A themed dark mount steps the luminance down
+    // gradually (black → elevated surface → white card) instead of a hard
+    // black-to-white cut, so the card reads as a deliberately framed photo.
     return Container(
-      width: size,
-      height: size,
+      padding: EdgeInsets.all(size * 0.14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.elevated,
+        borderRadius: BorderRadius.circular(28),
       ),
-      padding: EdgeInsets.all(size * 0.08),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Image.asset(
-          assetPath,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Icon(
-            Icons.accessibility_new_rounded,
-            size: size * 0.65,
-            color: const Color(0xFF424242),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(size * 0.08),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Icon(
+              Icons.accessibility_new_rounded,
+              size: size * 0.65,
+              color: const Color(0xFF424242),
+            ),
           ),
         ),
       ),

@@ -140,12 +140,12 @@ class BeastModeConfig {
   };
 
   static final Map<String, double> defaultScoringWeights = {
-    'Freshness': 0.25,
-    'Staple': 0.18,
-    'Known Data': 0.12,
-    'Collaborative': 0.12,
-    'SFR': 0.10,
-    'Random': 0.10,
+    'Freshness': 0.29,
+    'Staple': 0.21,
+    'Known Data': 0.14,
+    'Collaborative': 0.14,
+    'SFR': 0.11,
+    'Random': 0.11,
   };
 
   BeastModeConfig copyWith({

@@ -14114,7 +14114,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '注册即可解锁 1700+ 动作';
+  String get guestHome1700WithSignup => '注册即可解锁 2300+ 动作';
 
   @override
   String get guestHomeAiCoachDemo => 'AI 教练演示';
@@ -14221,7 +14221,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '展示 $guestExerciseLimit 个示例练习。免费注册即可访问 1700+ 个练习！';
+    return '展示 $guestExerciseLimit 个示例练习。免费注册即可访问 2300+ 个练习！';
   }
 
   @override
@@ -14243,7 +14243,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get guestLibrarySignUpToView => '注册后即可查看该动作的详细说明。';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '解锁 1700+ 动作';
+  String get guestLibraryUnlock1700Exercises => '解锁 2300+ 动作';
 
   @override
   String get guestLockedFeatureUnlockFree => '免费解锁';
@@ -25955,7 +25955,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => '正在匹配您的体型';
 
   @override
-  String get planAnalyzingPullingFrom1700 => '正在从1700+个动作中筛选';
+  String get planAnalyzingPullingFrom1700 => '正在从2300+个动作中筛选';
 
   @override
   String get planAnalyzingReviewingYourGoals => '正在审核您的目标';
@@ -34383,6 +34383,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => '所有档案';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '编辑 “$exerciseName”';
   }
@@ -41442,6 +41445,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutUiModeAdvanced => '进阶模式';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±5 lb增量、杠铃片计算表。';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       '全功能——包含热身/拉伸阶段、RPE/RIR、金字塔训练、超级组、递减组、±2.5 kg增量、杠铃片计算表。';
 
@@ -42341,6 +42348,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get heroModesActionRetry => '重试';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => '进行中';
 
   @override
@@ -42678,7 +42692,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“一位好的私人教练每月要 \$400。我实在负担不起，于是花了两年时间自己做了一个：1,722 个动作、真实的渐进负荷逻辑、一个真正会查看你这一周的教练。我自己每天都在用。”';
+      '“一位好的私人教练每月要 \$400。我实在负担不起，于是花了两年时间自己做了一个：2,300 个动作、真实的渐进负荷逻辑、一个真正会查看你这一周的教练。我自己每天都在用。”';
 
   @override
   String get paywallFounderName => 'Chetan · 创始人';

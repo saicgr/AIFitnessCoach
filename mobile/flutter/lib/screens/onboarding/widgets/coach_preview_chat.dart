@@ -112,6 +112,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
       _s.typing = false;
       _s.messages.add(msg);
     });
+    _scrollToBottom();
   }
 
   void _askChip(int index, PreviewChip chip) {
@@ -122,6 +123,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
       _s.messages.add(PreviewMsg(chip.question, isUser: true));
       _s.typing = true;
     });
+    _scrollToBottom();
     ref.read(posthogServiceProvider).capture(
       eventName: 'coach_preview_question',
       properties: {
@@ -146,6 +148,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
       _s.messages.add(PreviewMsg(q, isUser: true));
       _s.typing = true;
     });
+    _scrollToBottom();
 
     // Smalltalk: instant persona-voiced local reply. No live turn burned,
     // no API call made — greetings cost zero and can't fail.
@@ -261,6 +264,7 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
               ),
       );
     });
+    _scrollToBottom();
     ref.read(posthogServiceProvider).capture(
       eventName: 'coach_preview_fallback',
       properties: {'coach_id': widget.coach.id},
@@ -296,20 +300,42 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
   }
 
   Widget _buildTranscript(bool isDark, Color textPrimary, Color cc) {
-    // reverse:true anchors sparse conversations to the bottom and keeps the
-    // newest message in view without manual scroll bookkeeping.
-    final items = _s.messages.reversed.toList();
+    // Natural (non-reversed) order, top-anchored. `reverse: true` used to
+    // anchor the list to the BOTTOM of the Expanded chat area — correct once
+    // the transcript overflows, but with just the single opener message (the
+    // common case right after a coach card opens) it left a large blank gap
+    // between the header and that one bottom-anchored bubble, showing the
+    // card's own coach-tinted background through it — a solid orange void
+    // for the default coach. Content now lays out from the top like an
+    // ordinary message list; `_scrollToBottom` (called after every append)
+    // keeps the newest message in view once the conversation grows past the
+    // visible height.
+    final items = _s.messages;
     return ListView.builder(
       controller: _scroll,
-      reverse: true,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       itemCount: items.length + (_s.typing ? 1 : 0),
       itemBuilder: (context, index) {
-        if (_s.typing && index == 0) return _typingBubble(isDark, cc);
-        final msg = items[index - (_s.typing ? 1 : 0)];
+        if (_s.typing && index == items.length) return _typingBubble(isDark, cc);
+        final msg = items[index];
         return _bubble(msg, isDark, textPrimary, cc);
       },
     );
+  }
+
+  /// Scrolls the transcript to the newest message once it no longer fits in
+  /// the visible height. Scheduled a frame out since it runs right after a
+  /// `setState` that appended a message — the new bubble's height isn't in
+  /// the scroll metrics until the next layout pass.
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Widget _bubble(PreviewMsg msg, bool isDark, Color textPrimary, Color cc) {

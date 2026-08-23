@@ -612,6 +612,41 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  /// Human sentence explaining why the CTA is disabled on the current step,
+  /// or null when the step is already valid (or has no stated reason). Mirrors
+  /// `_missingReason` in `QuizPersonalizationGate` so every gated step gives
+  /// the same "what's missing" feedback instead of just greying the button.
+  String? get _canProceedReason {
+    if (_canProceed) return null;
+    switch (_currentQuestion) {
+      case 0:
+        return 'Select a goal to continue';
+
+      case 1:
+        final missing = <String>[];
+        if (_selectedLevel == null) missing.add('fitness level');
+        if (_selectedTrainingExperience == null) missing.add('training experience');
+        if (_selectedActivityLevel == null) missing.add('activity level');
+        if (missing.isEmpty) return null;
+        if (missing.length == 1) return 'Select your ${missing.first} to continue';
+        final last = missing.last;
+        final head = missing.sublist(0, missing.length - 1).join(', ');
+        return 'Select your $head and $last to continue';
+
+      case 2:
+        if (_selectedDays == null) return 'Select how many days a week to continue';
+        if (_workoutDurationMax == null) return 'Select a session length to continue';
+        return 'Select $_selectedDays workout days to continue';
+
+      case 4:
+        if (_selectedEnvironment == null) return 'Select where you train to continue';
+        return 'Select at least one piece of equipment to continue';
+
+      default:
+        return null;
+    }
+  }
+
   /// Get the title for a given quiz step (used by FoldableQuizScaffold left pane).
   String _getStepTitle(int step) {
     switch (step) {
@@ -1312,34 +1347,38 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   }
 
   Widget _buildPrimaryGoal({bool showHeader = true}) {
+    // One accent for all four, not a fourth unrelated rainbow (orange / blue
+    // / purple / green) in a single onboarding flow. These are rep-range
+    // styles, not categories with a real semantic distinction that would
+    // justify per-option colour-coding (contrast the injury/limitation
+    // chips, where red genuinely means something different from brand) —
+    // omitting 'color' here falls back to `AppColors.onboardingAccent` in
+    // `QuizPrimaryGoal`, matching the accent-per-selection pattern already
+    // used on the "goals" step above.
     final options = [
       {
         'id': 'muscle_hypertrophy',
         'label': 'Hypertrophy',  // ← SHORTENED from "Muscle Hypertrophy"
         'description': '8–12 reps • muscle size',  // ← CONDENSED to concise format
         'icon': Icons.fitness_center_rounded,
-        'color': AppColors.onboardingAccent, // Vibrant orange for visibility
       },
       {
         'id': 'muscle_strength',
         'label': 'Strength',  // ← SHORTENED from "Muscle Strength"
         'description': '3–6 reps • heavy & powerful',  // ← CONDENSED
         'icon': Icons.bolt_rounded,
-        'color': const Color(0xFF3B82F6), // Bright blue  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
       },
       {
         'id': 'strength_hypertrophy',
         'label': 'Balanced',  // ← SHORTENED from "Both Strength & Hypertrophy"
         'description': '6–10 reps • size + strength',  // ← CONDENSED
         'icon': Icons.all_inclusive_rounded,
-        'color': const Color(0xFF8B5CF6), // Vibrant purple  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       },
       {
         'id': 'endurance',
         'label': 'Endurance',  // ← KEEP as-is
         'description': '12+ reps • stamina',  // ← CONDENSED
         'icon': Icons.directions_run_rounded,
-        'color': const Color(0xFF10B981), // Vibrant green  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       },
     ];
 

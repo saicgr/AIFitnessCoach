@@ -14964,7 +14964,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ mit Anmeldung';
+  String get guestHome1700WithSignup => '2300+ mit Anmeldung';
 
   @override
   String get guestHomeAiCoachDemo => 'KI-Coach Demo';
@@ -15082,7 +15082,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Zeige $guestExerciseLimit Beispielübungen. Melde dich kostenlos an, um Zugriff auf über 1700 Übungen zu erhalten!';
+    return 'Zeige $guestExerciseLimit Beispielübungen. Melde dich kostenlos an, um Zugriff auf über 2300 Übungen zu erhalten!';
   }
 
   @override
@@ -15108,7 +15108,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      'Über 1700 Übungen freischalten';
+      'Über 2300 Übungen freischalten';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Kostenlos freischalten';
@@ -27588,7 +27588,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Wird aus über 1.700 Übungen zusammengestellt';
+      'Wird aus über 2.300 Übungen zusammengestellt';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Ziele werden überprüft';
@@ -36501,6 +36501,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Alle Profile';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" bearbeiten';
   }
@@ -43965,6 +43968,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Fortgeschritten';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Alles — Aufwärm-/Dehnphasen, RPE/RIR, Pyramiden, Supersätze, Dropsätze, 5 lb Schritte, Gewichtstabelle.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Alles — Aufwärm-/Dehnphasen, RPE/RIR, Pyramiden, Supersätze, Dropsätze, 2,5 kg Schritte, Gewichtstabelle.';
 
@@ -44900,6 +44907,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get heroModesActionRetry => 'ERNEUT';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LIVE';
 
   @override
@@ -45252,7 +45266,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Ein guter Personal Trainer kostet \$400/Monat. Das konnte ich nicht rechtfertigen, also habe ich zwei Jahre lang einen gebaut: 1.722 Übungen, echte Progressionslogik, ein Coach, der sich wirklich deine Woche ansieht. Ich nutze ihn jeden einzelnen Tag.”';
+      '“Ein guter Personal Trainer kostet \$400/Monat. Das konnte ich nicht rechtfertigen, also habe ich zwei Jahre lang einen gebaut: 2.300 Übungen, echte Progressionslogik, ein Coach, der sich wirklich deine Woche ansieht. Ich nutze ihn jeden einzelnen Tag.”';
 
   @override
   String get paywallFounderName => 'Chetan · Gründer';

@@ -204,7 +204,6 @@ def test_fallback_shape_when_pools_degenerate(monkeypatch):
     monkeypatch.setattr(gen, "EQUIPMENT_TAG_BY_FAMILY", {"bodyweight": []})
     monkeypatch.setattr(gen, "FOCUS_TAIL_BY_FOCUS", {"full_body": []})
     monkeypatch.setattr(gen, "DURATION_FLAVOR_BY_BUCKET", {"30-60min": []})
-    monkeypatch.setattr(gen, "MYTHIC_PREFIX", [])
 
     name = generate_workout_name(
         goal="strength",

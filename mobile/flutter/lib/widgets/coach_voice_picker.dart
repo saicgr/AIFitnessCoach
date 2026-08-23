@@ -11,7 +11,7 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 /// Coach voice selector.
 /// - "Default" is always available.
 /// - "Coach Chad" / "Coach Serena" require owning the matching cosmetic
-///   (unlocked at Level 50 via the cosmetics system).
+///   (unlocked at Level 15 via the cosmetics system).
 /// On selection: persists via AI Settings API + applies the new voice live.
 class CoachVoicePicker extends ConsumerWidget {
   const CoachVoicePicker({super.key});

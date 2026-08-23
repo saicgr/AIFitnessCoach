@@ -104,7 +104,7 @@ class _MicrosEntryCardState extends State<MicrosEntryCard> {
                                   color: textPrimary, letterSpacing: 1.5),
                             ),
                             Text(
-                              'Track 30+ nutrients vs your daily targets',
+                              'Track 30+ nutrients vs. recommended daily intake',
                               style: TextStyle(
                                   fontSize: 12, color: textSecondary),
                             ),
@@ -137,11 +137,13 @@ class _MicrosEntryCardState extends State<MicrosEntryCard> {
                         style: TextStyle(fontSize: 13, color: textSecondary),
                       ),
                     )
-                  else
+                  else ...[
                     ...peek.map((n) => _MiniNutrientBar(
                           nutrient: n,
                           isDark: isDark,
                         )),
+                    _NutrientColorLegend(textSecondary: textSecondary),
+                  ],
                   const SizedBox(height: 4),
                   SizedBox(
                     width: double.infinity,
@@ -236,5 +238,48 @@ class _MiniNutrientBar extends StatelessWidget {
     if (h.length == 6) h = 'FF$h';
     final v = int.tryParse(h, radix: 16);
     return v == null ? null : Color(v);
+  }
+}
+
+/// Legend for the bar colours above — every bar is now keyed to the same
+/// attainment scale (see [NutrientProgress.progressColor]), so a single
+/// shared key explains all of them instead of four unexplained hues.
+class _NutrientColorLegend extends StatelessWidget {
+  final Color textSecondary;
+  const _NutrientColorLegend({required this.textSecondary});
+
+  static const _entries = <(Color, String)>[
+    (Color(0xFFF44336), 'Low'),
+    (Color(0xFFFFC107), 'Adequate'),
+    (Color(0xFF4CAF50), 'Met'),
+    (Color(0xFFFF9800), 'Over'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 8),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 4,
+        children: [
+          for (final (color, label) in _entries)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration:
+                      BoxDecoration(color: color, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 4),
+                Text(label,
+                    style: TextStyle(fontSize: 10, color: textSecondary)),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }

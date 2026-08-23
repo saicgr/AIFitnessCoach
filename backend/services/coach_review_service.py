@@ -85,6 +85,24 @@ class CoachReviewService:
         plan = self._fetch_plan_with_items(plan_id)
         if not plan:
             raise ValueError("meal plan not found")
+        if not plan.get("items"):
+            # Nothing to grade — an empty plan has no caloric/macro intake, so
+            # a model call here only produces a confident-looking 0/100 and a
+            # nonsense micronutrient-gaps entry (row 422). Short-circuit with
+            # an honest empty-state review; no Gemini tokens spent.
+            return await self._persist(
+                user_id=user_id,
+                subject_type=CoachReviewSubject.MEAL_PLAN,
+                subject_id=plan_id,
+                subject_version=None,
+                kind=kind,
+                ai={
+                    "full_feedback": (
+                        "This meal plan doesn't have any meals yet — add "
+                        "some to get a coach review."
+                    ),
+                },
+            )
         profile = await self._fetch_profile(user_id)
         subject_data = json.dumps(plan, default=str)
         ai = await self._call_gemini("meal_plan", subject_data, profile)

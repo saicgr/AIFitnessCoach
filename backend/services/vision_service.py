@@ -2814,12 +2814,23 @@ Return ONLY valid JSON with this exact structure:
     "total_carbs_g": <float>,
     "total_fat_g": <float>,
     "total_fiber_g": <float>,
+    "sodium_mg": <float or null - from the label's Sodium row>,
+    "potassium_mg": <float or null - from the label's Potassium row>,
+    "iron_mg": <float or null - from the label's Iron row>,
+    "sugar_g": <float or null - from the label's Total Sugars row>,
+    "saturated_fat_g": <float or null - from the label's Saturated Fat row>,
+    "cholesterol_mg": <float or null - from the label's Cholesterol row>,
+    "calcium_mg": <float or null - from the label's Calcium row>,
     "health_score": <integer 1-10>
 }}
 
 Guidelines:
 - Read exact values from the label
 - Multiply ALL values by {servings_consumed} servings consumed
+- The micronutrient rows (sodium/potassium/iron/sugar/saturated fat/
+  cholesterol/calcium) are printed on nearly every panel — read whichever of
+  them ARE printed. Use null (never 0) for a nutrient the panel genuinely
+  does not list, so "not on this label" stays distinct from "zero of it".
 - Health score based on nutritional quality
 - Keep output strictly to the JSON — no prose, no commentary"""
 

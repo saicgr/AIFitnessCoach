@@ -16,6 +16,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 import asyncio
 import json
 import logging
+import random
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.auth import get_current_user
@@ -735,6 +736,17 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 effective_duration = target_duration_min
             else:
                 effective_duration = target_duration
+
+            # Spread the actual session length across the user's chosen range
+            # instead of always pinning it to one anchor point — otherwise every
+            # workout in the range reports the same duration_minutes (and, since
+            # calories are derived from duration, the same estimated_calories).
+            if (
+                target_duration_min
+                and target_duration_max
+                and target_duration_max > target_duration_min
+            ):
+                target_duration = random.randint(target_duration_min, target_duration_max)
 
             # Calculate base exercise count from duration. Pre-fix audit
             # found duration scaling was too flat (60min=6.5, 90min=6.6).

@@ -118,6 +118,14 @@ class StapleExercise {
       defaultResistanceLevel != null ||
       strokeRateSpm != null;
 
+  /// Whether the user has customised this staple's prescription (weight,
+  /// sets, reps, or rest) away from the exercise's default — row 284.
+  bool get hasCustomPrescription =>
+      userWeightLbs != null ||
+      userSets != null ||
+      (userReps != null && userReps!.trim().isNotEmpty) ||
+      userRestSeconds != null;
+
   /// Formatted cardio params for display
   String get cardioParamsDisplay {
     final parts = <String>[];

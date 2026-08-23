@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/chrome_constants.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -473,6 +474,23 @@ class _DailyTabState extends ConsumerState<DailyTab>
   // refresh icon on the removed NutritionGoalsCard. The equivalent flow is
   // now exposed as "Recalculate from profile" inside EditTargetsSheet.
 
+  // The meal-list section heading above used to read "TODAY'S LOG" no
+  // matter which day was selected — correct while viewing today, stale and
+  // wrong on every other day (e.g. still saying "Today" on a screen titled
+  // "Nutrition · Yesterday"). Bind it to the actual selected date instead.
+  String get _mealSectionLabel {
+    if (widget.isViewingToday) return "TODAY'S LOG";
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final d = widget.selectedDate;
+    if (d.year == yesterday.year &&
+        d.month == yesterday.month &&
+        d.day == yesterday.day) {
+      return "YESTERDAY'S LOG";
+    }
+    return DateFormat('EEE, MMM d').format(d).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // required by AutomaticKeepAliveClientMixin
@@ -596,7 +614,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text("TODAY'S LOG",
+                          child: Text(_mealSectionLabel,
                               style: ZType.lbl(11,
                                   color: ThemeColors.of(context).textMuted,
                                   letterSpacing: 2)),
@@ -698,6 +716,9 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   HydrationSummaryBlock(
                     key: _hydrationKey,
                     isDark: widget.isDark,
+                    userId: widget.userId,
+                    date: widget.selectedDate,
+                    isViewingToday: widget.isViewingToday,
                     // Tapping the card opens the full hydration tracker (the
                     // restored Fuel-tab experience), now hosted in
                     // HydrationDetailScreen.

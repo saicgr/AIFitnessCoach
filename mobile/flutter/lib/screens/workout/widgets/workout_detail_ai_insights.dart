@@ -539,7 +539,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                    accentColor.withValues(alpha: 0.15),
                     accentColor.withValues(alpha: 0.1),
                   ],
                 ),
@@ -549,17 +549,17 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   bottomLeft: Radius.circular(isExpanded ? 0 : 12),
                   bottomRight: Radius.circular(isExpanded ? 0 : 12),
                 ),
-                border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                      color: accentColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.psychology, color: AppColors.green, size: 18),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                    child: Icon(Icons.psychology, color: accentColor, size: 18),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -579,7 +579,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                   ),
                   Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: AppColors.green, size: 22),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                    color: accentColor, size: 22),
                 ],
               ),
             ),

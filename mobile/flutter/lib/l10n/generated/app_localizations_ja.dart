@@ -14281,7 +14281,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '登録で1700以上';
+  String get guestHome1700WithSignup => '登録で2300以上';
 
   @override
   String get guestHomeAiCoachDemo => 'AIコーチのデモ';
@@ -14389,7 +14389,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'サンプル種目$guestExerciseLimit件を表示中。無料登録で1700以上の種目にアクセス！';
+    return 'サンプル種目$guestExerciseLimit件を表示中。無料登録で2300以上の種目にアクセス！';
   }
 
   @override
@@ -14413,7 +14413,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get guestLibrarySignUpToView => '登録して、このエクササイズの詳細な手順を表示しましょう。';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '1700以上のエクササイズをアンロック';
+  String get guestLibraryUnlock1700Exercises => '2300以上のエクササイズをアンロック';
 
   @override
   String get guestLockedFeatureUnlockFree => '無料でアンロック';
@@ -26283,7 +26283,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => '体型に合わせて調整中';
 
   @override
-  String get planAnalyzingPullingFrom1700 => '1,700種類以上のエクササイズから選択中';
+  String get planAnalyzingPullingFrom1700 => '2,300種類以上のエクササイズから選択中';
 
   @override
   String get planAnalyzingReviewingYourGoals => '目標を確認中';
@@ -34798,6 +34798,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'すべてのプロフィール';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\"を編集';
   }
@@ -41955,6 +41958,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutUiModeAdvanced => '上級者向け';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±5lb単位の調整、プレートチャート。';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'すべてを表示 — ウォームアップ/ストレッチフェーズ、RPE/RIR、ピラミッド、スーパーセット、ドロップセット、±2.5kg単位の調整、プレートチャート。';
 
@@ -42861,6 +42868,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get heroModesActionRetry => '再試行';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'ライブ';
 
   @override
@@ -43198,7 +43212,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '「優秀なパーソナルトレーナーは\$400/月。とても払えなかったので、2年かけて自分で作りました。1,722種目、本物の漸進ロジック、あなたの1週間を実際に見てくれるコーチ。私自身、毎日使っています。」';
+      '「優秀なパーソナルトレーナーは\$400/月。とても払えなかったので、2年かけて自分で作りました。2,300種目、本物の漸進ロジック、あなたの1週間を実際に見てくれるコーチ。私自身、毎日使っています。」';
 
   @override
   String get paywallFounderName => 'Chetan · 創業者';

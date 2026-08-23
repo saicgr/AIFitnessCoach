@@ -12,6 +12,8 @@ import '../../data/services/api_client.dart';
 import '../../data/services/health_goals_service.dart';
 import '../../data/services/health_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../settings/sections/health_sync_section.dart'
+    show healthSyncPreferencesProvider;
 import '../../widgets/date_strip.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/trend_chart.dart';
@@ -192,6 +194,11 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
             isDark: isDark,
             selectedDate: _selectedDate,
             history: history,
+            // Only worth naming as the cause when nothing has ever synced —
+            // a per-day gap with real history elsewhere isn't explained by
+            // this toggle.
+            syncSleepOff: history.latest == null &&
+                !ref.watch(healthSyncPreferencesProvider).syncSleep,
           )
         else ...[
           if (showingFallback)
@@ -1228,10 +1235,15 @@ class _NoNightForDay extends StatelessWidget {
   final bool isDark;
   final DateTime selectedDate;
   final SleepHistory history;
+  // True when nothing has ever synced AND the Sleep toggle in Data to sync
+  // is off — the likely reason, so the empty state names it instead of
+  // leaving the user to guess.
+  final bool syncSleepOff;
   const _NoNightForDay({
     required this.isDark,
     required this.selectedDate,
     required this.history,
+    this.syncSleepOff = false,
   });
 
   @override
@@ -1239,6 +1251,7 @@ class _NoNightForDay extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final accent = context.accentColor;
     final latest = history.latest;
     return _Card(
       isDark: isDark,
@@ -1263,6 +1276,28 @@ class _NoNightForDay extends StatelessWidget {
                 : 'No nights have been tracked yet.',
             style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
+          if (syncSleepOff) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () => context.push('/settings/health-devices'),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Sleep sync is off — turn it on',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: accent),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

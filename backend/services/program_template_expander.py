@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import uuid
 from datetime import date, datetime, time, timedelta
 from typing import Any, Dict, List, Optional
@@ -363,7 +364,7 @@ def _library_meta_for(exercise_id: Optional[str]) -> Optional[Dict[str, Any]]:
         db = get_supabase_db()
         res = (
             db.client.table("exercise_library")
-            .select("equipment,is_timed,movement_pattern,default_hold_seconds")
+            .select("equipment,is_timed,movement_pattern,default_hold_seconds,target_muscle,body_part")
             .eq("id", exercise_id)
             .limit(1)
             .execute()
@@ -452,6 +453,16 @@ def _day_to_exercises_json(
                     obj["equipment"] = _lib["equipment"]
                 if _lib.get("is_timed") is not None:
                     obj["is_timed"] = _lib["is_timed"]
+                # Same target_muscle -> muscle_group mapping the staple builder
+                # uses (preference_engine._build_exercise_object) -- without
+                # this, every exercise routed through this expander (i.e. not
+                # a staple) stores no muscle_group at all, and any downstream
+                # consumer that takes "the" muscle_group off a session's
+                # exercise list ends up reading whichever staple happened to
+                # be the only one with the field set.
+                _muscle = _lib.get("target_muscle") or _lib.get("body_part")
+                if _muscle:
+                    obj["muscle_group"] = re.sub(r"\s*\(.*?\)", "", _muscle).strip() or _muscle
             # Honor an EXPLICIT authored timer: timed-circuit programs (e.g. the
             # World Cup conditioning intervals) set tracking_type="time" +
             # duration_seconds on the source exercise. The name/library derive

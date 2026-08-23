@@ -10,6 +10,7 @@ from core.db.workout_db import USER_INITIATED_WORKOUT_SOURCES
 from api.v1.workouts.generation_endpoints import _parse_workout_day_overrides
 import json
 import asyncio
+import random
 from datetime import datetime
 from typing import AsyncGenerator, Optional
 
@@ -569,6 +570,17 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             target_duration = resolved_duration["target"]
             target_duration_min = resolved_duration["min"]
             target_duration_max = resolved_duration["max"]
+
+            # Spread the actual session length across the user's chosen range
+            # instead of always pinning it to one anchor point — otherwise every
+            # workout in the range reports the same duration_minutes (and, since
+            # calories are derived from duration, the same estimated_calories).
+            if (
+                target_duration_min
+                and target_duration_max
+                and target_duration_max > target_duration_min
+            ):
+                target_duration = random.randint(target_duration_min, target_duration_max)
             logger.info(
                 f"[Streaming Duration] Resolved target={target_duration}, "
                 f"min={target_duration_min}, max={target_duration_max} "
@@ -1359,6 +1371,22 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "equipment": equipment if isinstance(equipment, list) else [],
                 }
                 exercises = validate_set_targets_strict(exercises, user_context)
+
+                # Progression-sanity guard (E2E register #162) — clamps any
+                # generated set_targets entry that jumps BOTH weight and reps
+                # past the user's last logged best set for that exercise in
+                # one step. Fail-open on any error.
+                try:
+                    from services.set_target_progression_guard import (
+                        enforce_progression_sanity,
+                    )
+                    exercises = await enforce_progression_sanity(
+                        exercises, str(body.user_id)
+                    )
+                except Exception as _pg:  # noqa: BLE001 — fail open
+                    logger.warning(
+                        f"[Streaming ProgressionGuard] stage raised, keeping targets: {_pg}"
+                    )
 
                 # ── TERMINAL INJURY-SAFETY GUARD (injury-2026-06) ──────────────
                 # The streaming path had NO injury gate; Phase-0 testing showed it

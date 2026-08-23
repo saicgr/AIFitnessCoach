@@ -1330,6 +1330,17 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
 
+/// Live OS push-authorization state (null = undetermined), shared by any
+/// screen that needs to reconcile an in-app notification toggle/promise with
+/// the actual OS permission (findings #370, #458 — a toggle/promise that
+/// looks "on" while iOS push authorization is silently denied).
+/// `autoDispose` so it re-checks on next watch instead of caching a stale
+/// denial across the whole app session.
+final osNotificationPermissionGrantedProvider =
+    FutureProvider.autoDispose<bool?>((ref) {
+  return ref.read(notificationServiceProvider).isOsNotificationPermissionGranted();
+});
+
 final notificationPreferencesProvider =
     StateNotifierProvider<NotificationPreferencesNotifier, NotificationPreferences>((ref) {
   throw UnimplementedError('Must be overridden with SharedPreferences');

@@ -90,7 +90,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                           color: textPrimary,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (subtitle.isNotEmpty) ...[

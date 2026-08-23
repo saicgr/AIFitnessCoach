@@ -380,6 +380,15 @@ class WorkoutActionChips {
     icon: Icons.tune_outlined,
   );
 
+  /// Breathing guide — opens the inhale/exhale cue sheet for the current
+  /// exercise. Lives in this row (not its own line above the chips) so it
+  /// reads as one of the same kind of control as Form/Swap/Adjust/Pyramid.
+  static const breathing = ActionChipData(
+    id: 'breathing',
+    label: 'Breathing',
+    icon: Icons.air_rounded,
+  );
+
   static ActionChipData leftRight({bool isActive = false}) => ActionChipData(
     id: 'lr',
     label: 'L/R',

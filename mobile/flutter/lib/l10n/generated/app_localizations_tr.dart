@@ -14842,7 +14842,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'Kayıt ile 1700+';
+  String get guestHome1700WithSignup => 'Kayıt ile 2300+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach Demosu';
@@ -14956,7 +14956,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit örnek egzersiz gösteriliyor. 1700+ egzersize erişmek için ücretsiz kaydolun!';
+    return '$guestExerciseLimit örnek egzersiz gösteriliyor. 2300+ egzersize erişmek için ücretsiz kaydolun!';
   }
 
   @override
@@ -14982,7 +14982,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      '1700+ Egzersizin Kilidini Açın';
+      '2300+ Egzersizin Kilidini Açın';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Ücretsiz kilidini aç';
@@ -27371,7 +27371,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      '1.700+ egzersiz arasından seçim yapılıyor';
+      '2.300+ egzersiz arasından seçim yapılıyor';
 
   @override
   String get planAnalyzingReviewingYourGoals =>
@@ -36222,6 +36222,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Tüm Profiller';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" düzenle';
   }
@@ -43645,6 +43648,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Gelişmiş';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±5 lb artışlar, plaka tablosu.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Her şey — ısınma/esneme aşamaları, RPE/RIR, piramit, süper setler, drop setler, ±2.5 kg artışlar, plaka tablosu.';
 
@@ -44578,6 +44585,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get heroModesActionRetry => 'YENİDEN';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'CANLI';
 
   @override
@@ -44929,7 +44943,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“İyi bir kişisel antrenör ayda \$400. Bunu karşılayamazdım, ben de iki yılımı bir tane geliştirmeye verdim: 1.722 egzersiz, gerçek ilerleme mantığı, haftana gerçekten bakan bir koç. Her gün kullanıyorum.”';
+      '“İyi bir kişisel antrenör ayda \$400. Bunu karşılayamazdım, ben de iki yılımı bir tane geliştirmeye verdim: 2.300 egzersiz, gerçek ilerleme mantığı, haftana gerçekten bakan bir koç. Her gün kullanıyorum.”';
 
   @override
   String get paywallFounderName => 'Chetan · kurucu';

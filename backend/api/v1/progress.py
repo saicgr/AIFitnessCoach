@@ -428,6 +428,81 @@ async def get_volume_over_time(
                 for row in data
             ]
 
+            # `weekly_progress_summary` only counts sets from workout_logs
+            # rows that already have `completed_at` set — a session still
+            # `in_progress` contributes nothing until the user finishes it,
+            # so the Home volume card reads 0 for the whole first set of an
+            # active workout even though it was already written to
+            # `performance_logs`. Top up the affected week(s) with those
+            # live, not-yet-finalized sets so Home reflects the session in
+            # progress instead of waiting for completion.
+            try:
+                inprogress_result = db.client.table("workout_logs") \
+                    .select("id") \
+                    .eq("user_id", user_id) \
+                    .eq("status", "in_progress") \
+                    .execute()
+                inprogress_ids = [
+                    r["id"] for r in (inprogress_result.data or []) if r.get("id")
+                ]
+            except Exception as e:
+                logger.debug(f"Failed to look up in-progress workout_logs: {e}")
+                inprogress_ids = []
+
+            if inprogress_ids:
+                perf_result = db.client.table("performance_logs") \
+                    .select("weight_kg, reps_completed, recorded_at, is_completed") \
+                    .in_("workout_log_id", inprogress_ids) \
+                    .execute()
+
+                live_weeks: Dict[str, Dict[str, Any]] = {}
+                for prow in (perf_result.data or []):
+                    if prow.get("is_completed") is False:
+                        continue
+                    recorded_at = prow.get("recorded_at")
+                    if not recorded_at:
+                        continue
+                    try:
+                        dt = datetime.fromisoformat(str(recorded_at).replace("Z", "+00:00"))
+                    except Exception:
+                        continue
+                    week_start_date = dt.date() - timedelta(days=dt.weekday())
+                    if cutoff_date and week_start_date < cutoff_date:
+                        continue
+                    week_key = week_start_date.isoformat()
+                    bucket = live_weeks.setdefault(
+                        week_key, {"volume": 0.0, "sets": 0, "reps": 0}
+                    )
+                    bucket["volume"] += float(prow.get("weight_kg") or 0) * int(
+                        prow.get("reps_completed") or 0
+                    )
+                    bucket["sets"] += 1
+                    bucket["reps"] += int(prow.get("reps_completed") or 0)
+
+                if live_weeks:
+                    by_week = {w.week_start: w for w in weekly_data}
+                    for week_key, bucket in live_weeks.items():
+                        if week_key in by_week:
+                            existing = by_week[week_key]
+                            existing.total_volume_kg = round(
+                                existing.total_volume_kg + bucket["volume"], 2
+                            )
+                            existing.total_sets += bucket["sets"]
+                            existing.total_reps += bucket["reps"]
+                        else:
+                            weekly_data.append(WeeklyVolumeData(
+                                week_start=week_key,
+                                week_number=_get_week_number(week_key),
+                                year=_get_year(week_key),
+                                workouts_completed=0,
+                                total_minutes=0,
+                                avg_duration_minutes=0.0,
+                                total_volume_kg=round(bucket["volume"], 2),
+                                total_sets=bucket["sets"],
+                                total_reps=bucket["reps"],
+                            ))
+                    weekly_data.sort(key=lambda w: w.week_start)
+
         # Calculate trend
         trend = _calculate_volume_trend(weekly_data)
 

@@ -14967,7 +14967,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ con registrazione';
+  String get guestHome1700WithSignup => '2300+ con registrazione';
 
   @override
   String get guestHomeAiCoachDemo => 'Demo AI Coach';
@@ -15084,7 +15084,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Mostrando $guestExerciseLimit esercizi campione. Iscriviti gratuitamente per accedere a oltre 1700 esercizi!';
+    return 'Mostrando $guestExerciseLimit esercizi campione. Iscriviti gratuitamente per accedere a oltre 2300 esercizi!';
   }
 
   @override
@@ -15109,7 +15109,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Registrati per visualizzare le istruzioni dettagliate per questo esercizio.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Sblocca oltre 1700 esercizi';
+  String get guestLibraryUnlock1700Exercises => 'Sblocca oltre 2300 esercizi';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Sblocca gratis';
@@ -27576,7 +27576,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Selezione da oltre 1.700 esercizi';
+      'Selezione da oltre 2.300 esercizi';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Revisione dei tuoi obiettivi';
@@ -36497,6 +36497,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Tutti i profili';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Modifica \"$exerciseName\"';
   }
@@ -43977,6 +43980,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Avanzato';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Tutto: fasi di riscaldamento/stretching, RPE/RIR, piramidali, superserie, drop set, incrementi di ±5 lb, tabella dischi.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Tutto: fasi di riscaldamento/stretching, RPE/RIR, piramidali, superserie, drop set, incrementi di ±2.5 kg, tabella dischi.';
 
@@ -44920,6 +44927,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get heroModesActionRetry => 'RIPROVA';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'IN CORSO';
 
   @override
@@ -45270,7 +45284,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Un buon personal trainer costa \$400/mese. Non potevo giustificare quella spesa, così ho passato due anni a costruirne uno: 1.722 esercizi, una vera logica di progressione, un coach che guarda davvero la tua settimana. Lo uso ogni singolo giorno.”';
+      '“Un buon personal trainer costa \$400/mese. Non potevo giustificare quella spesa, così ho passato due anni a costruirne uno: 2.300 esercizi, una vera logica di progressione, un coach che guarda davvero la tua settimana. Lo uso ogni singolo giorno.”';
 
   @override
   String get paywallFounderName => 'Chetan · fondatore';

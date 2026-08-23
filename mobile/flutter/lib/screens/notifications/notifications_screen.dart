@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/unified_notifications_provider.dart';
+import '../../data/services/notification_service.dart' show osNotificationPermissionGrantedProvider;
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 

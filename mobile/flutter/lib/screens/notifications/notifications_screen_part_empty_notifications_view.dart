@@ -1,16 +1,23 @@
 part of 'notifications_screen.dart';
 
 
-class _EmptyNotificationsView extends StatelessWidget {
+class _EmptyNotificationsView extends ConsumerWidget {
   final bool isDark;
 
   const _EmptyNotificationsView({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // finding #458 — none of the four promised alert types can arrive while
+    // OS push authorization is denied (rows #265, #312, #370). Detect it and
+    // swap the "what to expect" promises for an enable prompt instead.
+    final osDenied = ref.watch(osNotificationPermissionGrantedProvider).maybeWhen(
+          data: (granted) => granted == false,
+          orElse: () => false,
+        );
 
     return Center(
       child: Padding(
@@ -50,56 +57,101 @@ class _EmptyNotificationsView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: elevatedColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.accentColor.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, size: 18, color: context.accentColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        AppLocalizations.of(context).notificationsScreenPartWhatToExpect,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: context.accentColor,
+            if (osDenied)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: elevatedColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.error.withOpacity(0.4)), // accent-allowlist: warning state — permission genuinely denied
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.notifications_off_outlined, size: 18, color: AppColors.error), // accent-allowlist: warning state — permission genuinely denied
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Notifications are off in iOS Settings',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.error, // accent-allowlist: warning state — permission genuinely denied
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Workout reminders, achievement alerts, coach tips, and progress '
+                      'summaries can\'t reach you until you turn notifications back on.',
+                      style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: openAppSettings,
+                        style: FilledButton.styleFrom(backgroundColor: context.accentColor),
+                        child: const Text('Enable in Settings'),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _ExpectationItem(
-                    icon: Icons.fitness_center,
-                    text: 'Workout reminders based on your schedule',
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 8),
-                  _ExpectationItem(
-                    icon: Icons.emoji_events,
-                    text: 'Achievement and streak alerts',
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 8),
-                  _ExpectationItem(
-                    icon: Icons.auto_awesome,
-                    text: 'Personalized tips from your AI Coach',
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 8),
-                  _ExpectationItem(
-                    icon: Icons.insights,
-                    text: 'Weekly progress summaries',
-                    isDark: isDark,
-                  ),
-                ],
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: elevatedColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.accentColor.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.lightbulb_outline, size: 18, color: context.accentColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context).notificationsScreenPartWhatToExpect,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: context.accentColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _ExpectationItem(
+                      icon: Icons.fitness_center,
+                      text: 'Workout reminders based on your schedule',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 8),
+                    _ExpectationItem(
+                      icon: Icons.emoji_events,
+                      text: 'Achievement and streak alerts',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 8),
+                    _ExpectationItem(
+                      icon: Icons.auto_awesome,
+                      text: 'Personalized tips from your AI Coach',
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 8),
+                    _ExpectationItem(
+                      icon: Icons.insights,
+                      text: 'Weekly progress summaries',
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

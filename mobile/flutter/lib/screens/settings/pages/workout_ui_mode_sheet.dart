@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -56,6 +57,7 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
     final current =
         // ignore: deprecated_member_use_from_same_package
         rawMode == WorkoutUiMode.simple ? WorkoutUiMode.easy : rawMode;
+    final useKg = ref.watch(useKgForWorkoutProvider);
 
     return Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -94,8 +96,9 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                     mode: WorkoutUiMode.advanced,
                     icon: Icons.tune_rounded,
                     title: AppLocalizations.of(context).workoutUiModeAdvanced,
-                    description:
-                        AppLocalizations.of(context).workoutUiModeEverythingWarmupStretchPh,
+                    description: useKg
+                        ? AppLocalizations.of(context).workoutUiModeEverythingWarmupStretchPh
+                        : AppLocalizations.of(context).workoutUiModeEverythingWarmupStretchLb,
                     selected: current == WorkoutUiMode.advanced,
                     accent: accent,
                     isDark: isDark,

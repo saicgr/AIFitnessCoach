@@ -589,7 +589,10 @@ class MoodDayData {
 class MoodWeeklySummary {
   final int totalCheckins;
   final double avgMoodScore;
-  final String trend;
+  // Row 238 — null (no fallback to 'stable') when the server has no trend
+  // to report, i.e. zero check-ins this week. Coercing that to 'stable' here
+  // would silently undo the server-side fix and still show a fake trend.
+  final String? trend;
 
   const MoodWeeklySummary({
     required this.totalCheckins,
@@ -601,7 +604,7 @@ class MoodWeeklySummary {
     return MoodWeeklySummary(
       totalCheckins: json['total_checkins'] as int? ?? 0,
       avgMoodScore: (json['avg_mood_score'] as num?)?.toDouble() ?? 0.0,
-      trend: json['trend'] as String? ?? 'stable',
+      trend: json['trend'] as String?,
     );
   }
 

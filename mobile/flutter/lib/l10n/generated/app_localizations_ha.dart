@@ -14904,7 +14904,7 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ tare da yin rajista';
+  String get guestHome1700WithSignup => '2300+ tare da yin rajista';
 
   @override
   String get guestHomeAiCoachDemo => 'Misalin AI Coach';
@@ -15018,7 +15018,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Ana nuna $guestExerciseLimit misalan motsa jiki. Yi rajista kyauta don samun damar motsa jiki sama da 1700!';
+    return 'Ana nuna $guestExerciseLimit misalan motsa jiki. Yi rajista kyauta don samun damar motsa jiki sama da 2300!';
   }
 
   @override
@@ -15043,7 +15043,7 @@ class AppLocalizationsHa extends AppLocalizations {
       'Yi rajista don ganin cikakkun umarni don wannan motsa jiki.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Buɗe motsa jiki 1700+';
+  String get guestLibraryUnlock1700Exercises => 'Buɗe motsa jiki 2300+';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Buɗe kyauta';
@@ -27471,7 +27471,7 @@ class AppLocalizationsHa extends AppLocalizations {
       'Ana dacewa da nau\'in jikinka';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Ana ɗauka daga atisaye 1,700+';
+  String get planAnalyzingPullingFrom1700 => 'Ana ɗauka daga atisaye 2,300+';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Ana duba burinka';
@@ -36347,6 +36347,9 @@ class AppLocalizationsHa extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Duk Bayanan';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Gyara \"$exerciseName\"';
   }
@@ -43781,6 +43784,10 @@ class AppLocalizationsHa extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Babbar mataki';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Komai — matakan dumama/miƙa jiki, RPE/RIR, pyramid, supersets, drop sets, ƙarin nauyi na ±5 lb, jadawalin faranti.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Komai — matakan dumama/miƙa jiki, RPE/RIR, pyramid, supersets, drop sets, ƙarin nauyi na ±2.5 kg, jadawalin faranti.';
 
@@ -44716,6 +44723,13 @@ class AppLocalizationsHa extends AppLocalizations {
   String get heroModesActionRetry => 'SAKE';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'AKAN AIKI';
 
   @override
@@ -45065,7 +45079,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Kyakkyawan mai horarwa na sirri yana kashe \$400/wata. Ban iya ɗaukar hakan ba, don haka na shafe shekara biyu ina gina guda: motsa jiki 1,722, ainihin dabarar ci gaba, koci da ke duban makonka da gaske. Ina amfani da shi kowace rana.”';
+      '“Kyakkyawan mai horarwa na sirri yana kashe \$400/wata. Ban iya ɗaukar hakan ba, don haka na shafe shekara biyu ina gina guda: motsa jiki 2,300, ainihin dabarar ci gaba, koci da ke duban makonka da gaske. Ina amfani da shi kowace rana.”';
 
   @override
   String get paywallFounderName => 'Chetan · wanda ya kafa';

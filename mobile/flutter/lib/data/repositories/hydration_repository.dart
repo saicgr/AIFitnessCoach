@@ -265,6 +265,21 @@ final hydrationRepositoryProvider = Provider<HydrationRepository>((ref) {
   return HydrationRepository(ref.watch(apiClientProvider));
 });
 
+/// Hydration summary for a SPECIFIC past/future local date, keyed by
+/// `"$userId|$dateStr"`. `hydrationProvider.todaySummary` only ever holds
+/// today's total, so a Daily-tab page for another date rendered today's
+/// number under a different day's header (E2E register #251) — this is what
+/// a date-scoped card must watch instead.
+final hydrationSummaryForDateProvider =
+    FutureProvider.family<DailyHydrationSummary, String>((ref, key) async {
+  final parts = key.split('|');
+  final userId = parts[0];
+  final dateStr = parts[1];
+  return ref
+      .watch(hydrationRepositoryProvider)
+      .getDailySummary(userId, date: dateStr);
+});
+
 /// Hydration state
 class HydrationState {
   final bool isLoading;

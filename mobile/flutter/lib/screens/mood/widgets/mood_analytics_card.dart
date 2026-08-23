@@ -43,13 +43,20 @@ class MoodAnalyticsCard extends StatelessWidget {
               ),
               _buildStatItem(
                 value: summary.workoutsGenerated.toString(),
-                label: AppLocalizations.of(context).workoutListTitle,
+                // Row 238 — this counts workouts generated FROM a mood
+                // check-in specifically (mood_checkins.workout_generated),
+                // not the user's total workout count. The generic
+                // "Workouts" label read as contradicting the account's real
+                // workout history when the user hadn't used the mood-based
+                // generation flow. Literal string — scoping detail doesn't
+                // warrant its own localized key next to the shared ones above.
+                label: 'Mood Workouts',
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
               _buildStatItem(
                 value: AppLocalizations.of(context)!.moodAnalyticsCardValue(summary.completionRate.toInt()),
-                label: AppLocalizations.of(context).progressionStepCardCompleted,
+                label: 'Mood Completion',
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 valueColor: _getCompletionColor(summary.completionRate),

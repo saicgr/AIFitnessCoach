@@ -14847,7 +14847,7 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'साइनअपसह १७००+';
+  String get guestHome1700WithSignup => 'साइनअपसह २३००+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach डेमो';
@@ -14962,7 +14962,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit नमुना व्यायाम दाखवत आहे. १७००+ व्यायामांमध्ये प्रवेश मिळवण्यासाठी मोफत साइन अप करा!';
+    return '$guestExerciseLimit नमुना व्यायाम दाखवत आहे. २३००+ व्यायामांमध्ये प्रवेश मिळवण्यासाठी मोफत साइन अप करा!';
   }
 
   @override
@@ -14987,7 +14987,7 @@ class AppLocalizationsMr extends AppLocalizations {
       'या व्यायामासाठी तपशीलवार सूचना पाहण्यासाठी साइन अप करा.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '१७००+ व्यायाम अनलॉक करा';
+  String get guestLibraryUnlock1700Exercises => '२३००+ व्यायाम अनलॉक करा';
 
   @override
   String get guestLockedFeatureUnlockFree => 'मोफत अनलॉक करा';
@@ -27380,7 +27380,7 @@ class AppLocalizationsMr extends AppLocalizations {
       'तुमच्या शरीराच्या प्रकाराशी जुळवत आहे';
 
   @override
-  String get planAnalyzingPullingFrom1700 => '१,७००+ व्यायामांतून निवडत आहे';
+  String get planAnalyzingPullingFrom1700 => '२,३००+ व्यायामांतून निवडत आहे';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'तुमची ध्येये तपासत आहे';
@@ -36238,6 +36238,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'सर्व प्रोफाइल्स';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" संपादित करा';
   }
@@ -43657,6 +43660,10 @@ class AppLocalizationsMr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'प्रगत';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'सर्व काही — वॉर्मअप/स्ट्रेच टप्पे, RPE/RIR, पिरॅमिड, सुपरसेट्स, ड्रॉप सेट्स, ±5 lb वाढ, प्लेट चार्ट.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'सर्व काही — वॉर्मअप/स्ट्रेच टप्पे, RPE/RIR, पिरॅमिड, सुपरसेट्स, ड्रॉप सेट्स, ±2.5 kg वाढ, प्लेट चार्ट.';
 
@@ -44592,6 +44599,13 @@ class AppLocalizationsMr extends AppLocalizations {
   String get heroModesActionRetry => 'पुन्हा';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'लाइव्ह';
 
   @override
@@ -44941,7 +44955,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“चांगला पर्सनल ट्रेनर महिन्याला \$400 घेतो. ते मला परवडणारे नव्हते, म्हणून मी दोन वर्षे घालवून एक बनवला: 1,722 व्यायाम, खरे प्रोग्रेशन लॉजिक, तुमचा आठवडा खरोखर पाहणारा कोच. मी तो रोज वापरतो.”';
+      '“चांगला पर्सनल ट्रेनर महिन्याला \$400 घेतो. ते मला परवडणारे नव्हते, म्हणून मी दोन वर्षे घालवून एक बनवला: 2,300 व्यायाम, खरे प्रोग्रेशन लॉजिक, तुमचा आठवडा खरोखर पाहणारा कोच. मी तो रोज वापरतो.”';
 
   @override
   String get paywallFounderName => 'Chetan · संस्थापक';

@@ -14965,7 +14965,7 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'ಸೈನ್ ಅಪ್‌ನೊಂದಿಗೆ 1700+';
+  String get guestHome1700WithSignup => 'ಸೈನ್ ಅಪ್‌ನೊಂದಿಗೆ 2300+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach ಡೆಮೊ';
@@ -15084,7 +15084,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit ಮಾದರಿ ವ್ಯಾಯಾಮಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ. 1700+ ವ್ಯಾಯಾಮಗಳನ್ನು ಪ್ರವೇಶಿಸಲು ಉಚಿತವಾಗಿ ಸೈನ್ ಅಪ್ ಮಾಡಿ!';
+    return '$guestExerciseLimit ಮಾದರಿ ವ್ಯಾಯಾಮಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ. 2300+ ವ್ಯಾಯಾಮಗಳನ್ನು ಪ್ರವೇಶಿಸಲು ಉಚಿತವಾಗಿ ಸೈನ್ ಅಪ್ ಮಾಡಿ!';
   }
 
   @override
@@ -15110,7 +15110,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      '1700+ ವ್ಯಾಯಾಮಗಳನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ';
+      '2300+ ವ್ಯಾಯಾಮಗಳನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿ';
 
   @override
   String get guestLockedFeatureUnlockFree => 'ಉಚಿತವಾಗಿ ಅನ್‌ಲಾಕ್ ಮಾಡಿ';
@@ -27609,7 +27609,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      '1,700+ ವ್ಯಾಯಾಮಗಳಿಂದ ಆಯ್ಕೆ ಮಾಡಲಾಗುತ್ತಿದೆ';
+      '2,300+ ವ್ಯಾಯಾಮಗಳಿಂದ ಆಯ್ಕೆ ಮಾಡಲಾಗುತ್ತಿದೆ';
 
   @override
   String get planAnalyzingReviewingYourGoals =>
@@ -36548,6 +36548,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'ಎಲ್ಲಾ ಪ್ರೊಫೈಲ್‌ಗಳು';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" ಸಂಪಾದಿಸಿ';
   }
@@ -44040,6 +44043,10 @@ class AppLocalizationsKn extends AppLocalizations {
   String get workoutUiModeAdvanced => 'ಸುಧಾರಿತ';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'ಎಲ್ಲವೂ — ವಾರ್ಮ್‌ಅಪ್/ಸ್ಟ್ರೆಚ್ ಹಂತಗಳು, RPE/RIR, ಪಿರಮಿಡ್, ಸೂಪರ್‌ಸೆಟ್‌ಗಳು, ಡ್ರಾಪ್ ಸೆಟ್‌ಗಳು, ±5 lb ಹೆಚ್ಚಳ, ಪ್ಲೇಟ್ ಚಾರ್ಟ್.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'ಎಲ್ಲವೂ — ವಾರ್ಮ್‌ಅಪ್/ಸ್ಟ್ರೆಚ್ ಹಂತಗಳು, RPE/RIR, ಪಿರಮಿಡ್, ಸೂಪರ್‌ಸೆಟ್‌ಗಳು, ಡ್ರಾಪ್ ಸೆಟ್‌ಗಳು, ±2.5 kg ಹೆಚ್ಚಳ, ಪ್ಲೇಟ್ ಚಾರ್ಟ್.';
 
@@ -44976,6 +44983,13 @@ class AppLocalizationsKn extends AppLocalizations {
   String get heroModesActionRetry => 'ಮರುಪ್ರಯತ್ನ';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'ಲೈವ್';
 
   @override
@@ -45328,7 +45342,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“ಒಳ್ಳೆಯ ಪರ್ಸನಲ್ ಟ್ರೈನರ್‌ಗೆ \$400/ತಿಂಗಳು ಬೇಕು. ಅದನ್ನು ಭರಿಸಲು ನನಗೆ ಆಗಲಿಲ್ಲ, ಹಾಗಾಗಿ ಎರಡು ವರ್ಷ ಕಳೆದು ಒಂದನ್ನು ನಿರ್ಮಿಸಿದೆ: 1,722 ವ್ಯಾಯಾಮಗಳು, ನಿಜವಾದ ಪ್ರೋಗ್ರೆಶನ್ ಲಾಜಿಕ್, ನಿಮ್ಮ ವಾರವನ್ನು ನಿಜವಾಗಿ ನೋಡುವ ಕೋಚ್. ನಾನು ಇದನ್ನು ಪ್ರತಿದಿನವೂ ಬಳಸುತ್ತೇನೆ.”';
+      '“ಒಳ್ಳೆಯ ಪರ್ಸನಲ್ ಟ್ರೈನರ್‌ಗೆ \$400/ತಿಂಗಳು ಬೇಕು. ಅದನ್ನು ಭರಿಸಲು ನನಗೆ ಆಗಲಿಲ್ಲ, ಹಾಗಾಗಿ ಎರಡು ವರ್ಷ ಕಳೆದು ಒಂದನ್ನು ನಿರ್ಮಿಸಿದೆ: 2,300 ವ್ಯಾಯಾಮಗಳು, ನಿಜವಾದ ಪ್ರೋಗ್ರೆಶನ್ ಲಾಜಿಕ್, ನಿಮ್ಮ ವಾರವನ್ನು ನಿಜವಾಗಿ ನೋಡುವ ಕೋಚ್. ನಾನು ಇದನ್ನು ಪ್ರತಿದಿನವೂ ಬಳಸುತ್ತೇನೆ.”';
 
   @override
   String get paywallFounderName => 'Chetan · ಸಂಸ್ಥಾಪಕ';

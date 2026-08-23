@@ -38,6 +38,9 @@ final workoutCardStateProvider = Provider.autoDispose<WorkoutCardState>((ref) {
   // history snapshot or sleep failure must not blank the whole card.
   final isLoading = today.isLoading && !today.hasValue;
   final isError = today.hasError && !today.hasValue;
+  // finding #329 — a client-side timeout against a healthy backend must not
+  // render the same "OFFLINE" copy as a genuine no-connectivity failure.
+  final isTimeoutError = isError && today.error != null && isTimeoutLikeError(today.error!);
 
   PlanState planState = PlanState.active;
   WorkoutState workoutState = WorkoutState.none;
@@ -141,6 +144,7 @@ final workoutCardStateProvider = Provider.autoDispose<WorkoutCardState>((ref) {
   return WorkoutCardState(
     isLoading: isLoading,
     isError: isError,
+    isTimeoutError: isTimeoutError,
     planState: planState,
     workoutState: workoutState,
     time: time,

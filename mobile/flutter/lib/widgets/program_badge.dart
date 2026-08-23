@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/accent_color_provider.dart';
 import '../data/models/workout.dart';
 import '../data/models/workout_program_context.dart';
 import '../screens/schedule/widgets/program_color.dart';
@@ -44,6 +45,7 @@ class ProgramBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final attr = workoutProgramAttribution(workout);
+    final badgeColor = attr.isAi ? context.accentColor : attr.color;
     final pid = workout.programContext?.programId;
     final canOpen = onOpenProgram != null &&
         !attr.isAi &&
@@ -55,7 +57,7 @@ class ProgramBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.46),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: attr.color.withValues(alpha: 0.75)),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.75)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -63,7 +65,7 @@ class ProgramBadge extends StatelessWidget {
           Icon(
             attr.isAi ? Icons.auto_awesome_rounded : Icons.circle,
             size: attr.isAi ? 12 : 8,
-            color: attr.color,
+            color: badgeColor,
           ),
           const SizedBox(width: 6),
           Flexible(

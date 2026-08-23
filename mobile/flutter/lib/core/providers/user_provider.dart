@@ -27,9 +27,14 @@ final currentUserIdProvider = Provider<String?>((ref) {
 
 /// Provider for user's weight unit preference ('kg' or 'lbs')
 /// Body weight unit provider — for weighing yourself, BMI, body measurements.
-/// Defaults to 'kg' if user is not loaded yet.
+/// Before a user is loaded, falls back to the SAME locale-seeded default
+/// [workoutWeightUnitProvider] uses (previously this used a hardcoded 'kg'
+/// while workout used a hardcoded 'lbs' — two different defaults for the
+/// exact same not-yet-loaded state, which is how Home and an active session
+/// could disagree on units even before real preferences ever diverged).
 final weightUnitProvider = Provider<String>((ref) {
-  return ref.watch(authStateProvider.select((s) => s.user?.preferredWeightUnit)) ?? 'kg';
+  return ref.watch(authStateProvider.select((s) => s.user?.preferredWeightUnit)) ??
+      app_user.defaultWeightUnitForLocale();
 });
 
 /// Body weight: whether user prefers metric (kg) for body measurements.
@@ -49,9 +54,11 @@ final hydrationUseOzProvider = Provider<bool>((ref) {
 
 /// Workout weight unit provider — for exercise weights, sets, lifting.
 /// Separate from body weight unit (user may weigh in kg but lift in lbs).
-/// Falls back to body weight unit if not explicitly set.
+/// Falls back to body weight unit if not explicitly set, then to the same
+/// locale-seeded default as [weightUnitProvider].
 final workoutWeightUnitProvider = Provider<String>((ref) {
-  return ref.watch(authStateProvider.select((s) => s.user?.preferredWorkoutWeightUnit)) ?? 'lbs';
+  return ref.watch(authStateProvider.select((s) => s.user?.preferredWorkoutWeightUnit)) ??
+      app_user.defaultWeightUnitForLocale();
 });
 
 /// Workout weight: whether user prefers metric (kg) for lifting.

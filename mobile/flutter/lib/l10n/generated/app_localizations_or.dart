@@ -14919,7 +14919,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'ସାଇନ୍ ଅପ୍ ସହିତ 1700+';
+  String get guestHome1700WithSignup => 'ସାଇନ୍ ଅପ୍ ସହିତ 2300+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach ଡେମୋ';
@@ -15033,7 +15033,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimit ଟି ନମୁନା ବ୍ୟାୟାମ ଦେଖାଉଛି। 1700+ ବ୍ୟାୟାମ ଆକ୍ସେସ୍ କରିବା ପାଇଁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ!';
+    return '$guestExerciseLimit ଟି ନମୁନା ବ୍ୟାୟାମ ଦେଖାଉଛି। 2300+ ବ୍ୟାୟାମ ଆକ୍ସେସ୍ କରିବା ପାଇଁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ!';
   }
 
   @override
@@ -15058,7 +15058,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏହି ବ୍ୟାୟାମ ପାଇଁ ବିସ୍ତୃତ ନିର୍ଦ୍ଦେଶାବଳୀ ଦେଖିବାକୁ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ।';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '1700+ ବ୍ୟାୟାମ ଅନଲକ୍ କରନ୍ତୁ';
+  String get guestLibraryUnlock1700Exercises => '2300+ ବ୍ୟାୟାମ ଅନଲକ୍ କରନ୍ତୁ';
 
   @override
   String get guestLockedFeatureUnlockFree => 'ମାଗଣାରେ ଅନଲକ୍ କରନ୍ତୁ';
@@ -36433,6 +36433,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'ସମସ୍ତ ପ୍ରୋଫାଇଲ୍';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" ଏଡିଟ୍ କରନ୍ତୁ';
   }
@@ -43900,6 +43903,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutUiModeAdvanced => 'ଆଡଭାନ୍ସଡ୍';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'ସବୁକିଛି — ୱାର୍ମଅପ୍/ଷ୍ଟ୍ରେଚ୍ ପର୍ଯ୍ୟାୟ, RPE/RIR, ପିରାମିଡ୍, ସୁପରସେଟ୍, ଡ୍ରପ୍ ସେଟ୍, ±5 lb ବୃଦ୍ଧି, ପ୍ଲେଟ୍ ଚାର୍ଟ।';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'ସବୁକିଛି — ୱାର୍ମଅପ୍/ଷ୍ଟ୍ରେଚ୍ ପର୍ଯ୍ୟାୟ, RPE/RIR, ପିରାମିଡ୍, ସୁପରସେଟ୍, ଡ୍ରପ୍ ସେଟ୍, ±2.5 kg ବୃଦ୍ଧି, ପ୍ଲେଟ୍ ଚାର୍ଟ।';
 
@@ -44838,6 +44845,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get heroModesActionRetry => 'ପୁନଃ';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'ଲାଇଭ୍';
 
   @override
@@ -45190,7 +45204,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“ଜଣେ ଭଲ ପର୍ସନାଲ୍ ଟ୍ରେନରଙ୍କ ପାଇଁ \$400/ମାସ ଲାଗେ। ମୁଁ ତାହା ଦେଇ ପାରୁ ନଥିଲି, ତେଣୁ ମୁଁ ଦୁଇ ବର୍ଷ ଲଗାଇ ନିଜେ ଗୋଟିଏ ତିଆରି କଲି: 1,722 ବ୍ୟାୟାମ, ପ୍ରକୃତ ପ୍ରଗତି ଲଜିକ୍, ଏବଂ ଏମିତି ଜଣେ କୋଚ୍ ଯିଏ ସତରେ ଆପଣଙ୍କ ସପ୍ତାହକୁ ଦେଖନ୍ତି। ମୁଁ ଏହାକୁ ପ୍ରତିଦିନ ବ୍ୟବହାର କରେ।”';
+      '“ଜଣେ ଭଲ ପର୍ସନାଲ୍ ଟ୍ରେନରଙ୍କ ପାଇଁ \$400/ମାସ ଲାଗେ। ମୁଁ ତାହା ଦେଇ ପାରୁ ନଥିଲି, ତେଣୁ ମୁଁ ଦୁଇ ବର୍ଷ ଲଗାଇ ନିଜେ ଗୋଟିଏ ତିଆରି କଲି: 2,300 ବ୍ୟାୟାମ, ପ୍ରକୃତ ପ୍ରଗତି ଲଜିକ୍, ଏବଂ ଏମିତି ଜଣେ କୋଚ୍ ଯିଏ ସତରେ ଆପଣଙ୍କ ସପ୍ତାହକୁ ଦେଖନ୍ତି। ମୁଁ ଏହାକୁ ପ୍ରତିଦିନ ବ୍ୟବହାର କରେ।”';
 
   @override
   String get paywallFounderName => 'Chetan · ପ୍ରତିଷ୍ଠାତା';

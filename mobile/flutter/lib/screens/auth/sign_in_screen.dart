@@ -631,7 +631,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   Widget _buildValueReminderCard(PreAuthQuizData quizData, OnboardingTheme t) {
-    String goalDisplay = _formatGoal(quizData.goal ?? 'build_muscle');
+    String goalDisplay = _isRecompositionGoals(quizData.goals)
+        ? 'Recomposition'
+        : _formatGoal(quizData.goal ?? 'build_muscle');
 
     // v7: the card now carries the plan's own goal date (computed during
     // /plan-analyzing) so the account ask reads as protecting something
@@ -894,6 +896,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     final goalKg = quiz.goalWeightKg;
     final currentKg = quiz.weightKg;
 
+    // Recomposition (Build Muscle + Lose Weight both selected) gets its own
+    // line ahead of every other branch below — otherwise the weight-delta
+    // branch collapses it to a pure fat-loss message ("drop 7 lb") and the
+    // goal-key branch collapses it to pure muscle-gain ("put on real
+    // muscle"), so whichever branch fired, half of what the user asked for
+    // silently disappeared from the copy. Mirrors the goals-step tip card
+    // (`_goalAcknowledgment` in pre_auth_quiz_screen.dart).
+    if (_isRecompositionGoals(quiz.goals)) {
+      return "$greeting — I built you a plan to build muscle while losing "
+          "fat. Save it and let's start tomorrow.";
+    }
+
     // If we have a real weight delta, lead with the human-sized number.
     if (goalKg != null && currentKg != null && direction.isNotEmpty) {
       final deltaKg = (currentKg - goalKg).abs();
@@ -924,6 +938,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     }
     return "$greeting — $voice Save it and let's start tomorrow.";
   }
+
+  /// True when the user selected BOTH "Build Muscle" and "Lose Weight" on
+  /// the goals step — body recomposition, not either goal alone. Same pair
+  /// check as `_goalAcknowledgment` in pre_auth_quiz_screen.dart.
+  bool _isRecompositionGoals(List<String>? goals) =>
+      goals != null &&
+      goals.contains('build_muscle') &&
+      goals.contains('lose_weight');
 
   /// Renders the goal as a noun phrase so "Your $goalDisplay Plan"
   /// reads naturally — "Your Weight Loss Plan" / "Your Strength Plan"

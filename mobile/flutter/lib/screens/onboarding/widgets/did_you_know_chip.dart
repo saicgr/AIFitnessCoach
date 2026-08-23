@@ -24,9 +24,19 @@ class DidYouKnowChip extends StatelessWidget {
   ///
   /// Derived from the chip's own metrics, not a magic number: outer padding
   /// (4 + 6) + inner padding (7 × 2) + border (1 × 2) + two lines of 11pt text
-  /// at height 1.2, scaled by the platform text scaler.
+  /// at height 1.2, scaled by the platform text scaler, plus a small safety
+  /// margin.
+  ///
+  /// The 1.25 line-height factor is an ESTIMATE of the real two-line text
+  /// block — actual font metrics for the "Did you know?" run (below) run
+  /// slightly taller, and on the goals/equipment steps' two-line facts that
+  /// shortfall was enough for this reserved slot to come in a few px under
+  /// the real content, so the outer `ClipRRect` cropped the descenders off
+  /// the last line ("...ramp up over time." rendering with its "p"/"g" cut).
+  /// The `+3` buffer absorbs that estimate error instead of chasing the
+  /// exact metric.
   static double slotHeight(BuildContext context) {
-    const chrome = 4 + 6 + 14 + 2.0;
+    const chrome = 4 + 6 + 14 + 2.0 + 3.0;
     final lineHeight = MediaQuery.textScalerOf(context).scale(11) * 1.25;
     return chrome + lineHeight * 2;
   }
@@ -75,6 +85,7 @@ class DidYouKnowChip extends StatelessWidget {
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: t.textPrimary,
+                              height: 1.2,
                             ),
                           ),
                           TextSpan(

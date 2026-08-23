@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -8,6 +10,7 @@ import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
+import 'widgets/quiz_progress_bar.dart';
 import '../../widgets/glass_back_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -64,6 +67,16 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
   // Multi-select: people are usually driven by more than one reason. All picks
   // are saved + fed to the AI coach so it can speak to every motivation.
   final Set<String> _selected = {};
+
+  /// This screen is step 0 of the funnel: itself, then the 11-question
+  /// pre-auth quiz. Matches `QuizHeader`'s "~N min left" estimate (~15s per
+  /// question) so the progress affordance doesn't reset or disappear at the
+  /// boundary between this screen and the next one — the two used to show
+  /// no progress bar / no estimate here, then a 10-segment bar + "~3 min
+  /// left" one tap later, with no visible relationship between them.
+  static const int _totalFunnelSteps = 12;
+  int get _minutesLeft =>
+      math.max(1, (_totalFunnelSteps * 15 / 60).ceil());
 
   @override
   void initState() {
@@ -169,9 +182,31 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                           ),
                         ),
                       ),
+                      // Time-remaining estimate, matching QuizHeader's
+                      // "~N min left" exactly (same copy, same style) so the
+                      // progress affordance carries across the screen
+                      // boundary instead of appearing out of nowhere on the
+                      // very next screen.
+                      Text(
+                        AppLocalizations.of(context).quizMinutesLeft(_minutesLeft),
+                        style: TextStyle(
+                          color: t.accent,
+                          fontFamily: 'Barlow Condensed',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2,
+                        ),
+                      ),
                     ],
                   ).animate().fadeIn(),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
+                  QuizProgressBar(
+                    progress: 1 / _totalFunnelSteps,
+                    segments: _totalFunnelSteps,
+                    currentStep: 0,
+                    padding: EdgeInsets.zero,
+                  ).animate().fadeIn(),
+                  const SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context).onboardingWhyWhatSDrivingThis,
                     style: TextStyle(
@@ -210,7 +245,33 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
+                  // Reason line for the disabled CTA — fixed-height slot so
+                  // the button never shifts as picks are made/cleared.
+                  // Mirrors `QuizContinueButton`'s hint row so every
+                  // pre-auth screen explains a disabled Continue instead of
+                  // just greying it out.
+                  SizedBox(
+                    height: 20,
+                    child: _selected.isEmpty
+                        ? Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded,
+                                  size: 13, color: t.textMuted),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Pick at least one reason to continue',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: t.textMuted,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 6),
                   _ContinueButton(
                     enabled: _selected.isNotEmpty,
                     onTap: _continue,
@@ -333,52 +394,62 @@ class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
     return Semantics(
       button: true,
       enabled: enabled,
       label: AppLocalizations.of(context).onboardingContinueButton,
       child: GestureDetector(
         onTap: enabled ? onTap : null,
-        child: AnimatedOpacity(
+        // A flat opacity fade over BOTH fill and text used to read as
+        // "enabled but broken" — a half-transparent orange button with
+        // washed-out white text — rather than a deliberate disabled state.
+        // Swapping to the same solid inert tokens the quiz Continue button
+        // uses (`t.cardFill` / `t.textDisabled`) makes "waiting on you"
+        // unambiguous.
+        child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          opacity: enabled ? 1.0 : 0.45,
-          child: Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.onboardingAccent, context.accentColor],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: enabled
-                  ? [
-                      BoxShadow(
-                        color: AppColors.onboardingAccent
-                            .withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).onboardingContinueButton,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: enabled
+                ? LinearGradient(
+                    colors: [AppColors.onboardingAccent, context.accentColor],
+                  )
+                : null,
+            color: enabled ? null : t.cardFill,
+            borderRadius: BorderRadius.circular(16),
+            border: enabled ? null : Border.all(color: t.borderSubtle),
+            boxShadow: enabled
+                ? [
+                    BoxShadow(
+                      color: AppColors.onboardingAccent
+                          .withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  AppLocalizations.of(context).onboardingContinueButton,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: enabled ? Colors.white : t.textDisabled,
+                    letterSpacing: 0.3,
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded,
+                ),
+                if (enabled) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded,
                       color: Colors.white, size: 20),
                 ],
-              ),
+              ],
             ),
           ),
         ),

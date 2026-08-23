@@ -887,6 +887,12 @@ class IntegrationsGridScene extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        // Centered, not top-aligned: the tile grid is shorter than the
+        // frame the scene renders into, and a top-aligned Column left a
+        // few hundred px of dead black space below the last tile before
+        // the footer overlay. Centering distributes that slack evenly
+        // instead of dumping it all beneath the content.
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('CONNECTED DATA',
               style: TextStyle(
@@ -978,14 +984,21 @@ class IntegrationsGridScene extends StatelessWidget {
             ),
             const SizedBox(width: 9),
             Expanded(
-              child: Text(t.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFFAFAFA))),
+              // FittedBox instead of Text-with-ellipsis: "Health Connect" was
+              // truncating to "Health Conne…" in the 2-column tile — this
+              // shrinks the label to fit instead of clipping it.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(t.label,
+                    maxLines: 1,
+                    style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFAFAFA))),
+              ),
             ),
+            const SizedBox(width: 6),
             Container(
               width: 7,
               height: 7,
@@ -1148,7 +1161,7 @@ class ShareablesScene extends StatelessWidget {
             right: 0,
             bottom: 34,
             child: Center(
-              child: Text('Results not typical',
+              child: Text('Results not typical. Not medical advice.',
                   style: TextStyle(
                       color: Color(0xB3FFFFFF),
                       fontSize: 9,

@@ -25,6 +25,7 @@ from models.recipe import (
     CookingMethod,
     IngredientAnalyzeRequest,
     IngredientAnalyzeResponse,
+    MicronutrientData,
     NutritionSource,
 )
 from services.food_analysis.parser import (
@@ -242,6 +243,24 @@ class IngredientAnalyzerService:
             raise RuntimeError(f"Gemini returned no food_items for {text!r}")
 
         first = items[0]
+
+        # Same enrichment as meal logging: parse_food_description() estimates
+        # a fuller micronutrient set (vitamins A/C/D, calcium, iron,
+        # potassium, cholesterol, ...) at the top level of `result` — for a
+        # single-ingredient description that top level IS this item's data.
+        # Previously only sodium_mg made it onto the response below; the rest
+        # was computed by Gemini and then silently discarded.
+        _micro_fields = (
+            "vitamin_a_ug", "vitamin_c_mg", "vitamin_d_iu", "vitamin_e_mg",
+            "vitamin_k_ug", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+            "vitamin_b6_mg", "vitamin_b9_ug", "vitamin_b12_ug",
+            "calcium_mg", "iron_mg", "magnesium_mg", "zinc_mg",
+            "potassium_mg", "sodium_mg", "cholesterol_mg",
+            "omega3_g", "omega6_g",
+        )
+        _micro_values = {k: result.get(k) for k in _micro_fields if result.get(k) is not None}
+        micronutrients = MicronutrientData(**_micro_values) if _micro_values else None
+
         # Estimate confidence: bias by whether AI returned a structured amount + unit
         confidence = 70
         if first.get("amount") and first.get("unit"):
@@ -278,7 +297,11 @@ class IngredientAnalyzerService:
             fat_g=_safe_float(first.get("fat_g")),
             fiber_g=_safe_float(first.get("fiber_g")),
             sugar_g=_safe_float(first.get("sugar_g")),
-            sodium_mg=first.get("sodium_mg"),
+            sodium_mg=result.get("sodium_mg") or first.get("sodium_mg"),
+            calcium_mg=result.get("calcium_mg"),
+            iron_mg=result.get("iron_mg"),
+            vitamin_d_iu=result.get("vitamin_d_iu"),
+            micronutrients=micronutrients,
             raw_text=text,
         )
 

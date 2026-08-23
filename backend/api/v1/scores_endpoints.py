@@ -657,7 +657,28 @@ async def calculate_fitness_score(
     except Exception:
         nutrition_response = None
 
-    nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
+    if nutrition_response and nutrition_response.data:
+        nutrition_score = nutrition_response.data.get("nutrition_score", 0)
+    else:
+        # No cached row for this week yet (e.g. never triggered, or the first
+        # calculation ran before today's meals were logged). Defaulting to 0
+        # here silently reported "no nutrition" for an account with real,
+        # fully-logged food_logs — compute it live instead of trusting an
+        # absent cache, mirroring POST /nutrition/calculate.
+        try:
+            live_nutrition = await calculate_nutrition_score(
+                NutritionCalculateRequest(user_id=user_id, week_start=week_start),
+                background_tasks,
+                http_request,
+                current_user,
+            )
+            nutrition_score = live_nutrition.nutrition_score
+        except Exception:
+            logger.warning(
+                "Live nutrition-score fallback failed for %s; using 0", user_id,
+                exc_info=True,
+            )
+            nutrition_score = 0
 
     # 4. Get readiness score (7-day average)
     seven_days_ago = (today - timedelta(days=7)).isoformat()

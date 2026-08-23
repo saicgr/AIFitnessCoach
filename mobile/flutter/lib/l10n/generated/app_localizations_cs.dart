@@ -14842,7 +14842,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ po registraci';
+  String get guestHome1700WithSignup => '2300+ po registraci';
 
   @override
   String get guestHomeAiCoachDemo => 'Ukázka AI Coach';
@@ -14956,7 +14956,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Zobrazuji $guestExerciseLimit ukázkových cviků. Zaregistruj se zdarma a získej přístup k více než 1700 cvikům!';
+    return 'Zobrazuji $guestExerciseLimit ukázkových cviků. Zaregistruj se zdarma a získej přístup k více než 2300 cvikům!';
   }
 
   @override
@@ -14981,7 +14981,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Zaregistrujte se pro zobrazení podrobných instrukcí k tomuto cviku.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Odemknout 1700+ cviků';
+  String get guestLibraryUnlock1700Exercises => 'Odemknout 2300+ cviků';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Odemknout zdarma';
@@ -27359,7 +27359,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Přizpůsobení vašemu typu postavy';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Výběr z více než 1 700 cviků';
+  String get planAnalyzingPullingFrom1700 => 'Výběr z více než 2 300 cviků';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Kontrola vašich cílů';
@@ -36205,6 +36205,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Všechny profily';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Upravit \"$exerciseName\"';
   }
@@ -43629,6 +43632,10 @@ class AppLocalizationsCs extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Pokročilý';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Vše – fáze zahřátí/protahování, RPE/RIR, pyramidy, supersérie, shazované série, přírůstky po 5 lb, tabulka kotoučů.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Vše – fáze zahřátí/protahování, RPE/RIR, pyramidy, supersérie, shazované série, přírůstky po 2,5 kg, tabulka kotoučů.';
 
@@ -44561,6 +44568,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get heroModesActionRetry => 'ZNOVU';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'AKTIVNÍ';
 
   @override
@@ -44912,7 +44926,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Dobrý osobní trenér stojí \$400/měsíc. To jsem si nemohl obhájit, tak jsem dva roky stavěl vlastního: 1 722 cviků, skutečná logika progrese, kouč, který se opravdu dívá na váš týden. Používám ho každý den.”';
+      '“Dobrý osobní trenér stojí \$400/měsíc. To jsem si nemohl obhájit, tak jsem dva roky stavěl vlastního: 2 300 cviků, skutečná logika progrese, kouč, který se opravdu dívá na váš týden. Používám ho každý den.”';
 
   @override
   String get paywallFounderName => 'Chetan · zakladatel';

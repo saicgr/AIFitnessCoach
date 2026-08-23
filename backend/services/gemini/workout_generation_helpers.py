@@ -1515,6 +1515,22 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             }
             workout_data["exercises"] = validate_set_targets_strict(workout_data["exercises"], user_context)
 
+            # Progression-sanity guard (E2E register #162) — clamps any
+            # generated set_targets entry that jumps BOTH weight and reps
+            # past the user's last logged best set for that exercise in one
+            # step. Fail-open on any error.
+            try:
+                from services.set_target_progression_guard import (
+                    enforce_progression_sanity,
+                )
+                workout_data["exercises"] = await enforce_progression_sanity(
+                    workout_data["exercises"], user_id
+                )
+            except Exception as _pg:  # noqa: BLE001 — fail open
+                logger.warning(
+                    f"[ProgressionGuard] stage raised, keeping targets: {_pg}"
+                )
+
             # ─── Phase 2.C two-pass validator loop ────────────────────────
             # Run the deterministic workout validator over Gemini's output.
             # If there are HARD violations (MEV/MRV cap, antagonist superset

@@ -146,6 +146,12 @@ async def persist_recipe(
             "nutrition_confidence": ing.nutrition_confidence,
             "is_negligible": ing.is_negligible,
             "raw_text": ing.raw_text,
+            # Full micronutrient breakdown (vitamin A/C/E/K, B-vitamins,
+            # magnesium, zinc, potassium, ...) — was computed by the analyzer
+            # but never made it into the insert, so it always landed as {}.
+            "micronutrients": (
+                ing.micronutrients.dict(exclude_none=True) if ing.micronutrients else {}
+            ),
             "created_at": now,
             "updated_at": now,
         }

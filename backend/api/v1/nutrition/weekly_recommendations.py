@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from api.v1.nutrition.models import (
     WeeklyRecommendationResponse,
 )
+from api.v1.consistency import get_week_starts_sunday, week_start_for
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -170,8 +171,18 @@ async def get_checkin_weekly_summary(request: Request, user_id: str, current_use
         user_tz = resolve_timezone(request, db, user_id)
 
         today_str = get_user_today(user_tz)
-        from_date_obj = datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=7)
-        from_date_str = from_date_obj.strftime("%Y-%m-%d")
+        today_obj = datetime.strptime(today_str, "%Y-%m-%d").date()
+
+        # This card is presented next to a calendar-week label ("this week",
+        # a specific Mon/Sun-Sun/Sat date range) — it must count the SAME
+        # calendar week, not a rolling trailing window. `today - 7 days` to
+        # `today` is an 8-day span that reaches back into the PREVIOUS
+        # calendar week (e.g. today Aug 23 → window starts Aug 16, pulling in
+        # a dinner that belongs to last week's Aug 16-22 range and inflating
+        # "days logged" for a week that only actually has one log in it).
+        starts_sunday = get_week_starts_sunday(db, user_id)
+        week_start_obj = week_start_for(today_obj, starts_sunday)
+        from_date_str = week_start_obj.strftime("%Y-%m-%d")
 
         # Convert local date boundaries to UTC for querying
         from_utc_start, _ = local_date_to_utc_range(from_date_str, user_tz)

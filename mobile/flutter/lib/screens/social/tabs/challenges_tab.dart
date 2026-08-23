@@ -117,14 +117,22 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
       },
       data: (challenges) {
         if (challenges.isEmpty) {
+          // Discover being empty too would make "Browse Challenges" a dead
+          // end (My Challenges -> Discover -> "No Challenges Found" with no
+          // way out). Lead with Create Challenge in that case instead.
+          final discoverChallenges =
+              ref.watch(challengesListProvider(_userId!)).valueOrNull;
+          final hasDiscoverable = discoverChallenges == null ||
+              discoverChallenges.any((c) => c['user_participation'] == null);
+
           return SocialEmptyState(
             icon: Icons.emoji_events_outlined,
             title: AppLocalizations.of(context).challengesNoActiveChallenges,
             description: AppLocalizations.of(context).challengesJoinAChallengeTo,
-            actionLabel: 'Browse Challenges',
-            onAction: () {
-              _challengeTabController.animateTo(1);
-            },
+            actionLabel: hasDiscoverable ? 'Browse Challenges' : 'Create Challenge',
+            onAction: hasDiscoverable
+                ? () => _challengeTabController.animateTo(1)
+                : _handleCreateChallenge,
           );
         }
 
@@ -212,8 +220,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                 icon: Icons.search_off_rounded,
                 title: AppLocalizations.of(context).challengesNoChallengesFound,
                 description: AppLocalizations.of(context).challengesBeTheFirstTo,
-                actionLabel: null,
-                onAction: null,
+                actionLabel: 'Create Challenge',
+                onAction: _handleCreateChallenge,
               )
             else
               ...availableChallenges.map((challenge) {

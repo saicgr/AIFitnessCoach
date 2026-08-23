@@ -13,13 +13,17 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
     required Color cyan,
     required Color cardBorder,
   }) {
-    final history = state.historyByType[_selectedType] ?? [];
+    final useKg = ref.watch(useKgProvider);
+    final rawHistory = state.historyByType[_selectedType] ?? [];
+    final history = rawHistory.map((e) => _toDisplayEntry(e, useKg)).toList();
     final filtered = _filterByPeriod(history).reversed.toList();
-    final latest = summary?.latestByType[_selectedType];
-    final change = summary?.changeFromPrevious[_selectedType];
-    final unit = _selectedType == MeasurementType.weight
-        ? 'kg'
-        : (_selectedType == MeasurementType.bodyFat ? '%' : 'cm');
+    final rawLatest = summary?.latestByType[_selectedType];
+    final latest = rawLatest == null ? null : _toDisplayEntry(rawLatest, useKg);
+    final rawChange = summary?.changeFromPrevious[_selectedType];
+    final change = rawChange == null
+        ? null
+        : _deltaInUnit(rawChange, _selectedType, useKg);
+    final unit = useKg ? _selectedType.metricUnit : _selectedType.imperialUnit;
 
     return ZealovaCard(
       variant: ZealovaCardVariant.outlined,
@@ -118,6 +122,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
   void _showMetricPicker(
       BuildContext context, Color accent, Color textPrimary, bool isDark) {
     final state = ref.read(measurementsProvider);
+    final useKg = ref.read(useKgProvider);
     showGlassSheet<void>(
       context: context,
       builder: (sheetCtx) {
@@ -148,7 +153,10 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                         // row (typically Weight, since it's onboarded first)
                         // is the one most likely to have real data, making
                         // the omission conspicuous.
-                        final latest = state.summary?.latestByType[type];
+                        final rawLatest = state.summary?.latestByType[type];
+                        final latest = rawLatest == null
+                            ? null
+                            : _toDisplayEntry(rawLatest, useKg);
                         return ListTile(
                           dense: true,
                           leading: Icon(

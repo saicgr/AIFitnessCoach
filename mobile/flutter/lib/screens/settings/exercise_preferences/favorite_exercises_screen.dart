@@ -97,7 +97,11 @@ class FavoriteExercisesScreen extends ConsumerWidget {
             bottom: 96,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+              // Row 235 — Favorites ("always show me this") is a positive
+              // action, not a destructive one; red here duplicated Avoided's
+              // ("never show me this") accent, the two semantically opposite
+              // tabs in the same control.
+              backgroundColor: AppColors.pink,
               foregroundColor: Colors.white,
               onPressed: () => _showAddExercisePicker(context, ref),
               child: const Icon(Icons.add),
@@ -181,7 +185,8 @@ class FavoriteExercisesScreen extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return EmptyStateWithSuggestions(
       heroIcon: Icons.favorite_rounded,
-      accentColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+      // Row 235 — positive action, not destructive; see FAB comment above.
+      accentColor: AppColors.pink,
       heroTitle: 'Pick the exercises you love',
       heroSubtitle:
           'Favorites get priority when the AI builds your workouts. Tap any suggestion to add it instantly.',
@@ -339,12 +344,13 @@ class _FavoriteExerciseTile extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
+            // Row 235 — positive action, not destructive; see FAB comment above.
+            color: AppColors.pink.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             Icons.favorite,
-            color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+            color: AppColors.pink,
             size: 22,
           ),
         ),

@@ -256,6 +256,10 @@ class EasyActiveWorkoutView extends StatelessWidget {
               onEditSet: onEditSet,
               onReturnToCurrent: onReturnToCurrent,
               onSkipToSet: onSkipToSet,
+              warmupSetNumbers: {
+                for (final t in exercise.setTargets ?? const [])
+                  if (t.isWarmup) t.setNumber,
+              },
             ),
             // EASY REDESIGN: the five stacked insight cards (pre-set coach
             // tip / last-time / score-target / how-did-I-do) were REMOVED from

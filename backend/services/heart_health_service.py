@@ -39,9 +39,9 @@ class HeartComponent(BaseModel):
 
 class HeartHealthResponse(BaseModel):
     local_date: str
-    score: int                      # 0-100
+    score: Optional[int] = None     # 0-100, None when fewer than 2 drivers have data
     delta: Optional[int] = None     # vs previous snapshot
-    label: str                      # Excellent | Good | Fair | Poor
+    label: Optional[str] = None     # Excellent | Good | Fair | Poor, None when score is None
     components: List[HeartComponent]
     headline: str
     body: str
@@ -180,14 +180,25 @@ def compute_heart_health(sb, user_id: str, local_date: date) -> Dict[str, Any]:
 
     # --- Fuse: weight-renormalized over components with a score ---
     num = den = 0.0
+    n_scored = 0
     for c in components:
         if c.score is not None:
             w = _WEIGHTS.get(c.key, 0.0)
             num += w * c.score
             den += w
+            n_scored += 1
     overall = _clamp(num / den) if den > 0 else 0
 
-    return {"score": overall, "components": components, "has_data": den > 0}
+    # A single driver (e.g. only a logged BMI, with zero sleep, activity or
+    # heart-rate signal) renormalized over the omitted weights still fills
+    # the whole 0-100 scale — presenting a fully-measured "Excellent" score
+    # when nothing about heart rate, sleep or activity has actually been
+    # observed. Require at least two independent drivers before the
+    # composite counts as real (finding: HR sync on, zero readings, "89
+    # Excellent" reported anyway from a lone BMI reading).
+    has_data = den > 0 and n_scored >= 2
+
+    return {"score": overall, "components": components, "has_data": has_data}
 
 
 def _persist_and_delta(sb, user_id: str, local_date: date, score: int,
@@ -267,8 +278,11 @@ async def build_heart_health_response(
         )
         headline, body, delivery = ins["headline"], ins["body"], ins["delivery"]
 
+    has_data = computed["has_data"]
     return HeartHealthResponse(
         local_date=local_date.isoformat(),
-        score=score, delta=delta, label=_label(score),
+        score=score if has_data else None,
+        delta=delta if has_data else None,
+        label=_label(score) if has_data else None,
         components=components, headline=headline, body=body, delivery=delivery,
     )

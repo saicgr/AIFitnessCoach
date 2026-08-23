@@ -7,7 +7,6 @@ import '../../../data/models/user_program_assignment.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
-import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/program_assignments_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -565,28 +564,46 @@ class _ProgramBlock extends ConsumerWidget {
         // nothing binding it to the active profile's actual schedule, so it
         // read as empty (a heading + EDIT PROGRAM + the tile row) no matter
         // how many workouts were scheduled. Surfaces the next few upcoming
-        // sessions here; collapses to nothing when there genuinely are none.
-        const _UpcomingScheduleBlock(),
+        // sessions here; collapses to nothing when there genuinely are none —
+        // EXCEPT when there is also no program at all (row 186), where a
+        // silent collapse left the heading + tile row floating over a void
+        // with nothing telling the user why. `hasProgram` gates that one
+        // explicit empty state; a user WITH a program but no near-term
+        // session still gets the plain collapse.
+        _UpcomingScheduleBlock(hasProgram: primary != null || program != null),
       ],
     );
   }
 }
 
-/// The active profile's next few scheduled (not yet completed) sessions,
-/// shown under the tool-tile row so "MY PROGRAM" reflects the real schedule
-/// instead of always looking empty. Scoped to the active gym profile once one
-/// exists, so a session from a profile the user has since switched away from
-/// doesn't linger here (row 208).
+/// The next few scheduled (not yet completed) sessions, shown under the
+/// tool-tile row so "MY PROGRAM" reflects the real schedule instead of
+/// always looking empty.
+///
+/// Row 245 — this used to additionally scope by the active gym profile
+/// (`w.gymProfileId != activeProfileId`), which the Workout tab's SCHEDULE
+/// destination (`schedule_screen.dart` `_getWorkoutsForDay`) does not do —
+/// SCHEDULE lists every workout for the day regardless of which gym profile
+/// generated it. That divergence let this preview render empty while
+/// SCHEDULE, one tap away, listed the same workouts correctly. Dropped the
+/// profile filter so both surfaces query the workout the same way; a stale
+/// cross-profile session (row 208) is Schedule's call to filter, not this
+/// preview's alone.
 class _UpcomingScheduleBlock extends ConsumerWidget {
-  const _UpcomingScheduleBlock();
+  /// Whether the user has an active program/branded plan assigned. Gates the
+  /// explicit "no program yet" empty state below — a user who genuinely has
+  /// no program (never generated/assigned one) gets told why the section
+  /// looks bare, while a user WITH a program just between scheduled sessions
+  /// still gets the plain silent collapse.
+  final bool hasProgram;
+
+  const _UpcomingScheduleBlock({required this.hasProgram});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tc = ThemeColors.of(context);
     final workouts =
         ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
-    final profiles = ref.watch(gymProfilesProvider).valueOrNull ?? const [];
-    final activeProfileId = ref.watch(activeGymProfileIdProvider);
 
     final today = DateTime.now();
     final todayKey = DateTime(today.year, today.month, today.day);
@@ -598,12 +615,6 @@ class _UpcomingScheduleBlock extends ConsumerWidget {
       if (DateTime(day.year, day.month, day.day).isBefore(todayKey)) {
         return false;
       }
-      // Only scope by profile once the user actually has gym profiles —
-      // otherwise every workout (which predates profiles entirely) would
-      // vanish.
-      if (profiles.isNotEmpty && w.gymProfileId != activeProfileId) {
-        return false;
-      }
       return true;
     }).toList()
       ..sort((a, b) {
@@ -612,7 +623,25 @@ class _UpcomingScheduleBlock extends ConsumerWidget {
         return da.compareTo(db);
       });
 
-    if (upcoming.isEmpty) return const SizedBox.shrink();
+    if (upcoming.isEmpty) {
+      if (hasProgram) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(top: 18),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline_rounded, size: 15, color: tc.textMuted),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'No program yet — Quick Generate above, or browse Programs '
+                'below.',
+                style: TextStyle(fontSize: 12.5, color: tc.textMuted),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: 18),

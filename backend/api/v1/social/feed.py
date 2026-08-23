@@ -208,6 +208,19 @@ def _fallback_feed_query(supabase, user_id, activity_type, page_size, offset, so
     query = query.range(offset, offset + page_size - 1)
     result = query.execute()
 
+    # Batch-fetch the viewer's own reactions for the returned activities so
+    # the fallback path carries the same per-user reaction state the RPC
+    # returns -- without this every row falls back to "not reacted", which is
+    # exactly the stale-after-refetch bug this fallback must not reintroduce.
+    activity_ids = [row["id"] for row in (result.data or [])]
+    reaction_by_activity: dict = {}
+    if activity_ids:
+        reactions_result = supabase.table("activity_reactions").select(
+            "activity_id, reaction_type"
+        ).eq("user_id", user_id).in_("activity_id", activity_ids).execute()
+        for r in (reactions_result.data or []):
+            reaction_by_activity[r["activity_id"]] = r["reaction_type"]
+
     # Reshape rows to match the RPC output format that the caller expects
     rows = []
     for row in (result.data or []):
@@ -215,6 +228,9 @@ def _fallback_feed_query(supabase, user_id, activity_type, page_size, offset, so
         row["user_name"] = users_data.get("name") if users_data else None
         row["user_avatar"] = users_data.get("avatar_url") if users_data else None
         row["total_count"] = result.count or 0
+        user_reaction_type = reaction_by_activity.get(row["id"])
+        row["user_has_reacted"] = user_reaction_type is not None
+        row["user_reaction_type"] = user_reaction_type
         rows.append(row)
 
     # Wrap in a minimal object with .data attribute

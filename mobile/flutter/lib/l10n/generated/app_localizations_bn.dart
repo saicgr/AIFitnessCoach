@@ -14893,7 +14893,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => 'সাইন আপ করলে ১৭০০+';
+  String get guestHome1700WithSignup => 'সাইন আপ করলে ২৩০০+';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach ডেমো';
@@ -15008,7 +15008,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '$guestExerciseLimitটি নমুনা ব্যায়াম দেখানো হচ্ছে। ১৭০০+ ব্যায়াম অ্যাক্সেস করতে বিনামূল্যে সাইন আপ করুন!';
+    return '$guestExerciseLimitটি নমুনা ব্যায়াম দেখানো হচ্ছে। ২৩০০+ ব্যায়াম অ্যাক্সেস করতে বিনামূল্যে সাইন আপ করুন!';
   }
 
   @override
@@ -15033,7 +15033,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই ব্যায়ামের বিস্তারিত নির্দেশনা দেখতে সাইন আপ করুন।';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '১৭০০+ ব্যায়াম আনলক করুন';
+  String get guestLibraryUnlock1700Exercises => '২৩০০+ ব্যায়াম আনলক করুন';
 
   @override
   String get guestLockedFeatureUnlockFree => 'ফ্রি আনলক করুন';
@@ -27442,7 +27442,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      '১,৭০০+ ব্যায়াম থেকে সংগ্রহ করা হচ্ছে';
+      '২,৩০০+ ব্যায়াম থেকে সংগ্রহ করা হচ্ছে';
 
   @override
   String get planAnalyzingReviewingYourGoals =>
@@ -36317,6 +36317,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'সব প্রোফাইল';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" এডিট করুন';
   }
@@ -43755,6 +43758,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutUiModeAdvanced => 'অ্যাডভান্সড';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'সবকিছু — ওয়ার্মআপ/স্ট্রেচ পর্যায়, RPE/RIR, পিরামিড, সুপারসেট, ড্রপ সেট, ±5 lb ইনক্রিমেন্ট, প্লেট চার্ট।';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'সবকিছু — ওয়ার্মআপ/স্ট্রেচ পর্যায়, RPE/RIR, পিরামিড, সুপারসেট, ড্রপ সেট, ±2.5 kg ইনক্রিমেন্ট, প্লেট চার্ট।';
 
@@ -44687,6 +44694,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get heroModesActionRetry => 'আবার চেষ্টা';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'চলমান';
 
   @override
@@ -45037,7 +45051,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“একজন ভালো পার্সোনাল ট্রেনারের খরচ মাসে \$400। সেটা আমার পক্ষে সম্ভব ছিল না, তাই দুই বছর ধরে নিজেই একটা বানিয়েছি: ১,৭২২টি ব্যায়াম, আসল প্রগ্রেশন লজিক, এমন এক কোচ যে সত্যিই আপনার সপ্তাহটা দেখে। আমি প্রতিদিন এটা ব্যবহার করি।”';
+      '“একজন ভালো পার্সোনাল ট্রেনারের খরচ মাসে \$400। সেটা আমার পক্ষে সম্ভব ছিল না, তাই দুই বছর ধরে নিজেই একটা বানিয়েছি: ২,৩০০টি ব্যায়াম, আসল প্রগ্রেশন লজিক, এমন এক কোচ যে সত্যিই আপনার সপ্তাহটা দেখে। আমি প্রতিদিন এটা ব্যবহার করি।”';
 
   @override
   String get paywallFounderName => 'Chetan · প্রতিষ্ঠাতা';

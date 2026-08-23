@@ -1008,7 +1008,14 @@ Future<(List<TrendPoint>, String)> _fetchMeasurementSeries(
   if (type == null) return (const <TrendPoint>[], '');
 
   final auth = ref.read(authStateProvider);
-  final isMetric = auth.user?.usesMetricMeasurements ?? true;
+  // Weight has its own unit preference (`weightUnit`, kg/lbs) — distinct from
+  // `usesMetricMeasurements`, which governs body measurements (cm/in) and
+  // otherwise left this series reading the wrong flag: the value stayed
+  // un-converted while the unit label followed the weight preference
+  // elsewhere on Home, so the tile showed a kg number under an "LB" label.
+  final isMetric = type == MeasurementType.weight
+      ? (auth.user?.usesMetricWeight ?? true)
+      : (auth.user?.usesMetricMeasurements ?? true);
 
   final repo = ref.read(measurementsRepositoryProvider);
   final history = await repo.getMeasurementHistory(userId, type, limit: 365);

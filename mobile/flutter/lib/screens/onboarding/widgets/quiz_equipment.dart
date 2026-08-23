@@ -39,14 +39,18 @@ class _EquipmentPreset {
 class _WorkoutEnvironmentOption {
   final String id;
   final String label;
-  final String emoji;
+  // Material icon, not emoji — the equipment list right below these chips
+  // already uses vector glyphs (see `_EquipmentCategory`/`_VisualItem`
+  // above), and emoji chips beside them showed two icon systems in one
+  // viewport, render per-platform, and never pick up the app's accent ramp.
+  final IconData icon;
   final String description;
   final List<String> defaultEquipment;
 
   const _WorkoutEnvironmentOption({
     required this.id,
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.description,
     required this.defaultEquipment,
   });
@@ -159,28 +163,28 @@ class QuizEquipment extends StatefulWidget {
     _WorkoutEnvironmentOption(
       id: 'commercial_gym',
       label: l10n.quizEquipmentGym,
-      emoji: '\u{1F3E2}',
+      icon: Icons.apartment_rounded,
       description: l10n.quizEquipmentFullGymWithMachines,
       defaultEquipment: const ['full_gym'],
     ),
     _WorkoutEnvironmentOption(
       id: 'home',
       label: l10n.quizEquipmentHome,
-      emoji: '\u{1F3E1}',
+      icon: Icons.home_rounded,
       description: l10n.quizEquipmentMinimalEquipmentBodyweight,
       defaultEquipment: const ['bodyweight'],
     ),
     _WorkoutEnvironmentOption(
       id: 'home_gym',
       label: l10n.quizEquipmentHomeGym,
-      emoji: '\u{1F3E0}',
+      icon: Icons.garage_rounded,
       description: l10n.quizEquipmentDedicatedSpaceWithDumbbells,
       defaultEquipment: const ['bodyweight', 'dumbbells', 'barbell', 'resistance_bands', 'pull_up_bar', 'kettlebell'],
     ),
     _WorkoutEnvironmentOption(
       id: 'hotel',
       label: l10n.quizEquipmentHotel,
-      emoji: '\u{1F9F3}',
+      icon: Icons.luggage_rounded,
       description: l10n.quizEquipmentTravelFriendlyDumbbellsC,
       defaultEquipment: const ['bodyweight', 'dumbbells', 'resistance_bands'],
     ),
@@ -1370,9 +1374,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              env.emoji,
-                              style: const TextStyle(fontSize: 13),
+                            Icon(
+                              env.icon,
+                              size: 14,
+                              color: isSelected ? t.selectionAccent : t.textMuted,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1442,7 +1447,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             ),
           ),
         ),
-        SizedBox(
+        _HorizontalScrollEdgeFade(
+          background: t.isDark ? const Color(0xFF050505) : const Color(0xFFFAFAFA),
+          child: SizedBox(
           height: 40,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -1480,6 +1487,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 theme: t,
               );
             },
+          ),
           ),
         ),
       ],
@@ -1521,7 +1529,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(env.emoji, style: const TextStyle(fontSize: 24)),
+                    Icon(env.icon, size: 24, color: t.textPrimary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -1811,6 +1819,84 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-edge fade for a horizontal-scroll row that overflows the viewport.
+/// Without it, the last chip in a row like "Quick presets" gets a hard clip
+/// at the screen edge with nothing — no shadow, arrow, or partial peek — to
+/// say the row scrolls, so a label like "Bodyweight + Pull-up B…" reads as
+/// broken text rather than a chip cut off by the edge. Only paints once
+/// scroll metrics confirm there's more content past the visible edge, and
+/// clears itself once the row is scrolled all the way to its end.
+class _HorizontalScrollEdgeFade extends StatefulWidget {
+  final Widget child;
+  final Color background;
+
+  const _HorizontalScrollEdgeFade({
+    required this.child,
+    required this.background,
+  });
+
+  @override
+  State<_HorizontalScrollEdgeFade> createState() => _HorizontalScrollEdgeFadeState();
+}
+
+class _HorizontalScrollEdgeFadeState extends State<_HorizontalScrollEdgeFade> {
+  bool _more = false;
+
+  bool? _readMetrics(ScrollMetrics m) {
+    if (m.axis != Axis.horizontal || !m.hasPixels) return null;
+    return m.extentAfter > 2;
+  }
+
+  void _update(bool? next) {
+    if (next == null || next == _more) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && next != _more) setState(() => _more = next);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (n) {
+        _update(_readMetrics(n.metrics));
+        return false;
+      },
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (n) {
+          _update(_readMetrics(n.metrics));
+          return false;
+        },
+        child: Stack(
+          children: [
+            widget.child,
+            if (_more)
+              PositionedDirectional(
+                end: 0,
+                top: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 28,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: AlignmentDirectional.centerStart,
+                        end: AlignmentDirectional.centerEnd,
+                        colors: [
+                          widget.background.withValues(alpha: 0),
+                          widget.background,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

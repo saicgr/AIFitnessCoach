@@ -124,6 +124,16 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     // Use the activityFeedProvider to load feed data
     final activityFeedAsync = ref.watch(activityFeedProvider(userId));
 
+    // True only for the genuine no-posts-at-all empty state, which already
+    // renders its own full-width "Create Post" button. Showing the circular
+    // "+" FAB on top of that state duplicates the same action and, at the
+    // empty state's bottom-biased layout, physically overlaps the button's
+    // right edge — so it is suppressed for exactly this state.
+    final isGenuinelyEmpty = activityFeedAsync.maybeWhen(
+      data: (feedData) => ((feedData['items'] as List?) ?? const []).isEmpty,
+      orElse: () => false,
+    );
+
     return Stack(
       children: [
         CacheFirstView<Map<String, dynamic>>(
@@ -310,25 +320,26 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         // controls physically overlapped in the same corner. Derived from the
         // cluster's own tokens (`chrome_constants.dart`) so the two can never
         // drift back into each other.
-        PositionedDirectional(
-          bottom: MediaQuery.of(context).padding.bottom +
-              kQuickLogFabClearance +
-              8,
-          end: 16,
-          child: Builder(
-            builder: (context) {
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              final accentColor = ref.colors(context).accent;
-              return FloatingActionButton(
-                onPressed: () => _showCreatePostSheet(userId),
-                backgroundColor: accentColor,
-                foregroundColor: isDark ? Colors.black : Colors.white,
-                elevation: 4,
-                child: const Icon(Icons.add_rounded, size: 28),
-              );
-            },
+        if (!isGenuinelyEmpty)
+          PositionedDirectional(
+            bottom: MediaQuery.of(context).padding.bottom +
+                kQuickLogFabClearance +
+                8,
+            end: 16,
+            child: Builder(
+              builder: (context) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final accentColor = ref.colors(context).accent;
+                return FloatingActionButton(
+                  onPressed: () => _showCreatePostSheet(userId),
+                  backgroundColor: accentColor,
+                  foregroundColor: isDark ? Colors.black : Colors.white,
+                  elevation: 4,
+                  child: const Icon(Icons.add_rounded, size: 28),
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }

@@ -63,6 +63,30 @@ class _StapleExerciseTile extends ConsumerWidget {
     }
   }
 
+  /// Renders the staple's customised prescription, e.g. "50 lb · 4 × 10 ·
+  /// 90s rest" — mirrors the edit sheet's unit handling (`user_weight_lbs`
+  /// is always stored in pounds; convert to the user's current workout
+  /// weight unit for display, same as `_showEditStapleSheet`).
+  String _prescriptionDisplay(WidgetRef ref) {
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final parts = <String>[];
+    if (staple.userWeightLbs != null) {
+      final weight = useKg
+          ? WeightUtils.lbsToKg(staple.userWeightLbs!)
+          : staple.userWeightLbs!;
+      parts.add('${WeightUtils.formatWeightValue(weight)} ${WeightUtils.workoutUnitLabel(useKg)}');
+    }
+    final reps = staple.userReps?.trim();
+    if (staple.userSets != null || (reps != null && reps.isNotEmpty)) {
+      final sets = staple.userSets?.toString() ?? '-';
+      parts.add(reps != null && reps.isNotEmpty ? '$sets × $reps' : '$sets sets');
+    }
+    if (staple.userRestSeconds != null) {
+      parts.add('${staple.userRestSeconds}s rest');
+    }
+    return parts.join(' · ');
+  }
+
   Color _parseColor(String hexColor) {
     try {
       final hex = hexColor.replaceAll('#', '');
@@ -177,6 +201,42 @@ class _StapleExerciseTile extends ConsumerWidget {
                   ),
               ],
             ),
+            if (staple.hasCustomPrescription)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _prescriptionDisplay(ref),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: context.accentColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: context.accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).stapleExercisesScreenCustomised,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: context.accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (staple.isCardioEquipment)
               Padding(
                 padding: const EdgeInsets.only(top: 2),

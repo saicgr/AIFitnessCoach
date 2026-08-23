@@ -14907,7 +14907,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ kwa kujisajili';
+  String get guestHome1700WithSignup => '2300+ kwa kujisajili';
 
   @override
   String get guestHomeAiCoachDemo => 'Onyesho la Kocha wa AI';
@@ -15020,7 +15020,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Inaonyesha mazoezi ya sampuli $guestExerciseLimit. Jisajili bila malipo ili kufikia mazoezi 1700+!';
+    return 'Inaonyesha mazoezi ya sampuli $guestExerciseLimit. Jisajili bila malipo ili kufikia mazoezi 2300+!';
   }
 
   @override
@@ -15045,7 +15045,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Jisajili ili kutazama maelekezo ya kina ya zoezi hili.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Fungua Mazoezi 1700+';
+  String get guestLibraryUnlock1700Exercises => 'Fungua Mazoezi 2300+';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Fungua bure';
@@ -27473,7 +27473,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Inalinganisha na aina ya mwili wako';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Inachagua kutoka mazoezi 1,700+';
+  String get planAnalyzingPullingFrom1700 => 'Inachagua kutoka mazoezi 2,300+';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Inapitia malengo yako';
@@ -36355,6 +36355,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Wasifu Wote';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Hariri \"$exerciseName\"';
   }
@@ -43799,6 +43802,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Advanced';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Kila kitu — awamu za kupasha moto/kunyoosha, RPE/RIR, pyramid, supersets, drop sets, nyongeza za ±5 lb, chati ya uzito.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Kila kitu — awamu za kupasha moto/kunyoosha, RPE/RIR, pyramid, supersets, drop sets, nyongeza za ±2.5 kg, chati ya uzito.';
 
@@ -44735,6 +44742,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get heroModesActionRetry => 'JARIBU';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'MUBASHARA';
 
   @override
@@ -45085,7 +45099,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Kocha mzuri wa binafsi ni \$400/mwezi. Sikuweza kulipia hilo, kwa hiyo nilitumia miaka miwili kujenga wangu mwenyewe: mazoezi 1,722, mantiki halisi ya maendeleo, kocha anayeangalia wiki yako kwa kweli. Ninamtumia kila siku.”';
+      '“Kocha mzuri wa binafsi ni \$400/mwezi. Sikuweza kulipia hilo, kwa hiyo nilitumia miaka miwili kujenga wangu mwenyewe: mazoezi 2,300, mantiki halisi ya maendeleo, kocha anayeangalia wiki yako kwa kweli. Ninamtumia kila siku.”';
 
   @override
   String get paywallFounderName => 'Chetan · mwanzilishi';

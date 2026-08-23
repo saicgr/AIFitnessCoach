@@ -430,6 +430,9 @@ async def get_active_injuries_with_muscles(user_id: str) -> dict:
                 else:
                     body_part = ""
 
+                if isinstance(body_part, str) and body_part.strip().lower() in {"none", "other", "", "n/a", "na"}:
+                    continue
+
                 if body_part and body_part not in active_injuries:
                     active_injuries.append(body_part)
 

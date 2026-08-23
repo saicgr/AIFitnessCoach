@@ -109,10 +109,14 @@ Future<void> maybeRunPreWorkoutReshape(
     return;
   }
   if (!context.mounted) return;
-  // Mark done up-front so a rebuild/re-entry can't double-prompt.
+  // Mark done up-front so a rebuild/re-entry can't double-prompt. Persist is
+  // awaited (not fire-and-forget) so the disk mirror is guaranteed written
+  // before the sheet can be dismissed — otherwise a kill/relaunch in the
+  // gap between showing the sheet and the write landing re-armed the gate
+  // and the check-in showed a second time for the same workout/day on resume.
   final nextDone = {...done, key};
   ref.read(preWorkoutReshapeDoneProvider.notifier).state = nextDone;
-  unawaited(_persistDoneKeys({...persisted, key}));
+  await _persistDoneKeys({...persisted, key});
 
   // Gate the tier tour for the whole modal flow (sheet → reshape call → diff
   // dialog) so its spotlight never fires on top of this sheet, anchored to

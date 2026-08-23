@@ -986,7 +986,15 @@ Guidelines:
             elif fiber_ratio < 0.10:
                 refined_penalty += 1
 
-        score -= min(refined_penalty, 2)
+        # Row 102 — a high-protein meal (>=25g, the same "muscle goal"
+        # threshold the Gemini prompt scores against) commonly pairs with a
+        # plain starch (rice, potatoes) that trips the low-fiber-density
+        # signal above even though it isn't the refined/sugary pattern that
+        # signal targets. Cap the penalty lower so a genuine high-protein
+        # whole-food meal doesn't land in "unhealthy" territory purely for
+        # its starch side.
+        max_refined_penalty = 1 if protein_g >= 25 else 2
+        score -= min(refined_penalty, max_refined_penalty)
 
         return max(1, min(10, score))
 

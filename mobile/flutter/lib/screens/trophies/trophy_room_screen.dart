@@ -46,6 +46,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
   TrophyStatusFilter _statusFilter = TrophyStatusFilter.all;
   final TextEditingController _searchController = TextEditingController();
   final Map<TrophyCategory, bool> _expandedSections = {};
+  bool _mysteryExpanded = false;
 
   // Initialize all sections as expanded
   @override
@@ -226,21 +227,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                   child: _buildEmptyState(textMuted),
                 ),
 
-              // Mystery Trophies section (special section at top)
-              if (!isLoading && mysteryTrophies.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: _buildMysterySection(
-                    mysteryTrophies,
-                    isDark,
-                    textColor,
-                    textMuted,
-                    elevatedColor,
-                    cardBorder,
-                    accentColor,
-                  ),
-                ),
-
-              // Category sections
+              // Category sections (earned + in-progress first, mystery last)
               if (!isLoading && filteredTrophies.isNotEmpty)
                 ...TrophyCategory.values.map((category) {
                   final categoryTrophies = groupedTrophies[category] ?? [];
@@ -262,6 +249,20 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                     ),
                   );
                 }),
+
+              // Mystery Trophies section (collapsed by default, rendered last)
+              if (!isLoading && mysteryTrophies.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildMysterySection(
+                    mysteryTrophies,
+                    isDark,
+                    textColor,
+                    textMuted,
+                    elevatedColor,
+                    cardBorder,
+                    accentColor,
+                  ),
+                ),
 
               // Bottom padding
               const SliverToBoxAdapter(
@@ -634,11 +635,14 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header
+          // Section header (collapsible — collapsed by default so 40 mystery
+          // cards don't dominate the screen; see finding #363)
           GestureDetector(
             onTap: () {
               HapticService.light();
-              // Mystery section is always expanded (no collapse)
+              setState(() {
+                _mysteryExpanded = !_mysteryExpanded;
+              });
             },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -695,27 +699,40 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    _mysteryExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: textMuted,
+                    size: 24,
+                  ),
                 ],
               ),
             ),
           ),
 
-          // Trophy cards
-          ...mysteryTrophies.map((trophy) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _TrophyCard(
-                trophyProgress: trophy,
-                onTap: () => _showTrophyDetail(trophy, isDark, textColor, textMuted, elevatedColor, accentColor),
-                isDark: isDark,
-                textColor: textColor,
-                textMuted: textMuted,
-                elevatedColor: elevatedColor,
-                cardBorder: cardBorder,
-                accentColor: accentColor,
-              ),
-            );
-          }),
+          // Trophy cards (collapsed by default)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _mysteryExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+            firstChild: Column(
+              children: mysteryTrophies.map((trophy) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _TrophyCard(
+                    trophyProgress: trophy,
+                    onTap: () => _showTrophyDetail(trophy, isDark, textColor, textMuted, elevatedColor, accentColor),
+                    isDark: isDark,
+                    textColor: textColor,
+                    textMuted: textMuted,
+                    elevatedColor: elevatedColor,
+                    cardBorder: cardBorder,
+                    accentColor: accentColor,
+                  ),
+                );
+              }).toList(),
+            ),
+            secondChild: const SizedBox.shrink(),
+          ),
 
           const SizedBox(height: 8),
         ],

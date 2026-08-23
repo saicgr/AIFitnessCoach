@@ -50,11 +50,18 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         );
 
       case WorkoutCardMode.error:
+        // finding #329 — a client-side timeout against a reachable backend
+        // (e.g. a slow `/today` response) is not the same failure as a
+        // genuine no-connectivity error, and must not show "OFFLINE".
+        final isTimeoutError = ref.watch(workoutCardStateProvider).isTimeoutError;
+        if (isTimeoutError) {
+          _scheduleTimeoutAutoRetry();
+        }
         return _HeroBase(
           isDark: isDark,
-          pill: l10n.heroModesPillOffline,
+          pill: isTimeoutError ? l10n.heroModesPillSlowConnection : l10n.heroModesPillOffline,
           pillColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
-          body: l10n.heroModesBodyOffline,
+          body: isTimeoutError ? l10n.heroModesBodySlowConnection : l10n.heroModesBodyOffline,
           primary: _PrimaryButton(
             label: l10n.heroModesActionRetry,
             onTap: () {

@@ -35,6 +35,11 @@ class IngredientAnalysis {
   final double? ironMg;
   final double? sodiumMg;
   final double? omega3G;
+  // Fuller micronutrient breakdown (vitamin A/C/E/K, B-vitamins, magnesium,
+  // zinc, potassium, etc.) when the analyzer had it — same enrichment as
+  // meal logging, carried through to the saved recipe ingredient instead of
+  // being dropped at the "key 5" fields above.
+  final Map<String, dynamic>? micronutrients;
 
   const IngredientAnalysis({
     required this.foodName,
@@ -58,6 +63,7 @@ class IngredientAnalysis {
     this.ironMg,
     this.sodiumMg,
     this.omega3G,
+    this.micronutrients,
   });
 
   factory IngredientAnalysis.fromJson(Map<String, dynamic> j) => IngredientAnalysis(
@@ -82,6 +88,7 @@ class IngredientAnalysis {
         ironMg: (j['iron_mg'] as num?)?.toDouble(),
         sodiumMg: (j['sodium_mg'] as num?)?.toDouble(),
         omega3G: (j['omega3_g'] as num?)?.toDouble(),
+        micronutrients: (j['micronutrients'] as Map?)?.cast<String, dynamic>(),
       );
 }
 

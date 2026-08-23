@@ -269,12 +269,15 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       _isActive = false;
     });
 
+    final user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      unawaited(_logSession(user.id));
+    }
+
     _showCompletionDialog();
   }
 
   void _showCompletionDialog() {
-    final user = ref.read(currentUserProvider).value;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -303,10 +306,6 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Log the session
-                if (user != null) {
-                  _logSession(user.id);
-                }
                 context.pop();
               },
               child: Text(AppLocalizations.of(context).commonDone),
@@ -314,10 +313,6 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Log and do another
-                if (user != null) {
-                  _logSession(user.id);
-                }
                 setState(() {
                   _isActive = false;
                   _selectedExercise = null;
@@ -331,12 +326,12 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     );
   }
 
-  Future<void> _logSession(String userId) async {
+  Future<void> _logSession(String userId, {int? repsCompletedOverride}) async {
     try {
       final notifier = ref.read(kegelSessionNotifierProvider(userId).notifier);
       await notifier.logSession(
         durationSeconds: _totalSessionSeconds,
-        repsCompleted: _totalReps,
+        repsCompleted: repsCompletedOverride ?? _totalReps,
         holdDurationSeconds: _holdSeconds,
         sessionType: _difficultyToSessionType(_selectedExercise?.difficulty),
         exerciseName: _selectedExercise?.name,
@@ -347,7 +342,21 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       );
     } catch (e) {
       debugPrint('Failed to log kegel session: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save your kegel session')),
+        );
+      }
     }
+  }
+
+  /// Reps fully completed so far in the active session, for a partial save
+  /// when the user stops early. During the rest phase for rep N, N's hold is
+  /// already done; during the hold phase for rep N, only N-1 are done.
+  int get _completedReps {
+    if (!_isActive) return 0;
+    final completed = _isResting ? _currentRep : _currentRep - 1;
+    return completed.clamp(0, _totalReps);
   }
 
   KegelSessionType _difficultyToSessionType(String? difficulty) {
@@ -791,7 +800,27 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     );
   }
 
+  void _endActiveSession({required bool save}) {
+    _timer?.cancel();
+    unawaited(
+      WakelockPlus.disable().catchError((e) {
+        debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
+      }),
+    );
+    if (!widget.fromWorkout) {
+      unawaited(LiveActivityService.instance.end());
+    }
+    if (save) {
+      final user = ref.read(currentUserProvider).value;
+      if (user != null) {
+        unawaited(_logSession(user.id, repsCompletedOverride: _completedReps));
+      }
+    }
+    context.pop();
+  }
+
   void _showExitConfirmation() {
+    final completedReps = _completedReps;
     showDialog(
       context: context,
       builder: (context) {
@@ -804,22 +833,21 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
               onPressed: () => Navigator.pop(context),
               child: Text(AppLocalizations.of(context).onboardingContinueButton),
             ),
-            FilledButton(
+            TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _timer?.cancel();
-                unawaited(
-                  WakelockPlus.disable().catchError((e) {
-                    debugPrint('⚠️ [Kegel] wakelock disable failed: $e');
-                  }),
-                );
-                if (!widget.fromWorkout) {
-                  unawaited(LiveActivityService.instance.end());
-                }
-                this.context.pop();
+                _endActiveSession(save: false);
               },
               child: Text(AppLocalizations.of(context).kegelSessionEndSession2),
             ),
+            if (completedReps > 0)
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _endActiveSession(save: true);
+                },
+                child: Text('Save $completedReps of $_totalReps'),
+              ),
           ],
         );
       },

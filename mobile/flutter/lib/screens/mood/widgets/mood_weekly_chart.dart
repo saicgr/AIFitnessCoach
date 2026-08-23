@@ -115,6 +115,11 @@ class MoodWeeklyChart extends ConsumerWidget {
   }
 
   Widget _buildTrendBadge(BuildContext context, MoodWeeklySummary summary, bool isDark) {
+    // Row 238 — zero check-ins means there is no trend to report; showing
+    // "Stable" here read as a real (fabricated) signal from an empty week.
+    if (summary.totalCheckins == 0 || summary.trend == null) {
+      return const SizedBox.shrink();
+    }
     final l10n = AppLocalizations.of(context)!;
     Color bgColor;
     Color textColor;

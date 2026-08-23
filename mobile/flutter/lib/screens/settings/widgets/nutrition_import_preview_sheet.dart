@@ -337,7 +337,18 @@ class _SampleRow extends StatelessWidget {
     final date = '${row['date'] ?? ''}';
     final meal = '${row['meal'] ?? ''}';
     final calories = row['calories'];
-    final items = '${row['items'] ?? ''}';
+    // Backend sends `items` as a bare item COUNT (services/nutrition_import/
+    // bulk.py: `len(l["food_items"])`), not a name list — label it so it
+    // doesn't read as an unexplained number.
+    final rawItems = row['items'];
+    final itemsCount = rawItems is int
+        ? rawItems
+        : rawItems is num
+            ? rawItems.toInt()
+            : int.tryParse('${rawItems ?? ''}');
+    final items = itemsCount != null
+        ? '$itemsCount ${itemsCount == 1 ? 'item' : 'items'}'
+        : '${rawItems ?? ''}';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

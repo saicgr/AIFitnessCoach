@@ -56,8 +56,7 @@ import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/providers/root_messenger.dart';
-
-const double _mlPerOz = 29.5735;
+import '../../../core/utils/hydration_units.dart';
 
 class CoachHeroCard extends ConsumerStatefulWidget {
   const CoachHeroCard({super.key});
@@ -411,13 +410,12 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     // disagrees with the Hydration screen or the Home water tile.
     final waterUseOz = ref.watch(hydrationUseOzProvider);
     final waterUnit = waterUseOz ? 'oz' : 'L';
-    final waterValue = waterUseOz ? waterMl / _mlPerOz : waterMl / 1000;
-    final waterGoalValue = waterUseOz ? waterGoalMl / _mlPerOz : waterGoalMl / 1000;
-    final waterValueLabel =
-        waterUseOz ? waterValue.round().toString() : waterValue.toStringAsFixed(1);
-    final waterGoalLabel = waterUseOz
-        ? waterGoalValue.round().toString()
-        : waterGoalValue.toStringAsFixed(1);
+    final waterValueLabel = formatHydrationDisplay(
+        hydrationDisplayValue(waterMl.toDouble(), useOz: waterUseOz),
+        useOz: waterUseOz);
+    final waterGoalLabel = formatHydrationDisplay(
+        hydrationDisplayValue(waterGoalMl.toDouble(), useOz: waterUseOz),
+        useOz: waterUseOz);
     tasks.add(_TodoTask(
       icon: Icons.local_drink_rounded,
       done: waterDone,

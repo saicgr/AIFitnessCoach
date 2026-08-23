@@ -279,6 +279,13 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
   /// Selected weight increment
   late double _selectedIncrement;
 
+  /// Scrolls the set list so the active row's weight/reps steppers stay
+  /// visible when the inline rest row is inserted above it — without this
+  /// the newly-added row pushes the still-unlogged next set (and its
+  /// steppers) toward/past the bottom edge of the fixed-height viewport
+  /// right when the user needs to adjust the next set's load.
+  final ScrollController _scrollController = ScrollController();
+
   // Weight increment options in kg
   static const List<double> _kgIncrements = [1.0, 1.25, 2.5, 5.0, 10.0];
   // Weight increment options in lbs
@@ -301,11 +308,31 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
   }
 
   @override
+  void didUpdateWidget(SetTrackingOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The inline rest row appearing grows the scrollable content without
+    // moving the current scroll offset, so the active row's steppers can
+    // land past the bottom edge right as rest starts. Scroll them back
+    // into view once the new row has laid out.
+    if (widget.showInlineRest && !oldWidget.showInlineRest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _notesController.dispose();
     _notesFocusNode.dispose();
     _editWeightController?.dispose();
     _editRepsController?.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -392,6 +419,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           // Scrollable content
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

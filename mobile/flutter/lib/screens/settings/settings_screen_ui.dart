@@ -3,7 +3,8 @@ part of 'settings_screen.dart';
 /// UI builder methods extracted from _SettingsScreenState
 extension _SettingsScreenStateUI on _SettingsScreenState {
 
-  Widget _buildNoResultsMessage(BuildContext context, Color textMuted) {
+  Widget _buildNoResultsMessage(
+      BuildContext context, Color textMuted, List<String> liveSuggestions) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 48),
       child: Column(
@@ -30,6 +31,40 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
               color: textMuted.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
+          ),
+          // Suggestions built from this screen's own current (localized) row
+          // titles, not a fixed translated phrase — so a suggestion here can
+          // never name a term the search index doesn't actually recognise.
+          const SizedBox(height: 12),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: liveSuggestions.map((term) {
+              return GestureDetector(
+                onTap: () {
+                  _searchController.text = term;
+                  _searchController.selection = TextSelection.collapsed(
+                    offset: term.length,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: textMuted.withValues(alpha: 0.2)),
+                  ),
+                  child: Text(
+                    term,
+                    style: TextStyle(fontSize: 13, color: textMuted),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),

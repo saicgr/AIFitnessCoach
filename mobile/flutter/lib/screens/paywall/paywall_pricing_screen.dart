@@ -84,20 +84,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   // Index of the "here's what you unlock" value-grid page.
   static const int _valuePage = 2;
 
-  // Skip ("Maybe later") visibility — platform-aware.
+  // Skip ("Maybe later") visibility.
   //
   // Google Play REQUIRES a clearly-visible dismiss at any price (its
-  // "Paywall Restriction" policy deactivates apps that hide it), so on
-  // Android the skip is visible from the first frame.
+  // "Paywall Restriction" policy deactivates apps that hide it), so the
+  // skip is visible from the first frame on every intro page, on both
+  // platforms.
   //
-  // iOS polices *deceptive* dismissal (hidden/trapping X), but tolerates a
-  // short delay before a then-clearly-visible skip. We hide it for a few
-  // seconds so the user reads all three intro beats first, then fade it in.
-  // (The iOS hard-gate — `_experiments.hardGate` scoped to iOS — removes it
-  // entirely; the $1 / trial entry is what keeps that palatable.)
-  bool _skipVisible = !Platform.isIOS;
-  Timer? _skipRevealTimer;
-  static const Duration _kSkipRevealDelay = Duration(seconds: 4);
+  // This used to be iOS-only: hidden on arrival, then only faded in a few
+  // seconds after reaching the LAST of the 4 intro pages — so an iOS user
+  // had to page through the entire flow before any exit existed at all,
+  // while Android saw it immediately. Apple's own guidelines (and the
+  // newer EU/FTC rules on dark patterns) police exactly this kind of
+  // obstruction, and there is no compliance upside to being stricter than
+  // Android requires — only asymmetric risk. Same visibility rule on both
+  // platforms now; the iOS hard-gate (`_experiments.hardGate`, which drops
+  // the skip entirely) is a separate, deliberate, disclosed choice Apple
+  // explicitly permits for no-free-tier apps, and is unaffected by this.
 
   // v7 first-run redesign: page 0 leads with founder-note proof instead of
   // the phone-mock hero. Kill switch `onboarding_v7_paywall_founder_page`
@@ -155,19 +158,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   @override
   void dispose() {
-    _skipRevealTimer?.cancel();
     _pageController.dispose();
     super.dispose();
-  }
-
-  /// On iOS, reveal the de-emphasized "Maybe later" skip a few seconds after
-  /// the user lands on the last intro page — so they read the offer first.
-  /// No-op on Android (skip is already visible) and once already revealed.
-  void _scheduleSkipReveal() {
-    if (_skipVisible || _skipRevealTimer != null) return;
-    _skipRevealTimer = Timer(_kSkipRevealDelay, () {
-      if (mounted) setState(() => _skipVisible = true);
-    });
   }
 
   void _goToNextPage() {
@@ -773,7 +765,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: colors.textMuted.withOpacity(0.5),
+                            // Was `textMuted.withOpacity(0.5)` — the lowest
+                            // contrast text on the screen, directly under
+                            // the highest-contrast element (the orange
+                            // CTA). textMuted itself only clears ~4.1:1 on
+                            // this near-black background; halving its
+                            // opacity on top of that fell well under the
+                            // 4.5:1 floor. textSecondary clears 4.5:1 at
+                            // full opacity and keeps this visually quieter
+                            // than the CTA via size/weight alone.
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
@@ -941,9 +942,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   physics: const ClampingScrollPhysics(),
                   onPageChanged: (i) {
                     setState(() => _currentPage = i);
-                    // iOS: once the user reaches the last (offer) page, start
-                    // the timer that fades the "Maybe later" skip in.
-                    if (i == _totalPages - 1) _scheduleSkipReveal();
                     // v7: per-page funnel visibility (which beat loses
                     // people: proof → reminder → offer).
                     ref
@@ -1139,34 +1137,34 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               );
             }),
           ),
-          // Quiet exit on the last page only — once the user has seen all 3
-          // beats. Platform-aware:
-          //  • iOS hard-gate (paywall_hard_gate) removes it entirely — the
-          //    $1 / trial entry keeps that palatable, and Apple permits hard
-          //    paywalls for no-free-tier apps. Scoped to iOS only.
-          //  • Otherwise it's shown, but on iOS it fades in a few seconds
-          //    after this page appears (`_scheduleSkipReveal`); Android shows
-          //    it immediately — Google Play requires a clearly-visible
-          //    dismiss at any price ("Paywall Restriction" enforcement).
-          if (isLast && !(_experiments.hardGate && Platform.isIOS)) ...[
+          // Quiet exit — visible from arrival on every intro page, not just
+          // the last, and on both platforms: Google Play requires a
+          // clearly-visible dismiss at any price ("Paywall Restriction"
+          // enforcement), and there's no reason to be laxer than that on
+          // iOS given Apple's own policing of deceptive/obstructed
+          // dismissal. The iOS hard-gate (paywall_hard_gate) still removes
+          // it entirely — a separate, deliberate, disclosed choice Apple
+          // permits for no-free-tier apps.
+          if (!(_experiments.hardGate && Platform.isIOS)) ...[
             const SizedBox(height: 6),
-            AnimatedOpacity(
-              opacity: _skipVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 280),
-              child: IgnorePointer(
-                ignoring: !_skipVisible,
-                child: GestureDetector(
-                  onTap: () => _handleMaybeLater(context, ref),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text(
-                      AppLocalizations.of(context).notifsLaterButton,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: colors.textMuted.withValues(alpha: 0.7),
-                      ),
-                    ),
+            GestureDetector(
+              onTap: () => _handleMaybeLater(context, ref),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  AppLocalizations.of(context).notifsLaterButton,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    // Was `textMuted.withValues(alpha: 0.7)` — textMuted
+                    // itself only clears ~4.1:1 on this near-black
+                    // background, so dimming it further sat well under the
+                    // 4.5:1 floor for de-emphasized-but-still-legible text
+                    // right beneath the highest-contrast element on the
+                    // screen (the solid orange CTA). textSecondary clears
+                    // 4.5:1 here at full opacity; de-emphasis still comes
+                    // through via the smaller size/weight vs the CTA above.
+                    color: colors.textSecondary,
                   ),
                 ),
               ),

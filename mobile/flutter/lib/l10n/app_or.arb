@@ -19686,7 +19686,7 @@
   "groupSettingsScreenRemoveFromThisGroup": "{memberName} କୁ ଏହି ଗ୍ରୁପରୁ ହଟାଇବେ କି?",
   "groupSettingsScreenRemovedFromGroup": "{memberName} ଗ୍ରୁପରୁ ହଟିଯାଇଛନ୍ତି",
   "groupSettingsScreenYou": "{memberName} (ଆପଣ)",
-  "guestHome1700WithSignup": "ସାଇନ୍ ଅପ୍ ସହିତ 1700+",
+  "guestHome1700WithSignup": "ସାଇନ୍ ଅପ୍ ସହିତ 2300+",
   "guestHomeAiCoachDemo": "AI Coach ଡେମୋ",
   "guestHomeAllFree": "ସବୁ ମାଗଣା",
   "guestHomeContinuePreview": "ପ୍ରିଭ୍ୟୁ ଜାରି ରଖନ୍ତୁ",
@@ -19720,14 +19720,14 @@
   "guestLibraryInstructions": "ନିର୍ଦ୍ଦେଶାବଳୀ",
   "guestLibraryNoExercisesFound": "କୌଣସି ବ୍ୟାୟାମ ମିଳିଲା ନାହିଁ",
   "guestLibraryPreview": "ପ୍ରିଭ୍ୟୁ",
-  "guestLibraryScreenShowingSampleExercisesSign": "{guestExerciseLimit} ଟି ନମୁନା ବ୍ୟାୟାମ ଦେଖାଉଛି। 1700+ ବ୍ୟାୟାମ ଆକ୍ସେସ୍ କରିବା ପାଇଁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ!",
+  "guestLibraryScreenShowingSampleExercisesSign": "{guestExerciseLimit} ଟି ନମୁନା ବ୍ୟାୟାମ ଦେଖାଉଛି। 2300+ ବ୍ୟାୟାମ ଆକ୍ସେସ୍ କରିବା ପାଇଁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ!",
   "guestLibrarySearchExercises": "ବ୍ୟାୟାମ ଖୋଜନ୍ତୁ...",
   "guestLibrarySignUp": "ସାଇନ୍ ଅପ୍",
   "guestLibrarySignUpFree": "ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ",
   "guestLibrarySignUpFreeTo": "ଭିଡିଓ ପ୍ରଦର୍ଶନ ଏବଂ ନିର୍ଦ୍ଦେଶାବଳୀ ସହିତ ଆମର ସମ୍ପୂର୍ଣ୍ଣ ବ୍ୟାୟାମ ଲାଇବ୍ରେରୀକୁ ଆକ୍ସେସ୍ କରିବା ପାଇଁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ।",
   "guestLibrarySignUpFreeTo2": "ସମସ୍ତ ବ୍ୟାୟାମ ପାଇଁ HD ଭିଡିଓ ଗାଇଡ୍ ଆକ୍ସେସ୍ କରିବାକୁ ମାଗଣାରେ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ।",
   "guestLibrarySignUpToView": "ଏହି ବ୍ୟାୟାମ ପାଇଁ ବିସ୍ତୃତ ନିର୍ଦ୍ଦେଶାବଳୀ ଦେଖିବାକୁ ସାଇନ୍ ଅପ୍ କରନ୍ତୁ।",
-  "guestLibraryUnlock1700Exercises": "1700+ ବ୍ୟାୟାମ ଅନଲକ୍ କରନ୍ତୁ",
+  "guestLibraryUnlock1700Exercises": "2300+ ବ୍ୟାୟାମ ଅନଲକ୍ କରନ୍ତୁ",
   "guestLockedFeatureUnlockFree": "ମାଗଣାରେ ଅନଲକ୍ କରନ୍ତୁ",
   "guestSampleWorkoutExercises": "ବ୍ୟାୟାମ",
   "guestSampleWorkoutExercisesIncluded": "ଅନ୍ତର୍ଭୁକ୍ତ ବ୍ୟାୟାମ:",
@@ -27699,6 +27699,7 @@
   "workoutUiBuildersTapToReturn": "ଫେରିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
   "workoutUiBuildersUndo": "ପୂର୍ବ ଅବସ୍ଥାକୁ ଫେରନ୍ତୁ",
   "workoutUiModeAdvanced": "ଆଡଭାନ୍ସଡ୍",
+  "workoutUiModeEverythingWarmupStretchLb": "ସବୁକିଛି — ୱାର୍ମଅପ୍/ଷ୍ଟ୍ରେଚ୍ ପର୍ଯ୍ୟାୟ, RPE/RIR, ପିରାମିଡ୍, ସୁପରସେଟ୍, ଡ୍ରପ୍ ସେଟ୍, ±5 lb ବୃଦ୍ଧି, ପ୍ଲେଟ୍ ଚାର୍ଟ।",
   "workoutUiModeEverythingWarmupStretchPh": "ସବୁକିଛି — ୱାର୍ମଅପ୍/ଷ୍ଟ୍ରେଚ୍ ପର୍ଯ୍ୟାୟ, RPE/RIR, ପିରାମିଡ୍, ସୁପରସେଟ୍, ଡ୍ରପ୍ ସେଟ୍, ±2.5 kg ବୃଦ୍ଧି, ପ୍ଲେଟ୍ ଚାର୍ଟ।",
   "workoutUiModePickTheLevelOf": "ସେଟ୍ ଲଗ୍ କରିବା ସମୟରେ ଆପଣ କେତେ ବିବରଣୀ ଚାହାଁନ୍ତି ତାହା ବାଛନ୍ତୁ। ଆପଣ ଏହାକୁ ଯେକୌଣସି ସମୟରେ ବଦଳାଇ ପାରିବେ।",
   "workoutUiModePolishedDefaultSteppersAi": "ପଲିସ୍ଡ୍ ଡିଫଲ୍ଟ। ଷ୍ଟେପର୍ସ, AI କୋଚ୍, ବିଶ୍ରାମ ଟାଇମର୍, ଅଡିଓ + ଫଟୋ ସହିତ ନୋଟ୍, ପୂର୍ବ ସେଟ୍ ଏଡିଟ୍ କରିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ। ଅଧିକାଂଶ ସେସନ୍ ପାଇଁ ଉପଯୁକ୍ତ।",
@@ -28183,7 +28184,7 @@
   "@paywallFounderHeadline": {
     "description": "v7 paywall sequence"
   },
-  "paywallFounderQuote": "“ଜଣେ ଭଲ ପର୍ସନାଲ୍ ଟ୍ରେନରଙ୍କ ପାଇଁ $400/ମାସ ଲାଗେ। ମୁଁ ତାହା ଦେଇ ପାରୁ ନଥିଲି, ତେଣୁ ମୁଁ ଦୁଇ ବର୍ଷ ଲଗାଇ ନିଜେ ଗୋଟିଏ ତିଆରି କଲି: 1,722 ବ୍ୟାୟାମ, ପ୍ରକୃତ ପ୍ରଗତି ଲଜିକ୍, ଏବଂ ଏମିତି ଜଣେ କୋଚ୍ ଯିଏ ସତରେ ଆପଣଙ୍କ ସପ୍ତାହକୁ ଦେଖନ୍ତି। ମୁଁ ଏହାକୁ ପ୍ରତିଦିନ ବ୍ୟବହାର କରେ।”",
+  "paywallFounderQuote": "“ଜଣେ ଭଲ ପର୍ସନାଲ୍ ଟ୍ରେନରଙ୍କ ପାଇଁ $400/ମାସ ଲାଗେ। ମୁଁ ତାହା ଦେଇ ପାରୁ ନଥିଲି, ତେଣୁ ମୁଁ ଦୁଇ ବର୍ଷ ଲଗାଇ ନିଜେ ଗୋଟିଏ ତିଆରି କଲି: 2,300 ବ୍ୟାୟାମ, ପ୍ରକୃତ ପ୍ରଗତି ଲଜିକ୍, ଏବଂ ଏମିତି ଜଣେ କୋଚ୍ ଯିଏ ସତରେ ଆପଣଙ୍କ ସପ୍ତାହକୁ ଦେଖନ୍ତି। ମୁଁ ଏହାକୁ ପ୍ରତିଦିନ ବ୍ୟବହାର କରେ।”",
   "@paywallFounderQuote": {
     "description": "v7 paywall sequence"
   },

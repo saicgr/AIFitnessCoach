@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
@@ -8,6 +9,7 @@ import '../../data/models/merch_claim.dart';
 import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/merch_notification_prefs_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/notification_service.dart' show osNotificationPermissionGrantedProvider;
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -397,11 +399,23 @@ class _MerchNotificationToggle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prefsAsync = ref.watch(merchNotificationPrefsProvider);
+    // finding #370 — the push half of this toggle can never fire while OS
+    // push authorization is denied; reflect that instead of showing "on"
+    // for a promise the OS silently drops, without touching email (which
+    // still works regardless of OS push authorization).
+    final osGranted = ref.watch(osNotificationPermissionGrantedProvider).maybeWhen(
+          data: (granted) => granted,
+          orElse: () => null,
+        );
+    final osDenied = osGranted == false;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final prefs = prefsAsync.valueOrNull;
+    final notifier = ref.read(merchNotificationPrefsProvider.notifier);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -410,38 +424,75 @@ class _MerchNotificationToggle extends ConsumerWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
       ),
-      child: SwitchListTile(
-        value: prefsAsync.maybeWhen(
-          data: (p) => p.anyEnabled,
-          orElse: () => true,
-        ),
-        onChanged: prefsAsync.isLoading
-            ? null
-            : (v) async {
-                HapticService.light();
-                try {
-                  await ref.read(merchNotificationPrefsProvider.notifier).setEnabled(v);
-                } catch (_) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToUpdateTry)),
-                    );
-                  }
-                }
-              },
-        title: Text(
-          AppLocalizations.of(context).merchClaimsMerchNotifications,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 2),
+            child: Text(
+              AppLocalizations.of(context).merchClaimsMerchNotifications,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor),
+            ),
           ),
-        ),
-        subtitle: Text(
-          AppLocalizations.of(context).merchClaimsPushEmailAlertsWhen,
-          style: TextStyle(fontSize: 11, color: textMuted, height: 1.3),
-        ),
-        contentPadding: EdgeInsets.zero,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              AppLocalizations.of(context).merchClaimsPushEmailAlertsWhen,
+              style: TextStyle(fontSize: 11, color: textMuted, height: 1.3),
+            ),
+          ),
+          SwitchListTile(
+            value: !osDenied && (prefs?.pushEnabled ?? true),
+            onChanged: osDenied
+                ? (_) => openAppSettings()
+                : prefsAsync.isLoading
+                    ? null
+                    : (v) async {
+                        HapticService.light();
+                        try {
+                          await notifier.setChannelEnabled(push: v);
+                        } catch (_) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToUpdateTry)),
+                            );
+                          }
+                        }
+                      },
+            title: Text('Push', style: TextStyle(fontSize: 13, color: textColor)),
+            subtitle: osDenied
+                ? GestureDetector(
+                    onTap: openAppSettings,
+                    child: Text(
+                      'Off in iOS Settings — tap to enable',
+                      style: TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                : null,
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile(
+            value: prefs?.emailEnabled ?? true,
+            onChanged: prefsAsync.isLoading
+                ? null
+                : (v) async {
+                    HapticService.light();
+                    try {
+                      await notifier.setChannelEnabled(email: v);
+                    } catch (_) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToUpdateTry)),
+                        );
+                      }
+                    }
+                  },
+            title: Text('Email', style: TextStyle(fontSize: 13, color: textColor)),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
       ),
     );
   }

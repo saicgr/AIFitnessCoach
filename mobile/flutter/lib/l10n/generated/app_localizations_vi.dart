@@ -14872,7 +14872,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ khi đăng ký';
+  String get guestHome1700WithSignup => '2300+ khi đăng ký';
 
   @override
   String get guestHomeAiCoachDemo => 'Dùng thử AI Coach';
@@ -14985,7 +14985,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Đang hiển thị $guestExerciseLimit bài tập mẫu. Đăng ký miễn phí để truy cập hơn 1700 bài tập!';
+    return 'Đang hiển thị $guestExerciseLimit bài tập mẫu. Đăng ký miễn phí để truy cập hơn 2300 bài tập!';
   }
 
   @override
@@ -15010,7 +15010,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đăng ký để xem hướng dẫn chi tiết cho bài tập này.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Mở khóa 1700+ bài tập';
+  String get guestLibraryUnlock1700Exercises => 'Mở khóa 2300+ bài tập';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Mở khóa miễn phí';
@@ -27411,7 +27411,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đang khớp với loại cơ thể của bạn';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Đang lấy từ hơn 1.700 bài tập';
+  String get planAnalyzingPullingFrom1700 => 'Đang lấy từ hơn 2.300 bài tập';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Đang xem xét mục tiêu của bạn';
@@ -36286,6 +36286,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Tất cả hồ sơ';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Chỉnh sửa \"$exerciseName\"';
   }
@@ -43711,6 +43714,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Nâng cao';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Mọi thứ — các giai đoạn khởi động/giãn cơ, RPE/RIR, tập kim tự tháp, superset, drop set, tăng giảm 5 lb, biểu đồ tạ.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Mọi thứ — các giai đoạn khởi động/giãn cơ, RPE/RIR, tập kim tự tháp, superset, drop set, tăng giảm 2.5 kg, biểu đồ tạ.';
 
@@ -44644,6 +44651,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get heroModesActionRetry => 'THỬ LẠI';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'TRỰC TIẾP';
 
   @override
@@ -44992,7 +45006,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Một HLV cá nhân giỏi tốn \$400/tháng. Tôi không kham nổi, nên đã dành hai năm để tự xây một người: 1.722 bài tập, logic tăng tiến thực thụ, một HLV thực sự nhìn vào cả tuần của bạn. Tôi dùng nó mỗi ngày.”';
+      '“Một HLV cá nhân giỏi tốn \$400/tháng. Tôi không kham nổi, nên đã dành hai năm để tự xây một người: 2.300 bài tập, logic tăng tiến thực thụ, một HLV thực sự nhìn vào cả tuần của bạn. Tôi dùng nó mỗi ngày.”';
 
   @override
   String get paywallFounderName => 'Chetan · nhà sáng lập';

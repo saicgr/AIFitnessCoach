@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/user_provider.dart';
@@ -37,7 +38,6 @@ import '../widgets/ai_text_input_bar.dart';
 import '../widgets/barbell_plate_indicator.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType, RepProgressionTypeExtension;
 import '../widgets/exercise_thumbnail_strip_v2.dart';
-import '../widgets/breathing_guide_sheet.dart';
 import '../widgets/exercise_info_sheet.dart';
 import '../widgets/fatigue_alert_modal.dart';
 import '../widgets/hr_recovery_banner.dart';
@@ -368,6 +368,27 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
+            // Blurred `cover` copy of the same image fills the frame behind
+            // the `contain`-fitted demo below, so a white-background
+            // illustration doesn't letterbox into a grey/white/grey banded
+            // block against this dark card (mirrors the fix already applied
+            // to the easy-mode exercise header's `_BlurBackdrop`).
+            if (!isVideoInitialized && imageUrl != null && imageUrl!.isNotEmpty)
+              Positioned.fill(
+                child: ClipRect(
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                    child: Opacity(
+                      opacity: 0.55,
+                      child: Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             // Center the media content with proper aspect ratio
             Positioned.fill(
               child: Center(

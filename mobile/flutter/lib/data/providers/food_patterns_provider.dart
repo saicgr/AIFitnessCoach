@@ -340,12 +340,28 @@ class MacrosBaseline {
   final String currentLabel;
   final String baselineLabel;
 
+  /// Days with at least one logged meal inside the CURRENT window — the
+  /// backend already surfaces this ("Days counted in each window are
+  /// surfaced so the UI can disclose low-confidence comparisons",
+  /// `MacrosBaseline` in `backend/api/v1/nutrition/models.py`) but nothing
+  /// here read it, so trend language ("holding steady") rendered off a
+  /// single logged day compared against an empty prior window
+  /// (E2E register #271).
+  final int currentDaysCounted;
+
   const MacrosBaseline({
     this.goals = const [],
     this.nutrientTracks = const [],
     this.currentLabel = '',
     this.baselineLabel = '',
+    this.currentDaysCounted = 0,
   });
+
+  /// Below this, a delta vs the prior window is noise, not a trend — one
+  /// logged day says nothing about "lately".
+  static const int kMinDaysForTrend = 3;
+
+  bool get hasEnoughDataForTrend => currentDaysCounted >= kMinDaysForTrend;
 
   bool get isEmpty => goals.isEmpty && nutrientTracks.isEmpty;
 
@@ -360,6 +376,7 @@ class MacrosBaseline {
       nutrientTracks: parse('nutrient_tracks'),
       currentLabel: (j['current_label'] ?? '').toString(),
       baselineLabel: (j['baseline_label'] ?? '').toString(),
+      currentDaysCounted: (j['days_counted'] as num?)?.toInt() ?? 0,
     );
   }
 }

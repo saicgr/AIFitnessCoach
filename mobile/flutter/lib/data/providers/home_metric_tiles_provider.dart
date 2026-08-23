@@ -470,8 +470,13 @@ List<HomeMetricTile> defaultMetricTilesFor({
       out.add(tile);
       used.add(tile.id);
       final sub = takeSubstitute();
+      // Sized `wide`, not `tile.size` (the score's own `large`): the score
+      // keeps its full-width slot, so a second large tile right after it
+      // would add a whole extra row on its own. `_repackRemainderRows` below
+      // re-groups everything after the hero into rows anyway, so this only
+      // needs to be non-large.
       if (sub != null) {
-        out.add(HomeMetricTile(id: sub, size: tile.size, page: tile.page));
+        out.add(HomeMetricTile(id: sub, size: MetricSize.wide, page: tile.page));
       }
       continue;
     }
@@ -500,7 +505,48 @@ List<HomeMetricTile> defaultMetricTilesFor({
     }
   }
 
-  return _sanitise(out);
+  return _sanitise(_repackRemainderRows(out));
+}
+
+/// Re-groups every tile after the leading hero (`large`) tile into rows of at
+/// most 3, sized 1→`large`, 2→`wide`, 3→`small` — the only groupings that
+/// exactly fill the 6-column grid (6, 3+3, 2+2+2), so each group is always
+/// one full row. `large` tiles elsewhere are left as their own row.
+///
+/// [kDefaultMetricTiles] alone packs to 3 rows on its own (`large` + two
+/// `wide` + three `small` = 18 columns), but the Today Score substitution
+/// above inserts a 7th tile, and a capability gap can substitute any of the
+/// other 5 — so the count and shape of "everything after the hero" varies
+/// per account. Re-grouping it here, rather than trusting each tile's
+/// inherited size, is what keeps every capability set at 3 rows instead of
+/// 4 (see [packMetricTileRows] in the tile grid, which lays this out
+/// unchanged).
+List<HomeMetricTile> _repackRemainderRows(List<HomeMetricTile> tiles) {
+  final out = <HomeMetricTile>[];
+  var i = 0;
+  while (i < tiles.length) {
+    if (tiles[i].size == MetricSize.large) {
+      out.add(tiles[i]);
+      i++;
+      continue;
+    }
+    var end = i;
+    while (end < tiles.length &&
+        end < i + 3 &&
+        tiles[end].size != MetricSize.large) {
+      end++;
+    }
+    final size = switch (end - i) {
+      1 => MetricSize.large,
+      2 => MetricSize.wide,
+      _ => MetricSize.small,
+    };
+    for (var j = i; j < end; j++) {
+      out.add(tiles[j].copyWith(size: size));
+    }
+    i = end;
+  }
+  return out;
 }
 
 /// A named starting arrangement. A preset carries **everything the layout is**

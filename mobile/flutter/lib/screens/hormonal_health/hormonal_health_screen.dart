@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/hormonal_health.dart';
 import '../../data/providers/hormonal_health_provider.dart';
@@ -29,6 +30,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
     final profileAsync = ref.watch(hormonalProfileProvider);
     final cyclePhaseAsync = ref.watch(cyclePhaseProvider);
     final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Scaffold(
       appBar: PillAppBar(
@@ -49,7 +51,10 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showLogSheet(context),
-        icon: const Icon(Icons.add),
+        backgroundColor: tc.accent,
+        foregroundColor: tc.accentContrast,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        icon: Icon(Icons.add, color: tc.accentContrast),
         label: Text(AppLocalizations.of(context).hormonalHealthLogToday),
       ),
     );

@@ -267,6 +267,12 @@ class _GoalSpeedComparisonState extends ConsumerState<GoalSpeedComparison>
             leading: 'Based on your goal + ',
           ),
         ),
+        const SizedBox(height: 6),
+        Text(
+          'A projection, not a guarantee — not medical advice.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 10.5, color: c.textSecondary),
+        ),
       ],
     );
   }
@@ -316,6 +322,12 @@ class _GoalSpeedComparisonState extends ConsumerState<GoalSpeedComparison>
           accent: accent,
           fontSize: 11,
           leading: 'Source: ',
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'A projection, not a guarantee — not medical advice.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 10.5, color: c.textSecondary),
         ),
       ],
     );

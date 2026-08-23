@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
+import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -26,10 +27,8 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        title: Text(AppLocalizations.of(context).trainingMethodsTrainingMethods),
-        centerTitle: true,
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).trainingMethodsTrainingMethods,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -76,8 +75,12 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Header: icon + name + goal tags + chevron
+                          // Header: icon + name/description (full width) + chevron,
+                          // with goal tags on their own row underneath so the
+                          // fixed-width tag column no longer squeezes titles and
+                          // descriptions into ragged wraps (row 297).
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
                                 width: 40,
@@ -114,29 +117,32 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
                                         color: textMuted,
                                       ),
                                     ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: pattern.goalTags.map((tag) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _goalColor(tag, isDark).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: _goalColor(tag, isDark),
+                                          ),
+                                        ),
+                                      )).toList(),
+                                    ),
                                   ],
                                 ),
                               ),
-                              // Goal tags
-                              ...pattern.goalTags.map((tag) => Container(
-                                margin: const EdgeInsetsDirectional.only(start: 6),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _goalColor(tag, isDark).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: _goalColor(tag, isDark),
-                                  ),
-                                ),
-                              )),
                               const SizedBox(width: 4),
                               Icon(
                                 isExpanded ? Icons.expand_less : Icons.expand_more,

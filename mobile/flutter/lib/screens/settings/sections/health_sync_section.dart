@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
@@ -32,7 +33,7 @@ class HealthSyncPreferences {
     this.syncWeight = true,
     this.syncBodyFat = true,
     this.syncHeartRate = true,
-    this.syncSleep = false,
+    this.syncSleep = true,
     this.syncWorkoutsToHealth = true,
     this.syncMealsToHealth = true,
     this.syncHydrationToHealth = true,
@@ -83,7 +84,7 @@ class HealthSyncPreferencesNotifier extends StateNotifier<HealthSyncPreferences>
       syncWeight: prefs.getBool('health_sync_weight') ?? true,
       syncBodyFat: prefs.getBool('health_sync_body_fat') ?? true,
       syncHeartRate: prefs.getBool('health_sync_heart_rate') ?? true,
-      syncSleep: prefs.getBool('health_sync_sleep') ?? false,
+      syncSleep: prefs.getBool('health_sync_sleep') ?? true,
       syncWorkoutsToHealth: prefs.getBool('health_sync_workouts_write') ?? true,
       syncMealsToHealth: prefs.getBool('health_sync_meals_write') ?? true,
       syncHydrationToHealth: prefs.getBool('health_sync_hydration_write') ?? true,
@@ -654,6 +655,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
     Color cardBorder,
   ) {
     final syncPrefs = ref.watch(healthSyncPreferencesProvider);
+    final syncState = ref.watch(healthSyncProvider);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -766,13 +768,28 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
 
           const SizedBox(height: 12),
 
-          // Sync now button
+          // Sync now button. The tap itself always did real work (syncState
+          // already tracks isSyncing/lastSyncTime), but nothing on this card
+          // ever read either field, so a tap looked identical before and
+          // after -- no spinner while the request was in flight, and no
+          // lasting record once it finished, only an easy-to-miss SnackBar.
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _syncNow(),
-              icon: const Icon(Icons.sync, size: 18),
-              label: Text(AppLocalizations.of(context).syncStatusSyncNow),
+              onPressed: syncState.isSyncing ? null : () => _syncNow(),
+              icon: syncState.isSyncing
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: context.accentColor,
+                      ),
+                    )
+                  : const Icon(Icons.sync, size: 18),
+              label: Text(syncState.isSyncing
+                  ? AppLocalizations.of(context).syncStatusSyncing
+                  : AppLocalizations.of(context).syncStatusSyncNow),
               style: OutlinedButton.styleFrom(
                 foregroundColor: context.accentColor,
                 side: BorderSide(color: context.accentColor.withOpacity(0.5)),
@@ -780,6 +797,14 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               ),
             ),
           ),
+          if (syncState.lastSyncTime != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Synced · ${timeago.format(syncState.lastSyncTime!)}',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+          ],
         ],
       ),
     );

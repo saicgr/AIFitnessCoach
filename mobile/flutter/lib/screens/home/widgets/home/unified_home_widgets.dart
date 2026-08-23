@@ -28,6 +28,7 @@ import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/providers/sleep_score_provider.dart';
+import '../../../workout/widgets/workout_detail_helpers.dart' show dedupeMuscleNames;
 import '../../../../data/providers/user_history_snapshot_provider.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/providers/consistency_provider.dart';
@@ -981,18 +982,30 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
   /// Short Signature subtitle for the hero — the muscle focus when known,
   /// else the workout type ("LEGS", "CHEST & TRICEPS", …).
   String _heroSubtitle(Workout workout, String type) {
-    // Clean the muscle names: strip "(Latin name)" parentheticals, dedupe, keep
-    // at most two → "Chest & Triceps", never a raw multi-line anatomical dump.
-    final seen = <String>{};
-    final cleaned = <String>[];
-    for (final m in workout.primaryMuscles) {
-      final name = m.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
-      if (name.isEmpty) continue;
-      if (seen.add(name.toLowerCase())) cleaned.add(name);
-      if (cleaned.length >= 2) break;
-    }
-    if (cleaned.isNotEmpty) return cleaned.join(' & ');
-    return type;
+    // Clean the muscle names via the shared chokepoint: strip "(Latin name)"
+    // parentheticals AND comma-joined co-listed muscles, dedupe case-
+    // insensitively, keep at most two → "Chest & Triceps", never a raw
+    // multi-line anatomical dump.
+    final cleaned = dedupeMuscleNames(workout.primaryMuscles).take(3).toList();
+    if (cleaned.isEmpty) return type;
+
+    // `primaryMuscles` is a SET, so a session where only one of five
+    // exercises carries a muscle_group (a squat/push/hinge/spinal-extension
+    // + pulldown "Movement Flow" where four rows have it null) collapses to
+    // that single populated value and reads as if the whole session trained
+    // it. Name it "Full Body" instead whenever the known groups cover less
+    // than half the exercises, or span three or more distinct areas —
+    // either signal means no single group actually represents the session.
+    final exercises = workout.exercises;
+    final withMuscle = exercises
+        .where((e) =>
+            (e.muscleGroup != null && e.muscleGroup!.isNotEmpty) ||
+            (e.primaryMuscle != null && e.primaryMuscle!.isNotEmpty))
+        .length;
+    final coverage = exercises.isEmpty ? 1.0 : withMuscle / exercises.length;
+    if (cleaned.length >= 3 || coverage < 0.5) return 'Full Body';
+
+    return cleaned.take(2).join(' & ');
   }
 
   /// The background layer: the exercise photo, a loading shimmer, or — when no

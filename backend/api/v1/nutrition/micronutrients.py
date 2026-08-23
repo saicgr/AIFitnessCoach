@@ -135,10 +135,22 @@ async def get_daily_micronutrients(
             "calorie", "kcal",
         }
 
+        # Sex-specific RDAs (iron, omega-3, etc.) differ enough that the
+        # ungendered `rda_target` column can't represent both — it was
+        # observed holding the FEMALE value (iron 18mg) and showing it to
+        # male users too. Prefer the user's own sex's column; fall back to
+        # the ungendered column only when we don't know the user's sex.
+        _user_gender = ((user or {}).get("gender") or "").strip().lower()
+
         # Build progress for each category
         def make_progress(key: str, rda: dict) -> NutrientProgress:
             current = totals.get(key, 0)
-            target = rda.get("rda_target") or 1
+            if _user_gender in ("male", "m"):
+                target = rda.get("rda_target_male") or rda.get("rda_target") or 1
+            elif _user_gender in ("female", "f"):
+                target = rda.get("rda_target_female") or rda.get("rda_target") or 1
+            else:
+                target = rda.get("rda_target") or 1
             floor_val = rda.get("rda_floor")
             ceiling = rda.get("rda_ceiling")
             percentage = round((current / target) * 100, 1) if target > 0 else 0

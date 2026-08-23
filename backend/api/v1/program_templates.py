@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import json
 import logging
 import uuid
 from datetime import date, datetime, timedelta
@@ -3441,6 +3442,17 @@ async def assign_program_core(
 
     # --- 5. Schedule + expand into concrete dated workouts -----------------
     gym_profile_id = _resolve_active_gym_profile(db, user_id)
+
+    # Row 499: committing a program used to leave `Training Setup → Workout
+    # Days` stale — the days picked in this assign sheet went only into
+    # `user_program_assignments.assigned_days`, never into the stores the
+    # profile card actually reads (`gym_profiles.workout_days`, falling back
+    # to `users.preferences.workout_days`). A "secondary"/"addon" program
+    # legitimately trains on different days than the user's primary week, so
+    # only sync for a `primary` slot assignment.
+    if slot == "primary" and assigned_days:
+        _sync_workout_days_to_profile(db, user_id, gym_profile_id, assigned_days)
+
     schedule_id = str(uuid.uuid4())
     day_alignment = "calendar_weekday" if assigned_days else "start_today"
     try:
@@ -4916,6 +4928,52 @@ async def delete_template(
             "Failed to delete template %s: %s", template_id, e, exc_info=True
         )
         raise safe_internal_error(e, "program_templates")
+
+
+def _sync_workout_days_to_profile(
+    db, user_id: str, gym_profile_id: Optional[str], assigned_days: List[int]
+) -> None:
+    """Row 499: keep `Training Setup → Workout Days` in step with whatever a
+    program's assign sheet just scheduled. The profile card
+    (`training_setup_card.dart`) reads the active gym profile's
+    `workout_days` first, falling back to `users.preferences.workout_days` —
+    neither of which this endpoint used to touch, so a 4-day profile could
+    sit next to a freshly-committed 7-day-a-week program. Best-effort: a
+    failure here must never fail the assignment itself.
+    """
+    days = sorted({int(d) for d in assigned_days if 0 <= int(d) <= 6})
+    if not days:
+        return
+    try:
+        if gym_profile_id:
+            db.client.table("gym_profiles").update(
+                {"workout_days": days}
+            ).eq("id", gym_profile_id).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not sync workout_days to gym profile: %s", e)
+
+    try:
+        user_row = (
+            db.client.table("users")
+            .select("preferences")
+            .eq("id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        prefs = (user_row.data or {}).get("preferences") if user_row else None
+        if isinstance(prefs, str):
+            try:
+                prefs = json.loads(prefs) if prefs else {}
+            except (ValueError, TypeError):
+                prefs = {}
+        if not isinstance(prefs, dict):
+            prefs = {}
+        prefs["workout_days"] = days
+        db.client.table("users").update({"preferences": prefs}).eq(
+            "id", user_id
+        ).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not sync workout_days to user preferences: %s", e)
 
 
 # =============================================================================

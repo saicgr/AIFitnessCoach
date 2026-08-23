@@ -14999,7 +14999,7 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ sa pag-sign up';
+  String get guestHome1700WithSignup => '2300+ sa pag-sign up';
 
   @override
   String get guestHomeAiCoachDemo => 'Demo ng AI Coach';
@@ -15117,7 +15117,7 @@ class AppLocalizationsTl extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Nagpapakita ng $guestExerciseLimit sample na exercise. Mag-sign up nang libre para ma-access ang 1700+ na exercise!';
+    return 'Nagpapakita ng $guestExerciseLimit sample na exercise. Mag-sign up nang libre para ma-access ang 2300+ na exercise!';
   }
 
   @override
@@ -15143,7 +15143,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      'I-unlock ang 1700+ na Ehersisyo';
+      'I-unlock ang 2300+ na Ehersisyo';
 
   @override
   String get guestLockedFeatureUnlockFree => 'I-unlock nang libre';
@@ -27648,7 +27648,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Kumukuha mula sa 1,700+ na ehersisyo';
+      'Kumukuha mula sa 2,300+ na ehersisyo';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Sinusuri ang iyong mga goal';
@@ -36585,6 +36585,9 @@ class AppLocalizationsTl extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Lahat ng Profile';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'I-edit ang \"$exerciseName\"';
   }
@@ -44075,6 +44078,10 @@ class AppLocalizationsTl extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Abanteng Antas';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Lahat — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Lahat — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.';
 
@@ -45010,6 +45017,13 @@ class AppLocalizationsTl extends AppLocalizations {
   String get heroModesActionRetry => 'ULITIN';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LIVE';
 
   @override
@@ -45362,7 +45376,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“\$400/buwan ang magaling na personal trainer. Hindi ko \'yun kayang bayaran, kaya dalawang taon akong gumawa ng isa: 1,722 ehersisyo, totoong progression logic, coach na talagang tumitingin sa linggo mo. Ginagamit ko ito araw-araw.”';
+      '“\$400/buwan ang magaling na personal trainer. Hindi ko \'yun kayang bayaran, kaya dalawang taon akong gumawa ng isa: 2,300 ehersisyo, totoong progression logic, coach na talagang tumitingin sa linggo mo. Ginagamit ko ito araw-araw.”';
 
   @override
   String get paywallFounderName => 'Chetan · founder';

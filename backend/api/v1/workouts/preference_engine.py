@@ -31,6 +31,7 @@ DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
 
 from core.supabase_db import get_supabase_db
 from core.timezone_utils import get_user_today
+from .workout_duration_energy import derive_duration_and_calories, resolve_user_weight_kg
 
 logger = logging.getLogger(__name__)
 
@@ -425,7 +426,8 @@ async def _fetch_preference_context(db, user_id: str) -> dict:
     try:
         # User profile + preferences (for workout_days)
         profile_result = db.client.table("users").select(
-            "fitness_level, primary_goal, equipment_details, preferences"
+            "fitness_level, primary_goal, equipment_details, equipment_v2, "
+            "active_gym_profile_id, preferences"
         ).eq("id", user_id).single().execute()
         context["user_profile"] = profile_result.data
 
@@ -488,7 +490,8 @@ def _get_upcoming_workouts(db, user_id: str, timezone_str: str = None) -> list[d
         tomorrow_str = get_user_today("UTC")
     try:
         result = db.client.table("workouts").select(
-            "id, scheduled_date, exercises_json, name, status, is_completed, gym_profile_id"
+            "id, scheduled_date, exercises_json, name, status, is_completed, gym_profile_id, "
+            "type, difficulty, duration_minutes, modification_history"
         ).eq(
             "user_id", user_id
         ).gt(
@@ -537,6 +540,43 @@ def _validate_equipment(exercise_equipment: Optional[str], user_equipment: Optio
     return eq_lower in user_eq_lower
 
 
+def _resolve_equipment_for_workout(db, workout: dict, user_profile: Optional[dict]) -> Optional[list]:
+    """Resolve the equipment list that actually applies to `workout`.
+
+    Row 276: `_validate_equipment` used to be handed `users.equipment_details`
+    unconditionally — a legacy column that is `[]` for accounts on the newer
+    gym-profile equipment model, so the check was a silent no-op (`not []`
+    is True → "allow") and a cable-machine exercise was injected into a
+    bodyweight-only gym's session (row 210). Resolve from the SAME source
+    the rest of the app treats as authoritative: the workout's own
+    `gym_profile_id` (falling back to the user's active gym profile), then
+    `equipment_v2`, then the legacy `equipment_details` — mirrors
+    `card_context.py::_equipment_match`.
+    """
+    gym_profile_id = (workout or {}).get("gym_profile_id") or (user_profile or {}).get("active_gym_profile_id")
+    if gym_profile_id:
+        try:
+            gp = db.client.table("gym_profiles").select("equipment").eq(
+                "id", gym_profile_id
+            ).maybe_single().execute()
+            if gp and gp.data and gp.data.get("equipment"):
+                return gp.data["equipment"]
+        except Exception as e:
+            logger.warning(f"Could not fetch gym profile equipment for {gym_profile_id}: {e}", exc_info=True)
+
+    equipment_v2 = (user_profile or {}).get("equipment_v2")
+    if equipment_v2:
+        return equipment_v2
+
+    equipment_details = (user_profile or {}).get("equipment_details")
+    if isinstance(equipment_details, str):
+        try:
+            equipment_details = json.loads(equipment_details)
+        except (json.JSONDecodeError, TypeError):
+            equipment_details = None
+    return equipment_details
+
+
 # =============================================================================
 # Core Engine Functions
 # =============================================================================
@@ -563,12 +603,7 @@ async def inject_staple_into_workout(
     staple_muscle = _normalize_muscle(staple.get("target_muscle") or staple.get("muscle_group"))
 
     # Equipment validation
-    user_equipment = (context.get("user_profile") or {}).get("equipment_details")
-    if isinstance(user_equipment, str):
-        try:
-            user_equipment = json.loads(user_equipment)
-        except (json.JSONDecodeError, TypeError):
-            user_equipment = None
+    user_equipment = _resolve_equipment_for_workout(db, workout, context.get("user_profile"))
     staple_equipment = staple.get("equipment")
     if not _validate_equipment(staple_equipment, user_equipment):
         return {
@@ -634,6 +669,20 @@ async def inject_staple_into_workout(
         new_order = max((ex.get("order", 0) for ex in exercises), default=0) + 1
         exercises.append(_build_exercise_object(staple_name, staple, params, order=new_order))
 
+    # Row 276: neither `duration_minutes` nor `estimated_calories` was ever
+    # recalculated after an injection changed the exercise composition — a
+    # session could grow (e.g. 8 to 9 movements) and still report its
+    # pre-injection time/energy. Re-derive both through the same chokepoint
+    # `reshape.py` uses, with no authored duration so it is fully re-derived
+    # from the new composition.
+    weight_kg = resolve_user_weight_kg(db, user_id)
+    new_duration, new_calories = derive_duration_and_calories(
+        exercises,
+        workout.get("type"),
+        workout.get("difficulty"),
+        weight_kg,
+    )
+
     # Update workout
     try:
         # Register row #275: this endpoint rewrote exercises_json in place
@@ -662,6 +711,8 @@ async def inject_staple_into_workout(
 
         db.client.table("workouts").update({
             "exercises_json": exercises,
+            "duration_minutes": new_duration,
+            "estimated_calories": new_calories,
             "modification_history": new_history,
             "is_user_modified": True,
             "last_modified_at": now_iso,

@@ -85,44 +85,55 @@ class GymProgressFilter extends ConsumerWidget {
           allProfiles.where((p) => p.id == selectedGymId).firstOrNull,
         );
 
+    // Trailing-edge fade so a chip that doesn't fully fit peeks in as a
+    // scroll affordance instead of being hard-clipped by the screen edge.
     final chipRow = SizedBox(
       height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: padding,
-        children: [
-          if (showAllGymsOption)
-            _AllGymsChip(
-              selected: selection.isAllGyms,
-              onTap: () {
-                HapticService.light();
-                notifier.selectAllGyms();
-                onChanged?.call(GymProgressSelection.allGyms);
-              },
-            ),
-          for (final option in liveOptions)
-            _GymChip(
-              option: option,
-              selected:
-                  !selection.isAllGyms && selection.gymProfileId == option.id,
-              onTap: () {
-                HapticService.light();
-                notifier.selectGym(option.id);
-                onChanged?.call(GymProgressSelection.gym(option.id));
-              },
-            ),
-          if (archivedOptions.isNotEmpty)
-            _ArchivedGroup(
-              options: archivedOptions,
-              selectedId:
-                  selection.isAllGyms ? null : selection.gymProfileId,
-              onSelect: (id) {
-                HapticService.light();
-                notifier.selectGym(id);
-                onChanged?.call(GymProgressSelection.gym(id));
-              },
-            ),
-        ],
+      child: ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Colors.white, Colors.white, Colors.transparent],
+          stops: [0.0, 0.92, 1.0],
+        ).createShader(bounds),
+        blendMode: BlendMode.dstIn,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: padding,
+          children: [
+            if (showAllGymsOption)
+              _AllGymsChip(
+                selected: selection.isAllGyms,
+                onTap: () {
+                  HapticService.light();
+                  notifier.selectAllGyms();
+                  onChanged?.call(GymProgressSelection.allGyms);
+                },
+              ),
+            for (final option in liveOptions)
+              _GymChip(
+                option: option,
+                selected: !selection.isAllGyms &&
+                    selection.gymProfileId == option.id,
+                onTap: () {
+                  HapticService.light();
+                  notifier.selectGym(option.id);
+                  onChanged?.call(GymProgressSelection.gym(option.id));
+                },
+              ),
+            if (archivedOptions.isNotEmpty)
+              _ArchivedGroup(
+                options: archivedOptions,
+                selectedId:
+                    selection.isAllGyms ? null : selection.gymProfileId,
+                onSelect: (id) {
+                  HapticService.light();
+                  notifier.selectGym(id);
+                  onChanged?.call(GymProgressSelection.gym(id));
+                },
+              ),
+          ],
+        ),
       ),
     );
 
@@ -230,11 +241,16 @@ class _GymChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final dotColor = GymProfileColors.fromHex(option.colorHex);
+    // Selection highlight uses ONE app accent for every gym (matching the
+    // "All gyms" chip) — the per-gym `dotColor` stays on the identity dot
+    // only, so it disambiguates gyms without also implying "this is the
+    // selected one" via a different colour per chip.
+    final accent = colorScheme.primary;
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),
       child: _ChipShell(
         selected: selected,
-        selectedColor: dotColor,
+        selectedColor: accent,
         onTap: onTap,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -261,7 +277,7 @@ class _GymChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? dotColor : colorScheme.onSurface,
+                color: selected ? accent : colorScheme.onSurface,
               ),
             ),
             if (option.isArchived) ...[

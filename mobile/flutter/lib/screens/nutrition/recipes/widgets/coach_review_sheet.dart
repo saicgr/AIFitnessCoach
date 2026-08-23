@@ -73,9 +73,9 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           children: [
-            Container(width: 36, height: 4,
-              decoration: BoxDecoration(color: muted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 12),
+            // No handle here — the GlassSheet this is always opened inside
+            // (both call sites) already draws the drag handle + close button;
+            // drawing a second one duplicated the chrome (row 423).
             Row(children: [
               Icon(Icons.psychology_outlined, color: accent),
               const SizedBox(width: 8),
@@ -120,8 +120,8 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
   }
 
   List<Widget> _buildReview(CoachReview r, Color accent, Color text, Color muted) {
-    final score = r.overallScore ?? 0;
-    final scoreColor = score >= 75 ? AppColors.success : score >= 50 ? AppColors.yellow : AppColors.error;  // accent-allowlist: coach-review score severity scale
+    final score = r.overallScore;
+    final scoreColor = score == null ? muted : score >= 75 ? AppColors.success : score >= 50 ? AppColors.yellow : AppColors.error;  // accent-allowlist: coach-review score severity scale
     return [
       // Score donut + status
       Container(
@@ -132,17 +132,24 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
           border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
         ),
         child: Row(children: [
-          Stack(alignment: Alignment.center, children: [
-            SizedBox(width: 64, height: 64, child: CircularProgressIndicator(
-              value: score / 100, strokeWidth: 6, color: scoreColor,
-              backgroundColor: scoreColor.withValues(alpha: 0.18),
-            )),
-            Text('$score', style: ZType.disp(22, color: text)),
-          ]),
+          if (score != null)
+            Stack(alignment: Alignment.center, children: [
+              SizedBox(width: 64, height: 64, child: CircularProgressIndicator(
+                value: score / 100, strokeWidth: 6, color: scoreColor,
+                backgroundColor: scoreColor.withValues(alpha: 0.18),
+              )),
+              Text('$score', style: ZType.disp(22, color: text)),
+            ])
+          else
+            Icon(Icons.restaurant_menu_rounded, color: muted, size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(AppLocalizations.of(context).coachReviewOverallScore.toUpperCase(),
+              Text(
+                  (score == null
+                          ? 'Nothing to score yet'
+                          : AppLocalizations.of(context).coachReviewOverallScore)
+                      .toUpperCase(),
                   style: ZType.lbl(10, color: muted, letterSpacing: 1.5)),
               if (r.isStale)
                 Container(

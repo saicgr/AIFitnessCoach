@@ -415,17 +415,38 @@ class WorkoutSummaryGeneral extends ConsumerWidget {
     // Group sets by exercise_name (case-insensitive)
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     final Map<String, int> exerciseIndexMap = {};
+    // Exercises whose ONLY sets_json rows are `is_completed: false` padding —
+    // written by `_completeWorkoutNow` (easy_active_workout_state.dart) so
+    // performance_logs has a row per planned set when the user finishes early.
+    // Those placeholder rows (reps=0, weight=0) used to flow straight into
+    // `grouped` and render as a genuinely-performed "5×0" row; track their
+    // exercise name/index here so an exercise with ONLY placeholders can be
+    // rendered as skipped instead, same as one the user explicitly skipped.
+    final Map<String, int> placeholderOnlyIndexByKey = {};
 
     for (final set in setsJson) {
       final name = (set['exercise_name'] as String? ?? 'Unknown').trim();
       final key = name.toLowerCase();
+      final exerciseIndex = set['exercise_index'] as int? ?? 0;
+      // Legacy rows never wrote `is_completed` — treat absence as completed
+      // so historic workouts keep rendering exactly as before.
+      if (set['is_completed'] == false) {
+        // Only a candidate until/unless a REAL set for this exercise turns
+        // up (order in `setsJson` isn't guaranteed) — resolved below by
+        // checking membership in `grouped`, not by unwinding this map.
+        placeholderOnlyIndexByKey.putIfAbsent(key, () => exerciseIndex);
+        continue;
+      }
       grouped.putIfAbsent(key, () => []);
       grouped[key]!.add(set);
       // Track the exercise_index from the first occurrence
       if (!exerciseIndexMap.containsKey(key)) {
-        exerciseIndexMap[key] = set['exercise_index'] as int? ?? 0;
+        exerciseIndexMap[key] = exerciseIndex;
       }
     }
+    // An exercise with at least one REAL set is never placeholder-only,
+    // regardless of whether its padding rows were seen before or after it.
+    placeholderOnlyIndexByKey.removeWhere((key, _) => grouped.containsKey(key));
 
     // Parse drink events from metadata
     final drinkEvents = _parseDrinkEvents(metadata?['drink_events']);
@@ -570,8 +591,14 @@ class WorkoutSummaryGeneral extends ConsumerWidget {
       ));
     }
 
-    // Add skipped exercises
-    for (final skipIndex in skippedIndices) {
+    // Add skipped exercises — explicit skips (metadata) AND exercises whose
+    // sets_json rows were ALL `is_completed:false` padding (the workout was
+    // finished early via "Complete workout now" before they were started).
+    final allSkipIndices = <int>{
+      ...skippedIndices,
+      ...placeholderOnlyIndexByKey.values,
+    };
+    for (final skipIndex in allSkipIndices) {
       if (skipIndex >= 0 && skipIndex < parsedExercises.length) {
         final ex = parsedExercises[skipIndex];
         final name = ex['name'] as String? ?? 'Unknown';

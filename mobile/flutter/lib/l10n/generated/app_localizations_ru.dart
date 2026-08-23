@@ -14926,7 +14926,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ после регистрации';
+  String get guestHome1700WithSignup => '2300+ после регистрации';
 
   @override
   String get guestHomeAiCoachDemo => 'Демо AI Coach';
@@ -15043,7 +15043,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Показано $guestExerciseLimit примеров упражнений. Зарегистрируйтесь бесплатно, чтобы получить доступ к 1700+ упражнениям!';
+    return 'Показано $guestExerciseLimit примеров упражнений. Зарегистрируйтесь бесплатно, чтобы получить доступ к 2300+ упражнениям!';
   }
 
   @override
@@ -15069,7 +15069,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get guestLibraryUnlock1700Exercises =>
-      'Разблокируйте 1700+ упражнений';
+      'Разблокируйте 2300+ упражнений';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Разблокировать бесплатно';
@@ -27497,7 +27497,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Подбираем под ваш тип телосложения';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Выбираем из 1700+ упражнений';
+  String get planAnalyzingPullingFrom1700 => 'Выбираем из 2300+ упражнений';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Анализируем ваши цели';
@@ -36388,6 +36388,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Все профили';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Изменить \"$exerciseName\"';
   }
@@ -43845,6 +43848,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Продвинутый';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Все включено — фазы разминки/растяжки, RPE/RIR, пирамиды, суперсеты, дроп-сеты, приращения по 5 lb, таблица блинов.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Все включено — фазы разминки/растяжки, RPE/RIR, пирамиды, суперсеты, дроп-сеты, приращения по 2.5 кг, таблица блинов.';
 
@@ -44780,6 +44787,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get heroModesActionRetry => 'ПОВТОР';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'В ПРОЦЕССЕ';
 
   @override
@@ -45130,7 +45144,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '«Хороший персональный тренер стоит \$400/месяц. Я не мог себе этого позволить, поэтому два года строил своего: 1722 упражнения, настоящая логика прогрессии, тренер, который действительно смотрит на вашу неделю. Я пользуюсь им каждый день.»';
+      '«Хороший персональный тренер стоит \$400/месяц. Я не мог себе этого позволить, поэтому два года строил своего: 2300 упражнения, настоящая логика прогрессии, тренер, который действительно смотрит на вашу неделю. Я пользуюсь им каждый день.»';
 
   @override
   String get paywallFounderName => 'Chetan · основатель';

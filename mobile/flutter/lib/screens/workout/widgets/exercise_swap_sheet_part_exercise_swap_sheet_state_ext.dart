@@ -413,11 +413,14 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
               // Without this, ~4 results landed flush with the system
               // gesture area on iPhone (≈34pt) and gestural Android
               // (≈24pt) — user couldn't scroll the 4th card into view.
+              // Extra 84pt clears the floating "Snap equipment" pill, which
+              // is pinned bottom:16 over this list and otherwise covers the
+              // Swap button on the last visible card.
               padding: EdgeInsets.fromLTRB(
                 16,
                 0,
                 16,
-                MediaQuery.viewPaddingOf(context).bottom + 16,
+                MediaQuery.viewPaddingOf(context).bottom + 84,
               ),
               itemCount: _aiSuggestions.length,
               itemBuilder: (context, index) {
@@ -451,7 +454,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                 } else if (rank == 1) {
                   badge = l.exerciseSwapBadgeBestMatch;
                   badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
-                } else if (rank <= 3) {
+                } else if (rank == 2) {
                   badge = l.exerciseSwapBadgeTopPick;
                   badgeColor = context.accentColor;
                 } else {

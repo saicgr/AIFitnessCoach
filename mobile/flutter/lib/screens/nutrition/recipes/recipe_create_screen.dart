@@ -18,6 +18,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
+import '../../../data/models/micronutrients.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/recipe_repository.dart';
@@ -192,6 +193,14 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
           ironMg: a.ironMg,
           omega3G: a.omega3G,
           vitaminDIu: a.vitaminDIu,
+          micronutrients: a.micronutrients == null
+              ? null
+              : MicronutrientData.fromJson(a.micronutrients!),
+          cookingMethod: a.cookingMethod,
+          nutritionSource: a.nutritionSource.value,
+          nutritionConfidence: a.nutritionConfidence,
+          isNegligible: a.isNegligible,
+          rawText: a.rawText,
         ));
       }
       final create = RecipeCreate(

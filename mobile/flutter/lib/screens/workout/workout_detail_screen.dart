@@ -514,19 +514,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       // HYROX), color-matched to the merged schedule.
                       Builder(builder: (_) {
                         final attr = workoutProgramAttribution(workout);
+                        final programColor = attr.isAi ? accentColor : attr.color;
                         return _buildLabeledBadge(
                           label: 'Program',
                           value: attr.isAi ? 'AI' : attr.name,
-                          color: attr.color,
-                          backgroundColor: attr.color.withValues(alpha: 0.15),
+                          color: programColor,
+                          backgroundColor: programColor.withValues(alpha: 0.15),
                         );
                       }),
-                      // Workout Type Badge - now with semantic color
+                      // Workout Type Badge
                       _buildLabeledBadge(
                         label: AppLocalizations.of(context).workoutDetailType,
                         value: (workout.type ?? 'strength').capitalize(),
-                        color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
-                        backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withValues(alpha: 0.15),
+                        color: accentColor,
+                        backgroundColor: accentColor.withValues(alpha: 0.15),
                       ),
                       // Difficulty Badge - special animated version for Hell
                       if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')

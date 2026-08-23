@@ -386,6 +386,31 @@ async def get_streak_freeze_status(
         except Exception as e:
             logger.warning(f"[XP] freeze-status ledger read failed: {e}")
 
+        # Finding #368 — `xp_streak_freezes_available` defaults to 2 on
+        # signup (migration 2095) so most accounts start with banked
+        # freezes, but nothing ever wrote a ledger row explaining that grant.
+        # The screen then showed "N banked" next to "no freeze activity yet",
+        # an unexplained discrepancy. Backfill the missing origin entry once,
+        # lazily, the first time we see a nonzero balance with an empty
+        # ledger — best-effort, must never break the response.
+        if not recent and earn["freezes_available"] > 0:
+            try:
+                _record_freeze_ledger(
+                    db, user_id, delta=earn["freezes_available"],
+                    reason="signup_bonus",
+                    balance_after=earn["freezes_available"],
+                )
+                recent = [{
+                    "delta": earn["freezes_available"],
+                    "reason": "signup_bonus",
+                    "balance_after": earn["freezes_available"],
+                    "streak_day": None,
+                    "event_date": None,
+                    "created_at": None,
+                }]
+            except Exception as e:
+                logger.warning(f"[XP] freeze-status signup-bonus backfill failed: {e}")
+
         # Streak-days until the next auto-earned freeze.
         next_boundary = (
             (current_streak // STREAK_DAYS_PER_FREEZE) + 1

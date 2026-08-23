@@ -129,6 +129,21 @@ _NAME_RENAME_MAP: dict[str, str] = {
 _SMALL_CONNECTORS = {"With", "To", "And", "Of", "The", "On", "In", "At", "By"}
 
 
+def _cap_first_alpha(seg: str) -> str:
+    """Capitalize the first alphabetic character in a segment, lowercase the rest.
+
+    Source rows sometimes glue a parenthesis onto the following word with no
+    space (e.g. "(pro lat bar)"), so the leading character isn't a letter.
+    `seg[:1].upper()` only ever touches index 0, which silently leaves the
+    real first letter lowercase ("(pro" -> "(pro" instead of "(Pro"). Walk to
+    the first alphabetic character and capitalize that one instead.
+    """
+    for idx, ch in enumerate(seg):
+        if ch.isalpha():
+            return seg[:idx] + ch.upper() + seg[idx + 1:].lower()
+    return seg.lower()
+
+
 def _title_case_words(s: str) -> str:
     """Title Case via initcap-equivalent: capitalize first letter of each word.
 
@@ -143,9 +158,9 @@ def _title_case_words(s: str) -> str:
             continue
         # If the part has a hyphen, title-case each side.
         if "-" in p:
-            sub = "-".join(seg[:1].upper() + seg[1:].lower() for seg in p.split("-"))
+            sub = "-".join(_cap_first_alpha(seg) for seg in p.split("-"))
         else:
-            sub = p[:1].upper() + p[1:].lower()
+            sub = _cap_first_alpha(p)
         # Lowercase small connectors except when first or last word.
         if 0 < i < len(parts) - 1 and sub in _SMALL_CONNECTORS:
             sub = sub.lower()
@@ -168,6 +183,10 @@ def canonicalize_exercise_name(raw: str) -> str:
     if not raw:
         return ""
     s = re.sub(r"\s+", " ", raw).strip()
+    # Insert a missing space before a glued-on parenthesis, e.g.
+    # "Squat(back)" -> "Squat (back)", so Title Case below capitalizes
+    # "Back" as its own word instead of leaving it stuck inside "Squat(back)".
+    s = re.sub(r"([a-zA-Z0-9])\(", r"\1 (", s)
     # Strip trailing _female / _male / (VERSION 2) / camera-angle suffixes
     # in case they leak through from a stale source row.
     s = re.sub(r"[_\s](female|male)$", "", s, flags=re.IGNORECASE)

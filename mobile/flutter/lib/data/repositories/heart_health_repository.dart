@@ -150,13 +150,18 @@ class HeartComponent {
 @immutable
 class HeartHealthData {
   final String localDate;
-  final int score; // 0-100
+  // Null when fewer than 2 drivers (sleep/activity/cardio strain/BMI) have
+  // data — a lone reading (e.g. only a BMI) renormalized to fill the whole
+  // scale would otherwise read as a fully-measured, confident score.
+  final int? score; // 0-100, null when not enough drivers to be confident
   final int? delta; // vs previous snapshot
-  final String label; // Excellent | Good | Fair | Poor
+  final String? label; // Excellent | Good | Fair | Poor, null when score is null
   final List<HeartComponent> components;
   final String headline;
   final String body;
   final String delivery;
+
+  bool get hasScore => score != null;
 
   const HeartHealthData({
     required this.localDate,
@@ -172,9 +177,9 @@ class HeartHealthData {
   factory HeartHealthData.fromJson(Map<String, dynamic> json) {
     return HeartHealthData(
       localDate: json['local_date'] as String? ?? '',
-      score: json['score'] as int? ?? 0,
+      score: json['score'] as int?,
       delta: json['delta'] as int?,
-      label: json['label'] as String? ?? '',
+      label: json['label'] as String?,
       components: ((json['components'] as List<dynamic>?) ?? [])
           .map((e) =>
               HeartComponent.fromJson(Map<String, dynamic>.from(e as Map)))

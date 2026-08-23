@@ -166,7 +166,14 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.9,
+          // Full height below the status bar rather than 90% — when this
+          // sheet is opened from inside the Exercise Picker sheet (E2E
+          // register #420), a partial-height container left the picker's
+          // own header (with its own trailing close button) visible above
+          // this sheet's leading close button, reading as two dismiss
+          // controls on one screen at once.
+          height: MediaQuery.of(context).size.height -
+              MediaQuery.of(context).padding.top,
           decoration: BoxDecoration(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.4)

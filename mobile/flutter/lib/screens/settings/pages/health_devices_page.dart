@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,10 +129,11 @@ class _AutoImportWorkoutsCardState
                   const SizedBox(height: 4),
                   Text(
                     isConnected
-                        ? 'Pull workouts logged by other apps in Apple Health / '
-                            'Health Connect into your Zealova history automatically.'
-                        : 'Connect Apple Health / Health Connect above to '
-                            'enable auto-import.',
+                        ? 'Pull workouts logged by other apps in '
+                            '${Platform.isAndroid ? 'Health Connect' : 'Apple Health'} '
+                            'into your Zealova history automatically.'
+                        : 'Connect ${Platform.isAndroid ? 'Health Connect' : 'Apple Health'} '
+                            'above to enable auto-import.',
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.4,

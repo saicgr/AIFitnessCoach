@@ -58,6 +58,8 @@ class StreakFreezeLedgerEntry {
         return 'A freeze saved your streak';
       case 'admin_gift':
         return 'Freeze gifted';
+      case 'signup_bonus':
+        return 'Welcome bonus freeze';
       default:
         return isEarned ? 'Earned a freeze' : 'Used a freeze';
     }

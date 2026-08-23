@@ -323,7 +323,6 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                               volume: inWindow ? (dayData?.volume ?? 0) : 0,
                               thresholds: thresholds,
                               workoutName: dayData?.workoutName,
-                              type: inWindow ? dayData?.type : null,
                               isHighlighted:
                                   widget.highlightedDates?.contains(dateStr) ??
                                       false,
@@ -405,10 +404,10 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
         const Spacer(),
         Text('Less', style: mutedStyle),
         const SizedBox(width: 5),
-        // Empty cell + the 4 ascending blue stops, dim → bright.
+        // Empty cell + the 4 ascending accent stops, dim → bright.
         _LegendCell(color: _VolumeRamp.emptyColor(colors.isDark)),
         const SizedBox(width: 3),
-        ..._VolumeRamp.blueStops.map(
+        ..._VolumeRamp.stopsFor(context.accentColor).map(
           (c) => Padding(
             padding: const EdgeInsets.only(right: 3),
             child: _LegendCell(color: c),
@@ -532,29 +531,20 @@ class _RangeDropdown extends StatelessWidget {
   }
 }
 
-/// Volume ramp — a data-color scale where the HUE encodes the workout type
-/// (reusing the app-wide [AppColors.getWorkoutTypeColor] convention) and the
-/// SHADE (dim → bright) encodes training volume within that hue. Both signals
-/// live in one cell. Shared by [_HeatmapCell] and the legend so they never
-/// drift. The 4 lightness stops below reproduce the original blue ramp for the
-/// `strength` hue, so the look is unchanged for lifting days.
+/// Volume ramp — a data-color scale where the HUE is the app's live accent
+/// (so this reads as part of the same app as every other screen, not a
+/// competing colour source) and the SHADE (dim → bright) encodes training
+/// volume. Shared by [_HeatmapCell] and the legend so they never drift.
 class _VolumeRamp {
   const _VolumeRamp._();
 
-  /// Lightness of bucket 1 (dimmest) → bucket 4 (brightest), applied to a
-  /// type's base hue. Chosen to match the legacy blue ramp
-  /// (0xFF1E3A8A → 0xFF60A5FA).
+  /// Lightness of bucket 1 (dimmest) → bucket 4 (brightest), applied to the
+  /// accent hue.
   static const List<double> _lightnessStops = [0.33, 0.53, 0.60, 0.68];
 
-  /// Neutral blue reference ramp — kept for the legend, which illustrates the
-  /// SHADE (volume) dimension independent of any single type's hue.
-  static List<Color> get blueStops => stopsFor('strength');
-
-  /// The 4 ascending shade stops for a workout [type], derived from its base
-  /// hue. `null`/unknown types fall back to the default (blue) hue.
-  static List<Color> stopsFor(String? type) {
-    final base =
-        HSLColor.fromColor(AppColors.getWorkoutTypeColor(type ?? 'strength'));
+  /// The 4 ascending shade stops for [accent].
+  static List<Color> stopsFor(Color accent) {
+    final base = HSLColor.fromColor(accent);
     final sat = base.saturation.clamp(0.55, 0.95);
     return _lightnessStops
         .map((l) => base.withSaturation(sat).withLightness(l).toColor())
@@ -567,22 +557,22 @@ class _VolumeRamp {
       : Colors.grey.withValues(alpha: 0.10);
 
   /// Resolve a cell's fill from its volume + status against the window
-  /// thresholds [t1,t2,t3], using the [type]'s hue. Completed-but-zero-volume
-  /// days (e.g. imported cardio) get the lowest shade of their hue so a logged
-  /// day never looks empty.
+  /// thresholds [t1,t2,t3], in [accent]'s hue. Completed-but-zero-volume days
+  /// (e.g. imported cardio) get the lowest shade so a logged day never looks
+  /// empty.
   static Color colorFor({
     required CalendarStatus status,
     required double volume,
     required List<double>? thresholds,
     required bool isDark,
-    String? type,
+    required Color accent,
   }) {
-    final stops = stopsFor(type);
+    final stops = stopsFor(accent);
     if (volume <= 0) {
       if (status == CalendarStatus.completed) return stops[0];
       return emptyColor(isDark);
     }
-    // Positive volume → 1 of 4 ascending shades of the type hue.
+    // Positive volume → 1 of 4 ascending shades of the accent hue.
     if (thresholds == null) return stops[0];
     if (volume <= thresholds[0]) return stops[0];
     if (volume <= thresholds[1]) return stops[1];
@@ -591,14 +581,13 @@ class _VolumeRamp {
   }
 }
 
-/// Individual heatmap cell — colored by training VOLUME (blue ramp), not status.
+/// Individual heatmap cell — colored by training VOLUME (accent ramp), not status.
 class _HeatmapCell extends StatelessWidget {
   final String date;
   final CalendarStatus status;
   final double volume;
   final List<double>? thresholds;
   final String? workoutName;
-  final String? type;
   final bool isHighlighted;
   final VoidCallback? onTap;
   final double size;
@@ -610,7 +599,6 @@ class _HeatmapCell extends StatelessWidget {
     required this.volume,
     required this.thresholds,
     this.workoutName,
-    this.type,
     this.isHighlighted = false,
     this.onTap,
     this.size = 16,
@@ -626,7 +614,7 @@ class _HeatmapCell extends StatelessWidget {
       volume: volume,
       thresholds: thresholds,
       isDark: isDark,
-      type: type,
+      accent: accentColor,
     );
 
     return GestureDetector(

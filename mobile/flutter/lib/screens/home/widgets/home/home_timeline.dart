@@ -14,6 +14,7 @@ import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/sleep_detail_provider.dart';
 import '../../../../data/providers/timeline_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
+import '../../../../data/providers/user_cohort_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/charts/mini_sparkline.dart';
 import 'timeline_totals_strip.dart';
@@ -43,6 +44,20 @@ class HomeTimeline extends ConsumerWidget {
     final today = _dateOnly(DateTime.now());
     final timelineState = ref.watch(timelineProvider);
     final sleepHistory = ref.watch(sleepHistoryProvider).valueOrNull;
+    // Days before signup can never have logged/planned entries — don't
+    // back-fill them as failure-flavoured "Nothing logged" rows. Once the
+    // loaded window reaches this date, a single marker replaces "Show
+    // earlier days" instead of continuing to page further into the past.
+    final accountCreatedAt =
+        ref.watch(userCohortProvider).valueOrNull?.createdAt;
+    final accountCreatedDate =
+        accountCreatedAt != null ? _dateOnly(accountCreatedAt.toLocal()) : null;
+    final oldestLoadedDate = timelineState.days.isEmpty
+        ? null
+        : DateTime.tryParse(timelineState.days.last.date);
+    final reachedAccountCreation = accountCreatedDate != null &&
+        oldestLoadedDate != null &&
+        !_dateOnly(oldestLoadedDate).isAfter(accountCreatedDate);
 
     // Multi-day view: once today's feed is present, pull in the past week so
     // the timeline spans several days (Today → Yesterday → …). Idempotent —
@@ -83,6 +98,9 @@ class HomeTimeline extends ConsumerWidget {
         final parsed = DateTime.tryParse(day.date);
         if (parsed == null) continue;
         final dayDate = _dateOnly(parsed);
+        if (accountCreatedDate != null && dayDate.isBefore(accountCreatedDate)) {
+          continue; // predates the account — nothing could exist here
+        }
         final isToday = dayDate == today;
         final isPast = dayDate.isBefore(today);
         final isFuture = dayDate.isAfter(today);
@@ -167,8 +185,12 @@ class HomeTimeline extends ConsumerWidget {
         }
       }
 
-      // "Show earlier" footer — loads the previous page of days.
-      if (!timelineState.reachedEndPast) {
+      // Footer: once the loaded window reaches signup there's nothing
+      // earlier to page into, so a single marker replaces the "Show
+      // earlier" control (which loads the previous page of days).
+      if (reachedAccountCreation) {
+        children.add(_HistoryStartMarker(c: c));
+      } else if (!timelineState.reachedEndPast) {
         children.add(_ShowEarlierButton(
           c: c,
           loading: timelineState.isLoadingMore,
@@ -1490,6 +1512,35 @@ class _EmptyTile extends StatelessWidget {
 /// Footer pill at the bottom of the multi-day timeline — loads the previous
 /// page of days. Shows a spinner while a page is in flight; the parent hides
 /// it once there's no more history.
+class _HistoryStartMarker extends StatelessWidget {
+  final ThemeColors c;
+  const _HistoryStartMarker({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          Expanded(child: Divider(height: 1, thickness: 1, color: c.cardBorder)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'Your history starts here',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: c.textMuted,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(height: 1, thickness: 1, color: c.cardBorder)),
+        ],
+      ),
+    );
+  }
+}
+
 class _ShowEarlierButton extends StatelessWidget {
   final ThemeColors c;
   final bool loading;

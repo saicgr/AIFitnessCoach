@@ -363,8 +363,16 @@ class _RecentActivitySection extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm + 2),
                 Expanded(
                   child: Text(
-                    'No freeze activity yet. Keep your streak going and you\'ll '
-                    'bank your first freeze automatically.',
+                    // finding #368 — an empty ledger next to a nonzero banked
+                    // count is a contradiction ("2/5 banked" beside "no
+                    // activity yet"). Gate the copy on the banked count so
+                    // it never claims zero history when freezes exist.
+                    status.freezesAvailable > 0
+                        ? 'No freeze activity logged yet, but you have '
+                            '${status.freezesAvailable} banked (including any welcome '
+                            'bonus). Future earns and uses will show up here.'
+                        : 'No freeze activity yet. Keep your streak going and you\'ll '
+                            'bank your first freeze automatically.',
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.4,

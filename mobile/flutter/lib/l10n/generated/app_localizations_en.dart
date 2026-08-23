@@ -4073,10 +4073,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coachVoicePickerUnlocksAtLevel50 =>
-      'Unlocks at Level 50 — keep leveling up!';
+      'Unlocks at Level 15 — keep leveling up!';
 
   @override
-  String get coachVoicePickerUnlocksAtLevel502 => 'Unlocks at Level 50';
+  String get coachVoicePickerUnlocksAtLevel502 => 'Unlocks at Level 15';
 
   @override
   String get coachVoicePickerYourDeviceSDefault =>
@@ -12548,7 +12548,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'Complete workouts to see them shared here!\nFollow friends to see their workouts too.';
+      'Share a workout to see it here!\nFollow friends to see their workouts too.';
 
   @override
   String get feedCouldNotLoadYour =>
@@ -14758,7 +14758,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ with signup';
+  String get guestHome1700WithSignup => '2300+ with signup';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach Demo';
@@ -14871,7 +14871,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Showing $guestExerciseLimit sample exercises. Sign up free to access 1700+ exercises!';
+    return 'Showing $guestExerciseLimit sample exercises. Sign up free to access 2300+ exercises!';
   }
 
   @override
@@ -14896,7 +14896,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign up to view detailed instructions for this exercise.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Unlock 1700+ Exercises';
+  String get guestLibraryUnlock1700Exercises => 'Unlock 2300+ Exercises';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Unlock free';
@@ -27197,7 +27197,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => 'Matching your body type';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Pulling from 1,700+ exercises';
+  String get planAnalyzingPullingFrom1700 => 'Pulling from 2,300+ exercises';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Reviewing your goals';
@@ -35982,6 +35982,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'All Profiles';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Edit \"$exerciseName\"';
   }
@@ -43352,6 +43355,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Advanced';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±5 lb increments, plate chart.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.';
 
@@ -44279,6 +44286,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get heroModesActionRetry => 'RETRY';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LIVE';
 
   @override
@@ -44628,7 +44642,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“A good personal trainer is \$400/month. I couldn\'t justify that, so I spent two years building one: 1,722 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”';
+      '“A good personal trainer is \$400/month. I couldn\'t justify that, so I spent two years building one: 2,300 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”';
 
   @override
   String get paywallFounderName => 'Chetan · founder';

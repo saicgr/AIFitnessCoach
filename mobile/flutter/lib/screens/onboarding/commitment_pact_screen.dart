@@ -499,6 +499,13 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ),
           );
         }).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
+        // Trailing breathing room so the outcome banner (the last card,
+        // and the one users are asked to commit against) has clearance
+        // past the true bottom of the scrollable content — the sticky
+        // footer below is a separate Column slot, not an overlay, so this
+        // is purely about not leaving the last line flush with the
+        // scroll view's own edge once fully scrolled.
+        SizedBox(height: gapMd),
         ],
       ),
       ),
@@ -596,10 +603,22 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
   /// "Bodyweight" if nothing was selected.
   String _equipmentSummary(PreAuthQuizData quiz) {
     final env = (quiz.workoutEnvironment ?? '').toLowerCase();
-    final eq = [
+    final rawEq = [
       ...(quiz.equipment ?? const <String>[]),
       ...(quiz.customEquipment ?? const <String>[]),
     ].map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
+    // Dedupe case/underscore/space-insensitively — the synced equipment
+    // list can carry both a canonical id and a human-readable duplicate for
+    // the SAME item ("kettlebell" + "kettlebells", "smith_machine" +
+    // "smith machine"), which otherwise inflates the "+N more" count with
+    // things the user never separately picked.
+    final seen = <String>{};
+    final eq = <String>[];
+    for (final item in rawEq) {
+      final key = item.toLowerCase().replaceAll('_', ' ').trim();
+      if (seen.add(key)) eq.add(item);
+    }
 
     String envSuffix = '';
     if (env == 'home') {
@@ -614,6 +633,18 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       if (env == 'gym') return 'Full gym access';
       return 'Bodyweight$envSuffix';
     }
+
+    // `full_gym` is a canonical "I have everything" preset — selecting it
+    // collapses the on-screen selection to just itself (see
+    // `quiz_equipment.dart`'s "Always include bodyweight… if full_gym got
+    // added, collapse to just full_gym"). Every other entry that can end up
+    // alongside it server-side is implied, not a separate user choice, so
+    // itemizing/counting them ("Full Gym & Bodyweight +84 more") misreports
+    // one selection as dozens. Summarize as plain full-gym access instead.
+    if (seen.contains('full gym')) {
+      return 'Full gym access$envSuffix';
+    }
+
     // Title-case + show up to 2 items, with "+N more" for the rest.
     String pretty(String s) => s
         .replaceAll('_', ' ')

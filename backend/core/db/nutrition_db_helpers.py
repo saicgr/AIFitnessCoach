@@ -43,6 +43,44 @@ _FOOD_LOG_INPUT_TYPES = frozenset({
 })
 _FOOD_LOG_INPUT_TYPE_FALLBACK = "manual"
 
+# A single-item name the OCR/vision pipeline could only fill with a
+# placeholder (no brand/product text was legible) — never persist this
+# literally as the row's display name.
+_UNNAMED_FOOD_TOKENS = frozenset({"", "unknown", "unknown item", "unknown product"})
+
+
+def _derive_food_name(
+    food_items: Optional[list], total_calories: Optional[int] = None,
+) -> Optional[str]:
+    """Best-effort display name for a food_log row from its food_items[] payload.
+
+    A single item's own name wins; multiple items are comma-joined (capped at
+    3, "+N more" beyond that). A placeholder name the OCR could only fill with
+    "unknown" (no brand/product text legible on a scanned label) is replaced
+    with a calorie-anchored auto-name so the row is never given a literal
+    "unknown" display name — see row 346.
+    """
+    names = [
+        (item.get("name") or "").strip()
+        for item in (food_items or [])
+        if isinstance(item, dict) and (item.get("name") or "").strip()
+    ]
+    if not names:
+        return None
+    if len(names) == 1:
+        name = names[0]
+        if name.lower() in _UNNAMED_FOOD_TOKENS:
+            return (
+                f"{int(total_calories)} kcal packaged item"
+                if total_calories
+                else "Packaged item"
+            )
+        return name[:255]
+    joined = ", ".join(names[:3])
+    if len(names) > 3:
+        joined += f" +{len(names) - 3} more"
+    return joined[:255]
+
 
 class NutritionDB(NutritionDBPart2, BaseDB):
     """
@@ -63,6 +101,13 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         carbs_g: float,
         fat_g: float,
         fiber_g: float = 0,
+        # Display name for the meal-list row. When omitted (every current
+        # caller — /log-direct, /log-image, /log-text — never supplied one),
+        # derived from food_items[] so the row is never given a null name
+        # while the item that WAS named sits unreachable inside the JSONB
+        # array. See rows 346 (label-scan "unknown") and 425 (log-direct name
+        # sent but discarded).
+        food_name: Optional[str] = None,
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
         logged_at: Optional[str] = None,
@@ -116,6 +161,19 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # barcode / manual / watch. Schema CHECK constraint enforces allowlist.
         input_type: Optional[str] = None,
         user_query: Optional[str] = None,
+        # Row 106 — the user's own words verbatim (e.g. "2 boiled eggs, 150g
+        # grilled chicken breast, 1 cup white rice"), distinct from
+        # `user_query` (kept for back-compat / other callers' semantics).
+        # `food_logs.raw_input` existed as a column but no write path ever
+        # populated it, so it read back null despite the UI echoing the
+        # original text in quotes.
+        raw_input: Optional[str] = None,
+        # Row 106 — "high"/"medium"/"low" confidence in the parsed nutrition,
+        # computed by the caller from how specific/ambiguous the input was.
+        # Persisted so the "verified data" badge the UI shows at log time can
+        # still be reconstructed later (history, exports) instead of only
+        # existing in the one-shot API response.
+        nutrition_confidence: Optional[str] = None,
         # Free-text note attached to the log. Menu scans put the dish's printed
         # menu description here (or whatever the user typed over it) so the row
         # still says what the dish actually was months later.
@@ -192,6 +250,11 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "health_score": health_score,
             "source_type": normalized_source_type,
         }
+        resolved_food_name = (
+            food_name.strip() if food_name and food_name.strip() else None
+        ) or _derive_food_name(food_items, total_calories)
+        if resolved_food_name:
+            data["food_name"] = resolved_food_name
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         if input_type:
@@ -221,6 +284,10 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # Capture originating user input (search query, chat message, caption, etc.)
         if user_query:
             data["user_query"] = user_query
+        if raw_input and raw_input.strip():
+            data["raw_input"] = raw_input.strip()
+        if nutrition_confidence:
+            data["nutrition_confidence"] = nutrition_confidence
         if notes and notes.strip():
             data["notes"] = notes.strip()
 

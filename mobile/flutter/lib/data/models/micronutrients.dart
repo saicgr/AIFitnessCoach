@@ -23,6 +23,11 @@ enum NutrientCategory {
 /// Status of nutrient intake relative to targets
 enum NutrientStatus {
   low('low'),
+  // The backend (`api/v1/nutrition/micronutrients.py:make_progress`) emits
+  // 'adequate' for "past the floor but short of the full target" — this was
+  // missing here, so `fromValue` fell through to the `optimal` default and
+  // an adequate-but-not-fully-met nutrient rendered fully-green.
+  adequate('adequate'),
   optimal('optimal'),
   high('high'),
   overCeiling('over_ceiling');
@@ -37,17 +42,22 @@ enum NutrientStatus {
     );
   }
 
-  /// Get color for status
+  /// Get color for status — keyed to attainment (how close to target), the
+  /// same scale for every nutrient, so red/yellow/green means the same
+  /// thing on every bar instead of each nutrient carrying its own arbitrary
+  /// hue with no shared meaning.
   String get colorHex {
     switch (this) {
       case NutrientStatus.low:
-        return '#FFC107'; // Yellow
+        return '#F44336'; // Red — below the floor
+      case NutrientStatus.adequate:
+        return '#FFC107'; // Yellow — past the floor, short of target
       case NutrientStatus.optimal:
-        return '#4CAF50'; // Green
+        return '#4CAF50'; // Green — target met
       case NutrientStatus.high:
         return '#FF9800'; // Orange
       case NutrientStatus.overCeiling:
-        return '#F44336'; // Red
+        return '#FF9800'; // Orange — over the safe ceiling
     }
   }
 }
@@ -392,8 +402,13 @@ class NutrientProgress {
   /// Get category as enum
   NutrientCategory get categoryEnum => NutrientCategory.fromValue(category);
 
-  /// Get color for the progress bar
-  String get progressColor => colorHex ?? statusEnum.colorHex;
+  /// Get color for the progress bar — keyed to attainment (status), the
+  /// same red/yellow/green/orange scale for every nutrient. `colorHex` used
+  /// to win here: a per-nutrient DB color with no relation to how much of
+  /// the target was actually met (e.g. Iron at 24% rendered red while
+  /// Omega-3 at 20% rendered blue — four arbitrary hues, no shared meaning,
+  /// and no legend could make sense of them).
+  String get progressColor => statusEnum.colorHex;
 
   /// Whether this is at floor level
   bool get isAtFloor =>

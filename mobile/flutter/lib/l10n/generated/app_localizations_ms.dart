@@ -14869,7 +14869,7 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ dengan mendaftar';
+  String get guestHome1700WithSignup => '2300+ dengan mendaftar';
 
   @override
   String get guestHomeAiCoachDemo => 'Demo Jurulatih AI';
@@ -14983,7 +14983,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Menunjukkan $guestExerciseLimit contoh senaman. Daftar percuma untuk mengakses 1700+ senaman!';
+    return 'Menunjukkan $guestExerciseLimit contoh senaman. Daftar percuma untuk mengakses 2300+ senaman!';
   }
 
   @override
@@ -15008,7 +15008,7 @@ class AppLocalizationsMs extends AppLocalizations {
       'Daftar untuk melihat arahan terperinci bagi senaman ini.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Buka Kunci 1700+ Senaman';
+  String get guestLibraryUnlock1700Exercises => 'Buka Kunci 2300+ Senaman';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Buka kunci percuma';
@@ -27435,7 +27435,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Mengambil daripada 1,700+ senaman';
+      'Mengambil daripada 2,300+ senaman';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Menyemak matlamat anda';
@@ -36306,6 +36306,9 @@ class AppLocalizationsMs extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Semua Profil';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Edit \"$exerciseName\"';
   }
@@ -43742,6 +43745,10 @@ class AppLocalizationsMs extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Lanjutan';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Segalanya — fasa memanaskan badan/regangan, RPE/RIR, piramid, superset, drop set, kenaikan ±5 lb, carta plat.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Segalanya — fasa memanaskan badan/regangan, RPE/RIR, piramid, superset, drop set, kenaikan ±2.5 kg, carta plat.';
 
@@ -44674,6 +44681,13 @@ class AppLocalizationsMs extends AppLocalizations {
   String get heroModesActionRetry => 'CUBA';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LANGSUNG';
 
   @override
@@ -45023,7 +45037,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Jurulatih peribadi yang bagus berharga \$400/bulan. Saya tak mampu membayarnya, jadi saya luangkan dua tahun untuk membinanya: 1,722 senaman, logik progresi sebenar, jurulatih yang benar-benar melihat minggu anda. Saya menggunakannya setiap hari.”';
+      '“Jurulatih peribadi yang bagus berharga \$400/bulan. Saya tak mampu membayarnya, jadi saya luangkan dua tahun untuk membinanya: 2,300 senaman, logik progresi sebenar, jurulatih yang benar-benar melihat minggu anda. Saya menggunakannya setiap hari.”';
 
   @override
   String get paywallFounderName => 'Chetan · pengasas';

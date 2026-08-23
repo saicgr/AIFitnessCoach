@@ -136,6 +136,10 @@ class ActivityFeedItem(BaseModel):
     pinned_at: Optional[datetime] = None
     pinned_by: Optional[str] = None
 
+    # Requesting user's own reaction state on this activity
+    user_has_reacted: bool = False
+    user_reaction_type: Optional[str] = None
+
 
 class ActivityFeedItemCreate(BaseModel):
     """Request to create activity feed item."""

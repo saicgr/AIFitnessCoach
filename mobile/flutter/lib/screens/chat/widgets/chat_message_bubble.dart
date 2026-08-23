@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -581,7 +582,7 @@ class ChatMessageBubble extends ConsumerWidget {
                     color: tc.textMuted,
                   ),
                 ),
-                if (!isUser && message.responseTimeMs != null) ...[
+                if (!isUser && kDebugMode && message.responseTimeMs != null) ...[
                   Text(
                     ' · ${_formatResponseTime(message.responseTimeMs!)}',
                     style: TextStyle(

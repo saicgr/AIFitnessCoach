@@ -49,7 +49,6 @@ from .pools import (
     FOCUS_TAIL_BY_FOCUS,
     GOAL_NOUN_BY_GOAL,
     INTENSITY_ADJ_BY_DIFFICULTY,
-    MYTHIC_PREFIX,
 )
 
 
@@ -262,12 +261,18 @@ def _derive_seed(
 # Templates
 # ---------------------------------------------------------------------------
 
+#
+# E2E register #220 — "mythic_equipment_focus" and "intensity_mythic_focus"
+# (40% combined weight) concatenated a mythology name straight onto gym-jargon
+# equipment/focus tokens with nothing tying the three together — e.g.
+# "Yggdrasil" (Norse world-tree) + "Iso-Lateral" (equipment term) + "Six-Pack
+# Hour" (physique cliché + a duration word unrelated to the actual session
+# length). Removed both; the remaining three templates all read as a single
+# coherent phrase (intensity/duration/equipment + goal + focus).
 _TEMPLATES: List[Tuple[str, int]] = [
-    ("intensity_goal_focus", 40),
-    ("mythic_equipment_focus", 25),
-    ("intensity_mythic_focus", 15),
-    ("duration_goal_focus", 10),
-    ("equipment_goal_focus", 10),
+    ("intensity_goal_focus", 60),
+    ("duration_goal_focus", 20),
+    ("equipment_goal_focus", 20),
 ]
 
 
@@ -349,7 +354,6 @@ def generate_workout_name(
         equip_pool = EQUIPMENT_TAG_BY_FAMILY.get(equip_key) or []
         focus_pool = FOCUS_TAIL_BY_FOCUS.get(focus_key) or []
         duration_pool = DURATION_FLAVOR_BY_BUCKET.get(dur_key) or []
-        mythic_pool = MYTHIC_PREFIX
 
         # Avoidance is driven ONLY by the caller-supplied recent_names (the
         # user's last-14-day names). Keeping this an input — never process
@@ -366,18 +370,6 @@ def generate_workout_name(
                 tokens = [
                     rng.choice(intensity_pool),
                     rng.choice(goal_pool),
-                    rng.choice(focus_pool),
-                ]
-            elif template == "mythic_equipment_focus" and mythic_pool and equip_pool and focus_pool:
-                tokens = [
-                    rng.choice(mythic_pool),
-                    rng.choice(equip_pool),
-                    rng.choice(focus_pool),
-                ]
-            elif template == "intensity_mythic_focus" and intensity_pool and mythic_pool and focus_pool:
-                tokens = [
-                    rng.choice(intensity_pool),
-                    rng.choice(mythic_pool),
                     rng.choice(focus_pool),
                 ]
             elif template == "duration_goal_focus" and duration_pool and goal_pool and focus_pool:
@@ -404,6 +396,17 @@ def generate_workout_name(
             for t in tokens:
                 head_tokens.update(_tokens_of(t))
             if head_tokens & hot:
+                continue
+
+            # E2E register #220 — several FOCUS_TAIL_BY_FOCUS entries carry a
+            # literal "Hour" ("Six-Pack Hour", "Press Hour", ...) baked in as
+            # flavor text, unrelated to the session's actual length. On a
+            # short workout (<=30min) that reads as the name contradicting
+            # the duration the user actually asked for. Reject and retry
+            # rather than ship a name promising an hour for a 30-minute plan.
+            if dur_key in ("<=15min", "15-30min") and any(
+                "hour" in t.lower() for t in tokens
+            ):
                 continue
 
             name = _finalize(tokens)

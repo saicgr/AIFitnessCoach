@@ -591,9 +591,28 @@ async def get_discover_snapshot(
     from datetime import date as _date
     import datetime as _dt
 
+    user_id = current_user["id"]
+
+    # Finding #449 — the client's "Global Leaderboard Locked" gate only
+    # consults /leaderboard/unlock-status for its own UI; this endpoint
+    # returned the real board regardless, so a direct deep link
+    # (`zealova:///leaderboard`) bypassed the gate entirely and exposed
+    # other users' real display names/ranks. Enforce the unlock
+    # server-side for the global scope — the client-side padlock is
+    # presentation only from here on. Raised OUTSIDE the try/except below so
+    # the generic `except Exception` handler can't downgrade this 403 to a
+    # generic 500 (`safe_internal_error` doesn't special-case HTTPException).
+    if scope == "global":
+        unlock = leaderboard_service.check_unlock_status(user_id)
+        if not unlock.get("is_unlocked"):
+            raise HTTPException(
+                status_code=403,
+                detail="Global leaderboard is locked until you complete more workouts.",
+            )
+
     try:
         db = _get_supabase_db()
-        user_id = current_user["id"]
+
         # ISO week start (Monday)
         today = _date.today()
         week_start = today - _dt.timedelta(days=today.weekday())

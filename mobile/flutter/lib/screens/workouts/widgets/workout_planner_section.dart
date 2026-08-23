@@ -14,6 +14,7 @@ import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../../widgets/date_strip.dart';
 import '../../home/widgets/hero_workout_carousel.dart';
 import '../../home/widgets/hero_workout_card.dart' show GeneratingHeroCard;
+import '../../home/widgets/today_addons_row.dart';
 import '../../workout/schedule_date_utils.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -85,8 +86,22 @@ class _WorkoutPlannerSectionState
             child: _buildContent(todayWorkoutState),
           ),
         ),
+        // Row 269: today can carry more than one workout (a program session,
+        // a Quick Generate, a Builder session) and the carousel only ever
+        // shows the hero-picked one, with no indication the others exist.
+        // Surface them as a stack/count beneath the card — but only while
+        // the strip is actually focused on today; the carousel can also be
+        // showing a past/future day here.
+        if (_isSelectedDateToday) const TodayAddonsRow(),
       ],
     );
+  }
+
+  bool get _isSelectedDateToday {
+    final now = DateTime.now();
+    return _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
   }
 
   Widget _buildContent(AsyncValue<TodayWorkoutResponse?> todayWorkoutState) {
@@ -310,6 +325,13 @@ class WorkoutTuneMenu extends ConsumerWidget {
         }
       },
       itemBuilder: (_) => [
+        // Row #290: this used to swap BOTH halves on tap — the label named
+        // the destination day ("Start week on Monday") while the trailing
+        // text named the CURRENT day ("Sun"), so a single row asserted two
+        // contradictory days with nothing marking which was which. The
+        // label is now fixed (states the setting, not an action) and the
+        // switch is the only thing that changes — same stateful-control
+        // pattern as the "Show synced workouts" row directly below.
         PopupMenuItem(
           value: _TuneAction.toggleWeekStart,
           child: Row(
@@ -318,15 +340,14 @@ class WorkoutTuneMenu extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  startsSunday
-                      ? AppLocalizations.of(context).workoutPlannerStartWeekOnMonday
-                      : AppLocalizations.of(context).sectionedHeroAreaStartWeekOnSunday,
+                  AppLocalizations.of(context).workoutPlannerStartWeekOnMonday,
                 ),
               ),
-              Text(
-                startsSunday ? AppLocalizations.of(context).workoutPlannerSun : AppLocalizations.of(context).workoutPlannerMon,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600),
+              Switch.adaptive(
+                value: !startsSunday,
+                onChanged: (_) {
+                  Navigator.of(context).pop(_TuneAction.toggleWeekStart);
+                },
               ),
             ],
           ),

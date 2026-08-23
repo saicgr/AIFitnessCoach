@@ -364,6 +364,16 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// same exact-macro pill can't fire two logs before the row rebuilds.
   bool _smartPillLogging = false;
 
+  /// Row #253 — dedupe keys of pills already logged once in this sheet
+  /// session. A one-tap "↺ log it again" pill creates a brand-new food_log
+  /// row tagged with the CURRENTLY SELECTED meal slot, which can differ from
+  /// the slot the original candidate log carried — so the fresh row's own
+  /// dedupe key (keyed on slot + item names) didn't match the original and
+  /// both rendered as separate, identically-titled chips after the
+  /// post-log refresh. Excluded here regardless of slot so the just-logged
+  /// candidate can't resurface as a fresh pill of its own.
+  final Set<String> _justLoggedPillKeys = <String>{};
+
   /// Row #126 — in-sheet confirmation banner for a Quick-log pill tap. The
   /// sheet deliberately stays open after a one-tap log so the user can keep
   /// logging, but that means an external `ScaffoldMessenger` SnackBar (which

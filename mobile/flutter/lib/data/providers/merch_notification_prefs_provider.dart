@@ -58,6 +58,33 @@ class MerchNotificationPrefsNotifier extends StateNotifier<AsyncValue<MerchNotif
       rethrow;
     }
   }
+
+  /// Toggles ONE channel, leaving the other untouched. Finding #370: OS push
+  /// authorization being denied must disable/redirect the push half only —
+  /// email alerts still work and must not be silently switched off with it.
+  Future<void> setChannelEnabled({bool? push, bool? email}) async {
+    final userId = await _client.getUserId();
+    if (userId == null) return;
+    final current = state.valueOrNull ?? const MerchNotificationPrefs(pushEnabled: true, emailEnabled: true);
+    final next = MerchNotificationPrefs(
+      pushEnabled: push ?? current.pushEnabled,
+      emailEnabled: email ?? current.emailEnabled,
+    );
+    state = AsyncValue.data(next);
+    try {
+      await _client.put(
+        '/summaries/preferences/$userId',
+        data: {
+          'push_merch_alerts': next.pushEnabled,
+          'email_merch_alerts': next.emailEnabled,
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to update merch notification prefs: $e');
+      await load();
+      rethrow;
+    }
+  }
 }
 
 final merchNotificationPrefsProvider = StateNotifierProvider<

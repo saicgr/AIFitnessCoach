@@ -169,8 +169,11 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         if request.activity_level is not None:
             update_data["activity_level"] = request.activity_level
         if request.goals is not None:
-            # goals column is VARCHAR, needs JSON string
-            update_data["goals"] = json.dumps(request.goals) if isinstance(request.goals, list) else request.goals
+            # Store the real list (migration 2425 moves `goals` to jsonb, matching
+            # `active_injuries`/`equipment_v2`); avoids double-encoding a JSON
+            # string into a JSON column. Matches the write path already used by
+            # api/v1/users/profile.py (`_parse_list_field(user.goals)`).
+            update_data["goals"] = request.goals if isinstance(request.goals, list) else [request.goals]
         # users.primary_goal is TEXT, users.muscle_focus_points is JSONB
         # (migration 166). These drive the generated plan's rep scheme and
         # muscle prioritisation — dropping them silently made the first plan
@@ -219,7 +222,8 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         # normalizes both joint ids (knees…) and body-map muscle names (abs…).
         injuries_changed = False
         if request.limitations is not None:
-            update_data["active_injuries"] = request.limitations
+            from api.v1.workouts.utils import strip_injury_sentinels
+            update_data["active_injuries"] = strip_injury_sentinels(request.limitations)
             # Injury-change → workout-invalidation hook (injury-2026-06 Phase 2):
             # mirror equipment_changed so changing injuries post-onboarding
             # regenerates upcoming workouts under the new safety constraints.

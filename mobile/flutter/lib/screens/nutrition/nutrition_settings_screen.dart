@@ -609,7 +609,7 @@ class _NutritionSettingsScreenState
                         context,
                         title: 'Pregnant',
                         subtitle:
-                            'Adjusts your micronutrient targets (folate, iron, iodine, and more).',
+                            'Raises your micronutrient targets for pregnancy — more folate, iron, and iodine.',
                         value: _isPregnant,
                         onChanged: (value) =>
                             _updateLifeStage(isPregnant: value),
@@ -623,7 +623,7 @@ class _NutritionSettingsScreenState
                         context,
                         title: 'Breastfeeding',
                         subtitle:
-                            'Adjusts your micronutrient targets (folate, iron, iodine, and more).',
+                            'Shifts your micronutrient targets for breastfeeding — more iodine and vitamin A, iron eases back down.',
                         value: _isLactating,
                         onChanged: (value) =>
                             _updateLifeStage(isLactating: value),

@@ -14868,7 +14868,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ rekisteröitymisen jälkeen';
+  String get guestHome1700WithSignup => '2300+ rekisteröitymisen jälkeen';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach -demo';
@@ -14983,7 +14983,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Näytetään $guestExerciseLimit esimerkkiliikettä. Rekisteröidy ilmaiseksi ja saat käyttöösi yli 1700 liikettä!';
+    return 'Näytetään $guestExerciseLimit esimerkkiliikettä. Rekisteröidy ilmaiseksi ja saat käyttöösi yli 2300 liikettä!';
   }
 
   @override
@@ -15008,7 +15008,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Rekisteröidy nähdäksesi tämän liikkeen tarkat ohjeet.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Avaa yli 1700 liikettä';
+  String get guestLibraryUnlock1700Exercises => 'Avaa yli 2300 liikettä';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Avaa ilmaiseksi';
@@ -27433,7 +27433,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get planAnalyzingPullingFrom1700 =>
-      'Haetaan yli 1 700 liikkeen joukosta';
+      'Haetaan yli 2 300 liikkeen joukosta';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Tarkistetaan tavoitteesi';
@@ -36289,6 +36289,9 @@ class AppLocalizationsFi extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Kaikki profiilit';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Muokkaa \"$exerciseName\"';
   }
@@ -43718,6 +43721,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Edistynyt';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Kaikki — lämmittely/venyttelyvaiheet, RPE/RIR, pyramidi, supersarjat, pudotussarjat, ±5 lb lisäykset, levypainokaavio.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Kaikki — lämmittely/venyttelyvaiheet, RPE/RIR, pyramidi, supersarjat, pudotussarjat, ±2.5 kg lisäykset, levypainokaavio.';
 
@@ -44650,6 +44657,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get heroModesActionRetry => 'YRITÄ';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'KÄYNNISSÄ';
 
   @override
@@ -45002,7 +45016,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Hyvä personal trainer maksaa \$400/kk. En voinut perustella sitä, joten käytin kaksi vuotta sellaisen rakentamiseen: 1 722 liikettä, aitoa progressiologiikkaa ja valmentaja, joka oikeasti katsoo viikkoasi. Käytän sitä joka ikinen päivä.”';
+      '“Hyvä personal trainer maksaa \$400/kk. En voinut perustella sitä, joten käytin kaksi vuotta sellaisen rakentamiseen: 2 300 liikettä, aitoa progressiologiikkaa ja valmentaja, joka oikeasti katsoo viikkoasi. Käytän sitä joka ikinen päivä.”';
 
   @override
   String get paywallFounderName => 'Chetan · perustaja';

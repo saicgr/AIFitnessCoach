@@ -544,6 +544,16 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final userId = await _apiClient.getUserId();
       if (userId == null || !mounted) return;
 
+      // Row 278 — the session this call is fetching FOR. If startNewChat()
+      // or switchToSession() changes `_currentSessionId` while THIS call's
+      // `getSessionMessages` await is still in flight (e.g. the coach FAB's
+      // "always open fresh" reset racing an older in-flight history fetch —
+      // see Issue 11a below), the stale response must not overwrite the
+      // newer session's state once it finally resolves. That race is what
+      // silently swapped a genuinely fresh/empty chat back to the previous
+      // populated thread a few seconds after opening it.
+      final requestedSessionId = _currentSessionId;
+
       // 0. Synchronous warm-paint from the module-level in-memory mirror so
       //    the screen never sees AsyncValue.loading when there is data we
       //    already have. Awaiting the disk read still happens below — but
@@ -580,6 +590,18 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         final messages =
             await _repository.getSessionMessages(_currentSessionId!);
         if (!mounted) return;
+
+        // Row 278 — the active session changed while this fetch was in
+        // flight (startNewChat/switchToSession/_adoptSessionId). Applying
+        // this response now would silently resurrect the OLD session's
+        // messages over whatever the newer session/reset already painted.
+        if (_currentSessionId != requestedSessionId) {
+          debugPrint(
+            '⚠️ [Chat] Discarding stale history response for '
+            '$requestedSessionId — session is now $_currentSessionId',
+          );
+          return;
+        }
 
         // If sendMessage is in-flight, don't replace state — the send
         // owns state and will produce the authoritative version when done.

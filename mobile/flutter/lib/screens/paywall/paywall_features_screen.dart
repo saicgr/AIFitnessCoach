@@ -426,7 +426,7 @@ const List<_Feat> _marqueeRowTop = [
   (Icons.chat_bubble_outline, 'AI coach chat'),
   (Icons.receipt_long_outlined, 'Recipe import'),
   (Icons.camera_alt_outlined, 'Photo food logging'),
-  (Icons.movie_outlined, '1,722 exercises · HD video demos'),
+  (Icons.movie_outlined, '2,300+ exercises · HD video demos'),
   (Icons.calculate_outlined, 'Adaptive TDEE engine'),
   (Icons.emoji_events_outlined, '52+ skill progressions'),
   (Icons.view_week_outlined, 'Superset builder'),
@@ -599,6 +599,10 @@ class _MarqueeState extends State<_Marquee>
 
     // Edge fade: mask opaque in the middle, transparent at the L/R edges, so
     // the chips dissolve into the background for the "infinite rail" feel.
+    // The fade zone is wide enough to fully dissolve a whole chip (icon +
+    // label) before the true clip edge — an 8%-wide zone was only as wide as
+    // a chip's icon, so the icon (or the tail of a label) still hit the hard
+    // clip edge at full opacity and read as an abrupt cut, not a fade.
     return ShaderMask(
       shaderCallback: (rect) => const LinearGradient(
         begin: Alignment.centerLeft,
@@ -609,7 +613,7 @@ class _MarqueeState extends State<_Marquee>
           Colors.black,
           Colors.transparent,
         ],
-        stops: [0.0, 0.08, 0.92, 1.0],
+        stops: [0.0, 0.22, 0.78, 1.0],
       ).createShader(rect),
       blendMode: BlendMode.dstIn,
       child: SizedBox(

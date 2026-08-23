@@ -14281,7 +14281,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '가입 시 1700개 이상 제공';
+  String get guestHome1700WithSignup => '가입 시 2300개 이상 제공';
 
   @override
   String get guestHomeAiCoachDemo => 'AI 코치 데모';
@@ -14389,7 +14389,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return '샘플 운동 $guestExerciseLimit개를 보여드리고 있습니다. 무료로 가입하고 1700개 이상의 운동을 이용하세요!';
+    return '샘플 운동 $guestExerciseLimit개를 보여드리고 있습니다. 무료로 가입하고 2300개 이상의 운동을 이용하세요!';
   }
 
   @override
@@ -14412,7 +14412,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestLibrarySignUpToView => '가입하고 이 운동의 상세한 운동 방법을 확인하세요.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => '1700개 이상의 운동 잠금 해제';
+  String get guestLibraryUnlock1700Exercises => '2300개 이상의 운동 잠금 해제';
 
   @override
   String get guestLockedFeatureUnlockFree => '무료로 잠금 해제';
@@ -26297,7 +26297,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => '체형 분석 중';
 
   @override
-  String get planAnalyzingPullingFrom1700 => '1,700개 이상의 운동 데이터 불러오는 중';
+  String get planAnalyzingPullingFrom1700 => '2,300개 이상의 운동 데이터 불러오는 중';
 
   @override
   String get planAnalyzingReviewingYourGoals => '목표 검토 중';
@@ -34819,6 +34819,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => '모든 프로필';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return '\"$exerciseName\" 편집';
   }
@@ -41964,6 +41967,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutUiModeAdvanced => '고급';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±5lb 단위 증량, 원판 차트.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±2.5kg 단위 증량, 원판 차트.';
 
@@ -42875,6 +42882,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroModesActionRetry => '재시도';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => '라이브';
 
   @override
@@ -43212,7 +43226,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“좋은 퍼스널 트레이너는 한 달에 \$400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 1,722개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”';
+      '“좋은 퍼스널 트레이너는 한 달에 \$400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 2,300개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”';
 
   @override
   String get paywallFounderName => 'Chetan · 창업자';

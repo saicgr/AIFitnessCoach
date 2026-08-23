@@ -14813,7 +14813,7 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ med registrering';
+  String get guestHome1700WithSignup => '2300+ med registrering';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach-demo';
@@ -14927,7 +14927,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Visar $guestExerciseLimit exempelövningar. Registrera dig gratis för att få tillgång till 1700+ övningar!';
+    return 'Visar $guestExerciseLimit exempelövningar. Registrera dig gratis för att få tillgång till 2300+ övningar!';
   }
 
   @override
@@ -14952,7 +14952,7 @@ class AppLocalizationsSv extends AppLocalizations {
       'Registrera dig för att se detaljerade instruktioner för denna övning.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Lås upp 1700+ övningar';
+  String get guestLibraryUnlock1700Exercises => 'Lås upp 2300+ övningar';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Lås upp gratis';
@@ -27297,7 +27297,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => 'Matchar din kroppstyp';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Hämtar från 1 700+ övningar';
+  String get planAnalyzingPullingFrom1700 => 'Hämtar från 2 300+ övningar';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Granskar dina mål';
@@ -36127,6 +36127,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Alla profiler';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Redigera \"$exerciseName\"';
   }
@@ -43537,6 +43540,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Avancerat';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Allt — uppvärmning/stretch-faser, RPE/RIR, pyramid, superset, dropset, ±5 lb steg, vikttabell.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Allt — uppvärmning/stretch-faser, RPE/RIR, pyramid, superset, dropset, ±2,5 kg steg, vikttabell.';
 
@@ -44470,6 +44477,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get heroModesActionRetry => 'FÖRSÖK';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LIVE';
 
   @override
@@ -44819,7 +44833,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '”En bra personlig tränare kostar \$400/månad. Jag kunde inte motivera det, så jag la två år på att bygga en egen: 1 722 övningar, riktig progressionslogik, en coach som faktiskt tittar på din vecka. Jag använder den varenda dag.”';
+      '”En bra personlig tränare kostar \$400/månad. Jag kunde inte motivera det, så jag la två år på att bygga en egen: 2 300 övningar, riktig progressionslogik, en coach som faktiskt tittar på din vecka. Jag använder den varenda dag.”';
 
   @override
   String get paywallFounderName => 'Chetan · grundare';

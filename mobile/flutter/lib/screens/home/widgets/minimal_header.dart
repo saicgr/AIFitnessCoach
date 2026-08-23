@@ -151,6 +151,10 @@ class _Greeting extends ConsumerWidget {
     // rolls over — otherwise a session left open across midnight keeps
     // showing yesterday's greeting/date from the last paint (register #123).
     ref.watch(currentLocalDayProvider);
+    // Watched so the greeting word itself ("Morning"/"Afternoon"/"Evening")
+    // rebuilds the instant its bucket boundary is crossed — otherwise a
+    // session left open across e.g. 5pm keeps showing "Afternoon" (#295).
+    ref.watch(currentGreetingBucketProvider);
     final now = DateTime.now();
     final hour = now.hour;
     final name = ref.watch(currentUserProvider).valueOrNull?.name;

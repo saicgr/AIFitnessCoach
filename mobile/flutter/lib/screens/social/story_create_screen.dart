@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
@@ -62,8 +63,9 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
       );
 
       if (pickedFile != null) {
+        final stripped = await _stripExif(File(pickedFile.path));
         setState(() {
-          _selectedImage = File(pickedFile.path);
+          _selectedImage = stripped;
         });
       }
     } catch (e) {
@@ -73,6 +75,33 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
           SnackBar(content: Text('Failed to pick image: $e')),
         );
       }
+    }
+  }
+
+  /// Re-encodes the picked photo with EXIF (including GPS location) dropped
+  /// before it is ever shown in the preview or uploaded — a story is shared
+  /// content, not just analysed, so location metadata must never ride along.
+  /// Falls back to the original file if compression fails for any reason.
+  Future<File> _stripExif(File original) async {
+    try {
+      final bytes = await FlutterImageCompress.compressWithFile(
+        original.path,
+        minWidth: 1080,
+        minHeight: 1920,
+        quality: 85,
+        format: CompressFormat.jpeg,
+        autoCorrectionAngle: true,
+        keepExif: false,
+      );
+      if (bytes == null || bytes.isEmpty) return original;
+      final stripped = File(
+        '${original.parent.path}/story_stripped_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      );
+      await stripped.writeAsBytes(bytes, flush: true);
+      return stripped;
+    } catch (e) {
+      debugPrint('Error stripping EXIF from story photo: $e');
+      return original;
     }
   }
 

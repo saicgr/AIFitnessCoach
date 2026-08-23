@@ -11,6 +11,12 @@ class ZealovaStatTile extends StatelessWidget {
   final double valueSize;
   final bool accentValue;
   final CrossAxisAlignment align;
+  /// Optional long-press/hover explanation shown next to the label. Use this
+  /// when two similarly-named tiles on the same screen measure different
+  /// things (e.g. a strict day-by-day streak next to a schedule-aware one —
+  /// finding #453) so the difference is discoverable instead of looking like
+  /// a data-integrity bug.
+  final String? tooltip;
 
   const ZealovaStatTile({
     super.key,
@@ -20,11 +26,23 @@ class ZealovaStatTile extends StatelessWidget {
     this.valueSize = 20,
     this.accentValue = false,
     this.align = CrossAxisAlignment.start,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
+    final labelRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label.toUpperCase(),
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.3)),
+        if (tooltip != null) ...[
+          const SizedBox(width: 3),
+          Icon(Icons.info_outline, size: 10, color: tc.textMuted),
+        ],
+      ],
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: align,
@@ -47,8 +65,10 @@ class ZealovaStatTile extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 3),
-        Text(label.toUpperCase(),
-            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.3)),
+        if (tooltip != null)
+          Tooltip(message: tooltip, triggerMode: TooltipTriggerMode.tap, child: labelRow)
+        else
+          labelRow,
       ],
     );
   }

@@ -868,9 +868,12 @@ def equipment_dual_write_payload(value) -> dict:
 
     if not parsed:
         parsed = ["bodyweight"]
-    # Dedup while preserving order.
+    # Canonicalise to snake_case (spaces and underscores are the same token)
+    # and dedup while preserving order, so "dip station" and "dip_station"
+    # collapse to a single "dip_station" entry.
+    canonical = ["_".join(p.replace("_", " ").split()) for p in parsed]
     seen: set = set()
-    deduped = [p for p in parsed if not (p in seen or seen.add(p))]
+    deduped = [p for p in canonical if not (p in seen or seen.add(p))]
 
     # Re-encode the legacy column as a JSON-array string for compatibility
     # with read sites that still call `parse_json_field`.
@@ -878,6 +881,27 @@ def equipment_dual_write_payload(value) -> dict:
         "equipment": json.dumps(deduped),
         "equipment_v2": deduped,
     }
+
+
+_INJURY_SENTINEL_TOKENS = {"none", "other", "", "n/a", "na"}
+
+
+def strip_injury_sentinels(value):
+    """Drop bare 'none'/'other' sentinel strings from an injuries list.
+
+    The quiz posts a literal ["none"] to mean "no injuries", but that
+    sentinel is not a real limitation - stored as-is it makes any
+    non-empty-list check (including the EXERCISE_UNSAFE_FOR_INJURY guard)
+    see a limitation named "none". Real entries (injury dicts or actual
+    body-part strings) are left untouched; only bare sentinel strings are
+    removed, so ["none"] -> [] and ["none", {...}] -> [{...}].
+    """
+    if not isinstance(value, list):
+        return value
+    return [
+        item for item in value
+        if not (isinstance(item, str) and item.strip().lower() in _INJURY_SENTINEL_TOKENS)
+    ]
 
 
 def normalize_goals_list(goals) -> List[str]:

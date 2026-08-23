@@ -10,6 +10,7 @@ import '../../../core/stats/stat_trend.dart';
 import '../../../core/stats/stat_trend_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/trend_series_provider.dart';
+import '../../../core/providers/user_provider.dart' show useKgProvider;
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -222,6 +223,33 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
   String _formatValue(double value) {
     if (value == value.roundToDouble()) return value.toInt().toString();
     return value.toStringAsFixed(1);
+  }
+
+  /// Converts a metric-stored entry to the user's chosen display unit
+  /// (E2E register #237 — this tab used to hardcode kg/cm regardless of
+  /// `useKgProvider`, disagreeing with every other weight surface).
+  MeasurementEntry _toDisplayEntry(MeasurementEntry e, bool useKg) {
+    return MeasurementEntry(
+      id: e.id,
+      userId: e.userId,
+      type: e.type,
+      value: e.getValueInUnit(useKg),
+      unit: useKg ? e.type.metricUnit : e.type.imperialUnit,
+      recordedAt: e.recordedAt,
+      notes: e.notes,
+      bmi: e.bmi,
+      waistToHipRatio: e.waistToHipRatio,
+      waistToHeightRatio: e.waistToHeightRatio,
+      weightChange: e.weightChange,
+      bodyFatChange: e.bodyFatChange,
+    );
+  }
+
+  double _deltaInUnit(double metricDelta, MeasurementType type, bool useKg) {
+    if (useKg || type == MeasurementType.bodyFat) return metricDelta;
+    return type == MeasurementType.weight
+        ? metricDelta * 2.20462
+        : metricDelta / 2.54;
   }
 
   @override
@@ -753,12 +781,14 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required Color cardBorder,
     required bool isLast,
   }) {
-    final entry = summary?.latestByType[type];
-    final change = summary?.changeFromPrevious[type];
+    final useKg = ref.watch(useKgProvider);
+    final rawEntry = summary?.latestByType[type];
+    final entry = rawEntry == null ? null : _toDisplayEntry(rawEntry, useKg);
+    final rawChange = summary?.changeFromPrevious[type];
+    final change =
+        rawChange == null ? null : _deltaInUnit(rawChange, type, useKg);
     final hasData = entry != null;
-    final unit = type == MeasurementType.weight
-        ? 'kg'
-        : (type == MeasurementType.bodyFat ? '%' : 'cm');
+    final unit = useKg ? type.metricUnit : type.imperialUnit;
     final isSelected = _selectedType == type;
 
     return Container(

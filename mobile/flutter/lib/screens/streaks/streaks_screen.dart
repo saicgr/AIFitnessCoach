@@ -546,7 +546,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
 
     final bestStreak = _workoutStreak?.longest ?? 0;
 
-    Widget cell(String value, String label, {String? unit, bool accent = false}) {
+    Widget cell(String value, String label, {String? unit, bool accent = false, String? tooltip}) {
       return Expanded(
         child: ZealovaStatTile(
           value: value,
@@ -554,6 +554,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
           unit: unit,
           valueSize: 26,
           accentValue: accent,
+          tooltip: tooltip,
         ),
       );
     }
@@ -569,7 +570,8 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
               cell('$completed/$target', 'Workouts This Week', accent: true),
               const SizedBox(width: 16),
               cell('$bestStreak', 'Best Streak',
-                  unit: bestStreak == 1 ? 'day' : 'days'),
+                  unit: bestStreak == 1 ? 'day' : 'days',
+                  tooltip: 'Your longest run of scheduled workouts completed on time — rest days on your plan don\'t break it.'),
             ],
           ),
         ),
@@ -580,10 +582,12 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               cell('$consistencyStreak', 'Consistency Streak',
-                  unit: consistencyStreak == 1 ? 'day' : 'days'),
+                  unit: consistencyStreak == 1 ? 'day' : 'days',
+                  tooltip: 'A stricter, calendar-day count: every single day in a row with a completed workout, no rest days allowed. Different from Best Streak above, which follows your training schedule.'),
               const SizedBox(width: 16),
               cell('$consistencyBest', 'Consistency Best',
-                  unit: consistencyBest == 1 ? 'day' : 'days'),
+                  unit: consistencyBest == 1 ? 'day' : 'days',
+                  tooltip: 'Your longest-ever calendar-day streak (no rest days).'),
             ],
           ),
         ),

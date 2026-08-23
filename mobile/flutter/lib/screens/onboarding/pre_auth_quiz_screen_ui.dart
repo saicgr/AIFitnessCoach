@@ -42,7 +42,14 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.preAuthQuizGenerateMyFirstWorkout,
+                          // This step only advances to body metrics (step 7)
+                          // — three-plus steps and the paywall are still
+                          // ahead of it — so "Generate My First Workout"
+                          // promised something this tap doesn't deliver.
+                          // "Continue" matches every other quiz step's CTA
+                          // and saves the generate promise for the screen
+                          // that actually generates.
+                          AppLocalizations.of(context)!.onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
@@ -51,7 +58,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                         ),
                         if (_canProceed) ...[
                           const SizedBox(width: 8),
-                          Icon(Icons.auto_awesome_rounded, size: 20, color: t.buttonText),
+                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.buttonText),
                         ],
                       ],
                     ),
@@ -87,6 +94,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
       onPressed: _nextQuestion,
       onSkip: _isCurrentPageSkippable ? _skipCurrentPage : null,
       skipText: _currentQuestion == 10 ? AppLocalizations.of(context)!.preAuthQuizSkipAndFinish : AppLocalizations.of(context)!.onboardingSkip,
+      hintText: _canProceedReason,
     );
   }
 

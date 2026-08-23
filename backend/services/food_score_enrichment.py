@@ -64,6 +64,36 @@ _SCORE_COLUMNS = (
     "omega3_g", "omega6_g",
 )
 
+# The micronutrient subset of _SCORE_COLUMNS. These are printed facts (label
+# OCR, barcode lookup) when a caller supplies them, so — unlike the scoring
+# fields above, which are always this enrichment's to fill — they must never
+# be overwritten by this pass's own rough Gemini re-estimate once the row
+# already has a real value.
+_MICRO_COLUMNS = frozenset({
+    "sodium_mg", "sugar_g", "saturated_fat_g", "cholesterol_mg",
+    "potassium_mg",
+    "vitamin_a_ug", "vitamin_c_mg", "vitamin_d_iu", "vitamin_e_mg",
+    "vitamin_k_ug", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+    "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_ug", "vitamin_b9_ug",
+    "vitamin_b12_ug",
+    "calcium_mg", "iron_mg", "magnesium_mg", "zinc_mg", "phosphorus_mg",
+    "copper_mg", "manganese_mg", "selenium_ug", "choline_mg",
+    "omega3_g", "omega6_g",
+})
+
+
+def _drop_already_populated_micros(
+    payload: Dict[str, Any], row: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Strip any micronutrient key from [payload] that [row] already has a
+    real (non-None) value for — this pass backfills gaps, it must never
+    clobber a value the label scanner, barcode lookup, or a hand edit already
+    wrote with its own coarser re-estimate."""
+    return {
+        k: v for k, v in payload.items()
+        if k not in _MICRO_COLUMNS or row.get(k) is None
+    }
+
 
 def _build_seed_description(row: Dict[str, Any]) -> Optional[str]:
     """Build a Gemini-friendly text seed from the existing food_log row.
@@ -380,6 +410,7 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
     # logged foods, this skips the 3-5s Gemini call entirely.
     cached_payload = await _try_cache_stack_enrichment(row, user_id)
     if cached_payload:
+        cached_payload = _drop_already_populated_micros(cached_payload, row)
         cached_payload["score_status"] = "ok"
         # Cache stack fills the inflammation cluster + micros but not health.
         # Add a deterministic health score when the row lacks one.
@@ -427,7 +458,9 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
         logger.info(f"[score_enrich] Gemini returned nothing for {food_log_id}")
         return False
 
-    update_payload = _extract_scoring_fields(gemini_result)
+    update_payload = _drop_already_populated_micros(
+        _extract_scoring_fields(gemini_result), row,
+    )
     if not update_payload:
         logger.info(f"[score_enrich] No scoring fields extracted for {food_log_id}")
         return False

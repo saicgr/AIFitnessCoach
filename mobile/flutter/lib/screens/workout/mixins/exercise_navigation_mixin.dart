@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/models/set_progression.dart';
+import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/providers/tts_provider.dart';
 import '../../../core/services/posthog_service.dart';
@@ -21,6 +22,7 @@ import '../models/workout_state.dart';
 import '../providers/active_workout_session_provider.dart';
 import '../widgets/exercise_options_sheet.dart' as options_sheet;
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
+import '../widgets/breathing_guide_sheet.dart';
 import '../widgets/exercise_analytics_page.dart';
 import '../widgets/exercise_info_sheet.dart';
 import '../widgets/report_pain_sheet.dart';
@@ -411,7 +413,13 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   /// Handle back button press
   void handleBack() {
     final warmupEnabled = ref.read(warmupDurationProvider).warmupEnabled;
-    if (warmupEnabled) {
+    // Warmup is a consumed, one-shot phase: once the user has completed or
+    // skipped it for this workout, back from the exercise screen must not
+    // replay it — that stranded the user in a warmup they'd already passed
+    // and made them skip it a second time just to get back to the set they
+    // were on. Only re-enter warmup if it's still actually pending.
+    final warmupDone = ref.read(activeWorkoutWarmupDoneProvider);
+    if (warmupEnabled && !warmupDone) {
       goBackToWarmup();
     } else {
       showQuitDialogImpl();
@@ -479,6 +487,10 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       case 'how_did_i_do':
         showHowDidIDoForCurrentExercise();
         break;
+      case 'breathing':
+        breathingGuideOpened++;
+        showBreathingGuide(context: context, exercise: currentExercise);
+        break;
     }
   }
 
@@ -507,6 +519,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   /// Open the "How did I do?" critique for the sets logged so far on the
   /// current exercise. Implemented in the screen (needs the logged sets).
   void showHowDidIDoForCurrentExercise();
+
+  /// Count of times the breathing guide sheet was opened this workout —
+  /// same counter `workout_flow_mixin.dart` reports in the completion
+  /// summary payload.
+  int get breathingGuideOpened;
+  set breathingGuideOpened(int value);
 
   /// Confirm and delete an exercise from the workout
   void confirmDeleteExercise(int index) {

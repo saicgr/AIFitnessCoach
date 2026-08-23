@@ -8,6 +8,14 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
     Color textColor,
     Color subtitleColor,
   ) {
+    // Read the UPCOMING set's own prescribed reps/weight, not the exercise's
+    // flat working target — a warmup-ramp exercise (e.g. 15kg on sets 1-2,
+    // 30kg on sets 3-5) otherwise always previews the working weight even
+    // when the next set is still a ramp set.
+    final nextSetTarget = currentExercise.getTargetForSet(completedSetsCount + 1);
+    final nextSetReps = nextSetTarget?.targetReps ?? currentExercise.reps;
+    final nextSetWeight = nextSetTarget?.targetWeightKg ?? currentExercise.weight;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -64,11 +72,11 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                   ),
                 ),
                 // Show target reps and weight for next set
-                if (currentExercise.reps != null || currentExercise.weight != null) ...[
+                if (nextSetReps != null || nextSetWeight != null) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      if (currentExercise.reps != null) ...[
+                      if (nextSetReps != null) ...[
                         Icon(
                           Icons.repeat,
                           size: 12,
@@ -76,7 +84,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${currentExercise.reps} reps',
+                          '$nextSetReps reps',
                           style: TextStyle(
                             fontSize: 12,
                             color: subtitleColor,
@@ -84,9 +92,9 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                           ),
                         ),
                       ],
-                      if (currentExercise.reps != null &&
-                          currentExercise.weight != null &&
-                          currentExercise.weight! > 0)
+                      if (nextSetReps != null &&
+                          nextSetWeight != null &&
+                          nextSetWeight > 0)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           child: Text(
@@ -97,8 +105,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                             ),
                           ),
                         ),
-                      if (currentExercise.weight != null &&
-                          currentExercise.weight! > 0) ...[
+                      if (nextSetWeight != null && nextSetWeight > 0) ...[
                         Icon(
                           Icons.fitness_center,
                           size: 12,
@@ -106,7 +113,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${currentExercise.weight!.toStringAsFixed(currentExercise.weight! == currentExercise.weight!.roundToDouble() ? 0 : 1)} kg',
+                          '${nextSetWeight.toStringAsFixed(nextSetWeight == nextSetWeight.roundToDouble() ? 0 : 1)} kg',
                           style: TextStyle(
                             fontSize: 12,
                             color: subtitleColor,

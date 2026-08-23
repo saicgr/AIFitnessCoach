@@ -75,6 +75,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   Set<String> _defaultFilters = {};
   bool _filtersSeeded = false;
   bool _filtersExpanded = false;
+  final ScrollController _resultsScrollController = ScrollController();
   bool _chipsExpanded = false;
   String? _mood;
   bool _dirty = false;
@@ -196,6 +197,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   void dispose() {
     _scanTimer?.cancel();
     _sweep.dispose();
+    _resultsScrollController.dispose();
     super.dispose();
   }
 
@@ -448,11 +450,16 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           );
       if (!mounted || epoch != _sessionEpoch) return;
       debugPrint('🍳 [Fridge] findRecipes ✓ ${res.suggestions.length} recipes');
+      final wasRegenerate = _dirty;
       setState(() {
         _result = res;
         _searching = false;
         _hasGenerated = true;
         _dirty = false;
+        // Regenerating with the panel open buries the fresh recipes below
+        // ~900pt of chips — collapse it so the tap's own result is what the
+        // user sees next.
+        if (wasRegenerate) _filtersExpanded = false;
         final existing = _items.map((s) => s.toLowerCase()).toSet();
         for (final d in res.detectedItems) {
           if (!existing.contains(d.name.toLowerCase())) {
@@ -461,6 +468,13 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           }
         }
       });
+      if (wasRegenerate && _resultsScrollController.hasClients) {
+        _resultsScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
       _persistLastScan();
     } catch (e, st) {
       debugPrint('🍳 [Fridge] findRecipes ✗ $e');
@@ -769,6 +783,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       body: SafeArea(
         bottom: false,
         child: ListView(
+          controller: _resultsScrollController,
           padding: const EdgeInsets.only(bottom: 40),
           children: [
             _header(tc),

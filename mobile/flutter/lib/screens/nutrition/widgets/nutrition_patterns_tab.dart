@@ -2210,7 +2210,11 @@ class _GentleChangesSectionState
           return Column(
             children: [
               for (final g in data.goals)
-                _GentleGoalCard(goal: g, isDark: isDark),
+                _GentleGoalCard(
+                  goal: g,
+                  isDark: isDark,
+                  hasEnoughData: data.hasEnoughDataForTrend,
+                ),
               if (data.nutrientTracks.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 _BaselineTrendsBlock(
@@ -2218,6 +2222,7 @@ class _GentleChangesSectionState
                   currentLabel: data.currentLabel,
                   baselineLabel: data.baselineLabel,
                   isDark: isDark,
+                  hasEnoughData: data.hasEnoughDataForTrend,
                 ),
               ],
             ],
@@ -2231,6 +2236,7 @@ class _GentleChangesSectionState
             currentLabel: data.currentLabel,
             baselineLabel: data.baselineLabel,
             isDark: isDark,
+            hasEnoughData: data.hasEnoughDataForTrend,
           );
         }
         if (data == null && async.isLoading) {
@@ -2270,13 +2276,24 @@ Map<String, dynamic> _encodeBaseline(MacrosBaseline b) {
     'nutrient_tracks': [for (final g in b.nutrientTracks) goal(g)],
     'current_label': b.currentLabel,
     'baseline_label': b.baselineLabel,
+    'days_counted': b.currentDaysCounted,
   };
 }
 
 class _GentleGoalCard extends StatelessWidget {
   final GentleGoal goal;
   final bool isDark;
-  const _GentleGoalCard({required this.goal, required this.isDark});
+
+  /// False when the current window hasn't logged enough days to say
+  /// anything about a trend (E2E register #271 — "right where it was" read
+  /// off a single logged meal against an empty prior window). Gates the
+  /// trend phrase and icon; the current-vs-goal average still renders.
+  final bool hasEnoughData;
+  const _GentleGoalCard({
+    required this.goal,
+    required this.isDark,
+    required this.hasEnoughData,
+  });
 
   // Encouraging, non-judgmental delta copy. Never "you failed" — always a
   // nudge or a celebration.
@@ -2300,6 +2317,7 @@ class _GentleGoalCard extends StatelessWidget {
   ];
 
   String _deltaPhrase() {
+    if (!hasEnoughData) return 'still gathering data';
     switch (goal.trend) {
       case 1:
         return _pick(_up, goal.key);
@@ -2348,13 +2366,17 @@ class _GentleGoalCard extends StatelessWidget {
                         style: ZType.lbl(11.5, color: textPrimary)),
                     const SizedBox(width: 6),
                     Icon(
-                      goal.trend == 1
-                          ? Icons.trending_up
-                          : goal.trend == -1
-                              ? Icons.trending_down
-                              : Icons.trending_flat,
+                      !hasEnoughData
+                          ? Icons.hourglass_empty_rounded
+                          : goal.trend == 1
+                              ? Icons.trending_up
+                              : goal.trend == -1
+                                  ? Icons.trending_down
+                                  : Icons.trending_flat,
                       size: 14,
-                      color: goal.trend == -1 ? textMuted : accent,
+                      color: !hasEnoughData || goal.trend == -1
+                          ? textMuted
+                          : accent,
                     ),
                   ],
                 ),
@@ -2457,11 +2479,17 @@ class _BaselineTrendsBlock extends StatelessWidget {
   final String currentLabel;
   final String baselineLabel;
   final bool isDark;
+
+  /// False when the current window hasn't logged enough days for a
+  /// "now vs before" comparison to mean anything (E2E register #271 —
+  /// "818kcal now · 0.0kcal before" from a single logged meal).
+  final bool hasEnoughData;
   const _BaselineTrendsBlock({
     required this.tracks,
     required this.currentLabel,
     required this.baselineLabel,
     required this.isDark,
+    required this.hasEnoughData,
   });
 
   String _fmt(double v) =>
@@ -2511,15 +2539,15 @@ class _BaselineTrendsBlock extends StatelessWidget {
                               color: textPrimary)),
                       const SizedBox(height: 2),
                       Text(
-                        t.baseline != null
+                        hasEnoughData && t.baseline != null
                             ? '${_fmt(t.current)}${t.unit} now · ${_fmt(t.baseline!)}${t.unit} before'
-                            : '${_fmt(t.current)}${t.unit} now',
+                            : '${_fmt(t.current)}${t.unit} now · gathering baseline',
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                     ],
                   ),
                 ),
-                if (t.delta != null)
+                if (hasEnoughData && t.delta != null)
                   _DeltaPill(delta: t.delta!, unit: t.unit, isDark: isDark),
                 if (t.series.length >= 2) ...[
                   const SizedBox(width: 10),

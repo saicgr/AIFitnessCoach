@@ -461,9 +461,10 @@ class TrophyProgress {
   /// All trophies are visible - mystery ones show masked info
   bool get isVisible => true;
 
-  /// Get display name (mystery shows "Mystery Trophy")
+  /// Get display name (mystery shows a category-scoped teaser rather than
+  /// repeating the literal string "Mystery Trophy" across every card)
   String get displayName {
-    if (isMystery) return 'Mystery Trophy';
+    if (isMystery) return 'Mystery: ${trophy.trophyCategory.displayName}';
     return trophy.name;
   }
 

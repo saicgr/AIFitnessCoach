@@ -68,3 +68,77 @@ final currentLocalDayProvider =
     StateNotifierProvider<CurrentDayNotifier, DateTime>((ref) {
   return CurrentDayNotifier();
 });
+
+/// Which time-of-day greeting bucket ("Morning" / "Afternoon" / "Evening")
+/// applies right now, keyed purely off the boundary hours a greeting widget
+/// cares about (12:00 and 17:00).
+///
+/// `currentLocalDayProvider` only ticks at midnight, so a widget that reads
+/// `DateTime.now().hour` once and only rebuilds off that provider stays
+/// stamped with whatever greeting bucket was current at its last rebuild —
+/// the header could open at 2pm ("Afternoon") and, absent any other rebuild
+/// trigger, still read "Afternoon" at 10pm (register #295, the same family
+/// as #123). This notifier schedules a timer to the next boundary crossing
+/// (rescheduling itself each time it fires) so watching it is enough to
+/// stay correct across a session left open through a bucket change.
+enum GreetingBucket { morning, afternoon, evening }
+
+class CurrentGreetingBucketNotifier extends StateNotifier<GreetingBucket> {
+  CurrentGreetingBucketNotifier() : super(_bucketFor(DateTime.now())) {
+    _scheduleNextBoundary();
+  }
+
+  static GreetingBucket _bucketFor(DateTime now) {
+    final hour = now.hour;
+    if (hour < 12) return GreetingBucket.morning;
+    if (hour < 17) return GreetingBucket.afternoon;
+    return GreetingBucket.evening;
+  }
+
+  Timer? _timer;
+
+  void _scheduleNextBoundary() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final boundaries = [
+      today.add(const Duration(hours: 12)),
+      today.add(const Duration(hours: 17)),
+      today.add(const Duration(days: 1, hours: 12)),
+    ];
+    final next = boundaries.firstWhere((b) => b.isAfter(now));
+    // A couple of seconds of slack so a slightly-early timer fire never
+    // recomputes to the bucket that's about to start.
+    final delay = next.difference(now) + const Duration(seconds: 2);
+    _timer?.cancel();
+    _timer = Timer(delay, () {
+      refreshNow();
+      _scheduleNextBoundary();
+    });
+  }
+
+  /// Recompute the current bucket immediately — call on app resume so a
+  /// boundary crossed while backgrounded is picked up without waiting for
+  /// the timer that was scheduled relative to the pre-background `now`.
+  void refreshNow() {
+    final bucket = _bucketFor(DateTime.now());
+    if (bucket != state) {
+      debugPrint('🕒 [GreetingBucket] Rolled over to $bucket');
+      state = bucket;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+/// Watch this to rebuild whenever the time-of-day greeting bucket changes
+/// (app resume or a boundary rollover while running). Read
+/// `DateTime.now()` as usual for the actual value — this provider only
+/// exists to trigger the rebuild at the right moment.
+final currentGreetingBucketProvider =
+    StateNotifierProvider<CurrentGreetingBucketNotifier, GreetingBucket>((ref) {
+  return CurrentGreetingBucketNotifier();
+});

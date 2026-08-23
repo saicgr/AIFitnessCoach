@@ -60,11 +60,16 @@ class QuizFitnessLevel extends StatefulWidget {
     {'id': '5_plus_years', 'label': l10n.quizFitnessLevel5PlusYears, 'description': l10n.quizFitnessLevelVeteranLifter},
   ];
 
-  static List<Map<String, String>> _buildActivityLevelOptions(AppLocalizations l10n) => [
-    {'id': 'sedentary', 'emoji': '\u{1FA91}', 'label': l10n.quizFitnessLevelSedentary, 'description': l10n.quizFitnessLevelSedentaryDesc},
-    {'id': 'lightly_active', 'emoji': '\u{1F6B6}', 'label': l10n.quizFitnessLevelLight, 'description': l10n.quizFitnessLevelLightDesc},
-    {'id': 'moderately_active', 'emoji': '\u{1F3C3}', 'label': l10n.quizFitnessLevelModerate, 'description': l10n.quizFitnessLevelModerateDesc},
-    {'id': 'very_active', 'emoji': '\u{26A1}', 'label': l10n.quizFitnessLevelVeryActive, 'description': l10n.quizFitnessLevelVeryActiveDesc},
+  // Material icons, not emoji — every other option list in onboarding (see
+  // `_buildLevels` above) draws from Material vector icons so glyphs inherit
+  // the accent system and scale/render consistently across platforms; emoji
+  // here were the one exception, rendering per-OS and never picking up the
+  // app's accent ramp.
+  static List<Map<String, Object>> _buildActivityLevelOptions(AppLocalizations l10n) => [
+    {'id': 'sedentary', 'icon': Icons.weekend_rounded, 'label': l10n.quizFitnessLevelSedentary, 'description': l10n.quizFitnessLevelSedentaryDesc},
+    {'id': 'lightly_active', 'icon': Icons.directions_walk_rounded, 'label': l10n.quizFitnessLevelLight, 'description': l10n.quizFitnessLevelLightDesc},
+    {'id': 'moderately_active', 'icon': Icons.directions_run_rounded, 'label': l10n.quizFitnessLevelModerate, 'description': l10n.quizFitnessLevelModerateDesc},
+    {'id': 'very_active', 'icon': Icons.bolt_rounded, 'label': l10n.quizFitnessLevelVeryActive, 'description': l10n.quizFitnessLevelVeryActiveDesc},
   ];
 
   @override
@@ -345,7 +350,11 @@ class _QuizFitnessLevelState extends State<QuizFitnessLevel> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(option['emoji'] as String, style: const TextStyle(fontSize: 20)),
+                        Icon(
+                          option['icon'] as IconData,
+                          size: 20,
+                          color: isSelected ? t.selectionAccent : t.textMuted,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           option['label'] as String,

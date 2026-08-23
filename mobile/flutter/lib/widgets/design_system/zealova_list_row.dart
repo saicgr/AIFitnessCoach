@@ -47,6 +47,41 @@ class ZealovaListRow extends StatelessWidget {
         child: Icon(icon, size: 15, color: tc.textSecondary),
       );
     }
+    // The label is the row's IDENTITY and must win the width fight.
+    //
+    // `value` used to be an unconstrained trailing Text sharing the row with
+    // the label (flex 3:6). That still truncated any genuinely descriptive
+    // value ("Favorites, avoided & questionable ingredients") to a handful of
+    // words + ellipsis, no matter the flex split, because a single line to
+    // the right of a fixed-width icon + chevron simply never has room for a
+    // full sentence. The value now sits on its own line BELOW the label,
+    // left-aligned and indented to match, with two lines of room instead of
+    // a truncated fragment of one.
+    final labelRow = Row(
+      children: [
+        if (leading != null) ...[leading, const SizedBox(width: 12)],
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              color: labelColor ?? tc.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing!,
+        if (trailing == null && showChevron && onTap != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: Icon(Icons.chevron_right,
+                size: 18, color: tc.textMuted),
+          ),
+      ],
+    );
+
     final row = Container(
       padding: const EdgeInsets.symmetric(vertical: 13),
       decoration: hairline
@@ -54,53 +89,22 @@ class ZealovaListRow extends StatelessWidget {
               border: Border(bottom: BorderSide(color: tc.hairline)),
             )
           : null,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (leading != null) ...[leading, const SizedBox(width: 12)],
-          // The label is the row's IDENTITY and must win the width fight.
-          //
-          // `value` used to be an unconstrained Text, so it claimed its full
-          // intrinsic width and left `Expanded(label)` the remainder. A long
-          // value ("View & manage what your AI coach remembers") squeezed the
-          // label to a sliver — "Coach memory" wrapped onto THREE lines and
-          // broke mid-word ("memor / y"). Now both are flexible and the value
-          // gets the larger share — labels here are short menu nouns ("Coach
-          // memory", "Exercise Prefs") while values are the longer
-          // descriptive sentences, so this is also the split that leaves the
-          // least truncation on real content; label still has `maxLines: 2`
-          // as the safety net for a genuinely long label or locale.
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 15,
-                color: labelColor ?? tc.textPrimary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
+          labelRow,
           if (value != null)
-            Flexible(
-              flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(value!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.right,
-                    style: ZType.lbl(11,
-                        color: tc.textMuted, letterSpacing: 1)),
-              ),
-            ),
-          if (trailing != null) trailing!,
-          if (trailing == null && showChevron && onTap != null)
             Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: Icon(Icons.chevron_right,
-                  size: 18, color: tc.textMuted),
+              padding: EdgeInsets.only(
+                top: 4,
+                left: leading != null ? 42 : 0,
+              ),
+              child: Text(value!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
+                  style: ZType.lbl(11,
+                      color: tc.textMuted, letterSpacing: 1)),
             ),
         ],
       ),

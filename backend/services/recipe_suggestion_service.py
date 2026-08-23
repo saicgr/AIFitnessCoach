@@ -387,11 +387,20 @@ IMPORTANT:
                 fat_pps = safe_float(recipe.get("fat_per_serving_g"))
                 calories_pps = safe_int(recipe.get("calories_per_serving"))
                 # Gemini intermittently returns the per-serving macros but omits
-                # or zeroes calories_per_serving (cards then render "0 kcal").
-                # Derive it from the Atwater factors (4/4/9) so a card never
-                # shows 0 kcal when we have macros to compute from.
-                if calories_pps <= 0 and (protein_pps > 0 or carbs_pps > 0 or fat_pps > 0):
-                    calories_pps = round(4 * protein_pps + 4 * carbs_pps + 9 * fat_pps)
+                # or zeroes calories_per_serving (cards then render "0 kcal"), or
+                # — row 402/426 — returns a NON-zero figure that just doesn't add
+                # up against its own macros (a 12-36 kcal gap once past what
+                # rounding explains). Always derive the Atwater-factor (4/4/9)
+                # figure from the macros and use it whenever Gemini's own number
+                # is missing/zero OR drifts from it by more than ±9 kcal —
+                # the headline kcal must be internally consistent with the
+                # macros printed right next to it, not a separate AI guess.
+                if protein_pps > 0 or carbs_pps > 0 or fat_pps > 0:
+                    derived_calories_pps = round(
+                        4 * protein_pps + 4 * carbs_pps + 9 * fat_pps
+                    )
+                    if calories_pps <= 0 or abs(calories_pps - derived_calories_pps) > 9:
+                        calories_pps = derived_calories_pps
 
                 suggestion = RecipeSuggestion(
                     recipe_name=recipe.get("recipe_name", "Unnamed Recipe"),

@@ -139,7 +139,9 @@ class _HeartHealthDetailScreenState
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
-    final scoreColor = _scoreColor(data.score);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final hasScore = data.hasScore;
+    final scoreColor = hasScore ? _scoreColor(data.score!) : textMuted;
 
     return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(heartHealthProvider),
@@ -154,7 +156,7 @@ class _HeartHealthDetailScreenState
               child: TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 900),
                 curve: Curves.easeOutCubic,
-                tween: Tween(begin: 0, end: data.score / 100.0),
+                tween: Tween(begin: 0, end: hasScore ? data.score! / 100.0 : 0),
                 builder: (context, t, _) {
                   return CustomPaint(
                     painter: _GaugePainter(
@@ -163,19 +165,21 @@ class _HeartHealthDetailScreenState
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('${(t * 100).round()}',
+                          Text(hasScore ? '${(t * 100).round()}' : '—',
                               style: TextStyle(
                                   fontSize: 56,
                                   fontWeight: FontWeight.w900,
                                   height: 1,
-                                  color: textPrimary)),
+                                  color: hasScore ? textPrimary : textMuted)),
                           const SizedBox(height: 2),
-                          Text(data.label,
+                          Text(hasScore ? data.label! : 'Not enough data yet',
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: scoreColor)),
-                          if (data.delta != null && data.delta != 0) ...[
+                          if (hasScore &&
+                              data.delta != null &&
+                              data.delta != 0) ...[
                             const SizedBox(height: 6),
                             _DeltaChip(delta: data.delta!),
                           ],

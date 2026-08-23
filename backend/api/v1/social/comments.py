@@ -129,7 +129,23 @@ async def add_comment(
         comment_text=comment.comment_text,
     )
 
-    return ActivityComment(**result.data[0])
+    new_comment = ActivityComment(**result.data[0])
+    # The insert response carries no joined user data, so without this the
+    # comment the author sees immediately after posting (this response is
+    # rendered directly, not re-fetched via GET /comments) is attributed to
+    # the generic "User" fallback instead of their own profile name/avatar --
+    # same join get_comments() already does for every other comment.
+    try:
+        user_result = supabase.table("users").select("name, avatar_url").eq(
+            "id", user_id
+        ).execute()
+        if user_result.data:
+            new_comment.user_name = user_result.data[0].get("name")
+            new_comment.user_avatar = user_result.data[0].get("avatar_url")
+    except Exception as e:
+        logger.error(f"[Social] Failed to resolve commenter profile: {e}", exc_info=True)
+
+    return new_comment
 
 
 @router.put("/comments/{comment_id}", response_model=ActivityComment)

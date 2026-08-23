@@ -428,36 +428,57 @@ async def complete_workout(
                     ))
 
                 # Single bulk insert instead of one round trip per PR.
-                if pr_records:
-                    supabase.table("personal_records").insert(pr_records).execute()
+                #
+                # Finding #378 — this insert used to sit inside the same broad
+                # try/except as the rest of PR detection (below), which logs
+                # and swallows ANY exception without touching `detected_prs`.
+                # `detected_prs` is built from in-memory `PersonalRecord`
+                # objects BEFORE this insert runs and is returned to the
+                # client regardless of whether the insert actually succeeded —
+                # so a write failure here still let the client see PRs, show
+                # the celebration, and award the "Set First Personal Record"
+                # XP bonus for a row that was never persisted (`personal_records`
+                # empty for the user while the XP ledger and bonus both fired).
+                # Guard the persistence step on its own so a failure here
+                # clears `detected_prs` instead of forwarding fabricated
+                # success to the client — the two can no longer diverge.
+                try:
+                    if pr_records:
+                        supabase.table("personal_records").insert(pr_records).execute()
 
-                # Mirror weight/rep PRs into `strength_records` — the table the
-                # summary stat, the "Viral" share templates, and the data
-                # export all actually read (`personal_records` above is a
-                # separate table; nothing wrote to `strength_records`, so
-                # those surfaces always showed RECORDS 0 even on a real PR).
-                # Skip generic per-metric PRs (distance/carry/box-height) —
-                # `strength_records` is weight/1RM-shaped and has no columns
-                # for them.
-                strength_records = [
-                    {
-                        "user_id": user_id,
-                        "exercise_id": pr.exercise_id,
-                        "exercise_name": pr.exercise_name,
-                        "weight_kg": pr.weight_kg,
-                        "reps": pr.reps,
-                        "estimated_1rm": pr.estimated_1rm_kg,
-                        "rpe": pr.rpe,
-                        "is_pr": True,
-                        "achieved_at": now_iso,
-                    }
-                    for pr in new_prs
-                    if not (pr.pr_type or "").startswith("metric_")
-                ]
-                if strength_records:
-                    supabase.table("strength_records").insert(strength_records).execute()
+                    # Mirror weight/rep PRs into `strength_records` — the table the
+                    # summary stat, the "Viral" share templates, and the data
+                    # export all actually read (`personal_records` above is a
+                    # separate table; nothing wrote to `strength_records`, so
+                    # those surfaces always showed RECORDS 0 even on a real PR).
+                    # Skip generic per-metric PRs (distance/carry/box-height) —
+                    # `strength_records` is weight/1RM-shaped and has no columns
+                    # for them.
+                    strength_records = [
+                        {
+                            "user_id": user_id,
+                            "exercise_id": pr.exercise_id,
+                            "exercise_name": pr.exercise_name,
+                            "weight_kg": pr.weight_kg,
+                            "reps": pr.reps,
+                            "estimated_1rm": pr.estimated_1rm_kg,
+                            "rpe": pr.rpe,
+                            "is_pr": True,
+                            "achieved_at": now_iso,
+                        }
+                        for pr in new_prs
+                        if not (pr.pr_type or "").startswith("metric_")
+                    ]
+                    if strength_records:
+                        supabase.table("strength_records").insert(strength_records).execute()
 
-                logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
+                    logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
+                except Exception as persist_err:
+                    logger.error(
+                        f"[PRDetection] Failed to persist {len(detected_prs)} detected "
+                        f"PR(s) for workout {workout_id}: {persist_err}", exc_info=True,
+                    )
+                    detected_prs = []
 
         except Exception as e:
             logger.error(f"Error during PR detection: {e}", exc_info=True)

@@ -14881,7 +14881,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get guestHome1700WithSignup => '1700+ met aanmelding';
+  String get guestHome1700WithSignup => '2300+ met aanmelding';
 
   @override
   String get guestHomeAiCoachDemo => 'AI Coach Demo';
@@ -14997,7 +14997,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String guestLibraryScreenShowingSampleExercisesSign(
     Object guestExerciseLimit,
   ) {
-    return 'Toont $guestExerciseLimit voorbeeldoefeningen. Meld je gratis aan voor toegang tot 1700+ oefeningen!';
+    return 'Toont $guestExerciseLimit voorbeeldoefeningen. Meld je gratis aan voor toegang tot 2300+ oefeningen!';
   }
 
   @override
@@ -15022,7 +15022,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Meld je aan om gedetailleerde instructies voor deze oefening te bekijken.';
 
   @override
-  String get guestLibraryUnlock1700Exercises => 'Ontgrendel 1700+ oefeningen';
+  String get guestLibraryUnlock1700Exercises => 'Ontgrendel 2300+ oefeningen';
 
   @override
   String get guestLockedFeatureUnlockFree => 'Gratis ontgrendelen';
@@ -27439,7 +27439,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get planAnalyzingMatchingYourBodyType => 'Je lichaamstype matchen';
 
   @override
-  String get planAnalyzingPullingFrom1700 => 'Putten uit 1.700+ oefeningen';
+  String get planAnalyzingPullingFrom1700 => 'Putten uit 2.300+ oefeningen';
 
   @override
   String get planAnalyzingReviewingYourGoals => 'Je doelen beoordelen';
@@ -36298,6 +36298,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get stapleExercisesScreenAllProfiles => 'Alle profielen';
 
   @override
+  String get stapleExercisesScreenCustomised => 'Customised';
+
+  @override
   String stapleExercisesScreenEdit(Object exerciseName) {
     return 'Bewerk \"$exerciseName\"';
   }
@@ -43717,6 +43720,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Geavanceerd';
 
   @override
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Alles — warming-up/stretchfasen, RPE/RIR, piramide, supersets, dropsets, stappen van ±5 lb, schijvenschema.';
+
+  @override
   String get workoutUiModeEverythingWarmupStretchPh =>
       'Alles — warming-up/stretchfasen, RPE/RIR, piramide, supersets, dropsets, stappen van ±2,5 kg, schijvenschema.';
 
@@ -44647,6 +44654,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get heroModesActionRetry => 'OPNIEUW';
 
   @override
+  String get heroModesPillSlowConnection => 'TAKING A WHILE';
+
+  @override
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
+
+  @override
   String get heroModesPillLive => 'LIVE';
 
   @override
@@ -44999,7 +45013,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get paywallFounderQuote =>
-      '“Een goede personal trainer kost \$400 per maand. Dat kon ik niet verantwoorden, dus heb ik twee jaar besteed aan het bouwen van mijn eigen coach: 1,722 oefeningen, echte progressielogica, een coach die echt naar je week kijkt. Ik gebruik hem elke dag.”';
+      '“Een goede personal trainer kost \$400 per maand. Dat kon ik niet verantwoorden, dus heb ik twee jaar besteed aan het bouwen van mijn eigen coach: 2,300 oefeningen, echte progressielogica, een coach die echt naar je week kijkt. Ik gebruik hem elke dag.”';
 
   @override
   String get paywallFounderName => 'Chetan · oprichter';

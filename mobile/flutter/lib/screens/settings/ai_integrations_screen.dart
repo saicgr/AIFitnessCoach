@@ -5,7 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/subscription_provider.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/mcp_integration.dart';
@@ -47,7 +50,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
       ),
       floatingActionButton: state.hasLoadedOnce && !state.isEmpty
           ? FloatingActionButton.extended(
-              onPressed: () => _openCreateFlow(context, ref, accent, isDark),
+              onPressed: () => _handleCreateTap(context, ref, accent, isDark),
               icon: const Icon(Icons.add_link),
               label: Text(
                 AppLocalizations.of(context).aiIntegrationsCreateConnection,
@@ -96,6 +99,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
         if (state.error != null && state.hasLoadedOnce) ...[
           _InlineErrorBanner(
             message: state.error!,
+            upgradeUrl: state.upgradeUrl,
             onDismiss: () =>
                 ref.read(mcpIntegrationsProvider.notifier).clearError(),
           ),
@@ -111,7 +115,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
         if (state.isEmpty)
           _EmptyState(
             accent: accent,
-            onCreate: () => _openCreateFlow(context, ref, accent, isDark),
+            onCreate: () => _handleCreateTap(context, ref, accent, isDark),
           )
         else
           ...state.integrations.map(
@@ -134,6 +138,48 @@ class AiIntegrationsScreen extends ConsumerWidget {
   // ───────────────────────────────────────────────
   // ACTIONS
   // ───────────────────────────────────────────────
+
+  /// Row #259 — the entitlement gate used to fire only after the user named
+  /// the connection and tapped Quick Setup, even though the card above
+  /// already states "Yearly subscription required". Check eligibility here,
+  /// BEFORE the naming sheet opens, so a free account is upsold at the first
+  /// tap instead of partway through a flow it can never finish.
+  void _handleCreateTap(
+    BuildContext context,
+    WidgetRef ref,
+    Color accent,
+    bool isDark,
+  ) {
+    final billingPeriod = ref.read(subscriptionProvider).billingPeriod;
+    if (billingPeriod != BillingPeriod.yearly) {
+      HapticFeedback.selectionClick();
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Yearly subscription required'),
+          content: Text(
+            'MCP access requires a yearly ${Branding.appName} subscription. '
+            'Upgrade to connect Claude, ChatGPT, or Cursor.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(AppLocalizations.of(context).buttonCancel),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.push('/paywall-pricing');
+              },
+              child: const Text('Upgrade'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    _openCreateFlow(context, ref, accent, isDark);
+  }
 
   /// The full Create Connection flow.
   /// Step 1: name + Quick Setup vs Custom picker (bottom sheet).
@@ -178,40 +224,12 @@ class AiIntegrationsScreen extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (created == null) {
-      // Error state is already surfaced via the inline error banner.
-      final failedState = ref.read(mcpIntegrationsProvider);
-      final err = failedState.error;
-      final upgradeUrl = failedState.upgradeUrl;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            err ??
-                AppLocalizations.of(
-                  context,
-                ).aiIntegrationsCouldNotCreateConnection,
-          ),
-          backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive - must stay red
-          behavior: SnackBarBehavior.floating,
-          action: upgradeUrl != null
-              ? SnackBarAction(
-                  label: 'Upgrade',
-                  textColor: Colors.white,
-                  onPressed: () async {
-                    try {
-                      await launchUrl(
-                        Uri.parse(upgradeUrl),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } catch (e) {
-                      debugPrint(
-                        '❌ [AIIntegrations] Could not open upgrade URL: $e',
-                      );
-                    }
-                  },
-                )
-              : null,
-        ),
-      );
+      // Row #259 — this used to ALSO show a SnackBar with the same message,
+      // doubling the error on screen (inline banner + toast) and, because
+      // the toast is the route-scoped-incorrectly component from row #147,
+      // sticking around after the user left this screen. The inline error
+      // banner in `_buildBody` (scoped to this screen, watching the same
+      // `state.error`) is the single, correctly-scoped surface for it now.
       return;
     }
 
@@ -1237,7 +1255,15 @@ class _ErrorView extends StatelessWidget {
 class _InlineErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onDismiss;
-  const _InlineErrorBanner({required this.message, required this.onDismiss});
+  // Row #259 — the single surviving error surface (the duplicate SnackBar
+  // this used to run alongside is gone) carries the same "Upgrade" action
+  // the removed toast had, so nothing is lost by dropping the duplicate.
+  final String? upgradeUrl;
+  const _InlineErrorBanner({
+    required this.message,
+    required this.onDismiss,
+    this.upgradeUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1262,6 +1288,31 @@ class _InlineErrorBanner extends StatelessWidget {
               ),
             ),
           ),
+          if (upgradeUrl != null)
+            InkWell(
+              onTap: () async {
+                try {
+                  await launchUrl(
+                    Uri.parse(upgradeUrl!),
+                    mode: LaunchMode.externalApplication,
+                  );
+                } catch (e) {
+                  debugPrint('❌ [AIIntegrations] Could not open upgrade URL: $e');
+                }
+              },
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Text(
+                  'Upgrade',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
+                  ),
+                ),
+              ),
+            ),
           InkWell(
             onTap: onDismiss,
             borderRadius: BorderRadius.circular(6),

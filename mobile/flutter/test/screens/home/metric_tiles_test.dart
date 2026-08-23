@@ -1352,6 +1352,8 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         theme: ThemeData.dark(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 358,

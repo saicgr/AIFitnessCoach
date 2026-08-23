@@ -127,8 +127,16 @@ def _axis_endurance(sb, user_id: str) -> Optional[int]:
         st = current_state(sb, user_id)
         if not st or st.state == "calibration":
             return None
-        # Chronic load (28d capacity). ~80 TRIMP sustained -> 100.
-        return _clamp(float(st.chronic_load) / 80.0 * 100.0)
+        # `chronic_load` is a 28-DAY SUM of TRIMP (per training_load_service),
+        # not a weekly or daily figure — a single vigorous session is
+        # commonly 70-160 TRIMP on its own, so dividing the raw sum straight
+        # by 80 clamped this axis to 100 for almost anyone with any real
+        # cardio history. Normalize to a per-day rate first (same transform
+        # `compute_training_load_history`'s target_min/max already use for
+        # this same field) before comparing to a sustained-effort reference:
+        # ~50 TRIMP/day (a vigorous 45-60min session most days) -> 100.
+        daily_chronic = float(st.chronic_load) / 28.0
+        return _clamp(daily_chronic / 50.0 * 100.0)
     except Exception as e:
         logger.debug("[fitness_index] endurance skipped: %s", e)
     return None

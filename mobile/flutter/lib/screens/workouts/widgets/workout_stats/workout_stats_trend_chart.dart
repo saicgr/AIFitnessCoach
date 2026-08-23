@@ -490,6 +490,16 @@ class _BarsWithReadiness extends ConsumerWidget {
 /// ACWR load pill — deterministic classification straight from the backend's
 /// `state` (never LLM-classified). Shows the acute:chronic ratio + a short
 /// cited interpretation string the backend provides.
+///
+/// The underlying ACWR/TRIMP calculation is derived exclusively from CARDIO
+/// sessions (`training_load_service.py` pulls `cardio_logs`/`cardio_sessions`
+/// only) — it does not read strength volume/sessions/time at all. This pill
+/// renders unchanged for every segment of the Volume/Sessions/Time control
+/// above it, so without an explicit "Cardio" label it reads as if it were
+/// classifying whichever strength metric the user has selected (e.g. asking
+/// for "~14 days of cardio activity" while the Volume tab is active). The
+/// "Cardio load" prefix makes it unambiguous that this is a separate, cardio-
+/// specific signal regardless of which tab is selected.
 class _AcwrPill extends ConsumerWidget {
   final bool isDark;
 
@@ -507,7 +517,7 @@ class _AcwrPill extends ConsumerWidget {
           return _LoadPillChrome(
             isDark: isDark,
             color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            stateLabel: 'Calibrating',
+            stateLabel: 'Cardio: Calibrating',
             detail: state.interpretation,
           );
         }
@@ -516,7 +526,7 @@ class _AcwrPill extends ConsumerWidget {
         return _LoadPillChrome(
           isDark: isDark,
           color: color,
-          stateLabel: _stateLabel(state.state),
+          stateLabel: 'Cardio: ${_stateLabel(state.state)}',
           detail: 'acute:chronic $acwr · ${state.interpretation}',
         );
       },
@@ -598,7 +608,7 @@ class _LoadPillChrome extends StatelessWidget {
           Expanded(
             child: Text(
               detail,
-              maxLines: 2,
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 11, height: 1.3, color: textMuted),
             ),

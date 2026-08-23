@@ -41,6 +41,7 @@ import '../../../../data/providers/metric_layout_provider.dart' show MetricSize;
 import '../../../../data/providers/metric_tile_data_provider.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../ring_catalog.dart' show RingKindX;
+import '../score_colors.dart' show colorForContributor;
 
 /// Tile heights, from the mockup's 6-column grid.
 ///
@@ -624,10 +625,14 @@ class _ScoreCapacityTrack extends StatelessWidget {
                       width: 7,
                       height: 7,
                       decoration: BoxDecoration(
-                        color: segments[i].fill > 0 ? c.accent : null,
-                        border: segments[i].fill > 0
-                            ? null
-                            : Border.all(color: c.cardBorder),
+                        // Each contributor's own identity colour (matches the
+                        // score card / detail sheet elsewhere), muted when not
+                        // yet earned — not a theme-accent fill vs. a bare
+                        // outline, which left an unfilled swatch (e.g. TRAIN
+                        // before anything is logged) with no colour of its
+                        // own and effectively invisible against the card.
+                        color: colorForContributor(segments[i].kind)
+                            .withValues(alpha: segments[i].fill > 0 ? 1 : 0.35),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),

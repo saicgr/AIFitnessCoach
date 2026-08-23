@@ -299,6 +299,19 @@ class _CustomWorkoutBuilderScreenState
               ),
             );
           }
+          // Row 226 — `generateWorkoutStreaming` is the same endpoint every
+          // real generation flow uses, so it PERSISTS a scheduled `workouts`
+          // row as a side effect of what this screen documents as a content
+          // DRAFT ("nothing is saved until the user taps Create/Save"). Left
+          // alone, that row silently landed on the schedule/Workout tab —
+          // never in Custom, since it carries generation_source
+          // `streaming_generation`, not `manual` — even if the user never
+          // pressed Create. Delete it now that its content has been copied
+          // into `_selectedExercises`; Create/Save below creates the real,
+          // correctly-tagged row when the user actually commits.
+          if (w.id != null) {
+            unawaited(repo.deleteWorkout(w.id!));
+          }
           return;
         } else if (progress.status == WorkoutGenerationStatus.error) {
           throw Exception(progress.message);
@@ -444,6 +457,20 @@ class _CustomWorkoutBuilderScreenState
   void _updateExercise(int index, String field, dynamic value) {
     setState(() {
       _selectedExercises[index][field] = value;
+      // Row 225 — a superset has ONE rest interval taken after the pair, not
+      // two independent per-exercise values. Keep both members' rest_seconds
+      // in lockstep for as long as they stay linked, so editing either one
+      // updates the pair rather than leaving them silently diverged again.
+      if (field == 'rest_seconds') {
+        final group = _selectedExercises[index]['superset_group'];
+        if (group != null) {
+          for (final ex in _selectedExercises) {
+            if (ex != _selectedExercises[index] && ex['superset_group'] == group) {
+              ex['rest_seconds'] = value;
+            }
+          }
+        }
+      }
     });
   }
 
@@ -467,6 +494,14 @@ class _CustomWorkoutBuilderScreenState
         cur['superset_order'] = 1;
         nxt['superset_group'] = group;
         nxt['superset_order'] = 2;
+        // Row 225 — a linked pair has ONE rest interval (taken after the
+        // pair), not each member's own independent value. Collapse to the
+        // longer of the two on link so nothing is under-rested.
+        final curRest = ((cur['rest_seconds'] ?? 60) as num).toInt();
+        final nxtRest = ((nxt['rest_seconds'] ?? 60) as num).toInt();
+        final sharedRest = curRest > nxtRest ? curRest : nxtRest;
+        cur['rest_seconds'] = sharedRest;
+        nxt['rest_seconds'] = sharedRest;
       }
     });
   }
@@ -1187,15 +1222,69 @@ class _CustomWorkoutBuilderScreenState
     required Color textPrimary,
     required Color textSecondary,
   }) {
+    // Row 224 — a superset only ever links this card to the very next one
+    // (see _toggleSupersetWithNext: superset_order is always 1 then 2), but
+    // every card rendered identically apart from a small inline "SUPERSET"
+    // chip — in a long list there was nothing showing WHICH card a given
+    // one was paired with. Grouped cards now share a continuous accent
+    // border with the touching seam flattened (so the pair reads as one
+    // bracketed unit), and a single group header replaces the repeated
+    // per-card chip.
+    final supersetGroup = exercise['superset_group'];
+    final isGrouped = supersetGroup != null;
+    final isFirstInGroup = isGrouped && exercise['superset_order'] == 1;
+    final isLastInGroup = isGrouped && exercise['superset_order'] != 1;
+    final accent = context.accentColor;
+
     return Container(
       key: key,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: isFirstInGroup ? 0 : 12),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(isLastInGroup ? 0 : 16),
+          bottom: Radius.circular(isFirstInGroup ? 0 : 16),
+        ),
+        border: isGrouped
+            ? Border(
+                left: BorderSide(color: accent, width: 2),
+                right: BorderSide(color: accent, width: 2),
+                top: isFirstInGroup
+                    ? BorderSide(color: accent, width: 2)
+                    : BorderSide.none,
+                bottom: isLastInGroup
+                    ? BorderSide(color: accent, width: 2)
+                    : BorderSide.none,
+              )
+            : null,
       ),
       child: Column(
         children: [
+          if (isFirstInGroup)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.link_rounded, size: 13, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(
+                    'SUPERSET · 2 EXERCISES',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Header with drag handle, thumbnail, and exercise name
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -1239,24 +1328,11 @@ class _CustomWorkoutBuilderScreenState
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (exercise['superset_group'] != null) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: context.accentColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text('SUPERSET',
-                              style: TextStyle(
-                                color: context.accentColor,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1,
-                              )),
-                        ),
-                      ],
+                      // Row 224 — the group header above (shown once, on
+                      // the first card) now carries the "SUPERSET" label;
+                      // repeating it inline on every paired card was the
+                      // only thing distinguishing a pair, which didn't say
+                      // WHICH other card it was paired with in a long list.
                     ],
                   ),
                 ),

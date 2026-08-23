@@ -245,6 +245,14 @@ class _DiabetesDashboardScreenState
               textSecondary: textSecondary,
               textMuted: textMuted,
               cardBorder: cardBorder,
+            )
+          else
+            _DiabetesEmptyCard(
+              icon: Icons.bloodtype_outlined,
+              message: 'Log your first glucose reading to see it here.',
+              elevatedColor: elevatedColor,
+              textSecondary: textSecondary,
+              cardBorder: cardBorder,
             ),
 
           const SizedBox(height: 16),
@@ -270,6 +278,15 @@ class _DiabetesDashboardScreenState
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               textMuted: textMuted,
+              cardBorder: cardBorder,
+            )
+          else
+            _DiabetesEmptyCard(
+              icon: Icons.donut_large_outlined,
+              message:
+                  'Log readings throughout the day to see your time in range.',
+              elevatedColor: elevatedColor,
+              textSecondary: textSecondary,
               cardBorder: cardBorder,
             ),
 
@@ -300,6 +317,15 @@ class _DiabetesDashboardScreenState
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               textMuted: textMuted,
+              cardBorder: cardBorder,
+            )
+          else
+            _DiabetesEmptyCard(
+              icon: Icons.analytics_outlined,
+              message:
+                  'Log a few glucose readings to see your estimated A1C trend.',
+              elevatedColor: elevatedColor,
+              textSecondary: textSecondary,
               cardBorder: cardBorder,
             ),
 
@@ -781,6 +807,51 @@ class _UnitToggle extends StatelessWidget {
 /// row, time-in-range, insulin summary, A1C and recent-readings cards — so the
 /// skeleton→content cross-fade is reflow-free. Scrolls so it never overflows
 /// on a small device (iPhone SE).
+/// Explicit empty state for a diabetes card that has no data yet — the
+/// current-glucose, time-in-range and A1C cards used to just disappear
+/// (their `if (... != null)` guard rendering nothing on either side), which
+/// left a blank gap indistinguishable from the screen still loading rather
+/// than saying the account simply hasn't logged anything (E2E register #405).
+class _DiabetesEmptyCard extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final Color elevatedColor;
+  final Color textSecondary;
+  final Color cardBorder;
+
+  const _DiabetesEmptyCard({
+    required this.icon,
+    required this.message,
+    required this.elevatedColor,
+    required this.textSecondary,
+    required this.cardBorder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 28, color: textSecondary),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: textSecondary, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DiabetesDashboardSkeleton extends StatelessWidget {
   const _DiabetesDashboardSkeleton();
 

@@ -98,6 +98,29 @@ enum WeightDirection { losing, stable, gaining, unknown }
 
 enum EquipmentMatch { match, missing, unknown }
 
+/// Classifies a caught error as a client-side timeout (backend reachable but
+/// slow) rather than a genuine connectivity failure. Shared by
+/// `TodayWorkoutNotifier`'s catch block and the hero card's error rendering
+/// so a slow-but-healthy backend doesn't show the same "OFFLINE" copy as a
+/// real no-connectivity failure (finding #329).
+bool isTimeoutLikeError(Object error) {
+  final s = error.toString();
+  return s.contains('TimeoutException') ||
+      s.contains('connectionTimeout') ||
+      s.contains('receiveTimeout') ||
+      s.contains('sendTimeout');
+}
+
+/// Classifies a caught error as a genuine no-connectivity failure (device
+/// offline or DNS/socket-level failure), distinct from [isTimeoutLikeError].
+bool isNoConnectivityError(Object error) {
+  final s = error.toString();
+  return s.contains('SocketException') ||
+      s.contains('Failed host lookup') ||
+      s.contains('Network is unreachable') ||
+      s.contains('Connection refused');
+}
+
 /// Derived `body asks rest` signal — set to `alert` by upstream when
 /// the overtraining heuristic is independently confirmed (e.g. wearable
 /// strain coach). Not currently consulted in the resolver — kept for
@@ -110,6 +133,11 @@ class WorkoutCardState {
   // ── Core ────────────────────────────────────────────────────────────
   final bool isLoading;
   final bool isError;
+  /// True when `isError` was caused by a client-side timeout against a
+  /// reachable backend rather than a genuine no-connectivity failure (see
+  /// [isTimeoutLikeError]). Lets the UI show "taking longer than usual"
+  /// instead of "OFFLINE" for finding #329.
+  final bool isTimeoutError;
   final PlanState planState;
   final WorkoutState workoutState;
   final TimeOfDay time;
@@ -159,6 +187,7 @@ class WorkoutCardState {
   const WorkoutCardState({
     required this.isLoading,
     required this.isError,
+    this.isTimeoutError = false,
     required this.planState,
     required this.workoutState,
     required this.time,
@@ -230,6 +259,7 @@ class WorkoutCardState {
   WorkoutCardState copyWith({
     bool? isLoading,
     bool? isError,
+    bool? isTimeoutError,
     PlanState? planState,
     WorkoutState? workoutState,
     TimeOfDay? time,
@@ -263,6 +293,7 @@ class WorkoutCardState {
     return WorkoutCardState(
       isLoading: isLoading ?? this.isLoading,
       isError: isError ?? this.isError,
+      isTimeoutError: isTimeoutError ?? this.isTimeoutError,
       planState: planState ?? this.planState,
       workoutState: workoutState ?? this.workoutState,
       time: time ?? this.time,

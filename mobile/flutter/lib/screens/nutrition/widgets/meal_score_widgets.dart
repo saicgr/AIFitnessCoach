@@ -331,7 +331,12 @@ class MealScoreBreakdownRow extends StatelessWidget {
             child: _LabeledScorePill(
               icon: Icons.bubble_chart_outlined,
               label: 'Inflammation',
-              value: '${inflammationScore!}/10',
+              // Row 102 — unlike Health (higher is obviously better), a bare
+              // "Inflammation N/10" gives no hint of direction. The trailing
+              // down-arrow is the same "lower is better" convention as a golf
+              // score or a ping reading, on top of the existing red→green
+              // colour grade and the tap-to-explain sheet.
+              value: '${inflammationScore!}/10 ↓',
               color: inflammationColor(inflammationScore!),
               showHelpIcon: true,
             ),

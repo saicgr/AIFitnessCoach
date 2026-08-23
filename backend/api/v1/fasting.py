@@ -610,6 +610,28 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
 
         db.client.table("fasting_records").update(update_data).eq("id", fast_id).execute()
 
+        # Row 184 — the end-fast mood/energy check-in used to update ONLY
+        # `fasting_records.mood_after` / `energy_level_after`. Those columns
+        # are fast-scoped and never fed the general mood system (Stats >
+        # Mood trends, `mood_log`), so answering "How do you feel?" here
+        # silently vanished from every mood-trend surface (row 238
+        # corroborates: 0 check-ins in Mood Trends despite answering this
+        # sheet). Mirror it into `mood_log` too, same table the standalone
+        # mood picker writes, so a fast-end check-in counts like any other.
+        if data.mood_after:
+            try:
+                db.client.table("mood_log").insert({
+                    "user_id": data.user_id,
+                    "mood": data.mood_after,
+                    "energy_level": data.energy_level,
+                    "source": "fasting",
+                    "occurred_at": end_time.isoformat(),
+                }).execute()
+            except Exception as mood_err:
+                # Best-effort — a mood_log failure must never block the fast
+                # from ending (fasting_records is already updated above).
+                logger.warning(f"[end_fast] mood_log insert failed: {mood_err}")
+
         # Update streak
         streak_info = await update_streak(data.user_id, completed_goal, completion_percent, user_tz)
 

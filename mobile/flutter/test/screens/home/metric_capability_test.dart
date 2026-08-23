@@ -22,10 +22,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fitwiz/data/providers/home_metric_tiles_provider.dart';
-import 'package:fitwiz/data/providers/metric_layout_provider.dart' show MetricSize;
 import 'package:fitwiz/data/providers/metric_capability_provider.dart';
 import 'package:fitwiz/data/providers/metric_tile_data_provider.dart'
     show metricScoreSeenInWindowProvider;
+import 'package:fitwiz/screens/home/widgets/home/metric_tile_grid.dart'
+    show packMetricTileRows;
 import 'package:fitwiz/screens/home/widgets/ring_catalog.dart';
 
 /// A container for the capability notifier alone.
@@ -372,21 +373,62 @@ void main() {
       expect(ids, isNot(contains('recovery')));
     });
 
-    test('substitutes keep the slot they took — same size, same position', () {
+    test('substitutes keep the slot they took — same position, row-packed size',
+        () {
       final tiles = defaultMetricTilesFor(
         capabilityResolved: true,
         capable: const {RingKind.hydration, RingKind.weight},
       );
-      final bySize = {for (final t in tiles) t.id: t.size};
+      final ids = tiles.map((t) => t.id).toList();
 
-      // `move` and `sleep` were the two wide tiles; `recovery` was small.
-      expect(bySize[kToGoalTileId], MetricSize.wide);
-      expect(bySize[kThisWeekTileId], MetricSize.wide);
-      expect(bySize[kDailyFuelTileId], MetricSize.small);
-      // The hero slot's substitute is large, like the hero.
-      expect(bySize[kNextSessionTileId], MetricSize.large);
+      // Every substitute lands where the tile it replaced was, in order —
+      // the hero's own substitute directly after it, then move's, sleep's,
+      // recovery's, then the two hand-logged tiles that needed no
+      // substitute.
+      expect(
+        ids,
+        [
+          kTodayScoreTileId,
+          kNextSessionTileId,
+          kToGoalTileId,
+          kThisWeekTileId,
+          kDailyFuelTileId,
+          'hydration',
+          'weight',
+        ],
+      );
       expect(tiles.every((t) => t.page == 1), isTrue,
           reason: 'nothing is ever auto-filled onto page 2');
+    });
+
+    test('the default grid is always 3 rows, never 4 — every capability set',
+        () {
+      // The Today Score's own substitute is a 7th tile added alongside 6
+      // defaults, and a capability gap can substitute any of the other 5 —
+      // so this must hold regardless of which ids end up in the remaining
+      // slots, not just for one hand-picked capability set.
+      for (final capable in <Set<RingKind>>[
+        const {},
+        const {RingKind.hydration, RingKind.weight},
+        const {
+          RingKind.move,
+          RingKind.sleep,
+          RingKind.recovery,
+          RingKind.hydration,
+          RingKind.weight,
+        },
+        {RingKind.move},
+        {RingKind.sleep, RingKind.recovery},
+      ]) {
+        final tiles = defaultMetricTilesFor(
+          capabilityResolved: true,
+          capable: capable,
+        );
+        final rows = packMetricTileRows(tiles);
+        expect(rows.length, lessThanOrEqualTo(3),
+            reason: 'capable=$capable produced ${rows.length} rows: '
+                '${tiles.map((t) => '${t.id}(${t.size.name})').toList()}');
+      }
     });
 
     test('a fully-equipped account keeps every sensor tile it earned', () {

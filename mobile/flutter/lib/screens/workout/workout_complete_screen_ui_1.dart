@@ -35,11 +35,17 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             const <Map<String, dynamic>>[]),
     };
 
-    // Exercise id + equipment hint by name, sourced from the planned workout
-    // models so the thumbnail resolves the exact library row (not a fuzzy
-    // name match) and falls back to an equipment-matched icon. Name-only still
-    // works when an exercise isn't in this map.
-    final metaByName = <String, ({String? id, String? equipment})>{
+    // Exercise id + equipment hint + pre-resolved image URL by name, sourced
+    // from the planned workout models so the thumbnail resolves the exact
+    // library row (not a fuzzy name match) and falls back to an
+    // equipment-matched icon. Name-only still works when an exercise isn't
+    // in this map. `imageUrl` reads `imageS3Path` — the SAME field the
+    // active session's own exercise card reads first
+    // (easy_exercise_header.dart's `preResolved`), already resolved to an
+    // https URL server-side by the time it reaches this `Workout` object —
+    // reusing it means the summary never has to redo a lookup the session
+    // never needed.
+    final metaByName = <String, ({String? id, String? equipment, String? imageUrl})>{
       for (final ex in widget.workout.exercises)
         ex.name.toLowerCase().trim(): (
           id: (ex.exerciseId?.isNotEmpty == true)
@@ -48,6 +54,8 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           equipment: (ex.equipment?.trim().isNotEmpty == true)
               ? ex.equipment!.split(',').first.trim()
               : null,
+          imageUrl:
+              (ex.imageS3Path?.trim().isNotEmpty == true) ? ex.imageS3Path : null,
         ),
     };
 
@@ -90,6 +98,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 textMuted: textMuted,
                 exerciseId: meta?.id,
                 equipmentHint: meta?.equipment,
+                imageUrl: meta?.imageUrl,
               );
             }(),
         ],
@@ -1299,6 +1308,13 @@ class _ExpandableExerciseRow extends StatefulWidget {
   /// First equipment item — picks a matching fallback icon when no image.
   final String? equipmentHint;
 
+  /// Pre-resolved image URL, straight from the planned exercise's own
+  /// `exercises_json.image_url` — the same value the active session's
+  /// exercise card renders from. Preferred over a fresh `exerciseId`/name
+  /// lookup so the summary can never disagree with what the session itself
+  /// already showed.
+  final String? imageUrl;
+
   const _ExpandableExerciseRow({
     required this.name,
     required this.sets,
@@ -1311,6 +1327,7 @@ class _ExpandableExerciseRow extends StatefulWidget {
     required this.textMuted,
     this.exerciseId,
     this.equipmentHint,
+    this.imageUrl,
   });
 
   @override
@@ -1447,6 +1464,7 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
         // falls back to an equipment-matched icon, never a broken-image glyph.
         ExerciseImage(
           exerciseName: widget.name,
+          imageUrl: widget.imageUrl,
           exerciseId: widget.exerciseId,
           equipmentHint: widget.equipmentHint,
           width: 44,

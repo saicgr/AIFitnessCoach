@@ -143,9 +143,19 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
     final pills = <_SmartPill>[];
     final seen = <String>{};
 
-    // Helper — add a pill only if its de-dupe key is new.
+    // Helper — add a pill only if its de-dupe key is new AND it isn't the
+    // same item set the user just logged this session (row #253) — checked
+    // on the NAME-SET half of the key only (dropping the slot prefix) since
+    // the just-created log may carry a different slot than the original
+    // candidate did.
     bool add(_SmartPill p) {
       if (p.dedupeKey.isNotEmpty && !seen.add(p.dedupeKey)) return false;
+      final namesKey = p.dedupeKey.contains('::')
+          ? p.dedupeKey.substring(p.dedupeKey.indexOf('::') + 2)
+          : '';
+      if (namesKey.isNotEmpty && _justLoggedPillKeys.contains(namesKey)) {
+        return false;
+      }
       pills.add(p);
       return true;
     }
@@ -512,6 +522,12 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
   /// minus the sheet close. Shows a "Logged · Edit / Undo" snackbar.
   Future<void> _logExactPill(_SmartPill pill, FoodLog log) async {
     setState(() => _smartPillLogging = true);
+    // Row #253 — exclude this item set from future pill lists in this sheet
+    // session immediately, regardless of which slot the fresh log lands in.
+    if (pill.dedupeKey.contains('::')) {
+      _justLoggedPillKeys
+          .add(pill.dedupeKey.substring(pill.dedupeKey.indexOf('::') + 2));
+    }
     final userId = widget.userId;
     final mealType = _selectedMealType.value;
     HapticService.light();
@@ -557,7 +573,8 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
       if (mounted) {
         _showSmartPillLoggedSnack(
           pill.title,
-          undo: () => _undoSmartPillLog(saved.foodLogId ?? optimisticId, optimisticId),
+          undo: () => _undoSmartPillLog(
+              saved.foodLogId ?? optimisticId, optimisticId, pill),
         );
       }
     } catch (e) {
@@ -567,6 +584,10 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
       final stillOnline = await NutritionRepository.isOnline();
       if (stillOnline) {
         notifier.optimisticRemoveLog(optimisticId);
+        if (pill.dedupeKey.contains('::')) {
+          _justLoggedPillKeys.remove(
+              pill.dedupeKey.substring(pill.dedupeKey.indexOf('::') + 2));
+        }
         if (mounted) _showSmartPillFailedSnack();
       }
       // Offline: the write queue keeps the optimistic row + replays it.
@@ -576,13 +597,20 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
   }
 
   /// Undo a one-tap exact log — deletes the just-created row and refreshes.
-  Future<void> _undoSmartPillLog(String logId, String optimisticId) async {
+  Future<void> _undoSmartPillLog(
+      String logId, String optimisticId, _SmartPill pill) async {
     final userId = widget.userId;
     final notifier = ref.read(
         dailyNutritionProvider(_logSheetDateKey(widget.selectedDate)).notifier);
     // Remove optimistically first, then delete server-side.
     notifier.optimisticRemoveLog(optimisticId);
     if (logId != optimisticId) notifier.optimisticRemoveLog(logId);
+    // The log is gone again — this item set is a valid repeat candidate
+    // once more.
+    if (pill.dedupeKey.contains('::')) {
+      _justLoggedPillKeys
+          .remove(pill.dedupeKey.substring(pill.dedupeKey.indexOf('::') + 2));
+    }
     try {
       if (logId != optimisticId && !logId.startsWith('optimistic_')) {
         await ref.read(nutritionRepositoryProvider).deleteFoodLog(logId);

@@ -175,10 +175,15 @@ Future<void> _exportData(
     }
 
     if (response.data != null) {
-      // Save to temporary file
-      final tempDir = await getTemporaryDirectory();
+      // Row #263 — a temp-directory export lands in Library/Caches, which
+      // the Files app never shows and (without the Info.plist document-
+      // browser keys) neither does this app's own Documents folder, so the
+      // only way back into "Import Zealova Data" was an extra manual hop
+      // through the share sheet to Files/iCloud. Writing straight to the
+      // app's Documents directory closes that round-trip.
+      final docsDir = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().toIso8601String().split('T')[0];
-      final filePath = '${tempDir.path}/fitness_data_$timestamp.zip';
+      final filePath = '${docsDir.path}/fitness_data_$timestamp.zip';
       final file = File(filePath);
       await file.writeAsBytes(response.data as List<int>);
 

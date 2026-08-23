@@ -1415,7 +1415,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
       case 'STRENGTH':
       default:
         icon = Icons.fitness_center;
-        color = const Color(0xFFEF5777); // rose  // accent-allowlist: movement-category legend — STRENGTH/default is always this rose (see doc comment above)
+        color = context.accentColor;
         break;
     }
     final displayColor = isDark ? color : _darkenColor(color);
