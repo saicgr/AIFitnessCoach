@@ -55,7 +55,16 @@ class MissedWorkout {
     );
   }
 
-  /// Get a human-readable description of when this was missed
+  /// Get a human-readable description of when this was missed.
+  ///
+  /// English-only (E2E #333) — this is a repository model with no locale to
+  /// format against. Any presenter that interpolates this into a *localized*
+  /// string (an ARB message with a `{missedDescription}`-shaped placeholder)
+  /// MUST use `MissedWorkoutLocalization.localizedMissedDescription(context)`
+  /// (`screens/home/widgets/missed_workout_localization.dart`) instead, or a
+  /// non-English user reads mixed-language text (e.g. "Yesterday · 45min ·
+  /// 8 ejercicios"). This raw getter remains only for call sites whose
+  /// surrounding copy is itself still hardcoded English.
   String get missedDescription {
     if (daysMissed == 1) {
       return 'Yesterday';
@@ -66,7 +75,11 @@ class MissedWorkout {
     }
   }
 
-  /// Get the day name (e.g., "Tuesday's")
+  /// Get the day name (e.g., "Tuesday's").
+  ///
+  /// English-only (E2E #333) — same caveat as [missedDescription]. Use
+  /// `MissedWorkoutLocalization.localizedDayPossessive(context)` wherever
+  /// this feeds a localized string.
   String get dayPossessive {
     final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final dayName = weekdays[scheduledDate.weekday - 1];

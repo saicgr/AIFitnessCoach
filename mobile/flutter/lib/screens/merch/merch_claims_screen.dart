@@ -6,14 +6,49 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/merch_claim.dart';
+import '../../data/models/referral_summary.dart' show ReferralTier, levelEquivalentForMerchType;
 import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/merch_notification_prefs_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/notification_service.dart' show osNotificationPermissionGrantedProvider;
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../common/app_refresh_indicator.dart';
+
+/// Short display labels for this screen's unlock-summary copy (distinct
+/// from `ReferralTier.displayName`, which prefixes the branded app name —
+/// the sentences here already say "real {Branding.appName} gear" once).
+/// `shaker_bottle` is intentionally absent: it has no level equivalent and
+/// was never part of this screen's summary copy.
+const _kMerchShortLabel = {
+  'sticker_pack': 'Sticker Pack',
+  't_shirt': 'T-Shirt',
+  'hoodie': 'Hoodie',
+  'full_merch_kit': 'Full Kit',
+  'signed_premium_kit': 'Signed Premium Kit',
+};
+
+/// Builds the "Sticker Pack at Level 20 or 3 referrals, ..." summary
+/// sentence from the backend-driven level ladder (`merch_type_for_level()`,
+/// migration 2424, read via `allLevelsProvider`) joined with the referral
+/// tiers' (unchanged, see the audit note on `ReferralTier`) qualified-
+/// referral thresholds. Never hardcodes a level number (E2E #371) -- while
+/// [allLevels] hasn't loaded yet, each tier's clause just drops the
+/// "at Level N" half rather than asserting a stale one.
+String _merchUnlockSummary(List<Map<String, dynamic>>? allLevels) {
+  final clauses = <String>[];
+  for (final tier in ReferralTier.all) {
+    final label = _kMerchShortLabel[tier.merchType];
+    if (label == null) continue;
+    final level = levelEquivalentForMerchType(tier.merchType, allLevels);
+    final referralPart = '${tier.threshold} referral${tier.threshold == 1 ? '' : 's'}';
+    clauses.add(level != null ? '$label at Level $level or $referralPart' : '$label at $referralPart');
+  }
+  return 'Reach milestone levels — or refer enough friends — and we ship you '
+      'real ${Branding.appName} gear. ${clauses.join(', ')}.';
+}
 
 /// Screen showing physical merch rewards earned at milestone levels.
 /// Users tap "Accept" on unclaimed rewards and the ops team reaches out
@@ -180,11 +215,9 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Reach milestone levels — or refer enough friends — and we ship you '
-            'real ${Branding.appName} gear. Sticker Pack at Level 50 or 3 referrals, '
-            'T-Shirt at Level 100 or 25 referrals, Hoodie at Level 150 or 50 referrals, '
-            'Full Kit at Level 200 or 100 referrals, Signed Premium Kit at Level 250 '
-            'or 250 referrals.',
+            // Level numbers come from the backend ladder, never a literal
+            // here (E2E #371) -- see `_merchUnlockSummary`.
+            _merchUnlockSummary(ref.watch(allLevelsProvider).valueOrNull),
             style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 10),
@@ -234,13 +267,31 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Your first physical reward — a free ${Branding.appName} sticker pack — unlocks at Level 50, or with 3 qualified referrals.',
+            _firstMerchUnlockCopy(),
             style: TextStyle(fontSize: 13, color: textMuted),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
+  }
+
+  /// "Your first physical reward ... unlocks at Level N, or with M
+  /// qualified referrals." The level comes from the backend ladder
+  /// (`merch_type_for_level()`, migration 2424, via `allLevelsProvider`),
+  /// never a literal here; the referral count reuses `ReferralTier.all`'s
+  /// existing threshold rather than a second hardcoded copy (E2E #371).
+  /// Degrades to referral-only copy while the level ladder hasn't loaded.
+  String _firstMerchUnlockCopy() {
+    final stickerTier = ReferralTier.all.firstWhere((t) => t.merchType == 'sticker_pack');
+    final level = levelEquivalentForMerchType(
+      'sticker_pack',
+      ref.watch(allLevelsProvider).valueOrNull,
+    );
+    final referralPart = '${stickerTier.threshold} qualified referral${stickerTier.threshold == 1 ? '' : 's'}';
+    return level != null
+        ? 'Your first physical reward — a free ${Branding.appName} sticker pack — unlocks at Level $level, or with $referralPart.'
+        : 'Your first physical reward — a free ${Branding.appName} sticker pack — unlocks with $referralPart, or at an early milestone level.';
   }
 
   Widget _buildError(Object error, Color textColor, Color textMuted, Color accent) {

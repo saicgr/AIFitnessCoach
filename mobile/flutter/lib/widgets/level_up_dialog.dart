@@ -9,7 +9,6 @@ import '../data/models/user_xp.dart';
 import '../data/services/haptic_service.dart';
 import 'fitness_crate_dialog.dart';
 import 'minigame/nutrient_rush_game.dart';
-import 'package:fitwiz/core/constants/branding.dart';
 
 import '../l10n/generated/app_localizations.dart';
 part 'level_up_dialog_part_accomplishment.dart';
@@ -250,11 +249,28 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     }
 
     // 5. Next milestone (if any)
-    const milestones = [5, 10, 25, 50, 75, 100, 150, 200, 250];
+    // Cosmetic-badge milestones (unrelated to merch, unchanged) merged with
+    // the real backend merch-unlock levels (`merch_type_for_level()`,
+    // migration 2424, read via `allLevelsProvider`) -- these are two
+    // independent ladders that used to be conflated into one hardcoded list
+    // assuming merch landed on the cosmetic milestones (50/100/150/200/250).
+    // Under the rescaled ladder merch actually lands on 20/40/60/80/100, so
+    // the two sets are merged here rather than assumed to coincide (E2E #371).
+    const cosmeticMilestones = [5, 10, 25, 50, 75, 100, 150, 200, 250];
+    final merchMilestoneLevels = ref.read(allLevelsProvider).valueOrNull
+            ?.where((e) => e['merch_type'] != null)
+            .map((e) => e['level'] as int) ??
+        const <int>[];
+    final milestones = {...cosmeticMilestones, ...merchMilestoneLevels}.toList()..sort();
     for (final m in milestones) {
       if (level < m) {
-        final unlock = _getLevelUnlock(m);
-        if (unlock != null) {
+        final cosmeticUnlock = _getLevelUnlock(m);
+        final milestoneMerchType = _merchTypeForLevel(ref, m);
+        final merchUnlock = milestoneMerchType != null
+            ? LevelRewards.getRewardForLevel(m, merchType: milestoneMerchType).name
+            : null;
+        final unlock = [cosmeticUnlock, merchUnlock].whereType<String>().join(' + ');
+        if (unlock.isNotEmpty) {
           items.add(_Accomplishment(
             icon: '🏆',
             title: 'NEXT MILESTONE: LEVEL $m',
@@ -749,18 +765,27 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     );
   }
 
+  /// Cosmetic/badge flavor text only (mirrors backend
+  /// `MILESTONE_REWARDS_DISPLAY`'s non-merch copy) -- does NOT decide merch.
+  /// Merch is never inferred from a level literal here; the caller looks it
+  /// up separately via `_merchTypeForLevel` (backend `merch_type_for_level()`,
+  /// migration 2424, read off `allLevelsProvider`). This switch used to also
+  /// claim "FREE Sticker Pack!" / "FREE T-Shirt!" etc. at the OLD (pre-2424)
+  /// Level 50/100/150/200/250 ladder and silently drifted out of sync with
+  /// the DB's rescaled 20/40/60/80/100 ladder -- do not reintroduce that
+  /// (E2E #371; see mobile/flutter/lib/data/models/level_reward.dart for the
+  /// same pattern already fixed there).
   String? _getLevelUnlock(int level) {
-    // Mirrors backend MERCH_TYPE_FOR_LEVEL + MILESTONE_REWARDS_DISPLAY.
     switch (level) {
       case 5: return '"Rising Star" animated badge + Premium Crate';
       case 10: return '"Iron Will" animated badge + Iron theme';
       case 25: return 'Bronze animated frame + "Dedicated" chat title';
-      case 50: return 'Silver frame + FREE ${Branding.appName} Sticker Pack!';
+      case 50: return 'Silver frame + "Veteran" chat title';
       case 75: return 'Gold holographic frame + "Elite" animated nameplate';
-      case 100: return 'Elite badge + FREE ${Branding.appName} T-Shirt!';
-      case 150: return 'Champion badge + FREE ${Branding.appName} Hoodie!';
-      case 200: return 'Mythic badge + FREE Full Merch Kit!';
-      case 250: return 'Transcendent badge + FREE Signed Premium Kit!';
+      case 100: return 'Elite badge unlocked';
+      case 150: return 'Champion badge unlocked';
+      case 200: return 'Mythic badge unlocked';
+      case 250: return 'Transcendent badge unlocked';
       default: return null;
     }
   }

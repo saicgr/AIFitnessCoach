@@ -28,6 +28,7 @@ import '../../../data/repositories/xp_repository.dart' show UnclaimedCrate;
 import '../../../data/models/weekly_plan.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/scheduling_repository.dart' show MissedWorkout;
+import 'missed_workout_localization.dart';
 import '../../../data/services/crate_notification_router.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_dialog.dart';
@@ -319,7 +320,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         title: AppLocalizations.of(context).stackedBannerPanelMissedColon(
             _formatWorkoutType(workout.type)),
         subtitle: AppLocalizations.of(context).stackedBannerPanelMinExercises(
-            workout.durationMinutes, workout.exercisesCount, workout.missedDescription),
+            workout.durationMinutes, workout.exercisesCount, workout.localizedMissedDescription(context)),
         accentColor: context.accentColor,
         actionLabel: AppLocalizations.of(context).missedWorkoutBannerDoToday,
         onAction: () => _handleDoToday(workout),

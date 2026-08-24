@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/repositories/scheduling_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import 'missed_workout_localization.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
 
@@ -248,7 +248,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          workout.missedDescription,
+                          workout.localizedMissedDescription(context),
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,
@@ -278,7 +278,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
               // Workout details
               Text(
-                AppLocalizations.of(context)!.missedWorkoutBannerYouMissed(workout.dayPossessive, workout.name),
+                AppLocalizations.of(context).missedWorkoutBannerYouMissed(workout.localizedDayPossessive(context), workout.name),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -299,13 +299,13 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                   const SizedBox(width: 8),
                   _InfoChip(
                     icon: Icons.timer_outlined,
-                    label: AppLocalizations.of(context)!.missedWorkoutBannerMin(workout.durationMinutes),
+                    label: AppLocalizations.of(context).missedWorkoutBannerMin(workout.durationMinutes),
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
                   _InfoChip(
                     icon: Icons.format_list_numbered,
-                    label: AppLocalizations.of(context)!.missedWorkoutBannerExercises(workout.exercisesCount),
+                    label: AppLocalizations.of(context).missedWorkoutBannerExercises(workout.exercisesCount),
                     isDark: isDark,
                   ),
                 ],
@@ -387,7 +387,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                     const SizedBox(height: 12),
                     Center(
                       child: Text(
-                        AppLocalizations.of(context)!.missedWorkoutBannerMoreMissedWorkouts(missedList.length - 1),
+                        AppLocalizations.of(context).missedWorkoutBannerMoreMissedWorkouts(missedList.length - 1),
                         style: TextStyle(
                           fontSize: 12,
                           color: textSecondary,
@@ -465,7 +465,6 @@ class _SkipReasonSheet extends StatelessWidget {
     // nearBlack has no ThemeColors accessor; it's ~identical to pureBlack
     // (0xFF0A0A0A vs 0xFF0A0A0B) so tc.background (pureBlack/pureWhite) is a
     // safe, visually-indistinguishable substitute for this full-bleed sheet.
-    final backgroundColor = ThemeColors.of(context).background;
     final textPrimary = ThemeColors.of(context).textPrimary;
     final textSecondary = ThemeColors.of(context).textSecondary;
     final cardBg = ThemeColors.of(context).elevated;

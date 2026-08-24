@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/referral_summary.dart';
 import '../../data/providers/referral_provider.dart';
+import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/pending_referral_service.dart';
 import '../../data/services/share_service.dart';
@@ -22,6 +23,11 @@ class ReferralsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(referralSummaryProvider);
+    // Backend-driven level ladder (`merch_type_for_level()`, migration 2424)
+    // — used to show "or Level N" alongside each merch tier's referral count
+    // (E2E #371). Null while loading / offline; tiers then just omit the
+    // level clause instead of asserting a stale one.
+    final allLevels = ref.watch(allLevelsProvider).valueOrNull;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.background : AppColorsLight.background;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -115,6 +121,7 @@ class ReferralsScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           _NextTierCard(
                             summary: s,
+                            allLevels: allLevels,
                             accent: accent,
                             elevated: elevated,
                             border: border,
@@ -135,6 +142,7 @@ class ReferralsScreen extends ConsumerWidget {
                           ...ReferralTier.all.map((t) => _TierRow(
                                 tier: t,
                                 qualifiedCount: s.qualifiedCount,
+                                allLevels: allLevels,
                                 elevated: elevated,
                                 border: border,
                                 textColor: textColor,
@@ -359,29 +367,26 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-/// The XP level that unlocks the same `merchType` independently of
-/// referrals, or null when there is no level equivalent (the shaker
-/// bottle is referral-only). See `ReferralTier.levelEquivalent`.
-int? _levelAlternativeFor(String? merchType) {
-  if (merchType == null) return null;
-  for (final tier in ReferralTier.all) {
-    if (tier.merchType == merchType) return tier.levelEquivalent;
-  }
-  return null;
-}
-
 class _NextTierCard extends StatelessWidget {
   final ReferralSummary summary;
+  final List<Map<String, dynamic>>? allLevels;
   final Color accent, elevated, border, textColor, textMuted;
 
   const _NextTierCard({
     required this.summary,
+    required this.allLevels,
     required this.accent,
     required this.elevated,
     required this.border,
     required this.textColor,
     required this.textMuted,
   });
+
+  /// The XP level that unlocks the same merch type independently of
+  /// referrals, read live from the backend ladder (`merch_type_for_level()`,
+  /// migration 2424, via `allLevelsProvider`) — null while it hasn't loaded
+  /// yet, or if the merch type is referral-only (E2E #371).
+  int? get _nextTierLevel => levelEquivalentForMerchType(summary.nextMerchType, allLevels);
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +456,7 @@ class _NextTierCard extends StatelessWidget {
                     Text(
                       '${summary.neededForNext} more qualified referral'
                       "${summary.neededForNext == 1 ? '' : 's'} to unlock"
-                      '${_levelAlternativeFor(summary.nextMerchType) != null ? ' — or Level ${_levelAlternativeFor(summary.nextMerchType)}' : ''}',
+                      '${_nextTierLevel != null ? ' — or Level $_nextTierLevel' : ''}',
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ],
@@ -486,11 +491,13 @@ class _NextTierCard extends StatelessWidget {
 class _TierRow extends StatelessWidget {
   final ReferralTier tier;
   final int qualifiedCount;
+  final List<Map<String, dynamic>>? allLevels;
   final Color elevated, border, textColor, textMuted;
 
   const _TierRow({
     required this.tier,
     required this.qualifiedCount,
+    required this.allLevels,
     required this.elevated,
     required this.border,
     required this.textColor,
@@ -500,6 +507,9 @@ class _TierRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unlocked = qualifiedCount >= tier.threshold;
+    // Read live from the backend ladder (E2E #371) — omitted, not guessed,
+    // if it hasn't loaded yet.
+    final levelEquivalent = levelEquivalentForMerchType(tier.merchType, allLevels);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -536,8 +546,8 @@ class _TierRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  tier.levelEquivalent != null
-                      ? '${tier.threshold} qualified referrals · or Level ${tier.levelEquivalent}'
+                  levelEquivalent != null
+                      ? '${tier.threshold} qualified referrals · or Level $levelEquivalent'
                       : '${tier.threshold} qualified referrals',
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),

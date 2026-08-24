@@ -2,6 +2,7 @@
 from typing import Optional
 from datetime import datetime, timedelta, date, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import re
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
@@ -33,6 +34,33 @@ from .personal_goals_endpoints_part2 import (  # noqa: F401
 )
 
 router = APIRouter()
+
+def _normalize_goal_exercise_name(name: str) -> str:
+    """Normalize an exercise name so goal chips and library names can meet.
+
+    Goal names are free text typed in the app (create_goal_sheet.dart: "Push-ups",
+    "Squats", or a custom TextField), while workout-sync sends the exercise-library
+    name of what was actually performed ("Push-Up"). Exact case-insensitive equality
+    therefore gave a "500 push-ups this week" goal no credit at all.
+
+    This normalizes punctuation/spacing and trivial plurals so those two name spaces
+    match, WITHOUT the two-way substring rule the unmounted duplicate used -- that
+    rule credited a "Squat" goal from "Bulgarian Split Squat" reps. Normalizing keeps
+    "squat" != "bulgariansplitsquat", so only genuine spelling variants match.
+    """
+    base = (name or "").lower().strip()
+    # A parenthetical qualifier is a variant annotation, not a different movement:
+    # a goal for "Push-ups (Standard)" is credited by logged "Push-ups", and vice
+    # versa. This does NOT loosen into substring matching -- "squat" still never
+    # equals "bulgariansplitsquat".
+    base = re.sub(r"\s*\([^)]*\)", "", base)
+    collapsed = re.sub(r"[^a-z0-9]+", "", base)
+    # Trivial plural: "pushups" -> "pushup". Guard against "press"/"-ss" endings and
+    # over-short stems, which would collide unrelated movements.
+    if len(collapsed) > 3 and collapsed.endswith("s") and not collapsed.endswith("ss"):
+        collapsed = collapsed[:-1]
+    return collapsed
+
 
 @router.get("/records", response_model=PersonalRecordsResponse)
 async def get_personal_records(user_id: str,
@@ -181,9 +209,13 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
 
         # Build a map of exercise name (lowercase) -> goal for quick lookup
         goal_map = {}
+        goal_map_normalized = {}
         for goal in active_goals:
             exercise_lower = goal["exercise_name"].lower().strip()
             goal_map[exercise_lower] = goal
+            goal_map_normalized.setdefault(
+                _normalize_goal_exercise_name(goal["exercise_name"]), goal
+            )
 
         synced_goals = []
         total_volume_added = 0
@@ -193,8 +225,11 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
         for exercise in request.exercises:
             exercise_lower = exercise.exercise_name.lower().strip()
 
-            # Check for matching goal (case-insensitive)
-            matching_goal = goal_map.get(exercise_lower)
+            # Exact case-insensitive match wins; fall back to a normalized match
+            # so a "Push-ups" goal is credited by a logged "Push-Up".
+            matching_goal = goal_map.get(exercise_lower) or goal_map_normalized.get(
+                _normalize_goal_exercise_name(exercise.exercise_name)
+            )
             if not matching_goal:
                 logger.debug(f"No matching goal for exercise: {exercise.exercise_name}")
                 continue

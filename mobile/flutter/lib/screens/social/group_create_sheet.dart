@@ -6,6 +6,8 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
+import '../../core/animations/app_animations.dart';
+import 'friend_search_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating a group conversation (F12)
@@ -148,7 +150,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             child: Row(
               children: [
                 Text(
-                  AppLocalizations.of(context)!.groupCreateSheetSelectFriendsSelected(_selectedMemberIds.length),
+                  AppLocalizations.of(context).groupCreateSheetSelectFriendsSelected(_selectedMemberIds.length),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -269,11 +271,50 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
               }).toList();
 
         if (filteredFriends.isEmpty) {
+          // #454: zero-friends empty state previously had no way to add
+          // friends from here, dead-ending the group-creation flow. Add a
+          // Find Friends CTA that routes to the friend-search surface.
+          if (searchQuery.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context).socialScreenPartNoFriendsToAdd,
+                      style: TextStyle(color: textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            builder: (context) => const FriendSearchScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.person_search_rounded, size: 18),
+                      label: Text(AppLocalizations.of(context).socialFindFriends),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.accent,
+                        side: BorderSide(color: colors.accent),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           return Center(
             child: Text(
-              searchQuery.isEmpty
-                  ? AppLocalizations.of(context).socialScreenPartNoFriendsToAdd
-                  : AppLocalizations.of(context)!.groupCreateSheetNoFriendsMatching(searchQuery),
+              AppLocalizations.of(context).groupCreateSheetNoFriendsMatching(searchQuery),
               style: TextStyle(color: textMuted),
             ),
           );

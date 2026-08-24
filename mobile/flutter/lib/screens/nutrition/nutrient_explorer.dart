@@ -106,6 +106,13 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
 
             const SizedBox(height: 16),
 
+            // Status-color legend (#272): bar color is keyed to
+            // percent-of-target attainment for every nutrient below, so a
+            // single shared key covers vitamins, minerals, fatty acids, etc.
+            const _NutrientStatusLegend(),
+
+            const SizedBox(height: 12),
+
             // Nutrient Sections
             if (_selectedCategory == 'all' || _selectedCategory == 'vitamins')
               _NutrientSection(
@@ -170,6 +177,55 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
           isDark: widget.isDark,
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Nutrient Status Legend (#272)
+// ─────────────────────────────────────────────────────────────────
+//
+// The bar color in every _NutrientRow below is keyed to the nutrient's
+// attainment status (NutrientStatus), not to an arbitrary per-nutrient
+// color — this small key is what makes that legible instead of looking
+// like five unexplained colors.
+class _NutrientStatusLegend extends StatelessWidget {
+  const _NutrientStatusLegend();
+
+  static const _entries = <(Color, String)>[
+    (Color(0xFFFFC107), 'Below Target'), // accent-allowlist: nutrient-status severity scale
+    (Color(0xFF8BC34A), 'Adequate'), // accent-allowlist: nutrient-status severity scale
+    (Color(0xFF4CAF50), 'Optimal'), // accent-allowlist: nutrient-status severity scale
+    (Color(0xFFFF9800), 'Above Target'), // accent-allowlist: nutrient-status severity scale
+    (Color(0xFFF44336), 'Over Limit'), // accent-allowlist: nutrient-status severity scale
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Wrap(
+      spacing: 12,
+      runSpacing: 6,
+      children: _entries
+          .map((e) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: e.$1,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    e.$2,
+                    style: TextStyle(fontSize: 10, color: tc.textMuted),
+                  ),
+                ],
+              ))
+          .toList(),
     );
   }
 }
