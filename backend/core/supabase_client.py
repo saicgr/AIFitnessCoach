@@ -50,6 +50,7 @@ class SupabaseManager:
     _supabase_auth: Optional[Client] = None
     _engine = None
     _session_maker = None
+    _engine_loop: Optional[asyncio.AbstractEventLoop] = None
     _db_semaphore: Optional[asyncio.Semaphore] = None
 
     def __new__(cls):
@@ -170,28 +171,12 @@ class SupabaseManager:
             #
             # All three are no-ops when pointed at a direct DB connection or a
             # session-mode pooler — safe to leave on unconditionally.
-            from uuid import uuid4
-            self._engine = create_async_engine(
-                settings.database_url,
-                echo=settings.debug,
-                pool_pre_ping=True,
-                pool_size=settings.db_pool_size,
-                max_overflow=settings.db_max_overflow,
-                pool_timeout=settings.db_pool_timeout,
-                pool_recycle=settings.db_pool_recycle,
-                connect_args={
-                    "statement_cache_size": 0,
-                    "prepared_statement_cache_size": 0,
-                    "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
-                },
-            )
-
-            # Create session maker
-            self._session_maker = async_sessionmaker(
-                self._engine,
-                class_=AsyncSession,
-                expire_on_commit=False
-            )
+            self._build_engine_and_sessionmaker()
+            # Tracks which event loop `self._engine`'s pool belongs to — see
+            # `_ensure_engine_current()`. `None` until the first real
+            # loop-bound use; production has exactly one loop for the app's
+            # whole lifetime, so this is set once and never rebuilt there.
+            self._engine_loop = None
 
             # Hard cap on concurrent DB sessions to stay within Supabase limits
             max_concurrent = settings.db_pool_size + settings.db_max_overflow
@@ -225,13 +210,74 @@ class SupabaseManager:
         """
         return self._supabase_auth
 
+    def _build_engine_and_sessionmaker(self) -> None:
+        """(Re)build `self._engine` + `self._session_maker` from settings."""
+        settings = get_settings()
+        from uuid import uuid4
+        self._engine = create_async_engine(
+            settings.database_url,
+            echo=settings.debug,
+            pool_pre_ping=True,
+            pool_size=settings.db_pool_size,
+            max_overflow=settings.db_max_overflow,
+            pool_timeout=settings.db_pool_timeout,
+            pool_recycle=settings.db_pool_recycle,
+            connect_args={
+                "statement_cache_size": 0,
+                "prepared_statement_cache_size": 0,
+                "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
+            },
+        )
+        self._session_maker = async_sessionmaker(
+            self._engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
+
+    def _ensure_engine_current(self) -> None:
+        """Rebuild the async engine if the running event loop has changed.
+
+        asyncpg connections — and therefore this pooled SQLAlchemy engine —
+        are bound to whichever event loop was running when they were
+        created; they are not safe to reuse from a different loop. In
+        production this never fires after the first call: one worker
+        process runs exactly one event loop for its whole lifetime.
+
+        It matters where multiple event loops come and go in the same
+        process — e.g. a test suite that hands each test function its own
+        event loop while this manager (a process-wide singleton, `__new__`
+        above) and its connection pool persist across all of them. Without
+        this check, a pooled connection created under an earlier, now
+        different-or-closed loop gets checked out again and blows up deep in
+        asyncpg/SQLAlchemy internals ("Future ... attached to a different
+        loop", then "Event loop is closed" when the pool tries to clean up
+        the bad connection) instead of transparently getting a fresh one —
+        the same class of bug as a stale aiohttp session surviving past its
+        event loop (see tests/test_brand_name_preservation.py).
+        """
+        try:
+            running_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return  # Not inside an event loop yet; nothing to reconcile.
+        if self._engine_loop is running_loop:
+            return
+        # Drop the old engine/pool without touching it further — it may
+        # belong to an already-closed loop, and interacting with it further
+        # (even to dispose it) can itself raise the same cross-loop error.
+        # Let it be garbage collected; a fresh engine/pool costs nothing
+        # until something actually checks out a connection from it.
+        self._build_engine_and_sessionmaker()
+        self._engine_loop = running_loop
+
     @property
     def engine(self):
         """Get SQLAlchemy engine."""
+        self._ensure_engine_current()
         return self._engine
 
     def get_session(self) -> AsyncSession:
         """Get a new database session (raw, without semaphore)."""
+        self._ensure_engine_current()
         return self._session_maker()
 
     def pool_stats(self) -> dict:
@@ -290,6 +336,7 @@ class SupabaseManager:
 
         Returns an AsyncConnection (caller owns closing it).
         """
+        self._ensure_engine_current()
         breaker = get_db_breaker()
         try:
             async with breaker.guard():

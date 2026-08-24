@@ -22,17 +22,31 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.gemini_service import GeminiService  # noqa: E402
 
 
-# Session-scoped event loop so the google-genai aiohttp session survives
-# across tests. Without this, pytest-asyncio's default function-scoped loop
-# gets closed between tests and the SDK raises "Event loop is closed".
-@pytest.fixture(scope="session")
+# Module-scoped (NOT session-scoped) event loop so the google-genai aiohttp
+# session survives across this file's own tests without being torn down
+# between them. Session scope was a test-order-pollution bug: pytest only
+# closes a session-scoped fixture at the very end of the ENTIRE run, so the
+# loop stayed open (never closed) long after this module's tests finished.
+# services/gemini/constants.py holds `client` as a process-wide singleton,
+# and the google-genai SDK only recreates its cached aiohttp session when it
+# detects the old one's loop is closed (google/genai/_api_client.py, the
+# `self._aiohttp_session._loop.is_closed()` check) — an open-but-dead loop
+# looks "still valid", so every later test file that used the real client
+# tried to reuse a session bound to a loop with no task running in it,
+# raising "RuntimeError: Timeout context manager should be used inside a
+# task" (observed downstream in test_food_image_analysis.py,
+# test_rag_gemini_real_integration.py, test_pr_detection_integration.py and
+# test_safety_index_swap.py). Module scope keeps the same benefit for this
+# file while guaranteeing the loop is actually closed before the next test
+# module runs.
+@pytest.fixture(scope="module")
 def event_loop():
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def gemini_service(event_loop):
     return GeminiService()
 

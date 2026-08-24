@@ -37,6 +37,26 @@ def _load_ai_recommend():
     The clamp + baseline + finalize helpers under test are pure and do not touch
     any of the stubbed parents at call time.
     """
+    # 0) Snapshot whatever (if anything) real modules already occupy these
+    #    names, so teardown_module() can put them back. Pollution regression:
+    #    this used to overwrite sys.modules with no restore, so once any other
+    #    test in the same pytest process later did
+    #    `mock.patch("api.v1.nutrition.preferences.get_supabase_db", ...)`, it
+    #    hit this stub (which only defines `_active_meal_types`) instead of
+    #    the real module and blew up with `AttributeError: <module
+    #    'api.v1.nutrition.preferences'> does not have the attribute
+    #    'get_supabase_db'` — see tests/test_nutrition_preferences.py and
+    #    tests/test_nutrition_goal_fabrication.py.
+    global _saved_modules
+    _saved_modules = {
+        name: sys.modules.get(name)
+        for name in (
+            "api", "api.v1", "api.v1.nutrition",
+            "api.v1.nutrition.models", "api.v1.nutrition.preferences",
+            "api.v1.nutrition.ai_recommend",
+        )
+    }
+
     # 1) Real models module, loaded standalone.
     models_path = os.path.join(BACKEND_DIR, "api", "v1", "nutrition", "models.py")
     models_spec = importlib.util.spec_from_file_location(
@@ -94,7 +114,18 @@ def _load_ai_recommend():
     return ar_mod
 
 
+_saved_modules = {}
 AR = _load_ai_recommend()
+
+
+def teardown_module(module):
+    """Undo the sys.modules stubbing in _load_ai_recommend() so later tests
+    in the same pytest process see the real api.v1.nutrition.* modules."""
+    for name, original in _saved_modules.items():
+        if original is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = original
 
 
 # =============================================================================

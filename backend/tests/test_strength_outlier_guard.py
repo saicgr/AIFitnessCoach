@@ -20,6 +20,8 @@ import os
 import sys
 import types
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # ── Stub the one lazily-imported py3.10+ dependency BEFORE the functions run ──────────
@@ -50,16 +52,45 @@ def _stub_flatten(rows):
     return [{k: v for k, v in e.items() if k != "_score"} for e in out.values()]
 
 
-_api = types.ModuleType("api"); _api.__path__ = []          # noqa: E702
-_apiv1 = types.ModuleType("api.v1"); _apiv1.__path__ = []    # noqa: E702
-_scores = types.ModuleType("api.v1.scores")
-_scores._flatten_logs_for_strength = _stub_flatten
-sys.modules.setdefault("api", _api)
-sys.modules.setdefault("api.v1", _apiv1)
-sys.modules["api.v1.scores"] = _scores
-
 import services.strength_recalc as sr  # noqa: E402
 from services.strength_calculator_service import StrengthCalculatorService  # noqa: E402
+
+
+# Test-order-pollution regression: the stub used to be installed at MODULE
+# IMPORT time (a bare `sys.modules["api.v1.scores"] = stub`, restored via
+# `teardown_module`). That is too late a fix — pytest COLLECTS every test
+# file (importing all of them) before it RUNS any of them, so a module-level
+# `sys.modules[...]` write pollutes the whole process the instant this file
+# is *collected*, long before its own tests actually run, and stays poisoned
+# for every test elsewhere that happens to RUN earlier (in run order) than
+# this module's own tests — e.g. tests/test_pr_detection_integration.py
+# calling the real `api.v1.scores.get_user_body_info`/`get_supabase_db`
+# lazily, only to find the stub (missing those attributes) still installed.
+# `teardown_module` restoring things after THIS module's tests run does
+# nothing for tests that ran before that point. Scoping the patch to an
+# autouse fixture confines it to this module's own test-EXECUTION window
+# (pytest's run phase), never to collection.
+@pytest.fixture(autouse=True, scope="module")
+def _stub_api_v1_scores_module():
+    _api = types.ModuleType("api"); _api.__path__ = []          # noqa: E702
+    _apiv1 = types.ModuleType("api.v1"); _apiv1.__path__ = []    # noqa: E702
+    _scores = types.ModuleType("api.v1.scores")
+    _scores._flatten_logs_for_strength = _stub_flatten
+
+    saved_modules = {
+        name: sys.modules.get(name) for name in ("api", "api.v1", "api.v1.scores")
+    }
+    sys.modules.setdefault("api", _api)
+    sys.modules.setdefault("api.v1", _apiv1)
+    sys.modules["api.v1.scores"] = _scores
+    try:
+        yield
+    finally:
+        for name, original in saved_modules.items():
+            if original is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = original
 
 
 # ── Pure guard: _trusted_window_best ─────────────────────────────────────────────────
