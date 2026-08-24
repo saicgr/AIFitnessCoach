@@ -552,6 +552,100 @@ Baseline-diff gate (`scripts/tz_audit_baseline.json`) — fails only on NEW find
 and `.lte` on a half-open end. `--refresh-baseline` after clearing findings. Suppress an
 intentional UTC line with a trailing `# tz-allowlist: <reason>`.
 
+## Backend venv MUST be Python 3.11 (matching render.yaml)
+
+`render.yaml` pins `PYTHON_VERSION: "3.11"`, and the codebase uses PEP 604
+syntax (`dict | None`) that **3.9 cannot even parse**. For a long stretch the
+project venv was 3.9.6, so `pytest` died at import on `conftest.py` and the
+backend suite could not be run locally AT ALL. Nobody noticed, and **134
+failures accumulated unseen** — including 24 tests for a Strength Calibration
+feature that had been deleted wholesale commits earlier.
+
+A test suite that cannot run is worse than no suite: it looks like coverage.
+
+```bash
+cd backend && python3 --version          # must be 3.11.x
+.venv/bin/python -c "from api.v1.users import auth"   # 3.9 fails here
+```
+
+Rebuild if it drifts:
+
+```bash
+brew install python@3.11
+cd backend && mv .venv .venv.old && /opt/homebrew/bin/python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt pytest pytest-timeout pytest-asyncio greenlet
+```
+
+## Test-suite integrity: two order-dependent traps (both now gated)
+
+Both bugs below share a signature that makes them expensive to find: **the test
+passes in isolation and fails only in a full run**. Running the failing file by
+itself — the first thing anyone tries — "proves" it is fine. Budget for that.
+
+**1. `sys.modules` stubs assigned at import time.** Two test files installed bare
+`ModuleType` stubs over real packages and never restored them. Once either was
+collected, every LATER test patching by string resolved against the stub:
+
+```
+mock.patch("api.v1.nutrition.preferences.get_supabase_db", ...)
+AttributeError: <module '...preferences'> does not have the attribute 'get_supabase_db'
+```
+
+20 failures from one line. Stubbing is fine; not restoring is not. Use a
+`try/finally` (restores immediately — preferred), a `teardown_module`, or the
+self-restoring `monkeypatch.setitem` / `mock.patch.dict`.
+Gate: `tests/test_no_sys_modules_pollution.py`.
+
+**2. A pooled asyncpg engine cached across event loops.** `SupabaseManager` is a
+process-wide singleton that built its engine once and kept it forever. asyncpg
+binds connections to the creating loop; `pytest.ini` gives every async test a
+fresh loop, so every DB-touching test after the first reused a pool owned by a
+closed loop. Symptoms rotate and look environmental:
+
+```
+got Future <Future pending> attached to a different loop
+RuntimeError: Event loop is closed
+RuntimeError: Timeout context manager should be used inside a task
+```
+
+`_ensure_engine_current()` rebuilds on loop change. Do not "optimise" it away.
+Gate: `tests/test_supabase_engine_loop_affinity.py`.
+
+## Measuring the suite: three ways the numbers lie
+
+Every one of these produced a confident, wrong conclusion during the audit that
+wrote this section. Measure, do not reason, and control the variable first.
+
+**One pytest process at a time.** Background runs from earlier sessions do not
+die on their own. Up to 10 concurrent suites were once running against the same
+box and Supabase project, manufacturing `TestClient` teardown timeouts that read
+exactly like real failures. Check before trusting any tally:
+
+```bash
+pgrep -f pytest | wc -l        # must be 1 (or 0) before you start
+```
+
+**Contention is not the same as pollution.** After killing the strays, re-run a
+clean control before concluding. In this repo the split was 3 genuine failures,
+34 order-dependent — attributing all of it to load was wrong.
+
+**Compact-reporter line numbers do not identify the failing test.** `dart test`
+re-prints an in-progress suite's last test name as a heartbeat, so the `-1`
+lands next to a NEIGHBOURING file's status lines. Bisect, or read the stack
+trace, before naming a culprit — twice the named file was not the failing one.
+
+**Wall-clock affects date-sensitive tests.** Tests anchored on local
+`date.today()` while endpoints resolve UTC fail for ~5 hours each evening west
+of UTC, and pass all morning. If a run differs from an earlier one, check
+whether the two ran at different times of day before blaming the diff:
+
+```bash
+TZ=Pacific/Kiritimati <runner>   # UTC+14
+TZ=Pacific/Midway     <runner>   # UTC-11
+```
+
+Pass under one and fail under the other = a real instance, not flake.
+
 ## Remember
 
 > "Test first, deploy later. A senior developer tests the API before touching the device."

@@ -22,6 +22,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.pop("SENTRY_DSN", None)
 os.environ["PYTEST_DISABLE_SENTRY"] = "1"
 
+# Skip the startup inflammation pre-warm BEFORE importing main. It does a
+# paginated Supabase scan over the whole food_database table, launched via
+# asyncio.to_thread(asyncio.run, ...) — an OS thread that cannot be cancelled
+# once its socket read is in flight. Every TestClient(app) therefore pays a
+# live network round trip and can block for the whole per-test timeout during
+# teardown. Two tests in test_food_macro_integrity_e2e.py (which use a fake DB
+# and never touch Gemini) were timing out at 180s purely from this.
+# main.py already supports this flag for the same reason in local dev.
+os.environ["SKIP_INFLAMMATION_PREWARM"] = "1"
+
 from main import app
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
