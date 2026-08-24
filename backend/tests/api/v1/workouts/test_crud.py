@@ -85,7 +85,8 @@ class TestCreateWorkout:
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
                 result = await create_workout(
-                    workout_create,
+                    request=_make_request(),
+                    workout=workout_create,
                     background_tasks=BackgroundTasks(),
                     current_user=AUTH_USER,
                 )
@@ -125,7 +126,8 @@ class TestCreateWorkout:
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
                 result = await create_workout(
-                    workout_create,
+                    request=_make_request(),
+                    workout=workout_create,
                     background_tasks=BackgroundTasks(),
                     current_user=AUTH_USER,
                 )
@@ -260,7 +262,8 @@ class TestUpdateWorkout:
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with patch("api.v1.workouts.crud.index_workout_to_rag", new_callable=AsyncMock):
                 result = await update_workout(
-                    update_data,
+                    request=_make_request(),
+                    workout=update_data,
                     background_tasks=BackgroundTasks(),
                     workout_id="workout-1",
                     current_user=AUTH_USER,
@@ -280,7 +283,8 @@ class TestUpdateWorkout:
         with patch("api.v1.workouts.crud.get_supabase_db", return_value=mock_db):
             with pytest.raises(HTTPException) as exc_info:
                 await update_workout(
-                    WorkoutUpdate(name="Test"),
+                    request=_make_request(),
+                    workout=WorkoutUpdate(name="Test"),
                     background_tasks=BackgroundTasks(),
                     workout_id="nonexistent-id",
                     current_user=AUTH_USER,

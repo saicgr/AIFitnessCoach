@@ -137,14 +137,19 @@ async def trial_coach_cron(
                     if local_hour != tp_hour:
                         continue
 
-                    # Idempotency check
-                    if _already_sent(supabase, user_id, slot_id):
+                    # Idempotency: claim the (user_id, slot_id) slot BEFORE
+                    # sending (atomic via the UNIQUE(user_id, slot_id)
+                    # constraint), not after. Mirrors push_nudge_cron's
+                    # _try_dedup_insert — a check-then-send order fails OPEN
+                    # on a transient dedup-check error (silently re-sends a
+                    # message already recorded), while claim-then-send fails
+                    # CLOSED (worst case: skips a send, retried next hour).
+                    if not _try_claim_slot(supabase, user_id, slot_id):
                         continue
 
                     # Send the message
                     sent = await _send_trial_coach_message(supabase, user, slot_id)
                     if sent:
-                        _record_sent(supabase, user_id, slot_id)
                         messages_sent += 1
                         details.append(f"{user_id[:8]}…→{slot_id}")
 
@@ -173,32 +178,27 @@ def _to_local(utc_dt: datetime, tz_name: str) -> datetime:
         return utc_dt
 
 
-def _already_sent(supabase, user_id: str, slot_id: str) -> bool:
-    """Check if this user/slot already received a message."""
-    try:
-        result = supabase.client.table("trial_coach_messages_sent")\
-            .select("id")\
-            .eq("user_id", user_id)\
-            .eq("slot_id", slot_id)\
-            .limit(1)\
-            .execute()
-        return bool(result.data)
-    except Exception:
-        # Table may not exist yet — treat as not sent (will retry next hour)
-        # Production migration should add: trial_coach_messages_sent(user_id, slot_id, sent_at)
-        return False
+def _try_claim_slot(supabase, user_id: str, slot_id: str) -> bool:
+    """Attempt to atomically claim the (user_id, slot_id) idempotency slot.
 
-
-def _record_sent(supabase, user_id: str, slot_id: str):
-    """Record that a message was sent (idempotency tracker)."""
+    Returns True if the slot was claimed (this call should proceed to send).
+    Returns False if it was already claimed (UNIQUE constraint conflict —
+    already sent) OR the insert failed for any other reason. Fail-safe by
+    design: on an unexpected error we skip the send this hour (retried next
+    hour) rather than risk a duplicate proactive coach DM.
+    """
     try:
         supabase.client.table("trial_coach_messages_sent").insert({
             "user_id": user_id,
             "slot_id": slot_id,
             "sent_at": datetime.utcnow().isoformat(),
         }).execute()
+        return True
     except Exception as e:
-        logger.warning(f"Could not record sent message {user_id}/{slot_id}: {e}")
+        if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
+            return False
+        logger.error(f"Trial coach dedup insert error for {user_id}/{slot_id}: {e}", exc_info=True)
+        return False
 
 
 async def _send_trial_coach_message(supabase, user: dict, slot_id: str) -> bool:

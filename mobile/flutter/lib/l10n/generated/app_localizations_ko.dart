@@ -30,7 +30,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accessibilityCardHighContrast => '고대비';
 
   @override
-  String get accessibilityCardIncreaseColorContrastFor => '색상 대비를 높여 가독성을 향상합니다';
+  String get accessibilityCardIncreaseColorContrastFor =>
+      '색상 대비를 높여 가독성을 향상합니다';
 
   @override
   String get accessibilityCardLargeButtons => '큰 버튼';
@@ -91,7 +92,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get achievementsCardCompleteWorkoutsToUnlock => '운동을 완료하고 배지를 잠금 해제하세요!';
+  String get achievementsCardCompleteWorkoutsToUnlock =>
+      '운동을 완료하고 배지를 잠금 해제하세요!';
 
   @override
   String get achievementsCardLoadingAchievements => '업적 불러오는 중...';
@@ -314,7 +316,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get activeWorkoutHelperWhenToUse => '사용 시기';
 
   @override
-  String get activeWorkoutScreenExerciseSwappedSuccessfully => '운동이 성공적으로 교체되었습니다';
+  String get activeWorkoutScreenExerciseSwappedSuccessfully =>
+      '운동이 성공적으로 교체되었습니다';
 
   @override
   String activeWorkoutScreenRefactoredExerciseSAdded(Object _exercises) {
@@ -369,7 +372,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get activityCardReportPost => '게시물 신고';
 
   @override
-  String get activityCardReportSubmittedThankYou => '신고가 제출되었습니다. 커뮤니티를 안전하게 유지하도록 도와주셔서 감사합니다.';
+  String get activityCardReportSubmittedThankYou =>
+      '신고가 제출되었습니다. 커뮤니티를 안전하게 유지하도록 도와주셔서 감사합니다.';
 
   @override
   String get activityCardSubmit => '제출';
@@ -381,7 +385,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get activityCardUiEarnedAnAchievement => '업적 달성';
 
   @override
-  String get activityCardUiKeepTrainingEveryAttempt => '계속 훈련하세요! 모든 시도가 당신을 더 강하게 만듭니다';
+  String get activityCardUiKeepTrainingEveryAttempt =>
+      '계속 훈련하세요! 모든 시도가 당신을 더 강하게 만듭니다';
 
   @override
   String activityCardUiLbs(Object yourVolume) {
@@ -519,7 +524,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addGymProfileCreateGym => '체육관 만들기';
 
   @override
-  String get addGymProfileCustomizeTheEquipmentAvaila => '무게 범위를 포함하여 이 체육관에서 사용할 수 있는 장비를 맞춤 설정하세요';
+  String get addGymProfileCustomizeTheEquipmentAvaila =>
+      '무게 범위를 포함하여 이 체육관에서 사용할 수 있는 장비를 맞춤 설정하세요';
 
   @override
   String get addGymProfileDoYouHaveA => '웨이트 벤치가 있나요?';
@@ -549,7 +555,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addGymProfileMatchAppTheme => '앱 테마와 일치';
 
   @override
-  String get addGymProfileOptionalLeaveOnLet => '선택 사항 — 확실하지 않으면 \"AI가 결정하도록 두기\"로 두세요.';
+  String get addGymProfileOptionalLeaveOnLet =>
+      '선택 사항 — 확실하지 않으면 \"AI가 결정하도록 두기\"로 두세요.';
 
   @override
   String get addGymProfilePickAtLeastOne => '이 체육관에서 운동할 요일을 최소 하나 이상 선택하세요.';
@@ -558,7 +565,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addGymProfilePleaseEnterAName => '체육관 이름을 입력해 주세요';
 
   @override
-  String get addGymProfileRequiredForBarbellSquat => '필수 항목: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
+  String get addGymProfileRequiredForBarbellSquat =>
+      '필수 항목: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
 
   @override
   String get addGymProfileResetAll => '모두 재설정';
@@ -588,10 +596,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addGymProfileTrainingSplit => '트레이닝 분할';
 
   @override
-  String get addGymProfileUnlocksBenchPressIncline => '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
+  String get addGymProfileUnlocksBenchPressIncline =>
+      '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
 
   @override
-  String get addGymProfileUnlocksChestSupportedKb => '잠금 해제: 체스트 서포티드 KB 로우, KB 플로어 프레스 대안';
+  String get addGymProfileUnlocksChestSupportedKb =>
+      '잠금 해제: 체스트 서포티드 KB 로우, KB 플로어 프레스 대안';
 
   @override
   String get addGymProfileWorkoutEnvironment => '운동 환경';
@@ -665,13 +675,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get addGymSheetFollowUpBenchSubtitle => '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
+  String get addGymSheetFollowUpBenchSubtitle =>
+      '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
 
   @override
   String get addGymSheetFollowUpBenchTitle => '웨이트 벤치가 있나요?';
 
   @override
-  String get addGymSheetFollowUpSquatRackSubtitle => '필수 항목: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
+  String get addGymSheetFollowUpSquatRackSubtitle =>
+      '필수 항목: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
 
   @override
   String get addGymSheetFollowUpSquatRackTitle => '스쿼트 랙이 있나요?';
@@ -718,7 +730,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get addGymSheetPickAtLeastOneDay => '최소 하루 이상의 운동 요일을 선택하세요';
 
   @override
-  String get addGymSheetPickDaysDesc => '이 헬스장에서 운동할 요일을 선택하세요. 프로필을 전환하는 즉시 해당 요일에 대한 14일치 운동 계획이 미리 생성됩니다.';
+  String get addGymSheetPickDaysDesc =>
+      '이 헬스장에서 운동할 요일을 선택하세요. 프로필을 전환하는 즉시 해당 요일에 대한 14일치 운동 계획이 미리 생성됩니다.';
 
   @override
   String addGymSheetSameAs(Object name) {
@@ -994,7 +1007,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiCoachMealStressedWhatHelps => '스트레스를 받습니다. 무엇이 도움이 되나요?';
 
   @override
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '아시아 스타일 $meal 메뉴 하나를 추천해 주세요. 매크로와 조리법 포함.$budgetTail';
   }
 
@@ -1044,7 +1060,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType) {
+  String aiCoachMealSuggestionSheetGotALaterToday(
+    Object meal,
+    Object workoutType,
+  ) {
     return '오늘 나중에 $workoutType 예정이에요. 운동 전 에너지를 채울 수 있는 $meal 메뉴가 있을까요? 매크로와 타이밍 알려주세요.';
   }
 
@@ -1059,7 +1078,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetHighProteinPickOne(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '고단백 $meal 메뉴 하나를 추천해 주세요. 전체 매크로와 간단한 조리법 포함.$budgetTail';
   }
 
@@ -1094,17 +1116,26 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '인도식 $meal 메뉴 하나를 추천해 주세요. 매크로와 함께 식단 유지를 위해 포함하거나 제외할 사이드 메뉴를 알려주세요.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '이탈리안 또는 익숙한 $meal 메뉴 하나를 추천해 주세요. 매크로와 더 가벼운 대체 옵션 포함.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType) {
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
+    Object meal,
+    Object workoutType,
+  ) {
     return '$workoutType을 방금 마쳤어요. 이미 먹은 식단과 조화를 이루는 회복용 $meal 메뉴를 추천해 주세요.';
   }
 
@@ -1119,7 +1150,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '$meal 기록 중. 하루 식단에 맞는 건강한 메뉴 하나를 추천해 주세요. 매크로 포함, 짧고 직접적으로요.$budgetTail';
   }
 
@@ -1129,7 +1163,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '지중해식 $meal 메뉴 하나를 추천해 주세요. 매크로와 좋은 이유 포함.$budgetTail';
   }
 
@@ -1139,7 +1176,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '멕시칸 $meal 메뉴 하나를 추천해 주세요. 매크로와 함께 식단 유지를 위해 어떻게 구성해야 할지 알려주세요.$budgetTail';
   }
 
@@ -1154,7 +1194,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(
+    Object budgetTail,
+    Object meal,
+  ) {
     return '가스레인지나 오븐 없이 5분 안에 만들 수 있는 $meal 메뉴 하나를 추천해 주세요. 매크로와 준비물 포함.$budgetTail';
   }
 
@@ -1209,7 +1252,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiCoachMealWhatCanIEat => '이제 무엇을 먹을 수 있나요?';
 
   @override
-  String get aiCoachMealWorkingFromPartialData => '부분 데이터로 작업 - 대답은 일반적일 수 있습니다.';
+  String get aiCoachMealWorkingFromPartialData =>
+      '부분 데이터로 작업 - 대답은 일반적일 수 있습니다.';
 
   @override
   String get aiCoachMissedWorkoutNudge => '놓친 운동 넛지';
@@ -1315,7 +1359,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiDataUsageYourControls => '당신의 통제';
 
   @override
-  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit) {
+  String aiFeaturesMixinValue(
+    Object displayCurrent,
+    Object message,
+    Object snappedDisplay,
+    Object unit,
+  ) {
     return '$message: $displayCurrent → $snappedDisplay $unit';
   }
 
@@ -1463,13 +1512,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiIntegrationsTryAgain => '다시 시도';
 
   @override
-  String get aiIntegrationsUncheckAnythingYouWant => '이 연결에서 보류하려는 항목을 선택 취소하세요.';
+  String get aiIntegrationsUncheckAnythingYouWant =>
+      '이 연결에서 보류하려는 항목을 선택 취소하세요.';
 
   @override
   String get aiModelDownloadBasic => '기본';
 
   @override
-  String get aiModelDownloadBatteryWarning => '기기 내 AI 모델은 휴대폰에서 집중적인 연산을 수행합니다. 이로 인해 배터리 소모가 빨라지고 운동 생성 중 기기가 뜨거워질 수 있습니다. 더 큰 모델은 더 많은 리소스를 사용합니다.';
+  String get aiModelDownloadBatteryWarning =>
+      '기기 내 AI 모델은 휴대폰에서 집중적인 연산을 수행합니다. 이로 인해 배터리 소모가 빨라지고 운동 생성 중 기기가 뜨거워질 수 있습니다. 더 큰 모델은 더 많은 리소스를 사용합니다.';
 
   @override
   String get aiModelDownloadBestQuality => '최고 품질';
@@ -1502,7 +1553,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadGetYourTokenAt => 'huggingface.co/settings/tokens에서 토큰을 받으세요';
+  String get aiModelDownloadGetYourTokenAt =>
+      'huggingface.co/settings/tokens에서 토큰을 받으세요';
 
   @override
   String get aiModelDownloadHf => 'HF_...';
@@ -1511,7 +1563,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiModelDownloadHuggingfaceToken => 'HuggingFace 토큰';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenRemoved => 'HuggingFace 토큰이 제거되었습니다';
+  String get aiModelDownloadHuggingfaceTokenRemoved =>
+      'HuggingFace 토큰이 제거되었습니다';
 
   @override
   String get aiModelDownloadHuggingfaceTokenSaved => 'HuggingFace 토큰이 저장되었습니다';
@@ -1547,7 +1600,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiModelDownloadRemove => '제거하다';
 
   @override
-  String get aiModelDownloadRequiredToDownload => 'HuggingFace에서 모델을 다운로드하려면 필요합니다. huggingface.co/settings/tokens에서 무료 토큰을 받으세요.';
+  String get aiModelDownloadRequiredToDownload =>
+      'HuggingFace에서 모델을 다운로드하려면 필요합니다. huggingface.co/settings/tokens에서 무료 토큰을 받으세요.';
 
   @override
   String aiModelDownloadRequiresRam(Object ramLabel) {
@@ -1589,7 +1643,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiModelsCouldNotDetectDevice => '기기 성능을 감지할 수 없습니다';
 
   @override
-  String get aiModelsGetTokenAtHuggingface => 'Huggingface.co/settings/tokens에서 토큰을 받으세요.';
+  String get aiModelsGetTokenAtHuggingface =>
+      'Huggingface.co/settings/tokens에서 토큰을 받으세요.';
 
   @override
   String get aiModelsHf => 'hf_...';
@@ -1613,7 +1668,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiModelsRemove => '제거';
 
   @override
-  String get aiModelsRequiredToDownloadGated => 'HuggingFace에서 제한 모델을 다운로드하는 데 필요합니다.';
+  String get aiModelsRequiredToDownloadGated =>
+      'HuggingFace에서 제한 모델을 다운로드하는 데 필요합니다.';
 
   @override
   String get aiModelsSaveToken => '토큰 저장';
@@ -1653,7 +1709,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiPrivacyControlHowYourData => '데이터 사용 방식 제어';
 
   @override
-  String get aiPrivacyCouldnTUpdateConsent => '동의 설정을 업데이트할 수 없습니다. 다시 시도해 주세요.';
+  String get aiPrivacyCouldnTUpdateConsent =>
+      '동의 설정을 업데이트할 수 없습니다. 다시 시도해 주세요.';
 
   @override
   String get aiPrivacyHowYourDataIs => '데이터 사용 방식';
@@ -1701,7 +1758,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiSettingsPersonalityTone => '성격과 톤';
 
   @override
-  String get aiSettingsPickTheWeeklyStructure => 'AI가 계획해야 할 주간 구조를 선택하세요. 변경 사항은 다음 세대에 적용됩니다. 현재 주는 그대로 유지됩니다.';
+  String get aiSettingsPickTheWeeklyStructure =>
+      'AI가 계획해야 할 주간 구조를 선택하세요. 변경 사항은 다음 세대에 적용됩니다. 현재 주는 그대로 유지됩니다.';
 
   @override
   String get aiSettingsPrivacyData => '개인정보 및 데이터';
@@ -1766,7 +1824,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiSettingsScreenDefaultAgent => '기본 에이전트';
 
   @override
-  String get aiSettingsScreenEnableOrDisableAgents => '@멘션할 수 있는 상담원 활성화 또는 비활성화';
+  String get aiSettingsScreenEnableOrDisableAgents =>
+      '@멘션할 수 있는 상담원 활성화 또는 비활성화';
 
   @override
   String get aiSettingsScreenEncouragementLevel => '격려 수준';
@@ -1824,13 +1883,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiSettingsScreenStoreConversationsForContex => '맥락 파악을 위해 대화 저장';
 
   @override
-  String get aiSettingsScreenThisAgentRespondsWhen => '특정 에이전트를 @멘션하지 않을 때 응답하는 에이전트입니다';
+  String get aiSettingsScreenThisAgentRespondsWhen =>
+      '특정 에이전트를 @멘션하지 않을 때 응답하는 에이전트입니다';
 
   @override
   String get aiSettingsScreenThisWillDeleteAll => '모든 채팅 기록이 삭제됩니다';
 
   @override
-  String get aiSettingsScreenThisWillPermanentlyDelete => 'AI 코치와의 모든 대화가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
+  String get aiSettingsScreenThisWillPermanentlyDelete =>
+      'AI 코치와의 모든 대화가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
 
   @override
   String get aiSettingsScreenUseEmojis => '이모지 사용';
@@ -1839,13 +1900,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiSettingsScreenUsePreviousConversations => '이전 대화 사용';
 
   @override
-  String get aiSettingsShowAiAgentsFitness => 'AI 에이전트, 피트니스 코칭 토글 및 개인정보 보호 설정 표시';
+  String get aiSettingsShowAiAgentsFitness =>
+      'AI 에이전트, 피트니스 코칭 토글 및 개인정보 보호 설정 표시';
 
   @override
   String get aiSettingsSuggestions => '제안';
 
   @override
-  String get aiSettingsTellTheAiWhat => '이번 블록에서 가장 중요한 목표를 AI에게 알려주세요. 최대 5개까지, 각각 1~5점으로 가중치를 설정하세요.';
+  String get aiSettingsTellTheAiWhat =>
+      '이번 블록에서 가장 중요한 목표를 AI에게 알려주세요. 최대 5개까지, 각각 1~5점으로 가중치를 설정하세요.';
 
   @override
   String get aiSettingsTrainingSplit => '트레이닝 분할';
@@ -1870,7 +1933,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName) {
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
+    Object scheduleSuffix,
+    Object splitDisplayName,
+  ) {
     return '$splitDisplayName$scheduleSuffix(으)로 변경되었습니다. 새로운 운동을 생성 중입니다...';
   }
 
@@ -1914,7 +1980,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiTextInputGotIt => '확인';
 
   @override
-  String get aiTextInputLogSets1358 => '세트 기록: 135*8, 145*6, +10...\n운동 추가: 3x10 데드리프트 135';
+  String get aiTextInputLogSets1358 =>
+      '세트 기록: 135*8, 145*6, +10...\n운동 추가: 3x10 데드리프트 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => '세트 기록 / 운동 추가';
@@ -1958,7 +2025,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get audioCoachCardAudioSynthesisDisabledSho => '음성 합성 비활성화됨 — 텍스트만 표시됩니다.';
+  String get audioCoachCardAudioSynthesisDisabledSho =>
+      '음성 합성 비활성화됨 — 텍스트만 표시됩니다.';
 
   @override
   String get audioCoachCardTodaySCoachBrief => '오늘의 코치 브리핑';
@@ -2044,7 +2112,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get avoidedExercisesExercisesToAvoid => '제외할 운동';
 
   @override
-  String get avoidedExercisesExercisesYouAddHere => '여기에 추가한 운동은 AI가 생성하는 운동 계획에서 제외됩니다.';
+  String get avoidedExercisesExercisesYouAddHere =>
+      '여기에 추가한 운동은 AI가 생성하는 운동 계획에서 제외됩니다.';
 
   @override
   String get avoidedExercisesNoExercisesToAvoid => '제외할 운동 없음';
@@ -2053,7 +2122,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get avoidedExercisesPleaseLogIn => '로그인해주세요';
 
   @override
-  String get avoidedExercisesReasonAndTemporarySettings => '이유와 임시 설정은 모든 운동에 적용됩니다. 이후에 개별 항목을 수정할 수 있습니다.';
+  String get avoidedExercisesReasonAndTemporarySettings =>
+      '이유와 임시 설정은 모든 운동에 적용됩니다. 이후에 개별 항목을 수정할 수 있습니다.';
 
   @override
   String get avoidedExercisesReasonOptional => '이유 (선택 사항)';
@@ -2083,7 +2153,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenBrowseTheExerciseLibrary => '운동 라이브러리에서 옵션 찾아보기';
+  String get avoidedExercisesScreenBrowseTheExerciseLibrary =>
+      '운동 라이브러리에서 옵션 찾아보기';
 
   @override
   String avoidedExercisesScreenEdit(Object exerciseName) {
@@ -2091,18 +2162,26 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenErrorLoadingAlternatives => '대체 운동을 불러오는 중 오류가 발생했습니다';
+  String get avoidedExercisesScreenErrorLoadingAlternatives =>
+      '대체 운동을 불러오는 중 오류가 발생했습니다';
 
   @override
-  String get avoidedExercisesScreenNoSpecificAlternativesFound => '구체적인 대체 운동을 찾을 수 없습니다';
+  String get avoidedExercisesScreenNoSpecificAlternativesFound =>
+      '구체적인 대체 운동을 찾을 수 없습니다';
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
+    Object exerciseName,
+  ) {
     return '$exerciseName 대신';
   }
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
+    Object day,
+    Object month,
+    Object year,
+  ) {
     return '$year년 $month월 $day일까지';
   }
 
@@ -2172,7 +2251,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get avoidedMusclesErrorLoadingMuscles => '근육 정보를 불러오는 중 오류가 발생했습니다';
 
   @override
-  String get avoidedMusclesExercisesTargetingThisMuscl => '이 근육을 타겟으로 하는 운동은 완전히 제외됩니다';
+  String get avoidedMusclesExercisesTargetingThisMuscl =>
+      '이 근육을 타겟으로 하는 운동은 완전히 제외됩니다';
 
   @override
   String get avoidedMusclesMusclesToAvoid => '제외할 근육';
@@ -2190,7 +2270,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get avoidedMusclesRemoveFromAvoidList => '제외 목록에서 제거';
 
   @override
-  String get avoidedMusclesReplacedExercisesTargetingT => '다가오는 운동에서 이 근육을 타겟으로 하는 운동이 대체되었습니다';
+  String get avoidedMusclesReplacedExercisesTargetingT =>
+      '다가오는 운동에서 이 근육을 타겟으로 하는 운동이 대체되었습니다';
 
   @override
   String get avoidedMusclesSaveChanges => '변경 사항 저장';
@@ -2231,7 +2312,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get badgeHubChallenges => '챌린지';
 
   @override
-  String get badgeHubHeroEarnBadgesForEvery => '모든 이정표, 연속 기록, PB에 대해 배지를 획득하세요.';
+  String get badgeHubHeroEarnBadgesForEvery =>
+      '모든 이정표, 연속 기록, PB에 대해 배지를 획득하세요.';
 
   @override
   String get badgeHubHeroHowItWorks => '작동 방식';
@@ -2246,7 +2328,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get badgeHubInProgress2 => '진행 중';
 
   @override
-  String get badgeHubLevelledBadgesThatKeep => '더 많은 걸음 수, 칼로리, 세션 또는 거리를 기록할수록 계속 올라가는 레벨 배지입니다.';
+  String get badgeHubLevelledBadgesThatKeep =>
+      '더 많은 걸음 수, 칼로리, 세션 또는 거리를 기록할수록 계속 올라가는 레벨 배지입니다.';
 
   @override
   String get badgeHubMasteries => '마스터리';
@@ -2258,7 +2341,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get badgeHubMyBadges => '내 배지';
 
   @override
-  String get badgeHubOneTimeTrophiesFor => '시간 목표, 꾸준함, 큰 PR 등 이정표 달성을 위한 일회성 트로피입니다.';
+  String get badgeHubOneTimeTrophiesFor =>
+      '시간 목표, 꾸준함, 큰 PR 등 이정표 달성을 위한 일회성 트로피입니다.';
 
   @override
   String get badgeHubPersonalBests => '개인 최고 기록';
@@ -2275,10 +2359,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get badgeHubWeeklyOrDailyChallenges => '매주 또는 매일 도전할 수 있는 챌린지입니다. 일정에 따라 초기화되므로 언제든 다시 획득할 수 있습니다.';
+  String get badgeHubWeeklyOrDailyChallenges =>
+      '매주 또는 매일 도전할 수 있는 챌린지입니다. 일정에 따라 초기화되므로 언제든 다시 획득할 수 있습니다.';
 
   @override
-  String get badgeHubYourHighestLiftsLongest => '최고 중량, 최장 세션, 최대 운동량입니다. 기록을 경신하여 메달을 업그레이드하세요.';
+  String get badgeHubYourHighestLiftsLongest =>
+      '최고 중량, 최장 세션, 최대 운동량입니다. 기록을 경신하여 메달을 업그레이드하세요.';
 
   @override
   String get barcodeScannerOverlayPointYourCameraAt => '제품 바코드에 카메라를 비추세요';
@@ -2377,7 +2463,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beastModeUnlockUnlocked => '잠금 해제됨';
 
   @override
-  String get beastModeUnlockYouVeUnlockedThe => '파워 유저 툴킷이 잠금 해제되었습니다. 운동 뒤에 숨겨진 알고리즘을 확인해보세요.';
+  String get beastModeUnlockYouVeUnlockedThe =>
+      '파워 유저 툴킷이 잠금 해제되었습니다. 운동 뒤에 숨겨진 알고리즘을 확인해보세요.';
 
   @override
   String get beastModeWorkoutAlgorithm => '운동 알고리즘';
@@ -2449,13 +2536,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bodyAnalyzerBodyFat => '체지방';
 
   @override
-  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement => '사진에서 줄자 측정값도 추정';
+  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement =>
+      '사진에서 줄자 측정값도 추정';
 
   @override
   String get bodyAnalyzerCaptureAnalyzing => '분석 중…';
 
   @override
-  String get bodyAnalyzerCaptureFusesHeightWeightBody => '키, 체중, 체지방 및 줄자 측정값을 분석에 통합합니다.';
+  String get bodyAnalyzerCaptureFusesHeightWeightBody =>
+      '키, 체중, 체지방 및 줄자 측정값을 분석에 통합합니다.';
 
   @override
   String get bodyAnalyzerCapturePickAtLeastOne => '사진을 하나 이상 선택하세요.';
@@ -2649,7 +2738,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get cancelConfirmationAnythingElseYouD => '공유하고 싶은 다른 의견이 있으신가요? (선택 사항)';
+  String get cancelConfirmationAnythingElseYouD =>
+      '공유하고 싶은 다른 의견이 있으신가요? (선택 사항)';
 
   @override
   String get cancelConfirmationCancelAnyway => '그래도 취소';
@@ -2721,7 +2811,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get capabilityAndCommunityReachUsAnytime => '언제든 문의하세요';
 
   @override
-  String get capabilityAndCommunityRealNumbersRealPeople => '실제 수치. 그 뒤에 있는 실제 사람들.';
+  String get capabilityAndCommunityRealNumbersRealPeople =>
+      '실제 수치. 그 뒤에 있는 실제 사람들.';
 
   @override
   String get cardioHistoryAll => '전체';
@@ -2775,7 +2866,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cardioHistoryHike => '하이킹';
 
   @override
-  String get cardioHistoryImportFromStravaPeloton => 'Strava, Peloton, Garmin, Apple Health 또는 Fitbit에서 가져와 기록을 확인하세요.';
+  String get cardioHistoryImportFromStravaPeloton =>
+      'Strava, Peloton, Garmin, Apple Health 또는 Fitbit에서 가져와 기록을 확인하세요.';
 
   @override
   String get cardioHistoryIndoorCycle => '실내 사이클';
@@ -3160,7 +3252,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get challengeHistoryRetryChallenge2 => '챌린지 재도전?';
 
   @override
-  String get challengeHistoryRetryChallengeSentTime => '🔥 재도전 요청을 보냈습니다! 설욕할 시간입니다!';
+  String get challengeHistoryRetryChallengeSentTime =>
+      '🔥 재도전 요청을 보냈습니다! 설욕할 시간입니다!';
 
   @override
   String challengeHistoryScreenFailedToSendRetry(Object e) {
@@ -3204,7 +3297,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get challengesFailedToLoadChallenges => '챌린지 불러오기 실패';
 
   @override
-  String get challengesJoinAChallengeTo => '챌린지에 참여하여 친구들과 경쟁하고\n피트니스 목표를 달성하세요!';
+  String get challengesJoinAChallengeTo =>
+      '챌린지에 참여하여 친구들과 경쟁하고\n피트니스 목표를 달성하세요!';
 
   @override
   String get challengesMyChallenges => '내 챌린지';
@@ -3242,7 +3336,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get changeEquipmentHelperEquipment => '장비';
 
   @override
-  String get changeEquipmentHelperNoActiveGymProfile => '활성화된 짐 프로필이 없습니다. 설정 → 짐 메뉴를 먼저 확인하세요.';
+  String get changeEquipmentHelperNoActiveGymProfile =>
+      '활성화된 짐 프로필이 없습니다. 설정 → 짐 메뉴를 먼저 확인하세요.';
 
   @override
   String get chatActionConfirmApplied => '적용됨';
@@ -3260,16 +3355,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatClearChatHistory => '채팅 기록을 지울까요?';
 
   @override
-  String get chatFeaturesInfoLongPressActionPills => '액션 버튼을 길게 눌러 바로가기를 사용자 지정하세요';
+  String get chatFeaturesInfoLongPressActionPills =>
+      '액션 버튼을 길게 눌러 바로가기를 사용자 지정하세요';
 
   @override
-  String get chatFeaturesInfoTryAskingWhatCan => '전체 기능 목록을 보려면 \"무엇을 할 수 있나요?\"라고 물어보세요';
+  String get chatFeaturesInfoTryAskingWhatCan =>
+      '전체 기능 목록을 보려면 \"무엇을 할 수 있나요?\"라고 물어보세요';
 
   @override
   String get chatFeaturesInfoWhatCanIDo => '무엇을 할 수 있나요?';
 
   @override
-  String get chatFeaturesInfoYourAiCoachCan => 'AI 코치가 미디어 분석, 운동 생성, 영양 조언 등을 제공합니다.';
+  String get chatFeaturesInfoYourAiCoachCan =>
+      'AI 코치가 미디어 분석, 운동 생성, 영양 조언 등을 제공합니다.';
 
   @override
   String get chatGotIt => '확인';
@@ -3359,7 +3457,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatQuickPillsCustomizeShortcuts => '바로가기 사용자 지정';
 
   @override
-  String get chatQuickPillsDragToReorderTop => '드래그하여 순서를 변경하세요. 상위 5개 항목이 입력창 위에 표시됩니다.';
+  String get chatQuickPillsDragToReorderTop =>
+      '드래그하여 순서를 변경하세요. 상위 5개 항목이 입력창 위에 표시됩니다.';
 
   @override
   String get chatQuickPillsRecordVideo => '동영상 촬영';
@@ -3371,7 +3470,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatQuickPillsTakePhoto => '사진 촬영';
 
   @override
-  String get chatQuickPillsTapAnActionTo => '액션을 탭하여 사용하세요. 버튼을 길게 눌러 순서를 변경할 수 있습니다.';
+  String get chatQuickPillsTapAnActionTo =>
+      '액션을 탭하여 사용하세요. 버튼을 길게 눌러 순서를 변경할 수 있습니다.';
 
   @override
   String get chatScreenCantReachCoach => '현재 코치에게 연결할 수 없습니다.';
@@ -3486,7 +3586,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get chatScreenMultiAgentHangTight => '다중 에이전트 답변은 최대 2분까지 걸릴 수 있습니다. 잠시 기다리거나 다시 시도하세요.';
+  String get chatScreenMultiAgentHangTight =>
+      '다중 에이전트 답변은 최대 2분까지 걸릴 수 있습니다. 잠시 기다리거나 다시 시도하세요.';
 
   @override
   String get chatScreenPartAddAMessage => '메시지 입력...';
@@ -3532,7 +3633,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatScreenPartWaitTimeUnavailable => '대기 시간 확인 불가';
 
   @override
-  String get chatScreenPartYouWillBeConnected => '질문에 도움을 드릴 수 있는 실제 상담원과 연결됩니다.';
+  String get chatScreenPartYouWillBeConnected =>
+      '질문에 도움을 드릴 수 있는 실제 상담원과 연결됩니다.';
 
   @override
   String chatScreenRouteNotRegistered(Object route) {
@@ -3584,10 +3686,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chatThisMatchIsMissing => '이 매치에 운동 ID가 누락되었습니다.';
 
   @override
-  String get chatThisWillDeleteAll => 'AI 코치와의 모든 대화 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
+  String get chatThisWillDeleteAll =>
+      'AI 코치와의 모든 대화 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.';
 
   @override
-  String get chatYourPersonalAiPowered => '당신의 개인 AI 피트니스 코치입니다. 운동, 영양, 회복 또는 피트니스 관련 질문을 무엇이든 물어보세요. AI는 당신의 진행 상황을 학습하여 맞춤형 조언을 제공합니다.';
+  String get chatYourPersonalAiPowered =>
+      '당신의 개인 AI 피트니스 코치입니다. 운동, 영양, 회복 또는 피트니스 관련 질문을 무엇이든 물어보세요. AI는 당신의 진행 상황을 학습하여 맞춤형 조언을 제공합니다.';
 
   @override
   String get classicStatsTemplateCalories => '칼로리';
@@ -3763,7 +3867,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coachSelectionGender => '성별';
 
   @override
-  String get coachSelectionLetSGoooTime => '가자! 오늘 제대로 불태워 봅시다! 5일 연속 기록 중인데 여기서 멈출 순 없죠. 마법 같은 결과를 만들어 볼 준비 되셨나요?';
+  String get coachSelectionLetSGoooTime =>
+      '가자! 오늘 제대로 불태워 봅시다! 5일 연속 기록 중인데 여기서 멈출 순 없죠. 마법 같은 결과를 만들어 볼 준비 되셨나요?';
 
   @override
   String get coachSelectionLook => '외모';
@@ -3836,7 +3941,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coachVoicePickerPlaysDuringWorkoutAnnouncem => '운동 안내 시 재생';
 
   @override
-  String get coachVoicePickerUnlocksAtLevel50 => '레벨 50 달성 시 잠금 해제 — 계속 레벨업하세요!';
+  String get coachVoicePickerUnlocksAtLevel50 =>
+      '레벨 50 달성 시 잠금 해제 — 계속 레벨업하세요!';
 
   @override
   String get coachVoicePickerUnlocksAtLevel502 => '레벨 50 달성 시 잠금 해제';
@@ -3881,13 +3987,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get combinedHealthConnectHealth => '건강 연동';
 
   @override
-  String get combinedHealthConnectHealthBody => '걸음 수, 심박수, 수면 등은 Android의 Health Connect와 iOS의 건강 앱에서 동기화됩니다.';
+  String get combinedHealthConnectHealthBody =>
+      '걸음 수, 심박수, 수면 등은 Android의 Health Connect와 iOS의 건강 앱에서 동기화됩니다.';
 
   @override
   String get combinedHealthConnectHealthToSee => '활동을 확인하려면 건강 데이터를 연동하세요';
 
   @override
-  String get combinedHealthCouldNotLoadYour => '건강 데이터를 불러올 수 없습니다. 아래로 당겨서 다시 시도하세요.';
+  String get combinedHealthCouldNotLoadYour =>
+      '건강 데이터를 불러올 수 없습니다. 아래로 당겨서 다시 시도하세요.';
 
   @override
   String get combinedHealthCouldNotSaveGoal => '목표를 저장할 수 없습니다.';
@@ -3940,7 +4048,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get combinedHealthWater => '수분 섭취';
 
   @override
-  String get comebackModeComebackModeReducesSets => 'Comeback 모드는 휴식 후 부상을 방지하기 위해 세트 수와 강도를 줄여줍니다.';
+  String get comebackModeComebackModeReducesSets =>
+      'Comeback 모드는 휴식 후 부상을 방지하기 위해 세트 수와 강도를 줄여줍니다.';
 
   @override
   String get comebackModeEaseMeBackIn => '천천히 다시 시작하기';
@@ -3975,7 +4084,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comingSoonBottomGotIt => '확인했습니다!';
 
   @override
-  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek) {
+  String comingSoonBottomSheetWeeksSessionsPerWeek(
+    Object durationWeeks,
+    Object sessionsPerWeek,
+  ) {
     return '$durationWeeks주 • 주 $sessionsPerWeek회 세션';
   }
 
@@ -3983,7 +4095,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comingSoonBottomWhatYouCanExpect => '기대할 수 있는 기능:';
 
   @override
-  String get comingSoonBrowseLikeAndRemix => '커뮤니티에서 공유한 레시피를 탐색하고, 좋아요를 누르고, 리믹스하세요. 소셜 탭과 함께 제공됩니다.';
+  String get comingSoonBrowseLikeAndRemix =>
+      '커뮤니티에서 공유한 레시피를 탐색하고, 좋아요를 누르고, 리믹스하세요. 소셜 탭과 함께 제공됩니다.';
 
   @override
   String get comingSoonCaloriesSummary => '칼로리 요약';
@@ -4046,7 +4159,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comingSoonMyJourney => '나의 여정';
 
   @override
-  String get comingSoonOneTapOnYour => '홈 또는 잠금 화면에서 한 번의 탭으로 칼로리와 매크로가 포함된 AI 식단 아이디어를 확인하고 \'기록하기\' 버튼을 사용하세요.';
+  String get comingSoonOneTapOnYour =>
+      '홈 또는 잠금 화면에서 한 번의 탭으로 칼로리와 매크로가 포함된 AI 식단 아이디어를 확인하고 \'기록하기\' 버튼을 사용하세요.';
 
   @override
   String get comingSoonOneTapToStart => '한 번의 탭으로 오늘의 운동 시작';
@@ -4058,7 +4172,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comingSoonOverlayComingSoon => '준비 중';
 
   @override
-  String get comingSoonPairBleChestStraps => 'BLE 가슴 스트랩 및 심박수 모니터를 페어링하여 운동 중 실시간 BPM 확인';
+  String get comingSoonPairBleChestStraps =>
+      'BLE 가슴 스트랩 및 심박수 모니터를 페어링하여 운동 중 실시간 BPM 확인';
 
   @override
   String get comingSoonPhotoCompare => '사진 비교';
@@ -4103,7 +4218,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comingSoonStrengthAndVolumeCharts => '시간에 따른 근력 및 볼륨 차트';
 
   @override
-  String get comingSoonTheseFeaturesAreIn => '이 기능들은 현재 개발 중이며 곧 홈 화면 위젯으로 추가될 예정입니다.';
+  String get comingSoonTheseFeaturesAreIn =>
+      '이 기능들은 현재 개발 중이며 곧 홈 화면 위젯으로 추가될 예정입니다.';
 
   @override
   String get comingSoonTitle => '곧 출시';
@@ -4237,7 +4353,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get communityRecipeSearchCommunityRecipes => '커뮤니티 레시피';
 
   @override
-  String get communityRecipeSearchNothingFoundInCommunity => '커뮤니티 레시피에서 찾을 수 없습니다.';
+  String get communityRecipeSearchNothingFoundInCommunity =>
+      '커뮤니티 레시피에서 찾을 수 없습니다.';
 
   @override
   String get communityRecipeSearchOpenTheRecipeTo => '레시피를 열어 라이브러리에 저장하세요';
@@ -4246,7 +4363,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get communityRecipeSearchSaveToMyRecipes => '내 레시피에 저장';
 
   @override
-  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged) {
+  String communityRecipeSearchScreenKcalLogs(
+    Object summary,
+    Object timesLogged,
+  ) {
     return '$summary kcal · $timesLogged회 기록';
   }
 
@@ -4254,7 +4374,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get communityRecipeSearchSearchPublicRecipes => '공개 레시피 검색...';
 
   @override
-  String get communityRecipeSearchSearchPublicRecipesShared => '다른 사용자가 공유한 공개 레시피를 검색하세요.';
+  String get communityRecipeSearchSearchPublicRecipesShared =>
+      '다른 사용자가 공유한 공개 레시피를 검색하세요.';
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
@@ -4265,7 +4386,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get compactWorkoutRow => ' • ';
 
   @override
-  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount) {
+  String compactWorkoutRowMinExercises(
+    Object bestDurationMinutes,
+    Object exerciseCount,
+  ) {
     return '$bestDurationMinutes분 • 운동 $exerciseCount개';
   }
 
@@ -4273,7 +4397,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get companionPickerAddAll => '모두 추가';
 
   @override
-  String get companionPickerLastTimeYouLogged => '지난번에 함께 기록하셨네요. 오늘 적용할 항목만 선택하세요.';
+  String get companionPickerLastTimeYouLogged =>
+      '지난번에 함께 기록하셨네요. 오늘 적용할 항목만 선택하세요.';
 
   @override
   String get companionPickerLogSelected => '선택 항목 기록';
@@ -4338,7 +4463,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comparisonGalleryComparisonDeleted => '비교가 삭제되었습니다';
 
   @override
-  String get comparisonGalleryCreateABeforeAfter => '사진 탭에서 비포 & 애프터 비교를 만들어 시간 경과에 따른 변화를 확인하세요.';
+  String get comparisonGalleryCreateABeforeAfter =>
+      '사진 탭에서 비포 & 애프터 비교를 만들어 시간 경과에 따른 변화를 확인하세요.';
 
   @override
   String get comparisonGalleryDeleteComparison => '비교를 삭제할까요?';
@@ -4356,7 +4482,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comparisonGalleryOpenInComparisonEditor => '비교 편집기에서 열기';
 
   @override
-  String get comparisonGalleryOpenTheComparisonIn => '내보내기 및 공유를 하려면 먼저 편집기에서 비교를 여세요.';
+  String get comparisonGalleryOpenTheComparisonIn =>
+      '내보내기 및 공유를 하려면 먼저 편집기에서 비교를 여세요.';
 
   @override
   String get comparisonGalleryReEdit => '다시 편집';
@@ -4368,7 +4495,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get comparisonGallerySavedComparisons => '저장된 비교';
 
   @override
-  String get comparisonGalleryThisWillPermanentlyRemove => '이 비교가 영구적으로 삭제됩니다. 원본 사진은 삭제되지 않습니다.';
+  String get comparisonGalleryThisWillPermanentlyRemove =>
+      '이 비교가 영구적으로 삭제됩니다. 원본 사진은 삭제되지 않습니다.';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4431,7 +4559,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos) {
+  String comparisonViewExtSelectedPhotos(
+    Object length,
+    Object maxPhotos,
+    Object minPhotos,
+  ) {
     return '$length개 선택됨 ($minPhotos-$maxPhotos장)';
   }
 
@@ -4772,7 +4904,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get conversationSendTheFirstMessage => '첫 메시지를 보내보세요!';
 
   @override
-  String get conversationSomeMessagesWereEncrypted => '일부 메시지는 다른 기기에서 암호화되어 여기서 읽을 수 없습니다.';
+  String get conversationSomeMessagesWereEncrypted =>
+      '일부 메시지는 다른 기기에서 암호화되어 여기서 읽을 수 없습니다.';
 
   @override
   String get conversationTypeAMessage => '메시지 입력...';
@@ -4897,7 +5030,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get createExerciseAdvancedOptional => '고급 (선택 사항)';
 
   @override
-  String get createExerciseAiFilledExerciseDetails => 'AI가 운동 세부 정보를 채웠습니다. 검토 후 저장하세요';
+  String get createExerciseAiFilledExerciseDetails =>
+      'AI가 운동 세부 정보를 채웠습니다. 검토 후 저장하세요';
 
   @override
   String get createExerciseAnalyzeWithAi => 'AI로 분석';
@@ -4945,7 +5079,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get createExerciseReps => '횟수: ';
 
   @override
-  String get createExerciseRestRpeTempoIncline => '휴식, RPE, 템포, 경사도, 거리, 시간, 메모';
+  String get createExerciseRestRpeTempoIncline =>
+      '휴식, RPE, 템포, 경사도, 거리, 시간, 메모';
 
   @override
   String createExerciseSheetAddMoreExercises(Object length) {
@@ -5176,7 +5311,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customContentSectionAddEquipmentNotIn => '표준 목록에 없는 장비 추가';
 
   @override
-  String get customContentSectionAddEquipmentThatWill => 'AI 생성 운동에 포함될 장비를 추가하세요.';
+  String get customContentSectionAddEquipmentThatWill =>
+      'AI 생성 운동에 포함될 장비를 추가하세요.';
 
   @override
   String get customContentSectionAddExercise => '운동 추가';
@@ -5185,10 +5321,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customContentSectionCompoundExercise => '복합 운동';
 
   @override
-  String get customContentSectionCreateCustomComboExercise => '사용자 지정 및 콤보 운동 생성';
+  String get customContentSectionCreateCustomComboExercise =>
+      '사용자 지정 및 콤보 운동 생성';
 
   @override
-  String get customContentSectionCreateExercisesThatCan => 'AI 생성 운동에 포함할 수 있는 운동을 만드세요.';
+  String get customContentSectionCreateExercisesThatCan =>
+      'AI 생성 운동에 포함할 수 있는 운동을 만드세요.';
 
   @override
   String get customContentSectionDeleteExercise => '운동을 삭제할까요?';
@@ -5227,7 +5365,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customContentSectionNoCustomExercisesYet => '아직 맞춤 운동이 없습니다';
 
   @override
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed) {
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(
+    Object trimmed,
+  ) {
     return '\"$trimmed\"을(를) 장비에 추가했습니다';
   }
 
@@ -5247,7 +5387,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed) {
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(
+    Object trimmed,
+  ) {
     return '$trimmed은(는) 이미 목록에 있습니다';
   }
 
@@ -5308,7 +5450,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses) {
+  String customExercisesScreenExercisesUses(
+    Object totalCustomExercises,
+    Object totalUses,
+  ) {
     return '운동 $totalCustomExercises개, 사용 횟수 $totalUses회';
   }
 
@@ -5337,7 +5482,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customFoodBuilderCreateNewAnyway => '그래도 새로 생성';
 
   @override
-  String get customFoodBuilderFillItInYourself => '직접 입력하거나, 이름 또는 라벨 사진으로 AI의 제안을 받아보세요. 모든 값은 수정 가능합니다.';
+  String get customFoodBuilderFillItInYourself =>
+      '직접 입력하거나, 이름 또는 라벨 사진으로 AI의 제안을 받아보세요. 모든 값은 수정 가능합니다.';
 
   @override
   String get customFoodBuilderLabelFromPhotos => '사진에서 라벨 추출';
@@ -5368,7 +5514,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customFoodBuilderUseExisting => '기존 항목 사용';
 
   @override
-  String get customGoalsAddSpecificSkillsOr => '향상시키고 싶은 특정 기술이나 목표를 추가하세요.\nAI가 적절한 운동을 찾는 데 도움을 드립니다.';
+  String get customGoalsAddSpecificSkillsOr =>
+      '향상시키고 싶은 특정 기술이나 목표를 추가하세요.\nAI가 적절한 운동을 찾는 데 도움을 드립니다.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI 생성 키워드';
@@ -5400,7 +5547,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customGoalsSomethingWentWrong => '문제가 발생했습니다';
 
   @override
-  String get customGoalsTheseKeywordsWillHelp => '이 키워드들은 목표에 맞는 운동을 찾는 데 도움이 됩니다.';
+  String get customGoalsTheseKeywordsWillHelp =>
+      '이 키워드들은 목표에 맞는 운동을 찾는 데 도움이 됩니다.';
 
   @override
   String get customTrendAddMetric => '지표 추가';
@@ -5447,7 +5595,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints) {
+  String customTrendScreenSharedDays(
+    Object kMinCorrelationPairs,
+    Object pairedPoints,
+  ) {
     return '$pairedPoints/$kMinCorrelationPairs 공유 일수';
   }
 
@@ -5600,7 +5751,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get cycleMonthlySummaryThisRecapStaysPrivate => '이 요약은 본인만 볼 수 있으며, 주기 데이터는 절대 공유되지 않습니다.';
+  String get cycleMonthlySummaryThisRecapStaysPrivate =>
+      '이 요약은 본인만 볼 수 있으며, 주기 데이터는 절대 공유되지 않습니다.';
 
   @override
   String get cycleMonthlySummaryYourMonthInReview => '이번 달 요약';
@@ -5697,7 +5849,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiPredictionsAreEstimates => '예측은 기록된 데이터를 기반으로 한 추정치이며, 피임 방법이나 의학적 조언이 아닙니다. 건강 관련 우려 사항은 전문의와 상담하세요.';
+  String get cycleScreenUiPredictionsAreEstimates =>
+      '예측은 기록된 데이터를 기반으로 한 추정치이며, 피임 방법이나 의학적 조언이 아닙니다. 건강 관련 우려 사항은 전문의와 상담하세요.';
 
   @override
   String get cycleScreenUiPregnancyModeIsOn => '임신 모드 활성화됨';
@@ -5826,10 +5979,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cycleTemperatureChartBasalTemperature => '기초 체온';
 
   @override
-  String get cycleTemperatureChartDragAcrossTheChart => '차트를 드래그하여 특정 날짜를 확인하세요';
+  String get cycleTemperatureChartDragAcrossTheChart =>
+      '차트를 드래그하여 특정 날짜를 확인하세요';
 
   @override
-  String get cycleTemperatureChartLogBasalTemperatureTo => '기초 체온을 기록하여 차트를 채우세요';
+  String get cycleTemperatureChartLogBasalTemperatureTo =>
+      '기초 체온을 기록하여 차트를 채우세요';
 
   @override
   String get cycleToday => '오늘';
@@ -5871,7 +6026,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dailyActivityCardFromAppleHealth => 'Apple Health에서 가져옴';
 
   @override
-  String get dailyActivityCardFromHealthConnect => 'Google Health Connect에서 가져옴';
+  String get dailyActivityCardFromHealthConnect =>
+      'Google Health Connect에서 가져옴';
 
   @override
   String get dailyActivityCardRestingHr => '안정 시 심박수';
@@ -6134,7 +6290,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dataManagementExportMyWorkouts => '내 운동 기록 내보내기';
 
   @override
-  String get dataManagementHevyStrongFitbodPdf => 'Hevy / Strong / Fitbod / PDF / GPX — 어디서든 확인하세요';
+  String get dataManagementHevyStrongFitbodPdf =>
+      'Hevy / Strong / Fitbod / PDF / GPX — 어디서든 확인하세요';
 
   @override
   String get dataManagementLifetimeAccess => '평생 이용권';
@@ -6149,16 +6306,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dataManagementNoExercisesFoundIn => '계획에 포함된 운동이 없습니다.';
 
   @override
-  String get dataManagementNoUpcomingChargesYou => '예정된 결제가 없습니다 - 평생 이용권이 있습니다';
+  String get dataManagementNoUpcomingChargesYou =>
+      '예정된 결제가 없습니다 - 평생 이용권이 있습니다';
 
   @override
   String get dataManagementNoVideoUrlsAvailable => '계획에 사용할 수 있는 영상 URL이 없습니다.';
 
   @override
-  String get dataManagementPreCacheAllExercises => '오프라인 사용을 위해 계획의 모든 운동을 미리 캐시';
+  String get dataManagementPreCacheAllExercises =>
+      '오프라인 사용을 위해 계획의 모든 운동을 미리 캐시';
 
   @override
-  String get dataManagementRePickThePrimary => '동일한 운동이 두 번 동기화된 경우 기본 소스를 다시 선택하세요';
+  String get dataManagementRePickThePrimary =>
+      '동일한 운동이 두 번 동기화된 경우 기본 소스를 다시 선택하세요';
 
   @override
   String get dataManagementRequestRefund => '환불 요청';
@@ -6281,10 +6441,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteAccountFlowThisActionCannotBe => '이 작업은 되돌릴 수 없습니다!';
 
   @override
-  String get deleteAccountFlowThisWillPermanentlyDelete => '다음 항목이 영구적으로 삭제됩니다:';
+  String get deleteAccountFlowThisWillPermanentlyDelete =>
+      '다음 항목이 영구적으로 삭제됩니다:';
 
   @override
-  String get deleteAccountFlowWeCouldNotVerify => '비밀번호를 확인할 수 없습니다. 비밀번호를 재설정한 후 다시 계정 삭제를 시도하세요.';
+  String get deleteAccountFlowWeCouldNotVerify =>
+      '비밀번호를 확인할 수 없습니다. 비밀번호를 재설정한 후 다시 계정 삭제를 시도하세요.';
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
@@ -6325,13 +6487,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get demoActiveWorkoutExitWorkout => '운동을 종료할까요?';
 
   @override
-  String get demoActiveWorkoutGetAiGeneratedWorkout => 'AI가 생성한 운동 계획을 받고, 진행 상황을 추적하여 피트니스 목표를 더 빠르게 달성하세요.';
+  String get demoActiveWorkoutGetAiGeneratedWorkout =>
+      'AI가 생성한 운동 계획을 받고, 진행 상황을 추적하여 피트니스 목표를 더 빠르게 달성하세요.';
 
   @override
   String get demoActiveWorkoutGetPersonalizedWorkouts => '맞춤형 운동 받기';
 
   @override
-  String get demoActiveWorkoutGreatJobTimeTo => '수고하셨습니다! 이제 스트레칭과 회복을 할 시간입니다.';
+  String get demoActiveWorkoutGreatJobTimeTo =>
+      '수고하셨습니다! 이제 스트레칭과 회복을 할 시간입니다.';
 
   @override
   String get demoActiveWorkoutNextExerciseComingUp => '다음 운동이 곧 시작됩니다!';
@@ -6353,12 +6517,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet) {
+  String demoActiveWorkoutScreenUi1SetOf(
+    Object _currentExerciseSets,
+    Object _currentSet,
+  ) {
     return '세트 $_currentSet/$_currentExerciseSets';
   }
 
   @override
-  String get demoActiveWorkoutSignUpToGet => '가입하고 맞춤형 AI 코칭, 상세한 진행 상황 추적, 목표에 최적화된 운동을 받아보세요.';
+  String get demoActiveWorkoutSignUpToGet =>
+      '가입하고 맞춤형 AI 코칭, 상세한 진행 상황 추적, 목표에 최적화된 운동을 받아보세요.';
 
   @override
   String get demoActiveWorkoutSkipAll => '모두 건너뛰기';
@@ -6376,7 +6544,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get demoActiveWorkoutWorkoutComplete => '운동 완료!';
 
   @override
-  String get demoActiveWorkoutYourProgressInThis => '이 데모 운동에서의 진행 상황은 저장되지 않습니다. 정말 나가시겠습니까?';
+  String get demoActiveWorkoutYourProgressInThis =>
+      '이 데모 운동에서의 진행 상황은 저장되지 않습니다. 정말 나가시겠습니까?';
 
   @override
   String get demoDayBanner24HoursOfFull => '24시간 전체 이용권';
@@ -6385,7 +6554,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get demoDayBannerDemoDay => '데모 데이';
 
   @override
-  String get demoDayBannerExploreAllPremiumFeatures => '모든 프리미엄 기능 체험하기 - 부담 없이';
+  String get demoDayBannerExploreAllPremiumFeatures =>
+      '모든 프리미엄 기능 체험하기 - 부담 없이';
 
   @override
   String get demoDayBannerTimeRemaining => '남은 시간: ';
@@ -6442,7 +6612,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get demoWorkoutScreenSampleWorkoutPreview => '샘플 운동 미리보기';
 
   @override
-  String get demoWorkoutScreenSignUpToGet => '가입하고 목표, 피트니스 수준, 사용 가능한 장비에 맞춘 운동을 받아보세요.';
+  String get demoWorkoutScreenSignUpToGet =>
+      '가입하고 목표, 피트니스 수준, 사용 가능한 장비에 맞춘 운동을 받아보세요.';
 
   @override
   String get demoWorkoutScreenStartWorkout => '운동 시작';
@@ -6471,31 +6642,40 @@ class AppLocalizationsKo extends AppLocalizations {
   String get demoWorkoutVideoUnavailable => '영상 이용 불가';
 
   @override
-  String get derivedMetricDetailABmiBetween18 => 'BMI 18.5~24.9는 건강한 체중 범위로 간주됩니다. 지금처럼 계속 노력하세요!';
+  String get derivedMetricDetailABmiBetween18 =>
+      'BMI 18.5~24.9는 건강한 체중 범위로 간주됩니다. 지금처럼 계속 노력하세요!';
 
   @override
-  String get derivedMetricDetailABmiBetween25 => 'BMI 25~29.9는 과체중으로 간주됩니다. 참고: BMI는 근육과 지방을 구분하지 않습니다.';
+  String get derivedMetricDetailABmiBetween25 =>
+      'BMI 25~29.9는 과체중으로 간주됩니다. 참고: BMI는 근육과 지방을 구분하지 않습니다.';
 
   @override
-  String get derivedMetricDetailABmiOf30 => 'BMI 30 이상은 비만으로 분류됩니다. 전문가와 상담하여 지도를 받는 것을 고려하세요.';
+  String get derivedMetricDetailABmiOf30 =>
+      'BMI 30 이상은 비만으로 분류됩니다. 전문가와 상담하여 지도를 받는 것을 고려하세요.';
 
   @override
-  String get derivedMetricDetailAChestToWaist => '가슴-허리 비율이 1.1 미만이면 허리에 비해 가슴이 좁은 편입니다. 가슴과 등 운동에 집중하세요.';
+  String get derivedMetricDetailAChestToWaist =>
+      '가슴-허리 비율이 1.1 미만이면 허리에 비해 가슴이 좁은 편입니다. 가슴과 등 운동에 집중하세요.';
 
   @override
-  String get derivedMetricDetailAChestToWaist2 => '가슴-허리 비율 1.1~1.3은 평균입니다. 가슴과 허리의 비율이 건강합니다.';
+  String get derivedMetricDetailAChestToWaist2 =>
+      '가슴-허리 비율 1.1~1.3은 평균입니다. 가슴과 허리의 비율이 건강합니다.';
 
   @override
-  String get derivedMetricDetailAChestToWaist3 => '가슴-허리 비율이 1.3을 초과하면 허리에 비해 가슴이 잘 발달된 상태입니다. 훌륭한 비율입니다!';
+  String get derivedMetricDetailAChestToWaist3 =>
+      '가슴-허리 비율이 1.3을 초과하면 허리에 비해 가슴이 잘 발달된 상태입니다. 훌륭한 비율입니다!';
 
   @override
-  String get derivedMetricDetailAWhtrAbove0 => 'WHtR이 0.6을 초과하면 복부 지방이 많고 건강 위험이 증가함을 의미합니다.';
+  String get derivedMetricDetailAWhtrAbove0 =>
+      'WHtR이 0.6을 초과하면 복부 지방이 많고 건강 위험이 증가함을 의미합니다.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween0 => 'WHtR 0.4~0.5는 건강한 범위입니다. 허리 둘레가 키의 절반 미만입니다.';
+  String get derivedMetricDetailAWhtrBetween0 =>
+      'WHtR 0.4~0.5는 건강한 범위입니다. 허리 둘레가 키의 절반 미만입니다.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween02 => 'WHtR 0.5~0.6은 복부 지방 증가를 의미합니다. 허리 둘레를 줄이는 데 집중하세요.';
+  String get derivedMetricDetailAWhtrBetween02 =>
+      'WHtR 0.5~0.6은 복부 지방 증가를 의미합니다. 허리 둘레를 줄이는 데 집중하세요.';
 
   @override
   String get derivedMetricDetailAboveAverage => '평균 이상';
@@ -6534,7 +6714,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get derivedMetricDetailGood => '좋음';
 
   @override
-  String get derivedMetricDetailGoodSymmetry9397 => '양호한 대칭성 (93-97%). 정상 범위 내의 경미한 차이입니다.';
+  String get derivedMetricDetailGoodSymmetry9397 =>
+      '양호한 대칭성 (93-97%). 정상 범위 내의 경미한 차이입니다.';
 
   @override
   String get derivedMetricDetailHealthy => '건강함';
@@ -6573,7 +6754,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get derivedMetricDetailModerate => '보통';
 
   @override
-  String get derivedMetricDetailModerateAsymmetry8893 => '보통 수준의 비대칭 (88-93%). 불균형 해소를 위해 편측 운동 추가를 고려하세요.';
+  String get derivedMetricDetailModerateAsymmetry8893 =>
+      '보통 수준의 비대칭 (88-93%). 불균형 해소를 위해 편측 운동 추가를 고려하세요.';
 
   @override
   String get derivedMetricDetailModerateRisk => '중등도 위험';
@@ -6585,7 +6767,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get derivedMetricDetailNarrow => '좁음';
 
   @override
-  String get derivedMetricDetailNearPerfectSymmetry97 => '거의 완벽한 대칭 (97%+). 양쪽이 매우 균형 잡혀 있습니다.';
+  String get derivedMetricDetailNearPerfectSymmetry97 =>
+      '거의 완벽한 대칭 (97%+). 양쪽이 매우 균형 잡혀 있습니다.';
 
   @override
   String get derivedMetricDetailNoHistoryYet => '기록 없음';
@@ -6618,7 +6801,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get derivedMetricDetailShoulders => '어깨';
 
   @override
-  String get derivedMetricDetailSignificantAsymmetryBelow8 => '상당한 비대칭 (88% 미만). 약한 쪽을 위한 편측 훈련에 집중하세요.';
+  String get derivedMetricDetailSignificantAsymmetryBelow8 =>
+      '상당한 비대칭 (88% 미만). 약한 쪽을 위한 편측 훈련에 집중하세요.';
 
   @override
   String get derivedMetricDetailSuperior => '최상';
@@ -6698,7 +6882,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get diabetesDashboardScreenGreatYouReMeeting => '훌륭합니다! 목표 범위 내 70% 이상을 유지하고 있습니다.';
+  String get diabetesDashboardScreenGreatYouReMeeting =>
+      '훌륭합니다! 목표 범위 내 70% 이상을 유지하고 있습니다.';
 
   @override
   String get diabetesDashboardScreenHealthConnect => 'Health Connect';
@@ -6743,7 +6928,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
+    Object daysIncluded,
+  ) {
     return '지난 $daysIncluded일';
   }
 
@@ -6758,12 +6945,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
+    Object totalRapidUnits,
+  ) {
     return '${totalRapidUnits}U';
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(
+    Object totalLongUnits,
+  ) {
     return '${totalLongUnits}U';
   }
 
@@ -6899,7 +7090,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get difficultySelectorChooseDifferent => '다른 항목 선택';
 
   @override
-  String get difficultySelectorConsiderChallengingForA => '더 안전하고 강도 높은 운동을 위해 \"도전적(Challenging)\" 단계를 고려해보세요';
+  String get difficultySelectorConsiderChallengingForA =>
+      '더 안전하고 강도 높은 운동을 위해 \"도전적(Challenging)\" 단계를 고려해보세요';
 
   @override
   String get difficultySelectorContinueAnyway => '계속 진행';
@@ -6933,7 +7125,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get difficultySelectorThisIsAnExtreme => '이것은 당신의 한계를 시험하기 위해 설계된 극한 강도의 운동입니다.';
+  String get difficultySelectorThisIsAnExtreme =>
+      '이것은 당신의 한계를 시험하기 위해 설계된 극한 강도의 운동입니다.';
 
   @override
   String get discoverBrowseByCategory => '카테고리별 탐색';
@@ -7045,13 +7238,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoverTopOfTheWeek => '이번 주의 상위권';
 
   @override
-  String get discoverTourBrowseRisingStarsAnd => 'Rising Stars와 내 주변 사용자를 탐색하여 비슷한 수준의 사람들을 확인해보세요.';
+  String get discoverTourBrowseRisingStarsAnd =>
+      'Rising Stars와 내 주변 사용자를 탐색하여 비슷한 수준의 사람들을 확인해보세요.';
 
   @override
   String get discoverTourFindYourPeers => '비슷한 수준의 사용자 찾기';
 
   @override
-  String get discoverTourOpenTheir6Axis => '상대방의 6축 피트니스 레이더를 열어 XP, 볼륨, 연속 기록 등에서 내가 어느 정도 수준인지 확인해보세요.';
+  String get discoverTourOpenTheir6Axis =>
+      '상대방의 6축 피트니스 레이더를 열어 XP, 볼륨, 연속 기록 등에서 내가 어느 정도 수준인지 확인해보세요.';
 
   @override
   String get discoverTourSwitchBoards => '순위표 전환';
@@ -7060,7 +7255,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoverTourTapAnyUser => '사용자 탭하기';
 
   @override
-  String get discoverTourXpVolumeStreaksEach => 'XP / 볼륨 / 연속 기록은 각각 다른 게임처럼 순위를 매깁니다. 모두 시도하여 나에게 가장 강한 축을 찾아보세요.';
+  String get discoverTourXpVolumeStreaksEach =>
+      'XP / 볼륨 / 연속 기록은 각각 다른 게임처럼 순위를 매깁니다. 모두 시도하여 나에게 가장 강한 축을 찾아보세요.';
 
   @override
   String get discoverTrainingPlans => '훈련 계획';
@@ -7090,7 +7286,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dismissedBannersDismissedBanners => '닫은 배너';
 
   @override
-  String get dismissedBannersDismissedBannersResetAutoma => '닫은 배너는 자정에 자동으로 초기화됩니다.';
+  String get dismissedBannersDismissedBannersResetAutoma =>
+      '닫은 배너는 자정에 자동으로 초기화됩니다.';
 
   @override
   String get dismissedBannersRestore => '복원';
@@ -7135,7 +7332,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get downloadedVideosNoDownloadsYet => '아직 다운로드한 영상이 없습니다';
 
   @override
-  String get downloadedVideosSaveExerciseVideosFor => '운동 영상을 저장하여 오프라인으로 시청하세요. WiFi가 불안정한 체육관에서 유용합니다.';
+  String get downloadedVideosSaveExerciseVideosFor =>
+      '운동 영상을 저장하여 오프라인으로 시청하세요. WiFi가 불안정한 체육관에서 유용합니다.';
 
   @override
   String downloadedVideosScreenDeleted(Object exerciseName) {
@@ -7153,13 +7351,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get downloadedVideosStorageAlmostFullOldest => '저장 공간이 거의 꽉 찼습니다. 가장 오래된 영상부터 자동으로 삭제됩니다.';
+  String get downloadedVideosStorageAlmostFullOldest =>
+      '저장 공간이 거의 꽉 찼습니다. 가장 오래된 영상부터 자동으로 삭제됩니다.';
 
   @override
   String get downloadedVideosStorageUsed => '사용된 저장 공간';
 
   @override
-  String get downloadedVideosThisWillDeleteAll => '기기에 다운로드된 모든 운동 영상이 삭제됩니다. 언제든지 다시 다운로드할 수 있습니다.';
+  String get downloadedVideosThisWillDeleteAll =>
+      '기기에 다운로드된 모든 운동 영상이 삭제됩니다. 언제든지 다시 다운로드할 수 있습니다.';
 
   @override
   String get durationRangeSliderDuration => '기간';
@@ -7273,7 +7473,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get easyFocalColumnWeight => '무게';
 
   @override
-  String get easyHelpAdjustWeightAndReps => '−와 + 버튼으로 무게와 횟수를 조절하세요. 숫자를 길게 누르면 직접 입력할 수 있습니다.';
+  String get easyHelpAdjustWeightAndReps =>
+      '−와 + 버튼으로 무게와 횟수를 조절하세요. 숫자를 길게 누르면 직접 입력할 수 있습니다.';
 
   @override
   String get easyHelpGotIt => '확인';
@@ -7291,10 +7492,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get easyHelpSwitchToAdvanced => '고급 모드로 전환';
 
   @override
-  String get easyHelpTapTheBigWhen => '세트를 마치면 큰 ✓ 버튼을 누르세요. 나머지는 저희가 알아서 처리해 드립니다.';
+  String get easyHelpTapTheBigWhen =>
+      '세트를 마치면 큰 ✓ 버튼을 누르세요. 나머지는 저희가 알아서 처리해 드립니다.';
 
   @override
-  String get easyHelpThisIsTodayS => '오늘의 운동입니다. 자세를 다시 확인하고 싶을 때 언제든 ▶ 영상 보기 버튼을 누르세요.';
+  String get easyHelpThisIsTodayS =>
+      '오늘의 운동입니다. 자세를 다시 확인하고 싶을 때 언제든 ▶ 영상 보기 버튼을 누르세요.';
 
   @override
   String get easyHelpTodaySExercise => '오늘의 운동';
@@ -7419,7 +7622,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editGymProfileIcon => '아이콘';
 
   @override
-  String get editGymProfileLeaveOnAutoFor => 'AI가 결정하게 하려면 \'자동\'으로 두거나, 특정 요일에 집중 부위를 고정하세요 (예: 화 → 상체).';
+  String get editGymProfileLeaveOnAutoFor =>
+      'AI가 결정하게 하려면 \'자동\'으로 두거나, 특정 요일에 집중 부위를 고정하세요 (예: 화 → 상체).';
 
   @override
   String get editGymProfileLocationOptional => '위치 (선택 사항)';
@@ -7553,10 +7757,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editProgramSheetBack => '뒤로';
 
   @override
-  String get editProgramSheetChangeYourWeeklySchedule => '주간 일정, 장비 또는 난이도를 변경하세요. 새로운 설정에 맞춰 운동이 다시 생성됩니다.';
+  String get editProgramSheetChangeYourWeeklySchedule =>
+      '주간 일정, 장비 또는 난이도를 변경하세요. 새로운 설정에 맞춰 운동이 다시 생성됩니다.';
 
   @override
-  String get editProgramSheetChooseATrainingSplit => '일정과 목표에 맞는 트레이닝 분할을 선택하세요';
+  String get editProgramSheetChooseATrainingSplit =>
+      '일정과 목표에 맞는 트레이닝 분할을 선택하세요';
 
   @override
   String get editProgramSheetContinue => '계속';
@@ -7589,7 +7795,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get editProgramSheetDescribeWhatYouWant => '원하는 훈련 목표를 설명하면 AI가 개인 맞춤형 프로그램을 생성합니다.';
+  String get editProgramSheetDescribeWhatYouWant =>
+      '원하는 훈련 목표를 설명하면 AI가 개인 맞춤형 프로그램을 생성합니다.';
 
   @override
   String get editProgramSheetDifficulty => '난이도';
@@ -7635,7 +7842,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editProgramSheetNoProgramHistoryFound => '프로그램 기록이 없습니다';
 
   @override
-  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate) {
+  String editProgramSheetPartEditProgramSheetStateOf(
+    Object _generatingWorkout,
+    Object _totalWorkoutsToGenerate,
+  ) {
     return '$_generatingWorkout / $_totalWorkoutsToGenerate';
   }
 
@@ -7652,7 +7862,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editProgramSheetProgramHistory => '프로그램 기록';
 
   @override
-  String get editProgramSheetProgramRestoredRegenerateW => '프로그램이 복원되었습니다! 변경 사항을 적용하려면 운동을 다시 생성하세요.';
+  String get editProgramSheetProgramRestoredRegenerateW =>
+      '프로그램이 복원되었습니다! 변경 사항을 적용하려면 운동을 다시 생성하세요.';
 
   @override
   String get editProgramSheetRestoreAPreviousProgram => '이전 프로그램 구성 복원';
@@ -7673,7 +7884,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editProgramSheetSummary => '요약';
 
   @override
-  String get editProgramSheetThisStepIsOptional => '이 단계는 선택 사항입니다. 보고할 부상이 없다면 건너뛰어도 됩니다.';
+  String get editProgramSheetThisStepIsOptional =>
+      '이 단계는 선택 사항입니다. 보고할 부상이 없다면 건너뛰어도 됩니다.';
 
   @override
   String get editProgramSheetToday => '오늘';
@@ -7732,7 +7944,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editTargetsRecalculateFromProfile => '프로필에서 재계산';
 
   @override
-  String get editTargetsRecommendationUnavailableR => '추천을 사용할 수 없습니다 — 먼저 프로필에서 재계산하세요';
+  String get editTargetsRecommendationUnavailableR =>
+      '추천을 사용할 수 없습니다 — 먼저 프로필에서 재계산하세요';
 
   @override
   String get editTargetsReset => '초기화';
@@ -7791,7 +8004,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks) {
+  String editTargetsSheetUWks(
+    Object dateStr,
+    Object deficitInfo,
+    Object goalLabel,
+    Object weeks,
+  ) {
     return '$goalLabel → 약 $weeks주 ($dateStr)$deficitInfo';
   }
 
@@ -7915,7 +8133,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editWeightsMin => '최소';
 
   @override
-  String get editWeightsNoWeightsYetPick => '아직 무게가 없습니다. 최소/최대/단위를 선택하고 생성을 탭하세요.';
+  String get editWeightsNoWeightsYetPick =>
+      '아직 무게가 없습니다. 최소/최대/단위를 선택하고 생성을 탭하세요.';
 
   @override
   String get editWeightsPreset => '프리셋';
@@ -7961,7 +8180,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory) {
+  String editWorkoutEquipmentSheetValue(
+    Object length,
+    Object selectedInCategory,
+  ) {
     return '($selectedInCategory/$length)';
   }
 
@@ -7984,7 +8206,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editableFitnessCardActiveInjuries => '현재 부상 부위';
 
   @override
-  String get editableFitnessCardChangesAffectYourWorkout => '변경 사항이 운동 프로그램에 적용됩니다';
+  String get editableFitnessCardChangesAffectYourWorkout =>
+      '변경 사항이 운동 프로그램에 적용됩니다';
 
   @override
   String get editableFitnessCardCustom => '사용자 지정';
@@ -8019,7 +8242,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editableFitnessCardFitnessLevel => '운동 수준';
 
   @override
-  String get editableFitnessCardFitnessSettingsUpdatedWor => '운동 설정이 업데이트되었습니다. 운동이 다시 생성됩니다.';
+  String get editableFitnessCardFitnessSettingsUpdatedWor =>
+      '운동 설정이 업데이트되었습니다. 운동이 다시 생성됩니다.';
 
   @override
   String get editableFitnessCardGoal => '목표';
@@ -8048,17 +8272,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get editableFitnessCardNotSet => '설정 안 됨';
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(
+    Object _selectedStretchDuration,
+    Object _selectedWarmupDuration,
+  ) {
     return '$_selectedWarmupDuration+$_selectedStretchDuration분';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateMin(
+    Object _selectedWarmupDuration,
+  ) {
     return '$_selectedWarmupDuration분';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateMin2(
+    Object _selectedStretchDuration,
+  ) {
     return '$_selectedStretchDuration분';
   }
 
@@ -8119,7 +8350,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailPreferencesBillingAccount => '결제 및 계정';
 
   @override
-  String get emailPreferencesCheckInsFromYour => '코치의 체크인 알림 — 활성화, 복귀 독려, 가벼운 동기부여';
+  String get emailPreferencesCheckInsFromYour =>
+      '코치의 체크인 알림 — 활성화, 복귀 독려, 가벼운 동기부여';
 
   @override
   String get emailPreferencesDailyRemindersAboutYour => '예정된 운동에 대한 일일 알림';
@@ -8163,7 +8395,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailPreferencesStreakAlerts => '스트릭 알림';
 
   @override
-  String get emailPreferencesSundayRecapWithWorkouts => '일요일 요약 (운동, 영양, 스트릭, XP 포함)';
+  String get emailPreferencesSundayRecapWithWorkouts =>
+      '일요일 요약 (운동, 영양, 스트릭, XP 포함)';
 
   @override
   String get emailPreferencesThisWillTurnOff => '다음 마케팅 이메일이 모두 꺼집니다:';
@@ -8178,7 +8411,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailPreferencesUnsubscribeFromAllMarketing => '모든 마케팅 이메일 구독 취소';
 
   @override
-  String get emailPreferencesUnsubscribedFromMarketingEm => '마케팅 이메일 구독이 취소되었습니다';
+  String get emailPreferencesUnsubscribedFromMarketingEm =>
+      '마케팅 이메일 구독이 취소되었습니다';
 
   @override
   String get emailPreferencesWeeklySummary => '주간 요약';
@@ -8208,7 +8442,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailSignInForgotPassword => '비밀번호를 잊으셨나요?';
 
   @override
-  String get emailSignInIfAnAccountExists => '해당 이메일로 가입된 계정이 있다면 비밀번호 재설정 링크가 발송되었습니다.';
+  String get emailSignInIfAnAccountExists =>
+      '해당 이메일로 가입된 계정이 있다면 비밀번호 재설정 링크가 발송되었습니다.';
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
@@ -8233,7 +8468,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emailVerificationBannerResend => '재전송';
 
   @override
-  String get emailVerificationBannerVerifyYourEmailTo => '계정 보안을 위해 이메일을 인증하세요.';
+  String get emailVerificationBannerVerifyYourEmailTo =>
+      '계정 보안을 위해 이메일을 인증하세요.';
 
   @override
   String get embeddedCameraPanelFromGallery => '갤러리에서 선택';
@@ -8242,7 +8478,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get embeddedCameraPanelTryAgain => '다시 시도';
 
   @override
-  String get emptyCustomExercisesBuildCustomExercisesTailore => '나만의 운동을 맞춤 제작하거나 여러 동작을 결합하여 강력한 루틴을 만들어 보세요.';
+  String get emptyCustomExercisesBuildCustomExercisesTailore =>
+      '나만의 운동을 맞춤 제작하거나 여러 동작을 결합하여 강력한 루틴을 만들어 보세요.';
 
   @override
   String get emptyCustomExercisesCreateYourFirstExercise => '첫 번째 운동 만들기';
@@ -8254,7 +8491,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emptyStateClearFilters => '필터 초기화';
 
   @override
-  String get emptyStateCompleteYourFirstWorkout => '첫 번째 운동을 완료하고\n진행 상황을 기록해 보세요!';
+  String get emptyStateCompleteYourFirstWorkout =>
+      '첫 번째 운동을 완료하고\n진행 상황을 기록해 보세요!';
 
   @override
   String get emptyStateCreateProgram => '프로그램 생성';
@@ -8287,7 +8525,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get emptyStateWeCouldnTFind => '찾으시는 결과를 찾을 수 없습니다.\n다른 키워드로 검색해 보세요.';
 
   @override
-  String get emptyStateYourWorkoutScheduleIs => '운동 일정이 비어 있습니다.\n프로그램을 만들어 시작해 보세요!';
+  String get emptyStateYourWorkoutScheduleIs =>
+      '운동 일정이 비어 있습니다.\n프로그램을 만들어 시작해 보세요!';
 
   @override
   String get enhancedEmptyStateTryAsking => '질문해 보세요...';
@@ -8301,7 +8540,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get enhancedEmptyStateYourPersonalFitnessAssistan => '나만의 피트니스 어시스턴트';
 
   @override
-  String get enhancedNotesAddNotesAboutForm => '자세, 팁, 또는 수정 사항에 대한 메모를 추가하세요...';
+  String get enhancedNotesAddNotesAboutForm =>
+      '자세, 팁, 또는 수정 사항에 대한 메모를 추가하세요...';
 
   @override
   String get enhancedNotesCamera => '카메라';
@@ -8430,7 +8670,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get environmentDetailUseThis => '사용하기';
 
   @override
-  String get environmentDetailYouHaveUnsavedChanges => '저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?';
+  String get environmentDetailYouHaveUnsavedChanges =>
+      '저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?';
 
   @override
   String get environmentListActive => '활성';
@@ -8466,7 +8707,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get environmentListSelectYourWorkoutEnvironmen => '운동 환경을 선택하여 사용 가능한 장비를 맞춤 설정하세요.';
+  String get environmentListSelectYourWorkoutEnvironmen =>
+      '운동 환경을 선택하여 사용 가능한 장비를 맞춤 설정하세요.';
 
   @override
   String get environmentListUseThis => '사용하기';
@@ -8475,19 +8717,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get environmentListWorkoutEnvironment => '운동 환경';
 
   @override
-  String get equipmentCalibration15x220x225x230x2 => '15x2, 20x2, 25x2, 30x2, 35x2';
+  String get equipmentCalibration15x220x225x230x2 =>
+      '15x2, 20x2, 25x2, 30x2, 35x2';
 
   @override
   String get equipmentCalibration175ForEz => 'EZ바 17.5, 올림픽바 45';
 
   @override
-  String get equipmentCalibration45x435x225x410x2 => '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
+  String get equipmentCalibration45x435x225x410x2 =>
+      '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
 
   @override
   String get equipmentCalibration794ForEz => 'EZ바 7.94, 올림픽바 20';
 
   @override
-  String get equipmentCalibrationAddABarbellMachine => '바벨, 머신 또는 케이블을 추가하여 기본값을 재설정하세요.';
+  String get equipmentCalibrationAddABarbellMachine =>
+      '바벨, 머신 또는 케이블을 추가하여 기본값을 재설정하세요.';
 
   @override
   String get equipmentCalibrationAddEquipment => '장비 추가';
@@ -8505,7 +8750,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get equipmentCalibrationEditEquipment => '장비 편집';
 
   @override
-  String get equipmentCalibrationIntroBody => '원판 제안과 중량 추천이 실제 보유 장비와 일치합니다. 바벨 무게, 머신 슬레지 무게, 케이블 핀 증가량, 원판/덤벨 재고를 설정하세요.';
+  String get equipmentCalibrationIntroBody =>
+      '원판 제안과 중량 추천이 실제 보유 장비와 일치합니다. 바벨 무게, 머신 슬레지 무게, 케이블 핀 증가량, 원판/덤벨 재고를 설정하세요.';
 
   @override
   String get equipmentCalibrationIntroTitle => '실제 장비를 알려주세요';
@@ -8621,7 +8867,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get equipmentSelectorEnterCustomEquipmentE => '사용자 지정 장비 입력 (예: \"TRX 밴드\")';
+  String get equipmentSelectorEnterCustomEquipmentE =>
+      '사용자 지정 장비 입력 (예: \"TRX 밴드\")';
 
   @override
   String get equipmentSelectorEquipmentAvailable => '사용 가능한 장비';
@@ -8709,7 +8956,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get eventWorkoutComingJune152026183 => '2026년 6월 15일  •  183일 남음';
 
   @override
-  String get eventWorkoutComingTrainSmarterForYour => '중요한 순간을 위해 더 스마트하게 훈련하세요';
+  String get eventWorkoutComingTrainSmarterForYour =>
+      '중요한 순간을 위해 더 스마트하게 훈련하세요';
 
   @override
   String get eventWorkoutComingWeddingPrep => '결혼 준비';
@@ -8730,7 +8978,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseAddNoMineYet => '아직 개인 운동이 없습니다';
 
   @override
-  String get exerciseAddNoMineYetHint => '즐겨찾기, 주요 운동 또는 커스텀 운동을 추가하여 여기에 표시하세요';
+  String get exerciseAddNoMineYetHint =>
+      '즐겨찾기, 주요 운동 또는 커스텀 운동을 추가하여 여기에 표시하세요';
 
   @override
   String get exerciseAddSearchMine => '내 운동 검색...';
@@ -8754,7 +9003,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseAddSheetAll => '모두';
 
   @override
-  String get exerciseAddSheetCreateCustomExercisesOr => '맞춤 운동을 만들거나 즐겨찾기에 표시\n라이브러리 → 내 운동';
+  String get exerciseAddSheetCreateCustomExercisesOr =>
+      '맞춤 운동을 만들거나 즐겨찾기에 표시\n라이브러리 → 내 운동';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => '운동 추가 실패';
@@ -8772,7 +9022,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseAddSheetMine => '내 거';
 
   @override
-  String get exerciseAddSheetNoCustomExercisesFavorites => '아직 사용자 지정 운동, 즐겨찾기 또는\n주요 운동이 없습니다';
+  String get exerciseAddSheetNoCustomExercisesFavorites =>
+      '아직 사용자 지정 운동, 즐겨찾기 또는\n주요 운동이 없습니다';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable => '제안 사항 없음';
@@ -8816,7 +9067,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseAnalyticsCompareWithFriends => '친구와 비교';
 
   @override
-  String get exerciseAnalyticsCompleteMoreSessionsTo => '더 많은 세션을 완료하여 추세를 확인하세요';
+  String get exerciseAnalyticsCompleteMoreSessionsTo =>
+      '더 많은 세션을 완료하여 추세를 확인하세요';
 
   @override
   String get exerciseAnalyticsDrop => '떨어지다';
@@ -9085,27 +9337,40 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseDetailSheetNoExercisesInCurrent => '현재 운동에 대체할 운동이 없습니다';
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
+    Object e,
+  ) {
     return '고정 실패: $e';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
+    Object exerciseName,
+    Object selected,
+  ) {
     return '\"$selected\"을(를) \"$exerciseName\"(으)로 교체했습니다';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
+    Object exerciseName,
+    Object section,
+    Object timing,
+  ) {
     return '\"$exerciseName\"을(를) $section에 고정했습니다 ($timing)';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
+    Object exerciseName,
+  ) {
     return '\"$exerciseName\" 고정 해제됨';
   }
 
   @override
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName) {
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
+    Object exerciseName,
+  ) {
     return '\"$exerciseName\"의 오프라인 동영상을 삭제할까요? 언제든지 다시 다운로드할 수 있습니다.';
   }
 
@@ -9274,7 +9539,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseHistoryAllTime => '상시';
 
   @override
-  String get exerciseHistoryCompleteSomeWorkoutsTo => '운동 기록을 확인하고 시간 경과에 따른 진행 상황을 추적하려면 몇 가지 운동을 완료하세요.';
+  String get exerciseHistoryCompleteSomeWorkoutsTo =>
+      '운동 기록을 확인하고 시간 경과에 따른 진행 상황을 추적하려면 몇 가지 운동을 완료하세요.';
 
   @override
   String get exerciseHistoryExerciseHistory => '운동 기록';
@@ -9286,7 +9552,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseHistoryFailedToLoadExercises => '운동 기록을 불러오지 못했습니다';
 
   @override
-  String get exerciseHistoryKeepTrainingAndPushing => '계속 훈련하며 한계를 돌파하세요. 더 강해질수록 개인 기록이 여기에 표시됩니다.';
+  String get exerciseHistoryKeepTrainingAndPushing =>
+      '계속 훈련하며 한계를 돌파하세요. 더 강해질수록 개인 기록이 여기에 표시됩니다.';
 
   @override
   String get exerciseHistoryLast30Days => '최근 30일';
@@ -9351,7 +9618,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseManagementMixinMakeThisTheActive => '이 운동을 활성 운동으로 설정';
 
   @override
-  String get exerciseManagementMixinNoAvailableExercisesTo => '함께 묶을 수 있는 운동이 없습니다';
+  String get exerciseManagementMixinNoAvailableExercisesTo =>
+      '함께 묶을 수 있는 운동이 없습니다';
 
   @override
   String get exerciseManagementMixinPairWithNextExercise => '다음 운동과 묶기';
@@ -9497,7 +9765,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinSomeExercisesHaveMissing => '일부 연습에는 로그가 누락되었습니다.';
+  String get exerciseNavigationMixinSomeExercisesHaveMissing =>
+      '일부 연습에는 로그가 누락되었습니다.';
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
@@ -9548,37 +9817,45 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseOptionsInfoLinkAsSuperset => '슈퍼세트로 연결';
 
   @override
-  String get exerciseOptionsInfoMarkAsACore => '절대로 회전되지 않는 코어 리프트로 표시하십시오. AI는 항상 운동에 주요 운동을 포함하므로 지속적으로 점진적인 과부하를 원하는 복합 운동에 적합합니다.';
+  String get exerciseOptionsInfoMarkAsACore =>
+      '절대로 회전되지 않는 코어 리프트로 표시하십시오. AI는 항상 운동에 주요 운동을 포함하므로 지속적으로 점진적인 과부하를 원하는 복합 운동에 적합합니다.';
 
   @override
   String get exerciseOptionsInfoNeverRecommend => '절대 추천하지 않음';
 
   @override
-  String get exerciseOptionsInfoPairWithAnotherExercise => '다른 운동과 묶어 휴식 시간을 최소화하며 연속으로 수행하세요. 시간 효율성과 근육 펌핑에 좋습니다.';
+  String get exerciseOptionsInfoPairWithAnotherExercise =>
+      '다른 운동과 묶어 휴식 시간을 최소화하며 연속으로 수행하세요. 시간 효율성과 근육 펌핑에 좋습니다.';
 
   @override
-  String get exerciseOptionsInfoPermanentlyBlockThisExercis => '향후 AI 추천에서 이 운동을 영구적으로 차단합니다. 싫어하거나 부상으로 인해 할 수 없는 운동에 사용하세요.';
+  String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
+      '향후 AI 추천에서 이 운동을 영구적으로 차단합니다. 싫어하거나 부상으로 인해 할 수 없는 운동에 사용하세요.';
 
   @override
-  String get exerciseOptionsInfoQueueThisExerciseTo => '다음 운동에 표시되도록 이 운동을 대기열에 추가하세요. 집중하고 싶은 운동에 적합합니다. 대기 중인 운동은 사용하지 않으면 7일 후에 만료됩니다.';
+  String get exerciseOptionsInfoQueueThisExerciseTo =>
+      '다음 운동에 표시되도록 이 운동을 대기열에 추가하세요. 집중하고 싶은 운동에 적합합니다. 대기 중인 운동은 사용하지 않으면 7일 후에 만료됩니다.';
 
   @override
   String get exerciseOptionsInfoRemoveFromWorkout => '운동에서 제거';
 
   @override
-  String get exerciseOptionsInfoRemoveThisExerciseFrom => '현재 운동에서만 이 운동을 제거하세요. 해당 운동은 향후 운동에서 다시 나타날 수 있습니다.';
+  String get exerciseOptionsInfoRemoveThisExerciseFrom =>
+      '현재 운동에서만 이 운동을 제거하세요. 해당 운동은 향후 운동에서 다시 나타날 수 있습니다.';
 
   @override
   String get exerciseOptionsInfoRepeatNextTime => '다음 번에 반복';
 
   @override
-  String get exerciseOptionsInfoReplaceWithASimilar => '동일한 근육을 대상으로 하는 유사한 운동으로 대체하세요. AI 제안, 최근 교체 중에서 선택하거나 전체 라이브러리를 찾아보세요.';
+  String get exerciseOptionsInfoReplaceWithASimilar =>
+      '동일한 근육을 대상으로 하는 유사한 운동으로 대체하세요. AI 제안, 최근 교체 중에서 선택하거나 전체 라이브러리를 찾아보세요.';
 
   @override
-  String get exerciseOptionsInfoSaveExercisesYouLove => '빠른 액세스를 위해 좋아하는 운동을 저장하세요. 즐겨찾기는 운동 라이브러리 필터링 보기에 표시되며 AI 추천에서 우선순위가 지정됩니다.';
+  String get exerciseOptionsInfoSaveExercisesYouLove =>
+      '빠른 액세스를 위해 좋아하는 운동을 저장하세요. 즐겨찾기는 운동 라이브러리 필터링 보기에 표시되며 AI 추천에서 우선순위가 지정됩니다.';
 
   @override
-  String get exerciseOptionsInfoSeeYourPerformanceHistory => '시간 경과에 따른 이 운동의 성과 기록 및 진행 차트를 확인하세요.';
+  String get exerciseOptionsInfoSeeYourPerformanceHistory =>
+      '시간 경과에 따른 이 운동의 성과 기록 및 진행 차트를 확인하세요.';
 
   @override
   String get exerciseOptionsInfoStapleExercise => '필수 운동';
@@ -9660,17 +9937,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePickerSheetOrTypeAboveTo => '또는 위에서 입력하여 전체 운동 라이브러리 검색';
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1) {
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
+    Object length,
+    Object length1,
+  ) {
     return '$length1개 중 $length개 표시 중';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue(
+    Object customCount,
+  ) {
     return '($customCount)';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(
+    Object count,
+    Object name,
+  ) {
     return '$name ($count)';
   }
 
@@ -9692,13 +9977,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePickerSheetSearchForExercisesToAdd => '즐겨찾기에 추가할 운동 검색';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToInclude => '다음 운동에 포함할 운동 검색';
+  String get exercisePickerSheetSearchForExercisesToInclude =>
+      '다음 운동에 포함할 운동 검색';
 
   @override
   String get exercisePickerSheetSearchForExercisesToSkip => '건너뛸 운동 검색';
 
   @override
-  String get exercisePickerSheetSearchTryPushRow => '검색 — \"push\", \"row\", \"squat\"를 시도해 보세요.';
+  String get exercisePickerSheetSearchTryPushRow =>
+      '검색 — \"push\", \"row\", \"squat\"를 시도해 보세요.';
 
   @override
   String get exercisePickerSheetSearching => '검색 중...';
@@ -9739,16 +10026,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePreferencesCardCustomExercises => '커스텀 운동';
 
   @override
-  String get exercisePreferencesCardCustomizeStepPerEquipme => '장비별 +/- 단계 사용자 지정';
+  String get exercisePreferencesCardCustomizeStepPerEquipme =>
+      '장비별 +/- 단계 사용자 지정';
 
   @override
-  String get exercisePreferencesCardCustomizeWhichExercisesAppe => '운동에 표시될 운동 사용자 지정';
+  String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
+      '운동에 표시될 운동 사용자 지정';
 
   @override
   String get exercisePreferencesCardDynamicWarmupBeforeWorkouts => '운동 전 동적 웜업';
 
   @override
-  String get exercisePreferencesCardEnableOrDisableWorkout => '운동 단계 활성화 또는 비활성화';
+  String get exercisePreferencesCardEnableOrDisableWorkout =>
+      '운동 단계 활성화 또는 비활성화';
 
   @override
   String get exercisePreferencesCardExercisePreferences => '운동 선호도';
@@ -9757,7 +10047,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePreferencesCardExercisePreferences2 => '연습 PR참고자료';
 
   @override
-  String get exercisePreferencesCardExercisePreferencesExplained => '운동 환경 설정 설명';
+  String get exercisePreferencesCardExercisePreferencesExplained =>
+      '운동 환경 설정 설명';
 
   @override
   String get exercisePreferencesCardExerciseQueue => '운동 대기열';
@@ -9819,7 +10110,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePreferencesCardWarmupPhase => '웜업 단계';
 
   @override
-  String get exercisePreferencesCardWarnBeforeFinishingWith => '기록되지 않은 세트로 종료하기 전 경고';
+  String get exercisePreferencesCardWarnBeforeFinishingWith =>
+      '기록되지 않은 세트로 종료하기 전 경고';
 
   @override
   String get exercisePreferencesCardWeightIncrements => '무게 증분';
@@ -9831,7 +10123,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exercisePreferencesCardWorkoutMode => '운동 모드';
 
   @override
-  String get exercisePreferencesCardYourPersonalExerciseLibrary => '나만의 운동 라이브러리';
+  String get exercisePreferencesCardYourPersonalExerciseLibrary =>
+      '나만의 운동 라이브러리';
 
   @override
   String get exercisePreviewOverlayFormDemo => '자세 시연';
@@ -9895,7 +10188,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseProgressionsNotYet => '아직 아님';
 
   @override
-  String get exerciseProgressionsOneMoreTooEasy => '\"너무 쉬움\" 세션을 한 번 더 완료하면 다음 변형 동작이 잠금 해제됩니다.';
+  String get exerciseProgressionsOneMoreTooEasy =>
+      '\"너무 쉬움\" 세션을 한 번 더 완료하면 다음 변형 동작이 잠금 해제됩니다.';
 
   @override
   String get exerciseProgressionsOtherTrackedExercises => '기타 추적 중인 운동';
@@ -9941,7 +10235,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy) {
+  String exerciseProgressionsScreenEasySessions(
+    Object _target,
+    Object consecutiveEasy,
+  ) {
     return '쉬운 세션 $consecutiveEasy / $_target회';
   }
 
@@ -9961,7 +10258,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise) {
+  String exerciseProgressionsScreenYouWillMoveFrom(
+    Object exerciseName,
+    Object suggestedExercise,
+  ) {
     return '$exerciseName에서 $suggestedExercise(으)로 이동합니다. ';
   }
 
@@ -9990,7 +10290,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseQueueNoExercisesQueued => '대기 중인 운동 없음';
 
   @override
-  String get exerciseQueueQueuedExercisesWillBe => '대기열에 추가된 운동은 다음 운동에 포함됩니다. 항목은 7일 후 만료됩니다.';
+  String get exerciseQueueQueuedExercisesWillBe =>
+      '대기열에 추가된 운동은 다음 운동에 포함됩니다. 항목은 7일 후 만료됩니다.';
 
   @override
   String get exerciseQueueRemove => '제거';
@@ -10014,7 +10315,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get exerciseQueueTheseExercisesWillBe => '이 운동들은 다음 운동에 포함됩니다. 대기열 항목은 7일 후 만료됩니다.';
+  String get exerciseQueueTheseExercisesWillBe =>
+      '이 운동들은 다음 운동에 포함됩니다. 대기열 항목은 7일 후 만료됩니다.';
 
   @override
   String get exerciseSafetyAuditAllExercisesTagged => '모든 운동 태그 완료!';
@@ -10032,13 +10334,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSafetyAuditNoDifficulty => '난이도 없음';
 
   @override
-  String get exerciseSafetyAuditNoExercisesPendingManual => '수동 검토 대기 중인 운동이 없습니다.';
+  String get exerciseSafetyAuditNoExercisesPendingManual =>
+      '수동 검토 대기 중인 운동이 없습니다.';
 
   @override
   String get exerciseSafetyAuditNoPattern => '패턴 없음';
 
   @override
-  String get exerciseSafetyAuditOptionalCiteSourceExplain => '선택 사항: 출처 인용, 예외 상황 설명, 모호한 점 표시...';
+  String get exerciseSafetyAuditOptionalCiteSourceExplain =>
+      '선택 사항: 출처 인용, 예외 상황 설명, 모호한 점 표시...';
 
   @override
   String get exerciseSafetyAuditRefresh => '새로고침';
@@ -10073,28 +10377,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSafetyAuditTryAgain => '다시 시도';
 
   @override
-  String get exerciseScienceResearchAllTrainingParametersAre => '모든 훈련 매개변수는 동료 검토를 거친 운동 과학 문헌을 기반으로 합니다. 개인별 결과는 다를 수 있습니다.';
+  String get exerciseScienceResearchAllTrainingParametersAre =>
+      '모든 훈련 매개변수는 동료 검토를 거친 운동 과학 문헌을 기반으로 합니다. 개인별 결과는 다를 수 있습니다.';
 
   @override
-  String get exerciseScienceResearchAmericanCollegeOfSports => '미국 스포츠 의학회 (ACSM)';
+  String get exerciseScienceResearchAmericanCollegeOfSports =>
+      '미국 스포츠 의학회 (ACSM)';
 
   @override
-  String get exerciseScienceResearchAndroulakisKorakakisPFis => 'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
+  String get exerciseScienceResearchAndroulakisKorakakisPFis =>
+      'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
 
   @override
   String get exerciseScienceResearchBarbaRuizCEt => 'Barba-Ruiz, C. et al.';
 
   @override
-  String get exerciseScienceResearchEffectsOfSupersetConfigurat => '바벨 벤치 프레스의 운동 역학, 운동학 및 인지된 노력에 대한 슈퍼세트 구성의 효과';
+  String get exerciseScienceResearchEffectsOfSupersetConfigurat =>
+      '바벨 벤치 프레스의 운동 역학, 운동학 및 인지된 노력에 대한 슈퍼세트 구성의 효과';
 
   @override
-  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms => 'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
+  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms =>
+      'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
 
   @override
-  String get exerciseScienceResearchEssentialsOfStrengthTrainin => '근력 훈련 및 컨디셔닝의 필수 요소';
+  String get exerciseScienceResearchEssentialsOfStrengthTrainin =>
+      '근력 훈련 및 컨디셔닝의 필수 요소';
 
   @override
-  String get exerciseScienceResearchEverySubmittedSourceIs => '제출된 모든 출처는 지식 베이스에 추가되기 전에 사람이 직접 검토하고 검증합니다.';
+  String get exerciseScienceResearchEverySubmittedSourceIs =>
+      '제출된 모든 출처는 지식 베이스에 추가되기 전에 사람이 직접 검토하고 검증합니다.';
 
   @override
   String get exerciseScienceResearchEvidenceBasedTraining => '근거 기반 훈련';
@@ -10103,19 +10414,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseScienceResearchFeedDataToRag => 'RAG에 데이터 공급';
 
   @override
-  String get exerciseScienceResearchFeedYourOwnResearch => '나만의 연구 논문, 운동 데이터베이스 및 훈련 방법론을 RAG(검색 증강 생성) 시스템에 공급하세요. 이를 통해 AI 코치가 개인 맞춤형 운동 계획을 생성할 때 더 높은 품질의 출처를 활용하여 최신 과학에 기반한 더 스마트하고 맞춤화된 제안을 제공할 수 있습니다.';
+  String get exerciseScienceResearchFeedYourOwnResearch =>
+      '나만의 연구 논문, 운동 데이터베이스 및 훈련 방법론을 RAG(검색 증강 생성) 시스템에 공급하세요. 이를 통해 AI 코치가 개인 맞춤형 운동 계획을 생성할 때 더 높은 품질의 출처를 활용하여 최신 과학에 기반한 더 스마트하고 맞춤화된 제안을 제공할 수 있습니다.';
 
   @override
   String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. et al.';
 
   @override
-  String get exerciseScienceResearchGoldsteinANLeung => 'Goldstein, A. N. & Leung, E.';
+  String get exerciseScienceResearchGoldsteinANLeung =>
+      'Goldstein, A. N. & Leung, E.';
 
   @override
-  String get exerciseScienceResearchGuidelinesForExerciseTestin => '운동 검사 및 처방 가이드라인';
+  String get exerciseScienceResearchGuidelinesForExerciseTestin =>
+      '운동 검사 및 처방 가이드라인';
 
   @override
-  String get exerciseScienceResearchHaffGGTriplett => 'Haff, G. G. & Triplett, N. T.';
+  String get exerciseScienceResearchHaffGGTriplett =>
+      'Haff, G. G. & Triplett, N. T.';
 
   @override
   String get exerciseScienceResearchHowItWorks => '작동 원리';
@@ -10124,7 +10439,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseScienceResearchImportantGuidelines => '중요 가이드라인';
 
   @override
-  String get exerciseScienceResearchIsraetelMRpStrength => 'Israetel, M. / RP Strength';
+  String get exerciseScienceResearchIsraetelMRpStrength =>
+      'Israetel, M. / RP Strength';
 
   @override
   String get exerciseScienceResearchKeyFindings => '주요 연구 결과';
@@ -10151,7 +10467,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseScienceResearchUploadData => '데이터 업로드';
 
   @override
-  String get exerciseScienceResearchUploadPdfsArticlesOr => '운동 과학 연구가 포함된 PDF, 기사 또는 텍스트 파일을 업로드하세요. 시스템이 콘텐츠를 처리하고 색인화하여 AI가 운동을 생성할 때 참고할 수 있도록 합니다.';
+  String get exerciseScienceResearchUploadPdfsArticlesOr =>
+      '운동 과학 연구가 포함된 PDF, 기사 또는 텍스트 파일을 업로드하세요. 시스템이 콘텐츠를 처리하고 색인화하여 AI가 운동을 생성할 때 참고할 수 있도록 합니다.';
 
   @override
   String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. et al.';
@@ -10189,7 +10506,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults) {
+  String exerciseSearchResultsWorkoutsFound(
+    Object exerciseName,
+    Object totalResults,
+  ) {
     return '\"$exerciseName\" - $totalResults개의 운동을 찾았습니다';
   }
 
@@ -10353,7 +10673,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSwapSheetFailedToSwapExercise => '운동 교체 실패';
 
   @override
-  String get exerciseSwapSheetFindingMuscleMatchedAlterna => '근육 타겟 대체 운동 찾는 중...';
+  String get exerciseSwapSheetFindingMuscleMatchedAlterna =>
+      '근육 타겟 대체 운동 찾는 중...';
 
   @override
   String get exerciseSwapSheetFindingSimilarExercises => '유사한 운동 찾는 중...';
@@ -10380,7 +10701,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSwapSheetLoadingRecentExercises => '최근 운동 불러오는 중...';
 
   @override
-  String get exerciseSwapSheetMatchingEquipmentMusclesA => '장비, 근육 및 운동 기록 매칭 중';
+  String get exerciseSwapSheetMatchingEquipmentMusclesA =>
+      '장비, 근육 및 운동 기록 매칭 중';
 
   @override
   String get exerciseSwapSheetNoAlternativesYet => '아직 대체 운동 없음';
@@ -10389,7 +10711,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSwapSheetNoRecentSwaps => '최근 교체 기록 없음';
 
   @override
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName) {
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
+    Object newExerciseName,
+  ) {
     return '$newExerciseName(으)로 교체됨';
   }
 
@@ -10415,7 +10739,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSwapSheetSnapped => '촬영됨';
 
   @override
-  String get exerciseSwapSheetSpeechRecognitionNotAvailab => '음성 인식 기능을 사용할 수 없습니다';
+  String get exerciseSwapSheetSpeechRecognitionNotAvailab =>
+      '음성 인식 기능을 사용할 수 없습니다';
 
   @override
   String get exerciseSwapSheetSwap => '교체';
@@ -10448,7 +10773,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseSwapSheetTryAiSuggestions => 'AI 제안 시도';
 
   @override
-  String get exerciseSwapSheetTryRephrasingYourRequest => '위의 요청을 다시 작성하거나, 다른 이유를 선택하거나, 라이브러리 탭을 확인하세요.';
+  String get exerciseSwapSheetTryRephrasingYourRequest =>
+      '위의 요청을 다시 작성하거나, 다른 이유를 선택하거나, 라이브러리 탭을 확인하세요.';
 
   @override
   String get exerciseSwapSheetYourSwapHistoryWill => '교체 기록이 여기에 표시됩니다';
@@ -10667,7 +10993,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exportDialogPartTimeRange => '기간';
 
   @override
-  String get exportDialogPartYourDataWillBe => '데이터가 CSV 파일이 포함된 ZIP 파일로 내보내집니다.';
+  String get exportDialogPartYourDataWillBe =>
+      '데이터가 CSV 파일이 포함된 ZIP 파일로 내보내집니다.';
 
   @override
   String get exportExportingYourData => '데이터를 내보내는 중...';
@@ -10685,7 +11012,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exportStatsExportStats => '통계 내보내기';
 
   @override
-  String get exportStatsFullDataExportWith => '모든 운동, PR, 신체 측정값이 포함된 전체 데이터 내보내기';
+  String get exportStatsFullDataExportWith =>
+      '모든 운동, PR, 신체 측정값이 포함된 전체 데이터 내보내기';
 
   @override
   String get exportStatsPdfReport => 'PDF 보고서';
@@ -10703,7 +11031,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exportThisMayTakeA => '몇 초 정도 걸릴 수 있습니다.';
 
   @override
-  String get exportUserDataNotFound => '사용자 데이터를 찾을 수 없습니다. 로그아웃 후 다시 로그인해 보세요.';
+  String get exportUserDataNotFound =>
+      '사용자 데이터를 찾을 수 없습니다. 로그아웃 후 다시 로그인해 보세요.';
 
   @override
   String get exportWorkoutButtonExportAsFit => 'FIT으로 내보내기';
@@ -10721,16 +11050,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exportWorkoutButtonGarminWahooNative => 'Garmin / Wahoo 기본';
 
   @override
-  String get exportWorkoutButtonMyfitnesspalSportstracks => 'MyFitnessPal / Sportstracks';
+  String get exportWorkoutButtonMyfitnesspalSportstracks =>
+      'MyFitnessPal / Sportstracks';
 
   @override
-  String get exportWorkoutButtonStravaGarminConnectKomo => 'Strava / Garmin Connect / Komoot';
+  String get exportWorkoutButtonStravaGarminConnectKomo =>
+      'Strava / Garmin Connect / Komoot';
 
   @override
   String get fastingAiInsightAiInsight => 'AI 인사이트';
 
   @override
-  String get fastingAiInsightCouldnTLoadYour => '인사이트를 불러올 수 없습니다. 연결 상태를 확인하세요.';
+  String get fastingAiInsightCouldnTLoadYour =>
+      '인사이트를 불러올 수 없습니다. 연결 상태를 확인하세요.';
 
   @override
   String get fastingAreYouSureYou => '지금 단식을 종료하시겠습니까?';
@@ -10739,10 +11071,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingAvgDuration => '평균 지속 시간';
 
   @override
-  String get fastingBenefit_appetite => '시간이 지남에 따라 식욕 호르몬이 재설정되어 적게 먹는 것이 더 쉬워집니다.';
+  String get fastingBenefit_appetite =>
+      '시간이 지남에 따라 식욕 호르몬이 재설정되어 적게 먹는 것이 더 쉬워집니다.';
 
   @override
-  String get fastingBenefit_autophagy => '세포 자가포식이 손상된 단백질을 제거하여 노화 방지에 도움을 줍니다.';
+  String get fastingBenefit_autophagy =>
+      '세포 자가포식이 손상된 단백질을 제거하여 노화 방지에 도움을 줍니다.';
 
   @override
   String get fastingBenefit_bs_control => '혈당이 더 안정적으로 유지되어 식탐과 에너지 저하를 줄여줍니다.';
@@ -10757,16 +11091,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingBenefit_gut_rest => '소화 기관이 휴식을 취하여 장내 미생물 건강을 지원합니다.';
 
   @override
-  String get fastingBenefit_insulin_sensitivity => '인슐린 민감도가 개선되어 제2형 당뇨병 위험을 줄입니다.';
+  String get fastingBenefit_insulin_sensitivity =>
+      '인슐린 민감도가 개선되어 제2형 당뇨병 위험을 줄입니다.';
 
   @override
-  String get fastingBenefit_longevity => '동물 연구에 따르면 단식은 건강 수명을 늘리고 질병 지표를 줄이는 것과 관련이 있습니다.';
+  String get fastingBenefit_longevity =>
+      '동물 연구에 따르면 단식은 건강 수명을 늘리고 질병 지표를 줄이는 것과 관련이 있습니다.';
 
   @override
-  String get fastingBenefit_mental_clarity => '케톤은 포도당 급상승보다 뇌에 더 안정적인 에너지를 공급합니다.';
+  String get fastingBenefit_mental_clarity =>
+      '케톤은 포도당 급상승보다 뇌에 더 안정적인 에너지를 공급합니다.';
 
   @override
-  String get fastingBenefit_weight_loss => '제지방이 아닌 저장된 지방을 타겟팅하여 지속 가능한 체중 감량을 돕습니다.';
+  String get fastingBenefit_weight_loss =>
+      '제지방이 아닌 저장된 지방을 타겟팅하여 지속 가능한 체중 감량을 돕습니다.';
 
   @override
   String get fastingBodyStatusBeyondGoal => '목표 초과';
@@ -10801,7 +11139,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get fastingBodyStatusStartFastHint => '단식을 시작하여 각 단계에 도달하는 정확한 시간을 포함한 실시간 타임라인을 확인하세요.';
+  String get fastingBodyStatusStartFastHint =>
+      '단식을 시작하여 각 단계에 도달하는 정확한 시간을 포함한 실시간 타임라인을 확인하세요.';
 
   @override
   String get fastingBodyStatusYouAreHere => '현재 위치';
@@ -10822,7 +11161,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingCalendarWeight => '체중';
 
   @override
-  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal) {
+  String fastingCalendarWidgetCompleted(
+    Object goalsCompleted,
+    Object goalsTotal,
+  ) {
     return '$goalsCompleted/$goalsTotal 완료';
   }
 
@@ -10907,16 +11249,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingGuideIsItSafeFor => '저에게 안전할까요?';
 
   @override
-  String get fastingGuideSafetyBody => '어지러움, 현기증, 떨림 또는 몸 상태가 좋지 않다고 느껴지면 즉시 단식을 멈추고 식사하세요. 24시간 이상의 단식은 전해질 보충에 각별히 주의해야 하며, 72시간 이상의 단식은 반드시 의료진의 감독하에 진행해야 합니다. 단식은 의료 서비스를 대체할 수 없으며, 이 가이드는 교육용일 뿐 의학적 조언이 아닙니다.';
+  String get fastingGuideSafetyBody =>
+      '어지러움, 현기증, 떨림 또는 몸 상태가 좋지 않다고 느껴지면 즉시 단식을 멈추고 식사하세요. 24시간 이상의 단식은 전해질 보충에 각별히 주의해야 하며, 72시간 이상의 단식은 반드시 의료진의 감독하에 진행해야 합니다. 단식은 의료 서비스를 대체할 수 없으며, 이 가이드는 교육용일 뿐 의학적 조언이 아닙니다.';
 
   @override
   String get fastingGuideStaySafe => '안전 수칙';
 
   @override
-  String get fastingGuideSubtitle => '자신 있게 단식하는 데 필요한 모든 것 — 단식의 정의, 원리, 신체 변화에 대해 알아보세요.';
+  String get fastingGuideSubtitle =>
+      '자신 있게 단식하는 데 필요한 모든 것 — 단식의 정의, 원리, 신체 변화에 대해 알아보세요.';
 
   @override
-  String get fastingGuideSwipeTimeline => '마지막 식사부터 30일 단식까지, 시간별 변화를 스와이프하여 확인하세요.';
+  String get fastingGuideSwipeTimeline =>
+      '마지막 식사부터 30일 단식까지, 시간별 변화를 스와이프하여 확인하세요.';
 
   @override
   String get fastingGuideTheFastingTimeline => '단식 타임라인';
@@ -10956,10 +11301,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get fastingHydrationRowSyncedVisibleOnHome => '동기화됨 — 홈 및 영양 탭에서도 확인 가능합니다.';
+  String get fastingHydrationRowSyncedVisibleOnHome =>
+      '동기화됨 — 홈 및 영양 탭에서도 확인 가능합니다.';
 
   @override
-  String get fastingHydrationRowWaterKeepsYouEnergized => '물은 단식 중 에너지를 유지하는 데 도움을 줍니다';
+  String get fastingHydrationRowWaterKeepsYouEnergized =>
+      '물은 단식 중 에너지를 유지하는 데 도움을 줍니다';
 
   @override
   String get fastingImpactActivityCalendar => '활동 캘린더';
@@ -10973,10 +11320,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get fastingImpactCompleteMoreFastsTo => '정확한 영향 분석을 위해 단식을 더 완료하세요. 최소 7일 이상의 단식을 권장합니다.';
+  String get fastingImpactCompleteMoreFastsTo =>
+      '정확한 영향 분석을 위해 단식을 더 완료하세요. 최소 7일 이상의 단식을 권장합니다.';
 
   @override
-  String get fastingImpactCompleteSomeFastsAnd => '단식을 완료하고 체중을 기록하여 단식이 목표에 미치는 영향을 확인하세요.';
+  String get fastingImpactCompleteSomeFastsAnd =>
+      '단식을 완료하고 체중을 기록하여 단식이 목표에 미치는 영향을 확인하세요.';
 
   @override
   String get fastingImpactFailedToLoadData => '데이터를 불러오지 못했습니다';
@@ -11127,7 +11476,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingProtocol_72h_name => '72시간';
 
   @override
-  String get fastingProtocol_adf_desc => '격일 단식 — 일반 식사일과 초저칼로리 식사일을 번갈아 진행합니다.';
+  String get fastingProtocol_adf_desc =>
+      '격일 단식 — 일반 식사일과 초저칼로리 식사일을 번갈아 진행합니다.';
 
   @override
   String get fastingProtocol_adf_name => 'ADF';
@@ -11165,12 +11515,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String fastingScheduleEditorSheetValue(Object difficulty, Object displayName) {
+  String fastingScheduleEditorSheetValue(
+    Object difficulty,
+    Object displayName,
+  ) {
     return '$displayName  ·  $difficulty';
   }
 
   @override
-  String get fastingScheduleEditorWeeklyFastingScheduleSaved => '주간 단식 일정이 저장되었습니다';
+  String get fastingScheduleEditorWeeklyFastingScheduleSaved =>
+      '주간 단식 일정이 저장되었습니다';
 
   @override
   String get fastingScheduleEditorWeeklySchedule => '주간 일정';
@@ -11243,7 +11597,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingScreenRedesignedFastPaused => '단식 일시 중지됨';
 
   @override
-  String get fastingScreenRedesignedFastResumedYourTimer => '단식이 재개되었습니다 — 타이머가 다시 작동합니다.';
+  String get fastingScreenRedesignedFastResumedYourTimer =>
+      '단식이 재개되었습니다 — 타이머가 다시 작동합니다.';
 
   @override
   String get fastingScreenRedesignedFasting => '단식';
@@ -11395,43 +11750,50 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingStageTimerReadyToFast => '단식 준비 완료';
 
   @override
-  String get fastingStage_autophagy_desc => '세포가 손상된 단백질과 소기관을 분해하고 재활용하기 시작하는 깊은 세포 청소 과정입니다.';
+  String get fastingStage_autophagy_desc =>
+      '세포가 손상된 단백질과 소기관을 분해하고 재활용하기 시작하는 깊은 세포 청소 과정입니다.';
 
   @override
   String get fastingStage_autophagy_name => '자가포식';
 
   @override
-  String get fastingStage_fat_burning_desc => '글리코겐이 낮아지면 지방 세포가 연료로 사용하기 위해 지방산을 혈류로 방출합니다.';
+  String get fastingStage_fat_burning_desc =>
+      '글리코겐이 낮아지면 지방 세포가 연료로 사용하기 위해 지방산을 혈류로 방출합니다.';
 
   @override
   String get fastingStage_fat_burning_name => '지방 연소';
 
   @override
-  String get fastingStage_glycogen_depletion_desc => '신체는 저장된 포도당을 먼저 사용합니다. 12~14시간 후 간 글리코겐이 낮아지며 대사 전환이 시작됩니다.';
+  String get fastingStage_glycogen_depletion_desc =>
+      '신체는 저장된 포도당을 먼저 사용합니다. 12~14시간 후 간 글리코겐이 낮아지며 대사 전환이 시작됩니다.';
 
   @override
   String get fastingStage_glycogen_depletion_name => '글리코겐 고갈';
 
   @override
-  String get fastingStage_growth_hormone_desc => 'HGH 수치가 급격히 상승하여 제지방량을 보호하고 지방 대사를 가속화합니다.';
+  String get fastingStage_growth_hormone_desc =>
+      'HGH 수치가 급격히 상승하여 제지방량을 보호하고 지방 대사를 가속화합니다.';
 
   @override
   String get fastingStage_growth_hormone_name => '성장 호르몬 급증';
 
   @override
-  String get fastingStage_inflammation_drop_desc => '장기가 휴식을 취하고 면역 세포가 재생되면서 염증 수치가 감소합니다.';
+  String get fastingStage_inflammation_drop_desc =>
+      '장기가 휴식을 취하고 면역 세포가 재생되면서 염증 수치가 감소합니다.';
 
   @override
   String get fastingStage_inflammation_drop_name => '염증 감소';
 
   @override
-  String get fastingStage_insulin_low_desc => '인슐린이 기준치 근처로 유지되어 지방 저장고를 열고 인슐린 민감도를 개선합니다.';
+  String get fastingStage_insulin_low_desc =>
+      '인슐린이 기준치 근처로 유지되어 지방 저장고를 열고 인슐린 민감도를 개선합니다.';
 
   @override
   String get fastingStage_insulin_low_name => '인슐린 저하';
 
   @override
-  String get fastingStage_ketosis_desc => '간은 지방산을 뇌를 위한 깨끗하고 효율적인 연료인 케톤체로 전환합니다.';
+  String get fastingStage_ketosis_desc =>
+      '간은 지방산을 뇌를 위한 깨끗하고 효율적인 연료인 케톤체로 전환합니다.';
 
   @override
   String get fastingStage_ketosis_name => '케토시스';
@@ -11546,40 +11908,49 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fastingTimerEndFast => '단식 종료';
 
   @override
-  String get fastingTip_bcaa_avoid => 'BCAA 및 칼로리나 아미노산이 포함된 대부분의 보충제는 단식을 깹니다.';
+  String get fastingTip_bcaa_avoid =>
+      'BCAA 및 칼로리나 아미노산이 포함된 대부분의 보충제는 단식을 깹니다.';
 
   @override
-  String get fastingTip_break_with_protein => '근육을 보존하고 포만감을 오래 유지하기 위해 단백질이 풍부한 식사로 단식을 깨세요.';
+  String get fastingTip_break_with_protein =>
+      '근육을 보존하고 포만감을 오래 유지하기 위해 단백질이 풍부한 식사로 단식을 깨세요.';
 
   @override
   String get fastingTip_coffee_ok => '블랙 커피는 단식을 깨지 않으며 오히려 허기를 줄여줄 수 있습니다.';
 
   @override
-  String get fastingTip_exercise_fasted_ok_intermediate => '단식에 적응되면 가벼운 유산소 운동은 괜찮습니다. 몸의 소리에 귀를 기울이세요.';
+  String get fastingTip_exercise_fasted_ok_intermediate =>
+      '단식에 적응되면 가벼운 유산소 운동은 괜찮습니다. 몸의 소리에 귀를 기울이세요.';
 
   @override
-  String get fastingTip_exercise_high_intensity_eat_first => '고강도 웨이트나 인터벌 운동 전에는 식사를 해야 수행 능력을 보호할 수 있습니다.';
+  String get fastingTip_exercise_high_intensity_eat_first =>
+      '고강도 웨이트나 인터벌 운동 전에는 식사를 해야 수행 능력을 보호할 수 있습니다.';
 
   @override
-  String get fastingTip_ramp_up_gradually => '12시간부터 시작해 매주 30분씩 늘려가세요. 첫날부터 바로 OMAD를 하지 마세요.';
+  String get fastingTip_ramp_up_gradually =>
+      '12시간부터 시작해 매주 30분씩 늘려가세요. 첫날부터 바로 OMAD를 하지 마세요.';
 
   @override
-  String get fastingTip_refeed_carbs_carefully => '36시간 이상의 단식 후에는 소화 불편을 피하기 위해 탄수화물을 천천히 다시 섭취하세요.';
+  String get fastingTip_refeed_carbs_carefully =>
+      '36시간 이상의 단식 후에는 소화 불편을 피하기 위해 탄수화물을 천천히 다시 섭취하세요.';
 
   @override
-  String get fastingTip_sleep_helps_extended => '수면 시간과 단식 시간을 겹치면 더 긴 단식도 훨씬 쉬워집니다.';
+  String get fastingTip_sleep_helps_extended =>
+      '수면 시간과 단식 시간을 겹치면 더 긴 단식도 훨씬 쉬워집니다.';
 
   @override
   String get fastingTip_stay_hydrated => '단식 중에는 물, 블랙 커피, 설탕 없는 차를 마셔도 좋습니다.';
 
   @override
-  String get fastingTip_track_hunger_separate_from_appetite => '허기와 식욕은 다릅니다. 허기는 파도처럼 지나가지만 식욕은 습관입니다.';
+  String get fastingTip_track_hunger_separate_from_appetite =>
+      '허기와 식욕은 다릅니다. 허기는 파도처럼 지나가지만 식욕은 습관입니다.';
 
   @override
   String get fastingTotalFasts => '총 단식 횟수';
 
   @override
-  String get fastingTrackYourIntermittentFastin => '스마트 구간 알림, 진행 상황 분석 및 상세 기록으로 간헐적 단식을 관리하세요.';
+  String get fastingTrackYourIntermittentFastin =>
+      '스마트 구간 알림, 진행 상황 분석 및 상세 기록으로 간헐적 단식을 관리하세요.';
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
@@ -11623,7 +11994,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertModalBodyweightExerciseDropThe => '맨몸 운동 — 무게 대신 반복 횟수 목표를 낮추세요.';
+  String get fatigueAlertModalBodyweightExerciseDropThe =>
+      '맨몸 운동 — 무게 대신 반복 횟수 목표를 낮추세요.';
 
   @override
   String get fatigueAlertModalContinueAsPlanned => '계획대로 진행';
@@ -11691,7 +12063,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get favoriteExercisesTheAiWillPrioritize => 'AI가 운동을 생성할 때 이 운동들을 우선적으로 고려합니다.';
+  String get favoriteExercisesTheAiWillPrioritize =>
+      'AI가 운동을 생성할 때 이 운동들을 우선적으로 고려합니다.';
 
   @override
   String get favoriteWorkoutsFavoriteWorkouts => '즐겨찾는 운동 루틴';
@@ -11734,7 +12107,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get favoritesNoFavoritesYet => '아직 즐겨찾기가 없습니다';
 
   @override
-  String get favoritesTapU2665OnAny => '탐색 탭이나 라이브러리에서 레시피의 ♥ 아이콘을 눌러 여기에 저장하세요.';
+  String get favoritesTapU2665OnAny =>
+      '탐색 탭이나 라이브러리에서 레시피의 ♥ 아이콘을 눌러 여기에 저장하세요.';
 
   @override
   String get favoritesTryAgain => '다시 시도';
@@ -11755,7 +12129,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get featureVotingVoting => '투표';
 
   @override
-  String get feedCompleteWorkoutsToSee => '운동을 완료하고 여기에 공유해보세요! 친구를 팔로우하여 친구의 운동 기록도 확인하세요.';
+  String get feedCompleteWorkoutsToSee =>
+      '운동을 완료하고 여기에 공유해보세요! 친구를 팔로우하여 친구의 운동 기록도 확인하세요.';
 
   @override
   String get feedCouldNotLoadYour => '활동 피드를 불러올 수 없습니다. 나중에 다시 시도해주세요.';
@@ -11784,7 +12159,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get feelResultsCompleteWorkoutsWithMood => '운동 완료 후 기분 체크인을 통해 운동이 기분에 어떤 영향을 주는지 확인해보세요.';
+  String get feelResultsCompleteWorkoutsWithMood =>
+      '운동 완료 후 기분 체크인을 통해 운동이 기분에 어떤 영향을 주는지 확인해보세요.';
 
   @override
   String get feelResultsFeelResults => '운동 효과 확인';
@@ -11816,7 +12192,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts) {
+  String feelResultsScreenYouFeltStrongerAfter(
+    Object feelingStrongerCount,
+    Object totalWorkouts,
+  ) {
     return '총 $totalWorkouts번의 운동 중 $feelingStrongerCount번 더 강해졌다고 느꼈습니다!';
   }
 
@@ -11885,7 +12264,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get firstWorkoutForecastProjectedStrengthGainOn => '주요 리프팅 예상 근력 향상';
 
   @override
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions) {
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(
+    Object effectiveSessions,
+  ) {
     return '주 $effectiveSessions회 세션 기준 예상치';
   }
 
@@ -11935,7 +12316,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fitnessAssessmentHowManyCanYou => '연속으로 몇 개나 할 수 있나요?';
 
   @override
-  String get fitnessAssessmentHowManyConsecutivePush => '정확한 자세로 푸시업을 몇 개나 연속으로 할 수 있나요?';
+  String get fitnessAssessmentHowManyConsecutivePush =>
+      '정확한 자세로 푸시업을 몇 개나 연속으로 할 수 있나요?';
 
   @override
   String get fitnessAssessmentHowManyPullUps => '풀업을 몇 개나 할 수 있나요?';
@@ -11965,7 +12347,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fitnessAssessmentWhyThisMatters => '이게 중요한 이유';
 
   @override
-  String get fitnessAssessmentYourAnswersHelpThe => '답변해주신 내용은 AI가 사용자의 정확한 체력 수준에 맞춰 운동을 조정하는 데 사용됩니다 — 추측할 필요가 없습니다.';
+  String get fitnessAssessmentYourAnswersHelpThe =>
+      '답변해주신 내용은 AI가 사용자의 정확한 체력 수준에 맞춰 운동을 조정하는 데 사용됩니다 — 추측할 필요가 없습니다.';
 
   @override
   String get fitnessCrateCollect => '수집';
@@ -12013,10 +12396,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flexibilityAssessmentAllTests => '모든 테스트';
 
   @override
-  String get flexibilityAssessmentCompleteSomeFlexibilityAsse => '유연성 평가를 완료하고 맞춤형 스트레칭 추천을 받아보세요';
+  String get flexibilityAssessmentCompleteSomeFlexibilityAsse =>
+      '유연성 평가를 완료하고 맞춤형 스트레칭 추천을 받아보세요';
 
   @override
-  String get flexibilityAssessmentCompleteTheseTestsTo => '테스트를 완료하고 전체 유연성 프로필을 확인하세요';
+  String get flexibilityAssessmentCompleteTheseTestsTo =>
+      '테스트를 완료하고 전체 유연성 프로필을 확인하세요';
 
   @override
   String get flexibilityAssessmentFailedToLoadData => '데이터를 불러오지 못했습니다';
@@ -12025,13 +12410,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flexibilityAssessmentFlexibilityAssessment => '유연성 평가';
 
   @override
-  String get flexibilityAssessmentFocusOnTheseAreas => '전반적인 유연성 향상을 위해 이 부위에 집중하세요';
+  String get flexibilityAssessmentFocusOnTheseAreas =>
+      '전반적인 유연성 향상을 위해 이 부위에 집중하세요';
 
   @override
   String get flexibilityAssessmentMyPlans => '내 플랜';
 
   @override
-  String get flexibilityAssessmentNoFlexibilityTestsAvailable => '사용 가능한 유연성 테스트가 없습니다';
+  String get flexibilityAssessmentNoFlexibilityTestsAvailable =>
+      '사용 가능한 유연성 테스트가 없습니다';
 
   @override
   String get flexibilityAssessmentNoStretchPlansYet => '아직 스트레칭 플랜이 없습니다';
@@ -12071,7 +12458,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flexibilityHistoryAssessmentHistory => '평가 기록';
 
   @override
-  String get flexibilityHistoryCompleteSomeFlexibilityTest => '유연성 테스트를 완료하고 여기에 기록을 확인하세요';
+  String get flexibilityHistoryCompleteSomeFlexibilityTest =>
+      '유연성 테스트를 완료하고 여기에 기록을 확인하세요';
 
   @override
   String get flexibilityHistoryDeleteAssessment => '평가 삭제';
@@ -12161,7 +12549,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get flexibilityTestDetailTakeTest => '테스트 수행';
 
   @override
-  String get flexibilityTestDetailTakeThisTestTo => '이 테스트를 수행하여 유연성 등급을 확인하고 맞춤형 추천을 받으세요';
+  String get flexibilityTestDetailTakeThisTestTo =>
+      '이 테스트를 수행하여 유연성 등급을 확인하고 맞춤형 추천을 받으세요';
 
   @override
   String get flexibilityTestDetailTargetMuscles => '타겟 근육';
@@ -12203,7 +12592,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get floatingChatOverlayAskYourAiCoach => 'AI 코치에게 물어보기...';
 
   @override
-  String get floatingChatOverlayErrorLoadingMessages => '메시지를 불러오는 중 오류가 발생했습니다';
+  String get floatingChatOverlayErrorLoadingMessages =>
+      '메시지를 불러오는 중 오류가 발생했습니다';
 
   @override
   String floatingChatOverlayGoTo(Object workoutName) {
@@ -12214,7 +12604,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get floatingChatOverlayHowCanIHelp => '오늘 무엇을 도와드릴까요?';
 
   @override
-  String get floatingChatOverlayMediaAttachmentsAvailableIn => '미디어 첨부 파일은 전체 채팅에서 확인할 수 있습니다';
+  String get floatingChatOverlayMediaAttachmentsAvailableIn =>
+      '미디어 첨부 파일은 전체 채팅에서 확인할 수 있습니다';
 
   @override
   String get floatingChatOverlayOnline => '온라인';
@@ -12234,7 +12625,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focalStepperValue => '값';
 
   @override
-  String get focusAreasSelectorEnterCustomFocusArea => '사용자 지정 집중 부위 입력 (예: \"회전근개\")';
+  String get focusAreasSelectorEnterCustomFocusArea =>
+      '사용자 지정 집중 부위 입력 (예: \"회전근개\")';
 
   @override
   String focusAreasSelectorSelected(Object selectedCount) {
@@ -12245,7 +12637,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get focusAreasSelectorTargetAreas => '타겟 부위';
 
   @override
-  String get focusAreasSelectorWhichBodyRegionsTo => '집중할 신체 부위를 선택하세요. 위의 트레이닝 스타일과 결합할 수 있습니다.';
+  String get focusAreasSelectorWhichBodyRegionsTo =>
+      '집중할 신체 부위를 선택하세요. 위의 트레이닝 스타일과 결합할 수 있습니다.';
 
   @override
   String get foldableWarmupLayoutPause => '일시정지';
@@ -12324,12 +12717,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodAnalysisInlineU00b7 => '·';
 
   @override
-  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex) {
+  String foodAnalysisLoadingElapsed(
+    Object _elapsedSeconds,
+    Object _stillWorkingIndex,
+  ) {
     return '경과-$_elapsedSeconds-$_stillWorkingIndex';
   }
 
   @override
-  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy) {
+  String foodAnalysisLoadingS(
+    Object _elapsedSeconds,
+    Object analysisLoadingCopy,
+  ) {
     return '$analysisLoadingCopy… $_elapsedSeconds초';
   }
 
@@ -12344,7 +12743,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get foodAnalysisResultAiNutritionAnalysisIs => 'AI 영양 분석은 추정치입니다. 개인별 식단 조언은 영양사와 상담하세요.';
+  String get foodAnalysisResultAiNutritionAnalysisIs =>
+      'AI 영양 분석은 추정치입니다. 개인별 식단 조언은 영양사와 상담하세요.';
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
@@ -12367,7 +12767,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining) {
+  String foodAnalysisResultCardLeavesYouCalFor(
+    Object mealLabel,
+    Object remaining,
+  ) {
     return '$mealLabel에 $remaining cal 남음';
   }
 
@@ -12505,7 +12908,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodBrowserPanelOnlyMatchFound => '유일한 일치 항목';
 
   @override
-  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt) {
+  String foodBrowserPanelPartExpandableSearchCardStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  ) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12525,7 +12932,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt) {
+  String foodBrowserPanelPartNLItemSectionStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  ) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12541,7 +12952,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelSearch528000Foods => 'USDA, 캐나다, 인도 등 528,000개 이상의 음식 데이터베이스 검색';
+  String get foodBrowserPanelSearch528000Foods =>
+      'USDA, 캐나다, 인도 등 528,000개 이상의 음식 데이터베이스 검색';
 
   @override
   String get foodBrowserPanelSearchAlternatives => '대안 검색...';
@@ -12671,12 +13083,20 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel) {
+  String foodHistoryScreenPartDateRangeValue(
+    Object _dateLabel,
+    Object _mealLabel,
+    Object _sourceLabel,
+  ) {
     return '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel';
   }
 
   @override
-  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG) {
+  String foodHistoryScreenPartFrequentFoodChipPCF(
+    Object carbsG,
+    Object fatG,
+    Object proteinG,
+  ) {
     return '${proteinG}P · ${carbsG}C · ${fatG}F';
   }
 
@@ -12971,7 +13391,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodMoodAnalyticsStartTrackingMood => '기분 기록 시작하기';
 
   @override
-  String get foodMoodAnalyticsTrackYourMoodWhen => '식사 기록 시 기분을 함께 기록하여\n패턴과 인사이트를 확인하세요';
+  String get foodMoodAnalyticsTrackYourMoodWhen =>
+      '식사 기록 시 기분을 함께 기록하여\n패턴과 인사이트를 확인하세요';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => '기록된 식사';
@@ -13023,7 +13444,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodReportSubmitReport => '신고 제출';
 
   @override
-  String get foodReportWeLlReviewAnd => '48시간 이내에 검토 후 업데이트하겠습니다.\n데이터 개선에 도움을 주셔서 감사합니다!';
+  String get foodReportWeLlReviewAnd =>
+      '48시간 이내에 검토 후 업데이트하겠습니다.\n데이터 개선에 도움을 주셔서 감사합니다!';
 
   @override
   String get foodReportWhatFoodDidYou => '어떤 음식을 찾으셨나요?';
@@ -13083,10 +13505,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get foodSearchResultsSomethingWentWrong => '오류가 발생했습니다';
 
   @override
-  String get foodSearchResultsTypeToSearchYour => '저장된 음식, 최근 식사 또는 데이터베이스를 검색하세요.';
+  String get foodSearchResultsTypeToSearchYour =>
+      '저장된 음식, 최근 식사 또는 데이터베이스를 검색하세요.';
 
   @override
-  String get formCheckResultAiFormAnalysisIs => 'AI 자세 분석은 교육 목적으로만 제공됩니다. 개인별 맞춤 지도는 전문 트레이너와 상담하세요.';
+  String get formCheckResultAiFormAnalysisIs =>
+      'AI 자세 분석은 교육 목적으로만 제공됩니다. 개인별 맞춤 지도는 전문 트레이너와 상담하세요.';
 
   @override
   String get formCheckResultAreasToImprove => '개선할 점';
@@ -13132,13 +13556,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get formCheckResultNeedsWork => '보완 필요';
 
   @override
-  String get formCheckResultSendAVideoOf => '운동 영상을 보내주시면 자세를 확인하고, 횟수를 세어드리며, 교정 방법을 알려드립니다.';
+  String get formCheckResultSendAVideoOf =>
+      '운동 영상을 보내주시면 자세를 확인하고, 횟수를 세어드리며, 교정 방법을 알려드립니다.';
 
   @override
   String get formCheckResultTempo => '템포';
 
   @override
-  String get formComparisonResultAiFormAnalysisIs => 'AI 자세 분석은 교육 목적으로만 제공됩니다. 개인별 맞춤 지도는 전문 트레이너와 상담하세요.';
+  String get formComparisonResultAiFormAnalysisIs =>
+      'AI 자세 분석은 교육 목적으로만 제공됩니다. 개인별 맞춤 지도는 전문 트레이너와 상담하세요.';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -13188,7 +13614,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get founderNoteFounderSoloStillOn => '1인 창업자, 여전히 버전 1에 머물러 있습니다.';
 
   @override
-  String get founderNoteIUsedToLog => '저는 2주 동안 매일 모든 식사를 기록하며 뿌듯해하다가, 메뉴를 읽을 수 없는 태국 식당에 들어가 가장 안전해 보이는 음식을 먹고 조용히 앱을 삭제하곤 했습니다. 3주 뒤에는 다른 앱을 다시 설치하고 이번엔 다를 거라 다짐하며 같은 과정을 반복했죠. 모든 앱이 제 데이터를 기록했지만, 제가 기록을 멈췄을 때 알아차린 앱은 없었습니다. 그것들은 코치가 아니라 장부였으니까요.';
+  String get founderNoteIUsedToLog =>
+      '저는 2주 동안 매일 모든 식사를 기록하며 뿌듯해하다가, 메뉴를 읽을 수 없는 태국 식당에 들어가 가장 안전해 보이는 음식을 먹고 조용히 앱을 삭제하곤 했습니다. 3주 뒤에는 다른 앱을 다시 설치하고 이번엔 다를 거라 다짐하며 같은 과정을 반복했죠. 모든 앱이 제 데이터를 기록했지만, 제가 기록을 멈췄을 때 알아차린 앱은 없었습니다. 그것들은 코치가 아니라 장부였으니까요.';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -13204,13 +13631,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get founderNoteSoIBuiltThe => '그래서 장부가 아닌 사람을 지었습니다. 국내든 해외든 메뉴를 찍으면 코치가 매크로로 다시 읽어줍니다. 화요일을 건너뛰면 죄책감 없이 수요일 아침에 돌아올 수 있습니다. 한 달에 한 번 미만의 PT 세션으로 음식, 체육관, 슬립 패턴을 학습합니다.';
+  String get founderNoteSoIBuiltThe =>
+      '그래서 장부가 아닌 사람을 지었습니다. 국내든 해외든 메뉴를 찍으면 코치가 매크로로 다시 읽어줍니다. 화요일을 건너뛰면 죄책감 없이 수요일 아침에 돌아올 수 있습니다. 한 달에 한 번 미만의 PT 세션으로 음식, 체육관, 슬립 패턴을 학습합니다.';
 
   @override
-  String get founderNoteTheFriendsWhoActually => '실제로 몸을 만든 친구들은 누군가와 계속 연락을 주고받았습니다. 실제 책임감 있는 관리는 한 달에 약 200달러가 들고, 이것이 바로 우리 대부분이 그런 관리를 받지 못하는 이유이며, \'기록\'과 \'변화\' 사이의 간극이 수년 동안 좁혀지지 않는 이유입니다.';
+  String get founderNoteTheFriendsWhoActually =>
+      '실제로 몸을 만든 친구들은 누군가와 계속 연락을 주고받았습니다. 실제 책임감 있는 관리는 한 달에 약 200달러가 들고, 이것이 바로 우리 대부분이 그런 관리를 받지 못하는 이유이며, \'기록\'과 \'변화\' 사이의 간극이 수년 동안 좁혀지지 않는 이유입니다.';
 
   @override
-  String get freshnessDecayCardControlsHowQuicklyExercise => '운동 신선도가 감소하는 속도를 제어합니다: e^(-k * 세션)';
+  String get freshnessDecayCardControlsHowQuicklyExercise =>
+      '운동 신선도가 감소하는 속도를 제어합니다: e^(-k * 세션)';
 
   @override
   String get freshnessDecayCardFreshnessDecayTuner => '신선도 감소 튜너';
@@ -13305,13 +13735,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get friendProfileMoreDetailsComingSoon => '더 많은 정보가 곧 제공됩니다';
 
   @override
-  String get friendProfileThisUserWillNot => '이 사용자는 귀하의 콘텐츠를 보거나 메시지를 보낼 수 없습니다. 나중에 차단을 해제할 수 있습니다.';
+  String get friendProfileThisUserWillNot =>
+      '이 사용자는 귀하의 콘텐츠를 보거나 메시지를 보낼 수 없습니다. 나중에 차단을 해제할 수 있습니다.';
 
   @override
   String get friendProfileUserBlocked => '사용자가 차단되었습니다';
 
   @override
-  String get friendProfileWorkoutHistoryPrsAnd => '운동 기록, PR 및 트로피가\n여기에 표시됩니다.';
+  String get friendProfileWorkoutHistoryPrsAnd =>
+      '운동 기록, PR 및 트로피가\n여기에 표시됩니다.';
 
   @override
   String get friendSearchFindFriends => '친구 찾기';
@@ -13377,7 +13809,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get friendsFriendRequests => '친구 요청';
 
   @override
-  String get friendsKeepCrushingYourWorkouts => '계속해서 열심히 운동하세요!\n친구들이 당신의 성장을 지켜볼 것입니다.';
+  String get friendsKeepCrushingYourWorkouts =>
+      '계속해서 열심히 운동하세요!\n친구들이 당신의 성장을 지켜볼 것입니다.';
 
   @override
   String get friendsNoFollowersYet => '아직 팔로워가 없습니다';
@@ -13449,7 +13882,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get futuristicSetCardSkipExercise => '운동 건너뛰기';
 
   @override
-  String get generatePlanCreateAHolisticPlan => '운동, 영양, 단식을 아우르는 종합적인 계획을 세우세요.';
+  String get generatePlanCreateAHolisticPlan =>
+      '운동, 영양, 단식을 아우르는 종합적인 계획을 세우세요.';
 
   @override
   String get generatePlanFastingProtocol => '단식 프로토콜';
@@ -13476,7 +13910,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get generatePlanWeeklyPlanGenerated => '주간 계획이 생성되었습니다!';
 
   @override
-  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo => '각 운동은 안전하게 발전할 수 있도록 조정됩니다!';
+  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo =>
+      '각 운동은 안전하게 발전할 수 있도록 조정됩니다!';
 
   @override
   String get generateWorkoutPlaceholderGenerateWorkout => '운동 생성';
@@ -13488,7 +13923,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get generateWorkoutPlaceholderGenerationFailed => '생성 실패';
 
   @override
-  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou => '운동 기록을 바탕으로 개인화됨';
+  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou =>
+      '운동 기록을 바탕으로 개인화됨';
 
   @override
   String get generateWorkoutPlaceholderTapBelowToTry => '다시 시도하려면 아래를 탭하세요';
@@ -13497,10 +13933,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get generateWorkoutPlaceholderTapToRetry => '탭하여 다시 시도';
 
   @override
-  String get generateWorkoutPlaceholderWhatPowersYourWorkout => '운동의 원동력은 무엇인가요?';
+  String get generateWorkoutPlaceholderWhatPowersYourWorkout =>
+      '운동의 원동력은 무엇인가요?';
 
   @override
-  String get generateWorkoutPlaceholderYourAiCoachCreates => 'AI 코치가 다음을 바탕으로 운동을 생성합니다:';
+  String get generateWorkoutPlaceholderYourAiCoachCreates =>
+      'AI 코치가 다음을 바탕으로 운동을 생성합니다:';
 
   @override
   String get glassDragToResize => '드래그하여 크기 조절';
@@ -13638,16 +14076,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get googleCalendarConnectDisconnect => '연결 해제';
 
   @override
-  String get googleCalendarConnectFailedToConnectGoogle => 'Google Calendar 연결에 실패했습니다';
+  String get googleCalendarConnectFailedToConnectGoogle =>
+      'Google Calendar 연결에 실패했습니다';
 
   @override
   String get googleCalendarConnectGoogleCalendar => 'Google Calendar';
 
   @override
-  String get googleCalendarConnectGoogleCalendarConnected => 'Google Calendar가 연결되었습니다!';
+  String get googleCalendarConnectGoogleCalendarConnected =>
+      'Google Calendar가 연결되었습니다!';
 
   @override
-  String get googleCalendarConnectGoogleCalendarDisconnected => 'Google Calendar 연결이 해제되었습니다';
+  String get googleCalendarConnectGoogleCalendarDisconnected =>
+      'Google Calendar 연결이 해제되었습니다';
 
   @override
   String googleCalendarConnectSheetConnectYourGoogleCalendar(Object appName) {
@@ -13655,7 +14096,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectWeOnlyAccessCalendar => '사용자가 명시적으로 허용한 캘린더 데이터에만 액세스합니다';
+  String get googleCalendarConnectWeOnlyAccessCalendar =>
+      '사용자가 명시적으로 허용한 캘린더 데이터에만 액세스합니다';
 
   @override
   String get groceryListAdd => '추가';
@@ -13718,7 +14160,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groceryListsIndexNoListsYet => '아직 목록이 없습니다';
 
   @override
-  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount) {
+  String groceryListsIndexScreenOfChecked(
+    Object checkedCount,
+    Object itemCount,
+  ) {
     return '$checkedCount / $itemCount개 체크됨';
   }
 
@@ -13778,7 +14223,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get groupSettingsAllYourFriendsAre => '모든 친구가 이미 이 그룹에 있습니다';
 
   @override
-  String get groupSettingsAreYouSureYou => '정말 이 그룹을 나가시겠습니까? 더 이상 이 대화의 메시지를 받을 수 없습니다.';
+  String get groupSettingsAreYouSureYou =>
+      '정말 이 그룹을 나가시겠습니까? 더 이상 이 대화의 메시지를 받을 수 없습니다.';
 
   @override
   String get groupSettingsGroupNameUpdated => '그룹 이름이 업데이트되었습니다';
@@ -13897,7 +14343,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestHomeSignUpFreeTo2 => '무료로 가입하여 모든 기능을 잠금 해제하고 운동 여정을 시작하세요!';
 
   @override
-  String get guestHomeSignUpFreeTo3 => '무료로 가입하고 운동 관련 질문을 하여 연중무휴 개인 맞춤형 조언을 받으세요';
+  String get guestHomeSignUpFreeTo3 =>
+      '무료로 가입하고 운동 관련 질문을 하여 연중무휴 개인 맞춤형 조언을 받으세요';
 
   @override
   String get guestHomeTapAQuestionTo => '질문을 탭하여 AI 답변 보기';
@@ -13939,7 +14386,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestLibraryPreview => '미리보기';
 
   @override
-  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit) {
+  String guestLibraryScreenShowingSampleExercisesSign(
+    Object guestExerciseLimit,
+  ) {
     return '샘플 운동 $guestExerciseLimit개를 보여드리고 있습니다. 무료로 가입하고 2300개 이상의 운동을 이용하세요!';
   }
 
@@ -13953,7 +14402,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestLibrarySignUpFree => '무료로 가입하기';
 
   @override
-  String get guestLibrarySignUpFreeTo => '무료로 가입하고 영상 가이드와 운동 방법이 포함된 전체 운동 라이브러리를 이용하세요.';
+  String get guestLibrarySignUpFreeTo =>
+      '무료로 가입하고 영상 가이드와 운동 방법이 포함된 전체 운동 라이브러리를 이용하세요.';
 
   @override
   String get guestLibrarySignUpFreeTo2 => '무료로 가입하고 모든 운동의 HD 영상 가이드를 확인하세요.';
@@ -13989,7 +14439,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestSampleWorkoutSignUpFree => '무료로 가입하기';
 
   @override
-  String get guestSampleWorkoutSignUpFreeTo => '무료로 가입하고 목표, 장비, 일정에 맞춘 AI 생성 운동을 받아보세요.';
+  String get guestSampleWorkoutSignUpFreeTo =>
+      '무료로 가입하고 목표, 장비, 일정에 맞춘 AI 생성 운동을 받아보세요.';
 
   @override
   String get guestSampleWorkoutTapToSeeWorkout => '탭하여 운동 데모 보기';
@@ -14010,7 +14461,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get guestSignUpGetYourPersonalPlan => '나만의 맞춤 플랜 받기';
 
   @override
-  String get guestSignUpSeeYourFullWorkout => '결제 전 전체 운동 플랜을 확인하세요. 신용카드는 필요하지 않습니다!';
+  String get guestSignUpSeeYourFullWorkout =>
+      '결제 전 전체 운동 플랜을 확인하세요. 신용카드는 필요하지 않습니다!';
 
   @override
   String get guestSignUpSignUp => '가입하기';
@@ -14076,7 +14528,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gymLocationPickerGymLocation => '헬스장 위치';
 
   @override
-  String get gymLocationPickerMapBasedLocationPicker => '지도 기반 위치 선택은 아직 지원되지 않습니다.\n현재는 프로필에서 헬스장 이름을 설정해주세요.';
+  String get gymLocationPickerMapBasedLocationPicker =>
+      '지도 기반 위치 선택은 아직 지원되지 않습니다.\n현재는 프로필에서 헬스장 이름을 설정해주세요.';
 
   @override
   String get gymProfileSwitcherActive => '활성';
@@ -14115,7 +14568,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get gymProfileSwitcherEnterANameFor => '복제할 헬스장 이름을 입력하세요:';
 
   @override
-  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount) {
+  String gymProfileSwitcherEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  ) {
     return '기구 $equipmentCount개 • $environmentDisplayName';
   }
 
@@ -14207,7 +14663,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get habitDetailScreenNotEnoughDataYet => '데이터가 충분하지 않습니다';
 
   @override
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak) {
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
+    Object daysUntilBestStreak,
+  ) {
     return '개인 최고 기록을 경신하기까지 $daysUntilBestStreak일 남았습니다!';
   }
 
@@ -14311,7 +14769,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get habitsCardQuickStart => '빠른 시작:';
 
   @override
-  String get habitsCardStartTrackingDailyHabits => '매일 습관을 기록하여 꾸준함을 기르고 목표를 달성하세요.';
+  String get habitsCardStartTrackingDailyHabits =>
+      '매일 습관을 기록하여 꾸준함을 기르고 목표를 달성하세요.';
 
   @override
   String get habitsCardTodaySHabits => '오늘의 습관';
@@ -14364,7 +14823,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get habitsScreenPartCreateCustomHabit => '사용자 지정 습관 만들기';
 
   @override
-  String get habitsScreenPartDefineYourOwnHabit => '이름과 아이콘을 직접 설정하여 나만의 습관을 만드세요';
+  String get habitsScreenPartDefineYourOwnHabit =>
+      '이름과 아이콘을 직접 설정하여 나만의 습관을 만드세요';
 
   @override
   String get habitsScreenPartNoHabitsFound => '습관이 없습니다';
@@ -14494,7 +14954,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hardPaywallYourAiCoachRemembers => 'Zealova AI 코치가 모든 것을 기억합니다';
 
   @override
-  String get hardPaywallYourProgressIsStill => '진행 상황은 그대로 유지됩니다. 구독하고 다시 시작하세요.';
+  String get hardPaywallYourProgressIsStill =>
+      '진행 상황은 그대로 유지됩니다. 구독하고 다시 시작하세요.';
 
   @override
   String get hardPaywallYourTrialHasEnded => '체험 기간이 종료되었습니다';
@@ -14516,13 +14977,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthBreakdownBloodSugar => '혈당';
 
   @override
-  String get healthBreakdownChronicLowGradeInflammation => '만성 저강도 염증은 관절 건강, 에너지 및 회복에 영향을 미칩니다.';
+  String get healthBreakdownChronicLowGradeInflammation =>
+      '만성 저강도 염증은 관절 건강, 에너지 및 회복에 영향을 미칩니다.';
 
   @override
   String get healthBreakdownFodmap => 'FODMAP';
 
   @override
-  String get healthBreakdownGlycemicLoadGiCarbs => '혈당 부하(Glycemic Load) = GI × 탄수화물 ÷ 100. 낮을수록 에너지가 안정적이고 혈당 스파이크가 적습니다.';
+  String get healthBreakdownGlycemicLoadGiCarbs =>
+      '혈당 부하(Glycemic Load) = GI × 탄수화물 ÷ 100. 낮을수록 에너지가 안정적이고 혈당 스파이크가 적습니다.';
 
   @override
   String get healthBreakdownHealthBreakdown => '건강 분석';
@@ -14531,7 +14994,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthBreakdownInflammation => '염증';
 
   @override
-  String get healthBreakdownNoGlycemicLoadComputed => '혈당 부하가 계산되지 않았습니다 (탄수화물이 없는 음식일 가능성이 높습니다).';
+  String get healthBreakdownNoGlycemicLoadComputed =>
+      '혈당 부하가 계산되지 않았습니다 (탄수화물이 없는 음식일 가능성이 높습니다).';
 
   @override
   String get healthBreakdownNotClassifiedForThis => '이 음식에 대해 분류되지 않았습니다.';
@@ -14540,10 +15004,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthBreakdownNotComputedForThis => '이 음식에 대해 계산되지 않았습니다.';
 
   @override
-  String get healthBreakdownNotComputedLikelyNo => '계산되지 않음 — 이 음식에는 첨가당이 없을 가능성이 높습니다.';
+  String get healthBreakdownNotComputedLikelyNo =>
+      '계산되지 않음 — 이 음식에는 첨가당이 없을 가능성이 높습니다.';
 
   @override
-  String get healthBreakdownNovaGroup4Industrial => 'NOVA 그룹 4 — 유화제, 액상과당, 인공 감미료 등이 포함된 산업용 가공식품입니다.';
+  String get healthBreakdownNovaGroup4Industrial =>
+      'NOVA 그룹 4 — 유화제, 액상과당, 인공 감미료 등이 포함된 산업용 가공식품입니다.';
 
   @override
   String healthBreakdownSheetGl(Object gl) {
@@ -14582,7 +15048,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthConnectOnboardingACoachThatSees => '모든 것을 파악하는 코치';
 
   @override
-  String get healthConnectOnboardingHealthConnectIsnT => 'Health Connect가 설치되지 않았습니다. 나중에 설정에서 연결하세요.';
+  String get healthConnectOnboardingHealthConnectIsnT =>
+      'Health Connect가 설치되지 않았습니다. 나중에 설정에서 연결하세요.';
 
   @override
   String get healthConnectOnboardingRecoveryAwareWorkouts => '회복 상태를 고려한 운동';
@@ -14593,7 +15060,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String healthConnectOnboardingScreenConnectSoZealovaCan(Object _platformName) {
+  String healthConnectOnboardingScreenConnectSoZealovaCan(
+    Object _platformName,
+  ) {
     return '$_platformName을(를) 연결하여 Zealova가 귀하의 ';
   }
 
@@ -14604,7 +15073,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthConnectOnboardingUnlockYourAiHealth => 'AI 건강 코치 잠금 해제';
 
   @override
-  String get healthConnectSyncYourHealthData => '개인 맞춤형 피트니스 인사이트를 위해 건강 데이터를 동기화하세요';
+  String get healthConnectSyncYourHealthData =>
+      '개인 맞춤형 피트니스 인사이트를 위해 건강 데이터를 동기화하세요';
 
   @override
   String get healthDevicesHealthDevices => '건강 및 기기';
@@ -14631,10 +15101,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthMetricsCardBloodGlucoseReadingsWill => '혈당 측정값이 여기에 표시됩니다';
 
   @override
-  String get healthMetricsCardConnectAGlucoseMonitor => 'Health Connect를 통해 혈당 측정기 연결';
+  String get healthMetricsCardConnectAGlucoseMonitor =>
+      'Health Connect를 통해 혈당 측정기 연결';
 
   @override
-  String get healthMetricsCardConnectHealthConnectTo => '혈당을 확인하려면 Health Connect를 연결하세요';
+  String get healthMetricsCardConnectHealthConnectTo =>
+      '혈당을 확인하려면 Health Connect를 연결하세요';
 
   @override
   String get healthMetricsCardHealthMetrics => '건강 지표';
@@ -14646,7 +15118,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthMetricsCardInsulinDelivery => '인슐린 투여';
 
   @override
-  String get healthMetricsCardInsulinDeliveryData => '연결된 기기의 인슐린 주입 데이터가 여기에 표시됩니다';
+  String get healthMetricsCardInsulinDeliveryData =>
+      '연결된 기기의 인슐린 주입 데이터가 여기에 표시됩니다';
 
   @override
   String get healthMetricsCardLoadingHealthData => '건강 데이터 불러오는 중...';
@@ -14714,7 +15187,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthSyncEnableAiHealthCoaching => 'AI 건강 코칭을 활성화할까요?';
 
   @override
-  String get healthSyncEnableAllDataYou => '동기화할 모든 데이터(걸음 수, 심박수, 수면 등)를 활성화하세요';
+  String get healthSyncEnableAllDataYou =>
+      '동기화할 모든 데이터(걸음 수, 심박수, 수면 등)를 활성화하세요';
 
   @override
   String get healthSyncEnableSync => '동기화 활성화';
@@ -14732,7 +15206,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthSyncGrantPermissions => '권한 허용';
 
   @override
-  String get healthSyncHealthConnectIsNot => 'Health Connect를 사용할 수 없습니다. Play 스토어에서 설치해주세요.';
+  String get healthSyncHealthConnectIsNot =>
+      'Health Connect를 사용할 수 없습니다. Play 스토어에서 설치해주세요.';
 
   @override
   String get healthSyncHealthSync => '건강 동기화';
@@ -14838,7 +15313,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get healthSyncWriteToHealthApp => '건강 앱에 쓰기';
 
   @override
-  String get hearInsightButtonNoAudioOutputAvailable => '사용 가능한 오디오 출력이 없습니다. 헤드폰을 연결하거나 음소거를 해제하세요.';
+  String get hearInsightButtonNoAudioOutputAvailable =>
+      '사용 가능한 오디오 출력이 없습니다. 헤드폰을 연결하거나 음소거를 해제하세요.';
 
   @override
   String get hearInsightButtonStop => '중지';
@@ -14890,12 +15366,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heartRateChartNoHeartRateData => '심박수 데이터 없음';
 
   @override
-  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange) {
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(
+    Object percentageRange,
+  ) {
     return '심박수: 최대치의 $percentageRange';
   }
 
   @override
-  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel) {
+  String heartRateChartPartZoneLegendItemM(
+    Object minutes,
+    Object percent,
+    Object shortLabel,
+  ) {
     return '$shortLabel $minutes분 ($percent%)';
   }
 
@@ -15170,7 +15652,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardCouldNotUndoCompletion => '완료 취소를 할 수 없습니다';
 
   @override
-  String get heroWorkoutCardCouldnTRegenerateWorkout => '운동을 다시 생성할 수 없습니다. 다시 시도해 주세요.';
+  String get heroWorkoutCardCouldnTRegenerateWorkout =>
+      '운동을 다시 생성할 수 없습니다. 다시 시도해 주세요.';
 
   @override
   String get heroWorkoutCardDelayUntilFastEnds => '단식 종료까지 미루기';
@@ -15182,7 +15665,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardDismissQuickWorkout => 'Quick 운동을 삭제할까요?';
 
   @override
-  String get heroWorkoutCardDismissedOfflineWillSync => '오프라인에서 삭제됨 — 온라인 연결 시 동기화됩니다';
+  String get heroWorkoutCardDismissedOfflineWillSync =>
+      '오프라인에서 삭제됨 — 온라인 연결 시 동기화됩니다';
 
   @override
   String get heroWorkoutCardDoToday => '오늘 수행';
@@ -15196,7 +15680,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort) {
+  String heroWorkoutCardExtExercises(
+    Object exerciseCount,
+    Object formattedDurationShort,
+  ) {
     return '$formattedDurationShort • 운동 $exerciseCount개';
   }
 
@@ -15249,12 +15736,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardNothingToShareYet => '공유할 내용이 없습니다 — 먼저 운동을 기록하세요';
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
+    Object exerciseCount,
+  ) {
     return '운동 $exerciseCount개';
   }
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
+    Object bestDurationMinutes,
+  ) {
     return '$bestDurationMinutes분';
   }
 
@@ -15368,7 +15859,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get heroWorkoutCardWorkoutIsNotReady => '운동이 아직 준비되지 않았습니다. 다시 생성해 보세요.';
+  String get heroWorkoutCardWorkoutIsNotReady =>
+      '운동이 아직 준비되지 않았습니다. 다시 생성해 보세요.';
 
   @override
   String get heroWorkoutCardWorkoutMarkedAsDone => '운동이 완료 처리되었습니다!';
@@ -15383,7 +15875,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardWorkoutUnmarked => '운동 완료가 취소되었습니다';
 
   @override
-  String get heroWorkoutCardYouLlLoseThis => '이 Quick 운동이 삭제됩니다. 기록된 세트가 있다면 모두 사라집니다. 계속할까요?';
+  String get heroWorkoutCardYouLlLoseThis =>
+      '이 Quick 운동이 삭제됩니다. 기록된 세트가 있다면 모두 사라집니다. 계속할까요?';
 
   @override
   String get heroWorkoutCarouselAllDoneForThis => '이번 주 운동 완료!';
@@ -15421,7 +15914,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeApply => '적용';
 
   @override
-  String get homeCustomizeYourHomeLayout => '홈 레이아웃을 사용자 지정하고, 헬스장 프로필을 전환하고, 레벨을 확인하세요 — 모두 여기서 가능합니다.';
+  String get homeCustomizeYourHomeLayout =>
+      '홈 레이아웃을 사용자 지정하고, 헬스장 프로필을 전환하고, 레벨을 확인하세요 — 모두 여기서 가능합니다.';
 
   @override
   String get homeDailyStepsGoal => '일일 걸음 수 목표';
@@ -15448,7 +15942,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyChallenges_v2 => '챌린지는 동기부여에 최고예요. 하나 참여해 보세요.';
 
   @override
-  String get homeEmptyChallenges_v3 => '아직 진행 중인 것이 없네요. 당신의 레벨에 맞는 챌린지를 찾아보세요.';
+  String get homeEmptyChallenges_v3 =>
+      '아직 진행 중인 것이 없네요. 당신의 레벨에 맞는 챌린지를 찾아보세요.';
 
   @override
   String get homeEmptyChallenges_v4 => '챌린지가 없나요? 당신을 기다리는 좋은 챌린지들이 많아요.';
@@ -15466,16 +15961,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyChat_v4 => '첫 대화는 여기서 시작됩니다. 인사해 보세요.';
 
   @override
-  String get homeEmptyCustomExercises_v1 => '아직 맞춤형 운동이 없습니다. 직접 만들어 운동에 추가해보세요.';
+  String get homeEmptyCustomExercises_v1 =>
+      '아직 맞춤형 운동이 없습니다. 직접 만들어 운동에 추가해보세요.';
 
   @override
-  String get homeEmptyCustomExercises_v2 => '맞춤형 운동 라이브러리가 비어 있습니다. 첫 번째 운동을 만들어보세요.';
+  String get homeEmptyCustomExercises_v2 =>
+      '맞춤형 운동 라이브러리가 비어 있습니다. 첫 번째 운동을 만들어보세요.';
 
   @override
-  String get homeEmptyCustomExercises_v3 => '아직 아무것도 없습니다. 기본 라이브러리에 없는 운동을 추가해보세요.';
+  String get homeEmptyCustomExercises_v3 =>
+      '아직 아무것도 없습니다. 기본 라이브러리에 없는 운동을 추가해보세요.';
 
   @override
-  String get homeEmptyCustomExercises_v4 => '맞춤형 운동이 없습니다. 하나를 만들면 검색 결과에 나타납니다.';
+  String get homeEmptyCustomExercises_v4 =>
+      '맞춤형 운동이 없습니다. 하나를 만들면 검색 결과에 나타납니다.';
 
   @override
   String get homeEmptyFasting_v1 => '시작된 단식 세션이 없습니다. 프로토콜을 선택하여 시작하세요.';
@@ -15511,19 +16010,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyFriends_v3 => '아직 아무도 없습니다. 링크를 공유하여 친구를 늘려보세요.';
 
   @override
-  String get homeEmptyFriends_v4 => '추가된 친구가 없습니다. 누군가와 함께 운동하면 큰 도움이 됩니다. 친구를 추가해보세요.';
+  String get homeEmptyFriends_v4 =>
+      '추가된 친구가 없습니다. 누군가와 함께 운동하면 큰 도움이 됩니다. 친구를 추가해보세요.';
 
   @override
-  String get homeEmptyGymProfiles_v1 => '헬스장 프로필이 없습니다. 장비를 추가하여 운동을 설정에 맞게 조정하세요.';
+  String get homeEmptyGymProfiles_v1 =>
+      '헬스장 프로필이 없습니다. 장비를 추가하여 운동을 설정에 맞게 조정하세요.';
 
   @override
-  String get homeEmptyGymProfiles_v2 => '헬스장 프로필이 비어 있습니다. 장비를 한 번만 알려주시면 매번 반영해 드립니다.';
+  String get homeEmptyGymProfiles_v2 =>
+      '헬스장 프로필이 비어 있습니다. 장비를 한 번만 알려주시면 매번 반영해 드립니다.';
 
   @override
-  String get homeEmptyGymProfiles_v3 => '저장된 설정이 없습니다. 헬스장 프로필을 추가하여 맞춤형 운동을 받아보세요.';
+  String get homeEmptyGymProfiles_v3 =>
+      '저장된 설정이 없습니다. 헬스장 프로필을 추가하여 맞춤형 운동을 받아보세요.';
 
   @override
-  String get homeEmptyGymProfiles_v4 => '프로필이 비어 있습니다. 장비를 구성하면 나머지는 AI가 알아서 처리합니다.';
+  String get homeEmptyGymProfiles_v4 =>
+      '프로필이 비어 있습니다. 장비를 구성하면 나머지는 AI가 알아서 처리합니다.';
 
   @override
   String get homeEmptyHabits_v1 => '설정된 습관이 없습니다. 작은 일일 습관 하나를 추가하여 시작해보세요.';
@@ -15553,7 +16057,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyJournal_v1 => '저널 항목이 없습니다. 작더라도 오늘의 성취를 기록해보세요.';
 
   @override
-  String get homeEmptyJournal_v2 => '저널이 비어 있습니다. 여정을 기록해보세요. 나중에 큰 도움이 될 것입니다.';
+  String get homeEmptyJournal_v2 =>
+      '저널이 비어 있습니다. 여정을 기록해보세요. 나중에 큰 도움이 될 것입니다.';
 
   @override
   String get homeEmptyJournal_v3 => '아직 작성된 내용이 없습니다. 첫 번째 기록을 여기서 시작하세요.';
@@ -15562,7 +16067,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyJournal_v4 => '항목이 없습니다. 2분만 투자해서 솔직한 기록을 남겨보세요.';
 
   @override
-  String get homeEmptyMeasurements_v1 => '측정값이 기록되지 않았어요. 기준값을 추가하여 진행 상황을 추적하세요.';
+  String get homeEmptyMeasurements_v1 =>
+      '측정값이 기록되지 않았어요. 기준값을 추가하여 진행 상황을 추적하세요.';
 
   @override
   String get homeEmptyMeasurements_v2 => '아직 기록된 것이 없네요. 현재 수치부터 시작해 보세요.';
@@ -15610,7 +16116,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyPhotos_v4 => '사진 기록이 없어요. 하나를 추가하여 시간의 흐름에 따른 변화를 추적하세요.';
 
   @override
-  String get homeEmptyPlans_v1 => '아직 계획이 없습니다. AI가 당신의 일정과 목표에 맞춰 계획을 세우게 하세요.';
+  String get homeEmptyPlans_v1 =>
+      '아직 계획이 없습니다. AI가 당신의 일정과 목표에 맞춰 계획을 세우게 하세요.';
 
   @override
   String get homeEmptyPlans_v2 => '계획이 비어 있습니다. 맞춤형 훈련 계획을 생성하여 시작해보세요.';
@@ -15619,16 +16126,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyPlans_v3 => '아직 설정된 내용이 없습니다. 계획을 세우고 꾸준히 실천해보세요.';
 
   @override
-  String get homeEmptyPlans_v4 => '활성화된 계획이 없습니다. 계획을 시작하여 매일 무엇을 할지 고민하는 시간을 줄이세요.';
+  String get homeEmptyPlans_v4 =>
+      '활성화된 계획이 없습니다. 계획을 시작하여 매일 무엇을 할지 고민하는 시간을 줄이세요.';
 
   @override
-  String get homeEmptyPrograms_v1 => '활성화된 프로그램이 없습니다. 프로그램을 둘러보고 다음 목표를 찾아보세요.';
+  String get homeEmptyPrograms_v1 =>
+      '활성화된 프로그램이 없습니다. 프로그램을 둘러보고 다음 목표를 찾아보세요.';
 
   @override
   String get homeEmptyPrograms_v2 => '프로그램은 훈련에 체계를 더해줍니다. 하나를 선택해 시작해보세요.';
 
   @override
-  String get homeEmptyPrograms_v3 => '아직 진행 중인 내용이 없습니다. 프로그램을 시작하여 주간 계획을 잠금 해제하세요.';
+  String get homeEmptyPrograms_v3 =>
+      '아직 진행 중인 내용이 없습니다. 프로그램을 시작하여 주간 계획을 잠금 해제하세요.';
 
   @override
   String get homeEmptyPrograms_v4 => '활성화된 프로그램이 없습니다. 현재 상태에 맞는 프로그램을 선택하세요.';
@@ -15646,16 +16156,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyRecipes_v4 => '레시피 라이브러리가 비어있어요. 탭하여 새로운 식단을 발견하세요.';
 
   @override
-  String get homeEmptyRecovery_v1 => '회복 데이터가 없습니다. 수면, HRV 또는 근육통을 기록하여 점수를 확인하세요.';
+  String get homeEmptyRecovery_v1 =>
+      '회복 데이터가 없습니다. 수면, HRV 또는 근육통을 기록하여 점수를 확인하세요.';
 
   @override
-  String get homeEmptyRecovery_v2 => '회복 추적기가 비어 있습니다. 웨어러블 기기를 연결하거나 직접 기록하세요.';
+  String get homeEmptyRecovery_v2 =>
+      '회복 추적기가 비어 있습니다. 웨어러블 기기를 연결하거나 직접 기록하세요.';
 
   @override
-  String get homeEmptyRecovery_v3 => '아직 추적 중인 내용이 없습니다. 회복 데이터는 더 스마트하게 훈련하는 데 도움이 됩니다.';
+  String get homeEmptyRecovery_v3 =>
+      '아직 추적 중인 내용이 없습니다. 회복 데이터는 더 스마트하게 훈련하는 데 도움이 됩니다.';
 
   @override
-  String get homeEmptyRecovery_v4 => '회복 데이터가 비어 있습니다. 오늘의 데이터를 추가하여 다음 세션을 준비하세요.';
+  String get homeEmptyRecovery_v4 =>
+      '회복 데이터가 비어 있습니다. 오늘의 데이터를 추가하여 다음 세션을 준비하세요.';
 
   @override
   String get homeEmptyScores_v1 => '아직 점수가 없습니다. 운동을 기록하여 첫 번째 준비도 점수를 생성하세요.';
@@ -15664,10 +16178,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyScores_v2 => '점수는 데이터를 기록하기 시작하면 나타납니다. 꾸준히 기록해보세요.';
 
   @override
-  String get homeEmptyScores_v3 => '아직 점수가 매겨지지 않았습니다. 세션을 완료하여 첫 번째 평가를 확인하세요.';
+  String get homeEmptyScores_v3 =>
+      '아직 점수가 매겨지지 않았습니다. 세션을 완료하여 첫 번째 평가를 확인하세요.';
 
   @override
-  String get homeEmptyScores_v4 => '점수가 비어 있습니다. 데이터가 많을수록 더 정확한 통찰력을 얻을 수 있습니다. 기록을 시작하세요.';
+  String get homeEmptyScores_v4 =>
+      '점수가 비어 있습니다. 데이터가 많을수록 더 정확한 통찰력을 얻을 수 있습니다. 기록을 시작하세요.';
 
   @override
   String get homeEmptySleep_v1 => '수면 데이터가 없어요. 웨어러블을 연결하거나 수동으로 기록하세요.';
@@ -15685,7 +16201,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyTrends_v1 => '아직 트렌드가 없습니다. 7일 동안 꾸준히 기록하여 패턴을 확인해보세요.';
 
   @override
-  String get homeEmptyTrends_v2 => '트렌드를 보려면 데이터가 필요합니다. 계속 기록하면 그래프가 채워질 것입니다.';
+  String get homeEmptyTrends_v2 =>
+      '트렌드를 보려면 데이터가 필요합니다. 계속 기록하면 그래프가 채워질 것입니다.';
 
   @override
   String get homeEmptyTrends_v3 => '아직 보여줄 내용이 없습니다. 일주일간 추적한 후 다시 확인해보세요.';
@@ -15865,13 +16382,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get homeMySpaceStartFromAReady => '준비된 레이아웃으로 시작한 후, 사용자 지정에서 세부 조정하세요.';
+  String get homeMySpaceStartFromAReady =>
+      '준비된 레이아웃으로 시작한 후, 사용자 지정에서 세부 조정하세요.';
 
   @override
   String get homeQuickActions => '빠른 작업';
 
   @override
-  String get homeQuickWorkoutGenerationWeig => '빠른 운동 생성, 체중 기록, 식단 기록 등을 이용하세요.';
+  String get homeQuickWorkoutGenerationWeig =>
+      '빠른 운동 생성, 체중 기록, 식단 기록 등을 이용하세요.';
 
   @override
   String get homeReadinessCardCheckIn => '체크인';
@@ -15947,13 +16466,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeScreenTourCarouselTitle => '오늘의 운동';
 
   @override
-  String get homeScreenTourCommunityDesc => 'See the feed, challenges, ranks, and friends';
+  String get homeScreenTourCommunityDesc =>
+      'See the feed, challenges, ranks, and friends';
 
   @override
   String get homeScreenTourCommunityTitle => 'Community Tab';
 
   @override
-  String get homeScreenTourHealthDesc => 'Check your sleep, recovery, and body data';
+  String get homeScreenTourHealthDesc =>
+      'Check your sleep, recovery, and body data';
 
   @override
   String get homeScreenTourHealthTitle => 'Health Tab';
@@ -16012,7 +16533,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeScreenUiAddTile => '타일 추가';
 
   @override
-  String get homeScreenUiChooseAPresetLayout => '원하는 목표에 맞는 프리셋 레이아웃을 선택하세요. 적용 후 추가로 사용자 지정할 수 있습니다.';
+  String get homeScreenUiChooseAPresetLayout =>
+      '원하는 목표에 맞는 프리셋 레이아웃을 선택하세요. 적용 후 추가로 사용자 지정할 수 있습니다.';
 
   @override
   String get homeScreenUiCustomizeYourDashboard => '대시보드 사용자 지정';
@@ -16021,7 +16543,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeScreenUiDiscoverLayouts => '레이아웃 탐색';
 
   @override
-  String get homeScreenUiDragToReorderTap => '드래그하여 순서 변경 • 크기 탭하여 조정 • 눈 아이콘 탭하여 숨기기';
+  String get homeScreenUiDragToReorderTap =>
+      '드래그하여 순서 변경 • 크기 탭하여 조정 • 눈 아이콘 탭하여 숨기기';
 
   @override
   String get homeScreenUiGotIt => '확인했습니다!';
@@ -16098,7 +16621,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeSwipeToSeeThis => '스와이프하여 이번 주 계획을 확인하세요. 탭하면 오늘의 운동이 시작됩니다.';
 
   @override
-  String get homeThisWillRestoreThe => 'Minimalist 레이아웃(앱 기본값)으로 복원됩니다. 현재 설정한 사용자 지정 내용은 삭제됩니다.';
+  String get homeThisWillRestoreThe =>
+      'Minimalist 레이아웃(앱 기본값)으로 복원됩니다. 현재 설정한 사용자 지정 내용은 삭제됩니다.';
 
   @override
   String get homeTimelineCouldnTLoadYour => '타임라인을 불러올 수 없습니다';
@@ -16140,115 +16664,148 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get homeTip_ankle_mobility => '발목 가동성이 부족하면 스쿼트 시 보상 작용이 일어납니다. 매일 스트레칭하고 훈련하세요.';
+  String get homeTip_ankle_mobility =>
+      '발목 가동성이 부족하면 스쿼트 시 보상 작용이 일어납니다. 매일 스트레칭하고 훈련하세요.';
 
   @override
-  String get homeTip_breathing_during_lifts => '힘든 부분에서 숨을 내뱉고, 쉬운 부분에서 들이마시세요. 운동 내내 코어에 힘을 주세요.';
+  String get homeTip_breathing_during_lifts =>
+      '힘든 부분에서 숨을 내뱉고, 쉬운 부분에서 들이마시세요. 운동 내내 코어에 힘을 주세요.';
 
   @override
-  String get homeTip_caffeine_timing => '카페인은 섭취 후 45~60분 뒤에 효과가 최고조에 달합니다. 운동 전에 맞춰 섭취하세요.';
+  String get homeTip_caffeine_timing =>
+      '카페인은 섭취 후 45~60분 뒤에 효과가 최고조에 달합니다. 운동 전에 맞춰 섭취하세요.';
 
   @override
-  String get homeTip_cardio_and_strength => '충분한 영양을 섭취하고 과도하게 하지 않는다면 유산소 운동이 근성장을 방해하지 않습니다.';
+  String get homeTip_cardio_and_strength =>
+      '충분한 영양을 섭취하고 과도하게 하지 않는다면 유산소 운동이 근성장을 방해하지 않습니다.';
 
   @override
-  String get homeTip_cold_exposure => '찬물 샤워나 얼음물 목욕은 운동 후 염증을 줄여줄 수 있습니다. 운동 전이 아닌 후에 하세요.';
+  String get homeTip_cold_exposure =>
+      '찬물 샤워나 얼음물 목욕은 운동 후 염증을 줄여줄 수 있습니다. 운동 전이 아닌 후에 하세요.';
 
   @override
-  String get homeTip_compound_before_isolation => '컨디션이 좋을 때 복합 다관절 운동부터 하세요. 고립 운동은 마지막에 배치합니다.';
+  String get homeTip_compound_before_isolation =>
+      '컨디션이 좋을 때 복합 다관절 운동부터 하세요. 고립 운동은 마지막에 배치합니다.';
 
   @override
-  String get homeTip_compound_lifts => '스쿼트, 힌지, 푸시, 풀, 캐리. 이 다섯 가지만 마스터해도 80%는 해결됩니다.';
+  String get homeTip_compound_lifts =>
+      '스쿼트, 힌지, 푸시, 풀, 캐리. 이 다섯 가지만 마스터해도 80%는 해결됩니다.';
 
   @override
-  String get homeTip_consistency_beats_perfection => '100%를 할 수 없다고 포기하는 것보다 70%라도 꾸준히 하는 것이 훨씬 낫습니다.';
+  String get homeTip_consistency_beats_perfection =>
+      '100%를 할 수 없다고 포기하는 것보다 70%라도 꾸준히 하는 것이 훨씬 낫습니다.';
 
   @override
-  String get homeTip_core_in_every_lift => '모든 복합 운동에서 코어는 작동합니다. 20분 동안 크런치만 할 필요는 없습니다.';
+  String get homeTip_core_in_every_lift =>
+      '모든 복합 운동에서 코어는 작동합니다. 20분 동안 크런치만 할 필요는 없습니다.';
 
   @override
-  String get homeTip_creatine_basics => '크레아틴 모노하이드레이트는 스포츠 과학에서 가장 많이 연구된 보충제입니다. 매일 3~5g이면 충분합니다.';
+  String get homeTip_creatine_basics =>
+      '크레아틴 모노하이드레이트는 스포츠 과학에서 가장 많이 연구된 보충제입니다. 매일 3~5g이면 충분합니다.';
 
   @override
   String get homeTip_deload_week => '4~6주마다 운동량을 40% 줄이세요. 몸이 더 강해져서 돌아올 것입니다.';
 
   @override
-  String get homeTip_eat_before_training => '공복 운동도 효과가 있지만, 운동 60~90분 전 가벼운 식사는 운동 수행 능력을 높여줍니다.';
+  String get homeTip_eat_before_training =>
+      '공복 운동도 효과가 있지만, 운동 60~90분 전 가벼운 식사는 운동 수행 능력을 높여줍니다.';
 
   @override
-  String get homeTip_eccentric_focus => '근육 손상(및 성장)의 대부분은 무게를 내리는 단계에서 일어납니다. 이 과정을 통제하세요.';
+  String get homeTip_eccentric_focus =>
+      '근육 손상(및 성장)의 대부분은 무게를 내리는 단계에서 일어납니다. 이 과정을 통제하세요.';
 
   @override
-  String get homeTip_fiber_and_gut => '하루 30g의 식이섬유는 에너지를 일정하게 유지하고 식탐을 줄여줍니다. 대부분은 15g 정도만 섭취합니다.';
+  String get homeTip_fiber_and_gut =>
+      '하루 30g의 식이섬유는 에너지를 일정하게 유지하고 식탐을 줄여줍니다. 대부분은 15g 정도만 섭취합니다.';
 
   @override
-  String get homeTip_form_over_weight => '잘못된 자세로 무리하게 드는 무게는 근육이 아닌 부상을 키웁니다. 먼저 정확한 동작을 익히세요.';
+  String get homeTip_form_over_weight =>
+      '잘못된 자세로 무리하게 드는 무게는 근육이 아닌 부상을 키웁니다. 먼저 정확한 동작을 익히세요.';
 
   @override
   String get homeTip_grip_strength => '악력은 다른 어떤 지표보다 장수를 잘 예측합니다. 꾸준히 단련하세요.';
 
   @override
-  String get homeTip_hydration_basics => '매일 체중(온스 기준)의 절반만큼 물을 마시세요. 운동하는 날에는 더 많이 마셔야 합니다.';
+  String get homeTip_hydration_basics =>
+      '매일 체중(온스 기준)의 절반만큼 물을 마시세요. 운동하는 날에는 더 많이 마셔야 합니다.';
 
   @override
-  String get homeTip_meal_timing_simple => '자연식 위주로 식사하고, 단백질을 챙기며, 충분히 주무세요. 나머지는 부차적인 요소일 뿐입니다.';
+  String get homeTip_meal_timing_simple =>
+      '자연식 위주로 식사하고, 단백질을 챙기며, 충분히 주무세요. 나머지는 부차적인 요소일 뿐입니다.';
 
   @override
-  String get homeTip_mind_muscle_connection => '천천히 움직이며 근육의 움직임에 집중하세요. 단순히 무게를 옮기는 것이 전부가 아닙니다.';
+  String get homeTip_mind_muscle_connection =>
+      '천천히 움직이며 근육의 움직임에 집중하세요. 단순히 무게를 옮기는 것이 전부가 아닙니다.';
 
   @override
-  String get homeTip_mobility_daily => '매주 한 번 60분 운동하는 것보다 매일 10분씩 가동성 훈련을 하는 것이 훨씬 효과적입니다.';
+  String get homeTip_mobility_daily =>
+      '매주 한 번 60분 운동하는 것보다 매일 10분씩 가동성 훈련을 하는 것이 훨씬 효과적입니다.';
 
   @override
-  String get homeTip_no_junk_volume => '설렁설렁하는 20세트보다 집중해서 하는 10세트가 낫습니다. 양보다 질이 중요합니다.';
+  String get homeTip_no_junk_volume =>
+      '설렁설렁하는 20세트보다 집중해서 하는 10세트가 낫습니다. 양보다 질이 중요합니다.';
 
   @override
-  String get homeTip_omega3_basics => '매일 1~2g의 EPA+DHA 섭취는 염증을 줄이고 관절 건강을 돕습니다.';
+  String get homeTip_omega3_basics =>
+      '매일 1~2g의 EPA+DHA 섭취는 염증을 줄이고 관절 건강을 돕습니다.';
 
   @override
-  String get homeTip_periodization => '시간이 지남에 따라 반복 횟수와 강도를 변화시키세요. 선형적인 성장은 영원하지 않습니다.';
+  String get homeTip_periodization =>
+      '시간이 지남에 따라 반복 횟수와 강도를 변화시키세요. 선형적인 성장은 영원하지 않습니다.';
 
   @override
-  String get homeTip_progressive_overload => '매주 무게를 조금씩 늘리거나 횟수를 한 번 더 해보세요. 그것이 성장의 비결입니다.';
+  String get homeTip_progressive_overload =>
+      '매주 무게를 조금씩 늘리거나 횟수를 한 번 더 해보세요. 그것이 성장의 비결입니다.';
 
   @override
-  String get homeTip_protein_per_meal => '끼니당 30~40g의 단백질 섭취를 목표로 하세요. 한 번에 몰아 먹는 것보다 나누어 먹는 것이 좋습니다.';
+  String get homeTip_protein_per_meal =>
+      '끼니당 30~40g의 단백질 섭취를 목표로 하세요. 한 번에 몰아 먹는 것보다 나누어 먹는 것이 좋습니다.';
 
   @override
-  String get homeTip_protein_sources_vary => '닭고기, 달걀, 그릭 요거트, 콩류 등 단백질 공급원을 다양하게 섞으세요. 다양성이 모든 아미노산을 충족합니다.';
+  String get homeTip_protein_sources_vary =>
+      '닭고기, 달걀, 그릭 요거트, 콩류 등 단백질 공급원을 다양하게 섞으세요. 다양성이 모든 아미노산을 충족합니다.';
 
   @override
-  String get homeTip_rate_of_perceived_exertion => '운동 강도를 1~10으로 평가해보세요. 대부분의 세션에서 7~8을 유지하는 것이 가장 좋습니다.';
+  String get homeTip_rate_of_perceived_exertion =>
+      '운동 강도를 1~10으로 평가해보세요. 대부분의 세션에서 7~8을 유지하는 것이 가장 좋습니다.';
 
   @override
-  String get homeTip_rest_days_grow_muscle => '휴식일은 게으름이 아닙니다. 신체가 실제로 적응하고 성장하는 시간입니다.';
+  String get homeTip_rest_days_grow_muscle =>
+      '휴식일은 게으름이 아닙니다. 신체가 실제로 적응하고 성장하는 시간입니다.';
 
   @override
-  String get homeTip_scale_not_everything => '체중은 수분과 음식 섭취로 매일 2~4파운드씩 변합니다. 주간 평균으로 판단하세요.';
+  String get homeTip_scale_not_everything =>
+      '체중은 수분과 음식 섭취로 매일 2~4파운드씩 변합니다. 주간 평균으로 판단하세요.';
 
   @override
-  String get homeTip_set_rep_ranges => '1~5회는 근력, 6~12회는 근비대, 12~20회는 근지구력을 키워줍니다. 모두 중요합니다.';
+  String get homeTip_set_rep_ranges =>
+      '1~5회는 근력, 6~12회는 근비대, 12~20회는 근지구력을 키워줍니다. 모두 중요합니다.';
 
   @override
   String get homeTip_sleep_for_recovery => '근육은 운동할 때가 아니라 잠잘 때 성장합니다.';
 
   @override
-  String get homeTip_sodium_and_water => '나트륨은 적이 아닙니다. 수분 보충과 운동 수행 능력을 돕습니다. 두려워하지 마세요.';
+  String get homeTip_sodium_and_water =>
+      '나트륨은 적이 아닙니다. 수분 보충과 운동 수행 능력을 돕습니다. 두려워하지 마세요.';
 
   @override
-  String get homeTip_split_options => 'Push/pull/legs, upper/lower, full-body 3x — 꾸준히만 한다면 모두 효과적입니다.';
+  String get homeTip_split_options =>
+      'Push/pull/legs, upper/lower, full-body 3x — 꾸준히만 한다면 모두 효과적입니다.';
 
   @override
-  String get homeTip_stress_and_recovery => '높은 스트레스는 높은 코르티솔 수치를 유발해 회복을 더디게 합니다. 전체적인 관리가 필요합니다.';
+  String get homeTip_stress_and_recovery =>
+      '높은 스트레스는 높은 코르티솔 수치를 유발해 회복을 더디게 합니다. 전체적인 관리가 필요합니다.';
 
   @override
-  String get homeTip_tempo_training => '3-0-1 템포(내릴 때 3초, 멈춤 없이, 올릴 때 1초)로 운동 자극을 다르게 느껴보세요.';
+  String get homeTip_tempo_training =>
+      '3-0-1 템포(내릴 때 3초, 멈춤 없이, 올릴 때 1초)로 운동 자극을 다르게 느껴보세요.';
 
   @override
   String get homeTip_track_to_progress => '기록하지 않으면 관리할 수 없습니다. 세트를 기록하세요.';
 
   @override
-  String get homeTip_vitamin_d => '대부분의 사람들은 비타민 D가 부족합니다. 매일 1000~2000 IU 섭취가 안전한 기준입니다.';
+  String get homeTip_vitamin_d =>
+      '대부분의 사람들은 비타민 D가 부족합니다. 매일 1000~2000 IU 섭취가 안전한 기준입니다.';
 
   @override
   String get homeTip_walk_after_meals => '식후 10분 걷기는 혈당 스파이크를 30%까지 낮출 수 있습니다.';
@@ -16257,7 +16814,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeTip_warm_up_matters => '5분의 준비 운동이 모든 세트를 더 안전하고 강력하게 만듭니다.';
 
   @override
-  String get homeTip_zone2_cardio => 'Zone 2 유산소(대화 가능한 속도)는 모든 운동의 기초가 되는 유산소 베이스를 만듭니다.';
+  String get homeTip_zone2_cardio =>
+      'Zone 2 유산소(대화 가능한 속도)는 모든 운동의 기초가 되는 유산소 베이스를 만듭니다.';
 
   @override
   String get homeTodaysNutrition => '오늘의 영양';
@@ -16284,7 +16842,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeYourProgress => '나의 진행 상황';
 
   @override
-  String get homescreenCustomizationChangesAreSavedAutomaticall => '변경 사항은 자동으로 저장되며 즉시 적용됩니다.';
+  String get homescreenCustomizationChangesAreSavedAutomaticall =>
+      '변경 사항은 자동으로 저장되며 즉시 적용됩니다.';
 
   @override
   String get homescreenCustomizationChooseWhichCardsTo => '홈 화면에 표시할 카드를 선택하세요';
@@ -16299,7 +16858,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homescreenCustomizationExerciseVariationThisWeek => '이번 주 운동 변화';
 
   @override
-  String get homescreenCustomizationFeatureVotingAndRoadmap => '기능 투표 및 로드맵 미리보기';
+  String get homescreenCustomizationFeatureVotingAndRoadmap =>
+      '기능 투표 및 로드맵 미리보기';
 
   @override
   String get homescreenCustomizationFitnessScore => '피트니스 점수';
@@ -16308,7 +16868,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homescreenCustomizationGoalsAndMilestonesFor => '이번 주 목표 및 마일스톤';
 
   @override
-  String get homescreenCustomizationHealthDeviceActivitySummary => '건강 기기 활동 요약';
+  String get homescreenCustomizationHealthDeviceActivitySummary =>
+      '건강 기기 활동 요약';
 
   @override
   String get homescreenCustomizationLogFoodStatsShare => '식단, 통계, 공유, 물 기록 버튼';
@@ -16317,13 +16878,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homescreenCustomizationMoodCheckIn => '기분 체크인';
 
   @override
-  String get homescreenCustomizationOverallFitnessStrengthNu => '전반적인 피트니스, 근력 및 영양 점수';
+  String get homescreenCustomizationOverallFitnessStrengthNu =>
+      '전반적인 피트니스, 근력 및 영양 점수';
 
   @override
   String get homescreenCustomizationQuickActions => '빠른 작업';
 
   @override
-  String get homescreenCustomizationQuickMoodPickerFor => '즉각적인 운동을 위한 빠른 기분 선택';
+  String get homescreenCustomizationQuickMoodPickerFor =>
+      '즉각적인 운동을 위한 빠른 기분 선택';
 
   @override
   String get homescreenCustomizationResetToDefaults => '기본값으로 초기화';
@@ -16341,7 +16904,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homescreenCustomizationWeeklyProgress => '주간 진행 상황';
 
   @override
-  String get homescreenCustomizationWorkoutCompletionProgressRi => '운동 완료 진행률 링';
+  String get homescreenCustomizationWorkoutCompletionProgressRi =>
+      '운동 완료 진행률 링';
 
   @override
   String get hormonalHealthFailedToLoadHormonal => '호르몬 건강 데이터를 불러오지 못했습니다';
@@ -16385,7 +16949,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hormonalHealthSettingsAddHormoneGoal => '호르몬 목표 추가';
 
   @override
-  String get hormonalHealthSettingsAdjustWorkoutIntensityBased => '주기 단계에 따라 운동 강도 조절';
+  String get hormonalHealthSettingsAdjustWorkoutIntensityBased =>
+      '주기 단계에 따라 운동 강도 조절';
 
   @override
   String get hormonalHealthSettingsBirthSex => '생물학적 성별';
@@ -16418,7 +16983,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hormonalHealthSettingsHormoneSupportiveFoods => '호르몬 지원 음식';
 
   @override
-  String get hormonalHealthSettingsIncludeHormoneFriendlyFood => '호르몬 친화적 음식 제안 포함';
+  String get hormonalHealthSettingsIncludeHormoneFriendlyFood =>
+      '호르몬 친화적 음식 제안 포함';
 
   @override
   String get hormonalHealthSettingsLastPeriodStart => '마지막 생리 시작일';
@@ -16430,7 +16996,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hormonalHealthSettingsPeriodDuration => '생리 기간';
 
   @override
-  String get hormonalHealthSettingsPrioritizeExercisesThatSupp => '목표를 지원하는 운동 우선순위 지정';
+  String get hormonalHealthSettingsPrioritizeExercisesThatSupp =>
+      '목표를 지원하는 운동 우선순위 지정';
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
@@ -16456,7 +17023,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get hormonalHealthSettingsSelectHormoneGoals => '호르몬 목표 선택';
 
   @override
-  String get hormonalHealthSettingsTrackYourMenstrualCycle => '최적화된 운동을 위해 생리 주기를 추적하세요';
+  String get hormonalHealthSettingsTrackYourMenstrualCycle =>
+      '최적화된 운동을 위해 생리 주기를 추적하세요';
 
   @override
   String get hormonalHealthTodaySCheckIn => '오늘의 체크인';
@@ -16792,10 +17360,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importEquipmentAnyPublicWebpageListing => '운동 기구가 나열된 공개 웹페이지.';
 
   @override
-  String get importEquipmentEGNdumbbells5 => '예:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
+  String get importEquipmentEGNdumbbells5 =>
+      '예:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
-  String get importEquipmentEverythingImportedGoesTo => '가져온 모든 항목은 검토 화면으로 이동합니다. 확인 없이 장비를 덮어쓰지 않습니다.';
+  String get importEquipmentEverythingImportedGoesTo =>
+      '가져온 모든 항목은 검토 화면으로 이동합니다. 확인 없이 장비를 덮어쓰지 않습니다.';
 
   @override
   String get importEquipmentImportEquipment => '장비 가져오기';
@@ -16819,13 +17389,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importEquipmentResultCustom => '사용자 지정 ✓';
 
   @override
-  String get importEquipmentResultInferredFromImportedContent => '가져온 콘텐츠에서 추론됨';
+  String get importEquipmentResultInferredFromImportedContent =>
+      '가져온 콘텐츠에서 추론됨';
 
   @override
-  String get importEquipmentResultNoEquipmentCouldBe => '가져온 데이터에서 일치하는 장비를 찾을 수 없습니다.';
+  String get importEquipmentResultNoEquipmentCouldBe =>
+      '가져온 데이터에서 일치하는 장비를 찾을 수 없습니다.';
 
   @override
-  String get importEquipmentResultReviewBeforeSavingTap => '저장 전 검토하세요. 칩을 탭하여 제거할 수 있습니다.';
+  String get importEquipmentResultReviewBeforeSavingTap =>
+      '저장 전 검토하세요. 칩을 탭하여 제거할 수 있습니다.';
 
   @override
   String get importEquipmentResultSaving => '저장 중...';
@@ -16836,7 +17409,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched) {
+  String importEquipmentResultSheetMatched(
+    Object matchedKeptCount,
+    Object totalMatched,
+  ) {
     return '일치함 ($matchedKeptCount/$totalMatched)';
   }
 
@@ -16856,7 +17432,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentResultWeCouldnTMatch => '알려진 장비와 일치하지 않습니다. 건너뛰거나 사용자 지정으로 유지하세요.';
+  String get importEquipmentResultWeCouldnTMatch =>
+      '알려진 장비와 일치하지 않습니다. 건너뛰거나 사용자 지정으로 유지하세요.';
 
   @override
   String get importEquipmentResultWorkoutEnvironment => '운동 환경';
@@ -16882,7 +17459,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importExerciseDescribeTheExercise => '운동 설명';
 
   @override
-  String get importExerciseEGSeatedCable => '예: \'중립 그립 시티드 케이블 로우, 등 중앙 및 후면 삼각근 타겟\'';
+  String get importExerciseEGSeatedCable =>
+      '예: \'중립 그립 시티드 케이블 로우, 등 중앙 및 후면 삼각근 타겟\'';
 
   @override
   String get importExerciseExerciseNameHintOptional => '운동 이름 힌트 (선택 사항)';
@@ -16987,7 +17565,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inflammationAnalysisInflammationScore => '염증 점수';
 
   @override
-  String get inflammationAnalysisIngredientAnalysisUnavailabl => '성분 분석을 사용할 수 없음';
+  String get inflammationAnalysisIngredientAnalysisUnavailabl =>
+      '성분 분석을 사용할 수 없음';
 
   @override
   String get inflammationAnalysisIngredientsAnalysis => '성분 분석';
@@ -17007,7 +17586,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inflammationTagsContainsUltraProcessedItems => '초가공 식품 포함';
 
   @override
-  String get inflammationTagsExamplesSoftDrinksInstant => '예: 탄산음료, 인스턴트 라면, 포장 스낵, 치킨 너겟, 대부분의 시리얼.';
+  String get inflammationTagsExamplesSoftDrinksInstant =>
+      '예: 탄산음료, 인스턴트 라면, 포장 스낵, 치킨 너겟, 대부분의 시리얼.';
 
   @override
   String get inflammationTagsHowTheScoreIs => '점수 산정 방식';
@@ -17016,19 +17596,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inflammationTagsInflammationScore => '염증 점수';
 
   @override
-  String get inflammationTagsLowerScoresReduceSystemic => '점수가 낮을수록 전신 염증, 장 자극 및 식후 에너지 저하를 줄일 수 있습니다.';
+  String get inflammationTagsLowerScoresReduceSystemic =>
+      '점수가 낮을수록 전신 염증, 장 자극 및 식후 에너지 저하를 줄일 수 있습니다.';
 
   @override
-  String get inflammationTagsNovaProcessingLevelOmega => 'NOVA 가공 단계, 오메가-6:오메가-3 지방 비율, 정제당 함량, 식이섬유 및 폴리페놀 밀도, 혈당 부하, 씨앗유 함량. 동료 심사를 거친 식이 염증 지수(DII) 기준에 따라 조정되었습니다.';
+  String get inflammationTagsNovaProcessingLevelOmega =>
+      'NOVA 가공 단계, 오메가-6:오메가-3 지방 비율, 정제당 함량, 식이섬유 및 폴리페놀 밀도, 혈당 부하, 씨앗유 함량. 동료 심사를 거친 식이 염증 지수(DII) 기준에 따라 조정되었습니다.';
 
   @override
-  String get inflammationTagsResearchLinksRegularConsump => '연구에 따르면 정기적인 섭취는 염증, 비만, 심장 질환 및 소화기 문제 증가와 관련이 있습니다.';
+  String get inflammationTagsResearchLinksRegularConsump =>
+      '연구에 따르면 정기적인 섭취는 염증, 비만, 심장 질환 및 소화기 문제 증가와 관련이 있습니다.';
 
   @override
   String get inflammationTagsUltraProcessedFoods => '초가공 식품';
 
   @override
-  String get inflammationTagsUltraProcessedFoodsNova => '초가공 식품(NOVA 4단계)에는 유화제, 경화유, 인공 감미료, 단백질 분리물과 같은 산업용 첨가물이 포함되어 있으며, 이는 가정 요리에서는 찾아볼 수 없는 성분입니다.';
+  String get inflammationTagsUltraProcessedFoodsNova =>
+      '초가공 식품(NOVA 4단계)에는 유화제, 경화유, 인공 감미료, 단백질 분리물과 같은 산업용 첨가물이 포함되어 있으며, 이는 가정 요리에서는 찾아볼 수 없는 성분입니다.';
 
   @override
   String get injuriesActive => '진행 중';
@@ -17079,10 +17663,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get injuriesSelectorAiWillAvoidExercises => 'AI가 해당 부위를 악화시킬 수 있는 운동을 피합니다';
+  String get injuriesSelectorAiWillAvoidExercises =>
+      'AI가 해당 부위를 악화시킬 수 있는 운동을 피합니다';
 
   @override
-  String get injuriesSelectorEnterCustomInjuryE => '사용자 지정 부상 입력 (예: \"테니스 엘보\")';
+  String get injuriesSelectorEnterCustomInjuryE =>
+      '사용자 지정 부상 입력 (예: \"테니스 엘보\")';
 
   @override
   String get injuriesSelectorInjuriesToConsider => '고려할 부상';
@@ -17140,7 +17726,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get injuryDetailAffectedExercises => '영향을 받는 운동';
 
   @override
-  String get injuryDetailAreYouSureThis => '이 부상이 완전히 나았나요? 확인 시 부상 기록으로 이동됩니다.';
+  String get injuryDetailAreYouSureThis =>
+      '이 부상이 완전히 나았나요? 확인 시 부상 기록으로 이동됩니다.';
 
   @override
   String get injuryDetailCheckInLoggedSuccessfully => '체크인이 성공적으로 기록되었습니다';
@@ -17200,7 +17787,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get injuryDetailScreenLogCheckIn => '체크인 기록';
 
   @override
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay) {
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
+    Object bodyPartDisplay,
+  ) {
     return '오늘 $bodyPartDisplay 상태는 어떤가요?';
   }
 
@@ -17225,7 +17814,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get injuryDetailYesHealed => '네, 완치되었습니다';
 
   @override
-  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit) {
+  String inlineEditPillEditSetByReps(
+    Object _weightText,
+    Object reps,
+    Object unit,
+  ) {
     return '세트 편집, $_weightText $unit $reps회';
   }
 
@@ -17318,7 +17911,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get inlineWorkoutChatIntentIdentifyEquipmentWh => '[intent:identify_equipment] 이 기구는 무엇인가요?';
+  String get inlineWorkoutChatIntentIdentifyEquipmentWh =>
+      '[intent:identify_equipment] 이 기구는 무엇인가요?';
 
   @override
   String get inlineWorkoutChatRest => '휴식';
@@ -17374,7 +17968,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled) {
+  String insightsDetailScreenOfWorkouts(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '$workoutsScheduled개 중 $workoutsCompleted개 운동 완료';
   }
 
@@ -17405,7 +18002,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get insightsNarrativeTemplateYourConsistencyIsCompoundin => '꾸준함이 쌓이고 있습니다. 계속해서 반복 횟수를 늘려가세요.';
+  String get insightsNarrativeTemplateYourConsistencyIsCompoundin =>
+      '꾸준함이 쌓이고 있습니다. 계속해서 반복 횟수를 늘려가세요.';
 
   @override
   String get insightsPastReports => '지난 리포트';
@@ -17453,7 +18051,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get insightsPrsTemplateShowingUpIsThe => '운동을 나오는 것 자체가 진정한 승리입니다. 계속해서 반복 횟수를 쌓아가세요.';
+  String get insightsPrsTemplateShowingUpIsThe =>
+      '운동을 나오는 것 자체가 진정한 승리입니다. 계속해서 반복 횟수를 쌓아가세요.';
 
   @override
   String get insightsReportCardCalories => '칼로리';
@@ -17498,7 +18097,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled) {
+  String insightsScreenPartBodyCardWorkoutsMinKcal(
+    Object caloriesBurnedEstimate,
+    Object totalTimeMinutes,
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '운동 $workoutsCompleted/$workoutsScheduled회  |  $totalTimeMinutes분  |  $caloriesBurnedEstimate kcal';
   }
 
@@ -17512,13 +18116,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get insightsScreenPartGenerateAiInsight => 'AI 인사이트 생성';
 
   @override
-  String get insightsScreenPartGetPersonalizedAiAnalysis => '이 기간 동안의 운동 데이터를 바탕으로 개인 맞춤형 AI 분석을 받아보세요.';
+  String get insightsScreenPartGetPersonalizedAiAnalysis =>
+      '이 기간 동안의 운동 데이터를 바탕으로 개인 맞춤형 AI 분석을 받아보세요.';
 
   @override
-  String get insightsScreenPartLogYourMeasurementsTo => '신체 치수를 기록하여 신체 구성 변화를 추적하세요';
+  String get insightsScreenPartLogYourMeasurementsTo =>
+      '신체 치수를 기록하여 신체 구성 변화를 추적하세요';
 
   @override
-  String get insightsScreenPartLogYourReadinessAnd => '컨디션과 기분을 기록하여 회복 인사이트를 확인하세요';
+  String get insightsScreenPartLogYourReadinessAnd =>
+      '컨디션과 기분을 기록하여 회복 인사이트를 확인하세요';
 
   @override
   String get insightsScreenPartMoodDistribution => '기분 분포';
@@ -17540,7 +18147,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get insightsScreenPartPleaseCheckYourConnection => '연결 상태를 확인하고 다시 시도해 주세요.';
+  String get insightsScreenPartPleaseCheckYourConnection =>
+      '연결 상태를 확인하고 다시 시도해 주세요.';
 
   @override
   String get insightsScreenPartPrs => 'PRs';
@@ -17549,13 +18157,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get insightsScreenPartShareThisReport => '이 리포트 공유하기';
 
   @override
-  String get insightsScreenPartStartTrackingNutritionTo => '영양 기록을 시작하여 인사이트를 확인하세요';
+  String get insightsScreenPartStartTrackingNutritionTo =>
+      '영양 기록을 시작하여 인사이트를 확인하세요';
 
   @override
   String get insightsScreenPartTips => '팁';
 
   @override
-  String get insightsScreenPartWeeklyReportsWillAppear => '주간 리포트가 생성되면 여기에 표시됩니다.';
+  String get insightsScreenPartWeeklyReportsWillAppear =>
+      '주간 리포트가 생성되면 여기에 표시됩니다.';
 
   @override
   String get insightsScreenPartWeight => '체중';
@@ -17608,7 +18218,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get introAnAiCoachThat => '운동 계획을 세우고, 당신의 몸을 학습하며, 매주 조정해 주는 AI 코치입니다.';
+  String get introAnAiCoachThat =>
+      '운동 계획을 세우고, 당신의 몸을 학습하며, 매주 조정해 주는 AI 코치입니다.';
 
   @override
   String get introBuildMyPlan => '내 계획 만들기';
@@ -17640,7 +18251,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inventory2xXpActive => '⚡ 2배 XP 활성화 중';
 
   @override
-  String get inventory3RefsSticker10 => '친구 3명 초대 → 스티커 · 10명 → 쉐이커 · 25명 → 티셔츠';
+  String get inventory3RefsSticker10 =>
+      '친구 3명 초대 → 스티커 · 10명 → 쉐이커 · 25명 → 티셔츠';
 
   @override
   String get inventory730100Day => '7일, 30일, 100일 연속 기록';
@@ -17750,7 +18362,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get inventoryTapToBrowseOr => '탭하여 탐색하거나 변경하세요';
 
   @override
-  String get inventoryTrustLevelAffectsXp => '신뢰 레벨은 운동 및 활동에서 획득하는 XP에 영향을 줍니다.';
+  String get inventoryTrustLevelAffectsXp =>
+      '신뢰 레벨은 운동 및 활동에서 획득하는 XP에 영향을 줍니다.';
 
   @override
   String get inventoryTrustLevels => '신뢰 레벨';
@@ -17820,7 +18433,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps) {
+  String kegelSessionScreenRepsXSHold(
+    Object defaultHoldSeconds,
+    Object defaultReps,
+  ) {
     return '$defaultReps회 반복 x $defaultHoldSeconds초 유지';
   }
 
@@ -17894,7 +18510,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get kegelSettingsStandaloneSessions => '독립형 세션';
 
   @override
-  String get kegelSettingsStrengthenYourPelvicFloor => '운동 루틴에 포함된 케겔 운동으로 골반저근을 강화하세요.';
+  String get kegelSettingsStrengthenYourPelvicFloor =>
+      '운동 루틴에 포함된 케겔 운동으로 골반저근을 강화하세요.';
 
   @override
   String get kegelSettingsWarmup => '웜업';
@@ -17951,7 +18568,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get layoutEditorScreenApply => '적용';
 
   @override
-  String get layoutEditorScreenChooseAPresetTo => '프리셋을 선택하여 홈 화면을 빠르게 사용자 지정하세요';
+  String get layoutEditorScreenChooseAPresetTo =>
+      '프리셋을 선택하여 홈 화면을 빠르게 사용자 지정하세요';
 
   @override
   String get layoutEditorScreenDragToReorderTap => '드래그하여 순서 변경 • 탭하여 전환';
@@ -18012,7 +18630,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get leaderboardLockedStateCompleteMoreWorkoutsTo => '더 많은 운동을 완료하여 잠금을 해제하세요!';
+  String get leaderboardLockedStateCompleteMoreWorkoutsTo =>
+      '더 많은 운동을 완료하여 잠금을 해제하세요!';
 
   @override
   String get leaderboardLockedStateGlobalLeaderboardLocked => '글로벌 리더보드 잠김';
@@ -18035,7 +18654,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get leaderboardPrivacyAnonymousMode => '익명 모드';
 
   @override
-  String get leaderboardPrivacyCouldnTLoadPrivacy => '개인정보 설정을 불러올 수 없습니다. 당겨서 다시 시도하세요.';
+  String get leaderboardPrivacyCouldnTLoadPrivacy =>
+      '개인정보 설정을 불러올 수 없습니다. 당겨서 다시 시도하세요.';
 
   @override
   String get leaderboardPrivacyLeaderboardPrivacy => '리더보드 개인정보';
@@ -18106,7 +18726,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get levelUpCatchAwesomeGotIt => '멋져요 — 확인했습니다';
 
   @override
-  String get levelUpCatchIncludesAFreePhysical => '무료 실물 보상 포함 — Merch Rewards에서 수령하세요';
+  String get levelUpCatchIncludesAFreePhysical =>
+      '무료 실물 보상 포함 — Merch Rewards에서 수령하세요';
 
   @override
   String get levelUpCatchReveal => '공개';
@@ -18130,7 +18751,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel) {
+  String levelUpCatchUpBannerYouGainedLevelsUp(
+    Object count,
+    Object highestLevel,
+  ) {
     return '$count 레벨 상승 (최대 L$highestLevel)';
   }
 
@@ -18219,7 +18843,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get libraryLibrary => '라이브러리';
 
   @override
-  String get libraryQuickAccessBrowseExercisesProgramsW => '운동, 프로그램 및 운동 기록 탐색';
+  String get libraryQuickAccessBrowseExercisesProgramsW =>
+      '운동, 프로그램 및 운동 기록 탐색';
 
   @override
   String get libraryQuickAccessExerciseLibrary => '운동 라이브러리';
@@ -18228,7 +18853,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get librarySearchExercises => '운동 검색...';
 
   @override
-  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName) {
+  String lifetimeMemberBadgeDaysUntil(
+    Object daysRemaining,
+    Object nextTierName,
+  ) {
     return '$nextTierName까지 $daysRemaining일';
   }
 
@@ -18268,7 +18896,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get liveChatAreYouSureYou => '정말로 대화를 종료하시겠습니까? 나중에 새 채팅을 시작할 수 있습니다.';
 
   @override
-  String get liveChatConnectWithOurSupport => '실시간 지원을 위해 고객 지원 팀에 연결하세요. 상담원은 업무 시간 중에 질문이나 문제를 도와드릴 수 있습니다.';
+  String get liveChatConnectWithOurSupport =>
+      '실시간 지원을 위해 고객 지원 팀에 연결하세요. 상담원은 업무 시간 중에 질문이나 문제를 도와드릴 수 있습니다.';
 
   @override
   String get liveChatEndChat => '채팅을 종료할까요?';
@@ -18304,7 +18933,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get livePrSnackbarNewPr => '새로운 PR!';
 
   @override
-  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr) {
+  String livePrSnackbarRm(
+    Object oneRmStr,
+    Object reps,
+    Object unitLabel,
+    Object weightStr,
+  ) {
     return '$weightStr$unitLabel×$reps  →  $oneRmStr $unitLabel 1RM, ';
   }
 
@@ -18319,13 +18953,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsAddALocationTo => '자동 전환을 활성화하려면 체육관 프로필에 위치를 추가하세요. 프로필을 편집하고 \"위치 추가\"를 탭하세요.';
+  String get locationSettingsAddALocationTo =>
+      '자동 전환을 활성화하려면 체육관 프로필에 위치를 추가하세요. 프로필을 편집하고 \"위치 추가\"를 탭하세요.';
 
   @override
   String get locationSettingsAutoSwitchGymProfiles => '체육관 프로필 자동 전환';
 
   @override
-  String get locationSettingsAutoSwitchNeedsAlways => '자동 전환 기능을 사용하려면 체육관 도착을 감지하기 위해 \"항상\" 위치 권한이 필요합니다.';
+  String get locationSettingsAutoSwitchNeedsAlways =>
+      '자동 전환 기능을 사용하려면 체육관 도착을 감지하기 위해 \"항상\" 위치 권한이 필요합니다.';
 
   @override
   String get locationSettingsAutoSwitchProfiles => '프로필 자동 전환';
@@ -18350,7 +18986,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsSetAPreferredWorkout => '시간 기반 전환을 활성화하려면 체육관 프로필에서 선호하는 운동 시간을 설정하세요.';
+  String get locationSettingsSetAPreferredWorkout =>
+      '시간 기반 전환을 활성화하려면 체육관 프로필에서 선호하는 운동 시간을 설정하세요.';
 
   @override
   String get locationSettingsTapToGrantPermission => '탭하여 권한 허용';
@@ -18359,7 +18996,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get locationSettingsTimeBasedSwitching => '시간 기반 전환';
 
   @override
-  String get locationSettingsYourLocationIsOnly => '귀하의 위치는 저장된 체육관과의 근접성을 확인하기 위해 로컬에서만 사용됩니다.';
+  String get locationSettingsYourLocationIsOnly =>
+      '귀하의 위치는 저장된 체육관과의 근접성을 확인하기 위해 로컬에서만 사용됩니다.';
 
   @override
   String get log1rmCurrent1rm => '현재 1RM:';
@@ -18555,7 +19193,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetAddedTheFirst5 => '처음 5장의 사진을 추가했습니다(최대).';
 
   @override
-  String get logMealSheetAiEstimatesFromA => 'AI는 사진을 통해 추정합니다. 나중에 결과를 구체화할 수 있습니다.';
+  String get logMealSheetAiEstimatesFromA =>
+      'AI는 사진을 통해 추정합니다. 나중에 결과를 구체화할 수 있습니다.';
 
   @override
   String get logMealSheetAllItemsMatchedVerified => '모든 항목이 검증된 영양 데이터와 일치합니다';
@@ -18570,7 +19209,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetAnalyzing => '분석 중…';
 
   @override
-  String get logMealSheetAnythingElseInThe => '사진에는 ​​또 다른 게 있나요? (예: 아마씨, 유청 단백질)';
+  String get logMealSheetAnythingElseInThe =>
+      '사진에는 ​​또 다른 게 있나요? (예: 아마씨, 유청 단백질)';
 
   @override
   String get logMealSheetBackToResults => '결과로 돌아가기';
@@ -18614,7 +19254,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetCouldnTApplyThat => '해당 수정 사항을 적용할 수 없습니다. 식사는 변경되지 않습니다.';
+  String get logMealSheetCouldnTApplyThat =>
+      '해당 수정 사항을 적용할 수 없습니다. 식사는 변경되지 않습니다.';
 
   @override
   String get logMealSheetCouldnTLogThose => '해당 항목을 기록할 수 없습니다. 연결을 확인하세요.';
@@ -18640,7 +19281,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetEGGrilledChicken => '예를 들어 \"닭갈비구이 반만 먹었어요\"';
 
   @override
-  String get logMealSheetEnableMicrophoneAccessIn => '설정에서 마이크 액세스를 활성화하거나 대신 검색에 식사를 입력하세요.';
+  String get logMealSheetEnableMicrophoneAccessIn =>
+      '설정에서 마이크 액세스를 활성화하거나 대신 검색에 식사를 입력하세요.';
 
   @override
   String get logMealSheetEstimatedNutrition => '추정 영양';
@@ -18692,7 +19334,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetHandsFreeLoggingSpeak => '핸즈프리 로깅 — 자연스럽게 말하고, 텍스트를 검토한 후 확인하세요. 요리하는 동안 잘 작동합니다.';
+  String get logMealSheetHandsFreeLoggingSpeak =>
+      '핸즈프리 로깅 — 자연스럽게 말하고, 텍스트를 검토한 후 확인하세요. 요리하는 동안 잘 작동합니다.';
 
   @override
   String get logMealSheetHeardEditIfNeeded => '인식됨 — 필요시 수정 후 확인하세요';
@@ -18837,7 +19480,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetPickUpTo5 => '라이브러리에서 최대 5개 선택';
 
   @override
-  String get logMealSheetPlannedHighOutputDay => '계획된 고출력일 - 이는 의도적으로 설계된 것입니다.';
+  String get logMealSheetPlannedHighOutputDay =>
+      '계획된 고출력일 - 이는 의도적으로 설계된 것입니다.';
 
   @override
   String get logMealSheetPortionsAdjustedReviewWei => '분량 조정됨 — 아래 중량을 검토하세요';
@@ -18915,7 +19559,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetTapAgainWhenYou => '완료되면 다시 탭하세요';
 
   @override
-  String get logMealSheetTapHereToSave => '식사를 일일 로그에 저장하려면 여기를 누르세요. 혼자 분석하면 기록되지 않습니다!';
+  String get logMealSheetTapHereToSave =>
+      '식사를 일일 로그에 저장하려면 여기를 누르세요. 혼자 분석하면 기록되지 않습니다!';
 
   @override
   String get logMealSheetTapToConfirmEach => '탭하여 각각을 확인하거나 아래 목록에서 값을 편집하세요.';
@@ -18924,10 +19569,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetTapToSpeak => '탭하여 말하기';
 
   @override
-  String get logMealSheetTellTheAiAnything => '섭취량, 교체 횟수, 접시 크기 등 도움이 되는 모든 것을 AI에 알려주세요.';
+  String get logMealSheetTellTheAiAnything =>
+      '섭취량, 교체 횟수, 접시 크기 등 도움이 되는 모든 것을 AI에 알려주세요.';
 
   @override
-  String get logMealSheetThatCorrectionProducedAn => '그 수정으로 인해 빈 식사가 발생했으며 이전 추정치가 유지되었습니다.';
+  String get logMealSheetThatCorrectionProducedAn =>
+      '그 수정으로 인해 빈 식사가 발생했으며 이전 추정치가 유지되었습니다.';
 
   @override
   String get logMealSheetThatLooksLikeA => '레시피처럼 보입니다. 레시피 가져오기 도구에 붙여넣으세요.';
@@ -18936,7 +19583,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetThisPhotoWasHard => '이 사진은 읽기 어렵습니다';
 
   @override
-  String get logMealSheetTipAddBrandPortion => '팁: 정확도를 높이려면 브랜드 및 부분을 추가하세요(예: \'치폴레 치킨 볼\' 또는 \'도미노 슬라이스 2개\')';
+  String get logMealSheetTipAddBrandPortion =>
+      '팁: 정확도를 높이려면 브랜드 및 부분을 추가하세요(예: \'치폴레 치킨 볼\' 또는 \'도미노 슬라이스 2개\')';
 
   @override
   String get logMealSheetTryAgain => '다시 시도';
@@ -18985,7 +19633,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount) {
+  String logMealSheetUiOfItemsMatchedVerified(
+    Object length,
+    Object verifiedCount,
+  ) {
     return '$length개 항목 중 $verifiedCount개가 검증된 영양 데이터와 일치함';
   }
 
@@ -19166,7 +19817,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue) {
+  String logWeightSheetValidRange(
+    Object label,
+    Object maxValue,
+    Object minValue,
+  ) {
     return '유효 범위: $minValue-$maxValue $label';
   }
 
@@ -19297,7 +19952,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loggedMealsEnergyLevel => '에너지 수준';
 
   @override
-  String get loggedMealsExamplesSoftDrinksInstant => '예: 탄산음료, 인스턴트 라면, 포장 간식, 치킨 너겟, 대부분의 시리얼.';
+  String get loggedMealsExamplesSoftDrinksInstant =>
+      '예: 탄산음료, 인스턴트 라면, 포장 간식, 치킨 너겟, 대부분의 시리얼.';
 
   @override
   String get loggedMealsFG => '지방 (g)';
@@ -19372,7 +20028,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loggedMealsQuantity => '수량';
 
   @override
-  String get loggedMealsRatesHowInflammatoryA => '가공 수준, 지방 프로필, 당 함량, 식이섬유 및 항산화 특성을 기반으로 음식의 염증 유발 정도를 평가합니다.';
+  String get loggedMealsRatesHowInflammatoryA =>
+      '가공 수준, 지방 프로필, 당 함량, 식이섬유 및 항산화 특성을 기반으로 음식의 염증 유발 정도를 평가합니다.';
 
   @override
   String get loggedMealsRemove => '제거';
@@ -19389,7 +20046,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loggedMealsReportIncorrectData => '잘못된 데이터 신고';
 
   @override
-  String get loggedMealsResearchLinksRegularConsump => '연구에 따르면 정기적인 섭취는 염증, 비만, 심장 질환 및 소화기 문제 증가와 관련이 있습니다.';
+  String get loggedMealsResearchLinksRegularConsump =>
+      '연구에 따르면 정기적인 섭취는 염증, 비만, 심장 질환 및 소화기 문제 증가와 관련이 있습니다.';
 
   @override
   String get loggedMealsSaveAsRecipe => '레시피로 저장';
@@ -19569,7 +20227,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get loggedMealsUltraProcessedFoods => '초가공식품';
 
   @override
-  String get loggedMealsUltraProcessedFoodsNova => '초가공식품(NOVA 그룹 4)에는 유화제, 경화유, 인공 감미료, 단백질 분리물 등 가정 요리에서 볼 수 없는 산업용 첨가물이 포함되어 있습니다.';
+  String get loggedMealsUltraProcessedFoodsNova =>
+      '초가공식품(NOVA 그룹 4)에는 유화제, 경화유, 인공 감미료, 단백질 분리물 등 가정 요리에서 볼 수 없는 산업용 첨가물이 포함되어 있습니다.';
 
   @override
   String get loggedMealsUndo => '실행 취소';
@@ -19618,7 +20277,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mainShellPartSignUpFreeFor => '무제한 이용을 위해 무료로 가입하세요';
 
   @override
-  String get manageDuplicateImportsCouldNotLoadDuplicate => '중복 가져오기 항목을 불러올 수 없습니다';
+  String get manageDuplicateImportsCouldNotLoadDuplicate =>
+      '중복 가져오기 항목을 불러올 수 없습니다';
 
   @override
   String get manageDuplicateImportsDuplicateImports => '중복 가져오기';
@@ -19630,7 +20290,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get manageDuplicateImportsMakeThisPrimary => '기본값으로 설정';
 
   @override
-  String get manageDuplicateImportsNoDuplicateImportsDetected => '감지된 중복 가져오기 항목이 없습니다';
+  String get manageDuplicateImportsNoDuplicateImportsDetected =>
+      '감지된 중복 가져오기 항목이 없습니다';
 
   @override
   String get manageDuplicateImportsPrimary => '기본';
@@ -19691,7 +20352,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount) {
+  String manageGymProfilesSheetEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  ) {
     return '기구 $equipmentCount개 • $environmentDisplayName';
   }
 
@@ -19747,7 +20411,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get masteriesGridYourMasteriesWillLevel => '운동, 걸음 수, 유산소 운동을 기록하면 마스터리 레벨이 올라갑니다.';
+  String get masteriesGridYourMasteriesWillLevel =>
+      '운동, 걸음 수, 유산소 운동을 기록하면 마스터리 레벨이 올라갑니다.';
 
   @override
   String get mealPlannerAddARecipe => '레시피 추가';
@@ -19833,7 +20498,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mealRemindersSettingsMealReminders => '식사 알림';
 
   @override
-  String get mealRemindersSettingsNoSchedulesYetAdd => '아직 일정이 없습니다. 레시피 상세 화면에서 추가하세요.';
+  String get mealRemindersSettingsNoSchedulesYetAdd =>
+      '아직 일정이 없습니다. 레시피 상세 화면에서 추가하세요.';
 
   @override
   String get mealRemindersSettingsPublicSharingDefault => '공개 공유 기본값';
@@ -19963,7 +20629,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get measurementDetailTrends => '추세';
 
   @override
-  String get measurementDetailTrySelectingAWider => '더 넓은 기간을 선택하거나 새 항목을 기록해 보세요';
+  String get measurementDetailTrySelectingAWider =>
+      '더 넓은 기간을 선택하거나 새 항목을 기록해 보세요';
 
   @override
   String get measurementDetailViewTrends => '추세 보기';
@@ -20019,7 +20686,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get measurementsScreenPartAddAnyNotes => '메모 추가...';
 
   @override
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length) {
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
+    Object _selectedFormat,
+    Object length,
+  ) {
     return 'Export (length)\") measurement types as .(_selectedFormat)';
   }
 
@@ -20089,10 +20759,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get measurementsScreenPartSelectAll => '모두 선택';
 
   @override
-  String get measurementsScreenPartWeightBodyFatChest => '체중, 체지방, 가슴, 허리, 엉덩이, 목, 어깨, 왼쪽 이두근, 오른쪽 이두근, 왼쪽 전완근, 오른쪽 전완근, 왼쪽 허벅지, 오른쪽 허벅지, 왼쪽 종아리, 오른쪽 종아리';
+  String get measurementsScreenPartWeightBodyFatChest =>
+      '체중, 체지방, 가슴, 허리, 엉덩이, 목, 어깨, 왼쪽 이두근, 오른쪽 이두근, 왼쪽 전완근, 오른쪽 전완근, 왼쪽 허벅지, 오른쪽 허벅지, 왼쪽 종아리, 오른쪽 종아리';
 
   @override
-  String get measurementsScreenPartWorkoutsNutritionMeasureme => '운동, 영양, 측정값 등';
+  String get measurementsScreenPartWorkoutsNutritionMeasureme =>
+      '운동, 영양, 측정값 등';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -20177,7 +20849,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mediaPickerHelperFromGalleryMax60s => '갤러리에서 가져오기 (최대 60초)';
 
   @override
-  String get mediaPickerHelperImagesMax10Mb => '이미지: 최대 10MB | 동영상: 최대 60초 (BETA)';
+  String get mediaPickerHelperImagesMax10Mb =>
+      '이미지: 최대 10MB | 동영상: 최대 60초 (BETA)';
 
   @override
   String get mediaPickerHelperOpenSettings => '설정 열기';
@@ -20221,13 +20894,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get medicalDisclaimerAiRecommendations => 'AI 추천';
 
   @override
-  String get medicalDisclaimerAlwaysSeekTheAdvice => '새로운 운동 프로그램을 시작하기 전, 특히 기존 질환, 부상 또는 건강상의 문제가 있는 경우 항상 의사나 기타 자격을 갖춘 의료 전문가의 조언을 구하세요. 이 앱에서 읽은 내용 때문에 전문적인 의학적 조언을 무시하거나 구하는 것을 미루지 마세요.';
+  String get medicalDisclaimerAlwaysSeekTheAdvice =>
+      '새로운 운동 프로그램을 시작하기 전, 특히 기존 질환, 부상 또는 건강상의 문제가 있는 경우 항상 의사나 기타 자격을 갖춘 의료 전문가의 조언을 구하세요. 이 앱에서 읽은 내용 때문에 전문적인 의학적 조언을 무시하거나 구하는 것을 미루지 마세요.';
 
   @override
   String get medicalDisclaimerAssumptionOfRisk => '위험 부담';
 
   @override
-  String get medicalDisclaimerBannerAiGeneratedContentNot => 'AI 생성 콘텐츠 - 의학적 조언 아님';
+  String get medicalDisclaimerBannerAiGeneratedContentNot =>
+      'AI 생성 콘텐츠 - 의학적 조언 아님';
 
   @override
   String get medicalDisclaimerConsultYourDoctor => '의사와 상담하세요';
@@ -20250,7 +20925,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName) {
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
+    Object appName,
+  ) {
     return '신체 운동에는 내재된 위험이 따릅니다. $appName을(를) 사용함으로써 귀하는 자발적으로 신체 활동에 참여하며 부상, 질병 또는 사망을 포함하되 이에 국한되지 않는 그러한 활동과 관련된 모든 위험을 감수함을 인정합니다.';
   }
 
@@ -20265,10 +20942,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get medicalDisclaimerStopExercisingImmediatelyIf => '통증, 어지러움, 호흡 곤란, 메스꺼움 또는 일반적인 운동 범위를 벗어난 불편함이 느껴지면 즉시 운동을 중단하세요. AI는 실시간으로 사용자의 신체 상태를 평가할 수 없으므로, 자신의 한계 내에서 운동하는 것은 사용자의 책임입니다.';
+  String get medicalDisclaimerStopExercisingImmediatelyIf =>
+      '통증, 어지러움, 호흡 곤란, 메스꺼움 또는 일반적인 운동 범위를 벗어난 불편함이 느껴지면 즉시 운동을 중단하세요. AI는 실시간으로 사용자의 신체 상태를 평가할 수 없으므로, 자신의 한계 내에서 운동하는 것은 사용자의 책임입니다.';
 
   @override
-  String get medicalDisclaimerWorkoutRecommendationsAreGe => '운동 추천은 사용자가 제공한 정보(체력 수준, 목표, 장비 등)를 바탕으로 생성됩니다. AI는 정확성을 위해 노력하지만, 모든 개인적 요소를 고려할 수는 없습니다. 따라서 추천 내용이 모든 사람에게 적합하지 않을 수 있습니다.';
+  String get medicalDisclaimerWorkoutRecommendationsAreGe =>
+      '운동 추천은 사용자가 제공한 정보(체력 수준, 목표, 장비 등)를 바탕으로 생성됩니다. AI는 정확성을 위해 노력하지만, 모든 개인적 요소를 고려할 수는 없습니다. 따라서 추천 내용이 모든 사람에게 적합하지 않을 수 있습니다.';
 
   @override
   String get menuAnalysisAddFood => '음식 추가';
@@ -20362,7 +21041,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuAnalysisHistorySearchByNameRestaurant => '이름, 식당 또는 주소로 검색';
 
   @override
-  String get menuAnalysisHistoryTapTheBookmarkButton => '메뉴 스캔 후 북마크 버튼을 눌러 여기에 저장하세요.';
+  String get menuAnalysisHistoryTapTheBookmarkButton =>
+      '메뉴 스캔 후 북마크 버튼을 눌러 여기에 저장하세요.';
 
   @override
   String get menuAnalysisHistoryTryADifferentSearch => '다른 검색어를 시도해 보세요.';
@@ -20542,13 +21222,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuAnalysisSort2 => '정렬';
 
   @override
-  String get menuAnalysisTourAiPicksTheBest => 'AI가 남은 매크로, 알레르기 유발 물질 및 염증 내성을 고려하여 최고의 요리 3가지를 선정합니다.';
+  String get menuAnalysisTourAiPicksTheBest =>
+      'AI가 남은 매크로, 알레르기 유발 물질 및 염증 내성을 고려하여 최고의 요리 3가지를 선정합니다.';
 
   @override
   String get menuAnalysisTourFilterByDietAllergens => '식단 및 알레르기 필터링';
 
   @override
-  String get menuAnalysisTourHideDishesThatDon => '식단에 맞지 않거나 알레르기 유발 물질이 포함된 요리를 숨깁니다. 설정에서 지정한 환경설정이 적용됩니다.';
+  String get menuAnalysisTourHideDishesThatDon =>
+      '식단에 맞지 않거나 알레르기 유발 물질이 포함된 요리를 숨깁니다. 설정에서 지정한 환경설정이 적용됩니다.';
 
   @override
   String get menuAnalysisTourRecommendedForYou => '추천 메뉴';
@@ -20560,10 +21242,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuAnalysisTourSortTheWholeMenu => '전체 메뉴 정렬';
 
   @override
-  String get menuAnalysisTourTapProteinCarbsFat => '단백질, 탄수화물, 지방 또는 염증을 탭하여 모든 요리의 순위를 즉시 다시 매길 수 있습니다. \'더 보기…\'를 누르면 고급 정렬 옵션이 열립니다.';
+  String get menuAnalysisTourTapProteinCarbsFat =>
+      '단백질, 탄수화물, 지방 또는 염증을 탭하여 모든 요리의 순위를 즉시 다시 매길 수 있습니다. \'더 보기…\'를 누르면 고급 정렬 옵션이 열립니다.';
 
   @override
-  String get menuAnalysisTourTickTheDishesYou => '실제로 주문한 메뉴를 선택한 후, \'기록\'을 눌러 일일 총 섭취량에 추가하세요.';
+  String get menuAnalysisTourTickTheDishesYou =>
+      '실제로 주문한 메뉴를 선택한 후, \'기록\'을 눌러 일일 총 섭취량에 추가하세요.';
 
   @override
   String get menuAnalysisUpdateExisting => '기존 항목 업데이트';
@@ -20575,7 +21259,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuAnalysisUseRestaurantName => '식당 이름 사용';
 
   @override
-  String get menuAnalysisYouReOfflineThis => '오프라인 상태입니다. 이 기능을 사용하려면 연결이 필요합니다.';
+  String get menuAnalysisYouReOfflineThis =>
+      '오프라인 상태입니다. 이 기능을 사용하려면 연결이 필요합니다.';
 
   @override
   String get menuDishAdjustAddABitMore => '더 정확한 결과를 위해 세부 정보를 추가하세요.';
@@ -20587,13 +21272,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuDishAdjustApply => '적용';
 
   @override
-  String get menuDishAdjustCouldnTRefineThat => '조정할 수 없습니다. 다른 단어로 다시 시도해 보세요.';
+  String get menuDishAdjustCouldnTRefineThat =>
+      '조정할 수 없습니다. 다른 단어로 다시 시도해 보세요.';
 
   @override
   String get menuDishAdjustHowMuchDidYou => '얼마나 드셨나요?';
 
   @override
-  String get menuDishAdjustMenuMacrosAreAs => '메뉴의 매크로는 \'제공량 기준\'입니다. 실제로 드신 양을 알려주세요.';
+  String get menuDishAdjustMenuMacrosAreAs =>
+      '메뉴의 매크로는 \'제공량 기준\'입니다. 실제로 드신 양을 알려주세요.';
 
   @override
   String get menuDishAdjustOrDescribeIt => '또는 직접 설명하기';
@@ -20616,7 +21303,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuFilterAvoid => '피하기';
 
   @override
-  String get menuFilterBasedOnIngredientProfile => '성분 프로필(오메가-3, 식이섬유, 첨가당 등) 기준.';
+  String get menuFilterBasedOnIngredientProfile =>
+      '성분 프로필(오메가-3, 식이섬유, 첨가당 등) 기준.';
 
   @override
   String get menuFilterBloodSugar => '혈당';
@@ -20646,10 +21334,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuFilterFodmapIbs => 'FODMAP (IBS)';
 
   @override
-  String get menuFilterForSpecificTargetsMost => '특정 목표를 위한 설정입니다. 대부분의 경우 필요하지 않습니다.';
+  String get menuFilterForSpecificTargetsMost =>
+      '특정 목표를 위한 설정입니다. 대부분의 경우 필요하지 않습니다.';
 
   @override
-  String get menuFilterGlycemicLoadPerServing => '1회 제공량당 혈당 부하 — 낮을수록 에너지가 안정적입니다.';
+  String get menuFilterGlycemicLoadPerServing =>
+      '1회 제공량당 혈당 부하 — 낮을수록 에너지가 안정적입니다.';
 
   @override
   String get menuFilterGood => '✅ 좋음';
@@ -20682,7 +21372,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get menuFilterOkay => '👌 보통';
 
   @override
-  String get menuFilterOnionGarlicWheatLactose => '양파, 마늘, 밀, 유당은 IBS 증상을 유발할 수 있습니다.';
+  String get menuFilterOnionGarlicWheatLactose =>
+      '양파, 마늘, 밀, 유당은 IBS 증상을 유발할 수 있습니다.';
 
   @override
   String get menuFilterPerDishBudget => '메뉴당 예산';
@@ -20781,13 +21472,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get merchClaimsNotNow => '나중에';
 
   @override
-  String get merchClaimsPushEmailAlertsWhen => '상품 등급 달성 임박 시 또는 보상 대기 시 푸시 및 이메일 알림';
+  String get merchClaimsPushEmailAlertsWhen =>
+      '상품 등급 달성 임박 시 또는 보상 대기 시 푸시 및 이메일 알림';
 
   @override
   String get merchClaimsRealRewardsForReal => '진정한 성장을 위한 실질적인 보상';
 
   @override
-  String get merchClaimsRewardAcceptedWeLl => '보상이 수락되었습니다! 배송 정보 수집을 위해 이메일을 보내드리겠습니다.';
+  String get merchClaimsRewardAcceptedWeLl =>
+      '보상이 수락되었습니다! 배송 정보 수집을 위해 이메일을 보내드리겠습니다.';
 
   @override
   String get merchClaimsRewardCancelled => '보상이 취소되었습니다.';
@@ -20823,7 +21516,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get merchClaimsTapAcceptToClaim => '수락을 눌러 보상을 받으세요. 배송 준비가 되면 사이즈와 배송지 주소를 확인하는 이메일을 보내드립니다.';
+  String get merchClaimsTapAcceptToClaim =>
+      '수락을 눌러 보상을 받으세요. 배송 준비가 되면 사이즈와 배송지 주소를 확인하는 이메일을 보내드립니다.';
 
   @override
   String get merchClaimsTracking => '운송장 번호';
@@ -20863,7 +21557,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get messagesPleaseLogInTo => '메시지를 보려면 로그인하세요';
 
   @override
-  String get messagesStartAConversationWith => '친구와 대화를 시작해 보세요!\n메시지가 여기에 표시됩니다.';
+  String get messagesStartAConversationWith =>
+      '친구와 대화를 시작해 보세요!\n메시지가 여기에 표시됩니다.';
 
   @override
   String get metricHistoryCardNoDataForThis => '이 날짜에 대한 데이터가 없습니다';
@@ -20872,7 +21567,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metricHistoryCardTrendUnavailable => '추세를 확인할 수 없습니다.';
 
   @override
-  String get metricHistoryCardTwoOrMoreSynced => '추세를 차트로 보려면 2일 이상의 데이터가 동기화되어야 합니다.';
+  String get metricHistoryCardTwoOrMoreSynced =>
+      '추세를 차트로 보려면 2일 이상의 데이터가 동기화되어야 합니다.';
 
   @override
   String get metricPickerChooseAMetric => '지표 선택';
@@ -20976,7 +21672,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metricsDashboardWorkoutsThisWeek => '이번 주 운동';
 
   @override
-  String get micronutrientsNoMicronutrientDataAvailabl => '사용 가능한 미량 영양소 데이터 없음';
+  String get micronutrientsNoMicronutrientDataAvailabl =>
+      '사용 가능한 미량 영양소 데이터 없음';
 
   @override
   String get micronutrientsVitaminsMinerals => '비타민 및 미네랄';
@@ -21027,7 +21724,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes) {
+  String milestonesScreenUiAverageMinWorkout(
+    Object averageWorkoutDurationMinutes,
+  ) {
     return '평균: $averageWorkoutDurationMinutes 분/운동';
   }
 
@@ -21268,7 +21967,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get moodHistoryStartTrackingYourMood => '기분을 기록하고 맞춤형 운동 제안을 받으며 시간 경과에 따른 패턴을 확인하세요.';
+  String get moodHistoryStartTrackingYourMood =>
+      '기분을 기록하고 맞춤형 운동 제안을 받으며 시간 경과에 따른 패턴을 확인하세요.';
 
   @override
   String get moodHistoryYourMoodInsights => '나의 기분 인사이트';
@@ -21389,7 +22089,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get morningRecoveryNudgeBody => '오늘 컨디션이 낮습니다. 볼륨을 줄입니다 — 재생성하려면 앱을 여세요.';
+  String get morningRecoveryNudgeBody =>
+      '오늘 컨디션이 낮습니다. 볼륨을 줄입니다 — 재생성하려면 앱을 여세요.';
 
   @override
   String get morningRecoveryNudgeTitle => '오늘은 천천히 가세요';
@@ -21413,13 +22114,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get muscleAnalyticsBalanced => '균형 잡힘';
 
   @override
-  String get muscleAnalyticsCompleteMoreWorkoutsTo => '더 많은 운동을 완료하여 근육 균형 분석을 확인하세요.';
+  String get muscleAnalyticsCompleteMoreWorkoutsTo =>
+      '더 많은 운동을 완료하여 근육 균형 분석을 확인하세요.';
 
   @override
-  String get muscleAnalyticsCompleteSomeWorkoutsTo => '운동을 완료하여 근육 훈련 히트맵을 확인하세요.';
+  String get muscleAnalyticsCompleteSomeWorkoutsTo =>
+      '운동을 완료하여 근육 훈련 히트맵을 확인하세요.';
 
   @override
-  String get muscleAnalyticsCompleteWorkoutsOverMultipl => '여러 주에 걸쳐 운동을 완료하여 훈련 빈도를 확인하세요.';
+  String get muscleAnalyticsCompleteWorkoutsOverMultipl =>
+      '여러 주에 걸쳐 운동을 완료하여 훈련 빈도를 확인하세요.';
 
   @override
   String get muscleAnalyticsFrequency => '빈도';
@@ -21549,7 +22253,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get muscleFrequencyChartLow1xWk => '낮음 (<1회/주)';
 
   @override
-  String get muscleFrequencyChartNoFrequencyDataAvailable => '사용 가능한 빈도 데이터가 없습니다';
+  String get muscleFrequencyChartNoFrequencyDataAvailable =>
+      '사용 가능한 빈도 데이터가 없습니다';
 
   @override
   String get muscleFrequencyChartOptimal13xWk => '최적 (1-3회/주)';
@@ -21633,7 +22338,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get my1rmsAddManually => '수동으로 추가';
 
   @override
-  String get my1rmsAddYourMaxLifts => '최대 중량을 추가하여 훈련 강도에 기반한 개인 맞춤형 중량 추천을 받아보세요.';
+  String get my1rmsAddYourMaxLifts =>
+      '최대 중량을 추가하여 훈련 강도에 기반한 개인 맞춤형 중량 추천을 받아보세요.';
 
   @override
   String get my1rmsAutoPopulateFromWorkout => '운동 기록에서 자동 불러오기';
@@ -21695,7 +22401,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay) {
+  String my1rmsScreenPartOneRMCardKg(
+    Object derivedWeight,
+    Object multiplierDisplay,
+    Object relationshipDisplay,
+  ) {
     return '$multiplierDisplay = $derivedWeight kg • $relationshipDisplay';
   }
 
@@ -21710,12 +22420,17 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text) {
+  String my1rmsScreenPartOneRMCardLinkedTo(
+    Object primaryExerciseName,
+    Object text,
+  ) {
     return '$text을(를) $primaryExerciseName에 연결함';
   }
 
   @override
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName) {
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
+    Object linkedExerciseName,
+  ) {
     return '$linkedExerciseName을(를) 연결된 운동에서 삭제할까요?';
   }
 
@@ -21851,7 +22566,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3) {
+  String myFoodsSheetKcalUBP(
+    Object food,
+    Object food1,
+    Object food2,
+    Object food3,
+  ) {
     return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
@@ -21982,7 +22702,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get myLibraryTabHeartExercisesToSave => '운동을 찜하여 여기에 저장하세요';
 
   @override
-  String get myLibraryTabMarkExercisesAsStaples => '운동을 주력 운동으로 표시하여 AI가 우선시하도록 하세요';
+  String get myLibraryTabMarkExercisesAsStaples =>
+      '운동을 주력 운동으로 표시하여 AI가 우선시하도록 하세요';
 
   @override
   String get myLibraryTabMyExercises => '나의 운동';
@@ -21998,7 +22719,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps) {
+  String myLibraryTabPartHistoryTimelineCardBestKgX(
+    Object item,
+    Object maxReps,
+  ) {
     return '최고 기록: ${item}kg x $maxReps';
   }
 
@@ -22009,7 +22733,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get myLibraryTabViewAll => '모두 보기';
 
   @override
-  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays) {
+  String myProgramSummaryCardValue(
+    Object experience,
+    Object goal,
+    Object workoutDays,
+  ) {
     return '$workoutDays  •  $experience  •  $goal';
   }
 
@@ -22040,10 +22768,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get myWrappedCompleteAtLeast3 => '이번 달에 최소 3회 이상 운동을 완료하여\n개인 맞춤형 요약을 확인하세요';
+  String get myWrappedCompleteAtLeast3 =>
+      '이번 달에 최소 3회 이상 운동을 완료하여\n개인 맞춤형 요약을 확인하세요';
 
   @override
-  String get myWrappedEarnAUniquePersonality => '매달 최소 3회 이상 운동을 완료하고 고유한 피트니스 성향을 획득하세요.';
+  String get myWrappedEarnAUniquePersonality =>
+      '매달 최소 3회 이상 운동을 완료하고 고유한 피트니스 성향을 획득하세요.';
 
   @override
   String get myWrappedFailedToLoadWrapped => '요약 데이터를 불러오지 못했습니다';
@@ -22071,7 +22801,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName) {
+  String myWrappedScreenWrappedDropsInDays(
+    Object daysUntilDrop,
+    Object monthName,
+  ) {
     return '$monthName Wrapped가 $daysUntilDrop일 후에 공개됩니다';
   }
 
@@ -22251,7 +22984,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime) {
+  String neatDashboardScreenPartStreaksCardQuietHours(
+    Object endTime,
+    Object startTime,
+  ) {
     return '방해 금지 시간: $startTime - $endTime';
   }
 
@@ -22436,7 +23172,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get netflixExerciseCarouselSeeAll => '모두 보기';
 
   @override
-  String get netflixExercisesAddYourOwnExercises => '사용자 지정 횟수, 세트, 지침으로 나만의 운동을 추가하세요.';
+  String get netflixExercisesAddYourOwnExercises =>
+      '사용자 지정 횟수, 세트, 지침으로 나만의 운동을 추가하세요.';
 
   @override
   String get netflixExercisesAiSearchEG => 'AI 검색 (예: \"가슴 운동 추천\")';
@@ -22472,7 +23209,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get netflixExercisesTabCreate => '생성';
 
   @override
-  String get netflixExercisesTabCreateYourOwnExercises => '사진과 AI 분석을 사용하여 나만의 운동을 만드세요';
+  String get netflixExercisesTabCreateYourOwnExercises =>
+      '사진과 AI 분석을 사용하여 나만의 운동을 만드세요';
 
   @override
   String get netflixExercisesTabMyCustomExercises => '내 사용자 지정 운동';
@@ -22484,7 +23222,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get netflixExercisesTabNoExercisesFound => '운동을 찾을 수 없습니다';
 
   @override
-  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration) {
+  String netflixExercisesTabPartExerciseListCardDaysWeek(
+    Object daysPerWeek,
+    Object duration,
+  ) {
     return '주 $daysPerWeek회 • $duration';
   }
 
@@ -22508,7 +23249,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get newTilesAmazingStreakKeepGoing => '대단한 연속 기록입니다! 계속하세요!';
 
   @override
-  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays) {
+  String newTilesPartActiveChallengeCardDayOf(
+    Object currentDay,
+    Object totalDays,
+  ) {
     return '$totalDays일 중 $currentDay일차';
   }
 
@@ -22518,7 +23262,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps) {
+  String newTilesPartActiveChallengeCardTodayReps(
+    Object targetReps,
+    Object todayReps,
+  ) {
     return '오늘: $todayReps / $targetReps회';
   }
 
@@ -22678,7 +23425,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nextSetPreviewUseThis => '사용하기';
 
   @override
-  String get nextWorkoutCardCouldNotSkipWorkout => '운동을 건너뛸 수 없습니다. 다시 시도해 주세요.';
+  String get nextWorkoutCardCouldNotSkipWorkout =>
+      '운동을 건너뛸 수 없습니다. 다시 시도해 주세요.';
 
   @override
   String get nextWorkoutCardQuick => '빠른 시작';
@@ -22690,7 +23438,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nextWorkoutCardSkipWorkout => '운동을 건너뛸까요?';
 
   @override
-  String get nextWorkoutCardThisWorkoutWillBe => '이 운동은 건너뛴 것으로 표시되며 주간 목표에 포함되지 않습니다.';
+  String get nextWorkoutCardThisWorkoutWillBe =>
+      '이 운동은 건너뛴 것으로 표시되며 주간 목표에 포함되지 않습니다.';
 
   @override
   String get nextWorkoutCardUpcoming => '예정된 운동';
@@ -22823,10 +23572,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationTestTestsScheduledNotificationD => '예약된 알림 발송 테스트';
 
   @override
-  String get notificationTestTheseAreLocalNotifications => '이 알림은 로컬 알림(Firebase 아님)입니다. 기기에서 예약된 알림이 작동하는지 테스트할 때 사용하세요.';
+  String get notificationTestTheseAreLocalNotifications =>
+      '이 알림은 로컬 알림(Firebase 아님)입니다. 기기에서 예약된 알림이 작동하는지 테스트할 때 사용하세요.';
 
   @override
-  String get notificationTestTheseNotificationsAreSent => '이 알림은 백엔드를 통해 Firebase Cloud Messaging으로 발송됩니다.';
+  String get notificationTestTheseNotificationsAreSent =>
+      '이 알림은 백엔드를 통해 Firebase Cloud Messaging으로 발송됩니다.';
 
   @override
   String get notificationTestTimeToLogYour => '\"아침 식사를 기록할 시간이에요! 📸\"';
@@ -23009,7 +23760,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationsScreenPartWhatToExpect => '알림 안내';
 
   @override
-  String get notificationsScreenPartYourAiCoachWill => 'AI 코치가 이곳에서 운동 알림, 동기 부여 및 진행 상황 업데이트를 보내드립니다.';
+  String get notificationsScreenPartYourAiCoachWill =>
+      'AI 코치가 이곳에서 운동 알림, 동기 부여 및 진행 상황 업데이트를 보내드립니다.';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -23115,7 +23867,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutrientExplorerPartNutrientScore => '영양 점수';
 
   @override
-  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit) {
+  String nutrientExplorerPartNutrientScoreCardCurrent(
+    Object currentValue,
+    Object unit,
+  ) {
     return '현재: $currentValue$unit';
   }
 
@@ -23125,7 +23880,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount) {
+  String nutrientExplorerPartNutrientScoreCardOptimal(
+    Object optimalCount,
+    Object totalCount,
+  ) {
     return '$optimalCount/$totalCount 최적';
   }
 
@@ -23180,7 +23938,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutrientExplorerVitamins => '비타민';
 
   @override
-  String get nutrientRushGameCatchTheGoldenZealova => '황금 Zealova 마크를 잡아 파워업하세요!';
+  String get nutrientRushGameCatchTheGoldenZealova =>
+      '황금 Zealova 마크를 잡아 파워업하세요!';
 
   @override
   String get nutrientRushGameNewBest => '🎉 새로운 최고 기록!';
@@ -23230,7 +23989,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionDailyTab => '오늘';
 
   @override
-  String get nutritionErrorStatePleaseCheckYourConnection => '연결 상태를 확인하고 다시 시도하세요';
+  String get nutritionErrorStatePleaseCheckYourConnection =>
+      '연결 상태를 확인하고 다시 시도하세요';
 
   @override
   String get nutritionErrorStateTryAgain => '다시 시도';
@@ -23372,16 +24132,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionGoalsCardMetabolismSlowsWithAge => '나이가 들수록 신진대사가 느려집니다';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula => 'Mifflin-St Jeor 공식 · 자세히 보려면 탭하세요';
+  String get nutritionGoalsCardMifflinStJeorFormula =>
+      'Mifflin-St Jeor 공식 · 자세히 보려면 탭하세요';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula2 => 'Mifflin-St Jeor 공식(분석할 수 없는 프로필 데이터)';
+  String get nutritionGoalsCardMifflinStJeorFormula2 =>
+      'Mifflin-St Jeor 공식(분석할 수 없는 프로필 데이터)';
 
   @override
   String get nutritionGoalsCardMoreMassMoreEnergy => '질량이 클수록 휴식 시 에너지 소모가 큽니다';
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier) {
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
+    Object activityMultiplier,
+  ) {
     return '활동 계수 (×$activityMultiplier)';
   }
 
@@ -23411,7 +24175,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct) {
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
+    Object carbPct,
+    Object displayName,
+    Object fatPct,
+    Object proteinPct,
+  ) {
     return '매크로 비율 ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
@@ -23475,7 +24244,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPatternsAiMoodGuesses => 'AI 기분 추측';
 
   @override
-  String get nutritionPatternsAutoInferMoodFrom => '체크인을 건너뛰면 영양 상태를 통해 기분이 자동으로 추론됩니다.';
+  String get nutritionPatternsAutoInferMoodFrom =>
+      '체크인을 건너뛰면 영양 상태를 통해 기분이 자동으로 추론됩니다.';
 
   @override
   String get nutritionPatternsBasedOnTheLast => '지난 90일 기준';
@@ -23499,13 +24269,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPatternsFoodsThatEnergizeYou => '활력을 주는 음식';
 
   @override
-  String get nutritionPatternsLog3MealsWith => '체크인과 함께 3회 이상의 식사를 기록하여 어떤 음식이 당신에게 활력을 주고 어떤 음식이 당신을 실망시키는지 확인하세요.';
+  String get nutritionPatternsLog3MealsWith =>
+      '체크인과 함께 3회 이상의 식사를 기록하여 어떤 음식이 당신에게 활력을 주고 어떤 음식이 당신을 실망시키는지 확인하세요.';
 
   @override
   String get nutritionPatternsLogAFewMeals => '몇 가지 식사를 기록하여 거시적 추세를 확인하세요.';
 
   @override
-  String get nutritionPatternsLoggedMealsWillShow => '기록된 식사가 여기에 타임라인으로 표시됩니다.';
+  String get nutritionPatternsLoggedMealsWillShow =>
+      '기록된 식사가 여기에 타임라인으로 표시됩니다.';
 
   @override
   String get nutritionPatternsMealHistory => '식사 기록';
@@ -23535,7 +24307,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPatternsReEnable => '다시 활성화';
 
   @override
-  String get nutritionPatternsReEnableThePost => '식사 후 체크인 시트를 다시 활성화하여 음식 기분 패턴 구축을 시작하세요.';
+  String get nutritionPatternsReEnableThePost =>
+      '식사 후 체크인 시트를 다시 활성화하여 음식 기분 패턴 구축을 시작하세요.';
 
   @override
   String get nutritionPatternsSignInToSee => '로그인하여 패턴 확인하기';
@@ -23632,7 +24405,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPreferencesOtherAllergens => '기타 알레르기 유발 물질';
 
   @override
-  String get nutritionPreferencesOutsideTheFdaBig => 'FDA Big 9 이외의 제품(예: 망고, 나이트셰이드, 옥수수)';
+  String get nutritionPreferencesOutsideTheFdaBig =>
+      'FDA Big 9 이외의 제품(예: 망고, 나이트셰이드, 옥수수)';
 
   @override
   String get nutritionRecipesTab => '레시피';
@@ -23671,7 +24445,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get nutritionSettingsAdjustAiCalorieEstimates => '경험에 맞춰 AI 칼로리 추정치 조정';
+  String get nutritionSettingsAdjustAiCalorieEstimates =>
+      '경험에 맞춰 AI 칼로리 추정치 조정';
 
   @override
   String get nutritionSettingsAlwaysRules => '항상 규칙';
@@ -23754,7 +24529,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionSettingsScreenFoodPreferences => '음식 선호도';
 
   @override
-  String get nutritionSettingsScreenGoalsUpdatedAndTargets => '목표가 업데이트되고 목표가 다시 계산되었습니다!';
+  String get nutritionSettingsScreenGoalsUpdatedAndTargets =>
+      '목표가 업데이트되고 목표가 다시 계산되었습니다!';
 
   @override
   String get nutritionSettingsScreenMealPattern => '식사 패턴';
@@ -23784,7 +24560,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionSettingsScreenSaveRecalculate => '저장 및 다시 계산';
 
   @override
-  String get nutritionSettingsScreenSelectYourGoalsFirst => '목표를 선택하세요(첫 번째 선택 = 기본)';
+  String get nutritionSettingsScreenSelectYourGoalsFirst =>
+      '목표를 선택하세요(첫 번째 선택 = 기본)';
 
   @override
   String get nutritionSettingsScreenTrainingDay => '훈련일';
@@ -23825,13 +24602,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionSettingsShowMacrosOnLog => '로그에 매크로 표시';
 
   @override
-  String get nutritionSettingsStandingRulesZealovaApplies => 'Zealova가 모든 음식 분석에 적용하는 기본 규칙';
+  String get nutritionSettingsStandingRulesZealovaApplies =>
+      'Zealova가 모든 음식 분석에 적용하는 기본 규칙';
 
   @override
-  String get nutritionSettingsStreakFreezeUsedYour => '연속 동결 사용! 귀하의 연속 기록이 보호됩니다.';
+  String get nutritionSettingsStreakFreezeUsedYour =>
+      '연속 동결 사용! 귀하의 연속 기록이 보호됩니다.';
 
   @override
-  String get nutritionSettingsTargetsRecalculatedFromYour => '귀하의 프로필에서 목표가 다시 계산되었습니다.';
+  String get nutritionSettingsTargetsRecalculatedFromYour =>
+      '귀하의 프로필에서 목표가 다시 계산되었습니다.';
 
   @override
   String get nutritionSettingsTrainingDayBoost => '트레이닝 데이 부스트';
@@ -23876,7 +24656,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionShowcaseGrilledSalmonBowl => '구운 연어 그릇';
 
   @override
-  String get nutritionShowcaseIntroSubtitle => '메뉴판을 스캔하세요 — Zealova가 목표에 맞춰 모든 메뉴를 순위화해요 🍽️';
+  String get nutritionShowcaseIntroSubtitle =>
+      '메뉴판을 스캔하세요 — Zealova가 목표에 맞춰 모든 메뉴를 순위화해요 🍽️';
 
   @override
   String get nutritionShowcaseIntroTitle => '이제 메뉴 고민은 그만';
@@ -23891,7 +24672,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionShowcaseMultiplePagesSnapThem => '여러 페이지? 모두 찍어보세요.';
 
   @override
-  String get nutritionShowcaseNoDishesSelectedGo => '선택한 요리가 없습니다. 돌아가서 몇 가지를 선택하세요.';
+  String get nutritionShowcaseNoDishesSelectedGo =>
+      '선택한 요리가 없습니다. 돌아가서 몇 가지를 선택하세요.';
 
   @override
   String get nutritionShowcaseRecent => '최근의';
@@ -23934,7 +24716,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionShowcaseSortCleared => '정렬 해제 — 원래 메뉴 순서';
 
   @override
-  String get nutritionShowcaseSortHint => '눌러보세요 — \'단백질\'을 탭해 정렬. 탄수화물, 지방, 염증 기준으로도 정렬돼요.';
+  String get nutritionShowcaseSortHint =>
+      '눌러보세요 — \'단백질\'을 탭해 정렬. 탄수화물, 지방, 염증 기준으로도 정렬돼요.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
@@ -24009,7 +24792,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionStreakCardLogAMealTo => '식사를 기록하여 스트릭 시작하기';
 
   @override
-  String get nutritionStreakCardStreakFreezeUsedYour => 'Streak Freeze를 사용했습니다. 연속 기록은 안전합니다.';
+  String get nutritionStreakCardStreakFreezeUsedYour =>
+      'Streak Freeze를 사용했습니다. 연속 기록은 안전합니다.';
 
   @override
   String get nutritionStreakCardThisWeek => '이번 주';
@@ -24165,19 +24949,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionTourSaved => '저장됨';
 
   @override
-  String get nutritionTourStartAndTrackA => '여기에서 바로 단식을 시작하고 추적하세요. 실시간 단식 기간이 이 카드에 표시됩니다.';
+  String get nutritionTourStartAndTrackA =>
+      '여기에서 바로 단식을 시작하고 추적하세요. 실시간 단식 기간이 이 카드에 표시됩니다.';
 
   @override
   String get nutritionTourSwipeThroughDates => '날짜를 스와이프하세요';
 
   @override
-  String get nutritionTourTapTheCameraBarcode => '카메라, 바코드 또는 + 버튼을 탭하세요. 비전 OCR이 칼로리와 매크로를 자동으로 채워줍니다.';
+  String get nutritionTourTapTheCameraBarcode =>
+      '카메라, 바코드 또는 + 버튼을 탭하세요. 비전 OCR이 칼로리와 매크로를 자동으로 채워줍니다.';
 
   @override
-  String get nutritionTourUseTheDateArrows => '날짜 화살표를 사용하거나 기록을 탭하여 지난 날을 검토하세요.';
+  String get nutritionTourUseTheDateArrows =>
+      '날짜 화살표를 사용하거나 기록을 탭하여 지난 날을 검토하세요.';
 
   @override
-  String get nutritionTourYourSavedRecipesFoods => '저장된 레시피, 음식, 스캔한 메뉴가 여기에 저장됩니다. 탭 한 번으로 다시 기록할 수 있습니다.';
+  String get nutritionTourYourSavedRecipesFoods =>
+      '저장된 레시피, 음식, 스캔한 메뉴가 여기에 저장됩니다. 탭 한 번으로 다시 기록할 수 있습니다.';
 
   @override
   String get nutritionUndo => '끄르다';
@@ -24189,7 +24977,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get offlineModeOfflineMode => '오프라인 모드';
 
   @override
-  String get offlineModeWorkOutWithoutInternet => '인터넷 없이 운동하세요. 기기 내 AI, 사전 캐시된 운동, 운동 영상 다운로드 및 백그라운드 동기화가 지원됩니다.';
+  String get offlineModeWorkOutWithoutInternet =>
+      '인터넷 없이 운동하세요. 기기 내 AI, 사전 캐시된 운동, 운동 영상 다운로드 및 백그라운드 동기화가 지원됩니다.';
 
   @override
   String get onboardingAlreadyHaveAccount => '이미 계정이 있습니다';
@@ -24198,7 +24987,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get onboardingBlockerLetSDoIt => '시작해 봅시다';
 
   @override
-  String get onboardingBlockerNoJudgmentKnowingThe => '판단하지 않습니다. 한계를 아는 것이 계획의 시작입니다.';
+  String get onboardingBlockerNoJudgmentKnowingThe =>
+      '판단하지 않습니다. 한계를 아는 것이 계획의 시작입니다.';
 
   @override
   String get onboardingBlockerThatMakesSense => '이해가 됩니다.';
@@ -24232,7 +25022,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get onboardingConfidenceStartingUnsureIsHonest => '확신 없이 시작하는 것도 솔직한 모습입니다.';
+  String get onboardingConfidenceStartingUnsureIsHonest =>
+      '확신 없이 시작하는 것도 솔직한 모습입니다.';
 
   @override
   String get onboardingConfidenceThatBeliefWillCarry => '그 믿음이 당신을 이끌어줄 것입니다.';
@@ -24417,7 +25208,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get overviewPersonalRecords => '개인 최고 기록';
 
   @override
-  String get overviewPersonalRecordsAreTracked => '운동을 완료하면 개인 최고 기록이 추적됩니다. 지금 바로 운동을 시작하고 진행 상황을 확인하세요!';
+  String get overviewPersonalRecordsAreTracked =>
+      '운동을 완료하면 개인 최고 기록이 추적됩니다. 지금 바로 운동을 시작하고 진행 상황을 확인하세요!';
 
   @override
   String get overviewQuickAccess => '빠른 접근';
@@ -24495,7 +25287,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps) {
+  String parsedExercisesPreviewSheetValue(
+    Object exercise,
+    Object formattedSetsReps,
+  ) {
     return '$formattedSetsReps @ $exercise';
   }
 
@@ -24515,7 +25310,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pauseInterceptPauseFor30Days => '30일간 일시 정지';
 
   @override
-  String get pauseInterceptPauseYourPlanInstead => '플랜을 일시 정지하세요. 중단한 지점부터 바로 다시 시작할 수 있습니다.';
+  String get pauseInterceptPauseYourPlanInstead =>
+      '플랜을 일시 정지하세요. 중단한 지점부터 바로 다시 시작할 수 있습니다.';
 
   @override
   String get pauseInterceptQuickBreakShortTrip => '짧은 휴식 — 단기 여행, 바쁜 한 주';
@@ -24638,10 +25434,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallFeaturesLearnMore => '더 알아보기';
 
   @override
-  String get paywallFeaturesNutritionFormRecoveryAs => '영양, 자세, 회복 — 무엇이든 물어보세요';
+  String get paywallFeaturesNutritionFormRecoveryAs =>
+      '영양, 자세, 회복 — 무엇이든 물어보세요';
 
   @override
-  String get paywallFeaturesPersonalizedPlansForAny => '모든 장비와 목표에 맞춘 개인 맞춤형 플랜';
+  String get paywallFeaturesPersonalizedPlansForAny =>
+      '모든 장비와 목표에 맞춘 개인 맞춤형 플랜';
 
   @override
   String get paywallFeaturesProgressTrackingAnalytics => '진행 상황 추적 및 분석';
@@ -24716,7 +25514,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallPricingNoPurchasesFound => '구매 내역을 찾을 수 없음';
 
   @override
-  String get paywallPricingNoSurprisesCancelAnytime => '추가 비용 없음. 7일 차 이전에 설정에서 언제든지 취소 가능.';
+  String get paywallPricingNoSurprisesCancelAnytime =>
+      '추가 비용 없음. 7일 차 이전에 설정에서 언제든지 취소 가능.';
 
   @override
   String get paywallPricingPlanUpdatedSuccessfully => '플랜이 성공적으로 업데이트되었습니다!';
@@ -24749,7 +25548,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallPricingScreenCurrentPlan => '현재 플랜';
 
   @override
-  String get paywallPricingScreenExclusiveYearlyDiscountJust => '회원님만을 위한 독점 연간 할인!';
+  String get paywallPricingScreenExclusiveYearlyDiscountJust =>
+      '회원님만을 위한 독점 연간 할인!';
 
   @override
   String get paywallPricingScreenGetYearlyFor37 => '\$37.49에 연간 플랜 이용하기';
@@ -24782,7 +25582,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallPricingScreenThatSJust0 => '하루 단 \$0.10 — 커피 한 잔보다 저렴합니다';
 
   @override
-  String get paywallPricingScreenThisSpecialDiscountIs => '이 특별 할인은 더 이상 제공되지 않습니다.';
+  String get paywallPricingScreenThisSpecialDiscountIs =>
+      '이 특별 할인은 더 이상 제공되지 않습니다.';
 
   @override
   String get paywallPricingScreenWaitSpecialOffer => '잠시만요! 특별 제안';
@@ -24793,13 +25594,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get paywallPricingScreenYouCanStillGet => '여전히 프리미엄 연간 플랜을 다음 가격에 이용할 수 있습니다';
+  String get paywallPricingScreenYouCanStillGet =>
+      '여전히 프리미엄 연간 플랜을 다음 가격에 이용할 수 있습니다';
 
   @override
   String get paywallPricingScreenYouWillBeUpgraded => '즉시 업그레이드됩니다';
 
   @override
-  String get paywallPricingStartWithA7 => '7일 무료 체험으로 시작하세요. 언제든지 취소 가능하며, 체험 기간이 끝날 때까지 결제되지 않습니다.';
+  String get paywallPricingStartWithA7 =>
+      '7일 무료 체험으로 시작하세요. 언제든지 취소 가능하며, 체험 기간이 끝날 때까지 결제되지 않습니다.';
 
   @override
   String get paywallPricingStartYour7Day => '계속하려면 7일 무료\n체험을 시작하세요';
@@ -24811,7 +25614,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallPricingToday => '오늘';
 
   @override
-  String get paywallPricingUnlockUnlimitedAiWorkouts => '무제한 AI 운동, 음식 스캔 및 매크로, 자세 분석, 전체 진행 상황 추적 기능을 잠금 해제하세요.';
+  String get paywallPricingUnlockUnlimitedAiWorkouts =>
+      '무제한 AI 운동, 음식 스캔 및 매크로, 자세 분석, 전체 진행 상황 추적 기능을 잠금 해제하세요.';
 
   @override
   String get paywallPricingWeLlSendYou => '무료 체험 종료 전에\n알림을 보내드립니다';
@@ -24832,7 +25636,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallPricingYourAiCoach => '나만의 AI 코치';
 
   @override
-  String get paywallTimelineCancelAnytimeDuringOr => '체험 기간 중이나 종료 후 언제든지 취소할 수 있습니다. 체험이 끝날 때까지 결제되지 않으며, Google Play에서 구독을 관리할 수 있습니다.';
+  String get paywallTimelineCancelAnytimeDuringOr =>
+      '체험 기간 중이나 종료 후 언제든지 취소할 수 있습니다. 체험이 끝날 때까지 결제되지 않으며, Google Play에서 구독을 관리할 수 있습니다.';
 
   @override
   String get paywallTimelineHowYourFree => '무료 체험';
@@ -24863,10 +25668,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallTimelineTrialWorks => '체험 작동 방식';
 
   @override
-  String get paywallTimelineUnlimitedWorkoutsFoodScann => '무제한 운동, 음식 스캔, 부상 추적, 스킬 향상 등';
+  String get paywallTimelineUnlimitedWorkoutsFoodScann =>
+      '무제한 운동, 음식 스캔, 부상 추적, 스킬 향상 등';
 
   @override
-  String get paywallTimelineWeLlRemindYou => '체험 종료 전에 미리 알려드립니다 - 추가 비용 걱정 마세요';
+  String get paywallTimelineWeLlRemindYou =>
+      '체험 종료 전에 미리 알려드립니다 - 추가 비용 걱정 마세요';
 
   @override
   String pendingRequestCardValue(Object message) {
@@ -24883,13 +25690,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get permissionsPrimerCamera => '카메라';
 
   @override
-  String get permissionsPrimerEachAppFeatureWill => '각 앱 기능은 요청하기 전에 먼저 설명해 드립니다.';
+  String get permissionsPrimerEachAppFeatureWill =>
+      '각 앱 기능은 요청하기 전에 먼저 설명해 드립니다.';
 
   @override
   String get permissionsPrimerGrantPermissions => '권한 허용';
 
   @override
-  String get permissionsPrimerGrantingTheseNowMeans => '지금 권한을 허용하면 운동 중에 갑작스러운 알림 없이 모든 기능을 바로 사용할 수 있습니다.';
+  String get permissionsPrimerGrantingTheseNowMeans =>
+      '지금 권한을 허용하면 운동 중에 갑작스러운 알림 없이 모든 기능을 바로 사용할 수 있습니다.';
 
   @override
   String get permissionsPrimerMicrophone => '마이크';
@@ -24927,7 +25736,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get personalGoalsDeleteGoal => '목표를 삭제할까요?';
 
   @override
-  String get personalGoalsFullRecordsViewComing => '전체 기록 보기는 향후 업데이트에서 제공될 예정입니다';
+  String get personalGoalsFullRecordsViewComing =>
+      '전체 기록 보기는 향후 업데이트에서 제공될 예정입니다';
 
   @override
   String get personalGoalsMaxReps => '최대 횟수';
@@ -25010,7 +25820,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get personalInfoWeUseTheseTo => '이 정보는 코칭을 개인화하고 계정을 안전하게 보호하는 데 사용됩니다.';
+  String get personalInfoWeUseTheseTo =>
+      '이 정보는 코칭을 개인화하고 계정을 안전하게 보호하는 데 사용됩니다.';
 
   @override
   String get personalInfoYesSetItUp => '네, 설정할게요';
@@ -25031,7 +25842,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get personalRecordsCard1WeekAgo => '1주 전';
 
   @override
-  String get personalRecordsCardAfternoonTip => '수분을 유지하세요! 운동 전 최소 500ml의 물을 마시는 것을 목표로 하세요.';
+  String get personalRecordsCardAfternoonTip =>
+      '수분을 유지하세요! 운동 전 최소 500ml의 물을 마시는 것을 목표로 하세요.';
 
   @override
   String get personalRecordsCardAskCoachForMore => '코치에게 더 많은 팁을 물어보세요';
@@ -25040,7 +25852,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get personalRecordsCardCoachTip => '코치 팁';
 
   @override
-  String get personalRecordsCardCompleteWorkoutsToPR => '운동을 완료하여 개인 최고 기록을 세워보세요';
+  String get personalRecordsCardCompleteWorkoutsToPR =>
+      '운동을 완료하여 개인 최고 기록을 세워보세요';
 
   @override
   String get personalRecordsCardConnectHealthToTrack => '건강 앱을 연결하여 추적하세요';
@@ -25051,7 +25864,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardEveningTip => '저녁 운동은 기분을 좋게 할 수 있습니다. 오늘 밤 숙면을 원한다면 적당한 강도로 운동하세요.';
+  String get personalRecordsCardEveningTip =>
+      '저녁 운동은 기분을 좋게 할 수 있습니다. 오늘 밤 숙면을 원한다면 적당한 강도로 운동하세요.';
 
   @override
   String get personalRecordsCardGettingPersonalizedTip => '맞춤형 팁을 가져오는 중…';
@@ -25067,7 +25881,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardMorningTip => '운동 전 5분간 동적 스트레칭을 하여 수행 능력을 높이고 부상 위험을 줄이세요.';
+  String get personalRecordsCardMorningTip =>
+      '운동 전 5분간 동적 스트레칭을 하여 수행 능력을 높이고 부상 위험을 줄이세요.';
 
   @override
   String personalRecordsCardOfUsers(Object count) {
@@ -25114,7 +25929,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get personalRecordsCardYesterday => '어제';
 
   @override
-  String get personalRecordsCompleteWorkoutsToStart => '운동을 완료하여 각 운동의 PR 기록을 시작하세요.';
+  String get personalRecordsCompleteWorkoutsToStart =>
+      '운동을 완료하여 각 운동의 PR 기록을 시작하세요.';
 
   @override
   String get personalRecordsNoPersonalRecordsYet => '아직 개인 최고 기록이 없습니다';
@@ -25284,7 +26100,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get photosTabUiTakeFirstPhoto => '첫 번째 사진 찍기';
 
   @override
-  String get photosTabUiTakePhotosFromDifferent => '다양한 각도에서 사진을 찍어 시간 경과에 따른 시각적 변화를 추적하세요.';
+  String get photosTabUiTakePhotosFromDifferent =>
+      '다양한 각도에서 사진을 찍어 시간 경과에 따른 시각적 변화를 추적하세요.';
 
   @override
   String get photosTakePhoto => '사진 찍기';
@@ -25329,7 +26146,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pillarDetailCustomTrends => '맞춤형 트렌드';
 
   @override
-  String get pillarDetailDarkerCloserToGoal => '색이 진할수록 목표에 가깝습니다. 테두리가 있는 셀은 목표를 달성했습니다.';
+  String get pillarDetailDarkerCloserToGoal =>
+      '색이 진할수록 목표에 가깝습니다. 테두리가 있는 셀은 목표를 달성했습니다.';
 
   @override
   String get pillarDetailDuration => '운동 시간';
@@ -25513,7 +26331,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planPreviewRestRecovery => '휴식 및 회복';
 
   @override
-  String get planPreviewScreenAnalyzingYourGoalsFitness => '목표, 체력 수준, 장비를 분석하여 완벽한 프로그램을 생성합니다';
+  String get planPreviewScreenAnalyzingYourGoalsFitness =>
+      '목표, 체력 수준, 장비를 분석하여 완벽한 프로그램을 생성합니다';
 
   @override
   String get planPreviewScreenBuildStrengthFoundation => '근력 기초 다지기';
@@ -25581,7 +26400,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get planTodaySPlan => '오늘의 플랜';
 
   @override
-  String get plateauDashboardCompleteMoreWorkoutsAnd => '더 많은 운동을 완료하고 체중을 기록하여 정체기 분석 인사이트를 확인하세요.';
+  String get plateauDashboardCompleteMoreWorkoutsAnd =>
+      '더 많은 운동을 완료하고 체중을 기록하여 정체기 분석 인사이트를 확인하세요.';
 
   @override
   String get plateauDashboardCurrentWeight => '현재 체중';
@@ -25648,7 +26468,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get portionAmountInputThreeQuarters => '0.75배';
 
   @override
-  String get postMealReviewCheckInDisabledRe => '체크인이 비활성화되었습니다. 영양 → 패턴에서 다시 활성화하세요.';
+  String get postMealReviewCheckInDisabledRe =>
+      '체크인이 비활성화되었습니다. 영양 → 패턴에서 다시 활성화하세요.';
 
   @override
   String get postMealReviewCheckInSaved => '체크인이 저장되었습니다!';
@@ -25678,7 +26499,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postMealReviewSaveCheckIn => '체크인 저장';
 
   @override
-  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories) {
+  String postMealReviewSheetKcal(
+    Object extraCount,
+    Object foodSummary,
+    Object totalCalories,
+  ) {
     return '$foodSummary$extraCount · $totalCalories kcal';
   }
 
@@ -25708,7 +26533,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postWorkoutHrMin => '최소';
 
   @override
-  String get postWorkoutHrNoHeartRateData => '심박수 데이터가 없습니다. 스트랩(예: Amazfit Helios)을 착용하고 건강 권한을 허용하면 실시간 심박수와 운동 후 그래프를 볼 수 있습니다.';
+  String get postWorkoutHrNoHeartRateData =>
+      '심박수 데이터가 없습니다. 스트랩(예: Amazfit Helios)을 착용하고 건강 권한을 허용하면 실시간 심박수와 운동 후 그래프를 볼 수 있습니다.';
 
   @override
   String get postWorkoutHrPeak => '최고';
@@ -25886,7 +26712,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get prSummaryCardLogYourWorkoutsAnd => '운동을 기록하면 최고의 기록을 자동으로 추적해 드립니다!';
+  String get prSummaryCardLogYourWorkoutsAnd =>
+      '운동을 기록하면 최고의 기록을 자동으로 추적해 드립니다!';
 
   @override
   String get prSummaryCardNoPersonalRecordsYet => '아직 개인 최고 기록이 없습니다';
@@ -25938,19 +26765,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get preAuthQuizConsistencyBeatsIntensity => '강도보다 꾸준함이 중요합니다';
 
   @override
-  String get preAuthQuizControlsHowQuicklyWeights => '매주 중량, 횟수, 난이도가 증가하는 속도를 조절합니다.';
+  String get preAuthQuizControlsHowQuicklyWeights =>
+      '매주 중량, 횟수, 난이도가 증가하는 속도를 조절합니다.';
 
   @override
-  String get preAuthQuizEveryExerciseWillBe => '보유하신 장비에 맞춰 모든 운동이 선택됩니다. 별도의 대체 운동은 필요 없습니다.';
+  String get preAuthQuizEveryExerciseWillBe =>
+      '보유하신 장비에 맞춰 모든 운동이 선택됩니다. 별도의 대체 운동은 필요 없습니다.';
 
   @override
-  String get preAuthQuizFailedToSaveOnboarding => '온보딩 데이터를 저장하지 못했습니다. 다시 시도해 주세요.';
+  String get preAuthQuizFailedToSaveOnboarding =>
+      '온보딩 데이터를 저장하지 못했습니다. 다시 시도해 주세요.';
 
   @override
   String get preAuthQuizFineTuningYourPlan => '플랜 미세 조정 중';
 
   @override
-  String get preAuthQuizFitnessLevelHelpsSet => '피트니스 레벨은 적절한 시작점(적정 중량, 반복 횟수 범위, 운동 복잡도)을 설정하는 데 도움을 줍니다.';
+  String get preAuthQuizFitnessLevelHelpsSet =>
+      '피트니스 레벨은 적절한 시작점(적정 중량, 반복 횟수 범위, 운동 복잡도)을 설정하는 데 도움을 줍니다.';
 
   @override
   String get preAuthQuizFuelYourTraining => '운동을 위한 영양 섭취';
@@ -25965,7 +26796,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get preAuthQuizMatchedToYourSetup => '장비 맞춤 설정';
 
   @override
-  String get preAuthQuizNutritionTrackingIsOptional => '영양 기록은 선택 사항이지만 매우 유용합니다. AI가 목표와 활동량에 맞춰 매크로를 계산합니다.';
+  String get preAuthQuizNutritionTrackingIsOptional =>
+      '영양 기록은 선택 사항이지만 매우 유용합니다. AI가 목표와 활동량에 맞춰 매크로를 계산합니다.';
 
   @override
   String get preAuthQuizSafetyFirst => '안전 제일';
@@ -25980,16 +26812,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get preAuthQuizSomethingWentWrongPlease => '문제가 발생했습니다. 다시 시도해 주세요.';
 
   @override
-  String get preAuthQuizTellingUsAboutInjuries => '부상 부위를 알려주시면 통증이나 부상을 유발할 수 있는 운동을 피할 수 있습니다.';
+  String get preAuthQuizTellingUsAboutInjuries =>
+      '부상 부위를 알려주시면 통증이나 부상을 유발할 수 있는 운동을 피할 수 있습니다.';
 
   @override
-  String get preAuthQuizTheseOptionalDetailsMake => '이 선택 사항들은 운동을 더욱 개인화해 줍니다. 원치 않으시면 AI 기본값으로 진행하세요.';
+  String get preAuthQuizTheseOptionalDetailsMake =>
+      '이 선택 사항들은 운동을 더욱 개인화해 줍니다. 원치 않으시면 AI 기본값으로 진행하세요.';
 
   @override
-  String get preAuthQuizWeLlBuildThe => '일정에 최적화된 트레이닝 스플릿을 구성해 드립니다. 무조건 많이 하는 것보다 회복이 중요합니다.';
+  String get preAuthQuizWeLlBuildThe =>
+      '일정에 최적화된 트레이닝 스플릿을 구성해 드립니다. 무조건 많이 하는 것보다 회복이 중요합니다.';
 
   @override
-  String get preAuthQuizWeUseYourGoals => '목표를 바탕으로 트레이닝 스플릿, 운동 선택, 진행 속도를 결정합니다.';
+  String get preAuthQuizWeUseYourGoals =>
+      '목표를 바탕으로 트레이닝 스플릿, 운동 선택, 진행 속도를 결정합니다.';
 
   @override
   String get preAuthQuizWhichDaysWorkBest => '운동하기 가장 좋은 요일은 언제인가요?';
@@ -26121,7 +26957,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get previewTileMockGoodProgressKeepIt => '좋은 진행 상황입니다. 계속 유지하세요!';
 
   @override
-  String get previousWorkoutsCompleteYourFirstWorkout => '첫 운동을 완료하고 여기에 확인해보세요';
+  String get previousWorkoutsCompleteYourFirstWorkout =>
+      '첫 운동을 완료하고 여기에 확인해보세요';
 
   @override
   String get previousWorkoutsNoCompletedWorkoutsYet => '아직 완료된 운동이 없습니다';
@@ -26293,7 +27130,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programHistoryProgramHistory => '프로그램 기록';
 
   @override
-  String get programHistoryProgramRestoredSuccessfully => '프로그램이 성공적으로 복원되었습니다!';
+  String get programHistoryProgramRestoredSuccessfully =>
+      '프로그램이 성공적으로 복원되었습니다!';
 
   @override
   String get programHistoryRestoreProgram => '프로그램을 복원하시겠습니까?';
@@ -26330,7 +27168,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programHistoryUnknownError => '알 수 없는 오류';
 
   @override
-  String get programHistoryWhenYouCustomizeYour => '프로그램을 커스터마이징하면 스냅샷이 여기에 저장됩니다.';
+  String get programHistoryWhenYouCustomizeYour =>
+      '프로그램을 커스터마이징하면 스냅샷이 여기에 저장됩니다.';
 
   @override
   String get programLibrary => '•  ';
@@ -26355,7 +27194,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programLibraryClearFilters => '필터 초기화';
 
   @override
-  String get programLibraryCouldNotImportThis => '이 프로그램을 가져올 수 없습니다. 다시 시도해주세요.';
+  String get programLibraryCouldNotImportThis =>
+      '이 프로그램을 가져올 수 없습니다. 다시 시도해주세요.';
 
   @override
   String get programLibraryImportCustomize => '가져오기 및 커스터마이징';
@@ -26400,7 +27240,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programMenuButtonCustomizeProgram => '프로그램 맞춤 설정';
 
   @override
-  String get programMenuButtonCustomizeYourWorkoutProgram => '운동 프로그램을 맞춤 설정하거나 현재 설정으로 다시 생성하세요.';
+  String get programMenuButtonCustomizeYourWorkoutProgram =>
+      '운동 프로그램을 맞춤 설정하거나 현재 설정으로 다시 생성하세요.';
 
   @override
   String get programMenuButtonFailedToClearWorkouts => '운동 기록을 삭제하지 못했습니다';
@@ -26423,7 +27264,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programMenuButtonProgramOptions => '프로그램 옵션';
 
   @override
-  String get programMenuButtonProgramUpdatedYourNew => '프로그램이 업데이트되었습니다! 새로운 운동이 준비되었습니다.';
+  String get programMenuButtonProgramUpdatedYourNew =>
+      '프로그램이 업데이트되었습니다! 새로운 운동이 준비되었습니다.';
 
   @override
   String get programMenuButtonRegenerateThisWeek => '이번 주 운동 다시 생성';
@@ -26435,10 +27277,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programMenuButtonSeeYourWorkoutDays => '운동 요일, 숙련도 및 목표 확인';
 
   @override
-  String get programMenuButtonThisWillDeleteYour => '진행 중인 예정된 운동이 삭제되고 현재 프로그램 설정을 사용하여 새로운 운동이 생성됩니다.\n\n완료된 운동은 영향을 받지 않습니다.';
+  String get programMenuButtonThisWillDeleteYour =>
+      '진행 중인 예정된 운동이 삭제되고 현재 프로그램 설정을 사용하여 새로운 운동이 생성됩니다.\n\n완료된 운동은 영향을 받지 않습니다.';
 
   @override
-  String get programMenuButtonTryCelebrityWorkoutsSport => '유명인 운동, 스포츠 트레이닝 등 시도';
+  String get programMenuButtonTryCelebrityWorkoutsSport =>
+      '유명인 운동, 스포츠 트레이닝 등 시도';
 
   @override
   String get programMenuButtonViewMyPreferences => '내 환경설정 보기';
@@ -26468,7 +27312,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programSummaryAdvancedLabel => '고급';
 
   @override
-  String get programSummaryAutomaticallyIncreasesChalle => '시간이 지남에 따라 자동으로 난이도 증가';
+  String get programSummaryAutomaticallyIncreasesChalle =>
+      '시간이 지남에 따라 자동으로 난이도 증가';
 
   @override
   String get programSummaryAvoidsExercisesThatStress => '신체적 제한에 무리가 가는 운동 제외';
@@ -26545,7 +27390,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programSummaryYourProgramIsReady => '프로그램이 준비되었습니다';
 
   @override
-  String get programTemplateBuilderAProgramNeedsAt => '프로그램에는 최소 하루 이상의 트레이닝 일정이 필요합니다.';
+  String get programTemplateBuilderAProgramNeedsAt =>
+      '프로그램에는 최소 하루 이상의 트레이닝 일정이 필요합니다.';
 
   @override
   String get programTemplateBuilderAddExercise => '운동 추가';
@@ -26557,7 +27403,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programTemplateBuilderCopyDayToAnother => '다른 요일로 복사';
 
   @override
-  String get programTemplateBuilderCouldNotSaveThe => '템플릿을 저장할 수 없습니다. 다시 시도해주세요.';
+  String get programTemplateBuilderCouldNotSaveThe =>
+      '템플릿을 저장할 수 없습니다. 다시 시도해주세요.';
 
   @override
   String get programTemplateBuilderDropInASplit => '작성해둔 분할 루틴을 입력하면 분석해 드립니다.';
@@ -26575,7 +27422,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get programTemplateBuilderImportFromLibrary => '라이브러리에서 가져오기';
 
   @override
-  String get programTemplateBuilderLayOutEachTraining => '각 트레이닝 일정을 운동별로 구성하세요.';
+  String get programTemplateBuilderLayOutEachTraining =>
+      '각 트레이닝 일정을 운동별로 구성하세요.';
 
   @override
   String get programTemplateBuilderMakeRestDay => '휴식일로 설정';
@@ -26630,12 +27478,15 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String programTemplateBuilderScreenWeeksWhenScheduled(Object repeatWeeksHint) {
+  String programTemplateBuilderScreenWeeksWhenScheduled(
+    Object repeatWeeksHint,
+  ) {
     return '예정 시 $repeatWeeksHint주.';
   }
 
   @override
-  String get programTemplateBuilderStartFromAStructured => '구조화된 프로그램으로 시작하여 나만의 루틴을 만드세요.';
+  String get programTemplateBuilderStartFromAStructured =>
+      '구조화된 프로그램으로 시작하여 나만의 루틴을 만드세요.';
 
   @override
   String get programsAll => '전체';
@@ -26704,10 +27555,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressAll => '전체';
 
   @override
-  String get progressChartsCompleteSomeWorkoutsTo => '운동을 완료하여 시간 경과에 따른 볼륨 변화를 확인하세요.';
+  String get progressChartsCompleteSomeWorkoutsTo =>
+      '운동을 완료하여 시간 경과에 따른 볼륨 변화를 확인하세요.';
 
   @override
-  String get progressChartsCompleteWeightedExercisesTo => '중량 운동을 완료하여 근력 향상을 확인하세요.';
+  String get progressChartsCompleteWeightedExercisesTo =>
+      '중량 운동을 완료하여 근력 향상을 확인하세요.';
 
   @override
   String get progressChartsFailedToLoadData => '데이터를 불러오지 못했습니다';
@@ -26790,7 +27643,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressScores => '점수';
 
   @override
-  String get progressScreenExtCompleteWorkoutsTargetingTh => '근력 변화를 확인하려면 해당 근육을 타겟으로 하는 운동을 완료하세요.';
+  String get progressScreenExtCompleteWorkoutsTargetingTh =>
+      '근력 변화를 확인하려면 해당 근육을 타겟으로 하는 운동을 완료하세요.';
 
   @override
   String get progressScreenExtDetails => '상세 정보';
@@ -26843,7 +27697,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressScreenUiLogMeasurements => '측정값 기록';
 
   @override
-  String get progressScreenUiMasterEasierVariantsThen => '쉬운 변형 동작을 마스터한 후 더 어려운 동작으로 넘어가세요';
+  String get progressScreenUiMasterEasierVariantsThen =>
+      '쉬운 변형 동작을 마스터한 후 더 어려운 동작으로 넘어가세요';
 
   @override
   String get progressScreenUiMuscleAnalytics => '근육 분석';
@@ -26864,10 +27719,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressScreenUiTakeFirstPhoto => '첫 사진 찍기';
 
   @override
-  String get progressScreenUiTakePhotosFromDifferent => '다양한 각도에서 사진을 찍어 시간 경과에 따른 시각적 변화를 추적하세요.';
+  String get progressScreenUiTakePhotosFromDifferent =>
+      '다양한 각도에서 사진을 찍어 시간 경과에 따른 시각적 변화를 추적하세요.';
 
   @override
-  String get progressScreenUiTrackYourBodyMeasurements => '신체 치수를 기록하여 체중계 수치 이상의 상세한 변화를 확인하세요.';
+  String get progressScreenUiTrackYourBodyMeasurements =>
+      '신체 치수를 기록하여 체중계 수치 이상의 상세한 변화를 확인하세요.';
 
   @override
   String get progressScreenUiTrainingVolumeBalance => '운동 볼륨 및 균형';
@@ -26928,7 +27785,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressShareTemplatesInTheBooks => '기록 완료';
 
   @override
-  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText) {
+  String progressShareTemplatesLocalLegendShedsIn(
+    Object durationText,
+    Object weightLostText,
+  ) {
     return '로컬 레전드: $durationText 만에 $weightLostText 감량';
   }
 
@@ -26966,7 +27826,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressShareTemplatesReportedBy => '보도:';
 
   @override
-  String get progressShareTemplatesSourcesCloseToThe => '관계자에 따르면, 꾸준한 운동과 정직한 식단, 그리고 하체 운동을 거르지 않은 결과라고 합니다. 전문가들은 이를 \"전례 없는 헌신\"이라 부릅니다.';
+  String get progressShareTemplatesSourcesCloseToThe =>
+      '관계자에 따르면, 꾸준한 운동과 정직한 식단, 그리고 하체 운동을 거르지 않은 결과라고 합니다. 전문가들은 이를 \"전례 없는 헌신\"이라 부릅니다.';
 
   @override
   String get progressShareTemplatesTheDailyGains => '매일의 성장';
@@ -27027,7 +27888,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts) {
+  String progressShareTemplatesWorkoutsDayStreak(
+    Object currentStreak,
+    Object totalWorkouts,
+  ) {
     return '운동 $totalWorkouts회 · $currentStreak일 연속';
   }
 
@@ -27065,7 +27929,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressThisActionCannotBe => '이 작업은 되돌릴 수 없습니다.';
 
   @override
-  String get progressTrackYourFitnessJourney => '진행 상황 사진, 신체 측정 및 근력 점수로 피트니스 여정을 기록하세요. 얼마나 성장했는지 확인해보세요!';
+  String get progressTrackYourFitnessJourney =>
+      '진행 상황 사진, 신체 측정 및 근력 점수로 피트니스 여정을 기록하세요. 얼마나 성장했는지 확인해보세요!';
 
   @override
   String get progressUploadFailed => '업로드 실패';
@@ -27098,7 +27963,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressionPaceAutoDeloadWeeks => '자동 디로딩 주간';
 
   @override
-  String get progressionPaceControlHowQuicklyThe => 'AI가 운동 중량을 얼마나 빠르게 늘릴지 조절하세요. 초보자에게는 느린 진행이 더 안전하며, 숙련자에게는 빠른 진행이 적합합니다.';
+  String get progressionPaceControlHowQuicklyThe =>
+      'AI가 운동 중량을 얼마나 빠르게 늘릴지 조절하세요. 초보자에게는 느린 진행이 더 안전하며, 숙련자에게는 빠른 진행이 적합합니다.';
 
   @override
   String get progressionPaceDeloadFrequency => '디로딩 빈도';
@@ -27116,7 +27982,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressionPaceHowMuchToIncrease => '진행 시 중량 증가량';
 
   @override
-  String get progressionPacePeriodicallyReduceIntensity => '회복을 위해 주기적으로 강도 낮추기';
+  String get progressionPacePeriodicallyReduceIntensity =>
+      '회복을 위해 주기적으로 강도 낮추기';
 
   @override
   String get progressionPaceProgressionPace => '진행 속도';
@@ -27188,7 +28055,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressionStripTarget => '목표 ';
 
   @override
-  String get progressionSuggestionCardCompleteAFewMore => '진행 단계를 잠금 해제하려면 \"쉬움\" 세션을 몇 번 더 완료하세요';
+  String get progressionSuggestionCardCompleteAFewMore =>
+      '진행 단계를 잠금 해제하려면 \"쉬움\" 세션을 몇 번 더 완료하세요';
 
   @override
   String get progressionSuggestionCardCurrent => '현재';
@@ -27214,7 +28082,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise) {
+  String progressionSuggestionCardValue2(
+    Object currentExercise,
+    Object suggestedExercise,
+  ) {
     return '$currentExercise -> $suggestedExercise';
   }
 
@@ -27301,7 +28172,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get publicRecipeSaveToMyRecipes => '내 레시피에 저장';
 
   @override
-  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount) {
+  String publicRecipeScreenByViewsSaves(
+    Object authorDisplayName,
+    Object saveCount,
+    Object viewCount,
+  ) {
     return '$authorDisplayName 작성 · 조회수 $viewCount회 · 저장 $saveCount회';
   }
 
@@ -27695,7 +28570,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickLogOverlaySnack => '간식';
 
   @override
-  String get quickLogOverlayTapAMealType => '기록할 식사 유형을 탭하거나, 앱에서 더 많은 옵션을 확인하세요';
+  String get quickLogOverlayTapAMealType =>
+      '기록할 식사 유형을 탭하거나, 앱에서 더 많은 옵션을 확인하세요';
 
   @override
   String get quickLogWeightLogMoreWeightsTo => '더 많은 체중을 기록하고 변화 추이를 확인하세요';
@@ -27750,7 +28626,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickStatsCardActiveFeatures => '활성 기능';
 
   @override
-  String get quickStatsCardConfigureYourHormonalHealth => '호르몬 건강 설정을 구성하여 개인 맞춤형 인사이트를 확인하세요.';
+  String get quickStatsCardConfigureYourHormonalHealth =>
+      '호르몬 건강 설정을 구성하여 개인 맞춤형 인사이트를 확인하세요.';
 
   @override
   String get quickStatsCardCycleSyncedNutrition => '주기 동기화 영양';
@@ -27872,13 +28749,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickWorkoutSheetInjuriesOptional => '부상 부위 (선택 사항)';
 
   @override
-  String get quickWorkoutSheetInstantGenerationPoweredBy => '운동 과학 연구를 기반으로 즉시 생성됩니다.';
+  String get quickWorkoutSheetInstantGenerationPoweredBy =>
+      '운동 과학 연구를 기반으로 즉시 생성됩니다.';
 
   @override
   String get quickWorkoutSheetMoodOptional => '기분 (선택 사항)';
 
   @override
-  String get quickWorkoutSheetNoAdditionalSuggestionsAvai => '추가 제안을 사용할 수 없습니다.';
+  String get quickWorkoutSheetNoAdditionalSuggestionsAvai =>
+      '추가 제안을 사용할 수 없습니다.';
 
   @override
   String get quickWorkoutSheetPairOpposingMusclesTo => '길항근을 묶어 시간을 절약하세요';
@@ -27889,22 +28768,31 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
+    Object _selectedDuration,
+  ) {
     return '$_selectedDuration분 운동 생성';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
+    Object phaseDisplayName,
+  ) {
     return '메조사이클: $phaseDisplayName';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
+    Object _selectedDuration,
+  ) {
     return '$_selectedDuration분';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
+    Object totalWeeks,
+    Object weekNumber,
+  ) {
     return '$weekNumber/$totalWeeks주차';
   }
 
@@ -27960,7 +28848,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quitWorkoutAddANoteOptional => '메모 추가 (선택 사항)...';
 
   @override
-  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets) {
+  String quitWorkoutDialogCompleteSetsDone(
+    Object progressPercent,
+    Object totalCompletedSets,
+  ) {
     return '$progressPercent% 완료 · $totalCompletedSets 세트 완료';
   }
 
@@ -28064,13 +28955,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizContinueButtonSeeMyPlan => '내 플랜 보기';
 
   @override
-  String get quizDaysSelectorAiGeneratesWorkoutsWithin => 'AI가 선택하신 범위 내에서 운동을 생성합니다';
+  String get quizDaysSelectorAiGeneratesWorkoutsWithin =>
+      'AI가 선택하신 범위 내에서 운동을 생성합니다';
 
   @override
   String get quizDaysSelectorBest => '최적';
 
   @override
-  String get quizDaysSelectorConsistencyBeatsIntensity => '강도보다 꾸준함이 중요합니다. 유지할 수 있는 만큼 선택하세요';
+  String get quizDaysSelectorConsistencyBeatsIntensity =>
+      '강도보다 꾸준함이 중요합니다. 유지할 수 있는 만큼 선택하세요';
 
   @override
   String quizDaysSelectorDays(int arg0) {
@@ -28172,7 +29065,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentCableMachine => '케이블 머신';
 
   @override
-  String get quizEquipmentCouldnTLoadIdentified => '식별된 장비를 불러올 수 없습니다. 아래 목록에서 선택하세요.';
+  String get quizEquipmentCouldnTLoadIdentified =>
+      '식별된 장비를 불러올 수 없습니다. 아래 목록에서 선택하세요.';
 
   @override
   String get quizEquipmentCouldnTOpenThe => '카메라를 열 수 없습니다. 아래에서 장비를 선택하세요.';
@@ -28240,7 +29134,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentNeededForBarbell => '바벨 운동에 필요';
 
   @override
-  String get quizEquipmentNoEquipmentIdentifiedPick => '식별된 장비가 없습니다. 아래 목록에서 선택하세요.';
+  String get quizEquipmentNoEquipmentIdentifiedPick =>
+      '식별된 장비가 없습니다. 아래 목록에서 선택하세요.';
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
@@ -28272,16 +29167,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentSnapTitle => '체육관 촬영';
 
   @override
-  String get quizEquipmentRequiredForBarbellSquat => '필수: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
+  String get quizEquipmentRequiredForBarbellSquat =>
+      '필수: 바벨 스쿼트, 오버헤드 프레스, 바벨 벤치 프레스';
 
   @override
   String get quizEquipmentResistanceBands => '저항 밴드';
 
   @override
-  String get quizEquipmentSelectAllThatApply => '해당되는 모든 항목을 선택하세요. 보유하신 장비에 맞춰 운동을 설계해 드립니다';
+  String get quizEquipmentSelectAllThatApply =>
+      '해당되는 모든 항목을 선택하세요. 보유하신 장비에 맞춰 운동을 설계해 드립니다';
 
   @override
-  String get quizEquipmentSelectingYourWorkoutEnviron => '운동 환경을 선택하면 적절한 운동과 장비를 추천해 드릴 수 있습니다.';
+  String get quizEquipmentSelectingYourWorkoutEnviron =>
+      '운동 환경을 선택하면 적절한 운동과 장비를 추천해 드릴 수 있습니다.';
 
   @override
   String get quizEquipmentSquatRack => '스쿼트 랙';
@@ -28311,10 +29209,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentU1f9f3 => '🧳';
 
   @override
-  String get quizEquipmentUnlocksBenchPressIncline => '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
+  String get quizEquipmentUnlocksBenchPressIncline =>
+      '잠금 해제: 벤치 프레스, 인클라인 프레스, 풀오버, 체스트 서포티드 로우';
 
   @override
-  String get quizEquipmentUnlocksChestSupportedKb => '잠금 해제: 체스트 서포티드 KB 로우, KB 플로어 프레스 대안';
+  String get quizEquipmentUnlocksChestSupportedKb =>
+      '잠금 해제: 체스트 서포티드 KB 로우, KB 플로어 프레스 대안';
 
   @override
   String quizEquipmentUsersSnappedEquipment(Object apiBaseUrl, Object userId) {
@@ -28334,7 +29234,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizEquipmentYesAddIt => '네, 추가합니다';
 
   @override
-  String get quizEquipmentYouCanCustomizeEquipment => '환경 선택 후 장비를 맞춤 설정하거나, 건너뛰고 수동으로 선택할 수 있습니다.';
+  String get quizEquipmentYouCanCustomizeEquipment =>
+      '환경 선택 후 장비를 맞춤 설정하거나, 건너뛰고 수동으로 선택할 수 있습니다.';
 
   @override
   String get quizFastingApplyCustomProtocol => '맞춤형 프로토콜 적용';
@@ -28343,7 +29244,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizFastingChooseAFastingProtocol => '단식 프로토콜 선택';
 
   @override
-  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours) {
+  String quizFastingCustomProtocol(
+    Object _customEatingHours,
+    Object _customFastingHours,
+  ) {
     return '맞춤형 $_customFastingHours:$_customEatingHours 프로토콜';
   }
 
@@ -28364,7 +29268,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get quizFastingIntermittentFastingCanHelp => '간헐적 단식은 목표 달성 속도를 높이는 데 도움이 됩니다';
+  String get quizFastingIntermittentFastingCanHelp =>
+      '간헐적 단식은 목표 달성 속도를 높이는 데 도움이 됩니다';
 
   @override
   String get quizFastingOptionalYouCanSet => '선택 사항 - 나중에 설정할 수 있습니다';
@@ -28400,7 +29305,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals) {
+  String quizFastingUiMealsSpacedHoursApart(
+    Object hoursBetweenMeals,
+    Object meals,
+  ) {
     return '$meals끼 식사, 약 $hoursBetweenMeals시간 간격';
   }
 
@@ -28549,7 +29457,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizMotivationWhatSDrivingYou => '운동을 하게 된 동기는 무엇인가요?';
 
   @override
-  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints) {
+  String quizMuscleFocusAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  ) {
     return '$availablePoints / $maxTotalPoints점 사용 가능';
   }
 
@@ -28572,7 +29483,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizNutritionGateDietaryPreferences => '식단 선호도';
 
   @override
-  String get quizNutritionGateGetPersonalizedCalorieAnd => '피트니스 목표를 지원하기 위한 개인 맞춤형 칼로리 및 매크로 목표를 받으세요';
+  String get quizNutritionGateGetPersonalizedCalorieAnd =>
+      '피트니스 목표를 지원하기 위한 개인 맞춤형 칼로리 및 매크로 목표를 받으세요';
 
   @override
   String get quizNutritionGateMealTimingGuidance => '식사 시간 안내';
@@ -28620,13 +29532,17 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get quizNutritionGoalsHelpsPersonalizeMealSuggest => '식단 추천을 개인화하는 데 도움이 됩니다';
+  String get quizNutritionGoalsHelpsPersonalizeMealSuggest =>
+      '식단 추천을 개인화하는 데 도움이 됩니다';
 
   @override
   String get quizNutritionGoalsIncludeAllMealsAnd => '모든 식사와 간식 포함';
 
   @override
-  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal) {
+  String quizNutritionGoalsKcalGProteinPer(
+    Object calPerMeal,
+    Object proteinPerMeal,
+  ) {
     return '끼니당 약 $calPerMeal kcal & 단백질 ${proteinPerMeal}g';
   }
 
@@ -28670,13 +29586,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizPersonalizationGateQuickStart => '빠른 시작';
 
   @override
-  String get quizPersonalizationGateUsedToPersonalizeYour => '플랜과 예상치를 개인화하는 데 사용됩니다';
+  String get quizPersonalizationGateUsedToPersonalizeYour =>
+      '플랜과 예상치를 개인화하는 데 사용됩니다';
 
   @override
-  String get quizPrimaryGoalAdjustsRestPeriodsExercise => '휴식 시간, 운동 난이도, 전체 운동 볼륨을 목표에 따라 조정합니다.';
+  String get quizPrimaryGoalAdjustsRestPeriodsExercise =>
+      '휴식 시간, 운동 난이도, 전체 운동 볼륨을 목표에 따라 조정합니다.';
 
   @override
-  String get quizPrimaryGoalAiPicksExercisesThat => 'AI가 목표에 가장 적합한 운동을 선택합니다. 근력 향상을 위한 복합 관절 운동, 근비대를 위한 고립 운동 등을 포함합니다.';
+  String get quizPrimaryGoalAiPicksExercisesThat =>
+      'AI가 목표에 가장 적합한 운동을 선택합니다. 근력 향상을 위한 복합 관절 운동, 근비대를 위한 고립 운동 등을 포함합니다.';
 
   @override
   String get quizPrimaryGoalCanChangeAnytime => '언제든지 변경 가능';
@@ -28694,19 +29613,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizPrimaryGoalRepRanges => '반복 횟수 범위';
 
   @override
-  String get quizPrimaryGoalSetsTheNumberOf => '운동당 반복 횟수를 설정합니다. 근비대는 8-12회, 근력은 3-6회, 지구력은 12회 이상을 사용합니다.';
+  String get quizPrimaryGoalSetsTheNumberOf =>
+      '운동당 반복 횟수를 설정합니다. 근비대는 8-12회, 근력은 3-6회, 지구력은 12회 이상을 사용합니다.';
 
   @override
   String get quizPrimaryGoalWorkoutIntensity => '운동 강도';
 
   @override
-  String get quizPrimaryGoalYouCanUpdateYour => '목표가 변경되면 설정에서 언제든지 훈련 목표를 업데이트할 수 있습니다.';
+  String get quizPrimaryGoalYouCanUpdateYour =>
+      '목표가 변경되면 설정에서 언제든지 훈련 목표를 업데이트할 수 있습니다.';
 
   @override
   String get quizProgressionConstraintsBalanced => '균형 잡힌';
 
   @override
-  String get quizProgressionConstraintsBuildStrengthGraduallyLowe => '점진적으로 근력 향상, 부상 위험 감소';
+  String get quizProgressionConstraintsBuildStrengthGraduallyLowe =>
+      '점진적으로 근력 향상, 부상 위험 감소';
 
   @override
   String get quizProgressionConstraintsFastAggressive => '빠르고 공격적인';
@@ -28718,13 +29640,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizProgressionConstraintsProgressionPace => '진행 속도';
 
   @override
-  String get quizProgressionConstraintsPushHardFasterGains => '강도 높게, 빠른 성과 (상급자용)';
+  String get quizProgressionConstraintsPushHardFasterGains =>
+      '강도 높게, 빠른 성과 (상급자용)';
 
   @override
   String get quizProgressionConstraintsSlowSteady => '느리고 꾸준한';
 
   @override
-  String get quizProgressionConstraintsSteadyProgressWithManageabl => '관리 가능한 수준으로 꾸준히 진행';
+  String get quizProgressionConstraintsSteadyProgressWithManageabl =>
+      '관리 가능한 수준으로 꾸준히 진행';
 
   @override
   String get quizTrainingPreferencesAllOptional => '모두 선택 사항';
@@ -28739,7 +29663,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizTrainingPreferencesProgressionPace => '진행 속도';
 
   @override
-  String get quizTrainingPreferencesProgressiveOverloadRirInt => '점진적 과부하 및 RIR 통합';
+  String get quizTrainingPreferencesProgressiveOverloadRirInt =>
+      '점진적 과부하 및 RIR 통합';
 
   @override
   String get quizTrainingPreferencesTrainingPreferences => '훈련 선호도';
@@ -28759,7 +29684,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizTrainingStyleArnoldSplit => '아놀드 분할';
 
   @override
-  String get quizTrainingStyleAutomaticallyOptimizedForYo => '일정에 맞춰 자동 최적화 (권장)';
+  String get quizTrainingStyleAutomaticallyOptimizedForYo =>
+      '일정에 맞춰 자동 최적화 (권장)';
 
   @override
   String get quizTrainingStyleBestFor56 => '주 5-6회에 적합';
@@ -28774,7 +29700,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizTrainingStyleChooseHowYouWant => '운동 구조를 선택하세요';
 
   @override
-  String get quizTrainingStyleDoYouPreferThe => '매주 동일한 운동을 선호하시나요, 아니면 다양성을 선호하시나요?';
+  String get quizTrainingStyleDoYouPreferThe =>
+      '매주 동일한 운동을 선호하시나요, 아니면 다양성을 선호하시나요?';
 
   @override
   String get quizTrainingStyleExerciseVariety => '운동 다양성';
@@ -28789,10 +29716,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quizTrainingStyleOneMuscleGroupPer => '하루에 한 근육군 (5일 이상)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyAdaptiveTra => 'PHAT (파워 및 근비대 적응 훈련) (5일)';
+  String get quizTrainingStylePowerHypertrophyAdaptiveTra =>
+      'PHAT (파워 및 근비대 적응 훈련) (5일)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyUpperL => '파워 + 근비대, 상체 + 하체 (4일)';
+  String get quizTrainingStylePowerHypertrophyUpperL =>
+      '파워 + 근비대, 상체 + 하체 (4일)';
 
   @override
   String get quizTrainingStylePushPullLegsPpl => '밀기 / 당기기 / 하체 (PPL)';
@@ -28842,7 +29771,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get racePredictorDetailHowPredictionsAreCalculated => '예측 계산 방식';
 
   @override
-  String get racePredictorDetailLogAtLeastThree => '최소 3번의 달리기 기록(1km 측정 포함)을 입력하면 예측 결과가 나타납니다.';
+  String get racePredictorDetailLogAtLeastThree =>
+      '최소 3번의 달리기 기록(1km 측정 포함)을 입력하면 예측 결과가 나타납니다.';
 
   @override
   String get racePredictorDetailNeedMoreData => '데이터가 더 필요합니다';
@@ -28865,7 +29795,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ratingPromptBannerGot30Seconds => '30초만 시간 내주실 수 있나요?';
 
   @override
-  String get ratingPromptBannerHelpUsOutRate => '도와주세요 — App Store에서 Zealova를 평가해주세요.';
+  String get ratingPromptBannerHelpUsOutRate =>
+      '도와주세요 — App Store에서 Zealova를 평가해주세요.';
 
   @override
   String get ratingPromptDonTAskAgain => '다시 묻지 않기';
@@ -28918,7 +29849,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get readinessCheckinCardTodaySReadiness => '오늘의 준비 상태';
 
   @override
-  String get readinessTileBuildingBaselineCheckIn => '기준점 설정 중 — 14일 동안 매일 체크인하세요';
+  String get readinessTileBuildingBaselineCheckIn =>
+      '기준점 설정 중 — 14일 동안 매일 체크인하세요';
 
   @override
   String get readinessTileRecoveryReadiness => '회복 준비 상태';
@@ -29026,7 +29958,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName) {
+  String recipeBuilderSheetLoggedServingSOf(
+    Object portionEaten,
+    Object recipeName,
+  ) {
     return '\"$recipeName\" $portionEaten인분 기록됨: ';
   }
 
@@ -29251,7 +30186,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeFromFridgeFromYourFridge => '냉장고 속 재료';
 
   @override
-  String get recipeFromFridgeNoRecipesFoundFor => '해당 재료로 찾은 레시피가 없습니다. 재료를 더 추가해 보세요.';
+  String get recipeFromFridgeNoRecipesFoundFor =>
+      '해당 재료로 찾은 레시피가 없습니다. 재료를 더 추가해 보세요.';
 
   @override
   String get recipeFromFridgeScanComplete => '스캔 완료';
@@ -29293,7 +30229,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeFromFridgeSuggestions => '추천';
 
   @override
-  String get recipeFromFridgeTapFindRecipesTo => '\"레시피 찾기\"를 눌러 재료를 활용한 추천 레시피를 확인하세요';
+  String get recipeFromFridgeTapFindRecipesTo =>
+      '\"레시피 찾기\"를 눌러 재료를 활용한 추천 레시피를 확인하세요';
 
   @override
   String get recipeFromFridgeTypeIngredientEggsSpinach => '재료 입력 (계란, 시금치 등…)';
@@ -29308,7 +30245,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeHistoryNoDifferences => '차이 없음';
 
   @override
-  String get recipeHistoryNoEditsYetVersioning => '아직 수정 내역이 없습니다. 첫 변경 후 버전 관리가 시작됩니다.';
+  String get recipeHistoryNoEditsYetVersioning =>
+      '아직 수정 내역이 없습니다. 첫 변경 후 버전 관리가 시작됩니다.';
 
   @override
   String get recipeHistoryNowPickASecond => '이제 두 번째 버전을 선택하세요';
@@ -29343,7 +30281,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeHistoryUpdated => '업데이트됨';
 
   @override
-  String get recipeImportAimAtARecipe => '레시피 카드, 요리책 페이지 또는 스크린샷을 향해 조준하세요. 프레임에 맞춰 흔들리지 않게 고정하세요.';
+  String get recipeImportAimAtARecipe =>
+      '레시피 카드, 요리책 페이지 또는 스크린샷을 향해 조준하세요. 프레임에 맞춰 흔들리지 않게 고정하세요.';
 
   @override
   String get recipeImportAlignRecipeInsideFrame => '프레임 안에 레시피 맞추기';
@@ -29393,7 +30332,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipePreferencesSelectCuisinesYouEnjoy => '좋아하는 요리 선택 (탭하여 전환)';
 
   @override
-  String get recipePreferencesYourBodyTypeHelps => '체형 정보를 바탕으로 신진대사에 최적화된 레시피를 추천해 드립니다';
+  String get recipePreferencesYourBodyTypeHelps =>
+      '체형 정보를 바탕으로 신진대사에 최적화된 레시피를 추천해 드립니다';
 
   @override
   String recipeSaveJobsListenerCouldnTSaveRecipe(Object job) {
@@ -29534,7 +30474,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionsAnySpecificRequirementsE => '특별한 요구사항이 있나요? (예: 400칼로리 미만, 고식이섬유)';
+  String get recipeSuggestionsAnySpecificRequirementsE =>
+      '특별한 요구사항이 있나요? (예: 400칼로리 미만, 고식이섬유)';
 
   @override
   String get recipeSuggestionsGenerateSuggestions => '추천 생성';
@@ -29555,7 +30496,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeSuggestionsRecipeSuggestions => '레시피 추천';
 
   @override
-  String get recipeSuggestionsSaveRecipesYouLike => '좋아하는 레시피를 저장하면 나중에 여기서 확인할 수 있습니다';
+  String get recipeSuggestionsSaveRecipesYouLike =>
+      '좋아하는 레시피를 저장하면 나중에 여기서 확인할 수 있습니다';
 
   @override
   String get recipeSuggestionsSaved => '저장됨';
@@ -29569,7 +30511,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipeSuggestionsSuggestions => '추천';
 
   @override
-  String get recipeSuggestionsTapGenerateSuggestionsTo => '\"추천 생성\"을 탭하여 선호도에 기반한 AI 레시피 아이디어를 확인하세요.';
+  String get recipeSuggestionsTapGenerateSuggestionsTo =>
+      '\"추천 생성\"을 탭하여 선호도에 기반한 AI 레시피 아이디어를 확인하세요.';
 
   @override
   String get recipeSuggestionsWhatMealAreYou => '어떤 식사를 계획 중이신가요?';
@@ -29669,7 +30612,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recipesTakePhoto => '사진 촬영';
 
   @override
-  String get recipesTapBuildToCreate => '만들기를 탭하여 첫 번째 레시피를 생성하거나, 위의 냉장고/가져오기 기능을 사용해 보세요.';
+  String get recipesTapBuildToCreate =>
+      '만들기를 탭하여 첫 번째 레시피를 생성하거나, 위의 냉장고/가져오기 기능을 사용해 보세요.';
 
   @override
   String get recipesUpTo5Photos => '최대 5장의 사진 — 냉장고, 식료품 저장소, 냉동실';
@@ -29767,7 +30711,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recovery1rmCalculatorPlayground => '1RM 계산기';
 
   @override
-  String get recoveryColorCodedRed40 => '색상 코드: 빨간색 <40% | 노란색 40-70% | 녹색 >70%';
+  String get recoveryColorCodedRed40 =>
+      '색상 코드: 빨간색 <40% | 노란색 40-70% | 녹색 >70%';
 
   @override
   String get recoveryCompareEpleyBrzyckiAnd => 'Epley, Brzycki, Mayhew 추정치 비교';
@@ -29845,7 +30790,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get referralsQualified => '자격 충족';
 
   @override
-  String get referralsRedeemItHereBoth => '여기서 코드를 입력하세요. 두 분 모두 XP와 상자를 받을 수 있습니다.';
+  String get referralsRedeemItHereBoth =>
+      '여기서 코드를 입력하세요. 두 분 모두 XP와 상자를 받을 수 있습니다.';
 
   @override
   String referralsScreenMoreQualifiedReferral(Object neededForNext) {
@@ -29874,7 +30820,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get referralsYourReferralCode => '내 추천 코드';
 
   @override
-  String get refuelWindowCardAskCoachAboutRecovery => '회복을 위한 영양 섭취에 대해 코치에게 물어보세요';
+  String get refuelWindowCardAskCoachAboutRecovery =>
+      '회복을 위한 영양 섭취에 대해 코치에게 물어보세요';
 
   @override
   String get refuelWindowCardCarbs => '탄수화물';
@@ -30117,7 +31064,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWithNewContinueCurrent => '현재 유지';
 
   @override
-  String get regenerateWithNewEitherWayFutureWorkouts => '어느 쪽이든, 향후 운동은 업데이트된 장비를 기준으로 생성됩니다.';
+  String get regenerateWithNewEitherWayFutureWorkouts =>
+      '어느 쪽이든, 향후 운동은 업데이트된 장비를 기준으로 생성됩니다.';
 
   @override
   String get regenerateWithNewEquipmentUpdated => '장비 업데이트 완료';
@@ -30126,7 +31074,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWithNewRegenerateThisWorkout => '이 운동 다시 생성';
 
   @override
-  String get regenerateWorkoutSheetAiGenerationTypicallyTakes => 'AI 생성에는 보통 15-30초가 소요됩니다';
+  String get regenerateWorkoutSheetAiGenerationTypicallyTakes =>
+      'AI 생성에는 보통 15-30초가 소요됩니다';
 
   @override
   String get regenerateWorkoutSheetAiSuggestions => 'AI 추천';
@@ -30135,7 +31084,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWorkoutSheetApplyThisWorkout => '이 운동 적용하기';
 
   @override
-  String get regenerateWorkoutSheetCouldnTKeepYour => '기존 운동을 유지할 수 없습니다. 새 운동만 표시됩니다.';
+  String get regenerateWorkoutSheetCouldnTKeepYour =>
+      '기존 운동을 유지할 수 없습니다. 새 운동만 표시됩니다.';
 
   @override
   String get regenerateWorkoutSheetCustomize => '사용자 지정';
@@ -30144,10 +31094,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWorkoutSheetCustomizeOrLetAi => '사용자 지정하거나 AI에게 추천받으세요';
 
   @override
-  String get regenerateWorkoutSheetDefaultedToReplaceYour => '대체로 설정되었습니다. 이전 운동이 덮어쓰기되었습니다.';
+  String get regenerateWorkoutSheetDefaultedToReplaceYour =>
+      '대체로 설정되었습니다. 이전 운동이 덮어쓰기되었습니다.';
 
   @override
-  String get regenerateWorkoutSheetDescribeYourIdealWorkout => '이상적인 운동을 설명해주세요';
+  String get regenerateWorkoutSheetDescribeYourIdealWorkout =>
+      '이상적인 운동을 설명해주세요';
 
   @override
   String get regenerateWorkoutSheetDoThisToday => '오늘 이 운동 하기';
@@ -30156,7 +31108,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWorkoutSheetEGAQuick => '예: \"장비 없이 하는 빠른 상체 운동\"';
 
   @override
-  String get regenerateWorkoutSheetEnterAPromptAbove => '위 프롬프트를 입력하거나 새로고침을 눌러 AI 기반 운동 추천을 받으세요';
+  String get regenerateWorkoutSheetEnterAPromptAbove =>
+      '위 프롬프트를 입력하거나 새로고침을 눌러 AI 기반 운동 추천을 받으세요';
 
   @override
   String get regenerateWorkoutSheetGeneratingSuggestions => '추천 생성 중...';
@@ -30168,27 +31121,40 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWorkoutSheetNoSuggestionsYet => '아직 추천이 없습니다';
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
+    Object message,
+  ) {
     return '제안 적용 실패: $message';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
+    Object e,
+  ) {
     return '제안 적용 실패: $e';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
+    Object message,
+  ) {
     return '재생성 실패: $message';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
+    Object e,
+  ) {
     return '재생성 실패: $e';
   }
 
   @override
-  String get regenerateWorkoutSheetPreviewNotSupportedBy => '서버에서 미리보기를 지원하지 않습니다. 앱을 업데이트하거나 고객 지원에 문의하세요.';
+  String get regenerateWorkoutSheetPreviewNotSupportedBy =>
+      '서버에서 미리보기를 지원하지 않습니다. 앱을 업데이트하거나 고객 지원에 문의하세요.';
 
   @override
   String get regenerateWorkoutSheetRegenerateCurrentWorkout => '현재 운동 다시 생성';
@@ -30203,13 +31169,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get regenerateWorkoutSheetRestoredFromYourLast => '마지막 생성 시점으로 복원됨';
 
   @override
-  String get regenerateWorkoutSheetTodayIsnTIn => '오늘은 평소 운동하는 날이 아니지만, 그래도 추가하겠습니다.';
+  String get regenerateWorkoutSheetTodayIsnTIn =>
+      '오늘은 평소 운동하는 날이 아니지만, 그래도 추가하겠습니다.';
 
   @override
   String get regenerateWorkoutSheetWhen => '언제?';
 
   @override
-  String get regionVariantDropdownCouldNotSwapVariant => '변형을 교체할 수 없습니다. 다시 시도해주세요.';
+  String get regionVariantDropdownCouldNotSwapVariant =>
+      '변형을 교체할 수 없습니다. 다시 시도해주세요.';
 
   @override
   String regionVariantDropdownKcalG(Object v) {
@@ -30258,7 +31226,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repPreferencesRepRange => '반복 횟수 범위';
 
   @override
-  String get repPreferencesSectionConfigureYourSetVolume => '각 운동의 세트 볼륨을 구성하세요';
+  String get repPreferencesSectionConfigureYourSetVolume =>
+      '각 운동의 세트 볼륨을 구성하세요';
 
   @override
   String get repPreferencesSectionEndurance1520 => '지구력 (15-20)';
@@ -30288,15 +31257,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repPreferencesSectionMinimal12 => '최소 (1-2)';
 
   @override
-  String get repPreferencesSectionMinimumSetsToEnsure => '적절한 볼륨을 보장하기 위한 최소 세트 수';
+  String get repPreferencesSectionMinimumSetsToEnsure =>
+      '적절한 볼륨을 보장하기 위한 최소 세트 수';
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
+    Object maxSets,
+  ) {
     return '최대 세트: $maxSets';
   }
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
+    Object minSets,
+  ) {
     return '최소 세트: $minSets';
   }
 
@@ -30307,7 +31281,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repPreferencesSectionRepRangePreference => '반복 횟수 범위 선호도';
 
   @override
-  String get repPreferencesSectionSetYourPreferredReps => '선호하는 세트당 반복 횟수를 설정하세요';
+  String get repPreferencesSectionSetYourPreferredReps =>
+      '선호하는 세트당 반복 횟수를 설정하세요';
 
   @override
   String get repPreferencesSectionSetsPerExercise => '운동당 세트 수';
@@ -30319,10 +31294,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repPreferencesSectionStrength15 => '근력 (1-5)';
 
   @override
-  String get repPreferencesSectionTheAiWillGenerate => 'AI가 이 세트 범위 내에서 운동을 생성합니다. 세트가 많을수록 볼륨이 커지고 근육 자극이 강해집니다.';
+  String get repPreferencesSectionTheAiWillGenerate =>
+      'AI가 이 세트 범위 내에서 운동을 생성합니다. 세트가 많을수록 볼륨이 커지고 근육 자극이 강해집니다.';
 
   @override
-  String get repPreferencesSectionTheAiWillTry => 'AI는 중량을 조정하거나 점진적 과부하를 제안하여 운동을 이 범위 내로 유지하려고 합니다.';
+  String get repPreferencesSectionTheAiWillTry =>
+      'AI는 중량을 조정하거나 점진적 과부하를 제안하여 운동을 이 범위 내로 유지하려고 합니다.';
 
   @override
   String get repPreferencesSetsPerExercise => '운동당 세트 수';
@@ -30337,13 +31314,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repPreferencesYourPreferredRepsPer => '선호하는 세트당 반복 횟수';
 
   @override
-  String get repProgressionCardFineTuneRepRanges => '반복 횟수 범위 및 점진적 과부하 방식 미세 조정';
+  String get repProgressionCardFineTuneRepRanges =>
+      '반복 횟수 범위 및 점진적 과부하 방식 미세 조정';
 
   @override
   String get repProgressionCardRepProgression => '반복 횟수 및 점진적 과부하';
 
   @override
-  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps) {
+  String repProgressionCardReps(
+    Object preferredMaxReps,
+    Object preferredMinReps,
+  ) {
     return '$preferredMinReps-$preferredMaxReps회';
   }
 
@@ -30386,7 +31367,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reportInjurySeverity => '심각도';
 
   @override
-  String get reportInjuryThisIsForTracking => '이 정보는 추적 목적으로만 사용됩니다. 정확한 진단과 치료를 위해 의료 전문가와 상담하세요.';
+  String get reportInjuryThisIsForTracking =>
+      '이 정보는 추적 목적으로만 사용됩니다. 정확한 진단과 치료를 위해 의료 전문가와 상담하세요.';
 
   @override
   String get reportInjuryWhenDidItOccur => '언제 발생했나요?';
@@ -30398,7 +31380,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reportMessageHelpUsImproveOur => 'AI 코치 개선을 도와주세요';
 
   @override
-  String get reportMessageReportSubmittedThankYou => '보고서가 제출되었습니다. 피드백을 주셔서 감사합니다!';
+  String get reportMessageReportSubmittedThankYou =>
+      '보고서가 제출되었습니다. 피드백을 주셔서 감사합니다!';
 
   @override
   String get reportMessageReportThisResponse => '이 응답 신고하기';
@@ -30547,7 +31530,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get reportsHubNotEnoughDataYet => '데이터가 충분하지 않습니다. 다음 운동 후에 다시 시도해주세요.';
+  String get reportsHubNotEnoughDataYet =>
+      '데이터가 충분하지 않습니다. 다음 운동 후에 다시 시도해주세요.';
 
   @override
   String get reportsHubPeriodInsights => '기간별 인사이트';
@@ -30591,7 +31575,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reportsHubWeightBodyFatCircumferenc => '체중, 체지방, 신체 치수 추세';
 
   @override
-  String get reportsHubWorkoutsTimeCaloriesBy => '운동, 시간, 칼로리 (1주 / 1개월 / 3개월 / 6개월 / 1년 / 연초 대비 / 사용자 지정)';
+  String get reportsHubWorkoutsTimeCaloriesBy =>
+      '운동, 시간, 칼로리 (1주 / 1개월 / 3개월 / 6개월 / 1년 / 연초 대비 / 사용자 지정)';
 
   @override
   String get requestRefundAdditionalCommentsOptional => '추가 의견 (선택 사항)';
@@ -30618,7 +31603,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get requestRefundRefundRequestSubmitted => '환불 요청이 제출되었습니다';
 
   @override
-  String get requestRefundRefundRequestsAreTypically => '환불 요청은 일반적으로 영업일 기준 5-7일 이내에 처리됩니다. 요청이 검토되면 이메일로 확인 안내를 보내드립니다.';
+  String get requestRefundRefundRequestsAreTypically =>
+      '환불 요청은 일반적으로 영업일 기준 5-7일 이내에 처리됩니다. 요청이 검토되면 이메일로 확인 안내를 보내드립니다.';
 
   @override
   String get requestRefundRequestId => '요청 ID';
@@ -30649,7 +31635,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get requestRefundTellUsMoreAbout => '경험에 대해 더 자세히 알려주세요...';
 
   @override
-  String get requestRefundWeWillSendYou => '환불 요청에 대한 세부 정보가 포함된 확인 이메일을 보내드립니다. 처리에는 일반적으로 영업일 기준 5-7일이 소요됩니다.';
+  String get requestRefundWeWillSendYou =>
+      '환불 요청에 대한 세부 정보가 포함된 확인 이메일을 보내드립니다. 처리에는 일반적으로 영업일 기준 5-7일이 소요됩니다.';
 
   @override
   String get rescheduleFailedToLoadSuggestions => '제안을 불러오지 못했습니다';
@@ -30687,7 +31674,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get restSuggestionCardAiRestCoach => 'AI 휴식 코치';
 
   @override
-  String get restSuggestionCardCalculatingOptimalRestTime => '최적의 휴식 시간을 계산 중입니다...';
+  String get restSuggestionCardCalculatingOptimalRestTime =>
+      '최적의 휴식 시간을 계산 중입니다...';
 
   @override
   String get restSuggestionCardQuickRest => '빠른 휴식';
@@ -30795,7 +31783,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get restTimerOverlayRirRepsInReserve => 'RIR (Reps in Reserve)';
 
   @override
-  String get restTimerOverlayRpeRateOfPerceived => 'RPE (Rate of Perceived Exertion)';
+  String get restTimerOverlayRpeRateOfPerceived =>
+      'RPE (Rate of Perceived Exertion)';
 
   @override
   String restTimerOverlayS(Object restSecondsRemaining) {
@@ -30862,7 +31851,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retuneProposalPreviewUnavailable => '미리보기를 사용할 수 없습니다.';
 
   @override
-  String get retuneProposalProgramRetunedNextPlan => '프로그램이 재조정되었습니다. 다음 플랜에 변경 사항이 반영됩니다.';
+  String get retuneProposalProgramRetunedNextPlan =>
+      '프로그램이 재조정되었습니다. 다음 플랜에 변경 사항이 반영됩니다.';
 
   @override
   String get retuneProposalRetuneProposal => '재조정 제안';
@@ -30974,7 +31964,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get roiSummaryCardCalories => '칼로리';
 
   @override
-  String get roiSummaryCardCompleteYourFirstWorkout => '첫 번째 운동을 완료하고 진행 상황을 추적해보세요!';
+  String get roiSummaryCardCompleteYourFirstWorkout =>
+      '첫 번째 운동을 완료하고 진행 상황을 추적해보세요!';
 
   @override
   String get roiSummaryCardInvested => '투자함';
@@ -31021,7 +32012,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get rpeOneRepLeft => '1회 남음';
 
   @override
-  String get rpePillRpeRateOfPerceived => 'RPE — 자각도(Rate of Perceived Exertion)';
+  String get rpePillRpeRateOfPerceived =>
+      'RPE — 자각도(Rate of Perceived Exertion)';
 
   @override
   String get rpeRirHelpsAdjustNextSet => '다음 세트 조정에 도움';
@@ -31113,7 +32105,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get savedHubSaved => '저장됨';
 
   @override
-  String get savedHubScanARestaurantMenu => '식당 메뉴나 뷔페를 스캔하세요. 스캔한 항목이 여기에 저장됩니다.';
+  String get savedHubScanARestaurantMenu =>
+      '식당 메뉴나 뷔페를 스캔하세요. 스캔한 항목이 여기에 저장됩니다.';
 
   @override
   String get savedHubSignInToSee => '로그인하여 저장된 레시피를 확인하세요.';
@@ -31122,7 +32115,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get savedHubSignInToSee2 => '로그인하여 저장된 음식을 확인하세요.';
 
   @override
-  String get savedHubTapOnAnyRecipe => 'Discover나 라이브러리에서 레시피의 ♥를 눌러 여기에 저장하세요.';
+  String get savedHubTapOnAnyRecipe =>
+      'Discover나 라이브러리에서 레시피의 ♥를 눌러 여기에 저장하세요.';
 
   @override
   String get savedHubTryAgain => '다시 시도';
@@ -31184,7 +32178,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName) {
+  String scheduleMismatchDialogRequiresDaysPerWeek(
+    Object currentDayCount,
+    Object requiredDays,
+    Object splitName,
+  ) {
     return '$splitName은(는) 주 $requiredDays일 운동이 필요하지만, 현재 $currentDayCount일이 선택되어 있습니다.';
   }
 
@@ -31232,7 +32230,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate) {
+  String scheduleScreenGenerating(
+    Object _generatedCount,
+    Object _totalToGenerate,
+  ) {
     return '생성 중 $_generatedCount/$_totalToGenerate...';
   }
 
@@ -31326,7 +32327,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreChangeAnnouncementSleep => '수면';
 
   @override
-  String get scoreChangeAnnouncementSleepNowCountsToward => '이제 수면이 일일 점수에 반영됩니다.';
+  String get scoreChangeAnnouncementSleepNowCountsToward =>
+      '이제 수면이 일일 점수에 반영됩니다.';
 
   @override
   String get scoreChangeAnnouncementTrain => '운동';
@@ -31359,7 +32361,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainAddedSugar => '첨가당';
 
   @override
-  String get scoreExplainAddedSugarIsThe => '첨가당은 서구식 식단에서 대사 증후군을 예측하는 가장 강력한 단일 지표입니다.';
+  String get scoreExplainAddedSugarIsThe =>
+      '첨가당은 서구식 식단에서 대사 증후군을 예측하는 가장 강력한 단일 지표입니다.';
 
   @override
   String scoreExplainAddedSugarValue(Object value) {
@@ -31367,16 +32370,20 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainAiPicksATrafficLight => 'AI가 사용자의 개인 건강 목표에 따라 각 식단에 신호등 등급을 부여합니다.';
+  String get scoreExplainAiPicksATrafficLight =>
+      'AI가 사용자의 개인 건강 목표에 따라 각 식단에 신호등 등급을 부여합니다.';
 
   @override
-  String get scoreExplainAimForADailyAverage => '일일 평균 4점 미만을 목표로 하세요. 항염증 식품은 1~3점, 고염증 식품은 7~10점입니다.';
+  String get scoreExplainAimForADailyAverage =>
+      '일일 평균 4점 미만을 목표로 하세요. 항염증 식품은 1~3점, 고염증 식품은 7~10점입니다.';
 
   @override
-  String get scoreExplainCertainPortionsOfAvocado => '아보카도, 고구마, 아몬드의 특정 분량 — 소량은 괜찮으나 다량은 부담될 수 있음.';
+  String get scoreExplainCertainPortionsOfAvocado =>
+      '아보카도, 고구마, 아몬드의 특정 분량 — 소량은 괜찮으나 다량은 부담될 수 있음.';
 
   @override
-  String get scoreExplainChronicLowGradeInflammation => '식단으로 인한 만성 저강도 염증은 대사 질환, 관절 통증 및 인지 기능 저하와 관련이 있습니다.';
+  String get scoreExplainChronicLowGradeInflammation =>
+      '식단으로 인한 만성 저강도 염증은 대사 질환, 관절 통증 및 인지 기능 저하와 관련이 있습니다.';
 
   @override
   String get scoreExplainCurrentLabelAntiInfl => '항염증';
@@ -31415,28 +32422,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainCurrentLabelWhole => 'WHOLE';
 
   @override
-  String get scoreExplainDailyAverageAbove6 => '일일 평균 6점 이상은 장기적인 대사 건강 개선과 관련이 있습니다.';
+  String get scoreExplainDailyAverageAbove6 =>
+      '일일 평균 6점 이상은 장기적인 대사 건강 개선과 관련이 있습니다.';
 
   @override
-  String get scoreExplainDessertsSugaryDrinksCandy => '디저트, 가당 음료, 사탕, 대부분의 아침 시리얼. 인슐린 수치를 급격히 높이고 에너지를 저하시킴.';
+  String get scoreExplainDessertsSugaryDrinksCandy =>
+      '디저트, 가당 음료, 사탕, 대부분의 아침 시리얼. 인슐린 수치를 급격히 높이고 에너지를 저하시킴.';
 
   @override
-  String get scoreExplainEachMealGets => '각 식사는 영양 밀도, 가공 수준, 목표 부합도를 기준으로 1~10점의 건강 점수를 받습니다.';
+  String get scoreExplainEachMealGets =>
+      '각 식사는 영양 밀도, 가공 수준, 목표 부합도를 기준으로 1~10점의 건강 점수를 받습니다.';
 
   @override
-  String get scoreExplainEngineeredFoodProductsChip => '가공식품: 감자칩, 탄산음료, 인스턴트 라면, 포장 과자, 대부분의 패스트푸드.';
+  String get scoreExplainEngineeredFoodProductsChip =>
+      '가공식품: 감자칩, 탄산음료, 인스턴트 라면, 포장 과자, 대부분의 패스트푸드.';
 
   @override
   String get scoreExplainFodmapRating => 'FODMAP 등급';
 
   @override
-  String get scoreExplainFodmapsAreShortChain => 'FODMAP은 장내 박테리아에 의해 발효되고 흡수가 잘 되지 않는 단쇄 탄수화물입니다.';
+  String get scoreExplainFodmapsAreShortChain =>
+      'FODMAP은 장내 박테리아에 의해 발효되고 흡수가 잘 되지 않는 단쇄 탄수화물입니다.';
 
   @override
-  String get scoreExplainFriedFoodsProcessedMeats => '튀긴 음식, 가공육, 당분이 많은 음료, 정제된 씨앗유, 포장된 간식.';
+  String get scoreExplainFriedFoodsProcessedMeats =>
+      '튀긴 음식, 가공육, 당분이 많은 음료, 정제된 씨앗유, 포장된 간식.';
 
   @override
-  String get scoreExplainGlycemicLoadCombines => '혈당 부하는 탄수화물의 양과 질을 결합한 지표입니다. 식사 후 혈당이 얼마나 상승할지 예측합니다.';
+  String get scoreExplainGlycemicLoadCombines =>
+      '혈당 부하는 탄수화물의 양과 질을 결합한 지표입니다. 식사 후 혈당이 얼마나 상승할지 예측합니다.';
 
   @override
   String scoreExplainGlycemicLoadValue(Object v) {
@@ -31464,19 +32478,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainHigh20 => '높음 (20 이상)';
 
   @override
-  String get scoreExplainHighInflammationUltraProce => '높은 염증 유발, 초가공식품 또는 매크로와 크게 벗어남. 가능하다면 좋은 옵션으로 교체하세요.';
+  String get scoreExplainHighInflammationUltraProce =>
+      '높은 염증 유발, 초가공식품 또는 매크로와 크게 벗어남. 가능하다면 좋은 옵션으로 교체하세요.';
 
   @override
-  String get scoreExplainHighProteinOrFiber => '높은 단백질 또는 식이섬유, 자연식품, 낮은 당류, 항염증 성분.';
+  String get scoreExplainHighProteinOrFiber =>
+      '높은 단백질 또는 식이섬유, 자연식품, 낮은 당류, 항염증 성분.';
 
   @override
-  String get scoreExplainHitsYourGoalMacros => '목표 매크로 충족, 대부분 자연식품, 낮거나 적당한 염증 유발. 자유롭게 선택하세요.';
+  String get scoreExplainHitsYourGoalMacros =>
+      '목표 매크로 충족, 대부분 자연식품, 낮거나 적당한 염증 유발. 자유롭게 선택하세요.';
 
   @override
   String get scoreExplainHowThisDishRates => '이 음식의 평가';
 
   @override
-  String get scoreExplainImportantIfYouHaveDiabetes => '당뇨병, 인슐린 저항성이 있거나 에너지 레벨을 관리 중인 경우 중요합니다.';
+  String get scoreExplainImportantIfYouHaveDiabetes =>
+      '당뇨병, 인슐린 저항성이 있거나 에너지 레벨을 관리 중인 경우 중요합니다.';
 
   @override
   String scoreExplainInflammationScoreValue(Object v) {
@@ -31484,10 +32502,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainLargePopulationStudies => '대규모 인구 연구에 따르면 초가공식품 섭취는 암, 심혈관 질환 및 조기 사망과 관련이 있습니다.';
+  String get scoreExplainLargePopulationStudies =>
+      '대규모 인구 연구에 따르면 초가공식품 섭취는 암, 심혈관 질환 및 조기 사망과 관련이 있습니다.';
 
   @override
-  String get scoreExplainLeafyGreensBerriesWild => '잎채소, 베리류, 자연산 연어, 강황, 엑스트라 버진 올리브유, 견과류, 콩류.';
+  String get scoreExplainLeafyGreensBerriesWild =>
+      '잎채소, 베리류, 자연산 연어, 강황, 엑스트라 버진 올리브유, 견과류, 콩류.';
 
   @override
   String get scoreExplainLow => '낮음';
@@ -31499,7 +32519,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainLowUnder5G => '낮음 (5 g 미만)';
 
   @override
-  String get scoreExplainMeatEggsRiceOats => '고기, 달걀, 쌀, 귀리, 유당 제거 유제품, 당근, 애호박, 시금치, 베리류, 오렌지.';
+  String get scoreExplainMeatEggsRiceOats =>
+      '고기, 달걀, 쌀, 귀리, 유당 제거 유제품, 당근, 애호박, 시금치, 베리류, 오렌지.';
 
   @override
   String get scoreExplainMedium => '중간';
@@ -31508,7 +32529,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainMedium1019 => '중간 (10 – 19)';
 
   @override
-  String get scoreExplainMinimalBloodSugarSpike => '혈당 상승 최소화. 비전분 채소, 달걀, 고기, 베리류, 대부분의 유제품.';
+  String get scoreExplainMinimalBloodSugarSpike =>
+      '혈당 상승 최소화. 비전분 채소, 달걀, 고기, 베리류, 대부분의 유제품.';
 
   @override
   String get scoreExplainModerate => '보통';
@@ -31517,40 +32539,51 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainModerate514G => '보통 (5 – 14 g)';
 
   @override
-  String get scoreExplainModerateSpikeOatsWhole => '적당한 혈당 상승. 귀리, 통밀빵, 바나나, 고구마, 바스마티 쌀.';
+  String get scoreExplainModerateSpikeOatsWhole =>
+      '적당한 혈당 상승. 귀리, 통밀빵, 바나나, 고구마, 바스마티 쌀.';
 
   @override
-  String get scoreExplainMostSavouryDishesPlain => '대부분의 요리, 플레인 유제품, 통과일. 혈당에 큰 영향 없음.';
+  String get scoreExplainMostSavouryDishesPlain =>
+      '대부분의 요리, 플레인 유제품, 통과일. 혈당에 큰 영향 없음.';
 
   @override
-  String get scoreExplainOnionGarlicWheatRye => '양파, 마늘, 밀, 호밀, 우유/아이스크림, 사과, 배, 꿀, 콩, 콜리플라워.';
+  String get scoreExplainOnionGarlicWheatRye =>
+      '양파, 마늘, 밀, 호밀, 우유/아이스크림, 사과, 배, 꿀, 콩, 콜리플라워.';
 
   @override
-  String get scoreExplainOnlyRelevantIfYouHaveIbs => 'IBS(과민성 대장 증후군) 또는 진단받은 장 질환이 있는 경우에만 관련이 있습니다. 그 외에는 무시해도 좋습니다.';
+  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
+      'IBS(과민성 대장 증후군) 또는 진단받은 장 질환이 있는 경우에만 관련이 있습니다. 그 외에는 무시해도 좋습니다.';
 
   @override
-  String get scoreExplainRatingsArePersonalised => '등급은 사용자의 목표, 알레르기, 식습관 기록에 맞춰 개인화됩니다.';
+  String get scoreExplainRatingsArePersonalised =>
+      '등급은 사용자의 목표, 알레르기, 식습관 기록에 맞춰 개인화됩니다.';
 
   @override
-  String get scoreExplainRawOrBasicCooked => '원재료 또는 기본 조리 식품: 고기, 달걀, 채소, 플레인 요거트, 치즈, 통곡물.';
+  String get scoreExplainRawOrBasicCooked =>
+      '원재료 또는 기본 조리 식품: 고기, 달걀, 채소, 플레인 요거트, 치즈, 통곡물.';
 
   @override
-  String get scoreExplainReasonableChoiceCouldBe => '합리적인 선택 — 한두 가지 측면(식이섬유 증가, 가공 최소화)에서 개선 가능.';
+  String get scoreExplainReasonableChoiceCouldBe =>
+      '합리적인 선택 — 한두 가지 측면(식이섬유 증가, 가공 최소화)에서 개선 가능.';
 
   @override
-  String get scoreExplainReasonableChoiceWithA => '절충안이 있는 합리적인 선택 — 분량을 조절하거나 더 건강한 사이드 메뉴와 함께 드세요.';
+  String get scoreExplainReasonableChoiceWithA =>
+      '절충안이 있는 합리적인 선택 — 분량을 조절하거나 더 건강한 사이드 메뉴와 함께 드세요.';
 
   @override
-  String get scoreExplainScoreDetailUnavailable => '이 식단에 대한 점수 상세 정보를 사용할 수 없습니다.';
+  String get scoreExplainScoreDetailUnavailable =>
+      '이 식단에 대한 점수 상세 정보를 사용할 수 없습니다.';
 
   @override
   String get scoreExplainSkip => '건너뛰기';
 
   @override
-  String get scoreExplainSteepSpikeCrashWhite => '급격한 혈당 상승 및 저하. 흰 쌀밥, 가당 음료, 페이스트리, 많은 양의 파스타.';
+  String get scoreExplainSteepSpikeCrashWhite =>
+      '급격한 혈당 상승 및 저하. 흰 쌀밥, 가당 음료, 페이스트리, 많은 양의 파스타.';
 
   @override
-  String get scoreExplainSweetenedYogurtASmall => '가당 요거트, 작은 페이스트리, 스포츠 음료 반 병. 가끔은 괜찮은 간식 — 매일은 금물.';
+  String get scoreExplainSweetenedYogurtASmall =>
+      '가당 요거트, 작은 페이스트리, 스포츠 음료 반 병. 가끔은 괜찮은 간식 — 매일은 금물.';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -31561,19 +32594,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreExplainUltraProcessed => '초가공식품';
 
   @override
-  String get scoreExplainUltraProcessedDeepFried => '초가공, 튀김, 낮은 식이섬유, 또는 매우 높은 당류/나트륨 함량.';
+  String get scoreExplainUltraProcessedDeepFried =>
+      '초가공, 튀김, 낮은 식이섬유, 또는 매우 높은 당류/나트륨 함량.';
 
   @override
   String get scoreExplainUltraProcessedNova4 => '초가공식품 (NOVA 4)';
 
   @override
-  String get scoreExplainWeUseTheNovaClassification => '상파울루 대학교에서 개발한 NOVA 분류 체계를 사용합니다.';
+  String get scoreExplainWeUseTheNovaClassification =>
+      '상파울루 대학교에서 개발한 NOVA 분류 체계를 사용합니다.';
 
   @override
   String get scoreExplainWhiteRicePlainEggs => '흰 쌀밥, 플레인 달걀, 단단한 치즈, 소량의 살코기.';
 
   @override
-  String get scoreExplainWhoRecommendsAdults => 'WHO는 성인의 첨가당 섭취량을 하루 25g 미만(총 에너지의 5%)으로 제한할 것을 권장합니다.';
+  String get scoreExplainWhoRecommendsAdults =>
+      'WHO는 성인의 첨가당 섭취량을 하루 25g 미만(총 에너지의 5%)으로 제한할 것을 권장합니다.';
 
   @override
   String get scoreExplainWholeMinimallyProcessed => '자연식품 / 최소 가공식품';
@@ -31621,7 +32657,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoringHowScoresAreCalculated => '점수 산정 방식';
 
   @override
-  String get scoringYourOverallFitnessScore => '전반적인 피트니스 점수는 이러한 요소들을 종합하여 피트니스 여정을 한눈에 보여줍니다.';
+  String get scoringYourOverallFitnessScore =>
+      '전반적인 피트니스 점수는 이러한 요소들을 종합하여 피트니스 여정을 한눈에 보여줍니다.';
 
   @override
   String get sectionHeaderWhatSThis => '이게 무엇인가요?';
@@ -31685,7 +32722,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get seniorFitnessSettingsSaved => '설정이 저장되었습니다';
 
   @override
-  String get seniorFitnessTheseSettingsHelpCustomize => '이 설정은 더 긴 회복 시간과 관절 친화적인 운동을 포함하여 시니어 피트니스 요구에 맞게 운동을 조정하는 데 도움을 줍니다.';
+  String get seniorFitnessTheseSettingsHelpCustomize =>
+      '이 설정은 더 긴 회복 시간과 관절 친화적인 운동을 포함하여 시니어 피트니스 요구에 맞게 운동을 조정하는 데 도움을 줍니다.';
 
   @override
   String get seniorNavFood => '식단';
@@ -31743,22 +32781,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setAdjustmentSheetEditSets => '세트 편집';
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
+    Object originalSetCount,
+  ) {
     return '$originalSetCount개 추가됨';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
+    Object completedCount,
+  ) {
     return '$completedCount개 완료';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
+    Object remainingCount,
+  ) {
     return '$remainingCount개 남음';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
+    Object length,
+  ) {
     return '$length개 삭제됨';
   }
 
@@ -31768,7 +32814,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets) {
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
+    Object completedSets,
+  ) {
     return '$completedSets세트 완료';
   }
 
@@ -31986,7 +33034,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets) {
+  String setTrackingSectionSetTapToExpand(
+    Object currentSetNumber,
+    Object totalSets,
+  ) {
     return '세트 $currentSetNumber/$totalSets • 탭하여 펼치기';
   }
 
@@ -32013,22 +33064,26 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setTrackingSheetsGotIt => '확인';
 
   @override
-  String get setTrackingSheetsImmediatelyReduceWeightAfte => '실패 지점 도달 후 즉시 무게를 줄이고 계속 운동하세요. 근성장에 효과적입니다!';
+  String get setTrackingSheetsImmediatelyReduceWeightAfte =>
+      '실패 지점 도달 후 즉시 무게를 줄이고 계속 운동하세요. 근성장에 효과적입니다!';
 
   @override
   String get setTrackingSheetsLastSession => '지난 세션';
 
   @override
-  String get setTrackingSheetsLightWeightToPrepare => '근육 준비를 위한 가벼운 무게입니다. 운동 볼륨에는 포함되지 않습니다.';
+  String get setTrackingSheetsLightWeightToPrepare =>
+      '근육 준비를 위한 가벼운 무게입니다. 운동 볼륨에는 포함되지 않습니다.';
 
   @override
-  String get setTrackingSheetsMarkWhenYouCouldn => '목표 횟수를 완료하지 못했을 때 표시하세요. 강도를 추적하는 데 도움이 됩니다.';
+  String get setTrackingSheetsMarkWhenYouCouldn =>
+      '목표 횟수를 완료하지 못했을 때 표시하세요. 강도를 추적하는 데 도움이 됩니다.';
 
   @override
   String get setTrackingSheetsPersonalRecord => '개인 최고 기록 (PR)';
 
   @override
-  String get setTrackingSheetsRateOfPerceivedExertion => 'RPE(자각 인지 강도)는 세트의 강도를 측정합니다:';
+  String get setTrackingSheetsRateOfPerceivedExertion =>
+      'RPE(자각 인지 강도)는 세트의 강도를 측정합니다:';
 
   @override
   String get setTrackingSheetsReps => '횟수';
@@ -32061,19 +33116,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setTrackingSheetsWhatIsRpe => 'RPE란 무엇인가요?';
 
   @override
-  String get setTrackingTableALowerRir0 => '낮은 RIR(0–1)은 한계까지 밀어붙였음을 의미합니다. 높은 RIR(4–6 이상)은 세트가 비교적 쉬웠고 여력이 충분했음을 의미합니다.';
+  String get setTrackingTableALowerRir0 =>
+      '낮은 RIR(0–1)은 한계까지 밀어붙였음을 의미합니다. 높은 RIR(4–6 이상)은 세트가 비교적 쉬웠고 여력이 충분했음을 의미합니다.';
 
   @override
-  String get setTrackingTableALowerRir02 => '낮은 RIR(0–1)은 한계에 가깝게 밀어붙였음을 의미합니다. 높은 RIR(3–4)은 더 수행할 수 있는 여력이 있었음을 의미합니다.';
+  String get setTrackingTableALowerRir02 =>
+      '낮은 RIR(0–1)은 한계에 가깝게 밀어붙였음을 의미합니다. 높은 RIR(3–4)은 더 수행할 수 있는 여력이 있었음을 의미합니다.';
 
   @override
   String get setTrackingTableAddSet => '세트 추가';
 
   @override
-  String get setTrackingTableBeginnersGetExtraBuffer => '초보자는 자세 학습을 위해 추가적인 여유가 필요합니다. 숙련자는 더 안전하게 실패 지점까지 밀어붙일 수 있습니다.';
+  String get setTrackingTableBeginnersGetExtraBuffer =>
+      '초보자는 자세 학습을 위해 추가적인 여유가 필요합니다. 숙련자는 더 안전하게 실패 지점까지 밀어붙일 수 있습니다.';
 
   @override
-  String get setTrackingTableCompoundLiftsSquatsPresse => '복합 관절 운동(스쿼트, 프레스)은 고립 운동(컬, 레이즈)보다 보수적으로 유지합니다. 근비대 훈련은 근력 훈련보다 실패 지점에 더 가깝게 수행합니다.';
+  String get setTrackingTableCompoundLiftsSquatsPresse =>
+      '복합 관절 운동(스쿼트, 프레스)은 고립 운동(컬, 레이즈)보다 보수적으로 유지합니다. 근비대 훈련은 근력 훈련보다 실패 지점에 더 가깝게 수행합니다.';
 
   @override
   String get setTrackingTableEasiest => '가장 쉬움';
@@ -32091,7 +33150,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setTrackingTableLeft => '왼쪽';
 
   @override
-  String get setTrackingTableMachinesCablesAreSafer => '머신과 케이블은 강도 높게 훈련하기에 더 안전합니다. 바벨과 케틀벨은 부상 위험 때문에 더 많은 여유가 필요합니다.';
+  String get setTrackingTableMachinesCablesAreSafer =>
+      '머신과 케이블은 강도 높게 훈련하기에 더 안전합니다. 바벨과 케틀벨은 부상 위험 때문에 더 많은 여유가 필요합니다.';
 
   @override
   String get setTrackingTableManyRepsInReserve => '많은 반복 횟수 여유';
@@ -32116,10 +33176,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setTrackingTableRight => '오른쪽';
 
   @override
-  String get setTrackingTableRirDecreasesAcrossSets => '세트가 진행될수록 RIR은 감소합니다. 마지막 세트에서 가장 강도 높게 수행하고 이전 세트들은 빌드업합니다.';
+  String get setTrackingTableRirDecreasesAcrossSets =>
+      '세트가 진행될수록 RIR은 감소합니다. 마지막 세트에서 가장 강도 높게 수행하고 이전 세트들은 빌드업합니다.';
 
   @override
-  String get setTrackingTableRirStandsForReps => 'RIR은 Reps in Reserve의 약자로, 세트가 얼마나 힘들었는지 나타내는 간단한 방법입니다.';
+  String get setTrackingTableRirStandsForReps =>
+      'RIR은 Reps in Reserve의 약자로, 세트가 얼마나 힘들었는지 나타내는 간단한 방법입니다.';
 
   @override
   String get setTrackingTableSet => '세트';
@@ -32137,13 +33199,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get setTrackingTableWhatYouSeeAbove => '위에서 보시는 것은 RIR 척도입니다';
 
   @override
-  String get setTrackingTableYouAreNotRequired => 'RIR을 반드시 기록할 필요는 없지만 강력히 권장합니다. 실패 지점과의 거리를 이해하면 앱이 현재 근력 수준과 피로도를 더 잘 파악할 수 있습니다.';
+  String get setTrackingTableYouAreNotRequired =>
+      'RIR을 반드시 기록할 필요는 없지만 강력히 권장합니다. 실패 지점과의 거리를 이해하면 앱이 현재 근력 수준과 피로도를 더 잘 파악할 수 있습니다.';
 
   @override
   String get setTrackingTableYourFitnessLevel => '당신의 피트니스 레벨';
 
   @override
-  String get setTrackingTableYourRirTargetIs => '당신의 목표 RIR은 세 가지 요소를 사용하여 개인화됩니다:';
+  String get setTrackingTableYourRirTargetIs =>
+      '당신의 목표 RIR은 세 가지 요소를 사용하여 개인화됩니다:';
 
   @override
   String get settings24UpcomingFeatures => '24가지 예정된 기능';
@@ -32180,7 +33244,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get settingsCardChangingDaysWillReschedule => '요일을 변경하면 예정된 운동 일정이 자동으로 다시 조정됩니다.';
+  String get settingsCardChangingDaysWillReschedule =>
+      '요일을 변경하면 예정된 운동 일정이 자동으로 다시 조정됩니다.';
 
   @override
   String settingsCardExercises(Object length) {
@@ -32236,12 +33301,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region) {
+  String settingsCardPartAccentColorGridValue(
+    Object currentOffset,
+    Object region,
+  ) {
     return '$region • $currentOffset';
   }
 
   @override
-  String get settingsCardPartChangingDaysWillReschedule => '요일을 변경하면 예정된 운동이 자동으로 재조정됩니다.';
+  String get settingsCardPartChangingDaysWillReschedule =>
+      '요일을 변경하면 예정된 운동이 자동으로 재조정됩니다.';
 
   @override
   String get settingsCardPartClearAll => '모두 지우기';
@@ -32564,7 +33633,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsScreenExtReplayOnboardingWalkthrough => '온보딩 가이드 다시 보기';
 
   @override
-  String get settingsScreenExtReplayTheOnboardingWalkthro => '온보딩 가이드, 개별 화면 투어를 다시 보거나 인라인 힌트를 초기화합니다.';
+  String get settingsScreenExtReplayTheOnboardingWalkthro =>
+      '온보딩 가이드, 개별 화면 투어를 다시 보거나 인라인 힌트를 초기화합니다.';
 
   @override
   String get settingsScreenExtResetInlineHints => '인라인 힌트 초기화';
@@ -32573,7 +33643,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsScreenExtSearchSettings => '설정 검색...';
 
   @override
-  String get settingsScreenExtSmallEmptyStateHints => '앱 곳곳에 있는 작은 빈 상태 힌트입니다. 도움말 텍스트를 다시 보려면 초기화하세요.';
+  String get settingsScreenExtSmallEmptyStateHints =>
+      '앱 곳곳에 있는 작은 빈 상태 힌트입니다. 도움말 텍스트를 다시 보려면 초기화하세요.';
 
   @override
   String get settingsScreenExtTutorialsHints => '튜토리얼 및 힌트';
@@ -32589,10 +33660,14 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get settingsScreenExtYourAiPoweredPersonal => 'Zealova는 AI 기반 개인 피트니스 코치입니다. 맞춤형 운동 계획을 받고 진행 상황을 추적하여 피트니스 목표를 달성하세요.';
+  String get settingsScreenExtYourAiPoweredPersonal =>
+      'Zealova는 AI 기반 개인 피트니스 코치입니다. 맞춤형 운동 계획을 받고 진행 상황을 추적하여 피트니스 목표를 달성하세요.';
 
   @override
-  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail) {
+  String settingsScreenMailtoSubjectSupportRequest(
+    Object appName,
+    Object supportEmail,
+  ) {
     return 'mailto:$supportEmail?subject=$appName 지원 요청';
   }
 
@@ -32608,7 +33683,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsScreenUiNoSettingsFound => '설정을 찾을 수 없습니다';
 
   @override
-  String get settingsScreenUiTryDifferentKeywordsLike => '\"테마\", \"알림\", \"AI 음성\" 같은 다른 키워드로 검색해 보세요';
+  String get settingsScreenUiTryDifferentKeywordsLike =>
+      '\"테마\", \"알림\", \"AI 음성\" 같은 다른 키워드로 검색해 보세요';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -32925,7 +34001,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sharedWorkoutDetailAcceptChallenge => '챌린지 수락';
 
   @override
-  String get sharedWorkoutDetailExerciseDetailsNotAvailable => '운동 상세 정보를 사용할 수 없습니다';
+  String get sharedWorkoutDetailExerciseDetailsNotAvailable =>
+      '운동 상세 정보를 사용할 수 없습니다';
 
   @override
   String get sharedWorkoutDetailScheduleForLater => '나중에 하기';
@@ -33007,13 +34084,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get skillProgressionsBrowseSkills => '스킬 탐색';
 
   @override
-  String get skillProgressionsChooseASkillProgression => '스킬 단계를 선택하여 맨몸 운동을 단계별로 마스터하세요.';
+  String get skillProgressionsChooseASkillProgression =>
+      '스킬 단계를 선택하여 맨몸 운동을 단계별로 마스터하세요.';
 
   @override
   String get skillProgressionsDiscoverMoreSkills => '더 많은 스킬 발견하기';
 
   @override
-  String get skillProgressionsMasterBodyweightSkillsStep => '맨몸 운동 스킬을 단계별로 마스터하세요';
+  String get skillProgressionsMasterBodyweightSkillsStep =>
+      '맨몸 운동 스킬을 단계별로 마스터하세요';
 
   @override
   String get skillProgressionsMyProgress => '나의 진행 상황';
@@ -33034,7 +34113,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get skillProgressionsTryAgain => '다시 시도';
 
   @override
-  String get skillsMasterBodyweightSkillsStep => '가이드가 포함된 단계별 과정을 통해 맨몸 운동 스킬을 마스터하세요.';
+  String get skillsMasterBodyweightSkillsStep =>
+      '가이드가 포함된 단계별 과정을 통해 맨몸 운동 스킬을 마스터하세요.';
 
   @override
   String get skillsSkillProgressions => '스킬 단계';
@@ -33066,7 +34146,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sleepDetailConnectHealthToSee => '건강 앱을 연결하여 수면 데이터를 확인하세요';
 
   @override
-  String get sleepDetailCouldNotLoadSleep => '수면 데이터를 불러올 수 없습니다. 아래로 당겨 다시 시도하세요.';
+  String get sleepDetailCouldNotLoadSleep =>
+      '수면 데이터를 불러올 수 없습니다. 아래로 당겨 다시 시도하세요.';
 
   @override
   String get sleepDetailCouldNotSaveSleep => '수면 목표를 저장할 수 없습니다.';
@@ -33160,7 +34241,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sleepDetailTrendUnavailable => '추세를 사용할 수 없습니다.';
 
   @override
-  String get sleepDetailTwoOrMoreSynced => '추세를 차트로 보려면 2일 이상의 동기화된 수면 데이터가 필요합니다.';
+  String get sleepDetailTwoOrMoreSynced =>
+      '추세를 차트로 보려면 2일 이상의 동기화된 수면 데이터가 필요합니다.';
 
   @override
   String get sleepHypnogramAwake => '깨어 있음';
@@ -33180,7 +34262,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get smartInsightCardSmartInsight => '스마트 인사이트';
 
   @override
-  String get snappedEquipmentCouldnTReuseThat => '해당 스냅을 재사용할 수 없습니다. 다시 시도하세요.';
+  String get snappedEquipmentCouldnTReuseThat =>
+      '해당 스냅을 재사용할 수 없습니다. 다시 시도하세요.';
 
   @override
   String get snappedEquipmentNoMatchingExercisesFor => '이 장비와 일치하는 운동이 없습니다.';
@@ -33216,7 +34299,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get socialPrivacyAllowFriendRequests => '친구 요청 허용';
 
   @override
-  String get socialPrivacyAllowGeneratingShareableWor => '누구나 열 수 있는 운동 공유 URL 생성 허용';
+  String get socialPrivacyAllowGeneratingShareableWor =>
+      '누구나 열 수 있는 운동 공유 URL 생성 허용';
 
   @override
   String get socialPrivacyAppearInPublicAnd => '공개 및 친구 리더보드에 표시';
@@ -33267,7 +34351,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get socialPrivacySocialPrivacy => '소셜 및 개인정보 보호';
 
   @override
-  String get socialPrivacyWhenFriendsCompleteWorkouts => '친구가 운동을 완료하거나 목표를 달성했을 때';
+  String get socialPrivacyWhenFriendsCompleteWorkouts =>
+      '친구가 운동을 완료하거나 목표를 달성했을 때';
 
   @override
   String get socialPrivacyWhenSomeoneCommentsOn => '누군가 내 게시물에 댓글을 달았을 때';
@@ -33396,7 +34481,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get soundSettingsPlaySoundWhenRest => '휴식 시간 종료 시 사운드 재생';
 
   @override
-  String get soundSettingsPlaySoundsDuringCountdown => '카운트다운(3, 2, 1) 중 사운드 재생';
+  String get soundSettingsPlaySoundsDuringCountdown =>
+      '카운트다운(3, 2, 1) 중 사운드 재생';
 
   @override
   String get soundSettingsRestTimerEnd => '휴식 타이머 종료';
@@ -33447,7 +34533,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stackedBannerPanelFollowUsOnInstagram => 'Instagram에서 팔로우하세요';
 
   @override
-  String get stackedBannerPanelGetHelpShareWins => 'Discord에서 도움을 받고, 성과를 공유하고, 기능을 요청하세요';
+  String get stackedBannerPanelGetHelpShareWins =>
+      'Discord에서 도움을 받고, 성과를 공유하고, 기능을 요청하세요';
 
   @override
   String get stackedBannerPanelJoinTheCommunity => '커뮤니티 참여하기';
@@ -33461,7 +34548,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription) {
+  String stackedBannerPanelMinExercises(
+    Object durationMinutes,
+    Object exercisesCount,
+    Object missedDescription,
+  ) {
     return '$missedDescription · $durationMinutes분 · 운동 $exercisesCount개';
   }
 
@@ -33486,7 +34577,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stackedBannerPanelOpeningCrate => '상자 여는 중...';
 
   @override
-  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel) {
+  String stackedBannerPanelRenewsInDaysFor(
+    Object days,
+    Object formattedAmount,
+    Object tierLabel,
+  ) {
     return '$tierLabel $days일 후 $formattedAmount에 갱신';
   }
 
@@ -33507,7 +34602,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr) {
+  String stackedBannerPanelWorkoutsLifted(
+    Object totalWorkouts,
+    Object volumeStr,
+  ) {
     return '운동 $totalWorkouts회 · $volumeStr 중량';
   }
 
@@ -33782,7 +34880,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stapleExercisesTargetDays => '목표 요일';
 
   @override
-  String get stapleExercisesTheseCoreLiftsWill => '이 핵심 운동들은 다양성 설정과 관계없이 운동 루틴에서 절대 빠지지 않습니다.';
+  String get stapleExercisesTheseCoreLiftsWill =>
+      '이 핵심 운동들은 다양성 설정과 관계없이 운동 루틴에서 절대 빠지지 않습니다.';
 
   @override
   String get stapleExercisesTreadmillSettings => '트레드밀 설정';
@@ -34012,7 +35111,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stepGoalCardGoalReachedGreatJob => '목표 달성! 잘하셨어요!';
 
   @override
-  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage) {
+  String stepGoalCardStepGoalProgressOf(
+    Object currentSteps,
+    Object goalSteps,
+    Object percentage,
+  ) {
     return '걸음 수 목표 달성도: $goalSteps보 중 $currentSteps보, $percentage% 완료';
   }
 
@@ -34025,7 +35128,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get stepGoalEditorAutomaticallyIncreasesYourG => '실력이 향상됨에 따라 목표가 자동으로 증가합니다';
+  String get stepGoalEditorAutomaticallyIncreasesYourG =>
+      '실력이 향상됨에 따라 목표가 자동으로 증가합니다';
 
   @override
   String get stepGoalEditorQuickSelect => '빠른 선택';
@@ -34047,7 +35151,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal) {
+  String stepGoalEditorSheetStepGoalSliderFrom(
+    Object _maxGoal,
+    Object _minGoal,
+  ) {
     return '걸음 목표 슬라이더, $_minGoal에서 $_maxGoal 걸음 사이';
   }
 
@@ -34063,7 +35170,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stepGoalEditorUseProgressiveGoal => '점진적 목표 사용';
 
   @override
-  String get stepGoalEditorWhenYouHitYour => '5일 연속 목표를 달성하면 500걸음이 추가됩니다. 3일 연속 달성하지 못하면 기본 목표로 초기화됩니다.';
+  String get stepGoalEditorWhenYouHitYour =>
+      '5일 연속 목표를 달성하면 500걸음이 추가됩니다. 3일 연속 달성하지 못하면 기본 목표로 초기화됩니다.';
 
   @override
   String stepsCounterCardConnect(Object sourceLabel) {
@@ -34115,7 +35223,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get strainCoachCardTodaySIntensity => '오늘의 강도';
 
   @override
-  String get strainDashboardCompleteSomeWorkoutsTo => '운동을 완료하고 스트레인 예방 인사이트를 확인하세요.';
+  String get strainDashboardCompleteSomeWorkoutsTo =>
+      '운동을 완료하고 스트레인 예방 인사이트를 확인하세요.';
 
   @override
   String get strainDashboardFailedToLoadData => '데이터 로드 실패';
@@ -34270,10 +35379,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get strengthOverviewCardCheckIn => '체크인';
 
   @override
-  String get strengthOverviewCardCompleteWorkoutsWithResista => '저항 운동을 완료하여\n근력 향상을 추적하세요.';
+  String get strengthOverviewCardCompleteWorkoutsWithResista =>
+      '저항 운동을 완료하여\n근력 향상을 추적하세요.';
 
   @override
-  String get strengthOverviewCardDragU2630ToReorder => '☰을 드래그하여 재정렬 · 핀을 탭하여 상단에 고정';
+  String get strengthOverviewCardDragU2630ToReorder =>
+      '☰을 드래그하여 재정렬 · 핀을 탭하여 상단에 고정';
 
   @override
   String get strengthOverviewCardHowAreYouFeeling => '오늘 컨디션은 어떠신가요?';
@@ -34312,16 +35423,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get strengthOverviewCardRecalculate => '재계산';
 
   @override
-  String get strengthOverviewCardScoreIsCalculatedFrom => '점수는 최근 90일간 각 근육 그룹별 최고의 세트(중량 x 횟수)를 기준으로 계산됩니다. 체중 대비 비율이 높을수록 점수가 높습니다.';
+  String get strengthOverviewCardScoreIsCalculatedFrom =>
+      '점수는 최근 90일간 각 근육 그룹별 최고의 세트(중량 x 횟수)를 기준으로 계산됩니다. 체중 대비 비율이 높을수록 점수가 높습니다.';
 
   @override
-  String get strengthOverviewCardScoresUpdateAutomaticallyAf => '점수는 매 운동 후 자동으로 업데이트됩니다. 추적된 저항 운동만 반영되며, 가져온 유산소 운동은 점수에 영향을 주지 않습니다.';
+  String get strengthOverviewCardScoresUpdateAutomaticallyAf =>
+      '점수는 매 운동 후 자동으로 업데이트됩니다. 추적된 저항 운동만 반영되며, 가져온 유산소 운동은 점수에 영향을 주지 않습니다.';
 
   @override
   String get strengthOverviewCardStrengthScore => '근력 점수';
 
   @override
-  String get strengthOverviewCardTheRingDisplaysA => '링은 모든 근육 그룹 점수의 가중 평균을 표시합니다. 1RM은 최근 90일간 기록된 최고의 세트를 기준으로 Brzycki/Epley/Lombardi 공식 평균을 사용하여 추정됩니다.';
+  String get strengthOverviewCardTheRingDisplaysA =>
+      '링은 모든 근육 그룹 점수의 가중 평균을 표시합니다. 1RM은 최근 90일간 기록된 최고의 세트를 기준으로 Brzycki/Epley/Lombardi 공식 평균을 사용하여 추정됩니다.';
 
   @override
   String get strengthOverviewCardTrainingStatus => '훈련 상태';
@@ -34332,16 +35446,19 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get strengthOverviewCardValuesAreForIntermediate => '값은 중급자를 기준으로 하며 훈련 수준에 따라 자동으로 조정됩니다. 상태에는 준비도 체크인 결과도 반영됩니다.';
+  String get strengthOverviewCardValuesAreForIntermediate =>
+      '값은 중급자를 기준으로 하며 훈련 수준에 따라 자동으로 조정됩니다. 상태에는 준비도 체크인 결과도 반영됩니다.';
 
   @override
   String get strengthOverviewCardVolumeGuidelinesSetsWeek => '볼륨 가이드라인 (세트/주)';
 
   @override
-  String get strengthOverviewCardYourOverallFitnessScore => '종합 피트니스 점수 가중치:\n근력 40% + 일관성 30% + 영양 20% + 준비도 10%';
+  String get strengthOverviewCardYourOverallFitnessScore =>
+      '종합 피트니스 점수 가중치:\n근력 40% + 일관성 30% + 영양 20% + 준비도 10%';
 
   @override
-  String get strengthOverviewCardYourStrengthScore0 => '근력 점수(0-100)는 확립된 기준과 비교하여 체중 대비 얼마나 들어 올릴 수 있는지를 측정합니다.';
+  String get strengthOverviewCardYourStrengthScore0 =>
+      '근력 점수(0-100)는 확립된 기준과 비교하여 체중 대비 얼마나 들어 올릴 수 있는지를 측정합니다.';
 
   @override
   String get strengthRecentPersonalRecords => '최근 개인 기록';
@@ -34397,22 +35514,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get subscriptionManagementBillingInformation => '결제 정보';
 
   @override
-  String get subscriptionManagementCouldNotOpenSubscription => '구독 설정을 열 수 없습니다';
+  String get subscriptionManagementCouldNotOpenSubscription =>
+      '구독 설정을 열 수 없습니다';
 
   @override
-  String get subscriptionManagementFailedToLoadSubscription => '구독 정보를 불러오지 못했습니다';
+  String get subscriptionManagementFailedToLoadSubscription =>
+      '구독 정보를 불러오지 못했습니다';
 
   @override
-  String get subscriptionManagementGetUnlimitedWorkoutsAi => '무제한 운동, AI 코칭 등을 이용하세요';
+  String get subscriptionManagementGetUnlimitedWorkoutsAi =>
+      '무제한 운동, AI 코칭 등을 이용하세요';
 
   @override
   String get subscriptionManagementManageSubscription => '구독 관리';
 
   @override
-  String get subscriptionManagementNoBillingInformationAvailab => '결제 정보를 사용할 수 없습니다';
+  String get subscriptionManagementNoBillingInformationAvailab =>
+      '결제 정보를 사용할 수 없습니다';
 
   @override
-  String get subscriptionManagementPurchasesRestoredSuccessfull => '구매 항목이 성공적으로 복원되었습니다';
+  String get subscriptionManagementPurchasesRestoredSuccessfull =>
+      '구매 항목이 성공적으로 복원되었습니다';
 
   @override
   String get subscriptionManagementRequestRefund => '환불 요청';
@@ -34421,7 +35543,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get subscriptionManagementRestorePurchases => '구매 복원';
 
   @override
-  String get subscriptionManagementScreenAccessNeverExpires => '액세스 권한은 만료되지 않습니다';
+  String get subscriptionManagementScreenAccessNeverExpires =>
+      '액세스 권한은 만료되지 않습니다';
 
   @override
   String get subscriptionManagementScreenCancelAutoRenewal => '자동 갱신 취소';
@@ -34458,7 +35581,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get subscriptionManagementScreenStartBillingAgain => '결제 재개';
 
   @override
-  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays) {
+  String subscriptionManagementScreenSubscriptionPausedForDays(
+    Object durationDays,
+  ) {
     return '$durationDays일 동안 구독 일시 중지됨';
   }
 
@@ -34475,10 +35600,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get subscriptionManagementSubscriptionPaused => '구독 일시정지됨';
 
   @override
-  String get subscriptionManagementSubscriptionResumedSuccessfu => '구독이 성공적으로 재개되었습니다';
+  String get subscriptionManagementSubscriptionResumedSuccessfu =>
+      '구독이 성공적으로 재개되었습니다';
 
   @override
-  String get subscriptionManagementSyncWithAppStore => 'App Store / Play Store와 동기화';
+  String get subscriptionManagementSyncWithAppStore =>
+      'App Store / Play Store와 동기화';
 
   @override
   String get subscriptionManagementUnknownError => '알 수 없는 오류';
@@ -34502,7 +35629,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get suggestFeatureEGSocialWorkout => '예: 소셜 운동 공유';
 
   @override
-  String get suggestFeatureFeatureSuggestionSubmittedS => '기능 제안이 성공적으로 제출되었습니다!';
+  String get suggestFeatureFeatureSuggestionSubmittedS =>
+      '기능 제안이 성공적으로 제출되었습니다!';
 
   @override
   String get suggestFeatureFeatureTitle => '기능 제목';
@@ -34994,7 +36122,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supersetAlgorithmCardEGBentOver => '예: 벤트 오버 로우';
 
   @override
-  String get supersetAlgorithmCardEnterTwoExercisesYou => '슈퍼세트로 묶을 두 가지 운동을 입력하세요';
+  String get supersetAlgorithmCardEnterTwoExercisesYou =>
+      '슈퍼세트로 묶을 두 가지 운동을 입력하세요';
 
   @override
   String get supersetAlgorithmCardFavoritePairs => '즐겨찾는 조합';
@@ -35077,7 +36206,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supersetPairSheetPairTwoExercisesFor => '효율적인 훈련을 위해 두 운동을 묶으세요';
 
   @override
-  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1) {
+  String supersetPairSheetPartSupersetPairSheetStateValue(
+    Object name,
+    Object name1,
+  ) {
     return '$name + $name1';
   }
 
@@ -35136,7 +36268,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get supersetReorderReset => '초기화';
 
   @override
-  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber) {
+  String supersetReorderSheetEdit(
+    Object _originalTypeLabel,
+    Object groupNumber,
+  ) {
     return '$_originalTypeLabel $groupNumber 편집';
   }
 
@@ -35220,7 +36355,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncDetailsSyncDetails => '동기화 세부 정보';
 
   @override
-  String get syncDetailsThisErrorWonT => '이 오류는 재시도로 해결되지 않습니다. 편집 후 다시 로그인하거나 삭제하세요.';
+  String get syncDetailsThisErrorWonT =>
+      '이 오류는 재시도로 해결되지 않습니다. 편집 후 다시 로그인하거나 삭제하세요.';
 
   @override
   String get syncStatusSyncNow => '지금 동기화';
@@ -35318,7 +36454,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncedWorkoutDetailDistance => '거리';
 
   @override
-  String get syncedWorkoutDetailDuplicateOfAnotherImport => '다른 데이터와 중복됨 — 기본 소스가 우선입니다.';
+  String get syncedWorkoutDetailDuplicateOfAnotherImport =>
+      '다른 데이터와 중복됨 — 기본 소스가 우선입니다.';
 
   @override
   String get syncedWorkoutDetailDuration => '시간';
@@ -35345,7 +36482,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncedWorkoutDetailHrvPre => 'HRV (운동 전)';
 
   @override
-  String get syncedWorkoutDetailItWillReAppear => 'Health Connect와 다음 동기화 시 다시 나타납니다.';
+  String get syncedWorkoutDetailItWillReAppear =>
+      'Health Connect와 다음 동기화 시 다시 나타납니다.';
 
   @override
   String get syncedWorkoutDetailManage => '관리';
@@ -35366,7 +36504,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get syncedWorkoutDetailPeak => '최고';
 
   @override
-  String get syncedWorkoutDetailPullingRicherDataFrom => 'Health Connect에서 상세 데이터를 가져오는 중...';
+  String get syncedWorkoutDetailPullingRicherDataFrom =>
+      'Health Connect에서 상세 데이터를 가져오는 중...';
 
   @override
   String get syncedWorkoutDetailRestingHr => '안정 시 심박수';
@@ -35743,7 +36882,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tierComparisonFeature => '기능';
 
   @override
-  String get tierComparisonLongPressTheEasy => 'Easy / Advanced 버튼을 길게 누르면 언제든 다시 열 수 있습니다.';
+  String get tierComparisonLongPressTheEasy =>
+      'Easy / Advanced 버튼을 길게 누르면 언제든 다시 열 수 있습니다.';
 
   @override
   String get tierComparisonWhichTierIsRight => '나에게 맞는 티어는 무엇인가요?';
@@ -35820,7 +36960,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timelineEntryDetailEditDurationMin => '지속 시간 편집 (분)';
 
   @override
-  String get timelineEntryDetailFailedToDeleteRefresh => '삭제 실패 — 새로고침 후 다시 시도하세요.';
+  String get timelineEntryDetailFailedToDeleteRefresh =>
+      '삭제 실패 — 새로고침 후 다시 시도하세요.';
 
   @override
   String get timelineEntryDetailFailedToUpdate => '업데이트 실패';
@@ -35852,7 +36993,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timelineLoadEarlierDays => '이전 기록 불러오기';
 
   @override
-  String get timelineLogYourFirstWorkout => '채팅이나 + 버튼을 사용하여 첫 운동, 식사 또는 수분을 기록하세요. 여기에 표시됩니다.';
+  String get timelineLogYourFirstWorkout =>
+      '채팅이나 + 버튼을 사용하여 첫 운동, 식사 또는 수분을 기록하세요. 여기에 표시됩니다.';
 
   @override
   String get timelineNothingLogged => '기록된 내용이 없습니다.';
@@ -35922,7 +37064,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timerRestMixinGotIt => '확인';
 
   @override
-  String get timerRestMixinRateOfPerceivedExertion => 'RPE는 세트가 얼마나 힘들었는지 측정합니다:';
+  String get timerRestMixinRateOfPerceivedExertion =>
+      'RPE는 세트가 얼마나 힘들었는지 측정합니다:';
 
   @override
   String get timerRestMixinWhatIsRpe => 'RPE란 무엇인가요?';
@@ -36093,7 +37236,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get todaysHealthCardTodaySHealth => '오늘의 건강';
 
   @override
-  String get trainingFocusAllocateUpTo5 => '최대 5개의 집중 포인트를 할당하여 특정 근육 그룹을 우선순위에 두세요';
+  String get trainingFocusAllocateUpTo5 =>
+      '최대 5개의 집중 포인트를 할당하여 특정 근육 그룹을 우선순위에 두세요';
 
   @override
   String get trainingFocusFocusPoints => '집중 포인트';
@@ -36105,7 +37249,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trainingFocusPrimaryTrainingGoal => '주요 훈련 목표';
 
   @override
-  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints) {
+  String trainingFocusScreenAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  ) {
     return '$availablePoints/$maxTotalPoints 사용 가능';
   }
 
@@ -36135,7 +37282,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get trainingLoadChartNoCardioActivityYet => '아직 유산소 활동이 없습니다. 달리기, 라이딩 또는 로잉을 기록하여 기준점을 구축하세요.';
+  String get trainingLoadChartNoCardioActivityYet =>
+      '아직 유산소 활동이 없습니다. 달리기, 라이딩 또는 로잉을 기록하여 기준점을 구축하세요.';
 
   @override
   String get trainingLoadChronic28d => '만성 (28일)';
@@ -36157,7 +37305,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trainingMethodsTrainingMethods => '훈련 방법';
 
   @override
-  String get trainingPreferencesAddPastWorkoutsFor => '더 정확한 AI 중량 설정을 위해 과거 운동 추가';
+  String get trainingPreferencesAddPastWorkoutsFor =>
+      '더 정확한 AI 중량 설정을 위해 과거 운동 추가';
 
   @override
   String get trainingPreferencesBoostedInSelectionCan => '선택 시 가중치 부여, 교체 가능';
@@ -36166,7 +37315,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trainingPreferencesCustomizeHowWorkoutsAre => '운동 생성 방식 사용자 지정';
 
   @override
-  String get trainingPreferencesEquipmentAvailableForWorkou => '운동에 사용할 수 있는 장비';
+  String get trainingPreferencesEquipmentAvailableForWorkou =>
+      '운동에 사용할 수 있는 장비';
 
   @override
   String get trainingPreferencesExerciseConsistency => '운동 일관성';
@@ -36244,7 +37394,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trainingPreferencesViewAndEditYour => '최대 중량 확인 및 수정';
 
   @override
-  String get trainingPreferencesVisualizeStrengthVolumeOv => '시간에 따른 근력 및 볼륨 시각화';
+  String get trainingPreferencesVisualizeStrengthVolumeOv =>
+      '시간에 따른 근력 및 볼륨 시각화';
 
   @override
   String get trainingPreferencesWeekStartsOn => '한 주의 시작 요일';
@@ -36277,7 +37428,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trainingProgramSelectorCustomProgram => '맞춤형 프로그램';
 
   @override
-  String get trainingProgramSelectorDescribeWhatYouWant => '원하는 운동 목표를 설명하면 AI가 개인화된 프로그램을 생성합니다.';
+  String get trainingProgramSelectorDescribeWhatYouWant =>
+      '원하는 운동 목표를 설명하면 AI가 개인화된 프로그램을 생성합니다.';
 
   @override
   String get trainingProgramSelectorEGTrainFor => '예: \"HYROX 대회 준비\"';
@@ -36336,7 +37488,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get transitionCountdownOverlayGetReady => '준비하세요';
 
   @override
-  String get transitionCountdownOverlayNextExerciseStartingSoon => '다음 운동이 곧 시작됩니다';
+  String get transitionCountdownOverlayNextExerciseStartingSoon =>
+      '다음 운동이 곧 시작됩니다';
 
   @override
   String get transitionCountdownOverlayStartNow => '지금 시작';
@@ -36379,7 +37532,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get trophiesCardKeepShowingUpBadges => '꾸준히 운동하세요. 마일스톤 달성 시 배지가 잠금 해제됩니다.';
+  String get trophiesCardKeepShowingUpBadges =>
+      '꾸준히 운동하세요. 마일스톤 달성 시 배지가 잠금 해제됩니다.';
 
   @override
   String trophiesCardNewBadgesThisPeriod(Object length) {
@@ -36452,7 +37606,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trophiesEarnedNoNewRecords => '새로운 기록 없음';
 
   @override
-  String get trophiesEarnedNoNewRecordsThis => '이번 세션에 새로운 기록은 없지만, 다음 목표를 향해 나아가고 있습니다:';
+  String get trophiesEarnedNoNewRecordsThis =>
+      '이번 세션에 새로운 기록은 없지만, 다음 목표를 향해 나아가고 있습니다:';
 
   @override
   String get trophiesEarnedPersonalRecords => '개인 기록';
@@ -36491,7 +37646,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trophiesEarnedViewAllCardioPrs => '모든 유산소 PR 보기';
 
   @override
-  String get trophiesEarnedYouVeClearedEvery => '모든 마일스톤을 달성했습니다. 꾸준히 유지하면 새로운 마일스톤이 나타날 거예요!';
+  String get trophiesEarnedYouVeClearedEvery =>
+      '모든 마일스톤을 달성했습니다. 꾸준히 유지하면 새로운 마일스톤이 나타날 거예요!';
 
   @override
   String get trophiesEarnedYourFitnessJourney => '나의 피트니스 여정';
@@ -36524,7 +37680,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trophyCelebrationOverlayMilestoneReached => '마일스톤 달성!';
 
   @override
-  String get trophyCelebrationOverlayTapAnywhereToContinue => '계속하려면 아무 곳이나 탭하세요';
+  String get trophyCelebrationOverlayTapAnywhereToContinue =>
+      '계속하려면 아무 곳이나 탭하세요';
 
   @override
   String get trophyCelebrationOverlayTrophiesEarned => '트로피 획득!';
@@ -36535,7 +37692,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get trophyCeremonyOverlayCongratsOnEarningThis => '이 트로피를 획득하신 것을 축하합니다!';
+  String get trophyCeremonyOverlayCongratsOnEarningThis =>
+      '이 트로피를 획득하신 것을 축하합니다!';
 
   @override
   String trophyCeremonyOverlayLv(Object level) {
@@ -36612,7 +37770,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trustAndExpectationsSoundsGood => '좋아요';
 
   @override
-  String get trustAndExpectationsTls13Aes => 'TLS 1.3 + AES-256. 은행과 동일한 보안 표준입니다.';
+  String get trustAndExpectationsTls13Aes =>
+      'TLS 1.3 + AES-256. 은행과 동일한 보안 표준입니다.';
 
   @override
   String get trustAndExpectationsTwoThingsYouShould => '꼭 알아두셔야 할 두 가지.';
@@ -36738,7 +37897,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get unifiedHomeWidgetsRestDayNothingScheduled => '휴식일: 예정된 일정 없음';
 
   @override
-  String get unifiedHomeWidgetsSeeYourStepsCalories => '홈 화면에서 걸음 수, 칼로리, 수면을 확인하세요';
+  String get unifiedHomeWidgetsSeeYourStepsCalories =>
+      '홈 화면에서 걸음 수, 칼로리, 수면을 확인하세요';
 
   @override
   String get unifiedHomeWidgetsSleep => '수면';
@@ -36762,16 +37922,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get unresolvedExercisesBulkFixUnresolvedExercises => '미해결 운동 수정';
 
   @override
-  String get unresolvedExercisesBulkMapRawNamesFrom => '가져온 원본 이름을 라이브러리 운동에 매핑하세요.';
+  String get unresolvedExercisesBulkMapRawNamesFrom =>
+      '가져온 원본 이름을 라이브러리 운동에 매핑하세요.';
 
   @override
   String get unresolvedExercisesBulkMore => '더 보기…';
 
   @override
-  String get unresolvedExercisesBulkNoAutoSuggestionOpen => '자동 제안 없음 — 직접 선택하세요.';
+  String get unresolvedExercisesBulkNoAutoSuggestionOpen =>
+      '자동 제안 없음 — 직접 선택하세요.';
 
   @override
-  String get unresolvedExercisesBulkNothingToFixEvery => '수정할 항목 없음 — 모든 가져온 운동이 매핑되었습니다!';
+  String get unresolvedExercisesBulkNothingToFixEvery =>
+      '수정할 항목 없음 — 모든 가져온 운동이 매핑되었습니다!';
 
   @override
   String unresolvedExercisesBulkSheetCouldNotLoad(Object error) {
@@ -36784,7 +37947,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected) {
+  String unresolvedExercisesBulkSheetMappedRowsTo(
+    Object canonicalName,
+    Object rowsAffected,
+  ) {
     return '$rowsAffected개 행을 \"$canonicalName\"(으)로 매핑했습니다.';
   }
 
@@ -36808,7 +37974,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get unresolvedExercisesMapExercise => '운동 매핑';
 
   @override
-  String get unresolvedExercisesNoAutomaticSuggestionsFor => '이 이름에 대한 자동 제안이 없습니다.';
+  String get unresolvedExercisesNoAutomaticSuggestionsFor =>
+      '이 이름에 대한 자동 제안이 없습니다.';
 
   @override
   String get unresolvedExercisesOrTypeACanonical => '또는 표준 이름을 입력하세요';
@@ -37013,10 +38180,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get vo2maxDetailVo2max => 'VO2max';
 
   @override
-  String get voiceAnnouncementsAnnouncingExerciseNamesDuri => '운동 전환 시 운동 이름 안내';
+  String get voiceAnnouncementsAnnouncingExerciseNamesDuri =>
+      '운동 전환 시 운동 이름 안내';
 
   @override
-  String get voiceAnnouncementsMicFabOnActive => '운동 중 마이크 FAB 활성화 — \"225 for 5\"';
+  String get voiceAnnouncementsMicFabOnActive =>
+      '운동 중 마이크 FAB 활성화 — \"225 for 5\"';
 
   @override
   String get voiceAnnouncementsTestVoice => '음성 테스트';
@@ -37040,7 +38209,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get volumeAlertCardAcknowledge => '확인';
 
   @override
-  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay) {
+  String volumeAlertCardIncrease(
+    Object formattedIncrease,
+    Object muscleGroupDisplay,
+  ) {
     return '$muscleGroupDisplay: $formattedIncrease 증가';
   }
 
@@ -37132,10 +38304,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get volumeHistoryVolumeHistory => '볼륨 기록';
 
   @override
-  String get volumeProgressionCardDefineCustomProgressionVia => 'JSON을 통해 사용자 지정 점진적 과부하 정의 (고급)';
+  String get volumeProgressionCardDefineCustomProgressionVia =>
+      'JSON을 통해 사용자 지정 점진적 과부하 정의 (고급)';
 
   @override
-  String get volumeProgressionCardHowTrainingVolumeIncreases => '시간에 따른 훈련 볼륨 증가 방식';
+  String get volumeProgressionCardHowTrainingVolumeIncreases =>
+      '시간에 따른 훈련 볼륨 증가 방식';
 
   @override
   String volumeProgressionCardValue(Object v) {
@@ -37151,7 +38325,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardWavePatternVolumeCycles => '웨이브 패턴: 주간 볼륨 주기 반복';
+  String get volumeProgressionCardWavePatternVolumeCycles =>
+      '웨이브 패턴: 주간 볼륨 주기 반복';
 
   @override
   String get warmupControllerPause => '일시정지';
@@ -37250,13 +38425,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get warmupSettingsWarmupDuration => '웜업 시간';
 
   @override
-  String get warmupSettingsWarnBeforeFinishingWith => '기록되지 않은 세트가 있을 때 종료 전 경고';
+  String get warmupSettingsWarnBeforeFinishingWith =>
+      '기록되지 않은 세트가 있을 때 종료 전 경고';
 
   @override
-  String get watchInstallBannerCouldNotOpenPlay => '워치에서 Play 스토어를 열 수 없습니다. 수동으로 설치해 주세요.';
+  String get watchInstallBannerCouldNotOpenPlay =>
+      '워치에서 Play 스토어를 열 수 없습니다. 수동으로 설치해 주세요.';
 
   @override
-  String get watchInstallBannerFailedToConnectTo => '워치 연결에 실패했습니다. 다시 시도해 주세요.';
+  String get watchInstallBannerFailedToConnectTo =>
+      '워치 연결에 실패했습니다. 다시 시도해 주세요.';
 
   @override
   String get watchInstallBannerInstallOnWatch => '워치에 설치';
@@ -37383,7 +38561,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinApplyChanges => '변경 사항 적용';
 
   @override
-  String get weeklyCheckinConservativeModerateOrAgg => '보수적, 보통, 공격적 — 각각 다른 칼로리 목표와 예상 주간 변화량을 제공합니다.';
+  String get weeklyCheckinConservativeModerateOrAgg =>
+      '보수적, 보통, 공격적 — 각각 다른 칼로리 목표와 예상 주간 변화량을 제공합니다.';
 
   @override
   String get weeklyCheckinDisable => '비활성화';
@@ -37407,7 +38586,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinKeepIt => '유지하기';
 
   @override
-  String get weeklyCheckinPickAPlanTo => '목표를 업데이트할 플랜을 선택하거나 건너뛰어 현재 상태를 유지하세요. 자동으로 변경되는 것은 없습니다.';
+  String get weeklyCheckinPickAPlanTo =>
+      '목표를 업데이트할 플랜을 선택하거나 건너뛰어 현재 상태를 유지하세요. 자동으로 변경되는 것은 없습니다.';
 
   @override
   String get weeklyCheckinPleaseTryAgainLater => '나중에 다시 시도해주세요';
@@ -37475,16 +38655,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinSheetKeepLogging => '계속 기록하세요!';
 
   @override
-  String get weeklyCheckinSheetKeepLoggingYourMeals => '식단과 체중을 계속 기록하여 개인 맞춤형 TDEE 계산을 잠금 해제하세요.';
+  String get weeklyCheckinSheetKeepLoggingYourMeals =>
+      '식단과 체중을 계속 기록하여 개인 맞춤형 TDEE 계산을 잠금 해제하세요.';
 
   @override
-  String get weeklyCheckinSheetLogMealsConsistentlyFor => '최상의 결과를 위해 꾸준히 식단을 기록하세요';
+  String get weeklyCheckinSheetLogMealsConsistentlyFor =>
+      '최상의 결과를 위해 꾸준히 식단을 기록하세요';
 
   @override
   String get weeklyCheckinSheetMetabolicAdaptationDetected => '대사 적응 감지됨';
 
   @override
-  String get weeklyCheckinSheetNeed60DataQuality => '정확한 계산을 위해 60% 이상의 데이터 품질이 필요합니다';
+  String get weeklyCheckinSheetNeed60DataQuality =>
+      '정확한 계산을 위해 60% 이상의 데이터 품질이 필요합니다';
 
   @override
   String get weeklyCheckinSheetNewTargets => '새로운 목표';
@@ -37495,7 +38678,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target) {
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(
+    Object current,
+    Object target,
+  ) {
     return '$target일 중 $current일';
   }
 
@@ -37525,7 +38711,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent) {
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
+    Object dataQualityPercent,
+  ) {
     return '$dataQualityPercent%';
   }
 
@@ -37535,7 +38723,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate) {
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
+    Object formattedWeeklyRate,
+  ) {
     return '체중 추이: $formattedWeeklyRate';
   }
 
@@ -37552,7 +38742,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinSheetRecommendedAdjustment => '권장 조정';
 
   @override
-  String get weeklyCheckinSheetSelectARecommendationBased => '선호도에 따라 권장 사항을 선택하세요';
+  String get weeklyCheckinSheetSelectARecommendationBased =>
+      '선호도에 따라 권장 사항을 선택하세요';
 
   @override
   String weeklyCheckinSheetSuggestedAction(Object action) {
@@ -37574,7 +38765,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinSheetTipsForBetterResults => '더 나은 결과를 위한 팁';
 
   @override
-  String get weeklyCheckinSheetWeNeedABit => '개인 맞춤형 TDEE를 계산하려면 데이터가 조금 더 필요합니다.';
+  String get weeklyCheckinSheetWeNeedABit =>
+      '개인 맞춤형 TDEE를 계산하려면 데이터가 조금 더 필요합니다.';
 
   @override
   String get weeklyCheckinSheetWeightChange => '체중 변화';
@@ -37589,7 +38781,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinSheetYourAdaptiveTdee => '나의 적응형 TDEE';
 
   @override
-  String get weeklyCheckinSheetYourCurrentTargetsAre => '현재 목표는 진행 상황과 잘 맞습니다. 지금처럼 계속 노력하세요!';
+  String get weeklyCheckinSheetYourCurrentTargetsAre =>
+      '현재 목표는 진행 상황과 잘 맞습니다. 지금처럼 계속 노력하세요!';
 
   @override
   String get weeklyCheckinSkipThisWeek => '이번 주 건너뛰기';
@@ -37619,7 +38812,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinYouCanReEnable => '영양 설정에서 언제든지 다시 활성화할 수 있습니다.';
 
   @override
-  String get weeklyCheckinYouCanTurnThis => '영양 설정 → 주간 체크인 알림에서 언제든지 끌 수 있습니다.';
+  String get weeklyCheckinYouCanTurnThis =>
+      '영양 설정 → 주간 체크인 알림에서 언제든지 끌 수 있습니다.';
 
   @override
   String get weeklyCheckinYouChooseOrSkip => '직접 선택하거나 건너뛰세요';
@@ -37631,7 +38825,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyCheckinYouSee23 => '2~3가지 플랜 옵션 확인';
 
   @override
-  String get weeklyCheckinYourLoggedMealsAnd => '기록된 식단과 체중 데이터는 어떤 공식보다 정확한 실제 TDEE를 계산하는 데 사용됩니다.';
+  String get weeklyCheckinYourLoggedMealsAnd =>
+      '기록된 식단과 체중 데이터는 어떤 공식보다 정확한 실제 TDEE를 계산하는 데 사용됩니다.';
 
   @override
   String weeklyGoalsCardNewPr(Object prsThisWeek) {
@@ -37648,13 +38843,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyHighlightsTemplateAiHighlights => 'AI 하이라이트';
 
   @override
-  String get weeklyHighlightsTemplateAnotherWeekInThe => '또 한 주가 지났습니다. 꾸준함이 진짜 실력입니다.';
+  String get weeklyHighlightsTemplateAnotherWeekInThe =>
+      '또 한 주가 지났습니다. 꾸준함이 진짜 실력입니다.';
 
   @override
   String get weeklyHighlightsTemplateThisWeek => '이번 주';
 
   @override
-  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank) {
+  String weeklyPercentileHeroOfActiveUsersTap(
+    Object totalActive,
+    Object yourRank,
+  ) {
     return '활성 사용자 $totalActive명 중 #$yourRank위 · 탭하여 둘러보기';
   }
 
@@ -37667,7 +38866,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyPlanCardCreateYourWeeklyPlan => '주간 플랜 만들기';
 
   @override
-  String get weeklyPlanCardGetAHolisticPlan => '운동, 영양, 단식을 조율하는 종합적인 플랜을 받아보세요';
+  String get weeklyPlanCardGetAHolisticPlan =>
+      '운동, 영양, 단식을 조율하는 종합적인 플랜을 받아보세요';
 
   @override
   String get weeklyPlanCardTodaySPlan => '오늘의 플랜';
@@ -37676,7 +38876,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyPlanCardWeeklyPlan => '주간 계획';
 
   @override
-  String get weeklyPlanCreateAHolisticPlan => '운동, 영양, 단식 일정을 조율하여 일주일간의 종합적인 계획을 세워보세요.';
+  String get weeklyPlanCreateAHolisticPlan =>
+      '운동, 영양, 단식 일정을 조율하여 일주일간의 종합적인 계획을 세워보세요.';
 
   @override
   String get weeklyPlanErrorLoadingPlan => '계획을 불러오는 중 오류가 발생했습니다';
@@ -37718,7 +38919,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get weeklyPrsTemplateShowingUpIsThe => '꾸준히 하는 것이 곧 승리입니다. 다음 주도 힘내세요.';
+  String get weeklyPrsTemplateShowingUpIsThe =>
+      '꾸준히 하는 것이 곧 승리입니다. 다음 주도 힘내세요.';
 
   @override
   String get weeklyRecap => '🛡️';
@@ -37798,7 +39000,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String weeklyReportCardOfWorkoutsThisWeek(Object completed, Object scheduled) {
+  String weeklyReportCardOfWorkoutsThisWeek(
+    Object completed,
+    Object scheduled,
+  ) {
     return '이번 주 운동 $scheduled회 중 $completed회 완료';
   }
 
@@ -37820,7 +39025,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklySummaryGenerateSummary => '요약 생성하기';
 
   @override
-  String get weeklySummaryGenerateYourFirstWeekly => '첫 주간 요약을 생성하여 AI 기반 인사이트로 진행 상황을 확인해보세요';
+  String get weeklySummaryGenerateYourFirstWeekly =>
+      '첫 주간 요약을 생성하여 AI 기반 인사이트로 진행 상황을 확인해보세요';
 
   @override
   String get weeklySummaryHighlights => '하이라이트';
@@ -37844,7 +39050,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled) {
+  String weeklySummaryScreenWorkoutsCompleted(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '운동 $workoutsCompleted/$workoutsScheduled회 완료';
   }
 
@@ -37870,7 +39079,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weeklyWrappedFromYourCoach => '코치의 메시지';
 
   @override
-  String get weeklyWrappedNoWorkoutsScheduledYet => '아직 예정된 운동이 없습니다. 홈 화면에서 계획을 생성하세요.';
+  String get weeklyWrappedNoWorkoutsScheduledYet =>
+      '아직 예정된 운동이 없습니다. 홈 화면에서 계획을 생성하세요.';
 
   @override
   String get weeklyWrappedPrs => 'PR';
@@ -37934,7 +39144,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get weightIncrementsSourcesRogueLifeFitness => '출처: Rogue, Life Fitness, Eleiko';
+  String get weightIncrementsSourcesRogueLifeFitness =>
+      '출처: Rogue, Life Fitness, Eleiko';
 
   @override
   String get weightIncrementsUseDefaults => '기본값 사용';
@@ -37952,7 +39163,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get weightProjectionPerWeek => '주당';
 
   @override
-  String get weightProjectionSafeRate05 => '권장 속도: 주당 0.5–1kg. Zealova의 계획은 과학적 가이드라인을 따릅니다.';
+  String get weightProjectionSafeRate05 =>
+      '권장 속도: 주당 0.5–1kg. Zealova의 계획은 과학적 가이드라인을 따릅니다.';
 
   @override
   String get weightProjectionScreenContinueToYourPlan => '계획 계속하기';
@@ -37963,7 +39175,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get weightProjectionScreenLetSKeepYou => '현재 상태를 유지하세요! 전반적인 체력, 근력 및 에너지 수준을 향상시키면서 현재의 체형을 유지하는 데 집중할 것입니다.';
+  String get weightProjectionScreenLetSKeepYou =>
+      '현재 상태를 유지하세요! 전반적인 체력, 근력 및 에너지 수준을 향상시키면서 현재의 체형을 유지하는 데 집중할 것입니다.';
 
   @override
   String get weightProjectionScreenYouReAtYour => '이상적인 체중입니다!';
@@ -38062,7 +39275,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get welcomeAffirmationLetSBegin => '시작해봅시다';
 
   @override
-  String get welcomeAffirmationMostUsersHitTheir => '대부분의 사용자가 30일 이내에 첫 번째 마일스톤을 달성합니다';
+  String get welcomeAffirmationMostUsersHitTheir =>
+      '대부분의 사용자가 30일 이내에 첫 번째 마일스톤을 달성합니다';
 
   @override
   String get welcomeAffirmationYouReAboutTo => '당신도 곧 그렇게 될 것입니다.';
@@ -38121,7 +39335,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutActionsChangeWorkoutDate => '운동 날짜 변경';
 
   @override
-  String get workoutActionsCompleteTheWorkoutFirst => '공유 링크를 생성하려면 먼저 운동을 완료하세요';
+  String get workoutActionsCompleteTheWorkoutFirst =>
+      '공유 링크를 생성하려면 먼저 운동을 완료하세요';
 
   @override
   String get workoutActionsCoolDownStretches => '쿨다운 스트레칭';
@@ -38213,7 +39428,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps) {
+  String workoutActionsSheetValue(
+    Object _regenerateMessage,
+    Object _regenerateStep,
+    Object _regenerateTotalSteps,
+  ) {
     return '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)';
   }
 
@@ -38226,7 +39445,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutActionsThisActionCannotBe => '이 작업은 취소할 수 없습니다.';
 
   @override
-  String get workoutActionsThisWillCreateA => '그러면 오늘의 새로운 운동 계획이 만들어집니다. 현재 운동은 버전 기록에 저장됩니다.';
+  String get workoutActionsThisWillCreateA =>
+      '그러면 오늘의 새로운 운동 계획이 만들어집니다. 현재 운동은 버전 기록에 저장됩니다.';
 
   @override
   String get workoutActionsThisWorkoutCannotBe => '이 운동은 아직 공유할 수 없습니다';
@@ -38363,7 +39583,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant) {
+  String workoutCompleteScreenExt1GreatWillBeIncluded(
+    Object suggestedNextVariant,
+  ) {
     return '좋아요! $suggestedNextVariant은(는) 향후 운동에 포함될 것입니다.';
   }
 
@@ -38378,7 +39600,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenFailedToExtendWorkout => '운동을 연장하지 못했습니다. 다시 시도해 주세요.';
+  String get workoutCompleteScreenFailedToExtendWorkout =>
+      '운동을 연장하지 못했습니다. 다시 시도해 주세요.';
 
   @override
   String get workoutCompleteScreenFeelingStrongerToday => '오늘은 더 강해진 기분!';
@@ -38410,7 +39633,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes) {
+  String workoutCompleteScreenMinSaunaCal(
+    Object _saunaCalories,
+    Object _saunaMinutes,
+  ) {
     return '사우나 $_saunaMinutes분 · 약 $_saunaCalories kcal';
   }
 
@@ -38430,7 +39656,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutCompleteScreenNotYet => '아직 아님';
 
   @override
-  String get workoutCompleteScreenNoticeImprovementsInYour => '근력이나 지구력이 향상되었나요?';
+  String get workoutCompleteScreenNoticeImprovementsInYour =>
+      '근력이나 지구력이 향상되었나요?';
 
   @override
   String get workoutCompleteScreenPleaseRateYourWorkout => '운동을 평가해주세요';
@@ -38439,7 +39666,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutCompleteScreenRateIndividualExercises => '개별 운동 평가';
 
   @override
-  String get workoutCompleteScreenRatingsHelpOurAi => '평가는 AI가 더 나은 운동을 생성하는 데 도움이 됩니다. 그래도 건너뛰시겠습니까?';
+  String get workoutCompleteScreenRatingsHelpOurAi =>
+      '평가는 AI가 더 나은 운동을 생성하는 데 도움이 됩니다. 그래도 건너뛰시겠습니까?';
 
   @override
   String get workoutCompleteScreenReadyToLevelUp => '레벨업 준비 완료!';
@@ -38478,12 +39706,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutCompleteScreenU1f4aa => '💪';
 
   @override
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts) {
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
+    Object streak,
+    Object totalWorkouts,
+  ) {
     return '$streak일 연속, 총 운동 $totalWorkouts회';
   }
 
   @override
-  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions) {
+  String workoutCompleteScreenUi1MarkedAsTooEasy(
+    Object consecutiveEasySessions,
+  ) {
     return '\"너무 쉬움\"으로 $consecutiveEasySessions회 연속 표시됨';
   }
 
@@ -38503,12 +39736,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets) {
+  String workoutCompleteScreenUi2SetsReps(
+    Object currentReps,
+    Object currentSets,
+  ) {
     return '$currentSets세트, $currentReps회';
   }
 
   @override
-  String get workoutCompleteScreenUnableToChallengeFriends => '현재 친구에게 도전할 수 없습니다';
+  String get workoutCompleteScreenUnableToChallengeFriends =>
+      '현재 친구에게 도전할 수 없습니다';
 
   @override
   String get workoutCompleteScreenUnableToExtendWorkout => '운동을 연장할 수 없습니다';
@@ -38531,7 +39768,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutCompleteScreenYouDonTHave => '아직 친구가 없습니다. 먼저 친구를 추가하세요!';
 
   @override
-  String get workoutCompleteScreenYouVeMasteredThese => '당신은 이 연습을 마스터했습니다. 더 어려운 변형을 시도해 보시겠습니까?';
+  String get workoutCompleteScreenYouVeMasteredThese =>
+      '당신은 이 연습을 마스터했습니다. 더 어려운 변형을 시도해 보시겠습니까?';
 
   @override
   String get workoutCompleteSkipRating => '평가 건너뛰기';
@@ -38552,7 +39790,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutCompleteWorkoutComplete => '운동 완료!';
 
   @override
-  String get workoutCompleteYourRatingsHelpUs => '귀하의 평가는 향후 운동을 개인화하는 데 도움이 됩니다';
+  String get workoutCompleteYourRatingsHelpUs =>
+      '귀하의 평가는 향후 운동을 개인화하는 데 도움이 됩니다';
 
   @override
   String get workoutDayDetailAvgHr => '평균 HR';
@@ -38585,7 +39824,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDayDetailMusclesWorked => '근육이 일했다';
 
   @override
-  String get workoutDayDetailRecoveryIsJustAs => '회복은 훈련만큼 중요합니다. 근육은 휴식 중에 성장합니다!';
+  String get workoutDayDetailRecoveryIsJustAs =>
+      '회복은 훈련만큼 중요합니다. 근육은 휴식 중에 성장합니다!';
 
   @override
   String get workoutDayDetailRestDay => '휴일';
@@ -38610,7 +39850,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDayDetailWorkoutMissed => '운동을 놓쳤습니다';
 
   @override
-  String get workoutDaysChangingWorkoutDaysWill => '운동 요일을 변경하면 일정이 업데이트됩니다. 향후 운동이 다시 생성됩니다.';
+  String get workoutDaysChangingWorkoutDaysWill =>
+      '운동 요일을 변경하면 일정이 업데이트됩니다. 향후 운동이 다시 생성됩니다.';
 
   @override
   String get workoutDaysSelectWhichDaysYou => '운동할 요일을 선택하세요';
@@ -38680,7 +39921,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDetailAiTapToSeeAi => '탭하여 운동 선택에 대한 AI 추론 보기';
 
   @override
-  String get workoutDetailAiTheseParametersWereUsed => '이 매개변수는 귀하의 체력 수준, 목표 및 사용 가능한 장비에 맞는 맞춤형 운동을 생성하기 위해 AI가 사용했습니다.';
+  String get workoutDetailAiTheseParametersWereUsed =>
+      '이 매개변수는 귀하의 체력 수준, 목표 및 사용 가능한 장비에 맞는 맞춤형 운동을 생성하기 위해 AI가 사용했습니다.';
 
   @override
   String get workoutDetailAiUserProfile => '사용자 프로필';
@@ -38750,7 +39992,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDetailScreenChallenge => '챌린지';
 
   @override
-  String get workoutDetailScreenDiscardTheEquipmentChange => '장비 변경 사항을 완전히 폐기합니다.';
+  String get workoutDetailScreenDiscardTheEquipmentChange =>
+      '장비 변경 사항을 완전히 폐기합니다.';
 
   @override
   String get workoutDetailScreenEquipmentUpdated => '장비가 업데이트되었습니다';
@@ -38765,7 +40008,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDetailScreenFailedToUpdateFavorite => '즐겨찾기 업데이트 실패';
 
   @override
-  String get workoutDetailScreenKeepThisSessionUnchanged => '이 세션을 변경하지 않고 유지합니다. 새로운 장비는 향후 운동에 적용됩니다.';
+  String get workoutDetailScreenKeepThisSessionUnchanged =>
+      '이 세션을 변경하지 않고 유지합니다. 새로운 장비는 향후 운동에 적용됩니다.';
 
   @override
   String get workoutDetailScreenLetSGo => '갑시다';
@@ -38805,19 +40049,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutDetailScreenSupersetCreated => '슈퍼세트가 생성되었습니다!';
 
   @override
-  String get workoutDetailScreenSwapThoseExercisesIn => '이번 세션에서는 해당 운동을 바꿔보세요. 완료된 세트는 기록된 상태로 유지됩니다.';
+  String get workoutDetailScreenSwapThoseExercisesIn =>
+      '이번 세션에서는 해당 운동을 바꿔보세요. 완료된 세트는 기록된 상태로 유지됩니다.';
 
   @override
-  String get workoutDetailScreenTapAnotherExerciseTo => '다른 운동을 탭하여 슈퍼세트로 연결하세요';
+  String get workoutDetailScreenTapAnotherExerciseTo =>
+      '다른 운동을 탭하여 슈퍼세트로 연결하세요';
 
   @override
-  String get workoutDetailScreenThisIsAnOptional => '이는 선택적 고급 연습입니다. 준비가 되었다고 생각되면 시도해 보세요!';
+  String get workoutDetailScreenThisIsAnOptional =>
+      '이는 선택적 고급 연습입니다. 준비가 되었다고 생각되면 시도해 보세요!';
 
   @override
-  String get workoutDetailScreenThisWillRestoreAll => '장비 변경 사항이 적용되기 전의 모든 운동 상태로 복원됩니다.';
+  String get workoutDetailScreenThisWillRestoreAll =>
+      '장비 변경 사항이 적용되기 전의 모든 운동 상태로 복원됩니다.';
 
   @override
-  String get workoutDetailScreenThisWillUnlinkThese => '이렇게 하면 이러한 운동의 연결이 해제되어 별도로 수행됩니다.';
+  String get workoutDetailScreenThisWillUnlinkThese =>
+      '이렇게 하면 이러한 운동의 연결이 해제되어 별도로 수행됩니다.';
 
   @override
   String workoutDetailScreenUi1AddToCreateA(Object name, Object newSetType) {
@@ -38870,7 +40119,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenWouldYouLikeTo => '이 장비 구성을 나중을 위해 프로필에 저장하시겠습니까?';
+  String get workoutDetailScreenWouldYouLikeTo =>
+      '이 장비 구성을 나중을 위해 프로필에 저장하시겠습니까?';
 
   @override
   String get workoutDetailScreenYesSave => '네, 저장합니다';
@@ -38969,10 +40219,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutHistoryImportAddToHistory => '기록에 추가';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout => '과거 운동 데이터를 추가하면 AI가 근력 수준에 맞는 가중치로 운동을 생성할 수 있습니다.';
+  String get workoutHistoryImportAddYourPastWorkout =>
+      '과거 운동 데이터를 추가하면 AI가 근력 수준에 맞는 가중치로 운동을 생성할 수 있습니다.';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout2 => '과거 운동 데이터를 추가하면 AI가 더 나은 운동을 생성하는 데 도움이 됩니다.';
+  String get workoutHistoryImportAddYourPastWorkout2 =>
+      '과거 운동 데이터를 추가하면 AI가 더 나은 운동을 생성하는 데 도움이 됩니다.';
 
   @override
   String get workoutHistoryImportAppleHealth => 'Apple 건강';
@@ -39016,7 +40268,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutHistoryImportExerciseName => '운동명';
 
   @override
-  String get workoutHistoryImportExportFromHevy => 'Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton 등에서 내보내기 가능.';
+  String get workoutHistoryImportExportFromHevy =>
+      'Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton 등에서 내보내기 가능.';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -39107,7 +40360,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg) {
+  String workoutHistoryImportScreenSetsRepsKg(
+    Object reps,
+    Object sets,
+    Object weightKg,
+  ) {
     return '$sets세트 × $reps회 @ $weightKg kg';
   }
 
@@ -39130,10 +40387,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutHistoryImportStronglifts => 'StrongLifts';
 
   @override
-  String get workoutHistoryImportSupportsCsvXlsxXlsm => 'CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP을 지원합니다.';
+  String get workoutHistoryImportSupportsCsvXlsxXlsm =>
+      'CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP을 지원합니다.';
 
   @override
-  String get workoutHistoryImportTheAiUsesThis => 'AI는 이 데이터를 사용하여 적절한 중량을 설정합니다';
+  String get workoutHistoryImportTheAiUsesThis =>
+      'AI는 이 데이터를 사용하여 적절한 중량을 설정합니다';
 
   @override
   String get workoutHistoryImportViewAll => '모두 보기';
@@ -39148,7 +40407,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutHistoryImportWendler531 => '웬들러 5/3/1';
 
   @override
-  String get workoutHistoryImportWhichUnitIsThe => '중량란은 어느 단위인가요? 소스 앱을 알고 있는 경우 해당 앱을 선택하면 형제 형식(Hevy 및 Strong CSV)을 구분하는 데 도움이 됩니다.';
+  String get workoutHistoryImportWhichUnitIsThe =>
+      '중량란은 어느 단위인가요? 소스 앱을 알고 있는 경우 해당 앱을 선택하면 형제 형식(Hevy 및 Strong CSV)을 구분하는 데 도움이 됩니다.';
 
   @override
   String get workoutHistoryImportYourStrengthData => '귀하의 근력 데이터';
@@ -39213,7 +40473,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutImportPreviewNo => '아니요';
 
   @override
-  String get workoutImportPreviewNoSampleRowsProduced => '샘플 행이 생성되지 않습니다(파일이 비어 있거나 인식되지 않을 수 있음).';
+  String get workoutImportPreviewNoSampleRowsProduced =>
+      '샘플 행이 생성되지 않습니다(파일이 비어 있거나 인식되지 않을 수 있음).';
 
   @override
   String get workoutImportPreviewPreviewImport => '가져오기 미리보기';
@@ -39243,13 +40504,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutImportPreviewTemplate => '주형';
 
   @override
-  String get workoutImportPreviewTheseWillStillImport => '이 항목들은 그대로 가져와집니다. 작업 완료 후 표준 이름으로 매핑할 수 있습니다.';
+  String get workoutImportPreviewTheseWillStillImport =>
+      '이 항목들은 그대로 가져와집니다. 작업 완료 후 표준 이름으로 매핑할 수 있습니다.';
 
   @override
   String get workoutImportPreviewUnmatchedExercises => '일치하지 않는 운동';
 
   @override
-  String get workoutImportProgressImportIsStillIn => '가져오기가 아직 진행 중입니다. 잠시 기다려 주세요.';
+  String get workoutImportProgressImportIsStillIn =>
+      '가져오기가 아직 진행 중입니다. 잠시 기다려 주세요.';
 
   @override
   String get workoutImportProgressImportingWorkoutHistory => '운동 기록 가져오는 중';
@@ -39260,7 +40523,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workoutImportProgressThisUsuallyFinishesIn => '이 작업은 일반적으로 10~30초 안에 완료됩니다.';
+  String get workoutImportProgressThisUsuallyFinishesIn =>
+      '이 작업은 일반적으로 10~30초 안에 완료됩니다.';
 
   @override
   String get workoutImportRunning => '러닝';
@@ -39324,10 +40588,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutImportSummaryStrengthSetsAdded => '근력 세트 추가됨';
 
   @override
-  String get workoutImportSummaryTheseRowsWereImported => '이 행은 가져왔지만 아직 도서관 연습과 일치하지 않습니다. 매핑하면 가중치 제안 + 차트가 향상됩니다.';
+  String get workoutImportSummaryTheseRowsWereImported =>
+      '이 행은 가져왔지만 아직 도서관 연습과 일치하지 않습니다. 매핑하면 가중치 제안 + 차트가 향상됩니다.';
 
   @override
-  String get workoutImportSummaryUnknownErrorPleaseTry => '알 수 없는 오류입니다. 다시 시도하거나 지원팀에 문의하세요.';
+  String get workoutImportSummaryUnknownErrorPleaseTry =>
+      '알 수 없는 오류입니다. 다시 시도하거나 지원팀에 문의하세요.';
 
   @override
   String get workoutImportSummaryWarnings => '경고';
@@ -39336,10 +40602,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutImportSummaryWeCouldnTFinish => '가져오기를 완료할 수 없습니다.';
 
   @override
-  String get workoutImportSummaryWeParsedAMulti => '우리는 몇 주간의 프로그램 템플릿을 분석했습니다. 활성화하면 다음 주 월요일부터 운동 일정이 예약됩니다.';
+  String get workoutImportSummaryWeParsedAMulti =>
+      '우리는 몇 주간의 프로그램 템플릿을 분석했습니다. 활성화하면 다음 주 월요일부터 운동 일정이 예약됩니다.';
 
   @override
-  String get workoutImportSummaryWeightSuggestionsAcrossThe => '앱 전체의 체중 제안은 1분 이내에 이 기록을 반영하기 시작합니다.';
+  String get workoutImportSummaryWeightSuggestionsAcrossThe =>
+      '앱 전체의 체중 제안은 1분 이내에 이 기록을 반영하기 시작합니다.';
 
   @override
   String get workoutImportSwimming => '수영';
@@ -39433,7 +40701,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutOptionsSkipWorkout => '운동을 건너뛰시겠습니까?';
 
   @override
-  String get workoutOptionsThisWillMarkThe => '이렇게 하면 추적 세트 없이 운동이 완료된 것으로 표시됩니다.';
+  String get workoutOptionsThisWillMarkThe =>
+      '이렇게 하면 추적 세트 없이 운동이 완료된 것으로 표시됩니다.';
 
   @override
   String get workoutOptionsThisWorkoutWillBe => '이 운동은 건너뛴 것으로 표시됩니다.';
@@ -39442,7 +40711,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutPermissionsPrimeGotItLetU2019s => '알겠습니다, 시작하죠';
 
   @override
-  String get workoutPermissionsPrimeLetsUsAutoConnect => 'BLE 심박수 스트랩이 근처에 있으면 자동으로 연결할 수 있습니다.';
+  String get workoutPermissionsPrimeLetsUsAutoConnect =>
+      'BLE 심박수 스트랩이 근처에 있으면 자동으로 연결할 수 있습니다.';
 
   @override
   String get workoutPermissionsPrimeMicrophone => '마이크로폰';
@@ -39451,13 +40721,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutPermissionsPrimeNearbyDevices => '주변 기기';
 
   @override
-  String get workoutPermissionsPrimeTapTheMicMid => '질문을 하거나 음성으로 메모를 기록하려면 세트 중간에 마이크를 탭하세요.';
+  String get workoutPermissionsPrimeTapTheMicMid =>
+      '질문을 하거나 음성으로 메모를 기록하려면 세트 중간에 마이크를 탭하세요.';
 
   @override
   String get workoutPermissionsPrimeTwoQuickHeadsUps => '두 가지 빠른 알림';
 
   @override
-  String get workoutPermissionsPrimeYouMaySeeThese => '운동 중에 이러한 시스템 메시지가 나타날 수 있습니다. 둘 다 선택 사항입니다. 둘 중 하나를 건너뛰어도 운동은 계속 작동합니다.';
+  String get workoutPermissionsPrimeYouMaySeeThese =>
+      '운동 중에 이러한 시스템 메시지가 나타날 수 있습니다. 둘 다 선택 사항입니다. 둘 중 하나를 건너뛰어도 운동은 계속 작동합니다.';
 
   @override
   String get workoutPlanDrawerAddExercise => '운동 추가';
@@ -39576,13 +40848,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutReviewYourWorkout => '나의 운동';
 
   @override
-  String get workoutSettingsAddPastWorkoutsFor => '더 정확한 AI 중량 설정을 위해 과거 운동 기록 추가';
+  String get workoutSettingsAddPastWorkoutsFor =>
+      '더 정확한 AI 중량 설정을 위해 과거 운동 기록 추가';
 
   @override
-  String get workoutSettingsAutoDeloadDeloadFrequency => '자동 디로딩, 디로딩 빈도 및 진행 주수';
+  String get workoutSettingsAutoDeloadDeloadFrequency =>
+      '자동 디로딩, 디로딩 빈도 및 진행 주수';
 
   @override
-  String get workoutSettingsCustomizeWhichExercisesAppe => '운동 목록에 표시할 운동 사용자 지정';
+  String get workoutSettingsCustomizeWhichExercisesAppe =>
+      '운동 목록에 표시할 운동 사용자 지정';
 
   @override
   String get workoutSettingsExercisePreferences => '연습 PR참고자료';
@@ -39761,10 +41036,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSheetsMixinSupersetRemoved => '슈퍼세트 제거됨';
 
   @override
-  String get workoutSheetsMixinSupersetsHelpYouSave => '슈퍼세트는 최소한의 휴식으로 운동을 번갈아 수행하여 시간을 절약하는 데 도움이 됩니다.';
+  String get workoutSheetsMixinSupersetsHelpYouSave =>
+      '슈퍼세트는 최소한의 휴식으로 운동을 번갈아 수행하여 시간을 절약하는 데 도움이 됩니다.';
 
   @override
-  String get workoutSheetsMixinTheAiCoachWill => '이 운동 세션에서는 AI 코치가 숨겨집니다. 설정에서 계속 액세스할 수 있습니다.';
+  String get workoutSheetsMixinTheAiCoachWill =>
+      '이 운동 세션에서는 AI 코치가 숨겨집니다. 설정에서 계속 액세스할 수 있습니다.';
 
   @override
   String workoutSheetsMixinUiChangedTo(Object displayName) {
@@ -39783,13 +41060,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSheetsMixinWarmUp => '웜업';
 
   @override
-  String get workoutSheetsMixinWarmingUpHelpsPrevent => '웜업은 부상을 방지하고 수행 능력을 향상시킵니다.\n\n권장 사항: 본 세트 전 가벼운 무게로 1-2세트 수행.';
+  String get workoutSheetsMixinWarmingUpHelpsPrevent =>
+      '웜업은 부상을 방지하고 수행 능력을 향상시킵니다.\n\n권장 사항: 본 세트 전 가벼운 무게로 1-2세트 수행.';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';
 
   @override
-  String get workoutShowcaseViralFormatsTap => '운동과 식사용 인기 포맷 200개 이상 — 탭하면 미리보기';
+  String get workoutShowcaseViralFormatsTap =>
+      '운동과 식사용 인기 포맷 200개 이상 — 탭하면 미리보기';
 
   @override
   String get workoutShowcase1rmEstimate => '1RM 추정치';
@@ -39816,7 +41095,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutShowcaseAllSetsLogged => '✓ 모든 세트 기록 완료';
 
   @override
-  String get workoutShowcaseAllSetsLoggedProgression => '모든 세트 기록 완료 — 진행 상황 반영 중';
+  String get workoutShowcaseAllSetsLoggedProgression =>
+      '모든 세트 기록 완료 — 진행 상황 반영 중';
 
   @override
   String get workoutShowcaseAskCoach => '코치에게 물어보기';
@@ -39929,7 +41209,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutShowcaseInstructions => '지침';
 
   @override
-  String get workoutShowcaseIntroSubtitle => 'Zealova가 모든 세트를 코치하고 무게도 자동으로 올려줘요 💪';
+  String get workoutShowcaseIntroSubtitle =>
+      'Zealova가 모든 세트를 코치하고 무게도 자동으로 올려줘요 💪';
 
   @override
   String get workoutShowcaseIntroTitle => '첫 운동을 시작해요';
@@ -39964,7 +41245,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutShowcaseNewPr => '새로운 PR';
 
   @override
-  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight) {
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  ) {
     return '$set세트 기록 완료 — 다음 목표 자동 상향 $weight lb (+$delta lb)';
   }
 
@@ -39975,7 +41260,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutShowcasePlan => '계획';
 
   @override
-  String get workoutShowcasePlanAutoAdjustsNext => '다음 세션 계획 자동 조정 — 실제 수행 능력을 바탕으로 중량 + 반복 횟수 재조정.';
+  String get workoutShowcasePlanAutoAdjustsNext =>
+      '다음 세션 계획 자동 조정 — 실제 수행 능력을 바탕으로 중량 + 반복 횟수 재조정.';
 
   @override
   String get workoutShowcasePoweredByZealova => 'Powered by Zealova';
@@ -40016,7 +41302,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume) {
+  String workoutShowcaseScreenTotalPrs(
+    Object duration,
+    Object prs,
+    Object volume,
+  ) {
     return '총합 $duration · $volume · $prs PRS';
   }
 
@@ -40135,7 +41425,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutStateCardsTryAgain => '다시 시도';
 
   @override
-  String get workoutStateCardsYourPersonalizedWorkoutPlan => '맞춤형 운동 계획을 생성하고 있습니다';
+  String get workoutStateCardsYourPersonalizedWorkoutPlan =>
+      '맞춤형 운동 계획을 생성하고 있습니다';
 
   @override
   String get workoutStatsStripCalories => '칼로리';
@@ -40185,7 +41476,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedConfidence => '자신감';
 
   @override
-  String get workoutSummaryAdvancedDetailedTrackingDataIs => '이 운동에 대한 상세 추적 데이터를 사용할 수 없습니다.';
+  String get workoutSummaryAdvancedDetailedTrackingDataIs =>
+      '이 운동에 대한 상세 추적 데이터를 사용할 수 없습니다.';
 
   @override
   String get workoutSummaryAdvancedDuration => '시간';
@@ -40203,7 +41495,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedExerciseOrderTime => '운동 순서 및 시간';
 
   @override
-  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned) {
+  String workoutSummaryAdvancedExercises(
+    Object completedCount,
+    Object totalPlanned,
+  ) {
     return '운동 $completedCount / $totalPlanned개 완료';
   }
 
@@ -40272,7 +41567,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedNo => '아니요';
 
   @override
-  String get workoutSummaryAdvancedNoCompletedSetsLogged => '이 운동에 완료된 세트가 기록되지 않았습니다.';
+  String get workoutSummaryAdvancedNoCompletedSetsLogged =>
+      '이 운동에 완료된 세트가 기록되지 않았습니다.';
 
   @override
   String get workoutSummaryAdvancedNoVolumeDataYet => '아직 볼륨 데이터가 없습니다';
@@ -40441,7 +41737,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryGeneralCalories => '칼로리';
 
   @override
-  String get workoutSummaryGeneralConnectAHeartRate => '심박수 모니터를 연결하여\n심박수 구간을 추적하세요';
+  String get workoutSummaryGeneralConnectAHeartRate =>
+      '심박수 모니터를 연결하여\n심박수 구간을 추적하세요';
 
   @override
   String get workoutSummaryGeneralDifficulty => '난이도';
@@ -40459,7 +41756,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => '심박수';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs) {
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
     return '$weightLbs $unit x $reps 회';
   }
 
@@ -40536,10 +41837,14 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryScreenPleaseCheckYourConnection => '연결 상태를 확인하고 다시 시도하세요.';
+  String get workoutSummaryScreenPleaseCheckYourConnection =>
+      '연결 상태를 확인하고 다시 시도하세요.';
 
   @override
-  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets) {
+  String workoutSummaryScreenRepsAcrossSets(
+    Object totalReps,
+    Object totalSets,
+  ) {
     return '$totalSets 세트 동안 $totalReps 회 반복';
   }
 
@@ -40557,7 +41862,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg) {
+  String workoutSummaryScreenUiKgXRepsEst(
+    Object estimated1rmKg,
+    Object reps,
+    Object weightKg,
+  ) {
     return '$weightKg kg x $reps회  |  예상 1RM: $estimated1rmKg kg';
   }
 
@@ -40591,10 +41900,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutTopOverlayPaused => '일시 정지';
 
   @override
-  String get workoutTypeSelectorEnterCustomWorkoutType => '사용자 지정 운동 유형 입력 (예: \"Mobility\")';
+  String get workoutTypeSelectorEnterCustomWorkoutType =>
+      '사용자 지정 운동 유형 입력 (예: \"Mobility\")';
 
   @override
-  String get workoutTypeSelectorHowYouWantTo => '원하는 훈련 방식을 선택하세요. 아래의 목표 부위에서 신체 부위를 선택할 수 있습니다.';
+  String get workoutTypeSelectorHowYouWantTo =>
+      '원하는 훈련 방식을 선택하세요. 아래의 목표 부위에서 신체 부위를 선택할 수 있습니다.';
 
   @override
   String get workoutTypeSelectorTrainingStyle => '훈련 스타일';
@@ -40609,13 +41920,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutUiBuildersDrink => '수분 섭취';
 
   @override
-  String get workoutUiBuildersHeardRepsButNot => '횟수는 인식했지만 중량을 인식하지 못했습니다. \"225 for 5\"와 같이 입력해 보세요.';
+  String get workoutUiBuildersHeardRepsButNot =>
+      '횟수는 인식했지만 중량을 인식하지 못했습니다. \"225 for 5\"와 같이 입력해 보세요.';
 
   @override
   String get workoutUiBuildersHowTo => '방법';
 
   @override
-  String get workoutUiBuildersLoadingYourPersonalizedWarm => '개인 맞춤형 웜업 운동을 불러오는 중';
+  String get workoutUiBuildersLoadingYourPersonalizedWarm =>
+      '개인 맞춤형 웜업 운동을 불러오는 중';
 
   @override
   String workoutUiBuildersMixinUi2HeardKg(Object parsed) {
@@ -40623,7 +41936,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String workoutUiBuildersMixinUi2LoggedReps(Object reps, Object weightDisplay) {
+  String workoutUiBuildersMixinUi2LoggedReps(
+    Object reps,
+    Object weightDisplay,
+  ) {
     return '$weightDisplay × $reps회 기록됨';
   }
 
@@ -40662,16 +41978,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutUiModeAdvanced => '고급';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchLb => '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±5lb 단위 증량, 원판 차트.';
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±5lb 단위 증량, 원판 차트.';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchPh => '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±2.5kg 단위 증량, 원판 차트.';
+  String get workoutUiModeEverythingWarmupStretchPh =>
+      '모든 기능 포함 — 웜업/스트레칭 단계, RPE/RIR, 피라미드, 슈퍼세트, 드롭 세트, ±2.5kg 단위 증량, 원판 차트.';
 
   @override
-  String get workoutUiModePickTheLevelOf => '세트 기록 시 원하는 상세 수준을 선택하세요. 언제든지 변경할 수 있습니다.';
+  String get workoutUiModePickTheLevelOf =>
+      '세트 기록 시 원하는 상세 수준을 선택하세요. 언제든지 변경할 수 있습니다.';
 
   @override
-  String get workoutUiModePolishedDefaultSteppersAi => '세련된 기본 모드. 스텝퍼, AI 코치, 휴식 타이머, 오디오/사진 메모, 이전 세트 탭하여 수정 기능. 대부분의 세션에 적합합니다.';
+  String get workoutUiModePolishedDefaultSteppersAi =>
+      '세련된 기본 모드. 스텝퍼, AI 코치, 휴식 타이머, 오디오/사진 메모, 이전 세트 탭하여 수정 기능. 대부분의 세션에 적합합니다.';
 
   @override
   String get workoutUiModeSelected => '선택됨';
@@ -40685,7 +42005,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutUiModeWorkoutMode => '운동 모드';
 
   @override
-  String get workoutsBenchSquatDeadliftBest => '벤치, 스쿼트, 데드리프트 — 최고 기록 세트만 알고 있을 때 가장 좋습니다';
+  String get workoutsBenchSquatDeadliftBest =>
+      '벤치, 스쿼트, 데드리프트 — 최고 기록 세트만 알고 있을 때 가장 좋습니다';
 
   @override
   String get workoutsCollapseWeekView => '주간 보기 접기';
@@ -40715,10 +42036,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutsGym => '헬스장';
 
   @override
-  String get workoutsHealthConnectAppleHealth => 'Health Connect / Apple Health';
+  String get workoutsHealthConnectAppleHealth =>
+      'Health Connect / Apple Health';
 
   @override
-  String get workoutsHevyStrongLiftinFitbod => 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, 사용자 지정 CSV';
+  String get workoutsHevyStrongLiftinFitbod =>
+      'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, 사용자 지정 CSV';
 
   @override
   String get workoutsImportWorkouts => '운동 가져오기';
@@ -40750,13 +42073,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutsSyncSessionsFromYour => '워치에서 세션 동기화 (백그라운드에서 동기화 중)';
 
   @override
-  String get workoutsTourHitStartOnToday => '오늘의 운동에서 \'시작\'을 눌러 세트, 횟수, 무게를 기록하고 휴식 타이머를 활용하세요.';
+  String get workoutsTourHitStartOnToday =>
+      '오늘의 운동에서 \'시작\'을 눌러 세트, 횟수, 무게를 기록하고 휴식 타이머를 활용하세요.';
 
   @override
   String get workoutsTourMakeItYours => '나만의 운동 만들기';
 
   @override
-  String get workoutsTourPinFavoritesHideExercises => '즐겨찾기를 고정하고, 피하는 운동은 숨기거나 다음에 할 운동을 대기열에 추가하세요.';
+  String get workoutsTourPinFavoritesHideExercises =>
+      '즐겨찾기를 고정하고, 피하는 운동은 숨기거나 다음에 할 운동을 대기열에 추가하세요.';
 
   @override
   String get workoutsTourSetYourPreferences => '환경 설정';
@@ -40765,7 +42090,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutsTourStartAWorkout => '운동 시작';
 
   @override
-  String get workoutsTourUseCustomBrowseOr => '사용자 지정, 탐색, 즐겨찾기를 사용하여 운동을 구성, 교체 또는 반복하세요.';
+  String get workoutsTourUseCustomBrowseOr =>
+      '사용자 지정, 탐색, 즐겨찾기를 사용하여 운동을 구성, 교체 또는 반복하세요.';
 
   @override
   String get workoutsTypeAFewPrs => '몇 가지 PR을 수동으로 입력';
@@ -40774,7 +42100,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutsUpcoming => '예정된 운동';
 
   @override
-  String get workoutsYouCanEditUndo => '가져온 데이터는 나중에 언제든 수정, 취소 또는 재매핑할 수 있습니다. 데이터는 삭제되지 않습니다.';
+  String get workoutsYouCanEditUndo =>
+      '가져온 데이터는 나중에 언제든 수정, 취소 또는 재매핑할 수 있습니다. 데이터는 삭제되지 않습니다.';
 
   @override
   String get workoutsYourNextWorkoutIs => '다음 운동은 각 세션이 끝난 후 자동으로 생성됩니다';
@@ -40877,7 +42204,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get xpGoalsDialogFirstChatWithAiCoachXp => 'AI 코치와 첫 채팅: +15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp => '첫 식사/체중/측정: 각 +50 XP';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
+      '첫 식사/체중/측정: 각 +50 XP';
 
   @override
   String get xpGoalsDialogFirstPrXp => '첫 PR: +100 XP';
@@ -40949,10 +42277,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get xpGoalsScreenConsumableLegend => '소모품 범례';
 
   @override
-  String get xpGoalsScreenErrorLoadingMonthlyAchievem => '월간 업적을 불러오는 중 오류가 발생했습니다';
+  String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
+      '월간 업적을 불러오는 중 오류가 발생했습니다';
 
   @override
-  String get xpGoalsScreenErrorLoadingWeeklyProgress => '주간 진행 상황을 불러오는 중 오류가 발생했습니다';
+  String get xpGoalsScreenErrorLoadingWeeklyProgress =>
+      '주간 진행 상황을 불러오는 중 오류가 발생했습니다';
 
   @override
   String get xpGoalsScreenFailedToLoadLevels => '레벨을 불러오지 못했습니다';
@@ -41017,7 +42347,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get xpGoalsScreenSetFirstPersonalRecord => '첫 개인 최고 기록(PR) 설정';
 
   @override
-  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length) {
+  String xpGoalsScreenUi1CheckpointsComplete(
+    Object completedCount,
+    Object length,
+  ) {
     return '$length개 중 $completedCount개 체크포인트 완료';
   }
 
@@ -41139,7 +42472,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get xpLeaderboardNoLeaderboardDataYet => '아직 리더보드 데이터가 없습니다.\nXP를 획득하여 순위를 올려보세요!';
+  String get xpLeaderboardNoLeaderboardDataYet =>
+      '아직 리더보드 데이터가 없습니다.\nXP를 획득하여 순위를 올려보세요!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {
@@ -41297,7 +42631,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsChatLanguageTitle => 'AI Coach 언어';
 
   @override
-  String get settingsChatLanguageDescription => 'AI Coach 응답 언어 설정 (앱 UI 언어와 별개)';
+  String get settingsChatLanguageDescription =>
+      'AI Coach 응답 언어 설정 (앱 UI 언어와 별개)';
 
   @override
   String get settingsChatLanguageSameAsApp => '앱 언어와 동일';
@@ -41348,7 +42683,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get vacationModeBannerOn => '알림이 켜져 있습니다';
 
   @override
-  String get vacationModeBannerOnSubtitle => '중요하지 않은 알림을 일시중지하려면 아래에서 휴가 모드를 활성화하세요.';
+  String get vacationModeBannerOnSubtitle =>
+      '중요하지 않은 알림을 일시중지하려면 아래에서 휴가 모드를 활성화하세요.';
 
   @override
   String get difficultyEasy => '초보자';
@@ -41404,7 +42740,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsEmptyTitle => '아직 공유된 항목이 없습니다.';
 
   @override
-  String get importsEmptyBody => '사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.';
+  String get importsEmptyBody =>
+      '사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.';
 
   @override
   String get importsActionOpen => '열려 있는';
@@ -41422,7 +42759,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsSnackRetryFailed => '다시 시도할 수 없습니다. 나중에 다시 시도하세요.';
 
   @override
-  String get importsSnackReclassifyQueued => '대기 중인 재분류 - 항목을 다시 공유하여 경로를 재지정합니다.';
+  String get importsSnackReclassifyQueued =>
+      '대기 중인 재분류 - 항목을 다시 공유하여 경로를 재지정합니다.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -41430,7 +42768,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => '해당 기록은 수입 내역에서 제거됩니다. 가져온 운동/레시피/음식 로그 자체가 그대로 유지됩니다.';
+  String get importsDeleteConfirmBody =>
+      '해당 기록은 수입 내역에서 제거됩니다. 가져온 운동/레시피/음식 로그 자체가 그대로 유지됩니다.';
 
   @override
   String get importsActionCancel => '취소';
@@ -41484,7 +42823,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsLimitsLimitsHeader => '제한';
 
   @override
-  String get importsLimitsFooter => '일일 한도는 모든 사람에게 동일합니다. 수입 품질을 높게 유지하고 폭주하는 비용으로부터 보호합니다.';
+  String get importsLimitsFooter =>
+      '일일 한도는 모든 사람에게 동일합니다. 수입 품질을 높게 유지하고 폭주하는 비용으로부터 보호합니다.';
 
   @override
   String get importsPrivacySectionTitle => '수입품';
@@ -41493,19 +42833,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => '라우팅하기 전에 항상 물어보세요.';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => '자동 경로 카운트다운을 건너뛰세요. 공유할 때마다 선택기가 열립니다.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      '자동 경로 카운트다운을 건너뛰세요. 공유할 때마다 선택기가 열립니다.';
 
   @override
   String get importsPrivacyClearHistoryTitle => '공유 기록 지우기';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => '가져오기 목록에서 모든 기록을 제거합니다. 가져온 운동, 레시피, 음식 로그는 그대로 유지됩니다.';
+  String get importsPrivacyClearHistorySubtitle =>
+      '가져오기 목록에서 모든 기록을 제거합니다. 가져온 운동, 레시피, 음식 로그는 그대로 유지됩니다.';
 
   @override
   String get importsPrivacyClearConfirmTitle => '공유 기록을 삭제하시겠습니까?';
 
   @override
-  String get importsPrivacyClearConfirmBody => '가져오기 목록의 모든 행이 제거됩니다. 가져온 운동, 레시피, 음식 기록은 그대로 유지됩니다.';
+  String get importsPrivacyClearConfirmBody =>
+      '가져오기 목록의 모든 행이 제거됩니다. 가져온 운동, 레시피, 음식 기록은 그대로 유지됩니다.';
 
   @override
   String get importsPrivacyClearAction => '분명한';
@@ -41553,7 +42896,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroModesPillSlowConnection => 'TAKING A WHILE';
 
   @override
-  String get heroModesBodySlowConnection => 'Taking longer than usual to load — retrying automatically.';
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
 
   @override
   String get heroModesPillLive => '라이브';
@@ -41694,7 +43038,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metricsDashboardHrHigh => 'High';
 
   @override
-  String get metricsDashboardHrDisclaimer => 'Informational only, not medical advice. Talk to a clinician about any concerns.';
+  String get metricsDashboardHrDisclaimer =>
+      'Informational only, not medical advice. Talk to a clinician about any concerns.';
 
   @override
   String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
@@ -41719,7 +43064,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metricsDashboardGetStartedTitle => 'Start tracking';
 
   @override
-  String get metricsDashboardGetStartedCta => 'Connect a wearable or log a meal to see your metrics.';
+  String get metricsDashboardGetStartedCta =>
+      'Connect a wearable or log a meal to see your metrics.';
 
   @override
   String quizMinutesLeft(int minutes) {
@@ -41890,7 +43236,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallFounderHeadline => '제가 감당할 수 없었던 코치를 직접 만들었습니다.';
 
   @override
-  String get paywallFounderQuote => '“좋은 퍼스널 트레이너는 한 달에 \$400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 2,300개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”';
+  String get paywallFounderQuote =>
+      '“좋은 퍼스널 트레이너는 한 달에 \$400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 2,300개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”';
 
   @override
   String get paywallFounderName => 'Chetan · 창업자';
@@ -41899,13 +43246,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallFounderSub => '첫날부터 Zealova와 함께 트레이닝 중';
 
   @override
-  String get paywallTesterQuote => '“제가 금요일 하체 운동을 늘 거른다는 걸 알아채더니 그냥… 토요일로 옮겨줬어요.”';
+  String get paywallTesterQuote =>
+      '“제가 금요일 하체 운동을 늘 거른다는 걸 알아채더니 그냥… 토요일로 옮겨줬어요.”';
 
   @override
   String get paywallTesterName => 'Keertan · 초기 테스터';
 
   @override
-  String get paywallTesterQuote2 => '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
+  String get paywallTesterQuote2 =>
+      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
   String get paywallTesterName2 => 'Toby · macro tracker';
@@ -41964,7 +43313,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallV7DownsellHeadline => '플랜이 삭제된다고요?';
 
   @override
-  String get paywallV7DownsellSub => '단 한 번뿐인 창립 멤버 가격, 동일한 7일 무료 체험. 이 혜택은 다시 오지 않습니다.';
+  String get paywallV7DownsellSub =>
+      '단 한 번뿐인 창립 멤버 가격, 동일한 7일 무료 체험. 이 혜택은 다시 오지 않습니다.';
 
   @override
   String metricSetupPanelKicker(num count) {
@@ -42091,7 +43441,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get metricGridAddMetric => '지표 추가';
 
   @override
-  String get metricGridConnectBody => '걸음 수, 수면, 컨디션이 자동으로 채워집니다 — 추정값은 보여주지 않습니다.';
+  String get metricGridConnectBody =>
+      '걸음 수, 수면, 컨디션이 자동으로 채워집니다 — 추정값은 보여주지 않습니다.';
 
   @override
   String get metricGridConnectCta => 'HEALTH 연결';

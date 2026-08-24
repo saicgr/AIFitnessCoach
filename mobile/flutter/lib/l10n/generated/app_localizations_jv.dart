@@ -24,13 +24,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get accessibilityCardAccessibility => 'Aksesibilitas';
 
   @override
-  String get accessibilityCardBiggerTouchTargetsFor => 'Target tutul luwih gedhe supaya gampang dipencet';
+  String get accessibilityCardBiggerTouchTargetsFor =>
+      'Target tutul luwih gedhe supaya gampang dipencet';
 
   @override
   String get accessibilityCardHighContrast => 'Kontras Dhuwur';
 
   @override
-  String get accessibilityCardIncreaseColorContrastFor => 'Tambah kontras warna supaya luwih cetha';
+  String get accessibilityCardIncreaseColorContrastFor =>
+      'Tambah kontras warna supaya luwih cetha';
 
   @override
   String get accessibilityCardLargeButtons => 'Tombol Gedhe';
@@ -42,7 +44,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get accessibilityCardReduceAnimations => 'Kurangi Animasi';
 
   @override
-  String get accessibilityCardVisualAndInteractionAdjustm => 'Pangaturan visual lan interaksi';
+  String get accessibilityCardVisualAndInteractionAdjustm =>
+      'Pangaturan visual lan interaksi';
 
   @override
   String get accessibilityCurrentMode => 'Mode Saiki';
@@ -91,7 +94,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get achievementsCardCompleteWorkoutsToUnlock => 'Rampungake latihan kanggo mbukak lencana!';
+  String get achievementsCardCompleteWorkoutsToUnlock =>
+      'Rampungake latihan kanggo mbukak lencana!';
 
   @override
   String get achievementsCardLoadingAchievements => 'Ngasah prestasi...';
@@ -103,16 +107,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get achievementsCardStartYourJourney => 'Miwiti perjalananmu';
 
   @override
-  String get achievementsCompleteWorkoutsToEarn => 'Rampungake latihan kanggo entuk prestasi!';
+  String get achievementsCompleteWorkoutsToEarn =>
+      'Rampungake latihan kanggo entuk prestasi!';
 
   @override
   String get achievementsCurrentStreaks => 'STREAK SAIKI';
 
   @override
-  String get achievementsKeepWorkingOutTo => 'Terus latihan kanggo mbukak lencana!';
+  String get achievementsKeepWorkingOutTo =>
+      'Terus latihan kanggo mbukak lencana!';
 
   @override
-  String get achievementsLiftHeavierToSet => 'Angkat luwih abot kanggo nggawe PR anyar!';
+  String get achievementsLiftHeavierToSet =>
+      'Angkat luwih abot kanggo nggawe PR anyar!';
 
   @override
   String get achievementsNoAchievementsYet => 'Durung ana prestasi';
@@ -269,7 +276,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activeWorkoutHelperBreathing => 'Ambegan';
 
   @override
-  String get activeWorkoutHelperChooseHowWeightChanges => 'Pilih carane bobot owah ing saben set';
+  String get activeWorkoutHelperChooseHowWeightChanges =>
+      'Pilih carane bobot owah ing saben set';
 
   @override
   String get activeWorkoutHelperDifficulty => 'Kangelan';
@@ -287,7 +295,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activeWorkoutHelperFormCues => 'Ciri Gerakan';
 
   @override
-  String get activeWorkoutHelperLoadingAiCoachTips => 'Ngasah tips pelatih AI...';
+  String get activeWorkoutHelperLoadingAiCoachTips =>
+      'Ngasah tips pelatih AI...';
 
   @override
   String get activeWorkoutHelperPrimaryMuscle => 'Otot Utama';
@@ -302,7 +311,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activeWorkoutHelperSetProgression => 'Progresi Set';
 
   @override
-  String get activeWorkoutHelperTapVideoToWatch => 'Pencet \"Video\" kanggo ndeleng conto gerakan';
+  String get activeWorkoutHelperTapVideoToWatch =>
+      'Pencet \"Video\" kanggo ndeleng conto gerakan';
 
   @override
   String get activeWorkoutHelperVideo => 'Video';
@@ -314,7 +324,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activeWorkoutHelperWhenToUse => 'Kapan digunakake';
 
   @override
-  String get activeWorkoutScreenExerciseSwappedSuccessfully => 'Latihan kasil diganti';
+  String get activeWorkoutScreenExerciseSwappedSuccessfully =>
+      'Latihan kasil diganti';
 
   @override
   String activeWorkoutScreenRefactoredExerciseSAdded(Object _exercises) {
@@ -328,10 +339,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activeWorkoutScreenWorkoutAdapted => 'Latihan wis diadaptasi.';
 
   @override
-  String get activityCardAdditionalDetailsOptional => 'Detail tambahan (opsional)';
+  String get activityCardAdditionalDetailsOptional =>
+      'Detail tambahan (opsional)';
 
   @override
-  String get activityCardAreYouSureYou => 'Apa sampeyan yakin arep mbusak kiriman iki? Tindakan iki ora bisa dibatalake.';
+  String get activityCardAreYouSureYou =>
+      'Apa sampeyan yakin arep mbusak kiriman iki? Tindakan iki ora bisa dibatalake.';
 
   @override
   String get activityCardCopyLink => 'Salin Link';
@@ -343,10 +356,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activityCardEditPost => 'Sunting Kiriman';
 
   @override
-  String get activityCardFailedToSubmitReport => 'Gagal ngirim laporan. Mangga dicobi malih.';
+  String get activityCardFailedToSubmitReport =>
+      'Gagal ngirim laporan. Mangga dicobi malih.';
 
   @override
-  String get activityCardLinkCopiedToClipboard => 'Tautan disalin menyang papan klip';
+  String get activityCardLinkCopiedToClipboard =>
+      'Tautan disalin menyang papan klip';
 
   @override
   String activityCardPartChallengeLeaderboardM(Object duration) {
@@ -369,7 +384,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activityCardReportPost => 'Lapor kiriman';
 
   @override
-  String get activityCardReportSubmittedThankYou => 'Laporan wis dikirim. Matur nuwun wis mbantu njaga komunitas kita tetep aman.';
+  String get activityCardReportSubmittedThankYou =>
+      'Laporan wis dikirim. Matur nuwun wis mbantu njaga komunitas kita tetep aman.';
 
   @override
   String get activityCardSubmit => 'Kirim';
@@ -381,7 +397,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activityCardUiEarnedAnAchievement => 'entuk prestasi';
 
   @override
-  String get activityCardUiKeepTrainingEveryAttempt => 'Terus latihan! Saben usaha nggawe sampeyan luwih kuwat';
+  String get activityCardUiKeepTrainingEveryAttempt =>
+      'Terus latihan! Saben usaha nggawe sampeyan luwih kuwat';
 
   @override
   String activityCardUiLbs(Object yourVolume) {
@@ -435,7 +452,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activityCardUnpinPost => 'Copot pin kiriman';
 
   @override
-  String get activityCardWhyAreYouReporting => 'Kenapa sampeyan nglaporake kiriman iki?';
+  String get activityCardWhyAreYouReporting =>
+      'Kenapa sampeyan nglaporake kiriman iki?';
 
   @override
   String get activityHeatmapActivity => 'Aktivitas';
@@ -495,7 +513,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get activityShareTapToAddA => 'Tutul kanggo nambah katrangan...';
 
   @override
-  String get addFoodEGMadeWith => 'tuladhane \'digawe nganggo lenga zaitun, tanpa gandum wutuh\' utawa \'aku mung mangan setengah\'';
+  String get addFoodEGMadeWith =>
+      'tuladhane \'digawe nganggo lenga zaitun, tanpa gandum wutuh\' utawa \'aku mung mangan setengah\'';
 
   @override
   String get addFoodRefineWithAi => 'Refine nganggo AI';
@@ -519,7 +538,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymProfileCreateGym => 'Gawe Gym';
 
   @override
-  String get addGymProfileCustomizeTheEquipmentAvaila => 'Kustomisasi peralatan sing kasedhiya ing gym iki, kalebu rentang bobot';
+  String get addGymProfileCustomizeTheEquipmentAvaila =>
+      'Kustomisasi peralatan sing kasedhiya ing gym iki, kalebu rentang bobot';
 
   @override
   String get addGymProfileDoYouHaveA => 'Apa sampeyan duwe bangku bobot?';
@@ -528,10 +548,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymProfileDoYouHaveA2 => 'Apa sampeyan duwe rak squat?';
 
   @override
-  String get addGymProfileEGHomeGym => 'tuladhane, Gym Ngarep, Planet Fitness, Hotel';
+  String get addGymProfileEGHomeGym =>
+      'tuladhane, Gym Ngarep, Planet Fitness, Hotel';
 
   @override
-  String get addGymProfileEnterANameFor => 'Ketik jeneng kanggo gym sampeyan dhisik (langkah 1).';
+  String get addGymProfileEnterANameFor =>
+      'Ketik jeneng kanggo gym sampeyan dhisik (langkah 1).';
 
   @override
   String get addGymProfileEquipment => 'Peralatan';
@@ -543,22 +565,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymProfileIcon => 'Ikon';
 
   @override
-  String get addGymProfileImportFromPdfPhoto => 'Impor saka PDF, foto, utawa URL';
+  String get addGymProfileImportFromPdfPhoto =>
+      'Impor saka PDF, foto, utawa URL';
 
   @override
   String get addGymProfileMatchAppTheme => 'Cocogake tema aplikasi';
 
   @override
-  String get addGymProfileOptionalLeaveOnLet => 'Opsional — tinggal ing \"Let AI Decide\" yen ora yakin.';
+  String get addGymProfileOptionalLeaveOnLet =>
+      'Opsional — tinggal ing \"Let AI Decide\" yen ora yakin.';
 
   @override
-  String get addGymProfilePickAtLeastOne => 'Pilih paling ora siji dina latihan kanggo gym iki.';
+  String get addGymProfilePickAtLeastOne =>
+      'Pilih paling ora siji dina latihan kanggo gym iki.';
 
   @override
-  String get addGymProfilePleaseEnterAName => 'Mangga ketik jeneng kanggo gym sampeyan';
+  String get addGymProfilePleaseEnterAName =>
+      'Mangga ketik jeneng kanggo gym sampeyan';
 
   @override
-  String get addGymProfileRequiredForBarbellSquat => 'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get addGymProfileRequiredForBarbellSquat =>
+      'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
   String get addGymProfileResetAll => 'Reset Kabeh';
@@ -579,19 +606,23 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get addGymProfileTapToAddRemove => 'Tutul kanggo nambah, mbusak, utawa ngowahi bobot';
+  String get addGymProfileTapToAddRemove =>
+      'Tutul kanggo nambah, mbusak, utawa ngowahi bobot';
 
   @override
-  String get addGymProfileThisHelpsUsSuggest => 'Iki mbantu kita menehi saran peralatan sing bener';
+  String get addGymProfileThisHelpsUsSuggest =>
+      'Iki mbantu kita menehi saran peralatan sing bener';
 
   @override
   String get addGymProfileTrainingSplit => 'Jadwal Latihan';
 
   @override
-  String get addGymProfileUnlocksBenchPressIncline => 'Mbukak kunci: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get addGymProfileUnlocksBenchPressIncline =>
+      'Mbukak kunci: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get addGymProfileUnlocksChestSupportedKb => 'Mbukak kunci: Chest-Supported KB Row, alternatif KB Floor Press';
+  String get addGymProfileUnlocksChestSupportedKb =>
+      'Mbukak kunci: Chest-Supported KB Row, alternatif KB Floor Press';
 
   @override
   String get addGymProfileWorkoutEnvironment => 'Lingkungan Latihan';
@@ -617,7 +648,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymSheetCommercialGym => 'Gym Komersial';
 
   @override
-  String get addGymSheetCommercialGymDesc => 'Akses lengkap menyang kabeh mesin lan peralatan';
+  String get addGymSheetCommercialGymDesc =>
+      'Akses lengkap menyang kabeh mesin lan peralatan';
 
   @override
   String addGymSheetConflictDay(Object day, Object names) {
@@ -665,28 +697,35 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get addGymSheetFollowUpBenchSubtitle => 'Mbukak: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get addGymSheetFollowUpBenchSubtitle =>
+      'Mbukak: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get addGymSheetFollowUpBenchTitle => 'Apa sampeyan duwe bangku angkat beban?';
+  String get addGymSheetFollowUpBenchTitle =>
+      'Apa sampeyan duwe bangku angkat beban?';
 
   @override
-  String get addGymSheetFollowUpSquatRackSubtitle => 'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get addGymSheetFollowUpSquatRackSubtitle =>
+      'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
-  String get addGymSheetFollowUpSquatRackTitle => 'Apa sampeyan duwe rak squat?';
+  String get addGymSheetFollowUpSquatRackTitle =>
+      'Apa sampeyan duwe rak squat?';
 
   @override
-  String get addGymSheetGymNameHint => 'tuladhane: Gym Omah, Planet Fitness, Hotel';
+  String get addGymSheetGymNameHint =>
+      'tuladhane: Gym Omah, Planet Fitness, Hotel';
 
   @override
-  String get addGymSheetHelpsUsSuggest => 'Iki mbantu kita menehi saran peralatan sing pas';
+  String get addGymSheetHelpsUsSuggest =>
+      'Iki mbantu kita menehi saran peralatan sing pas';
 
   @override
   String get addGymSheetHomeGym => 'Gym Omah';
 
   @override
-  String get addGymSheetHomeGymDesc => 'Panggonan latihan khusus nganggo peralatanmu dhewe';
+  String get addGymSheetHomeGymDesc =>
+      'Panggonan latihan khusus nganggo peralatanmu dhewe';
 
   @override
   String get addGymSheetHomeMinimal => 'Omah (Minimal)';
@@ -698,7 +737,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymSheetHotelTravel => 'Hotel / Travel';
 
   @override
-  String get addGymSheetHotelTravelDesc => 'Panggonan lan peralatan winates nalika lelungan';
+  String get addGymSheetHotelTravelDesc =>
+      'Panggonan lan peralatan winates nalika lelungan';
 
   @override
   String addGymSheetItems(Object count) {
@@ -712,13 +752,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymSheetOutdoors => 'Njobo Ruangan';
 
   @override
-  String get addGymSheetOutdoorsDesc => 'Taman, gym njobo ruangan, lan papan terbuka';
+  String get addGymSheetOutdoorsDesc =>
+      'Taman, gym njobo ruangan, lan papan terbuka';
 
   @override
-  String get addGymSheetPickAtLeastOneDay => 'Mangga pilih paling ora siji dina latihan';
+  String get addGymSheetPickAtLeastOneDay =>
+      'Mangga pilih paling ora siji dina latihan';
 
   @override
-  String get addGymSheetPickDaysDesc => 'Pilih dina sampeyan bakal latihan ing gym iki. Kita bakal nggawe jadwal latihan 14 dina kanggo dina-dina kasebut nalika sampeyan pindhah menyang profil iki.';
+  String get addGymSheetPickDaysDesc =>
+      'Pilih dina sampeyan bakal latihan ing gym iki. Kita bakal nggawe jadwal latihan 14 dina kanggo dina-dina kasebut nalika sampeyan pindhah menyang profil iki.';
 
   @override
   String addGymSheetSameAs(Object name) {
@@ -773,7 +816,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addGymSheetYesAddIt => 'Ya, Tambahake';
 
   @override
-  String get addScheduleItemAddToGoogleCalendar => 'Tambah menyang Google Calendar';
+  String get addScheduleItemAddToGoogleCalendar =>
+      'Tambah menyang Google Calendar';
 
   @override
   String get addScheduleItemAddToSchedule => 'Tambah menyang Jadwal';
@@ -785,10 +829,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get addScheduleItemSaveChanges => 'Simpen Owah-owahan';
 
   @override
-  String get advancedAudioCountdownRestTimerVoice => 'Countdown, timer ngaso, pengumuman swara';
+  String get advancedAudioCountdownRestTimerVoice =>
+      'Countdown, timer ngaso, pengumuman swara';
 
   @override
-  String get advancedAudioSoundEffectsWorkoutAudio => 'Efek swara & audio latihan';
+  String get advancedAudioSoundEffectsWorkoutAudio =>
+      'Efek swara & audio latihan';
 
   @override
   String get agentInfoHeaderConnectedToSupport => 'Sambung menyang dhukungan';
@@ -817,7 +863,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachBalanced => 'Seimbang';
 
   @override
-  String get aiCoachCelebrateStreakMilestones => 'Rayakake tonggak sejarah streak';
+  String get aiCoachCelebrateStreakMilestones =>
+      'Rayakake tonggak sejarah streak';
 
   @override
   String get aiCoachCoachNotifications => 'NOTIFIKASI PELATIH';
@@ -835,7 +882,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachGentle => 'Alus';
 
   @override
-  String get aiCoachGetNotifiedWhenYour => 'Entuk notifikasi nalika kothakmu wis siyap';
+  String get aiCoachGetNotifiedWhenYour =>
+      'Entuk notifikasi nalika kothakmu wis siyap';
 
   @override
   String get aiCoachHabitReminders => 'Pangeling Pakulinan';
@@ -853,7 +901,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealAngryWhatToEat => 'Nesu — mangan apa?';
 
   @override
-  String get aiCoachMealAnxiousCalmingPick => 'Kuwatir — pilihan sing nenangake?';
+  String get aiCoachMealAnxiousCalmingPick =>
+      'Kuwatir — pilihan sing nenangake?';
 
   @override
   String get aiCoachMealAnythingHealthy => 'Apa wae sing sehat';
@@ -874,25 +923,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealBloatedWhatNow => 'Kembung — saiki piye?';
 
   @override
-  String get aiCoachMealBoredEatingWhatInstead => 'Mangan amarga bosen — ganti apa?';
+  String get aiCoachMealBoredEatingWhatInstead =>
+      'Mangan amarga bosen — ganti apa?';
 
   @override
   String get aiCoachMealBudgetFriendlyMeal => 'Panganan sing irit?';
 
   @override
-  String get aiCoachMealBulkingCalorieDensePick => 'Pilihan kalori dhuwur kanggo bulking?';
+  String get aiCoachMealBulkingCalorieDensePick =>
+      'Pilihan kalori dhuwur kanggo bulking?';
 
   @override
   String get aiCoachMealCoachNeedsAConnection => 'Pelatih butuh sambungan.';
 
   @override
-  String get aiCoachMealComfortFoodSmartVersion => 'Comfort food, versi pinter?';
+  String get aiCoachMealComfortFoodSmartVersion =>
+      'Comfort food, versi pinter?';
 
   @override
-  String get aiCoachMealCravingSugarSmartSwap => 'Pengin gula — ganti sing pinter?';
+  String get aiCoachMealCravingSugarSmartSwap =>
+      'Pengin gula — ganti sing pinter?';
 
   @override
-  String get aiCoachMealCuttingFriendlyMeal => 'Panganan sing pas kanggo cutting?';
+  String get aiCoachMealCuttingFriendlyMeal =>
+      'Panganan sing pas kanggo cutting?';
 
   @override
   String get aiCoachMealFastFood => 'Panganan cepet';
@@ -910,7 +964,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealHeadacheFoodFix => 'Sirah mumet — panganan sing pas?';
 
   @override
-  String get aiCoachMealHeartburnSafePick => 'Pilihan sing aman kanggo asam lambung?';
+  String get aiCoachMealHeartburnSafePick =>
+      'Pilihan sing aman kanggo asam lambung?';
 
   @override
   String get aiCoachMealHighProtein => 'Protein dhuwur';
@@ -937,7 +992,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealLogThisMeal => 'Cathet panganan iki';
 
   @override
-  String get aiCoachMealLookingAtTodayS => 'Ndeleng panganan, latihan, lan favorit dina iki...';
+  String get aiCoachMealLookingAtTodayS =>
+      'Ndeleng panganan, latihan, lan favorit dina iki...';
 
   @override
   String get aiCoachMealLowCalSwap => 'Ganti kalori sithik?';
@@ -946,7 +1002,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealLowSugarOption => 'Opsi gula sithik?';
 
   @override
-  String get aiCoachMealMaintenanceSteadyPick => 'Pilihan stabil kanggo maintenance?';
+  String get aiCoachMealMaintenanceSteadyPick =>
+      'Pilihan stabil kanggo maintenance?';
 
   @override
   String get aiCoachMealMediterranean => 'Mediterania';
@@ -958,7 +1015,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealMexican => 'Meksiko';
 
   @override
-  String get aiCoachMealMexicanWithGoodMacros => 'Meksiko kanthi makro sing apik?';
+  String get aiCoachMealMexicanWithGoodMacros =>
+      'Meksiko kanthi makro sing apik?';
 
   @override
   String get aiCoachMealNeedMoreFiber => 'Butuh luwih akeh serat?';
@@ -973,7 +1031,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealOpenFullChat => 'Bukak chat lengkap';
 
   @override
-  String get aiCoachMealPoorSleepLastNight => 'Turu kurang nyenyak wingi bengi?';
+  String get aiCoachMealPoorSleepLastNight =>
+      'Turu kurang nyenyak wingi bengi?';
 
   @override
   String get aiCoachMealPostWorkoutMeal => 'Panganan sawise latihan?';
@@ -994,7 +1053,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealStressedWhatHelps => 'Stres — apa sing mbantu?';
 
   @override
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Panganan $meal ala Asia — siji pilihan (rice bowl, mi, sushi, stir fry), macros lan cara nyiapake.$budgetTail';
   }
 
@@ -1044,7 +1106,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType) {
+  String aiCoachMealSuggestionSheetGotALaterToday(
+    Object meal,
+    Object workoutType,
+  ) {
     return 'Bakal ana $workoutType mengko. Apa $meal sadurunge latihan sing pas? Sertakake makro + wektu.';
   }
 
@@ -1059,7 +1124,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetHighProteinPickOne(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Pilih $meal dhuwur protein. Siji menu, macros lengkap, cara nyiapake singkat.$budgetTail';
   }
 
@@ -1094,17 +1162,26 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Panganan $meal India — siji pilihan otentik (lor utawa kidul), macros, sisihane sing kudu dihindari/ditambah supaya tetep on track.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Panganan $meal Italia utawa comfort food — siji pilihan nyata, macros, swap sing luwih entheng yen perlu.$budgetTail';
   }
 
   @override
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType) {
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
+    Object meal,
+    Object workoutType,
+  ) {
     return 'Nembe rampung $workoutType. Apa $meal pemulihan sing pas karo apa sing wis kula dhahar?';
   }
 
@@ -1119,7 +1196,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Lagi nyathet $meal. Wenehi aku siji pilihan panganan sehat sing pas kanggo dina iki — macros, cekak lan cetha.$budgetTail';
   }
 
@@ -1129,7 +1209,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Panganan $meal Mediterania — siji pilihan (bowl, piring, wrap), macros, alesan kenapa iki pas.$budgetTail';
   }
 
@@ -1139,7 +1222,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Panganan $meal Meksiko — siji pilihan nyata (bowl, taco, lsp), macros, apa sing kudu ditambah supaya tetep on track.$budgetTail';
   }
 
@@ -1154,7 +1240,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal) {
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(
+    Object budgetTail,
+    Object meal,
+  ) {
     return 'Ora ana kompor, ora ana oven — siji $meal cepet sing bisa digawe ing 5 menit. Macros + apa sing kudu dituku.$budgetTail';
   }
 
@@ -1197,7 +1286,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealTiredEnergyFood => 'Kesel — panganan energi?';
 
   @override
-  String get aiCoachMealUpsetStomachGentleMeal => 'Weteng ora kepenak — panganan sing alus?';
+  String get aiCoachMealUpsetStomachGentleMeal =>
+      'Weteng ora kepenak — panganan sing alus?';
 
   @override
   String get aiCoachMealVegetarianPick => 'Pilihan vegetarian?';
@@ -1209,7 +1299,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachMealWhatCanIEat => 'Apa sing bisa tak pangan saiki?';
 
   @override
-  String get aiCoachMealWorkingFromPartialData => 'Nggarap data parsial — jawaban bisa uga umum.';
+  String get aiCoachMealWorkingFromPartialData =>
+      'Nggarap data parsial — jawaban bisa uga umum.';
 
   @override
   String get aiCoachMissedWorkoutNudge => 'Pangeling Latihan sing Keliwat';
@@ -1232,7 +1323,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachPostWorkoutMeal => 'Panganan Sawise Latihan';
 
   @override
-  String get aiCoachRefuelReminderAfterTraining => 'Pangeling nutrisi sawise latihan';
+  String get aiCoachRefuelReminderAfterTraining =>
+      'Pangeling nutrisi sawise latihan';
 
   @override
   String get aiCoachRemindByEveningIf => 'Elingake sore yen kowe lali';
@@ -1253,7 +1345,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get aiCoachReportGreatWorkoutKeepUp => 'Latihan sing apik! Terusake semangatmu.';
+  String get aiCoachReportGreatWorkoutKeepUp =>
+      'Latihan sing apik! Terusake semangatmu.';
 
   @override
   String get aiCoachReportMusclesWorked => 'Otot sing Dilatih';
@@ -1271,10 +1364,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiCoachReportVsLast => 'vs Pungkasan';
 
   @override
-  String get aiCoachShowFloatingBubbleFor => 'Tampilake gelembung ngambang kanggo akses cepet AI Coach';
+  String get aiCoachShowFloatingBubbleFor =>
+      'Tampilake gelembung ngambang kanggo akses cepet AI Coach';
 
   @override
-  String get aiCoachShowFloatingChatBubble => 'Tampilake gelembung chat ngambang, notifikasi khusus, lan kontrol privasi';
+  String get aiCoachShowFloatingChatBubble =>
+      'Tampilake gelembung chat ngambang, notifikasi khusus, lan kontrol privasi';
 
   @override
   String get aiCoachStreakCelebrations => 'Perayaan Streak';
@@ -1286,7 +1381,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiDataUsageDataWeDoNot => 'Data sing ora kita bagi karo model';
 
   @override
-  String get aiDataUsageEverythingNeededToCoach => 'Kabeh sing dibutuhake kanggo nglatih sampeyan';
+  String get aiDataUsageEverythingNeededToCoach =>
+      'Kabeh sing dibutuhake kanggo nglatih sampeyan';
 
   @override
   String get aiDataUsageHowDataIsProtected => 'Kepiye Data Dilindungi';
@@ -1300,22 +1396,30 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get aiDataUsageTechnicalSafeguardsInPlace => 'Pangayoman teknis sing wis ana';
+  String get aiDataUsageTechnicalSafeguardsInPlace =>
+      'Pangayoman teknis sing wis ana';
 
   @override
   String get aiDataUsageWhatModelsReceive => 'Apa sing ditampa dening model';
 
   @override
-  String get aiDataUsageWhatNeverLeavesOur => 'Apa sing ora bakal metu saka server kita';
+  String get aiDataUsageWhatNeverLeavesOur =>
+      'Apa sing ora bakal metu saka server kita';
 
   @override
-  String get aiDataUsageYouAreInCharge => 'Sampeyan sing ngatur data sampeyan dhewe';
+  String get aiDataUsageYouAreInCharge =>
+      'Sampeyan sing ngatur data sampeyan dhewe';
 
   @override
   String get aiDataUsageYourControls => 'Kontrol Sampeyan';
 
   @override
-  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit) {
+  String aiFeaturesMixinValue(
+    Object displayCurrent,
+    Object message,
+    Object snappedDisplay,
+    Object unit,
+  ) {
     return '$message: $displayCurrent → $snappedDisplay $unit';
   }
 
@@ -1363,10 +1467,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiIntegrationsCopyTokenOnly => 'Salin token wae';
 
   @override
-  String get aiIntegrationsCouldNotCreateConnection => 'Ora bisa nggawe sambungan.';
+  String get aiIntegrationsCouldNotCreateConnection =>
+      'Ora bisa nggawe sambungan.';
 
   @override
-  String get aiIntegrationsCouldNotLoadIntegrations => 'Ora bisa mbukak integrasi';
+  String get aiIntegrationsCouldNotLoadIntegrations =>
+      'Ora bisa mbukak integrasi';
 
   @override
   String get aiIntegrationsCreateConnection => 'Gawe Sambungan';
@@ -1378,7 +1484,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiIntegrationsDisconnect => 'Pedhot sambungan';
 
   @override
-  String get aiIntegrationsDisconnectThisAssistant => 'Pedhot sambungan asisten iki?';
+  String get aiIntegrationsDisconnectThisAssistant =>
+      'Pedhot sambungan asisten iki?';
 
   @override
   String get aiIntegrationsDisconnecting => 'Medhot sambungan...';
@@ -1387,13 +1494,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiIntegrationsGenerate => 'Gawe';
 
   @override
-  String get aiIntegrationsGiveThisConnectionA => 'Wenehi jeneng sambungan iki dhisik.';
+  String get aiIntegrationsGiveThisConnectionA =>
+      'Wenehi jeneng sambungan iki dhisik.';
 
   @override
   String get aiIntegrationsGrantedPermissions => 'Izin sing diwenehake';
 
   @override
-  String get aiIntegrationsIVeSavedMy => 'Aku wis nyimpen konfigurasi · Rampung';
+  String get aiIntegrationsIVeSavedMy =>
+      'Aku wis nyimpen konfigurasi · Rampung';
 
   @override
   String get aiIntegrationsMyLaptopClaude => 'Laptopku Claude';
@@ -1408,7 +1517,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiIntegrationsOauth => 'OAuth';
 
   @override
-  String get aiIntegrationsPasteThisConfigInto => 'Tempel konfigurasi iki menyang klien AI sampeyan.';
+  String get aiIntegrationsPasteThisConfigInto =>
+      'Tempel konfigurasi iki menyang klien AI sampeyan.';
 
   @override
   String get aiIntegrationsPermissions => 'Izin';
@@ -1463,13 +1573,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiIntegrationsTryAgain => 'Coba maneh';
 
   @override
-  String get aiIntegrationsUncheckAnythingYouWant => 'Copot centhang apa wae sing pengin sampeyan ora wenehake menyang sambungan iki.';
+  String get aiIntegrationsUncheckAnythingYouWant =>
+      'Copot centhang apa wae sing pengin sampeyan ora wenehake menyang sambungan iki.';
 
   @override
   String get aiModelDownloadBasic => 'Dhasar';
 
   @override
-  String get aiModelDownloadBatteryWarning => 'Model AI ing piranti nindakake komputasi intensif ing telpon sampeyan. Iki bisa nambah panggunaan baterei lan nggawe piranti dadi panas nalika nggawe latihan. Model sing luwih gedhe nggunakake luwih akeh sumber daya.';
+  String get aiModelDownloadBatteryWarning =>
+      'Model AI ing piranti nindakake komputasi intensif ing telpon sampeyan. Iki bisa nambah panggunaan baterei lan nggawe piranti dadi panas nalika nggawe latihan. Model sing luwih gedhe nggunakake luwih akeh sumber daya.';
 
   @override
   String get aiModelDownloadBestQuality => 'Kualitas paling apik';
@@ -1502,7 +1614,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadGetYourTokenAt => 'Entuk token sampeyan ing huggingface.co/settings/tokens';
+  String get aiModelDownloadGetYourTokenAt =>
+      'Entuk token sampeyan ing huggingface.co/settings/tokens';
 
   @override
   String get aiModelDownloadHf => 'hf_...';
@@ -1511,10 +1624,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelDownloadHuggingfaceToken => 'Token HuggingFace';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenRemoved => 'Token HuggingFace dibusak';
+  String get aiModelDownloadHuggingfaceTokenRemoved =>
+      'Token HuggingFace dibusak';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenSaved => 'Token HuggingFace disimpen';
+  String get aiModelDownloadHuggingfaceTokenSaved =>
+      'Token HuggingFace disimpen';
 
   @override
   String get aiModelDownloadImages => 'Gambar';
@@ -1529,7 +1644,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelDownloadNotCompatible => 'Ora kompatibel';
 
   @override
-  String get aiModelDownloadNotSupportedOnThis => 'Ora didhukung ing piranti iki';
+  String get aiModelDownloadNotSupportedOnThis =>
+      'Ora didhukung ing piranti iki';
 
   @override
   String get aiModelDownloadOnDeviceAiModel => 'Model AI ing Piranti';
@@ -1547,7 +1663,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelDownloadRemove => 'Busak';
 
   @override
-  String get aiModelDownloadRequiredToDownload => 'Perlu kanggo ngunduh model saka HuggingFace. Entuk token gratis sampeyan ing huggingface.co/settings/tokens';
+  String get aiModelDownloadRequiredToDownload =>
+      'Perlu kanggo ngunduh model saka HuggingFace. Entuk token gratis sampeyan ing huggingface.co/settings/tokens';
 
   @override
   String aiModelDownloadRequiresRam(Object ramLabel) {
@@ -1583,13 +1700,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelDownloadUnknown => 'Ora dingerteni';
 
   @override
-  String get aiModelsCheckingDeviceCapabilities => 'Mriksa kapabilitas piranti...';
+  String get aiModelsCheckingDeviceCapabilities =>
+      'Mriksa kapabilitas piranti...';
 
   @override
-  String get aiModelsCouldNotDetectDevice => 'Ora bisa ndeteksi kapabilitas piranti';
+  String get aiModelsCouldNotDetectDevice =>
+      'Ora bisa ndeteksi kapabilitas piranti';
 
   @override
-  String get aiModelsGetTokenAtHuggingface => 'Entuk token ing huggingface.co/settings/tokens';
+  String get aiModelsGetTokenAtHuggingface =>
+      'Entuk token ing huggingface.co/settings/tokens';
 
   @override
   String get aiModelsHf => 'hf_...';
@@ -1598,7 +1718,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelsHuggingfaceToken => 'Token HuggingFace';
 
   @override
-  String get aiModelsManageGemmaModelsFor => 'Ngatur model Gemma kanggo nggawe latihan offline';
+  String get aiModelsManageGemmaModelsFor =>
+      'Ngatur model Gemma kanggo nggawe latihan offline';
 
   @override
   String get aiModelsModelLibrary => 'Pustaka Model';
@@ -1613,7 +1734,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelsRemove => 'Busak';
 
   @override
-  String get aiModelsRequiredToDownloadGated => 'Dibutuhake kanggo ndownload model gated saka HuggingFace.';
+  String get aiModelsRequiredToDownloadGated =>
+      'Dibutuhake kanggo ndownload model gated saka HuggingFace.';
 
   @override
   String get aiModelsSaveToken => 'Simpen Token';
@@ -1647,25 +1769,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiModelsTokenSavedSecurely => 'Token disimpen kanthi aman';
 
   @override
-  String get aiPrivacyContributeToWomenS => 'Kontribusi kanggo Riset Kesehatan Wanita';
+  String get aiPrivacyContributeToWomenS =>
+      'Kontribusi kanggo Riset Kesehatan Wanita';
 
   @override
-  String get aiPrivacyControlHowYourData => 'Kontrol kepiye data sampeyan digunakake';
+  String get aiPrivacyControlHowYourData =>
+      'Kontrol kepiye data sampeyan digunakake';
 
   @override
-  String get aiPrivacyCouldnTUpdateConsent => 'Ora bisa nganyari idin. Mangga coba maneh.';
+  String get aiPrivacyCouldnTUpdateConsent =>
+      'Ora bisa nganyari idin. Mangga coba maneh.';
 
   @override
   String get aiPrivacyHowYourDataIs => 'Kepiye Data Sampeyan Digunakake';
 
   @override
-  String get aiPrivacyImportantHealthInformation => 'Informasi kesehatan penting';
+  String get aiPrivacyImportantHealthInformation =>
+      'Informasi kesehatan penting';
 
   @override
   String get aiPrivacyMedicalDisclaimer => 'Panyuwunan Medis';
 
   @override
-  String get aiPrivacyMessagesAreStoredSo => 'Pesen disimpen supaya pelatih sampeyan ngelingi konteks';
+  String get aiPrivacyMessagesAreStoredSo =>
+      'Pesen disimpen supaya pelatih sampeyan ngelingi konteks';
 
   @override
   String get aiPrivacyPersonalization => 'Personalisasi';
@@ -1677,10 +1804,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiPrivacySaveChatHistory => 'Simpen Riwayat Chat';
 
   @override
-  String get aiPrivacySeeWhatDataIs => 'Deleng data apa sing diproses lan kepiye carane';
+  String get aiPrivacySeeWhatDataIs =>
+      'Deleng data apa sing diproses lan kepiye carane';
 
   @override
-  String get aiPrivacyYourCoachPersonalizesWorkou => 'Pelatih sampeyan nggawe jadwal latihan lan chat sing pas kanggo sampeyan';
+  String get aiPrivacyYourCoachPersonalizesWorkou =>
+      'Pelatih sampeyan nggawe jadwal latihan lan chat sing pas kanggo sampeyan';
 
   @override
   String get aiSettingsAdvancedSettings => 'Setelan lanjut';
@@ -1701,7 +1830,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiSettingsPersonalityTone => 'KEPRIBADIAN & NADA';
 
   @override
-  String get aiSettingsPickTheWeeklyStructure => 'Pilih struktur mingguan sing bakal direncanakake dening AI. Owah-owahan bakal ditrapake kanggo generasi sabanjure — minggu iki ora bakal owah.';
+  String get aiSettingsPickTheWeeklyStructure =>
+      'Pilih struktur mingguan sing bakal direncanakake dening AI. Owah-owahan bakal ditrapake kanggo generasi sabanjure — minggu iki ora bakal owah.';
 
   @override
   String get aiSettingsPrivacyData => 'PRIVASI & DATA';
@@ -1721,16 +1851,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get aiSettingsScreenAddHelpfulTipsIn => 'Tambah tips migunani ing tanggapan';
+  String get aiSettingsScreenAddHelpfulTipsIn =>
+      'Tambah tips migunani ing tanggapan';
 
   @override
-  String get aiSettingsScreenAiCoachDuringWorkouts => 'Pelatih AI Nalika Latihan';
+  String get aiSettingsScreenAiCoachDuringWorkouts =>
+      'Pelatih AI Nalika Latihan';
 
   @override
   String get aiSettingsScreenAiCoachSettings => 'Setelan Pelatih AI';
 
   @override
-  String get aiSettingsScreenAiLearnsFromPast => 'AI sinau saka interaksi sadurunge (RAG)';
+  String get aiSettingsScreenAiLearnsFromPast =>
+      'AI sinau saka interaksi sadurunge (RAG)';
 
   @override
   String get aiSettingsScreenAvailableAgents => 'Agen sing Kasedhiya';
@@ -1757,16 +1890,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiSettingsScreenCommunicationTone => 'Nada Komunikasi';
 
   @override
-  String get aiSettingsScreenConsiderYourInjuriesWhen => 'Nggatekake tatu sampeyan nalika menehi saran';
+  String get aiSettingsScreenConsiderYourInjuriesWhen =>
+      'Nggatekake tatu sampeyan nalika menehi saran';
 
   @override
-  String get aiSettingsScreenCustomizeHowYourAi => 'Atur cara pelatih AI sampeyan sesambungan karo sampeyan';
+  String get aiSettingsScreenCustomizeHowYourAi =>
+      'Atur cara pelatih AI sampeyan sesambungan karo sampeyan';
 
   @override
   String get aiSettingsScreenDefaultAgent => 'Agen Default';
 
   @override
-  String get aiSettingsScreenEnableOrDisableAgents => 'Aktifake utawa mateni agen sing bisa sampeyan @mention';
+  String get aiSettingsScreenEnableOrDisableAgents =>
+      'Aktifake utawa mateni agen sing bisa sampeyan @mention';
 
   @override
   String get aiSettingsScreenEncouragementLevel => 'Tingkat Semangat';
@@ -1775,13 +1911,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiSettingsScreenFormReminders => 'Pangeling Gerakan';
 
   @override
-  String get aiSettingsScreenGetRemindersAboutProper => 'Entuk pangeling babagan gerakan latihan sing bener';
+  String get aiSettingsScreenGetRemindersAboutProper =>
+      'Entuk pangeling babagan gerakan latihan sing bener';
 
   @override
-  String get aiSettingsScreenGetSuggestionsForRest => 'Entuk saran kanggo ngaso lan pemulihan';
+  String get aiSettingsScreenGetSuggestionsForRest =>
+      'Entuk saran kanggo ngaso lan pemulihan';
 
   @override
-  String get aiSettingsScreenIncludeNutritionAdviceIn => 'Kalebu saran nutrisi ing diskusi latihan';
+  String get aiSettingsScreenIncludeNutritionAdviceIn =>
+      'Kalebu saran nutrisi ing diskusi latihan';
 
   @override
   String get aiSettingsScreenIncludeTips => 'Kalebu Tips';
@@ -1806,7 +1945,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get aiSettingsScreenRenameYourCoachPreset => 'Ganti jeneng pelatih sampeyan — preset tetep padha';
+  String get aiSettingsScreenRenameYourCoachPreset =>
+      'Ganti jeneng pelatih sampeyan — preset tetep padha';
 
   @override
   String get aiSettingsScreenResponseLength => 'Dawane Tanggapan';
@@ -1818,34 +1958,42 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiSettingsScreenSaveChatHistory => 'Simpen Riwayat Chat';
 
   @override
-  String get aiSettingsScreenShowAiCoachAssistant => 'Tampilake asisten pelatih AI nalika latihan';
+  String get aiSettingsScreenShowAiCoachAssistant =>
+      'Tampilake asisten pelatih AI nalika latihan';
 
   @override
-  String get aiSettingsScreenStoreConversationsForContex => 'Simpen pacelathon kanggo konteks';
+  String get aiSettingsScreenStoreConversationsForContex =>
+      'Simpen pacelathon kanggo konteks';
 
   @override
-  String get aiSettingsScreenThisAgentRespondsWhen => 'Agen iki nanggapi nalika sampeyan ora @mention agen tartamtu';
+  String get aiSettingsScreenThisAgentRespondsWhen =>
+      'Agen iki nanggapi nalika sampeyan ora @mention agen tartamtu';
 
   @override
-  String get aiSettingsScreenThisWillDeleteAll => 'Iki bakal mbusak kabeh riwayat chat sampeyan';
+  String get aiSettingsScreenThisWillDeleteAll =>
+      'Iki bakal mbusak kabeh riwayat chat sampeyan';
 
   @override
-  String get aiSettingsScreenThisWillPermanentlyDelete => 'Iki bakal mbusak kabeh pacelathon sampeyan karo pelatih AI kanthi permanen. Tindakan iki ora bisa dibatalake.';
+  String get aiSettingsScreenThisWillPermanentlyDelete =>
+      'Iki bakal mbusak kabeh pacelathon sampeyan karo pelatih AI kanthi permanen. Tindakan iki ora bisa dibatalake.';
 
   @override
   String get aiSettingsScreenUseEmojis => 'Gunakake Emoji';
 
   @override
-  String get aiSettingsScreenUsePreviousConversations => 'Gunakake Pacelathon Sadurunge';
+  String get aiSettingsScreenUsePreviousConversations =>
+      'Gunakake Pacelathon Sadurunge';
 
   @override
-  String get aiSettingsShowAiAgentsFitness => 'Tampilake agen AI, tombol pelatihan fitness, lan kontrol privasi';
+  String get aiSettingsShowAiAgentsFitness =>
+      'Tampilake agen AI, tombol pelatihan fitness, lan kontrol privasi';
 
   @override
   String get aiSettingsSuggestions => 'Saran';
 
   @override
-  String get aiSettingsTellTheAiWhat => 'Kandhani AI apa sing paling penting ing blok iki. Maksimal 5 babagan, saben bobote 1–5.';
+  String get aiSettingsTellTheAiWhat =>
+      'Kandhani AI apa sing paling penting ing blok iki. Maksimal 5 babagan, saben bobote 1–5.';
 
   @override
   String get aiSettingsTrainingSplit => 'PEMBAGIAN LATIHAN';
@@ -1870,7 +2018,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName) {
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
+    Object scheduleSuffix,
+    Object splitDisplayName,
+  ) {
     return 'Ngalih menyang $splitDisplayName$scheduleSuffix. Nggawe latihan anyar...';
   }
 
@@ -1889,7 +2040,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiSuggestionCardExercisesPreview => 'Pratinjau Latihan';
 
   @override
-  String get aiSuggestionCoachIsReviewingYour => 'Pelatih lagi mriksa dhaharan sampeyan...';
+  String get aiSuggestionCoachIsReviewingYour =>
+      'Pelatih lagi mriksa dhaharan sampeyan...';
 
   @override
   String aiSuggestionSectionSTip(Object name) {
@@ -1914,25 +2066,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get aiTextInputGotIt => 'Oke';
 
   @override
-  String get aiTextInputLogSets1358 => 'Cathet set: 135*8, 145*6, +10...\nTambah latihan: 3x10 deadlift ing 135';
+  String get aiTextInputLogSets1358 =>
+      'Cathet set: 135*8, 145*6, +10...\nTambah latihan: 3x10 deadlift ing 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Cathet set / Tambah latihan';
 
   @override
-  String get aiTextInputLogSetsForCurrent => '📝 Cathet set kanggo latihan saiki:';
+  String get aiTextInputLogSetsForCurrent =>
+      '📝 Cathet set kanggo latihan saiki:';
 
   @override
   String get aiTextInputOpenAiExerciseInput => 'Buka input latihan AI';
 
   @override
-  String get aiTextInputPhotoOfWorkoutLog => 'Foto log latihan, papan tulis, utawa barbell';
+  String get aiTextInputPhotoOfWorkoutLog =>
+      'Foto log latihan, papan tulis, utawa barbell';
 
   @override
-  String get aiTextInputSpeakNaturallyDid135 => 'Ngomong kanthi alami: \"did 135 for 8\"';
+  String get aiTextInputSpeakNaturallyDid135 =>
+      'Ngomong kanthi alami: \"did 135 for 8\"';
 
   @override
-  String get aiTextInputTapToAddExercises => 'Tutul ✦ kanggo nambah latihan nganggo AI';
+  String get aiTextInputTapToAddExercises =>
+      'Tutul ✦ kanggo nambah latihan nganggo AI';
 
   @override
   String get allSplitsTrainingSplits => 'Pembagian Latihan';
@@ -1958,7 +2115,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get audioCoachCardAudioSynthesisDisabledSho => 'Sintesis audio dipateni — mung nampilake teks.';
+  String get audioCoachCardAudioSynthesisDisabledSho =>
+      'Sintesis audio dipateni — mung nampilake teks.';
 
   @override
   String get audioCoachCardTodaySCoachBrief => 'Ringkesan pelatih dina iki';
@@ -1970,10 +2128,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get audioSettingsBackgroundMusic => 'Musik Latar';
 
   @override
-  String get audioSettingsKeepSpotifyMusicPlaying => 'Tetep muter musik Spotify/liya nalika latihan';
+  String get audioSettingsKeepSpotifyMusicPlaying =>
+      'Tetep muter musik Spotify/liya nalika latihan';
 
   @override
-  String get audioSettingsLowerMusicDuringVoice => 'Cilikake swara musik nalika ana pengumuman swara';
+  String get audioSettingsLowerMusicDuringVoice =>
+      'Cilikake swara musik nalika ana pengumuman swara';
 
   @override
   String get audioSettingsMuteVoiceDuringVideos => 'Mutu swara nalika video';
@@ -2032,7 +2192,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get authWelcomeTitle => 'Sugeng rawuh ing Zealova';
 
   @override
-  String get avoidedExercisesAddToAvoidList => 'Tambah menyang Dhaptar Sing Dihindari';
+  String get avoidedExercisesAddToAvoidList =>
+      'Tambah menyang Dhaptar Sing Dihindari';
 
   @override
   String get avoidedExercisesChangeExercise => 'Ganti Latihan';
@@ -2044,16 +2205,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get avoidedExercisesExercisesToAvoid => 'Latihan sing Dihindari';
 
   @override
-  String get avoidedExercisesExercisesYouAddHere => 'Latihan sing sampeyan tambahake ing kene bakal dicoret saka rencana latihan sing digawe AI.';
+  String get avoidedExercisesExercisesYouAddHere =>
+      'Latihan sing sampeyan tambahake ing kene bakal dicoret saka rencana latihan sing digawe AI.';
 
   @override
-  String get avoidedExercisesNoExercisesToAvoid => 'Ora ana latihan sing dihindari';
+  String get avoidedExercisesNoExercisesToAvoid =>
+      'Ora ana latihan sing dihindari';
 
   @override
   String get avoidedExercisesPleaseLogIn => 'Mangga mlebu akun';
 
   @override
-  String get avoidedExercisesReasonAndTemporarySettings => 'Alesan lan setelan sementara bakal ditrapake kanggo saben latihan. Sampeyan bisa ngowahi entri siji-siji mengko.';
+  String get avoidedExercisesReasonAndTemporarySettings =>
+      'Alesan lan setelan sementara bakal ditrapake kanggo saben latihan. Sampeyan bisa ngowahi entri siji-siji mengko.';
 
   @override
   String get avoidedExercisesReasonOptional => 'Alesan (opsional)';
@@ -2083,7 +2247,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenBrowseTheExerciseLibrary => 'Telusuri perpustakaan latihan kanggo pilihan liyane';
+  String get avoidedExercisesScreenBrowseTheExerciseLibrary =>
+      'Telusuri perpustakaan latihan kanggo pilihan liyane';
 
   @override
   String avoidedExercisesScreenEdit(Object exerciseName) {
@@ -2091,18 +2256,26 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenErrorLoadingAlternatives => 'Gagal ngemot alternatif';
+  String get avoidedExercisesScreenErrorLoadingAlternatives =>
+      'Gagal ngemot alternatif';
 
   @override
-  String get avoidedExercisesScreenNoSpecificAlternativesFound => 'Ora ana alternatif khusus sing ditemokake';
+  String get avoidedExercisesScreenNoSpecificAlternativesFound =>
+      'Ora ana alternatif khusus sing ditemokake';
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
+    Object exerciseName,
+  ) {
     return 'Minangka gantine $exerciseName';
   }
 
   @override
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year) {
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
+    Object day,
+    Object month,
+    Object year,
+  ) {
     return 'Nganti $day/$month/$year';
   }
 
@@ -2148,16 +2321,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get avoidedExercisesScreenViewSafeAlternatives => 'Deleng Alternatif Aman';
+  String get avoidedExercisesScreenViewSafeAlternatives =>
+      'Deleng Alternatif Aman';
 
   @override
-  String get avoidedExercisesSetAnEndDate => 'Setel tanggal pungkasan kanggo watesan iki';
+  String get avoidedExercisesSetAnEndDate =>
+      'Setel tanggal pungkasan kanggo watesan iki';
 
   @override
-  String get avoidedExercisesSetAnEndDate2 => 'Setel tanggal pungkasan kanggo watesan iki';
+  String get avoidedExercisesSetAnEndDate2 =>
+      'Setel tanggal pungkasan kanggo watesan iki';
 
   @override
-  String get avoidedExercisesTapToAddExercises => 'Tutul + kanggo nambah latihan sing pengin dilewati';
+  String get avoidedExercisesTapToAddExercises =>
+      'Tutul + kanggo nambah latihan sing pengin dilewati';
 
   @override
   String get avoidedExercisesTemporary => 'Sementara';
@@ -2172,7 +2349,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get avoidedMusclesErrorLoadingMuscles => 'Gagal ngemot otot';
 
   @override
-  String get avoidedMusclesExercisesTargetingThisMuscl => 'Latihan sing nargetake otot iki bakal dicoret kabeh';
+  String get avoidedMusclesExercisesTargetingThisMuscl =>
+      'Latihan sing nargetake otot iki bakal dicoret kabeh';
 
   @override
   String get avoidedMusclesMusclesToAvoid => 'Otot sing Dihindari';
@@ -2187,10 +2365,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get avoidedMusclesRemove => 'Busak';
 
   @override
-  String get avoidedMusclesRemoveFromAvoidList => 'Busak saka Dhaptar Dihindari';
+  String get avoidedMusclesRemoveFromAvoidList =>
+      'Busak saka Dhaptar Dihindari';
 
   @override
-  String get avoidedMusclesReplacedExercisesTargetingT => 'Latihan sing nargetake otot iki wis diganti ing latihan sabanjure';
+  String get avoidedMusclesReplacedExercisesTargetingT =>
+      'Latihan sing nargetake otot iki wis diganti ing latihan sabanjure';
 
   @override
   String get avoidedMusclesSaveChanges => 'Simpen Owah-owahan';
@@ -2216,7 +2396,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get avoidedMusclesSelectMusclesToAvoid => 'Pilih otot sing pengin dihindari utawa dikurangi ing latihan sampeyan';
+  String get avoidedMusclesSelectMusclesToAvoid =>
+      'Pilih otot sing pengin dihindari utawa dikurangi ing latihan sampeyan';
 
   @override
   String get avoidedMusclesSeverity => 'Tingkat';
@@ -2231,13 +2412,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get badgeHubChallenges => 'TANTANGAN';
 
   @override
-  String get badgeHubHeroEarnBadgesForEvery => 'Entuk lencana kanggo saben tonggak sejarah, streak, lan PB.';
+  String get badgeHubHeroEarnBadgesForEvery =>
+      'Entuk lencana kanggo saben tonggak sejarah, streak, lan PB.';
 
   @override
   String get badgeHubHeroHowItWorks => 'Cara kerjane';
 
   @override
-  String get badgeHubHeroRewardYourProgress => 'Wenehi Penghargaan kanggo Kemajuan Sampeyan';
+  String get badgeHubHeroRewardYourProgress =>
+      'Wenehi Penghargaan kanggo Kemajuan Sampeyan';
 
   @override
   String get badgeHubInProgress => 'Lagi Diproses';
@@ -2246,7 +2429,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get badgeHubInProgress2 => 'LAGI DIPROSES';
 
   @override
-  String get badgeHubLevelledBadgesThatKeep => 'Lencana tingkat sing terus munggah nalika sampeyan nambah langkah, kalori, sesi, utawa jarak.';
+  String get badgeHubLevelledBadgesThatKeep =>
+      'Lencana tingkat sing terus munggah nalika sampeyan nambah langkah, kalori, sesi, utawa jarak.';
 
   @override
   String get badgeHubMasteries => 'Masteri';
@@ -2258,7 +2442,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get badgeHubMyBadges => 'LENCANA SAYA';
 
   @override
-  String get badgeHubOneTimeTrophiesFor => 'Piala siji-wektu kanggo nggayuh tonggak sejarah — target wektu, konsistensi, lan PR gedhe.';
+  String get badgeHubOneTimeTrophiesFor =>
+      'Piala siji-wektu kanggo nggayuh tonggak sejarah — target wektu, konsistensi, lan PR gedhe.';
 
   @override
   String get badgeHubPersonalBests => 'Rekor Pribadi';
@@ -2267,7 +2452,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get badgeHubPersonalBests2 => 'REKOR PRIBADI';
 
   @override
-  String get badgeHubRewardYourProgress => 'Wenehi Penghargaan kanggo Kemajuan Sampeyan';
+  String get badgeHubRewardYourProgress =>
+      'Wenehi Penghargaan kanggo Kemajuan Sampeyan';
 
   @override
   String badgeHubScreenTotal(Object count) {
@@ -2275,13 +2461,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get badgeHubWeeklyOrDailyChallenges => 'Tantangan mingguan utawa saben dina sing bisa sampeyan kejar. Tantangan iki bakal reset supaya sampeyan bisa entuk maneh.';
+  String get badgeHubWeeklyOrDailyChallenges =>
+      'Tantangan mingguan utawa saben dina sing bisa sampeyan kejar. Tantangan iki bakal reset supaya sampeyan bisa entuk maneh.';
 
   @override
-  String get badgeHubYourHighestLiftsLongest => 'Angkatan paling dhuwur, sesi paling suwe, lan latihan paling gedhe sampeyan. Kalahkan rekor kasebut kanggo ngunggahake medali.';
+  String get badgeHubYourHighestLiftsLongest =>
+      'Angkatan paling dhuwur, sesi paling suwe, lan latihan paling gedhe sampeyan. Kalahkan rekor kasebut kanggo ngunggahake medali.';
 
   @override
-  String get barcodeScannerOverlayPointYourCameraAt => 'Arahake kamera sampeyan menyang barcode produk';
+  String get barcodeScannerOverlayPointYourCameraAt =>
+      'Arahake kamera sampeyan menyang barcode produk';
 
   @override
   String get barcodeScannerOverlayScanABarcode => 'Scan Barcode';
@@ -2290,7 +2479,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get batchPortioningBatchPortioning => 'Porsi Batch';
 
   @override
-  String get batchPortioningCalculateNutritionPerPortio => 'Itung nutrisi saben porsi';
+  String get batchPortioningCalculateNutritionPerPortio =>
+      'Itung nutrisi saben porsi';
 
   @override
   String get batchPortioningCalories => 'Kalori';
@@ -2341,7 +2531,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get beastModeAlgorithmInspector => 'INSPEKTUR ALGORITMA';
 
   @override
-  String get beastModeAlgorithmInspectorSubtitle => 'Deleng matematika ing mburi latihan sampeyan';
+  String get beastModeAlgorithmInspectorSubtitle =>
+      'Deleng matematika ing mburi latihan sampeyan';
 
   @override
   String get beastModeBeastMode => 'Beast Mode';
@@ -2350,13 +2541,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get beastModeCustomizationLab => 'LAB KUSTOMISASI';
 
   @override
-  String get beastModeCustomizationLabSubtitle => 'Kontrol warna lan font tingkat lanjut';
+  String get beastModeCustomizationLabSubtitle =>
+      'Kontrol warna lan font tingkat lanjut';
 
   @override
   String get beastModeDataAndSyncTools => 'ALAT DATA & SINKRONISASI';
 
   @override
-  String get beastModeDataAndSyncToolsSubtitle => 'Debug masalah sinkronisasi lan kelola data sampeyan';
+  String get beastModeDataAndSyncToolsSubtitle =>
+      'Debug masalah sinkronisasi lan kelola data sampeyan';
 
   @override
   String get beastModePremium => 'Premium';
@@ -2365,7 +2558,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get beastModeRecoveryAndProgression => 'PEMULIHAN & PROGRES';
 
   @override
-  String get beastModeRecoveryAndProgressionSubtitle => 'Visualisasikake pemulihan awak lan ramalan perkembangan sampeyan';
+  String get beastModeRecoveryAndProgressionSubtitle =>
+      'Visualisasikake pemulihan awak lan ramalan perkembangan sampeyan';
 
   @override
   String get beastModeUnlockBeastMode => 'BEAST MODE';
@@ -2377,22 +2571,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get beastModeUnlockUnlocked => 'WIS DIBUKA';
 
   @override
-  String get beastModeUnlockYouVeUnlockedThe => 'Sampeyan wis mbukak toolkit pangguna pro. Deleng algoritma ing mburi latihan sampeyan.';
+  String get beastModeUnlockYouVeUnlockedThe =>
+      'Sampeyan wis mbukak toolkit pangguna pro. Deleng algoritma ing mburi latihan sampeyan.';
 
   @override
   String get beastModeWorkoutAlgorithm => 'ALGORITMA LATIHAN';
 
   @override
-  String get beastModeWorkoutAlgorithmSubtitle => 'Kontrol jero babagan nggawe latihan';
+  String get beastModeWorkoutAlgorithmSubtitle =>
+      'Kontrol jero babagan nggawe latihan';
 
   @override
   String get beastModeWorkoutTemplates => 'TEMPLAT LATIHAN';
 
   @override
-  String get beastModeWorkoutTemplatesSubtitle => 'Prasetel struktur latihan khusus';
+  String get beastModeWorkoutTemplatesSubtitle =>
+      'Prasetel struktur latihan khusus';
 
   @override
-  String get bleHeartRateAutoConnectOnWorkout => 'Sambung otomatis nalika latihan diwiwiti';
+  String get bleHeartRateAutoConnectOnWorkout =>
+      'Sambung otomatis nalika latihan diwiwiti';
 
   @override
   String get bleHeartRateConnect => 'Sambung';
@@ -2449,13 +2647,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get bodyAnalyzerBodyFat => 'Lemak Awak';
 
   @override
-  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement => 'Uga ngira-ngira ukuran pita saka foto';
+  String get bodyAnalyzerCaptureAlsoEstimateTapeMeasurement =>
+      'Uga ngira-ngira ukuran pita saka foto';
 
   @override
   String get bodyAnalyzerCaptureAnalyzing => 'Nganalisis...';
 
   @override
-  String get bodyAnalyzerCaptureFusesHeightWeightBody => 'Nggabungake dhuwur/bobot/lemak awak lan nilai pita menyang analisis.';
+  String get bodyAnalyzerCaptureFusesHeightWeightBody =>
+      'Nggabungake dhuwur/bobot/lemak awak lan nilai pita menyang analisis.';
 
   @override
   String get bodyAnalyzerCapturePickAtLeastOne => 'Pilih paling ora siji foto.';
@@ -2469,13 +2669,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get bodyAnalyzerCaptureUseMyStoredMeasurements => 'Gunakake ukuran sing disimpen';
+  String get bodyAnalyzerCaptureUseMyStoredMeasurements =>
+      'Gunakake ukuran sing disimpen';
 
   @override
   String get bodyAnalyzerCreatingProposal => 'Nggawe proposal...';
 
   @override
-  String get bodyAnalyzerGetYourBodyAnalyzer => 'Entuk umpan balik Penganalisis Awak sampeyan';
+  String get bodyAnalyzerGetYourBodyAnalyzer =>
+      'Entuk umpan balik Penganalisis Awak sampeyan';
 
   @override
   String get bodyAnalyzerHeroOverallRating => 'Rating Sakabèhé';
@@ -2526,7 +2728,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get bodyMuscleSelectorLoadingBodyDiagram => 'Ngunggah diagram awak...';
 
   @override
-  String get bodyMuscleSelectorTapOnAMuscle => 'Tutul otot kanggo milih • Ciyut kanggo zoom';
+  String get bodyMuscleSelectorTapOnAMuscle =>
+      'Tutul otot kanggo milih • Ciyut kanggo zoom';
 
   @override
   String get bodyPartSelectorSelectBodyPart => 'Pilih Bagian Awak';
@@ -2578,19 +2781,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get calendarIconButtonSchedule => 'Jadwal';
 
   @override
-  String get caloriesBurnedAllFromBackgroundActivity => 'Kabeh saka aktivitas latar mburi';
+  String get caloriesBurnedAllFromBackgroundActivity =>
+      'Kabeh saka aktivitas latar mburi';
 
   @override
-  String get caloriesBurnedCaloriesBurnedToday => 'Kalori sing diobong dina iki';
+  String get caloriesBurnedCaloriesBurnedToday =>
+      'Kalori sing diobong dina iki';
 
   @override
-  String get caloriesBurnedCompleteAWorkoutOr => 'Rampungake latihan utawa sinkronisasi saka aplikasi kesehatan sampeyan';
+  String get caloriesBurnedCompleteAWorkoutOr =>
+      'Rampungake latihan utawa sinkronisasi saka aplikasi kesehatan sampeyan';
 
   @override
   String get caloriesBurnedInApp => 'Ing aplikasi';
 
   @override
-  String get caloriesBurnedNoActivityRecordedToday => 'Ora ana aktivitas sing dicathet dina iki';
+  String get caloriesBurnedNoActivityRecordedToday =>
+      'Ora ana aktivitas sing dicathet dina iki';
 
   @override
   String get caloriesBurnedPassive => 'Pasif';
@@ -2624,7 +2831,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get caloriesBurnedStepsHeartRateAnd => 'Langkah, denyut jantung, lan gerakan sedina muput';
+  String get caloriesBurnedStepsHeartRateAnd =>
+      'Langkah, denyut jantung, lan gerakan sedina muput';
 
   @override
   String get caloriesBurnedSynced => 'Disinkronisasi';
@@ -2649,7 +2857,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cancelConfirmationAnythingElseYouD => 'Apa ana maneh sing pengin dituduhake? (opsional)';
+  String get cancelConfirmationAnythingElseYouD =>
+      'Apa ana maneh sing pengin dituduhake? (opsional)';
 
   @override
   String get cancelConfirmationCancelAnyway => 'Batal wae';
@@ -2685,7 +2894,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cancelConfirmationSpecialOffersJustFor => 'Penawaran khusus kanggo sampeyan';
+  String get cancelConfirmationSpecialOffersJustFor =>
+      'Penawaran khusus kanggo sampeyan';
 
   @override
   String get cancelConfirmationWeDHateTo => 'Kita sedhih yen sampeyan lunga';
@@ -2694,13 +2904,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cancelConfirmationWhatYouLlLose => 'Apa sing bakal ilang';
 
   @override
-  String get cancelConfirmationWhyAreYouThinking => 'Kenapa sampeyan mikir arep mbatalake?';
+  String get cancelConfirmationWhyAreYouThinking =>
+      'Kenapa sampeyan mikir arep mbatalake?';
 
   @override
-  String get capabilityAndCommunityAiCoachAvailability => 'Kasedhiyan pelatih AI';
+  String get capabilityAndCommunityAiCoachAvailability =>
+      'Kasedhiyan pelatih AI';
 
   @override
-  String get capabilityAndCommunityAiUpdatedContinuously => 'AI, dianyari terus-terusan';
+  String get capabilityAndCommunityAiUpdatedContinuously =>
+      'AI, dianyari terus-terusan';
 
   @override
   String get capabilityAndCommunityBuiltRight => 'Digawe kanthi bener.';
@@ -2709,10 +2922,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get capabilityAndCommunityDiscord => 'Discord';
 
   @override
-  String get capabilityAndCommunityExercisesWithHdVideo => 'Latihan nganggo video HD';
+  String get capabilityAndCommunityExercisesWithHdVideo =>
+      'Latihan nganggo video HD';
 
   @override
-  String get capabilityAndCommunityFoodsInOurDatabase => 'Panganan ing database kita';
+  String get capabilityAndCommunityFoodsInOurDatabase =>
+      'Panganan ing database kita';
 
   @override
   String get capabilityAndCommunityInstagram => 'Instagram';
@@ -2721,7 +2936,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get capabilityAndCommunityReachUsAnytime => 'Hubungi kita kapan wae';
 
   @override
-  String get capabilityAndCommunityRealNumbersRealPeople => 'Angka nyata. Wong nyata ing mburine.';
+  String get capabilityAndCommunityRealNumbersRealPeople =>
+      'Angka nyata. Wong nyata ing mburine.';
 
   @override
   String get cardioHistoryAll => 'Kabeh';
@@ -2751,7 +2967,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioHistoryClearDateFilter => 'Busak filter tanggal';
 
   @override
-  String get cardioHistoryCouldNotLoadCardio => 'Ora bisa mbukak riwayat kardio';
+  String get cardioHistoryCouldNotLoadCardio =>
+      'Ora bisa mbukak riwayat kardio';
 
   @override
   String get cardioHistoryCycle => 'Sepedaan';
@@ -2775,7 +2992,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioHistoryHike => 'Mendaki';
 
   @override
-  String get cardioHistoryImportFromStravaPeloton => 'Impor saka Strava, Peloton, Garmin, Apple Health, utawa Fitbit kanggo ndeleng riwayat sampeyan ing kene.';
+  String get cardioHistoryImportFromStravaPeloton =>
+      'Impor saka Strava, Peloton, Garmin, Apple Health, utawa Fitbit kanggo ndeleng riwayat sampeyan ing kene.';
 
   @override
   String get cardioHistoryIndoorCycle => 'Sepeda statis';
@@ -2809,13 +3027,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioHistoryNoCardioSessionsYet => 'Durung ana sesi kardio.';
 
   @override
-  String get cardioHistoryNoSessionsMatchThis => 'Ora ana sesi sing cocog karo filter iki.';
+  String get cardioHistoryNoSessionsMatchThis =>
+      'Ora ana sesi sing cocog karo filter iki.';
 
   @override
   String get cardioHistoryNotes => 'Cathetan';
 
   @override
-  String get cardioHistoryPleaseSignInTo => 'Mangga mlebu kanggo ndeleng riwayat cardio sampeyan.';
+  String get cardioHistoryPleaseSignInTo =>
+      'Mangga mlebu kanggo ndeleng riwayat cardio sampeyan.';
 
   @override
   String cardioHistoryRouteRecordedPts(Object count) {
@@ -2869,7 +3089,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioHistoryThisWeek => 'Minggu iki';
 
   @override
-  String get cardioHistoryTryClearingFiltersOr => 'Coba busak filter utawa nggedhekake rentang tanggal.';
+  String get cardioHistoryTryClearingFiltersOr =>
+      'Coba busak filter utawa nggedhekake rentang tanggal.';
 
   @override
   String get cardioHistoryWalk => 'Mlaku santai';
@@ -2878,7 +3099,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioHistoryYoga => 'Yoga';
 
   @override
-  String get cardioPrHistoryAllTimeBestsBy => 'Rekor paling apik miturut olahraga';
+  String get cardioPrHistoryAllTimeBestsBy =>
+      'Rekor paling apik miturut olahraga';
 
   @override
   String get cardioPrHistoryCardioPrs => 'PR Cardio';
@@ -2890,7 +3112,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cardioPrHistoryFirstTime => 'Kaping pisanan!';
 
   @override
-  String get cardioPrHistoryLogACardioSession => 'Cathet sesi cardio kanggo miwiti nglacak PR.';
+  String get cardioPrHistoryLogACardioSession =>
+      'Cathet sesi cardio kanggo miwiti nglacak PR.';
 
   @override
   String get cardioPrHistoryNoCardioPrsYet => 'Durung ana PR cardio';
@@ -2919,7 +3142,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chainDetailProgressionPath => 'Jalur Progresi';
 
   @override
-  String get chainDetailProgressionStartedGoodLuck => 'Progresi diwiwiti! Sugeng berjuang!';
+  String get chainDetailProgressionStartedGoodLuck =>
+      'Progresi diwiwiti! Sugeng berjuang!';
 
   @override
   String chainDetailScreenAttemptsAtCurrentStep(Object attemptsAtCurrent) {
@@ -2954,7 +3178,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengeCardActive => 'AKTIF';
 
   @override
-  String get challengeCardChallengedYouToBeat => 'Nantang sampeyan kanggo ngalahake';
+  String get challengeCardChallengedYouToBeat =>
+      'Nantang sampeyan kanggo ngalahake';
 
   @override
   String challengeCardDaysLeft(Object daysRemaining) {
@@ -2973,7 +3198,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get challengeCardYouChallengedToBeat => 'Sampeyan ditantang kanggo ngalahake';
+  String get challengeCardYouChallengedToBeat =>
+      'Sampeyan ditantang kanggo ngalahake';
 
   @override
   String get challengeCompareChallengeResults => 'Hasil Tantangan';
@@ -3049,7 +3275,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengeCompleteVictory => 'MENANG!';
 
   @override
-  String get challengeCompleteViewFullComparison => 'Deleng Perbandingan Lengkap';
+  String get challengeCompleteViewFullComparison =>
+      'Deleng Perbandingan Lengkap';
 
   @override
   String get challengeCompleteViewInFeed => 'Deleng ing Feed';
@@ -3061,10 +3288,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengeCompleteYou => 'Sampeyan: ';
 
   @override
-  String get challengeCompleteYourVictoryHasBeen => 'Kamenangan sampeyan wis dituduhake karo kanca-kanca! 🎉';
+  String get challengeCompleteYourVictoryHasBeen =>
+      'Kamenangan sampeyan wis dituduhake karo kanca-kanca! 🎉';
 
   @override
-  String get challengeCreateAnyoneCanJoinVia => 'Sapa wae bisa gabung liwat tab sosial';
+  String get challengeCreateAnyoneCanJoinVia =>
+      'Sapa wae bisa gabung liwat tab sosial';
 
   @override
   String get challengeCreateButton => 'Gawe tantangan';
@@ -3091,7 +3320,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengeCreateTitle => 'Gawe tantangan';
 
   @override
-  String get challengeFriendsAddTrashTalkMessage => 'Tambah pesen ejekan (opsional) 💪';
+  String get challengeFriendsAddTrashTalkMessage =>
+      'Tambah pesen ejekan (opsional) 💪';
 
   @override
   String get challengeFriendsChallengeFriends => 'Tantang Kanca';
@@ -3112,10 +3342,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get challengeFriendsNoFriendsToChallenge => 'Ora ana kanca kanggo ditantang';
+  String get challengeFriendsNoFriendsToChallenge =>
+      'Ora ana kanca kanggo ditantang';
 
   @override
-  String get challengeFriendsPleaseSelectAtLeast => 'Mangga pilih paling sethithik siji kanca';
+  String get challengeFriendsPleaseSelectAtLeast =>
+      'Mangga pilih paling sethithik siji kanca';
 
   @override
   String get challengeFriendsSearchFriends => 'Golek kanca...';
@@ -3160,7 +3392,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengeHistoryRetryChallenge2 => 'COBA TANTANGAN MANEH?';
 
   @override
-  String get challengeHistoryRetryChallengeSentTime => '🔥 Tantangan wis dikirim! Wayahe mbales!';
+  String get challengeHistoryRetryChallengeSentTime =>
+      '🔥 Tantangan wis dikirim! Wayahe mbales!';
 
   @override
   String challengeHistoryScreenFailedToSendRetry(Object e) {
@@ -3192,10 +3425,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengesChallenge => 'Tantangan';
 
   @override
-  String get challengesCouldNotLoadChallenges => 'Gagal mbukak tantangan.\nCoba maneh.';
+  String get challengesCouldNotLoadChallenges =>
+      'Gagal mbukak tantangan.\nCoba maneh.';
 
   @override
-  String get challengesCouldNotLoadYour => 'Gagal mbukak tantangan sampeyan.\nCoba maneh.';
+  String get challengesCouldNotLoadYour =>
+      'Gagal mbukak tantangan sampeyan.\nCoba maneh.';
 
   @override
   String get challengesCreateChallenge => 'Nggawe Tantangan';
@@ -3204,7 +3439,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengesFailedToLoadChallenges => 'Gagal Mbukak Tantangan';
 
   @override
-  String get challengesJoinAChallengeTo => 'Melu tantangan kanggo saingan karo\nkanca lan nggayuh target fitness sampeyan!';
+  String get challengesJoinAChallengeTo =>
+      'Melu tantangan kanggo saingan karo\nkanca lan nggayuh target fitness sampeyan!';
 
   @override
   String get challengesMyChallenges => 'Tantanganku';
@@ -3219,7 +3455,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get challengesPopularChallenges => 'Tantangan Populer';
 
   @override
-  String get challengesStartYourOwnChallenge => 'Mulai tantanganmu dhewe lan undang kanca';
+  String get challengesStartYourOwnChallenge =>
+      'Mulai tantanganmu dhewe lan undang kanca';
 
   @override
   String get challengesStrip100KmTarget => 'Target 100 km';
@@ -3242,7 +3479,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get changeEquipmentHelperEquipment => 'Peralatan';
 
   @override
-  String get changeEquipmentHelperNoActiveGymProfile => 'Ora ana profil gym aktif — bukak Setelan → Gyms dhisik.';
+  String get changeEquipmentHelperNoActiveGymProfile =>
+      'Ora ana profil gym aktif — bukak Setelan → Gyms dhisik.';
 
   @override
   String get chatActionConfirmApplied => 'Ditrapake';
@@ -3260,16 +3498,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatClearChatHistory => 'Resiki Riwayat Chat?';
 
   @override
-  String get chatFeaturesInfoLongPressActionPills => 'Pencet suwe tombol aksi kanggo ngatur trabasan sampeyan';
+  String get chatFeaturesInfoLongPressActionPills =>
+      'Pencet suwe tombol aksi kanggo ngatur trabasan sampeyan';
 
   @override
-  String get chatFeaturesInfoTryAskingWhatCan => 'Coba takon: \"Apa sing bisa mbok lakoni?\" kanggo dhaptar lengkap kemampuan';
+  String get chatFeaturesInfoTryAskingWhatCan =>
+      'Coba takon: \"Apa sing bisa mbok lakoni?\" kanggo dhaptar lengkap kemampuan';
 
   @override
   String get chatFeaturesInfoWhatCanIDo => 'Apa sing bisa tak lakoni?';
 
   @override
-  String get chatFeaturesInfoYourAiCoachCan => 'Pelatih AI sampeyan bisa nganalisis media, nggawe latihan, menehi saran nutrisi, lan liya-liyane.';
+  String get chatFeaturesInfoYourAiCoachCan =>
+      'Pelatih AI sampeyan bisa nganalisis media, nggawe latihan, menehi saran nutrisi, lan liya-liyane.';
 
   @override
   String get chatGotIt => 'Oke';
@@ -3319,7 +3560,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatMessageBubbleReport => 'Lapor';
 
   @override
-  String get chatMessageBubbleThisActionCannotBe => 'Tindakan iki ora bisa dibatalake.';
+  String get chatMessageBubbleThisActionCannotBe =>
+      'Tindakan iki ora bisa dibatalake.';
 
   @override
   String get chatMessageBubbleUnpin => 'Unpin';
@@ -3359,7 +3601,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatQuickPillsCustomizeShortcuts => 'Atur Trabasan';
 
   @override
-  String get chatQuickPillsDragToReorderTop => 'Seret kanggo ngurutake. 5 paling dhuwur bakal katon minangka tombol ing ndhuwur kolom input.';
+  String get chatQuickPillsDragToReorderTop =>
+      'Seret kanggo ngurutake. 5 paling dhuwur bakal katon minangka tombol ing ndhuwur kolom input.';
 
   @override
   String get chatQuickPillsRecordVideo => 'Rekam Video';
@@ -3371,16 +3614,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatQuickPillsTakePhoto => 'Jupuk Foto';
 
   @override
-  String get chatQuickPillsTapAnActionTo => 'Tutul aksi kanggo nggunakake. Pencet suwe tombol kanggo ngurutake.';
+  String get chatQuickPillsTapAnActionTo =>
+      'Tutul aksi kanggo nggunakake. Pencet suwe tombol kanggo ngurutake.';
 
   @override
   String get chatScreenCantReachCoach => 'Ora bisa ngubungi pelatih saiki.';
 
   @override
-  String get chatScreenCheckConnection => 'Priksa sambungan sampeyan lan coba maneh.';
+  String get chatScreenCheckConnection =>
+      'Priksa sambungan sampeyan lan coba maneh.';
 
   @override
-  String get chatScreenCoachIsThinkingLonger => 'Pelatih mikir luwih suwe tinimbang biasane.';
+  String get chatScreenCoachIsThinkingLonger =>
+      'Pelatih mikir luwih suwe tinimbang biasane.';
 
   @override
   String get chatScreenCouldntReachCoach => 'Ora bisa ngubungi pelatih.';
@@ -3440,10 +3686,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatScreenExtResetsAtMidnight => 'Reset ing tengah wengi';
 
   @override
-  String get chatScreenExtSeeWhatYourAi => 'Deleng apa sing bisa ditindakake pelatih AI sampeyan';
+  String get chatScreenExtSeeWhatYourAi =>
+      'Deleng apa sing bisa ditindakake pelatih AI sampeyan';
 
   @override
-  String get chatScreenExtSwitchToADifferent => 'Ganti menyang pelatih AI liyane';
+  String get chatScreenExtSwitchToADifferent =>
+      'Ganti menyang pelatih AI liyane';
 
   @override
   String get chatScreenExtTakePhoto => 'Njupuk Foto';
@@ -3465,7 +3713,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatScreenExtTodaySUsage => 'Panggunaan Dina Iki';
 
   @override
-  String get chatScreenExtUnlimitedAccessWithPremium => 'Akses tanpa wates nganggo Premium';
+  String get chatScreenExtUnlimitedAccessWithPremium =>
+      'Akses tanpa wates nganggo Premium';
 
   @override
   String get chatScreenExtUpgradeForUnlimited => 'Upgrade kanggo Tanpa Wates';
@@ -3486,7 +3735,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get chatScreenMultiAgentHangTight => 'Wangsulan multi-agen bisa mbutuhake nganti rong menit — enteni sedhela utawa coba maneh.';
+  String get chatScreenMultiAgentHangTight =>
+      'Wangsulan multi-agen bisa mbutuhake nganti rong menit — enteni sedhela utawa coba maneh.';
 
   @override
   String get chatScreenPartAddAMessage => 'Tambah pesen...';
@@ -3523,7 +3773,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatScreenPartSelectACategory => 'Pilih kategori:';
 
   @override
-  String get chatScreenPartTalkToHumanSupport => 'Ngobrol karo Dhukungan Manungsa';
+  String get chatScreenPartTalkToHumanSupport =>
+      'Ngobrol karo Dhukungan Manungsa';
 
   @override
   String get chatScreenPartUseCameraMax60s => 'Gunakake kamera (maks 60s)';
@@ -3532,7 +3783,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatScreenPartWaitTimeUnavailable => 'Wektu tunggu ora kasedhiya';
 
   @override
-  String get chatScreenPartYouWillBeConnected => 'Sampeyan bakal disambungake karo agen dhukungan nyata sing bisa mbantu pitakonan sampeyan.';
+  String get chatScreenPartYouWillBeConnected =>
+      'Sampeyan bakal disambungake karo agen dhukungan nyata sing bisa mbantu pitakonan sampeyan.';
 
   @override
   String chatScreenRouteNotRegistered(Object route) {
@@ -3540,7 +3792,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get chatScreenSomethingWentWrongLoading => 'Ana sing salah nalika mbukak obrolan sampeyan.';
+  String get chatScreenSomethingWentWrongLoading =>
+      'Ana sing salah nalika mbukak obrolan sampeyan.';
 
   @override
   String get chatScreenTyping => 'Ngetik...';
@@ -3584,10 +3837,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get chatThisMatchIsMissing => 'Cocokan iki ora duwe id latihan.';
 
   @override
-  String get chatThisWillDeleteAll => 'Iki bakal mbusak kabeh riwayat obrolan sampeyan karo pelatih AI. Tindakan iki ora bisa dibatalake.';
+  String get chatThisWillDeleteAll =>
+      'Iki bakal mbusak kabeh riwayat obrolan sampeyan karo pelatih AI. Tindakan iki ora bisa dibatalake.';
 
   @override
-  String get chatYourPersonalAiPowered => 'Pelatih fitness pribadi berbasis AI sampeyan. Takon babagan latihan, nutrisi, pemulihan, utawa pitakonan apa wae sing ana gandhengane karo fitness. AI sinau saka kemajuan sampeyan kanggo menehi saran sing dipersonalisasi.';
+  String get chatYourPersonalAiPowered =>
+      'Pelatih fitness pribadi berbasis AI sampeyan. Takon babagan latihan, nutrisi, pemulihan, utawa pitakonan apa wae sing ana gandhengane karo fitness. AI sinau saka kemajuan sampeyan kanggo menehi saran sing dipersonalisasi.';
 
   @override
   String get classicStatsTemplateCalories => 'KALORI';
@@ -3649,7 +3904,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachDashboardWeight => 'Bobot';
 
   @override
-  String get coachHeroCardAlreadyRefreshedInThe => 'Wis dianyari ing 30 menit pungkasan.';
+  String get coachHeroCardAlreadyRefreshedInThe =>
+      'Wis dianyari ing 30 menit pungkasan.';
 
   @override
   String get coachHeroCardRethinking => 'Mikir maneh…';
@@ -3661,7 +3917,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachHeroCardYourCoach => 'PELATIH SAMPEYAN';
 
   @override
-  String get coachHeroCardYourCoachIsGathering => 'Pelatih sampeyan lagi ngumpulake pikiran.';
+  String get coachHeroCardYourCoachIsGathering =>
+      'Pelatih sampeyan lagi ngumpulake pikiran.';
 
   @override
   String get coachHeroCardYourCoachIsHere => 'Pelatih sampeyan wis teka.';
@@ -3673,7 +3930,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachReviewApply => 'Aplikasi';
 
   @override
-  String get coachReviewApplySwapComingWith => 'Aplikasi swap — bakal teka karo integrasi perencana';
+  String get coachReviewApplySwapComingWith =>
+      'Aplikasi swap — bakal teka karo integrasi perencana';
 
   @override
   String get coachReviewCoachReview => 'Tinjauan pelatih';
@@ -3688,7 +3946,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachReviewMicronutrientGaps => 'Celah mikronutrien';
 
   @override
-  String get coachReviewNoReviewYetTap => 'Durung ana tinjauan — tutul refresh kanggo nggawe';
+  String get coachReviewNoReviewYetTap =>
+      'Durung ana tinjauan — tutul refresh kanggo nggawe';
 
   @override
   String get coachReviewOutOfDate => 'Wis kadaluwarsa';
@@ -3724,7 +3983,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachReviewTemplateWorkoutReview => 'TINJAUAN LATIHAN';
 
   @override
-  String get coachReviewWeLlNotifyYou => 'Kita bakal menehi kabar nalika peninjau manungsa diluncurake';
+  String get coachReviewWeLlNotifyYou =>
+      'Kita bakal menehi kabar nalika peninjau manungsa diluncurake';
 
   @override
   String get coachSelectionAiGeneratedAvatar => 'Avatar sing digawe AI';
@@ -3751,7 +4011,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachSelectionCustom => 'KUSTOM';
 
   @override
-  String get coachSelectionDesignACoachThat => 'Rancang pelatih sing cocog karo gaya sampeyan';
+  String get coachSelectionDesignACoachThat =>
+      'Rancang pelatih sing cocog karo gaya sampeyan';
 
   @override
   String get coachSelectionEGAtlasRiley => 'contone Atlas, Riley, Sensei';
@@ -3763,13 +4024,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachSelectionGender => 'Jinis Kelamin';
 
   @override
-  String get coachSelectionLetSGoooTime => 'AYO! Wektune kanggo nggayuh target dina iki! Sampeyan wis sukses 5 dina berturut-turut lan aku ora bakal nglilani sampeyan mandheg. Siap nggawe keajaiban?';
+  String get coachSelectionLetSGoooTime =>
+      'AYO! Wektune kanggo nggayuh target dina iki! Sampeyan wis sukses 5 dina berturut-turut lan aku ora bakal nglilani sampeyan mandheg. Siap nggawe keajaiban?';
 
   @override
   String get coachSelectionLook => 'Tampilan';
 
   @override
-  String get coachSelectionMotivationalEncouraging => 'Motivasi & Panyengkuyung';
+  String get coachSelectionMotivationalEncouraging =>
+      'Motivasi & Panyengkuyung';
 
   @override
   String get coachSelectionNameYourCoach => 'Jenengi pelatih sampeyan';
@@ -3781,7 +4044,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachSelectionScreenChangeCoach => 'Ganti Pelatih';
 
   @override
-  String get coachSelectionScreenCreateYourOwnCoach => 'Gawe Pelatih Sampeyan Dhewe';
+  String get coachSelectionScreenCreateYourOwnCoach =>
+      'Gawe Pelatih Sampeyan Dhewe';
 
   @override
   String get coachSelectionScreenEnergy => 'Energi';
@@ -3822,7 +4086,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get coachVoicePickerCoachVoice => 'Swara coach';
 
   @override
-  String get coachVoicePickerDeeperHighEnergyVoice => 'Swara luwih jero lan semangat';
+  String get coachVoicePickerDeeperHighEnergyVoice =>
+      'Swara luwih jero lan semangat';
 
   @override
   String get coachVoicePickerDefault => 'Gawan';
@@ -3833,16 +4098,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get coachVoicePickerPlaysDuringWorkoutAnnouncem => 'Muni nalika pengumuman latihan';
+  String get coachVoicePickerPlaysDuringWorkoutAnnouncem =>
+      'Muni nalika pengumuman latihan';
 
   @override
-  String get coachVoicePickerUnlocksAtLevel50 => 'Kebuka ing Level 50 — terus munggah level!';
+  String get coachVoicePickerUnlocksAtLevel50 =>
+      'Kebuka ing Level 50 — terus munggah level!';
 
   @override
   String get coachVoicePickerUnlocksAtLevel502 => 'Kebuka ing Level 50';
 
   @override
-  String get coachVoicePickerYourDeviceSDefault => 'Swara gawan piranti sampeyan';
+  String get coachVoicePickerYourDeviceSDefault =>
+      'Swara gawan piranti sampeyan';
 
   @override
   String get collapsedBannerStrip2x => '2x';
@@ -3881,13 +4149,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get combinedHealthConnectHealth => 'Sambungake Kesehatan';
 
   @override
-  String get combinedHealthConnectHealthBody => 'Langkah, detak jantung, turu, lan liya-liyane disinkronake saka Health Connect ing Android lan aplikasi Health ing iOS.';
+  String get combinedHealthConnectHealthBody =>
+      'Langkah, detak jantung, turu, lan liya-liyane disinkronake saka Health Connect ing Android lan aplikasi Health ing iOS.';
 
   @override
-  String get combinedHealthConnectHealthToSee => 'Sambungake Kesehatan kanggo ndeleng aktivitas sampeyan';
+  String get combinedHealthConnectHealthToSee =>
+      'Sambungake Kesehatan kanggo ndeleng aktivitas sampeyan';
 
   @override
-  String get combinedHealthCouldNotLoadYour => 'Data kesehatan ora bisa dimuat. Tarik mudhun lan coba maneh.';
+  String get combinedHealthCouldNotLoadYour =>
+      'Data kesehatan ora bisa dimuat. Tarik mudhun lan coba maneh.';
 
   @override
   String get combinedHealthCouldNotSaveGoal => 'Gagal nyimpen target.';
@@ -3899,7 +4170,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get combinedHealthHealth => 'Kesehatan';
 
   @override
-  String get combinedHealthHitYourStepGoal => 'Gayuh target langkah sampeyan kanggo miwiti streak.';
+  String get combinedHealthHitYourStepGoal =>
+      'Gayuh target langkah sampeyan kanggo miwiti streak.';
 
   @override
   String get combinedHealthRestingHeartRate => 'Detak Jantung Istirahat';
@@ -3940,7 +4212,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get combinedHealthWater => 'Banyu';
 
   @override
-  String get comebackModeComebackModeReducesSets => 'Mode comeback nyuda set lan intensitas kanggo nyegah cidera sawise istirahat.';
+  String get comebackModeComebackModeReducesSets =>
+      'Mode comeback nyuda set lan intensitas kanggo nyegah cidera sawise istirahat.';
 
   @override
   String get comebackModeEaseMeBackIn => 'Alon-alon wae';
@@ -3960,10 +4233,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonActiveChallenges => 'Tantangan Aktif';
 
   @override
-  String get comingSoonBeforeAfterProgressComparis => 'Komparasi progres sadurunge/sawise';
+  String get comingSoonBeforeAfterProgressComparis =>
+      'Komparasi progres sadurunge/sawise';
 
   @override
-  String get comingSoonBluetoothHeartRateHardware => 'Hardware Detak Jantung Bluetooth';
+  String get comingSoonBluetoothHeartRateHardware =>
+      'Hardware Detak Jantung Bluetooth';
 
   @override
   String get comingSoonBody => 'Aku lagi nggarap fitur iki. Tetep ngenteni.';
@@ -3975,21 +4250,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonBottomGotIt => 'Oke, paham!';
 
   @override
-  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek) {
+  String comingSoonBottomSheetWeeksSessionsPerWeek(
+    Object durationWeeks,
+    Object sessionsPerWeek,
+  ) {
     return '$durationWeeks minggu • $sessionsPerWeek sesi saben minggu';
   }
 
   @override
-  String get comingSoonBottomWhatYouCanExpect => 'Apa sing bisa sampeyan enteni:';
+  String get comingSoonBottomWhatYouCanExpect =>
+      'Apa sing bisa sampeyan enteni:';
 
   @override
-  String get comingSoonBrowseLikeAndRemix => 'Jelajahi, senengi, lan remix resep sing dituduhake komunitas. Bakal hadir ing tab Sosial.';
+  String get comingSoonBrowseLikeAndRemix =>
+      'Jelajahi, senengi, lan remix resep sing dituduhake komunitas. Bakal hadir ing tab Sosial.';
 
   @override
   String get comingSoonCaloriesSummary => 'Ringkesan Kalori';
 
   @override
-  String get comingSoonChallengeProgressMiniCard => 'Mini-card progres tantangan';
+  String get comingSoonChallengeProgressMiniCard =>
+      'Mini-card progres tantangan';
 
   @override
   String get comingSoonComingSoon => 'Bakal Hadir';
@@ -4001,7 +4282,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonDailyStats => 'Statistik Saben Dina';
 
   @override
-  String get comingSoonExerciseVariationThisWeek => 'Variasi latihan minggu iki';
+  String get comingSoonExerciseVariationThisWeek =>
+      'Variasi latihan minggu iki';
 
   @override
   String get comingSoonFeaturesWeReWorking => 'Fitur sing lagi kita garap';
@@ -4016,10 +4298,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonFriendActivity => 'Aktivitas Kanca';
 
   @override
-  String get comingSoonHealthDeviceActivitySummary => 'Ringkesan aktivitas piranti kesehatan';
+  String get comingSoonHealthDeviceActivitySummary =>
+      'Ringkesan aktivitas piranti kesehatan';
 
   @override
-  String get comingSoonHolisticPlanWithWorkouts => 'Rencana holistik karo latihan, nutrisi & pasa';
+  String get comingSoonHolisticPlanWithWorkouts =>
+      'Rencana holistik karo latihan, nutrisi & pasa';
 
   @override
   String get comingSoonLeaderboard => 'Papan Peringkat';
@@ -4031,13 +4315,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonMiniCalendar => 'Mini Kalender';
 
   @override
-  String get comingSoonMiniCalendarWithWorkout => 'Mini kalender karo dina latihan';
+  String get comingSoonMiniCalendarWithWorkout =>
+      'Mini kalender karo dina latihan';
 
   @override
   String get comingSoonMoodCheckIn => 'Check-in swasana ati';
 
   @override
-  String get comingSoonMuscleGroupsTrainedRecently => 'Grup otot sing dilatih bubar';
+  String get comingSoonMuscleGroupsTrainedRecently =>
+      'Grup otot sing dilatih bubar';
 
   @override
   String get comingSoonMuscleHeatmap => 'Heatmap Otot';
@@ -4046,19 +4332,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonMyJourney => 'Perjalananku';
 
   @override
-  String get comingSoonOneTapOnYour => 'Siji tutul ing layar ngarep utawa layar kunci kanggo ide panganan AI karo kalori & makro — ditambah tombol \"Log it\"';
+  String get comingSoonOneTapOnYour =>
+      'Siji tutul ing layar ngarep utawa layar kunci kanggo ide panganan AI karo kalori & makro — ditambah tombol \"Log it\"';
 
   @override
-  String get comingSoonOneTapToStart => 'Siji tutul kanggo miwiti latihan dina iki';
+  String get comingSoonOneTapToStart =>
+      'Siji tutul kanggo miwiti latihan dina iki';
 
   @override
-  String get comingSoonOverallFitnessStrengthNu => 'Skor kebugaran, kekuatan & nutrisi sakabèhé';
+  String get comingSoonOverallFitnessStrengthNu =>
+      'Skor kebugaran, kekuatan & nutrisi sakabèhé';
 
   @override
   String get comingSoonOverlayComingSoon => 'Bakal Hadir';
 
   @override
-  String get comingSoonPairBleChestStraps => 'Pasang tali dada BLE & monitor detak jantung kanggo BPM langsung nalika latihan';
+  String get comingSoonPairBleChestStraps =>
+      'Pasang tali dada BLE & monitor detak jantung kanggo BPM langsung nalika latihan';
 
   @override
   String get comingSoonPhotoCompare => 'Komparasi Foto';
@@ -4070,7 +4360,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonQuickMeasurements => 'Pangukuran Cepet';
 
   @override
-  String get comingSoonQuickMoodPickerFor => 'Pemilih swasana ati cepet kanggo latihan instan';
+  String get comingSoonQuickMoodPickerFor =>
+      'Pemilih swasana ati cepet kanggo latihan instan';
 
   @override
   String get comingSoonQuickStart => 'Mulai Cepet';
@@ -4085,7 +4376,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonRecipeImport => 'Impor Resep';
 
   @override
-  String get comingSoonRecoveryTipsForRest => 'Tips pemulihan kanggo dina istirahat';
+  String get comingSoonRecoveryTipsForRest =>
+      'Tips pemulihan kanggo dina istirahat';
 
   @override
   String get comingSoonRestDayTips => 'Tips Dina Istirahat';
@@ -4094,34 +4386,42 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonSearchFeatures => 'Telusuri fitur...';
 
   @override
-  String get comingSoonSeeWhatFriendsAre => 'Deleng apa sing lagi ditindakake kanca-kanca';
+  String get comingSoonSeeWhatFriendsAre =>
+      'Deleng apa sing lagi ditindakake kanca-kanca';
 
   @override
-  String get comingSoonStepsCountAndCalorie => 'Ngetung langkah lan nglacak defisit kalori';
+  String get comingSoonStepsCountAndCalorie =>
+      'Ngetung langkah lan nglacak defisit kalori';
 
   @override
-  String get comingSoonStrengthAndVolumeCharts => 'Grafik kekuatan lan volume saka wektu ke wektu';
+  String get comingSoonStrengthAndVolumeCharts =>
+      'Grafik kekuatan lan volume saka wektu ke wektu';
 
   @override
-  String get comingSoonTheseFeaturesAreIn => 'Fitur-fitur iki isih dikembangake lan bakal kasedhiya minangka widget layar ngarep sing bisa diatur rauh.';
+  String get comingSoonTheseFeaturesAreIn =>
+      'Fitur-fitur iki isih dikembangake lan bakal kasedhiya minangka widget layar ngarep sing bisa diatur rauh.';
 
   @override
   String get comingSoonTitle => 'Bakal teka';
 
   @override
-  String get comingSoonTodaySIntakeVs => 'Asupan dina iki dibandhingake karo target';
+  String get comingSoonTodaySIntakeVs =>
+      'Asupan dina iki dibandhingake karo target';
 
   @override
-  String get comingSoonTotalWorkoutsTimeInvested => 'Total latihan, wektu sing digunakake, lan tonggak sejarah';
+  String get comingSoonTotalWorkoutsTimeInvested =>
+      'Total latihan, wektu sing digunakake, lan tonggak sejarah';
 
   @override
-  String get comingSoonTrackBodyMeasurementsEasily => 'Lacak ukuran awak kanthi gampang';
+  String get comingSoonTrackBodyMeasurementsEasily =>
+      'Lacak ukuran awak kanthi gampang';
 
   @override
   String get comingSoonUpcomingHomeWidgets => 'Widget Ngarep sing Bakal Teka';
 
   @override
-  String get comingSoonVisualDonutChartsFor => 'Grafik donat visual kanggo protein, karbohidrat & lemak';
+  String get comingSoonVisualDonutChartsFor =>
+      'Grafik donat visual kanggo protein, karbohidrat & lemak';
 
   @override
   String get comingSoonWeekChanges => 'Owah-owahan Minggu';
@@ -4136,19 +4436,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comingSoonWhatShouldIEat => 'Widget Apa sing Kudu Dakpangan?';
 
   @override
-  String get comingSoonYourFitnessJourneyProgress => 'Kemajuan perjalanan fitness sampeyan';
+  String get comingSoonYourFitnessJourneyProgress =>
+      'Kemajuan perjalanan fitness sampeyan';
 
   @override
   String get comingSoonYourJourneyRoi => 'ROI Perjalanan Sampeyan';
 
   @override
-  String get comingSoonYourPositionOnThe => 'Posisi sampeyan ing papan peringkat';
+  String get comingSoonYourPositionOnThe =>
+      'Posisi sampeyan ing papan peringkat';
 
   @override
   String get commentsAddAComment => 'Tambah komentar...';
 
   @override
-  String get commentsAreYouSureYou => 'Apa sampeyan yakin pengin mbusak komentar iki?';
+  String get commentsAreYouSureYou =>
+      'Apa sampeyan yakin pengin mbusak komentar iki?';
 
   @override
   String get commentsBeTheFirstTo => 'Dadi sing pisanan menehi komentar!';
@@ -4186,7 +4489,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get commitmentPactSkipTheCommitment => 'Loncati komitmen?';
 
   @override
-  String get commitmentPactWeLlHandleThe => 'Kita bakal ngatur rencana — sampeyan mung kudu teka.';
+  String get commitmentPactWeLlHandleThe =>
+      'Kita bakal ngatur rencana — sampeyan mung kudu teka.';
 
   @override
   String get commonBack => 'Bali';
@@ -4237,24 +4541,31 @@ class AppLocalizationsJv extends AppLocalizations {
   String get communityRecipeSearchCommunityRecipes => 'Resep komunitas';
 
   @override
-  String get communityRecipeSearchNothingFoundInCommunity => 'Ora ditemokake ing resep komunitas.';
+  String get communityRecipeSearchNothingFoundInCommunity =>
+      'Ora ditemokake ing resep komunitas.';
 
   @override
-  String get communityRecipeSearchOpenTheRecipeTo => 'Bukak resep kanggo disimpen ing perpustakaan sampeyan';
+  String get communityRecipeSearchOpenTheRecipeTo =>
+      'Bukak resep kanggo disimpen ing perpustakaan sampeyan';
 
   @override
   String get communityRecipeSearchSaveToMyRecipes => 'Simpen menyang resepku';
 
   @override
-  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged) {
+  String communityRecipeSearchScreenKcalLogs(
+    Object summary,
+    Object timesLogged,
+  ) {
     return '$summary kcal · $timesLogged log';
   }
 
   @override
-  String get communityRecipeSearchSearchPublicRecipes => 'Telusuri resep umum...';
+  String get communityRecipeSearchSearchPublicRecipes =>
+      'Telusuri resep umum...';
 
   @override
-  String get communityRecipeSearchSearchPublicRecipesShared => 'Telusuri resep umum sing dituduhake dening pangguna liya.';
+  String get communityRecipeSearchSearchPublicRecipesShared =>
+      'Telusuri resep umum sing dituduhake dening pangguna liya.';
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
@@ -4265,7 +4576,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get compactWorkoutRow => ' • ';
 
   @override
-  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount) {
+  String compactWorkoutRowMinExercises(
+    Object bestDurationMinutes,
+    Object exerciseCount,
+  ) {
     return '${bestDurationMinutes}menit • $exerciseCount latihan';
   }
 
@@ -4273,13 +4587,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get companionPickerAddAll => 'Tambah kabeh';
 
   @override
-  String get companionPickerLastTimeYouLogged => 'Pungkasan sampeyan nyathet iki bebarengan — pilih mung sing cocog dina iki.';
+  String get companionPickerLastTimeYouLogged =>
+      'Pungkasan sampeyan nyathet iki bebarengan — pilih mung sing cocog dina iki.';
 
   @override
   String get companionPickerLogSelected => 'Cathet sing dipilih';
 
   @override
-  String get companionPickerPickWhatYouHad => 'Pilih apa sing sampeyan konsumsi';
+  String get companionPickerPickWhatYouHad =>
+      'Pilih apa sing sampeyan konsumsi';
 
   @override
   String companionPickerSheetCal(Object item) {
@@ -4338,13 +4654,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comparisonGalleryComparisonDeleted => 'Perbandingan dibusak';
 
   @override
-  String get comparisonGalleryCreateABeforeAfter => 'Gawe perbandingan sadurunge & sawise saka tab Foto kanggo ndeleng kemajuan sampeyan saka wektu ke wektu.';
+  String get comparisonGalleryCreateABeforeAfter =>
+      'Gawe perbandingan sadurunge & sawise saka tab Foto kanggo ndeleng kemajuan sampeyan saka wektu ke wektu.';
 
   @override
   String get comparisonGalleryDeleteComparison => 'Busak Perbandingan?';
 
   @override
-  String get comparisonGalleryExportAndShareThis => 'Ekspor lan barengake perbandingan iki';
+  String get comparisonGalleryExportAndShareThis =>
+      'Ekspor lan barengake perbandingan iki';
 
   @override
   String get comparisonGalleryNoComparisonsYet => 'Durung Ana Perbandingan';
@@ -4353,10 +4671,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comparisonGalleryOpen => 'Bukak';
 
   @override
-  String get comparisonGalleryOpenInComparisonEditor => 'Bukak ing editor perbandingan';
+  String get comparisonGalleryOpenInComparisonEditor =>
+      'Bukak ing editor perbandingan';
 
   @override
-  String get comparisonGalleryOpenTheComparisonIn => 'Bukak perbandingan ing editor dhisik kanggo ngekspor lan barengake.';
+  String get comparisonGalleryOpenTheComparisonIn =>
+      'Bukak perbandingan ing editor dhisik kanggo ngekspor lan barengake.';
 
   @override
   String get comparisonGalleryReEdit => 'Sunting maneh';
@@ -4368,7 +4688,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get comparisonGallerySavedComparisons => 'Perbandingan sing Disimpen';
 
   @override
-  String get comparisonGalleryThisWillPermanentlyRemove => 'Iki bakal mbusak perbandingan kanthi permanen. Foto asli ora bakal dibusak.';
+  String get comparisonGalleryThisWillPermanentlyRemove =>
+      'Iki bakal mbusak perbandingan kanthi permanen. Foto asli ora bakal dibusak.';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4431,7 +4752,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos) {
+  String comparisonViewExtSelectedPhotos(
+    Object length,
+    Object maxPhotos,
+    Object minPhotos,
+  ) {
     return '$length dipilih ($minPhotos-$maxPhotos foto)';
   }
 
@@ -4512,7 +4837,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get completeViewGoals => 'Deleng Target';
 
   @override
-  String get complianceRingCardAllWorkoutsCompleted => 'Kabeh latihan wis rampung';
+  String get complianceRingCardAllWorkoutsCompleted =>
+      'Kabeh latihan wis rampung';
 
   @override
   String get complianceRingCardGetStartedToday => 'Mulai dina iki';
@@ -4523,7 +4849,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get complianceRingCardNoWorkoutsScheduledThis => 'Ora ana jadwal latihan minggu iki';
+  String get complianceRingCardNoWorkoutsScheduledThis =>
+      'Ora ana jadwal latihan minggu iki';
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
@@ -4563,7 +4890,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get connectedAppsIncludeStrengthWorkouts => 'Kalebu latihan kekuatan';
 
   @override
-  String get connectedAppsNoSyncYetWill => 'Durung ana sinkronisasi — bakal mlaku sajrone 15 menit.';
+  String get connectedAppsNoSyncYetWill =>
+      'Durung ana sinkronisasi — bakal mlaku sajrone 15 menit.';
 
   @override
   String get connectedAppsReconnect => 'Sambungake maneh';
@@ -4627,7 +4955,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get consistencyInsightCardStreak => 'Streak';
 
   @override
-  String get consistencyInsightCardTapToBeginA => 'Tutul kanggo miwiti streak anyar';
+  String get consistencyInsightCardTapToBeginA =>
+      'Tutul kanggo miwiti streak anyar';
 
   @override
   String get consistencyInsightCardTapToRefresh => 'Tutul kanggo refresh';
@@ -4661,7 +4990,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get consistencyScoreCardWorkoutCompletionRate => 'Tingkat ngrampungake latihan';
+  String get consistencyScoreCardWorkoutCompletionRate =>
+      'Tingkat ngrampungake latihan';
 
   @override
   String consistencyScreenAverageWeeklyCompletion(Object avgRate) {
@@ -4723,22 +5053,28 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get contributeFoodDataCouldNotDeletePlease => 'Gagal mbusak — mangga coba maneh';
+  String get contributeFoodDataCouldNotDeletePlease =>
+      'Gagal mbusak — mangga coba maneh';
 
   @override
-  String get contributeFoodDataDeleteFoodContributions => 'Busak kontribusi panganan?';
+  String get contributeFoodDataDeleteFoodContributions =>
+      'Busak kontribusi panganan?';
 
   @override
-  String get contributeFoodDataDeleteMyFoodContributions => 'Busak kontribusi pangananku';
+  String get contributeFoodDataDeleteMyFoodContributions =>
+      'Busak kontribusi pangananku';
 
   @override
-  String get contributeFoodDataHelpImproveNutritionData => 'Bantu ningkatake data nutrisi';
+  String get contributeFoodDataHelpImproveNutritionData =>
+      'Bantu ningkatake data nutrisi';
 
   @override
-  String get contributeFoodDataNoContributionsToDelete => 'Ora ana kontribusi sing bisa dibusak';
+  String get contributeFoodDataNoContributionsToDelete =>
+      'Ora ana kontribusi sing bisa dibusak';
 
   @override
-  String get contributeFoodDataSharingNovelDishesRecommen => 'Nuduhake panganan anyar (disaranake)';
+  String get contributeFoodDataSharingNovelDishesRecommen =>
+      'Nuduhake panganan anyar (disaranake)';
 
   @override
   String get conversationEncrypted => 'Di-enkripsi';
@@ -4772,13 +5108,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get conversationSendTheFirstMessage => 'Kirim pesen pisanan!';
 
   @override
-  String get conversationSomeMessagesWereEncrypted => 'Sawetara pesen di-enkripsi ing piranti liya lan ora bisa diwaca ing kene.';
+  String get conversationSomeMessagesWereEncrypted =>
+      'Sawetara pesen di-enkripsi ing piranti liya lan ora bisa diwaca ing kene.';
 
   @override
   String get conversationTypeAMessage => 'Ketik pesen...';
 
   @override
-  String get cookingConverterConvertBetweenRawAnd => 'Konversi antarane bobot mentah lan mateng';
+  String get cookingConverterConvertBetweenRawAnd =>
+      'Konversi antarane bobot mentah lan mateng';
 
   @override
   String get cookingConverterCooked => 'Mateng';
@@ -4846,7 +5184,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cosmeticsGalleryYourLoadout => 'Loadout sampeyan';
 
   @override
-  String get createChallengeAnyoneCanDiscoverAnd => 'Sapa wae bisa nemokake lan gabung';
+  String get createChallengeAnyoneCanDiscoverAnd =>
+      'Sapa wae bisa nemokake lan gabung';
 
   @override
   String get createChallengeChallengeType => 'Jinis Tantangan';
@@ -4897,7 +5236,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createExerciseAdvancedOptional => 'Lanjut (opsional)';
 
   @override
-  String get createExerciseAiFilledExerciseDetails => 'Detail latihan diisi AI — priksa lan simpen';
+  String get createExerciseAiFilledExerciseDetails =>
+      'Detail latihan diisi AI — priksa lan simpen';
 
   @override
   String get createExerciseAnalyzeWithAi => 'Analisis nganggo AI';
@@ -4921,16 +5261,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createExerciseCreateExercise => 'Gawe Latihan';
 
   @override
-  String get createExerciseDescribeHowToPerform => 'Jelasake cara nindakake latihan iki...';
+  String get createExerciseDescribeHowToPerform =>
+      'Jelasake cara nindakake latihan iki...';
 
   @override
-  String get createExerciseEGBenchPress => 'tuladha, Bench Press & Chest Fly Superset';
+  String get createExerciseEGBenchPress =>
+      'tuladha, Bench Press & Chest Fly Superset';
 
   @override
   String get createExerciseEGBenchPress2 => 'tuladha, Bench Press';
 
   @override
-  String get createExerciseEGFocusOn => 'tuladha, Fokus ing remetan ing ndhuwur, alon-alon eccentric';
+  String get createExerciseEGFocusOn =>
+      'tuladha, Fokus ing remetan ing ndhuwur, alon-alon eccentric';
 
   @override
   String get createExerciseEGMyCustom => 'tuladha, My Custom Press';
@@ -4945,7 +5288,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createExerciseReps => 'Reps: ';
 
   @override
-  String get createExerciseRestRpeTempoIncline => 'Rest, RPE, tempo, incline, jarak, durasi, cathetan';
+  String get createExerciseRestRpeTempoIncline =>
+      'Rest, RPE, tempo, incline, jarak, durasi, cathetan';
 
   @override
   String createExerciseSheetAddMoreExercises(Object length) {
@@ -4969,7 +5313,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createExerciseTakePhoto => 'Jupuk Foto';
 
   @override
-  String get createGoalChallengeYourselfToBeat => 'Tantang awakmu kanggo ngalahake rekor pribadimu!';
+  String get createGoalChallengeYourselfToBeat =>
+      'Tantang awakmu kanggo ngalahake rekor pribadimu!';
 
   @override
   String get createGoalExercise => 'Latihan';
@@ -4990,7 +5335,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createGoalPleaseEnterAValid => 'Mangga lebokake target sing bener';
 
   @override
-  String get createGoalPleaseEnterAnExercise => 'Mangga lebokake jeneng latihan';
+  String get createGoalPleaseEnterAnExercise =>
+      'Mangga lebokake jeneng latihan';
 
   @override
   String get createGoalSetGoal => 'Setel Sasaran';
@@ -5090,7 +5436,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get createPostSheetMediaOptional => 'Media (Opsional)';
 
   @override
-  String get createPostSheetShareYourFitnessJourney => 'Nuduhake perjalanan fitnessmu...';
+  String get createPostSheetShareYourFitnessJourney =>
+      'Nuduhake perjalanan fitnessmu...';
 
   @override
   String get createPostSheetTrending => 'Trending';
@@ -5155,10 +5502,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customColorLabCustomColorLab => 'Lab Warna Kustom';
 
   @override
-  String get customColorLabFineTuneAccentColor => 'Atur warna aksen nganggo pemilih HSV';
+  String get customColorLabFineTuneAccentColor =>
+      'Atur warna aksen nganggo pemilih HSV';
 
   @override
-  String get customContentAddYourOwnEquipment => 'Tambah peralatan lan latihanmu dhewe';
+  String get customContentAddYourOwnEquipment =>
+      'Tambah peralatan lan latihanmu dhewe';
 
   @override
   String get customContentMyCustomContent => 'KONTEN KUSTOMKU';
@@ -5170,13 +5519,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customContentSectionAddCustomExercise => 'Tambah Latihan Kustom';
 
   @override
-  String get customContentSectionAddEquipmentAboveTo => 'Tambah peralatan ing ndhuwur kanggo miwiti';
+  String get customContentSectionAddEquipmentAboveTo =>
+      'Tambah peralatan ing ndhuwur kanggo miwiti';
 
   @override
-  String get customContentSectionAddEquipmentNotIn => 'Tambah peralatan sing ora ana ing dhaptar standar';
+  String get customContentSectionAddEquipmentNotIn =>
+      'Tambah peralatan sing ora ana ing dhaptar standar';
 
   @override
-  String get customContentSectionAddEquipmentThatWill => 'Tambah peralatan sing bakal digunakake nalika nggawe latihanmu.';
+  String get customContentSectionAddEquipmentThatWill =>
+      'Tambah peralatan sing bakal digunakake nalika nggawe latihanmu.';
 
   @override
   String get customContentSectionAddExercise => 'Tambah Latihan';
@@ -5185,25 +5537,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customContentSectionCompoundExercise => 'Latihan Majemuk';
 
   @override
-  String get customContentSectionCreateCustomComboExercise => 'Gawe latihan kustom & kombo';
+  String get customContentSectionCreateCustomComboExercise =>
+      'Gawe latihan kustom & kombo';
 
   @override
-  String get customContentSectionCreateExercisesThatCan => 'Gawe latihan sing bisa dilebokake ing latihan sing digawe AI.';
+  String get customContentSectionCreateExercisesThatCan =>
+      'Gawe latihan sing bisa dilebokake ing latihan sing digawe AI.';
 
   @override
   String get customContentSectionDeleteExercise => 'Busak Latihan?';
 
   @override
-  String get customContentSectionDescribeHowToPerform => 'Jelasake cara nindakake...';
+  String get customContentSectionDescribeHowToPerform =>
+      'Jelasake cara nindakake...';
 
   @override
   String get customContentSectionEGPikePush => 'contone, Pike Push-ups';
 
   @override
-  String get customContentSectionEnterEquipmentName => 'Ketik jeneng peralatan...';
+  String get customContentSectionEnterEquipmentName =>
+      'Ketik jeneng peralatan...';
 
   @override
-  String get customContentSectionFailedToLoadExercises => 'Gagal mbukak latihan';
+  String get customContentSectionFailedToLoadExercises =>
+      'Gagal mbukak latihan';
 
   @override
   String get customContentSectionInstructionsOptional => 'Instruksi (opsional)';
@@ -5221,13 +5578,17 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customContentSectionMyExercises => 'Latihanku';
 
   @override
-  String get customContentSectionNoCustomEquipmentYet => 'Durung ana peralatan kustom';
+  String get customContentSectionNoCustomEquipmentYet =>
+      'Durung ana peralatan kustom';
 
   @override
-  String get customContentSectionNoCustomExercisesYet => 'Durung ana latihan kustom';
+  String get customContentSectionNoCustomExercisesYet =>
+      'Durung ana latihan kustom';
 
   @override
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed) {
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(
+    Object trimmed,
+  ) {
     return 'Nambah \"$trimmed\" menyang peralatan sampeyan';
   }
 
@@ -5247,7 +5608,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed) {
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(
+    Object trimmed,
+  ) {
     return '$trimmed wis ana ing dhaptar sampeyan';
   }
 
@@ -5263,10 +5626,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customContentSectionSets => 'Set';
 
   @override
-  String get customContentSectionTapTheButtonAbove => 'Tutul tombol ing ndhuwur kanggo nggawe siji';
+  String get customContentSectionTapTheButtonAbove =>
+      'Tutul tombol ing ndhuwur kanggo nggawe siji';
 
   @override
-  String get customContentSectionTargetsMultipleMuscleGroups => 'Target macem-macem klompok otot';
+  String get customContentSectionTargetsMultipleMuscleGroups =>
+      'Target macem-macem klompok otot';
 
   @override
   String get customExerciseCard => ' • ';
@@ -5300,7 +5665,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customExercisesMyExercises => 'Latihanku';
 
   @override
-  String get customExercisesNoExercisesMatchYour => 'Ora ana latihan sing cocog karo telusuranmu';
+  String get customExercisesNoExercisesMatchYour =>
+      'Ora ana latihan sing cocog karo telusuranmu';
 
   @override
   String customExercisesScreenAreYouSureYou(Object name) {
@@ -5308,7 +5674,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses) {
+  String customExercisesScreenExercisesUses(
+    Object totalCustomExercises,
+    Object totalUses,
+  ) {
     return '$totalCustomExercises latihan, $totalUses panggunaan';
   }
 
@@ -5337,7 +5706,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customFoodBuilderCreateNewAnyway => 'Tetep gawe anyar';
 
   @override
-  String get customFoodBuilderFillItInYourself => 'Isi dhewe, utawa jarke AI menehi saran saka jeneng utawa foto label. Saben nilai bisa diowahi.';
+  String get customFoodBuilderFillItInYourself =>
+      'Isi dhewe, utawa jarke AI menehi saran saka jeneng utawa foto label. Saben nilai bisa diowahi.';
 
   @override
   String get customFoodBuilderLabelFromPhotos => 'Label saka foto';
@@ -5368,7 +5738,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customFoodBuilderUseExisting => 'Gunakake sing wis ana';
 
   @override
-  String get customGoalsAddSpecificSkillsOr => 'Tambah katrampilan utawa tujuan khusus sing pengin ditingkatake.\nAI bakal mbantu nemokake latihan sing pas.';
+  String get customGoalsAddSpecificSkillsOr =>
+      'Tambah katrampilan utawa tujuan khusus sing pengin ditingkatake.\nAI bakal mbantu nemokake latihan sing pas.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'Kata Kunci sing Digawe AI';
@@ -5380,7 +5751,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customGoalsDeleteGoal => 'Busak Tujuan?';
 
   @override
-  String get customGoalsEGImproveBox => 'contone, \"Tingkatake dhuwur lompat box\"';
+  String get customGoalsEGImproveBox =>
+      'contone, \"Tingkatake dhuwur lompat box\"';
 
   @override
   String get customGoalsGoalCreated => 'Tujuan Digawe!';
@@ -5400,7 +5772,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customGoalsSomethingWentWrong => 'Ana sing salah';
 
   @override
-  String get customGoalsTheseKeywordsWillHelp => 'Kata kunci iki bakal mbantu nemokake latihan sing relevan kanggo tujuanmu.';
+  String get customGoalsTheseKeywordsWillHelp =>
+      'Kata kunci iki bakal mbantu nemokake latihan sing relevan kanggo tujuanmu.';
 
   @override
   String get customTrendAddMetric => 'Tambah metrik';
@@ -5412,7 +5785,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customTrendCompareLastCycle => 'Bandingake siklus pungkasan';
 
   @override
-  String get customTrendCompareLastCycleNeeds => 'Bandingake siklus pungkasan · butuh ≥ 2 siklus ing rentang';
+  String get customTrendCompareLastCycleNeeds =>
+      'Bandingake siklus pungkasan · butuh ≥ 2 siklus ing rentang';
 
   @override
   String get customTrendCustomTrendSaved => 'Tren kustom disimpen';
@@ -5447,7 +5821,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints) {
+  String customTrendScreenSharedDays(
+    Object kMinCorrelationPairs,
+    Object pairedPoints,
+  ) {
     return '$pairedPoints/$kMinCorrelationPairs dina bareng';
   }
 
@@ -5458,7 +5835,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customWorkoutBuilderBuildCustomWorkout => 'Gawe Latihan Kustom';
 
   @override
-  String get customWorkoutBuilderCustomWorkoutCreated => 'Latihan kustom digawe!';
+  String get customWorkoutBuilderCustomWorkoutCreated =>
+      'Latihan kustom digawe!';
 
   @override
   String get customWorkoutBuilderDifficulty => 'Kangelan';
@@ -5467,16 +5845,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customWorkoutBuilderExercise => 'Latihan';
 
   @override
-  String get customWorkoutBuilderFailedToCreateWorkout => 'Gagal nggawe latihan';
+  String get customWorkoutBuilderFailedToCreateWorkout =>
+      'Gagal nggawe latihan';
 
   @override
-  String get customWorkoutBuilderNoExercisesAddedYet => 'Durung ana latihan sing ditambahake';
+  String get customWorkoutBuilderNoExercisesAddedYet =>
+      'Durung ana latihan sing ditambahake';
 
   @override
-  String get customWorkoutBuilderPleaseAddAtLeast => 'Mangga tambahake paling ora siji latihan';
+  String get customWorkoutBuilderPleaseAddAtLeast =>
+      'Mangga tambahake paling ora siji latihan';
 
   @override
-  String get customWorkoutBuilderPleaseEnterAWorkout => 'Mangga ketik jeneng latihan';
+  String get customWorkoutBuilderPleaseEnterAWorkout =>
+      'Mangga ketik jeneng latihan';
 
   @override
   String get customWorkoutBuilderReps => 'Reps';
@@ -5501,7 +5883,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get customWorkoutBuilderSets => 'Set';
 
   @override
-  String get customWorkoutBuilderTapTheButtonBelow => 'Tutul tombol ing ngisor iki kanggo nambah latihan';
+  String get customWorkoutBuilderTapTheButtonBelow =>
+      'Tutul tombol ing ngisor iki kanggo nambah latihan';
 
   @override
   String get customWorkoutBuilderWeightKg => 'Bobot (kg)';
@@ -5600,7 +5983,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cycleMonthlySummaryThisRecapStaysPrivate => 'Rekap iki tetep pribadi kanggo sampeyan — data siklus ora bakal dituduhake.';
+  String get cycleMonthlySummaryThisRecapStaysPrivate =>
+      'Rekap iki tetep pribadi kanggo sampeyan — data siklus ora bakal dituduhake.';
 
   @override
   String get cycleMonthlySummaryYourMonthInReview => 'Tinjauan wulan sampeyan';
@@ -5637,7 +6021,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleOpen => 'Bukak';
 
   @override
-  String get cyclePeriodSavedYourCoach => 'Periode disimpen — pelatih sampeyan wis nganyari wawasan sampeyan';
+  String get cyclePeriodSavedYourCoach =>
+      'Periode disimpen — pelatih sampeyan wis nganyari wawasan sampeyan';
 
   @override
   String get cyclePhaseChartGotIt => 'Oke';
@@ -5674,10 +6059,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiCheckYourConnectionAnd => 'Priksa sambungan sampeyan lan coba maneh.';
+  String get cycleScreenUiCheckYourConnectionAnd =>
+      'Priksa sambungan sampeyan lan coba maneh.';
 
   @override
-  String get cycleScreenUiCouldnTLoadYour => 'Ora bisa mbukak data siklus sampeyan';
+  String get cycleScreenUiCouldnTLoadYour =>
+      'Ora bisa mbukak data siklus sampeyan';
 
   @override
   String get cycleScreenUiDailyCheckIn => 'Check-in saben dina';
@@ -5689,7 +6076,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleScreenUiLogPeriod => 'Cathet periode';
 
   @override
-  String get cycleScreenUiLogYourFirstPeriod => 'Cathet periode pisanan sampeyan kanggo miwiti prediksi.';
+  String get cycleScreenUiLogYourFirstPeriod =>
+      'Cathet periode pisanan sampeyan kanggo miwiti prediksi.';
 
   @override
   String cycleScreenUiPhaseLabel(Object displayName) {
@@ -5697,7 +6085,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cycleScreenUiPredictionsAreEstimates => 'Prediksi minangka estimasi adhedhasar data sing sampeyan cathet, dudu cara kontrasepsi lan dudu saran medis. Temoni dhokter kanggo masalah kesehatan apa wae.';
+  String get cycleScreenUiPredictionsAreEstimates =>
+      'Prediksi minangka estimasi adhedhasar data sing sampeyan cathet, dudu cara kontrasepsi lan dudu saran medis. Temoni dhokter kanggo masalah kesehatan apa wae.';
 
   @override
   String get cycleScreenUiPregnancyModeIsOn => 'Mode meteng aktif';
@@ -5714,16 +6103,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get cycleSettingsAMorningNudgeTo => 'Pangeling esuk kanggo nyathet BBT sampeyan';
+  String get cycleSettingsAMorningNudgeTo =>
+      'Pangeling esuk kanggo nyathet BBT sampeyan';
 
   @override
-  String get cycleSettingsAnEveningNudgeTo => 'Pangeling sore kanggo nyathet perasaan sampeyan';
+  String get cycleSettingsAnEveningNudgeTo =>
+      'Pangeling sore kanggo nyathet perasaan sampeyan';
 
   @override
-  String get cycleSettingsBestTakenBeforeGetting => 'Paling apik dijupuk sadurunge tangi';
+  String get cycleSettingsBestTakenBeforeGetting =>
+      'Paling apik dijupuk sadurunge tangi';
 
   @override
-  String get cycleSettingsCalendarPredictionsLogging => 'Kalender, prediksi, logging, lan wawasan';
+  String get cycleSettingsCalendarPredictionsLogging =>
+      'Kalender, prediksi, logging, lan wawasan';
 
   @override
   String get cycleSettingsCheckInTime => 'Wektu check-in';
@@ -5732,7 +6125,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleSettingsCycle => 'Siklus';
 
   @override
-  String get cycleSettingsCycleAwarePhotoReminders => 'Pangeling foto sing sadar siklus';
+  String get cycleSettingsCycleAwarePhotoReminders =>
+      'Pangeling foto sing sadar siklus';
 
   @override
   String get cycleSettingsCycleReminders => 'Pangeling siklus';
@@ -5741,7 +6135,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleSettingsCycleTracking => 'Pelacakan siklus';
 
   @override
-  String get cycleSettingsDailyTemperatureReminder => 'Pangeling suhu saben dina';
+  String get cycleSettingsDailyTemperatureReminder =>
+      'Pangeling suhu saben dina';
 
   @override
   String get cycleSettingsDaysBefore => 'Dina sadurunge';
@@ -5750,10 +6145,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleSettingsFertileWindow => 'Jendhela subur';
 
   @override
-  String get cycleSettingsMasterSwitchForAll => 'Tombol utama kanggo kabeh notifikasi siklus';
+  String get cycleSettingsMasterSwitchForAll =>
+      'Tombol utama kanggo kabeh notifikasi siklus';
 
   @override
-  String get cycleSettingsOnYourPredictedPeriod => 'Ing tanggal wiwitan periode sing diprediksi';
+  String get cycleSettingsOnYourPredictedPeriod =>
+      'Ing tanggal wiwitan periode sing diprediksi';
 
   @override
   String get cycleSettingsOpenCycle => 'Bukak Siklus';
@@ -5785,7 +6182,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleSettingsTemperatureReminderTime => 'Wektu pangeling suhu';
 
   @override
-  String get cycleSettingsWhenTheRemindersAbove => 'Nalika pangeling ing ndhuwur dikirim';
+  String get cycleSettingsWhenTheRemindersAbove =>
+      'Nalika pangeling ing ndhuwur dikirim';
 
   @override
   String get cycleSetupHomeDismiss => 'Tutup';
@@ -5817,7 +6215,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleSuggestedChipsAskYourCoach => 'Takon pelatih sampeyan';
 
   @override
-  String get cycleSwitchHowTheCycle => 'Ganti cara layar Siklus makarya kanggo kahanan sampeyan.';
+  String get cycleSwitchHowTheCycle =>
+      'Ganti cara layar Siklus makarya kanggo kahanan sampeyan.';
 
   @override
   String get cycleTemperatureChartAsk => 'Takon';
@@ -5826,10 +6225,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get cycleTemperatureChartBasalTemperature => 'Suhu basal';
 
   @override
-  String get cycleTemperatureChartDragAcrossTheChart => 'Seret ing sadhuwure grafik kanggo mriksa saben dina';
+  String get cycleTemperatureChartDragAcrossTheChart =>
+      'Seret ing sadhuwure grafik kanggo mriksa saben dina';
 
   @override
-  String get cycleTemperatureChartLogBasalTemperatureTo => 'Cathet suhu basal kanggo ngisi grafik iki';
+  String get cycleTemperatureChartLogBasalTemperatureTo =>
+      'Cathet suhu basal kanggo ngisi grafik iki';
 
   @override
   String get cycleToday => 'Dina iki';
@@ -5883,7 +6284,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dailyActivityCardTodaySActivity => 'Aktivitas Dina Iki';
 
   @override
-  String get dailyActivityCardTrackYourActivity => 'Lacak Aktivitas Panjenengan';
+  String get dailyActivityCardTrackYourActivity =>
+      'Lacak Aktivitas Panjenengan';
 
   @override
   String get dailyCalories => 'Kalori';
@@ -5901,25 +6303,29 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dailyCrateBannerBasicRewards => 'Hadiah dhasar';
 
   @override
-  String get dailyCrateBannerChoose1CrateTo => 'Pilih 1 kothak kanggo dibukak dina iki';
+  String get dailyCrateBannerChoose1CrateTo =>
+      'Pilih 1 kothak kanggo dibukak dina iki';
 
   @override
   String get dailyCrateBannerDailyCrate => 'Kothak Saben Dina';
 
   @override
-  String get dailyCrateBannerDailyCratesAvailable => 'Kothak Saben Dina Kasedhiya!';
+  String get dailyCrateBannerDailyCratesAvailable =>
+      'Kothak Saben Dina Kasedhiya!';
 
   @override
   String get dailyCrateBannerFailedToClaimCrate => 'Gagal njupuk kothak';
 
   @override
-  String get dailyCrateBannerPickYourDailyCrate => '🎁 Pilih Kothak Saben Dina Panjenengan';
+  String get dailyCrateBannerPickYourDailyCrate =>
+      '🎁 Pilih Kothak Saben Dina Panjenengan';
 
   @override
   String get dailyCrateBannerStreakCrate => 'Kothak Streak';
 
   @override
-  String get dailyCrateBannerTapToPickYour => 'Tutul kanggo milih hadiah panjenengan';
+  String get dailyCrateBannerTapToPickYour =>
+      'Tutul kanggo milih hadiah panjenengan';
 
   @override
   String get dailyEditGoalsInSettings => 'Sunting Target ing Setelan';
@@ -5928,7 +6334,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dailyExpired => 'KADALUWARSA';
 
   @override
-  String get dailyFailedToUpdatePinned => 'Gagal nganyari nutrisi sing disematake';
+  String get dailyFailedToUpdatePinned =>
+      'Gagal nganyari nutrisi sing disematake';
 
   @override
   String get dailyFat => 'Lemak';
@@ -5940,7 +6347,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dailyLeftoversReadyToLog => 'Sisa panganan siap dicathet';
 
   @override
-  String get dailyPickTheNutrientsYou => 'Pilih nutrisi sing pengin dideleng ing sisih ndhuwur tab Saben Dina.';
+  String get dailyPickTheNutrientsYou =>
+      'Pilih nutrisi sing pengin dideleng ing sisih ndhuwur tab Saben Dina.';
 
   @override
   String get dailyPinNutrients => 'Semat nutrisi';
@@ -6068,7 +6476,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get dailyTapSettingsIconTo => 'Tutul ikon setelan kanggo nyetel target iki';
+  String get dailyTapSettingsIconTo =>
+      'Tutul ikon setelan kanggo nyetel target iki';
 
   @override
   String get dailyTapToLog => 'TUTUL KANGGO NGLOG';
@@ -6098,10 +6507,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dangerZoneDeleteAccount => 'Busak Akun';
 
   @override
-  String get dangerZoneDeleteWorkoutsKeepAccount => 'Busak latihan, simpen akun';
+  String get dangerZoneDeleteWorkoutsKeepAccount =>
+      'Busak latihan, simpen akun';
 
   @override
-  String get dangerZonePermanentlyDeleteAllData => 'Busak kabeh data kanthi permanen';
+  String get dangerZonePermanentlyDeleteAllData =>
+      'Busak kabeh data kanthi permanen';
 
   @override
   String get dangerZoneResetProgram => 'Reset Program';
@@ -6113,7 +6524,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dangerZoneThisWill => 'Iki bakal:';
 
   @override
-  String get dangerZoneYourCompletedWorkoutHistory => 'Riwayat latihan sing wis rampung bakal disimpen.';
+  String get dangerZoneYourCompletedWorkoutHistory =>
+      'Riwayat latihan sing wis rampung bakal disimpen.';
 
   @override
   String get dataManagementAutoRenewalActive => 'Panyambungan otomatis aktif';
@@ -6125,7 +6537,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dataManagementDownloadThisWeekS => 'Unduh video minggu iki';
 
   @override
-  String get dataManagementDownloadYourWorkoutNutrit => 'Unduh data latihan + nutrisi panjenengan';
+  String get dataManagementDownloadYourWorkoutNutrit =>
+      'Unduh data latihan + nutrisi panjenengan';
 
   @override
   String get dataManagementDownloadedVideos => 'Video sing Diunduh';
@@ -6134,7 +6547,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dataManagementExportMyWorkouts => 'Ekspor Latihan Kula';
 
   @override
-  String get dataManagementHevyStrongFitbodPdf => 'Hevy / Strong / Fitbod / PDF / GPX — gawa menyang ngendi wae';
+  String get dataManagementHevyStrongFitbodPdf =>
+      'Hevy / Strong / Fitbod / PDF / GPX — gawa menyang ngendi wae';
 
   @override
   String get dataManagementLifetimeAccess => 'Akses Seumur Urip';
@@ -6143,22 +6557,28 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dataManagementManageDuplicateImports => 'Kelola impor duplikat';
 
   @override
-  String get dataManagementManageOfflineExerciseVideos => 'Kelola video latihan offline';
+  String get dataManagementManageOfflineExerciseVideos =>
+      'Kelola video latihan offline';
 
   @override
-  String get dataManagementNoExercisesFoundIn => 'Ora ana latihan sing ditemokake ing rencana panjenengan.';
+  String get dataManagementNoExercisesFoundIn =>
+      'Ora ana latihan sing ditemokake ing rencana panjenengan.';
 
   @override
-  String get dataManagementNoUpcomingChargesYou => 'Ora ana tagihan sing bakal teka - panjenengan duwe akses seumur urip';
+  String get dataManagementNoUpcomingChargesYou =>
+      'Ora ana tagihan sing bakal teka - panjenengan duwe akses seumur urip';
 
   @override
-  String get dataManagementNoVideoUrlsAvailable => 'Ora ana URL video sing kasedhiya kanggo rencana panjenengan.';
+  String get dataManagementNoVideoUrlsAvailable =>
+      'Ora ana URL video sing kasedhiya kanggo rencana panjenengan.';
 
   @override
-  String get dataManagementPreCacheAllExercises => 'Pre-cache kabeh latihan ing rencana sampeyan kanggo panggunaan offline';
+  String get dataManagementPreCacheAllExercises =>
+      'Pre-cache kabeh latihan ing rencana sampeyan kanggo panggunaan offline';
 
   @override
-  String get dataManagementRePickThePrimary => 'Pilih maneh sumber utama nalika latihan sing padha disinkronake kaping pindho';
+  String get dataManagementRePickThePrimary =>
+      'Pilih maneh sumber utama nalika latihan sing padha disinkronake kaping pindho';
 
   @override
   String get dataManagementRequestRefund => 'Nyuwun Pangembalian Dana';
@@ -6194,10 +6614,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get dataManagementSignInToDownload => 'Mlebu kanggo ndownload rencana mingguan sampeyan.';
+  String get dataManagementSignInToDownload =>
+      'Mlebu kanggo ndownload rencana mingguan sampeyan.';
 
   @override
-  String get dataManagementSubmitARefundRequest => 'Kirim panjaluk pangembalian dana';
+  String get dataManagementSubmitARefundRequest =>
+      'Kirim panjaluk pangembalian dana';
 
   @override
   String get dataManagementSubscription => 'LANGGANAN';
@@ -6212,7 +6634,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dataSyncDeviceInfo => 'Info Piranti';
 
   @override
-  String get dataSyncFreeMemoryByClearing => 'Kosongake memori kanthi mbusak cache ing memori';
+  String get dataSyncFreeMemoryByClearing =>
+      'Kosongake memori kanthi mbusak cache ing memori';
 
   @override
   String get dataSyncLoading => 'Ngangkut...';
@@ -6244,7 +6667,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get deleteAccountFlowActiveSubscription => 'Langganan aktif';
 
   @override
-  String get deleteAccountFlowConfirmWithYourPassword => 'Konfirmasi nganggo sandhi sampeyan';
+  String get deleteAccountFlowConfirmWithYourPassword =>
+      'Konfirmasi nganggo sandhi sampeyan';
 
   @override
   String get deleteAccountFlowDeleteAccount => 'Busak Akun?';
@@ -6266,10 +6690,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get deleteAccountFlowPleaseEnterYourPassword => 'Mangga lebokake sandhi sampeyan';
+  String get deleteAccountFlowPleaseEnterYourPassword =>
+      'Mangga lebokake sandhi sampeyan';
 
   @override
-  String get deleteAccountFlowReAuthenticationRequired => 'Perlu otentikasi ulang';
+  String get deleteAccountFlowReAuthenticationRequired =>
+      'Perlu otentikasi ulang';
 
   @override
   String get deleteAccountFlowResetPassword => 'Reset sandhi';
@@ -6278,13 +6704,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get deleteAccountFlowSignInAgain => 'Mlebu maneh';
 
   @override
-  String get deleteAccountFlowThisActionCannotBe => 'Tindakan iki ora bisa dibatalake!';
+  String get deleteAccountFlowThisActionCannotBe =>
+      'Tindakan iki ora bisa dibatalake!';
 
   @override
-  String get deleteAccountFlowThisWillPermanentlyDelete => 'Iki bakal mbusak kanthi permanen:';
+  String get deleteAccountFlowThisWillPermanentlyDelete =>
+      'Iki bakal mbusak kanthi permanen:';
 
   @override
-  String get deleteAccountFlowWeCouldNotVerify => 'Kita ora bisa verifikasi sandhi sampeyan. Reset sandhi sampeyan dhisik, banjur coba busak akun maneh.';
+  String get deleteAccountFlowWeCouldNotVerify =>
+      'Kita ora bisa verifikasi sandhi sampeyan. Reset sandhi sampeyan dhisik, banjur coba busak akun maneh.';
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
@@ -6292,7 +6721,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get deleteAccountFlowYouWillNeedTo => 'Sampeyan kudu ndaftar maneh kanggo nggunakake aplikasi iki.';
+  String get deleteAccountFlowYouWillNeedTo =>
+      'Sampeyan kudu ndaftar maneh kanggo nggunakake aplikasi iki.';
 
   @override
   String get deleteAccountProgressDeletingYourAccount => 'Mbusak akun sampeyan';
@@ -6325,19 +6755,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoActiveWorkoutExitWorkout => 'Metu saka Latihan?';
 
   @override
-  String get demoActiveWorkoutGetAiGeneratedWorkout => 'Entuk rencana latihan sing digawe AI, lacak kemajuan sampeyan, lan gayuh target fitness sampeyan luwih cepet.';
+  String get demoActiveWorkoutGetAiGeneratedWorkout =>
+      'Entuk rencana latihan sing digawe AI, lacak kemajuan sampeyan, lan gayuh target fitness sampeyan luwih cepet.';
 
   @override
-  String get demoActiveWorkoutGetPersonalizedWorkouts => 'Entuk Latihan Pribadi';
+  String get demoActiveWorkoutGetPersonalizedWorkouts =>
+      'Entuk Latihan Pribadi';
 
   @override
-  String get demoActiveWorkoutGreatJobTimeTo => 'Apik banget! Wektune kanggo peregangan lan pulih.';
+  String get demoActiveWorkoutGreatJobTimeTo =>
+      'Apik banget! Wektune kanggo peregangan lan pulih.';
 
   @override
-  String get demoActiveWorkoutNextExerciseComingUp => 'Latihan Sabanjure Bakal Teka!';
+  String get demoActiveWorkoutNextExerciseComingUp =>
+      'Latihan Sabanjure Bakal Teka!';
 
   @override
-  String get demoActiveWorkoutReadyForTheFull => 'Siap kanggo pengalaman lengkap?';
+  String get demoActiveWorkoutReadyForTheFull =>
+      'Siap kanggo pengalaman lengkap?';
 
   @override
   String get demoActiveWorkoutRestTime => 'Wektu Istirahat';
@@ -6353,12 +6788,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet) {
+  String demoActiveWorkoutScreenUi1SetOf(
+    Object _currentExerciseSets,
+    Object _currentSet,
+  ) {
     return 'Set $_currentSet saka $_currentExerciseSets';
   }
 
   @override
-  String get demoActiveWorkoutSignUpToGet => 'Ndaftar kanggo entuk pelatihan AI pribadi, pelacakan kemajuan sing rinci, lan latihan sing disesuaikan karo target sampeyan.';
+  String get demoActiveWorkoutSignUpToGet =>
+      'Ndaftar kanggo entuk pelatihan AI pribadi, pelacakan kemajuan sing rinci, lan latihan sing disesuaikan karo target sampeyan.';
 
   @override
   String get demoActiveWorkoutSkipAll => 'Skip Kabeh';
@@ -6376,7 +6815,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoActiveWorkoutWorkoutComplete => 'Latihan Rampung!';
 
   @override
-  String get demoActiveWorkoutYourProgressInThis => 'Kemajuan sampeyan ing latihan demo iki ora bakal disimpen. Apa sampeyan yakin pengin metu?';
+  String get demoActiveWorkoutYourProgressInThis =>
+      'Kemajuan sampeyan ing latihan demo iki ora bakal disimpen. Apa sampeyan yakin pengin metu?';
 
   @override
   String get demoDayBanner24HoursOfFull => '24 Jam Akses Penuh';
@@ -6385,7 +6825,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoDayBannerDemoDay => 'DEMO DAY';
 
   @override
-  String get demoDayBannerExploreAllPremiumFeatures => 'Jelajahi kabeh fitur premium - tanpa komitmen';
+  String get demoDayBannerExploreAllPremiumFeatures =>
+      'Jelajahi kabeh fitur premium - tanpa komitmen';
 
   @override
   String get demoDayBannerTimeRemaining => 'Wektu Sisa: ';
@@ -6400,10 +6841,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoTasksSnapAMenuLog => 'Foto menu, cathet dhaharan';
 
   @override
-  String get demoTasksTryOneOrBoth => 'Coba salah siji utawa loro-lorone. Skip yen sampeyan pengin.';
+  String get demoTasksTryOneOrBoth =>
+      'Coba salah siji utawa loro-lorone. Skip yen sampeyan pengin.';
 
   @override
-  String get demoWorkoutCreatingYourPersonalizedWor => 'Nggawe latihan pribadi sampeyan...';
+  String get demoWorkoutCreatingYourPersonalizedWor =>
+      'Nggawe latihan pribadi sampeyan...';
 
   @override
   String get demoWorkoutExercises => 'LATIHAN';
@@ -6412,7 +6855,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoWorkoutFailedToLoadWorkout => 'Gagal mbukak latihan';
 
   @override
-  String get demoWorkoutFocusOnProperForm => 'Fokus ing wangun sing bener lan gerakan sing dikontrol.';
+  String get demoWorkoutFocusOnProperForm =>
+      'Fokus ing wangun sing bener lan gerakan sing dikontrol.';
 
   @override
   String get demoWorkoutHowToPerform => 'Cara nindakake';
@@ -6421,7 +6865,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoWorkoutScreenAi => 'AI';
 
   @override
-  String get demoWorkoutScreenBasedOnYourGoals => 'Adhedhasar target, peralatan & tingkat fitness sampeyan';
+  String get demoWorkoutScreenBasedOnYourGoals =>
+      'Adhedhasar target, peralatan & tingkat fitness sampeyan';
 
   @override
   String get demoWorkoutScreenDifficulty => 'Kangelan';
@@ -6430,10 +6875,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoWorkoutScreenEquipmentNeeded => 'PERALATAN SING DIBUTUHEKAKE';
 
   @override
-  String get demoWorkoutScreenGetAiPersonalizedWorkouts => 'Entuk Latihan Pribadi AI';
+  String get demoWorkoutScreenGetAiPersonalizedWorkouts =>
+      'Entuk Latihan Pribadi AI';
 
   @override
-  String get demoWorkoutScreenGetPersonalizedWorkouts => 'Entuk Latihan Pribadi';
+  String get demoWorkoutScreenGetPersonalizedWorkouts =>
+      'Entuk Latihan Pribadi';
 
   @override
   String get demoWorkoutScreenSampleWorkout => 'Conto Latihan';
@@ -6442,13 +6889,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoWorkoutScreenSampleWorkoutPreview => 'Pratinjau Conto Latihan';
 
   @override
-  String get demoWorkoutScreenSignUpToGet => 'Ndaftar kanggo entuk latihan sing disesuaikan karo target, tingkat fitness, lan peralatan sing kasedhiya.';
+  String get demoWorkoutScreenSignUpToGet =>
+      'Ndaftar kanggo entuk latihan sing disesuaikan karo target, tingkat fitness, lan peralatan sing kasedhiya.';
 
   @override
   String get demoWorkoutScreenStartWorkout => 'Mulai Latihan';
 
   @override
-  String get demoWorkoutScreenTryAnotherSampleWorkout => 'Coba Conto Latihan Liyane';
+  String get demoWorkoutScreenTryAnotherSampleWorkout =>
+      'Coba Conto Latihan Liyane';
 
   @override
   String get demoWorkoutScreenType => 'Tipe';
@@ -6459,7 +6908,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get demoWorkoutScreenYourPersonalizedWorkout => 'Latihan Pribadi Sampeyan';
+  String get demoWorkoutScreenYourPersonalizedWorkout =>
+      'Latihan Pribadi Sampeyan';
 
   @override
   String get demoWorkoutTryAgain => 'Coba Maneh';
@@ -6471,31 +6921,40 @@ class AppLocalizationsJv extends AppLocalizations {
   String get demoWorkoutVideoUnavailable => 'Video ora kasedhiya';
 
   @override
-  String get derivedMetricDetailABmiBetween18 => 'BMI antarane 18.5 lan 24.9 dianggep bobot awak sing sehat. Terusake pakaryan apikmu!';
+  String get derivedMetricDetailABmiBetween18 =>
+      'BMI antarane 18.5 lan 24.9 dianggep bobot awak sing sehat. Terusake pakaryan apikmu!';
 
   @override
-  String get derivedMetricDetailABmiBetween25 => 'BMI antarane 25 lan 29.9 dianggep kabotan bobot. Cathetan: BMI ora mbedakake otot karo lemak.';
+  String get derivedMetricDetailABmiBetween25 =>
+      'BMI antarane 25 lan 29.9 dianggep kabotan bobot. Cathetan: BMI ora mbedakake otot karo lemak.';
 
   @override
-  String get derivedMetricDetailABmiOf30 => 'BMI 30 utawa luwih diklasifikasikake minangka obesitas. Coba konsultasi karo profesional kesehatan kanggo pituduh.';
+  String get derivedMetricDetailABmiOf30 =>
+      'BMI 30 utawa luwih diklasifikasikake minangka obesitas. Coba konsultasi karo profesional kesehatan kanggo pituduh.';
 
   @override
-  String get derivedMetricDetailAChestToWaist => 'Rasio dhadha-menyang-bangkekan ing ngisor 1.1 nuduhake dhadha sing cilik dibandhingake bangkekan. Fokus ing latihan dhadha lan geger.';
+  String get derivedMetricDetailAChestToWaist =>
+      'Rasio dhadha-menyang-bangkekan ing ngisor 1.1 nuduhake dhadha sing cilik dibandhingake bangkekan. Fokus ing latihan dhadha lan geger.';
 
   @override
-  String get derivedMetricDetailAChestToWaist2 => 'Rasio dhadha-menyang-bangkekan 1.1-1.3 iku rata-rata. Proporsi sehat antarane dhadha lan bangkekan.';
+  String get derivedMetricDetailAChestToWaist2 =>
+      'Rasio dhadha-menyang-bangkekan 1.1-1.3 iku rata-rata. Proporsi sehat antarane dhadha lan bangkekan.';
 
   @override
-  String get derivedMetricDetailAChestToWaist3 => 'Rasio dhadha-menyang-bangkekan ing ndhuwur 1.3 nuduhake dhadha sing wangun apik dibandhingake bangkekan. Proporsi sing apik banget!';
+  String get derivedMetricDetailAChestToWaist3 =>
+      'Rasio dhadha-menyang-bangkekan ing ndhuwur 1.3 nuduhake dhadha sing wangun apik dibandhingake bangkekan. Proporsi sing apik banget!';
 
   @override
-  String get derivedMetricDetailAWhtrAbove0 => 'WHtR ing ndhuwur 0.6 nuduhake lemak weteng sing signifikan lan risiko kesehatan sing mundhak.';
+  String get derivedMetricDetailAWhtrAbove0 =>
+      'WHtR ing ndhuwur 0.6 nuduhake lemak weteng sing signifikan lan risiko kesehatan sing mundhak.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween0 => 'WHtR antarane 0.4 lan 0.5 dianggep sehat. Bangkekanmu kurang saka setengah dhuwurmu.';
+  String get derivedMetricDetailAWhtrBetween0 =>
+      'WHtR antarane 0.4 lan 0.5 dianggep sehat. Bangkekanmu kurang saka setengah dhuwurmu.';
 
   @override
-  String get derivedMetricDetailAWhtrBetween02 => 'WHtR antarane 0.5 lan 0.6 nuduhake lemak weteng sing mundhak. Fokus kanggo nyuda ukuran bangkekan.';
+  String get derivedMetricDetailAWhtrBetween02 =>
+      'WHtR antarane 0.5 lan 0.6 nuduhake lemak weteng sing mundhak. Fokus kanggo nyuda ukuran bangkekan.';
 
   @override
   String get derivedMetricDetailAboveAverage => 'Ing Ndhuwur Rata-rata';
@@ -6534,7 +6993,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get derivedMetricDetailGood => 'Apik';
 
   @override
-  String get derivedMetricDetailGoodSymmetry9397 => 'Simetri apik (93-97%). Beda cilik sing isih ing kisaran normal.';
+  String get derivedMetricDetailGoodSymmetry9397 =>
+      'Simetri apik (93-97%). Beda cilik sing isih ing kisaran normal.';
 
   @override
   String get derivedMetricDetailHealthy => 'Sehat';
@@ -6573,7 +7033,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get derivedMetricDetailModerate => 'Sedheng';
 
   @override
-  String get derivedMetricDetailModerateAsymmetry8893 => 'Asimetri sedheng (88-93%). Coba tambahake latihan unilateral kanggo ngatasi ketidakseimbangan.';
+  String get derivedMetricDetailModerateAsymmetry8893 =>
+      'Asimetri sedheng (88-93%). Coba tambahake latihan unilateral kanggo ngatasi ketidakseimbangan.';
 
   @override
   String get derivedMetricDetailModerateRisk => 'Risiko Sedheng';
@@ -6585,7 +7046,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get derivedMetricDetailNarrow => 'Cilik';
 
   @override
-  String get derivedMetricDetailNearPerfectSymmetry97 => 'Simetri meh sampurna (97%+). Sisih loro seimbang banget.';
+  String get derivedMetricDetailNearPerfectSymmetry97 =>
+      'Simetri meh sampurna (97%+). Sisih loro seimbang banget.';
 
   @override
   String get derivedMetricDetailNoHistoryYet => 'Durung ana riwayat';
@@ -6618,7 +7080,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get derivedMetricDetailShoulders => 'Pundhak';
 
   @override
-  String get derivedMetricDetailSignificantAsymmetryBelow8 => 'Asimetri signifikan (ing ngisor 88%). Fokus ing latihan unilateral kanggo sisih sing luwih ringkih.';
+  String get derivedMetricDetailSignificantAsymmetryBelow8 =>
+      'Asimetri signifikan (ing ngisor 88%). Fokus ing latihan unilateral kanggo sisih sing luwih ringkih.';
 
   @override
   String get derivedMetricDetailSuperior => 'Unggul';
@@ -6678,7 +7141,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get diabetesDashboardScreenAbove => 'Ing Ndhuwur';
 
   @override
-  String get diabetesDashboardScreenAllBloodGlucoseReadings => 'Kabeh Wacan Glukosa Getih';
+  String get diabetesDashboardScreenAllBloodGlucoseReadings =>
+      'Kabeh Wacan Glukosa Getih';
 
   @override
   String get diabetesDashboardScreenBasedOnReadings => 'Adhasar wacan';
@@ -6698,7 +7162,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get diabetesDashboardScreenGreatYouReMeeting => 'Apik! Sampeyan wis nggayuh target 70%+ ing kisaran.';
+  String get diabetesDashboardScreenGreatYouReMeeting =>
+      'Apik! Sampeyan wis nggayuh target 70%+ ing kisaran.';
 
   @override
   String get diabetesDashboardScreenHealthConnect => 'Health Connect';
@@ -6730,7 +7195,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get diabetesDashboardScreenMgDl => 'mg/dL';
 
   @override
-  String get diabetesDashboardScreenNoAdditionalReadingsAvailab => 'Ora ana wacan tambahan sing kasedhiya';
+  String get diabetesDashboardScreenNoAdditionalReadingsAvailab =>
+      'Ora ana wacan tambahan sing kasedhiya';
 
   @override
   String diabetesDashboardScreenPartA1CCardDaysAgo(Object daysSinceMeasured) {
@@ -6743,7 +7209,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
+    Object daysIncluded,
+  ) {
     return '$daysIncluded dina pungkasan';
   }
 
@@ -6758,12 +7226,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
+    Object totalRapidUnits,
+  ) {
     return '${totalRapidUnits}U';
   }
 
   @override
-  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits) {
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(
+    Object totalLongUnits,
+  ) {
     return '${totalLongUnits}U';
   }
 
@@ -6793,7 +7265,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get diabetesDashboardScreenSync => 'Sinkronisasi';
 
   @override
-  String get diabetesDashboardScreenSyncYourGlucoseData => 'Sinkronisasi data glukosa sampeyan';
+  String get diabetesDashboardScreenSyncYourGlucoseData =>
+      'Sinkronisasi data glukosa sampeyan';
 
   @override
   String get diabetesDashboardScreenTimeInRange => 'Wektu ing Rentang';
@@ -6869,7 +7342,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get difficultyCardTapAnyCellTo => 'Tutul sel apa wae kanggo ngowahi faktor skala';
+  String get difficultyCardTapAnyCellTo =>
+      'Tutul sel apa wae kanggo ngowahi faktor skala';
 
   @override
   String get difficultyCardTier => 'Tingkat';
@@ -6899,7 +7373,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get difficultySelectorChooseDifferent => 'Pilih Beda';
 
   @override
-  String get difficultySelectorConsiderChallengingForA => 'Coba \"Challenging\" kanggo latihan intensif sing luwih aman';
+  String get difficultySelectorConsiderChallengingForA =>
+      'Coba \"Challenging\" kanggo latihan intensif sing luwih aman';
 
   @override
   String get difficultySelectorContinueAnyway => 'Terusake wae';
@@ -6933,7 +7408,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get difficultySelectorThisIsAnExtreme => 'Iki latihan intensitas ekstrem sing dirancang kanggo ngetokake watesan maksimal sampeyan.';
+  String get difficultySelectorThisIsAnExtreme =>
+      'Iki latihan intensitas ekstrem sing dirancang kanggo ngetokake watesan maksimal sampeyan.';
 
   @override
   String get discoverBrowseByCategory => 'Telusuri miturut Kategori';
@@ -6948,25 +7424,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get discoverChallenges => 'Tantangan';
 
   @override
-  String get discoverCheckYourConnectionAnd => 'Priksa sambungan sampeyan lan coba maneh.';
+  String get discoverCheckYourConnectionAnd =>
+      'Priksa sambungan sampeyan lan coba maneh.';
 
   @override
-  String get discoverComplete3WorkoutsTo => 'Rampungake 3 latihan kanggo mbukak profil fitness sampeyan.';
+  String get discoverComplete3WorkoutsTo =>
+      'Rampungake 3 latihan kanggo mbukak profil fitness sampeyan.';
 
   @override
   String get discoverCompleteAWorkoutThis => 'Rampungake latihan minggu iki';
 
   @override
-  String get discoverCompleteAWorkoutTo => 'Rampungake latihan kanggo munggah peringkat';
+  String get discoverCompleteAWorkoutTo =>
+      'Rampungake latihan kanggo munggah peringkat';
 
   @override
-  String get discoverCompleteYourProfileTo => 'Rampungake profil sampeyan kanggo entuk rekomendasi pribadi';
+  String get discoverCompleteYourProfileTo =>
+      'Rampungake profil sampeyan kanggo entuk rekomendasi pribadi';
 
   @override
   String get discoverCouldnTLoadDiscover => 'Gagal mbukak Discover.';
 
   @override
-  String get discoverCuratedRecipesToTry => 'Resep pilihan kanggo dicoba utawa dikembangake';
+  String get discoverCuratedRecipesToTry =>
+      'Resep pilihan kanggo dicoba utawa dikembangake';
 
   @override
   String get discoverFeed => 'Feed';
@@ -7045,13 +7526,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get discoverTopOfTheWeek => 'Paling dhuwur minggu iki';
 
   @override
-  String get discoverTourBrowseRisingStarsAnd => 'Telusuri Rising Stars lan Near You kanggo ndeleng sapa sing latihan ing level sampeyan.';
+  String get discoverTourBrowseRisingStarsAnd =>
+      'Telusuri Rising Stars lan Near You kanggo ndeleng sapa sing latihan ing level sampeyan.';
 
   @override
   String get discoverTourFindYourPeers => 'Temokake kanca sampeyan';
 
   @override
-  String get discoverTourOpenTheir6Axis => 'Bukak radar fitness 6-axis dheweke lan deleng posisi sampeyan ing XP, volume, streaks, lan liya-liyane.';
+  String get discoverTourOpenTheir6Axis =>
+      'Bukak radar fitness 6-axis dheweke lan deleng posisi sampeyan ing XP, volume, streaks, lan liya-liyane.';
 
   @override
   String get discoverTourSwitchBoards => 'Ganti papan';
@@ -7060,7 +7543,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get discoverTourTapAnyUser => 'Tutul pangguna apa wae';
 
   @override
-  String get discoverTourXpVolumeStreaksEach => 'XP / Volume / Streaks saben peringkat game sing beda — coba kabeh kanggo nemokake sumbu paling kuat sampeyan.';
+  String get discoverTourXpVolumeStreaksEach =>
+      'XP / Volume / Streaks saben peringkat game sing beda — coba kabeh kanggo nemokake sumbu paling kuat sampeyan.';
 
   @override
   String get discoverTrainingPlans => 'Rencana Latihan';
@@ -7081,7 +7565,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get discoverYou => 'Sampeyan · ';
 
   @override
-  String get discoverYourRankPercentileAppears => 'Peringkat + persentil sampeyan bakal muncul sawise sampeyan ana ing papan';
+  String get discoverYourRankPercentileAppears =>
+      'Peringkat + persentil sampeyan bakal muncul sawise sampeyan ana ing papan';
 
   @override
   String get dismissedBannersDailyXpGoals => 'Target XP Saben Dina';
@@ -7090,7 +7575,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get dismissedBannersDismissedBanners => 'BANNER SING DIDHELIKE';
 
   @override
-  String get dismissedBannersDismissedBannersResetAutoma => 'Banner sing didhelikake bakal reset otomatis ing tengah wengi.';
+  String get dismissedBannersDismissedBannersResetAutoma =>
+      'Banner sing didhelikake bakal reset otomatis ing tengah wengi.';
 
   @override
   String get dismissedBannersRestore => 'Pulihake';
@@ -7117,7 +7603,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get downloadedVideosAllDownloadsCleared => 'Kabeh unduhan wis dibusak';
 
   @override
-  String get downloadedVideosBrowseExerciseLibrary => 'Jelajahi Pustaka Latihan';
+  String get downloadedVideosBrowseExerciseLibrary =>
+      'Jelajahi Pustaka Latihan';
 
   @override
   String get downloadedVideosClearAll => 'Busak Kabeh';
@@ -7135,7 +7622,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get downloadedVideosNoDownloadsYet => 'Durung Ana Unduhan';
 
   @override
-  String get downloadedVideosSaveExerciseVideosFor => 'Simpen video latihan kanggo ditonton offline — cocog kanggo ing gym nalika WiFi ora stabil.';
+  String get downloadedVideosSaveExerciseVideosFor =>
+      'Simpen video latihan kanggo ditonton offline — cocog kanggo ing gym nalika WiFi ora stabil.';
 
   @override
   String downloadedVideosScreenDeleted(Object exerciseName) {
@@ -7153,13 +7641,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get downloadedVideosStorageAlmostFullOldest => 'Panyimpenan meh kebak. Video lawas bakal otomatis dibusak.';
+  String get downloadedVideosStorageAlmostFullOldest =>
+      'Panyimpenan meh kebak. Video lawas bakal otomatis dibusak.';
 
   @override
   String get downloadedVideosStorageUsed => 'Panyimpenan sing Digunakake';
 
   @override
-  String get downloadedVideosThisWillDeleteAll => 'Iki bakal mbusak kabeh video latihan sing diunduh saka piranti sampeyan. Sampeyan bisa ngunduh maneh kapan wae.';
+  String get downloadedVideosThisWillDeleteAll =>
+      'Iki bakal mbusak kabeh video latihan sing diunduh saka piranti sampeyan. Sampeyan bisa ngunduh maneh kapan wae.';
 
   @override
   String get durationRangeSliderDuration => 'Durasi';
@@ -7223,10 +7713,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get easyExerciseActionsChangeEquipment => 'Ganti peralatan';
 
   @override
-  String get easyExerciseActionsDonTHaveWhat => 'Ora duwe peralatan sing didaftar?';
+  String get easyExerciseActionsDonTHaveWhat =>
+      'Ora duwe peralatan sing didaftar?';
 
   @override
-  String get easyExerciseActionsPickADifferentMovement => 'Pilih gerakan liyane kanggo slot iki';
+  String get easyExerciseActionsPickADifferentMovement =>
+      'Pilih gerakan liyane kanggo slot iki';
 
   @override
   String get easyExerciseActionsReportPain => 'Laporke rasa nyeri';
@@ -7235,10 +7727,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get easyExerciseActionsShowVideo => 'Tampilake video';
 
   @override
-  String get easyExerciseActionsSkipThisExerciseAvoid => 'Lewati latihan iki & hindari sedhela';
+  String get easyExerciseActionsSkipThisExerciseAvoid =>
+      'Lewati latihan iki & hindari sedhela';
 
   @override
-  String get easyExerciseActionsSkipToNextExercise => 'Lewati menyang latihan sabanjure';
+  String get easyExerciseActionsSkipToNextExercise =>
+      'Lewati menyang latihan sabanjure';
 
   @override
   String get easyExerciseActionsSwapExercise => 'Ganti latihan';
@@ -7273,7 +7767,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get easyFocalColumnWeight => 'Bobot';
 
   @override
-  String get easyHelpAdjustWeightAndReps => 'Atur bobot lan reps nganggo − lan +. Pencet suwe angka kanggo ngetik langsung.';
+  String get easyHelpAdjustWeightAndReps =>
+      'Atur bobot lan reps nganggo − lan +. Pencet suwe angka kanggo ngetik langsung.';
 
   @override
   String get easyHelpGotIt => 'Oke, ngerti';
@@ -7291,10 +7786,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get easyHelpSwitchToAdvanced => 'Pindah menyang Lanjut';
 
   @override
-  String get easyHelpTapTheBigWhen => 'Pencet ✓ gedhe nalika sampeyan rampung set. Kita bakal ngurus liyane.';
+  String get easyHelpTapTheBigWhen =>
+      'Pencet ✓ gedhe nalika sampeyan rampung set. Kita bakal ngurus liyane.';
 
   @override
-  String get easyHelpThisIsTodayS => 'Iki latihan dina iki. Pencet ▶ Tampilake video kapan wae sampeyan butuh pangeling babagan teknik.';
+  String get easyHelpThisIsTodayS =>
+      'Iki latihan dina iki. Pencet ▶ Tampilake video kapan wae sampeyan butuh pangeling babagan teknik.';
 
   @override
   String get easyHelpTodaySExercise => 'Latihan dina iki';
@@ -7341,7 +7838,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get easySheetHelpersHowToPerform => 'Cara nindakake';
 
   @override
-  String get easySheetHelpersNoDemoVideoFor => 'Durung ana video demo kanggo latihan iki.';
+  String get easySheetHelpersNoDemoVideoFor =>
+      'Durung ana video demo kanggo latihan iki.';
 
   @override
   String get easySheetHelpersPrimaryMuscle => 'Otot utama';
@@ -7386,7 +7884,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editGymProfileColor => 'Werna';
 
   @override
-  String get editGymProfileCustomizeWorkoutsForThis => 'Kustomisasi latihan kanggo gym iki';
+  String get editGymProfileCustomizeWorkoutsForThis =>
+      'Kustomisasi latihan kanggo gym iki';
 
   @override
   String get editGymProfileDuplicate => 'Duplikat';
@@ -7413,19 +7912,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editGymProfileFocusAreas => 'Area Fokus';
 
   @override
-  String get editGymProfileHowMuchExerciseVariety => 'Sepira akeh variasi latihan saben minggu';
+  String get editGymProfileHowMuchExerciseVariety =>
+      'Sepira akeh variasi latihan saben minggu';
 
   @override
   String get editGymProfileIcon => 'Ikon';
 
   @override
-  String get editGymProfileLeaveOnAutoFor => 'Setel menyang Otomatis supaya AI sing nemtokake, utawa pin fokus menyang dina tartamtu (tuladhane Sel → Upper).';
+  String get editGymProfileLeaveOnAutoFor =>
+      'Setel menyang Otomatis supaya AI sing nemtokake, utawa pin fokus menyang dina tartamtu (tuladhane Sel → Upper).';
 
   @override
   String get editGymProfileLocationOptional => 'Lokasi (Opsional)';
 
   @override
-  String get editGymProfileMuscleGroupsToPrioritize => 'Klompok otot sing diprioritasake';
+  String get editGymProfileMuscleGroupsToPrioritize =>
+      'Klompok otot sing diprioritasake';
 
   @override
   String get editGymProfileName => 'Jeneng';
@@ -7446,13 +7948,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editGymProfileRenameGym => 'Ganti Jeneng Gym';
 
   @override
-  String get editGymProfileRequiresLocationPermission => 'Mbutuhake ijin lokasi';
+  String get editGymProfileRequiresLocationPermission =>
+      'Mbutuhake ijin lokasi';
 
   @override
   String get editGymProfileSaveChanges => 'Simpen Owah-owahan';
 
   @override
-  String get editGymProfileSetALocationTo => 'Setel lokasi kanggo ngganti profil kanthi otomatis';
+  String get editGymProfileSetALocationTo =>
+      'Setel lokasi kanggo ngganti profil kanthi otomatis';
 
   @override
   String editGymProfileSheetEquipmentItems(Object length) {
@@ -7490,16 +7994,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get editGymProfileTapToAddRemove => 'Tutul kanggo nambah, mbusak, utawa ngowahi bobot';
+  String get editGymProfileTapToAddRemove =>
+      'Tutul kanggo nambah, mbusak, utawa ngowahi bobot';
 
   @override
-  String get editGymProfileTrainingPreferencesOptional => 'Preferensi Latihan (Opsional)';
+  String get editGymProfileTrainingPreferencesOptional =>
+      'Preferensi Latihan (Opsional)';
 
   @override
   String get editGymProfileWeeklyVariety => 'Variasi Mingguan';
 
   @override
-  String get editGymProfileWhenDoYouUsually => 'Kapan biasane sampeyan latihan ing kene?';
+  String get editGymProfileWhenDoYouUsually =>
+      'Kapan biasane sampeyan latihan ing kene?';
 
   @override
   String get editGymProfileWorkoutDays => 'Dina Latihan';
@@ -7532,7 +8039,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editPersonalInfoTargetWeight => 'BOBOT TARGET';
 
   @override
-  String get editPersonalInfoTellUsAboutYourself => 'Critakake babagan sampeyan...';
+  String get editPersonalInfoTellUsAboutYourself =>
+      'Critakake babagan sampeyan...';
 
   @override
   String get editPersonalInfoUploadPhoto => 'Unggah Foto';
@@ -7553,10 +8061,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editProgramSheetBack => 'Mbalik';
 
   @override
-  String get editProgramSheetChangeYourWeeklySchedule => 'Ganti jadwal mingguan, peralatan, utawa kangelan sampeyan. Latihan sampeyan bakal digawe maneh adhedhasar setelan anyar.';
+  String get editProgramSheetChangeYourWeeklySchedule =>
+      'Ganti jadwal mingguan, peralatan, utawa kangelan sampeyan. Latihan sampeyan bakal digawe maneh adhedhasar setelan anyar.';
 
   @override
-  String get editProgramSheetChooseATrainingSplit => 'Pilih split latihan sing cocog karo jadwal lan target sampeyan';
+  String get editProgramSheetChooseATrainingSplit =>
+      'Pilih split latihan sing cocog karo jadwal lan target sampeyan';
 
   @override
   String get editProgramSheetContinue => 'Terusake';
@@ -7589,7 +8099,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get editProgramSheetDescribeWhatYouWant => 'Jelasake apa sing pengin dilatih lan AI bakal nggawe program sing dipersonalisasi.';
+  String get editProgramSheetDescribeWhatYouWant =>
+      'Jelasake apa sing pengin dilatih lan AI bakal nggawe program sing dipersonalisasi.';
 
   @override
   String get editProgramSheetDifficulty => 'Tingkat kesulitan';
@@ -7598,7 +8109,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editProgramSheetDuration => 'Durasi';
 
   @override
-  String get editProgramSheetEGTrainFor => 'tuladhane, \"Latihan kanggo kompetisi HYROX\"';
+  String get editProgramSheetEGTrainFor =>
+      'tuladhane, \"Latihan kanggo kompetisi HYROX\"';
 
   @override
   String get editProgramSheetEquipment => 'Peralatan';
@@ -7632,18 +8144,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editProgramSheetInjuries => 'Cidera';
 
   @override
-  String get editProgramSheetNoProgramHistoryFound => 'Riwayat program ora ditemokake';
+  String get editProgramSheetNoProgramHistoryFound =>
+      'Riwayat program ora ditemokake';
 
   @override
-  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate) {
+  String editProgramSheetPartEditProgramSheetStateOf(
+    Object _generatingWorkout,
+    Object _totalWorkoutsToGenerate,
+  ) {
     return '$_generatingWorkout saka $_totalWorkoutsToGenerate';
   }
 
   @override
-  String get editProgramSheetPleaseLogInTo => 'Mangga mlebu kanggo ndeleng riwayat program';
+  String get editProgramSheetPleaseLogInTo =>
+      'Mangga mlebu kanggo ndeleng riwayat program';
 
   @override
-  String get editProgramSheetPleaseSelectAtLeast => 'Mangga pilih paling ora siji dina latihan';
+  String get editProgramSheetPleaseSelectAtLeast =>
+      'Mangga pilih paling ora siji dina latihan';
 
   @override
   String get editProgramSheetProgram => 'Program';
@@ -7652,10 +8170,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editProgramSheetProgramHistory => 'Riwayat Program';
 
   @override
-  String get editProgramSheetProgramRestoredRegenerateW => 'Program wis dibalekake! Gawe maneh latihan kanggo ngetrapake owah-owahan.';
+  String get editProgramSheetProgramRestoredRegenerateW =>
+      'Program wis dibalekake! Gawe maneh latihan kanggo ngetrapake owah-owahan.';
 
   @override
-  String get editProgramSheetRestoreAPreviousProgram => 'Balekake konfigurasi program sadurunge';
+  String get editProgramSheetRestoreAPreviousProgram =>
+      'Balekake konfigurasi program sadurunge';
 
   @override
   String get editProgramSheetRestoreThisProgram => 'Balekake Program Iki';
@@ -7673,7 +8193,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editProgramSheetSummary => 'Ringkesan';
 
   @override
-  String get editProgramSheetThisStepIsOptional => 'Langkah iki opsional. Sampeyan bisa ngliwati yen ora ana tatu sing kudu dilaporake.';
+  String get editProgramSheetThisStepIsOptional =>
+      'Langkah iki opsional. Sampeyan bisa ngliwati yen ora ana tatu sing kudu dilaporake.';
 
   @override
   String get editProgramSheetToday => 'Dina iki';
@@ -7732,7 +8253,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editTargetsRecalculateFromProfile => 'Itung maneh saka profil';
 
   @override
-  String get editTargetsRecommendationUnavailableR => 'Rekomendasi ora kasedhiya — itung maneh saka profil dhisik';
+  String get editTargetsRecommendationUnavailableR =>
+      'Rekomendasi ora kasedhiya — itung maneh saka profil dhisik';
 
   @override
   String get editTargetsReset => 'Reset';
@@ -7791,7 +8313,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks) {
+  String editTargetsSheetUWks(
+    Object dateStr,
+    Object deficitInfo,
+    Object goalLabel,
+    Object weeks,
+  ) {
     return '$goalLabel → ~$weeks minggu ($dateStr)$deficitInfo';
   }
 
@@ -7801,7 +8328,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get editTargetsTargetsRecalculatedFromProf => 'Target diitung maneh saka profil';
+  String get editTargetsTargetsRecalculatedFromProf =>
+      'Target diitung maneh saka profil';
 
   @override
   String get editTargetsTargetsUpdated => 'Target wis dianyari';
@@ -7816,7 +8344,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editTargetsWeeklyRateKgWk => 'Tingkat Mingguan (kg/minggu)';
 
   @override
-  String get editTrackingAtLeastOneStat => 'Paling ora siji statistik kudu tetep katon';
+  String get editTrackingAtLeastOneStat =>
+      'Paling ora siji statistik kudu tetep katon';
 
   @override
   String get editTrackingCaloriesBurned => 'Kalori sing Dibakar';
@@ -7825,34 +8354,41 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editTrackingCaloriesPCF => 'Kalori, makro P/C/F & asupan banyu';
 
   @override
-  String get editTrackingChooseWhichStatsTo => 'Pilih statistik sing bakal ditampilake ing bar pelacakan sampeyan';
+  String get editTrackingChooseWhichStatsTo =>
+      'Pilih statistik sing bakal ditampilake ing bar pelacakan sampeyan';
 
   @override
-  String get editTrackingConsecutiveWorkoutDays => 'Dina latihan berturut-turut';
+  String get editTrackingConsecutiveWorkoutDays =>
+      'Dina latihan berturut-turut';
 
   @override
   String get editTrackingDailyGoals => 'Target Saben Dina';
 
   @override
-  String get editTrackingDailyHabitCompletionProgres => 'Kemajuan ngrampungake pakulinan saben dina';
+  String get editTrackingDailyHabitCompletionProgres =>
+      'Kemajuan ngrampungake pakulinan saben dina';
 
   @override
-  String get editTrackingDailyStepCountFrom => 'Jumlah langkah saben dina saka piranti kesehatan';
+  String get editTrackingDailyStepCountFrom =>
+      'Jumlah langkah saben dina saka piranti kesehatan';
 
   @override
   String get editTrackingEditTracking => 'Sunting Pelacakan';
 
   @override
-  String get editTrackingFromConnectedHealthDevices => 'Saka piranti kesehatan sing disambungake';
+  String get editTrackingFromConnectedHealthDevices =>
+      'Saka piranti kesehatan sing disambungake';
 
   @override
   String get editTrackingHabits => 'Kabiasaan';
 
   @override
-  String get editTrackingLastNightSSleep => 'Durasi & kualitas turu wingi bengi';
+  String get editTrackingLastNightSSleep =>
+      'Durasi & kualitas turu wingi bengi';
 
   @override
-  String get editTrackingLoginWeightMealWorkout => 'Login, bobot, dhaharan & latihan';
+  String get editTrackingLoginWeightMealWorkout =>
+      'Login, bobot, dhaharan & latihan';
 
   @override
   String get editTrackingNutritionHydration => 'Nutrisi & Hidrasi';
@@ -7870,7 +8406,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editTrackingWorkoutStreak => 'Streak Latihan';
 
   @override
-  String get editWeightsAnyWeightAllowedIn => 'Bobot apa wae diidini ing latihan';
+  String get editWeightsAnyWeightAllowedIn =>
+      'Bobot apa wae diidini ing latihan';
 
   @override
   String get editWeightsApplyAPreset => 'Gunakake prasetel';
@@ -7915,7 +8452,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editWeightsMin => 'Min';
 
   @override
-  String get editWeightsNoWeightsYetPick => 'Durung ana bobot — pilih min/maks/langkah banjur tutul Gawe.';
+  String get editWeightsNoWeightsYetPick =>
+      'Durung ana bobot — pilih min/maks/langkah banjur tutul Gawe.';
 
   @override
   String get editWeightsPreset => 'Prasetel';
@@ -7961,12 +8499,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory) {
+  String editWorkoutEquipmentSheetValue(
+    Object length,
+    Object selectedInCategory,
+  ) {
     return '($selectedInCategory/$length)';
   }
 
   @override
-  String get editWorkoutEquipmentUpdateWorkoutEquipment => 'Nganyari Peralatan Latihan';
+  String get editWorkoutEquipmentUpdateWorkoutEquipment =>
+      'Nganyari Peralatan Latihan';
 
   @override
   String get editWorkoutEquipmentWeights => 'Bobot';
@@ -7984,7 +8526,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editableFitnessCardActiveInjuries => 'Cidera Aktif';
 
   @override
-  String get editableFitnessCardChangesAffectYourWorkout => 'Owah-owahan mengaruhi program latihan sampeyan';
+  String get editableFitnessCardChangesAffectYourWorkout =>
+      'Owah-owahan mengaruhi program latihan sampeyan';
 
   @override
   String get editableFitnessCardCustom => 'Khusus';
@@ -8019,7 +8562,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editableFitnessCardFitnessLevel => 'Tingkat Kebugaran';
 
   @override
-  String get editableFitnessCardFitnessSettingsUpdatedWor => 'Setelan kebugaran dianyari - latihan bakal digawe maneh';
+  String get editableFitnessCardFitnessSettingsUpdatedWor =>
+      'Setelan kebugaran dianyari - latihan bakal digawe maneh';
 
   @override
   String get editableFitnessCardGoal => 'Target';
@@ -8048,17 +8592,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get editableFitnessCardNotSet => 'Durung disetel';
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(
+    Object _selectedStretchDuration,
+    Object _selectedWarmupDuration,
+  ) {
     return '$_selectedWarmupDuration+$_selectedStretchDuration menit';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateMin(
+    Object _selectedWarmupDuration,
+  ) {
     return '$_selectedWarmupDuration menit';
   }
 
   @override
-  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration) {
+  String editableFitnessCardPartEditableFitnessCardStateMin2(
+    Object _selectedStretchDuration,
+  ) {
     return '$_selectedStretchDuration menit';
   }
 
@@ -8110,7 +8661,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get emailPreferencesAFollowUpIf => 'Tindak lanjut yen wektu sing dijadwalake liwat tanpa dicathet';
+  String get emailPreferencesAFollowUpIf =>
+      'Tindak lanjut yen wektu sing dijadwalake liwat tanpa dicathet';
 
   @override
   String get emailPreferencesAchievementUnlocks => 'Pambuka prestasi';
@@ -8119,28 +8671,34 @@ class AppLocalizationsJv extends AppLocalizations {
   String get emailPreferencesBillingAccount => 'Tagihan & akun';
 
   @override
-  String get emailPreferencesCheckInsFromYour => 'Check-in saka pelatih sampeyan — aktivasi, bali latihan, pangeling alus';
+  String get emailPreferencesCheckInsFromYour =>
+      'Check-in saka pelatih sampeyan — aktivasi, bali latihan, pangeling alus';
 
   @override
-  String get emailPreferencesDailyRemindersAboutYour => 'Pangeling saben dina babagan latihan sing dijadwalake';
+  String get emailPreferencesDailyRemindersAboutYour =>
+      'Pangeling saben dina babagan latihan sing dijadwalake';
 
   @override
   String get emailPreferencesEmailPreferences => 'PREFERENSI EMAIL';
 
   @override
-  String get emailPreferencesFailedToLoadEmail => 'Gagal ngemot preferensi email';
+  String get emailPreferencesFailedToLoadEmail =>
+      'Gagal ngemot preferensi email';
 
   @override
-  String get emailPreferencesKeepOnlyEssentialWorkout => 'Simpen mung pangeling latihan sing penting';
+  String get emailPreferencesKeepOnlyEssentialWorkout =>
+      'Simpen mung pangeling latihan sing penting';
 
   @override
-  String get emailPreferencesMissedWorkoutNudges => 'Pangeling latihan sing kelewat';
+  String get emailPreferencesMissedWorkoutNudges =>
+      'Pangeling latihan sing kelewat';
 
   @override
   String get emailPreferencesMotivationalNudges => 'Pangeling motivasi';
 
   @override
-  String get emailPreferencesNewFeaturesAndApp => 'Fitur anyar lan peningkatan aplikasi';
+  String get emailPreferencesNewFeaturesAndApp =>
+      'Fitur anyar lan peningkatan aplikasi';
 
   @override
   String get emailPreferencesOffersDiscounts => 'Penawaran & diskon';
@@ -8149,7 +8707,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get emailPreferencesProductUpdates => 'Update produk';
 
   @override
-  String get emailPreferencesPurchaseBillingCancellatio => 'Tuku, tagihan, pembatalan (wajib)';
+  String get emailPreferencesPurchaseBillingCancellatio =>
+      'Tuku, tagihan, pembatalan (wajib)';
 
   @override
   String emailPreferencesSectionControlWhatEmailsYou(Object appName) {
@@ -8157,40 +8716,48 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get emailPreferencesSpecialOffersAndRe => 'Penawaran khusus lan diskon keterlibatan maneh';
+  String get emailPreferencesSpecialOffersAndRe =>
+      'Penawaran khusus lan diskon keterlibatan maneh';
 
   @override
   String get emailPreferencesStreakAlerts => 'Wara-wara streak';
 
   @override
-  String get emailPreferencesSundayRecapWithWorkouts => 'Ringkesan dina Minggu karo latihan, nutrisi, streak, lan XP';
+  String get emailPreferencesSundayRecapWithWorkouts =>
+      'Ringkesan dina Minggu karo latihan, nutrisi, streak, lan XP';
 
   @override
-  String get emailPreferencesThisWillTurnOff => 'Iki bakal mateni kabeh email marketing:';
+  String get emailPreferencesThisWillTurnOff =>
+      'Iki bakal mateni kabeh email marketing:';
 
   @override
-  String get emailPreferencesTrophiesFirstWorkoutCeleb => 'Trofi + perayaan latihan pisanan';
+  String get emailPreferencesTrophiesFirstWorkoutCeleb =>
+      'Trofi + perayaan latihan pisanan';
 
   @override
   String get emailPreferencesUnsubscribe => 'Mandheg langganan';
 
   @override
-  String get emailPreferencesUnsubscribeFromAllMarketing => 'Mandheg langganan kabeh marketing';
+  String get emailPreferencesUnsubscribeFromAllMarketing =>
+      'Mandheg langganan kabeh marketing';
 
   @override
-  String get emailPreferencesUnsubscribedFromMarketingEm => 'Wis mandheg langganan email marketing';
+  String get emailPreferencesUnsubscribedFromMarketingEm =>
+      'Wis mandheg langganan email marketing';
 
   @override
   String get emailPreferencesWeeklySummary => 'Ringkesan mingguan';
 
   @override
-  String get emailPreferencesWhenYourStreakIs => 'Nalika streak sampeyan meh pedhot';
+  String get emailPreferencesWhenYourStreakIs =>
+      'Nalika streak sampeyan meh pedhot';
 
   @override
   String get emailPreferencesWorkoutReminders => 'Pangeling latihan';
 
   @override
-  String get emailPreferencesYouWillStillReceive => 'Sampeyan bakal tetep nampa pangeling latihan sing penting.';
+  String get emailPreferencesYouWillStillReceive =>
+      'Sampeyan bakal tetep nampa pangeling latihan sing penting.';
 
   @override
   String get emailSignInAlreadyHaveAnAccount => 'Wis duwe akun?';
@@ -8208,7 +8775,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get emailSignInForgotPassword => 'Lali Sandi?';
 
   @override
-  String get emailSignInIfAnAccountExists => 'Yen akun nganggo email iki wis ana, link reset sandi wis dikirim.';
+  String get emailSignInIfAnAccountExists =>
+      'Yen akun nganggo email iki wis ana, link reset sandi wis dikirim.';
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
@@ -8233,7 +8801,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get emailVerificationBannerResend => 'Kirim maneh';
 
   @override
-  String get emailVerificationBannerVerifyYourEmailTo => 'Verifikasi email sampeyan kanggo ngamanake akun.';
+  String get emailVerificationBannerVerifyYourEmailTo =>
+      'Verifikasi email sampeyan kanggo ngamanake akun.';
 
   @override
   String get embeddedCameraPanelFromGallery => 'Saka galeri';
@@ -8242,19 +8811,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get embeddedCameraPanelTryAgain => 'Coba maneh';
 
   @override
-  String get emptyCustomExercisesBuildCustomExercisesTailore => 'Gawe latihan khusus sing cocog karo kabutuhan sampeyan, utawa gabungke sawetara gerakan dadi kombo sing kuat.';
+  String get emptyCustomExercisesBuildCustomExercisesTailore =>
+      'Gawe latihan khusus sing cocog karo kabutuhan sampeyan, utawa gabungke sawetara gerakan dadi kombo sing kuat.';
 
   @override
-  String get emptyCustomExercisesCreateYourFirstExercise => 'Gawe Latihan Pisanan Sampeyan';
+  String get emptyCustomExercisesCreateYourFirstExercise =>
+      'Gawe Latihan Pisanan Sampeyan';
 
   @override
-  String get emptyCustomExercisesCreateYourOwnExercises => 'Gawe Latihan Sampeyan Dhewe';
+  String get emptyCustomExercisesCreateYourOwnExercises =>
+      'Gawe Latihan Sampeyan Dhewe';
 
   @override
   String get emptyStateClearFilters => 'Busak filter';
 
   @override
-  String get emptyStateCompleteYourFirstWorkout => 'Rampungake latihan pisanan sampeyan\nkanggo miwiti nglacak kemajuan!';
+  String get emptyStateCompleteYourFirstWorkout =>
+      'Rampungake latihan pisanan sampeyan\nkanggo miwiti nglacak kemajuan!';
 
   @override
   String get emptyStateCreateProgram => 'Gawe program';
@@ -8275,19 +8848,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get emptyStateNoWorkoutsYet => 'Durung ana latihan';
 
   @override
-  String get emptyStatePleaseCheckYourInternet => 'Mangga priksa sambungan internet sampeyan\nlan coba maneh.';
+  String get emptyStatePleaseCheckYourInternet =>
+      'Mangga priksa sambungan internet sampeyan\nlan coba maneh.';
 
   @override
   String get emptyStateTipGotIt => 'Oke';
 
   @override
-  String get emptyStateTryAdjustingYourFilters => 'Coba atur filter sampeyan\nutawo goleki liyane.';
+  String get emptyStateTryAdjustingYourFilters =>
+      'Coba atur filter sampeyan\nutawo goleki liyane.';
 
   @override
-  String get emptyStateWeCouldnTFind => 'Kita ora bisa nemokake apa sing sampeyan goleki.\nCoba tembung kunci liyane.';
+  String get emptyStateWeCouldnTFind =>
+      'Kita ora bisa nemokake apa sing sampeyan goleki.\nCoba tembung kunci liyane.';
 
   @override
-  String get emptyStateYourWorkoutScheduleIs => 'Jadwal latihan sampeyan kosong.\nMiwiti kanthi nggawe program!';
+  String get emptyStateYourWorkoutScheduleIs =>
+      'Jadwal latihan sampeyan kosong.\nMiwiti kanthi nggawe program!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'COBA TAKON...';
@@ -8298,10 +8875,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get enhancedEmptyStateYourPersonalFitnessAssistan => 'Asisten fitness pribadi sampeyan';
+  String get enhancedEmptyStateYourPersonalFitnessAssistan =>
+      'Asisten fitness pribadi sampeyan';
 
   @override
-  String get enhancedNotesAddNotesAboutForm => 'Tambah cathetan babagan form, isyarat, utawa modifikasi...';
+  String get enhancedNotesAddNotesAboutForm =>
+      'Tambah cathetan babagan form, isyarat, utawa modifikasi...';
 
   @override
   String get enhancedNotesCamera => 'Kamera';
@@ -8325,7 +8904,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get enhancedNotesListeningSpeakNow => 'Ngrungokake... ngomonga saiki';
 
   @override
-  String get enhancedNotesMicrophonePermissionRequired => 'Idin mikropon dibutuhake';
+  String get enhancedNotesMicrophonePermissionRequired =>
+      'Idin mikropon dibutuhake';
 
   @override
   String get enhancedNotesRecord => 'Rekam';
@@ -8334,7 +8914,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get enhancedNotesRecording => 'Rekam...';
 
   @override
-  String get enhancedNotesSpeechRecognitionNotAvailab => 'Pangenalan swara ora kasedhiya';
+  String get enhancedNotesSpeechRecognitionNotAvailab =>
+      'Pangenalan swara ora kasedhiya';
 
   @override
   String get enhancedNotesStop => 'Mandheg';
@@ -8382,7 +8963,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get environmentDetailHowManyDoYou => 'Pira sing sampeyan duwe?';
 
   @override
-  String get environmentDetailNoEquipmentAdded => 'Ora ana peralatan sing ditambahake';
+  String get environmentDetailNoEquipmentAdded =>
+      'Ora ana peralatan sing ditambahake';
 
   @override
   String get environmentDetailNotesOptional => 'Cathetan (opsional)';
@@ -8412,13 +8994,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get environmentDetailSearchEquipment => 'Goleki peralatan...';
 
   @override
-  String get environmentDetailSeparateMultipleWeightsWith => 'Pisahake sawetara bobot nganggo koma';
+  String get environmentDetailSeparateMultipleWeightsWith =>
+      'Pisahake sawetara bobot nganggo koma';
 
   @override
-  String get environmentDetailTapAddEquipmentTo => 'Tutul \"Tambah Peralatan\" kanggo miwiti';
+  String get environmentDetailTapAddEquipmentTo =>
+      'Tutul \"Tambah Peralatan\" kanggo miwiti';
 
   @override
-  String get environmentDetailThisIsYourActive => 'Iki lingkungan aktif sampeyan';
+  String get environmentDetailThisIsYourActive =>
+      'Iki lingkungan aktif sampeyan';
 
   @override
   String get environmentDetailUndo => 'Batal';
@@ -8430,7 +9015,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get environmentDetailUseThis => 'Gunakake Iki';
 
   @override
-  String get environmentDetailYouHaveUnsavedChanges => 'Sampeyan duwe owah-owahan sing durung disimpen. Apa sampeyan pengin nyimpen sadurunge metu?';
+  String get environmentDetailYouHaveUnsavedChanges =>
+      'Sampeyan duwe owah-owahan sing durung disimpen. Apa sampeyan pengin nyimpen sadurunge metu?';
 
   @override
   String get environmentListActive => 'Aktif';
@@ -8466,7 +9052,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get environmentListSelectYourWorkoutEnvironmen => 'Pilih lingkungan latihanmu kanggo ngatur peralatan sing kasedhiya kanggo sampeyan.';
+  String get environmentListSelectYourWorkoutEnvironmen =>
+      'Pilih lingkungan latihanmu kanggo ngatur peralatan sing kasedhiya kanggo sampeyan.';
 
   @override
   String get environmentListUseThis => 'Gunakake Iki';
@@ -8475,19 +9062,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get environmentListWorkoutEnvironment => 'Lingkungan Latihan';
 
   @override
-  String get equipmentCalibration15x220x225x230x2 => '15x2, 20x2, 25x2, 30x2, 35x2';
+  String get equipmentCalibration15x220x225x230x2 =>
+      '15x2, 20x2, 25x2, 30x2, 35x2';
 
   @override
-  String get equipmentCalibration175ForEz => '17.5 kanggo EZ, 45 kanggo Olympic';
+  String get equipmentCalibration175ForEz =>
+      '17.5 kanggo EZ, 45 kanggo Olympic';
 
   @override
-  String get equipmentCalibration45x435x225x410x2 => '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
+  String get equipmentCalibration45x435x225x410x2 =>
+      '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2';
 
   @override
-  String get equipmentCalibration794ForEz => '7.94 kanggo EZ, 20 kanggo Olympic';
+  String get equipmentCalibration794ForEz =>
+      '7.94 kanggo EZ, 20 kanggo Olympic';
 
   @override
-  String get equipmentCalibrationAddABarbellMachine => 'Tambah barbell, mesin, utawa kabel kanggo ngganti standar.';
+  String get equipmentCalibrationAddABarbellMachine =>
+      'Tambah barbell, mesin, utawa kabel kanggo ngganti standar.';
 
   @override
   String get equipmentCalibrationAddEquipment => 'Tambah peralatan';
@@ -8496,7 +9088,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentCalibrationCalibration => 'KALIBRASI';
 
   @override
-  String get equipmentCalibrationCouldNotLoadCalibrations => 'Ora bisa mbukak kalibrasi';
+  String get equipmentCalibrationCouldNotLoadCalibrations =>
+      'Ora bisa mbukak kalibrasi';
 
   @override
   String get equipmentCalibrationEGHomeRack => 'tuladhane \"Rak omah bar EZ\"';
@@ -8505,16 +9098,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentCalibrationEditEquipment => 'Sunting peralatan';
 
   @override
-  String get equipmentCalibrationIntroBody => 'Saran piring lan rekomendasi bobot bakal cocok karo sing kowé duwèni. Atur bobot bar, bobot sled mesin, undakan pin kabel, lan inventaris piring / dumbel.';
+  String get equipmentCalibrationIntroBody =>
+      'Saran piring lan rekomendasi bobot bakal cocok karo sing kowé duwèni. Atur bobot bar, bobot sled mesin, undakan pin kabel, lan inventaris piring / dumbel.';
 
   @override
-  String get equipmentCalibrationIntroTitle => 'Critakaké piranti sing sejatiné dueki';
+  String get equipmentCalibrationIntroTitle =>
+      'Critakaké piranti sing sejatiné dueki';
 
   @override
   String get equipmentCalibrationLabelOptional => 'Label (opsional)';
 
   @override
-  String get equipmentCalibrationLeaveBlankToUse => 'Kosongi kanggo nggunakake set IPF standar';
+  String get equipmentCalibrationLeaveBlankToUse =>
+      'Kosongi kanggo nggunakake set IPF standar';
 
   @override
   String get equipmentCalibrationLegPress20 => 'Leg press: 20';
@@ -8523,10 +9119,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentCalibrationLegPress45 => 'Leg press: 45';
 
   @override
-  String get equipmentCalibrationNoCalibratedEquipmentYet => 'Durung ana peralatan sing dikalibrasi';
+  String get equipmentCalibrationNoCalibratedEquipmentYet =>
+      'Durung ana peralatan sing dikalibrasi';
 
   @override
-  String get equipmentCalibrationPlateMathWillFall => 'Petungan piring bakal bali menyang standar.';
+  String get equipmentCalibrationPlateMathWillFall =>
+      'Petungan piring bakal bali menyang standar.';
 
   @override
   String get equipmentCalibrationRemove => 'Busak';
@@ -8555,7 +9153,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get equipmentCalibrationSetBarSledCable => 'Setel inventaris bar / sled / kabel / piring';
+  String get equipmentCalibrationSetBarSledCable =>
+      'Setel inventaris bar / sled / kabel / piring';
 
   @override
   String get equipmentCalibrationTitle => 'Kalibrasi piranti';
@@ -8596,7 +9195,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentSearchCustom => 'KUSTOM';
 
   @override
-  String get equipmentSearchEGHomemadePull => 'tuladhane, Pull-up bar gawean dhewe';
+  String get equipmentSearchEGHomemadePull =>
+      'tuladhane, Pull-up bar gawean dhewe';
 
   @override
   String get equipmentSearchNoEquipmentFound => 'Peralatan ora ditemokake';
@@ -8608,7 +9208,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentSearchSearchEquipment => 'Golek peralatan...';
 
   @override
-  String get equipmentSearchSearchFrom100Equipment => 'Golek saka 100+ jinis peralatan';
+  String get equipmentSearchSearchFrom100Equipment =>
+      'Golek saka 100+ jinis peralatan';
 
   @override
   String equipmentSearchSheetAdd(Object _searchQuery) {
@@ -8621,13 +9222,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get equipmentSelectorEnterCustomEquipmentE => 'Ketik peralatan kustom (tuladhane, \"TRX Bands\")';
+  String get equipmentSelectorEnterCustomEquipmentE =>
+      'Ketik peralatan kustom (tuladhane, \"TRX Bands\")';
 
   @override
   String get equipmentSelectorEquipmentAvailable => 'Peralatan sing Kasedhiya';
 
   @override
-  String get equipmentSelectorOnlyGenerateExercisesWith => 'Mung gawe latihan nganggo peralatan sing dipilih';
+  String get equipmentSelectorOnlyGenerateExercisesWith =>
+      'Mung gawe latihan nganggo peralatan sing dipilih';
 
   @override
   String equipmentSelectorSelected(Object selectedCount) {
@@ -8641,7 +9244,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentSnapFlowLooksABitBlurry => 'Katon rada burem';
 
   @override
-  String get equipmentSnapFlowNotTheseDescribeInstead => 'Dudu iki — jelasake wae';
+  String get equipmentSnapFlowNotTheseDescribeInstead =>
+      'Dudu iki — jelasake wae';
 
   @override
   String get equipmentSnapFlowReplaceWithCardio => 'Ganti karo kardio?';
@@ -8658,7 +9262,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentSnapFlowSomethingWentWrong => 'Ana sing salah.';
 
   @override
-  String get equipmentSnapFlowThisWillSwapSets => 'Iki bakal ngganti set/rep dadi target durasi. Terusake?';
+  String get equipmentSnapFlowThisWillSwapSets =>
+      'Iki bakal ngganti set/rep dadi target durasi. Terusake?';
 
   @override
   String get equipmentSnapFlowTryAgain => 'Coba maneh';
@@ -8667,7 +9272,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get equipmentSnapFlowUseAnyway => 'Gunakake wae';
 
   @override
-  String get equipmentSnapFlowWeReNot100 => 'Kita ora 100% yakin — pilih sing paling pas.';
+  String get equipmentSnapFlowWeReNot100 =>
+      'Kita ora 100% yakin — pilih sing paling pas.';
 
   @override
   String get equipmentSnapFlowWhichOneIsIt => 'Sing endi iki?';
@@ -8682,7 +9288,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get eventBasedWorkoutHigh => 'Dhuwur';
 
   @override
-  String get eventBasedWorkoutTapToLearnMore => 'Tutul kanggo sinau luwih lanjut';
+  String get eventBasedWorkoutTapToLearnMore =>
+      'Tutul kanggo sinau luwih lanjut';
 
   @override
   String get eventBasedWorkoutTrainForYourBig => 'Latihan kanggo dina gedhemu';
@@ -8706,10 +9313,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get eventWorkoutComingGotIt => 'Oke, paham!';
 
   @override
-  String get eventWorkoutComingJune152026183 => '15 Juni 2026  •  183 dina maneh';
+  String get eventWorkoutComingJune152026183 =>
+      '15 Juni 2026  •  183 dina maneh';
 
   @override
-  String get eventWorkoutComingTrainSmarterForYour => 'Latihan luwih pinter kanggo momen gedhemu';
+  String get eventWorkoutComingTrainSmarterForYour =>
+      'Latihan luwih pinter kanggo momen gedhemu';
 
   @override
   String get eventWorkoutComingWeddingPrep => 'Persiapan Nikahan';
@@ -8730,7 +9339,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAddNoMineYet => 'Durung ana latihan pribadi';
 
   @override
-  String get exerciseAddNoMineYetHint => 'Tambah favorit, pokok, utawa latihan khusus supaya katon ing kene';
+  String get exerciseAddNoMineYetHint =>
+      'Tambah favorit, pokok, utawa latihan khusus supaya katon ing kene';
 
   @override
   String get exerciseAddSearchMine => 'Goleki latihanku...';
@@ -8754,13 +9364,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAddSheetAll => 'Kabeh';
 
   @override
-  String get exerciseAddSheetCreateCustomExercisesOr => 'Gawe latihan kustom utawa tandhani favorit\ning Pustaka → Mine';
+  String get exerciseAddSheetCreateCustomExercisesOr =>
+      'Gawe latihan kustom utawa tandhani favorit\ning Pustaka → Mine';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Gagal nambah latihan';
 
   @override
-  String get exerciseAddSheetFindThePerfectExercise => 'Temokake latihan sing pas kanggo ditambahake ing latihanmu';
+  String get exerciseAddSheetFindThePerfectExercise =>
+      'Temokake latihan sing pas kanggo ditambahake ing latihanmu';
 
   @override
   String get exerciseAddSheetGettingAiSuggestions => 'Njaluk saran AI...';
@@ -8772,10 +9384,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAddSheetMine => 'Duwéku';
 
   @override
-  String get exerciseAddSheetNoCustomExercisesFavorites => 'Durung ana latihan khusus, favorit, utawa pokok';
+  String get exerciseAddSheetNoCustomExercisesFavorites =>
+      'Durung ana latihan khusus, favorit, utawa pokok';
 
   @override
-  String get exerciseAddSheetNoSuggestionsAvailable => 'Ora ana saran sing kasedhiya';
+  String get exerciseAddSheetNoSuggestionsAvailable =>
+      'Ora ana saran sing kasedhiya';
 
   @override
   String exerciseAddSheetPartExerciseAddSheetStateAdded(Object exerciseName) {
@@ -8795,7 +9409,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Wis dipilih';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Golek latihan sing pas kanggo ditambahake';
+  String get exerciseAddSheetSubtitle =>
+      'Golek latihan sing pas kanggo ditambahake';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Pilihan AI';
@@ -8816,7 +9431,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAnalyticsCompareWithFriends => 'Bandingake karo kanca';
 
   @override
-  String get exerciseAnalyticsCompleteMoreSessionsTo => 'Rampungake luwih akeh sesi kanggo ndeleng tren';
+  String get exerciseAnalyticsCompleteMoreSessionsTo =>
+      'Rampungake luwih akeh sesi kanggo ndeleng tren';
 
   @override
   String get exerciseAnalyticsDrop => 'Drop';
@@ -8864,7 +9480,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseAnalyticsTotalVolume => 'Total volume';
 
   @override
-  String get exerciseAnalyticsVolumeWeightXReps => 'Volume (bobot x repetisi) saka wektu ke wektu';
+  String get exerciseAnalyticsVolumeWeightXReps =>
+      'Volume (bobot x repetisi) saka wektu ke wektu';
 
   @override
   String get exerciseAnalyticsWarmup => 'Pemanasan';
@@ -8912,13 +9529,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseCardGenerateAWorkoutPlan => 'Gawe rencana latihan dhisik';
 
   @override
-  String get exerciseCardNoUpcomingWorkouts => 'Ora ana latihan sing bakal teka';
+  String get exerciseCardNoUpcomingWorkouts =>
+      'Ora ana latihan sing bakal teka';
 
   @override
   String get exerciseCardOrAddToWorkout => 'UTAWA TAMBAH MENYANG LATIHAN';
 
   @override
-  String get exerciseCardWillBeIncludedIn => 'Bakal kalebu ing latihan sabanjure';
+  String get exerciseCardWillBeIncludedIn =>
+      'Bakal kalebu ing latihan sabanjure';
 
   @override
   String get exerciseDetailActionGuide => 'Pandhuan tumindak';
@@ -8957,7 +9576,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailMuscle => 'Otot';
 
   @override
-  String get exerciseDetailNoHistoryForThis => 'Durung ana riwayat kanggo latihan iki';
+  String get exerciseDetailNoHistoryForThis =>
+      'Durung ana riwayat kanggo latihan iki';
 
   @override
   String get exerciseDetailPrevious => 'Sadurunge';
@@ -8984,7 +9604,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailScreenCoachingCues => 'CUE COACHING';
 
   @override
-  String get exerciseDetailScreenCompleteAWorkoutTo => 'Rampungake latihan kanggo miwiti nglacak';
+  String get exerciseDetailScreenCompleteAWorkoutTo =>
+      'Rampungake latihan kanggo miwiti nglacak';
 
   @override
   String get exerciseDetailScreenDifficulty => 'Kangelan';
@@ -9009,7 +9630,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailScreenNoStatsForThis => 'Durung ana statistik kanggo latihan iki';
+  String get exerciseDetailScreenNoStatsForThis =>
+      'Durung ana statistik kanggo latihan iki';
 
   @override
   String get exerciseDetailScreenNotes => 'Cathetan';
@@ -9082,30 +9704,44 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailSheetNoExercisesInCurrent => 'Ora ana latihan ing sesi saiki kanggo diganti';
+  String get exerciseDetailSheetNoExercisesInCurrent =>
+      'Ora ana latihan ing sesi saiki kanggo diganti';
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
+    Object e,
+  ) {
     return 'Gagal nempelake: $e';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
+    Object exerciseName,
+    Object selected,
+  ) {
     return 'Ngganti \"$selected\" karo \"$exerciseName\"';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
+    Object exerciseName,
+    Object section,
+    Object timing,
+  ) {
     return 'Nempelake \"$exerciseName\" menyang $section ($timing)';
   }
 
   @override
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName) {
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
+    Object exerciseName,
+  ) {
     return '\"$exerciseName\" dicopot';
   }
 
   @override
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName) {
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
+    Object exerciseName,
+  ) {
     return 'Busak video offline kanggo \"$exerciseName\"? Sampeyan bisa ndownload maneh kapan wae.';
   }
 
@@ -9113,7 +9749,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailSheetQueue => 'Antrean';
 
   @override
-  String get exerciseDetailSheetReplaceWhichExercise => 'Ganti latihan sing endi?';
+  String get exerciseDetailSheetReplaceWhichExercise =>
+      'Ganti latihan sing endi?';
 
   @override
   String exerciseDetailSheetSet(Object setNumber) {
@@ -9124,7 +9761,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailSheetStaple => 'Pokok';
 
   @override
-  String get exerciseDetailSheetTrackYourMaxStrength => 'Lacak kekuatan maksimal sampeyan';
+  String get exerciseDetailSheetTrackYourMaxStrength =>
+      'Lacak kekuatan maksimal sampeyan';
 
   @override
   String get exerciseDetailStapleOptions => 'Opsi Utama';
@@ -9142,10 +9780,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailVideoNotAvailable => 'Video ora kasedhiya';
 
   @override
-  String get exerciseDetailWillAutoPlayWhen => 'Bakal muter otomatis nalika siyap';
+  String get exerciseDetailWillAutoPlayWhen =>
+      'Bakal muter otomatis nalika siyap';
 
   @override
-  String get exerciseDetailYourSessionsWillAppear => 'Sesi sampeyan bakal katon ing kene';
+  String get exerciseDetailYourSessionsWillAppear =>
+      'Sesi sampeyan bakal katon ing kene';
 
   @override
   String get exerciseDetailsAiCoachTips => 'Tips pelatih AI';
@@ -9211,7 +9851,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailsSheetFormCues => 'Pandhuan Gerakan';
 
   @override
-  String get exerciseDetailsSheetLoadingAiCoachTips => 'Ngasah tips pelatih AI...';
+  String get exerciseDetailsSheetLoadingAiCoachTips =>
+      'Ngasah tips pelatih AI...';
 
   @override
   String get exerciseDetailsSheetPrimaryMuscle => 'Otot Utama';
@@ -9223,7 +9864,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseDetailsSheetSecondaryMuscles => 'Otot Tambahan';
 
   @override
-  String get exerciseDetailsSheetTapVideoToWatch => 'Tutul \"Video\" kanggo ndeleng demonstrasi gerakan';
+  String get exerciseDetailsSheetTapVideoToWatch =>
+      'Tutul \"Video\" kanggo ndeleng demonstrasi gerakan';
 
   @override
   String get exerciseDetailsSheetVideo => 'Video';
@@ -9274,7 +9916,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseHistoryAllTime => 'SAWENEH WAKTU';
 
   @override
-  String get exerciseHistoryCompleteSomeWorkoutsTo => 'Rampungake sawetara latihan kanggo ndeleng riwayat latihan lan nglacak kemajuan sampeyan.';
+  String get exerciseHistoryCompleteSomeWorkoutsTo =>
+      'Rampungake sawetara latihan kanggo ndeleng riwayat latihan lan nglacak kemajuan sampeyan.';
 
   @override
   String get exerciseHistoryExerciseHistory => 'Riwayat Latihan';
@@ -9286,13 +9929,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseHistoryFailedToLoadExercises => 'Gagal ngemot latihan';
 
   @override
-  String get exerciseHistoryKeepTrainingAndPushing => 'Terus latihan lan tantang watesan sampeyan. Rekor pribadi sampeyan bakal katon ing kene nalika sampeyan saya kuwat.';
+  String get exerciseHistoryKeepTrainingAndPushing =>
+      'Terus latihan lan tantang watesan sampeyan. Rekor pribadi sampeyan bakal katon ing kene nalika sampeyan saya kuwat.';
 
   @override
   String get exerciseHistoryLast30Days => '30 Dina Pungkasan';
 
   @override
-  String get exerciseHistoryNoExerciseHistoryYet => 'Durung Ana Riwayat Latihan';
+  String get exerciseHistoryNoExerciseHistoryYet =>
+      'Durung Ana Riwayat Latihan';
 
   @override
   String get exerciseHistoryNoPersonalRecordsYet => 'Durung Ana Rekor Pribadi';
@@ -9301,7 +9946,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseHistoryPrStreak => 'Streak PR';
 
   @override
-  String get exerciseHistoryRecentPersonalRecords => 'Rekor Pribadi Paling Anyar';
+  String get exerciseHistoryRecentPersonalRecords =>
+      'Rekor Pribadi Paling Anyar';
 
   @override
   String exerciseHistoryScreenValue(Object timesPerformed) {
@@ -9331,13 +9977,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseInfoRetrying => 'Nyoba maneh';
 
   @override
-  String get exerciseManagementMixinAiPoweredAlternatives => 'Alternatif berbasis AI';
+  String get exerciseManagementMixinAiPoweredAlternatives =>
+      'Alternatif berbasis AI';
 
   @override
-  String get exerciseManagementMixinBreakTheSupersetPair => 'Pisahake pasangan superset';
+  String get exerciseManagementMixinBreakTheSupersetPair =>
+      'Pisahake pasangan superset';
 
   @override
-  String get exerciseManagementMixinChooseExerciseToPair => 'Pilih latihan kanggo dipasangake';
+  String get exerciseManagementMixinChooseExerciseToPair =>
+      'Pilih latihan kanggo dipasangake';
 
   @override
   String get exerciseManagementMixinCreateSuperset => 'Gawe Superset';
@@ -9348,19 +9997,23 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseManagementMixinMakeThisTheActive => 'Jadike iki latihan aktif';
+  String get exerciseManagementMixinMakeThisTheActive =>
+      'Jadike iki latihan aktif';
 
   @override
-  String get exerciseManagementMixinNoAvailableExercisesTo => 'Ora ana latihan sing kasedhiya kanggo dipasangake';
+  String get exerciseManagementMixinNoAvailableExercisesTo =>
+      'Ora ana latihan sing kasedhiya kanggo dipasangake';
 
   @override
-  String get exerciseManagementMixinPairWithNextExercise => 'Pasangake karo Latihan Sabanjure';
+  String get exerciseManagementMixinPairWithNextExercise =>
+      'Pasangake karo Latihan Sabanjure';
 
   @override
   String get exerciseManagementMixinRemoveFromSuperset => 'Busak saka Superset';
 
   @override
-  String get exerciseManagementMixinRemoveFromThisWorkout => 'Busak saka latihan iki';
+  String get exerciseManagementMixinRemoveFromThisWorkout =>
+      'Busak saka latihan iki';
 
   @override
   String get exerciseManagementMixinReplaceExercise => 'Ganti Latihan';
@@ -9390,7 +10043,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseMenuNeverRecommend => 'Aja Menehi Rekomendasi';
 
   @override
-  String get exerciseMenuQueuedForNext => 'Diantrekake kanggo latihan sabanjure';
+  String get exerciseMenuQueuedForNext =>
+      'Diantrekake kanggo latihan sabanjure';
 
   @override
   String get exerciseMenuRemoveAsStaple => 'Busak minangka Pokok';
@@ -9429,13 +10083,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseMiniChartNotEnoughHistory => 'Riwayat durung cukup';
 
   @override
-  String get exerciseNavigationMixinApplyToAllLinked => 'Terapake menyang kabeh latihan sing disambungake?';
+  String get exerciseNavigationMixinApplyToAllLinked =>
+      'Terapake menyang kabeh latihan sing disambungake?';
 
   @override
   String get exerciseNavigationMixinBarType => 'Tipe Bar';
 
   @override
-  String get exerciseNavigationMixinCannotRemoveTheLast => 'Ora bisa mbusak latihan pungkasan';
+  String get exerciseNavigationMixinCannotRemoveTheLast =>
+      'Ora bisa mbusak latihan pungkasan';
 
   @override
   String exerciseNavigationMixinChangedTo(Object displayName) {
@@ -9462,7 +10118,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinIncompleteExercises => 'Latihan Durung Rampung';
+  String get exerciseNavigationMixinIncompleteExercises =>
+      'Latihan Durung Rampung';
 
   @override
   String get exerciseNavigationMixinMyGym => 'Gym Kula';
@@ -9497,7 +10154,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseNavigationMixinSomeExercisesHaveMissing => 'Sawetara latihan durung dicathet:';
+  String get exerciseNavigationMixinSomeExercisesHaveMissing =>
+      'Sawetara latihan durung dicathet:';
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
@@ -9521,10 +10179,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseNavigationMixinUndo => 'Batal';
 
   @override
-  String get exerciseNavigationMixinUseTheNotesSection => 'Gunakake bagean cathetan ing ngisor set';
+  String get exerciseNavigationMixinUseTheNotesSection =>
+      'Gunakake bagean cathetan ing ngisor set';
 
   @override
-  String get exerciseNavigationMixinYesApplyToAll => 'Ya, terapake menyang kabeh';
+  String get exerciseNavigationMixinYesApplyToAll =>
+      'Ya, terapake menyang kabeh';
 
   @override
   String get exerciseOptionsAddToSuperset => 'Tambah menyang Superset';
@@ -9539,46 +10199,56 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseOptionsExerciseHistory => 'Riwayat Latihan';
 
   @override
-  String get exerciseOptionsInfoExerciseOptionsExplained => 'Penjelasan Opsi Latihan';
+  String get exerciseOptionsInfoExerciseOptionsExplained =>
+      'Penjelasan Opsi Latihan';
 
   @override
   String get exerciseOptionsInfoFavorite => 'Favorit';
 
   @override
-  String get exerciseOptionsInfoLinkAsSuperset => 'Sambungake minangka Superset';
+  String get exerciseOptionsInfoLinkAsSuperset =>
+      'Sambungake minangka Superset';
 
   @override
-  String get exerciseOptionsInfoMarkAsACore => 'Tandhani minangka latihan inti sing ora bakal diganti. AI bakal tansah nyakup latihan utama ing jadwalmu - cocog kanggo gerakan majemuk sing pengin terus ditingkatake.';
+  String get exerciseOptionsInfoMarkAsACore =>
+      'Tandhani minangka latihan inti sing ora bakal diganti. AI bakal tansah nyakup latihan utama ing jadwalmu - cocog kanggo gerakan majemuk sing pengin terus ditingkatake.';
 
   @override
   String get exerciseOptionsInfoNeverRecommend => 'Aja Menehi Rekomendasi';
 
   @override
-  String get exerciseOptionsInfoPairWithAnotherExercise => 'Pasangake karo latihan liyane kanggo ditindakake kanthi urut tanpa akeh ngaso. Cocog kanggo efisiensi wektu lan nambah otot.';
+  String get exerciseOptionsInfoPairWithAnotherExercise =>
+      'Pasangake karo latihan liyane kanggo ditindakake kanthi urut tanpa akeh ngaso. Cocog kanggo efisiensi wektu lan nambah otot.';
 
   @override
-  String get exerciseOptionsInfoPermanentlyBlockThisExercis => 'Blokir latihan iki selawase saka rekomendasi AI ing mangarepan. Gunakake iki kanggo latihan sing ora koksenengi utawa ora bisa ditindakake amarga tatu.';
+  String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
+      'Blokir latihan iki selawase saka rekomendasi AI ing mangarepan. Gunakake iki kanggo latihan sing ora koksenengi utawa ora bisa ditindakake amarga tatu.';
 
   @override
-  String get exerciseOptionsInfoQueueThisExerciseTo => 'Antri latihan iki supaya muncul ing latihan sabanjure. Cocog kanggo latihan sing pengin difokusake. Latihan sing diantri bakal kadaluwarsa sawise 7 dina yen ora digunakake.';
+  String get exerciseOptionsInfoQueueThisExerciseTo =>
+      'Antri latihan iki supaya muncul ing latihan sabanjure. Cocog kanggo latihan sing pengin difokusake. Latihan sing diantri bakal kadaluwarsa sawise 7 dina yen ora digunakake.';
 
   @override
   String get exerciseOptionsInfoRemoveFromWorkout => 'Busak saka Latihan';
 
   @override
-  String get exerciseOptionsInfoRemoveThisExerciseFrom => 'Busak latihan iki saka sesi latihan saiki wae. Latihan iki bisa muncul maneh ing sesi latihan sabanjure.';
+  String get exerciseOptionsInfoRemoveThisExerciseFrom =>
+      'Busak latihan iki saka sesi latihan saiki wae. Latihan iki bisa muncul maneh ing sesi latihan sabanjure.';
 
   @override
   String get exerciseOptionsInfoRepeatNextTime => 'Baleni Sabanjure';
 
   @override
-  String get exerciseOptionsInfoReplaceWithASimilar => 'Ganti karo latihan sing padha kanggo target otot sing padha. Pilih saka saran AI, ganti anyar, utawa jelajahi kabeh pustaka.';
+  String get exerciseOptionsInfoReplaceWithASimilar =>
+      'Ganti karo latihan sing padha kanggo target otot sing padha. Pilih saka saran AI, ganti anyar, utawa jelajahi kabeh pustaka.';
 
   @override
-  String get exerciseOptionsInfoSaveExercisesYouLove => 'Simpen latihan sing koksenengi supaya gampang diakses. Favorit bakal muncul ing tampilan Pustaka Latihan lan diprioritasake ing rekomendasi AI.';
+  String get exerciseOptionsInfoSaveExercisesYouLove =>
+      'Simpen latihan sing koksenengi supaya gampang diakses. Favorit bakal muncul ing tampilan Pustaka Latihan lan diprioritasake ing rekomendasi AI.';
 
   @override
-  String get exerciseOptionsInfoSeeYourPerformanceHistory => 'Deleng riwayat kinerja lan grafik kemajuanmu kanggo latihan iki saka wektu ke wektu.';
+  String get exerciseOptionsInfoSeeYourPerformanceHistory =>
+      'Deleng riwayat kinerja lan grafik kemajuanmu kanggo latihan iki saka wektu ke wektu.';
 
   @override
   String get exerciseOptionsInfoStapleExercise => 'Latihan Utama';
@@ -9613,7 +10283,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetAddExerciseToAvoid => 'Tambah Latihan sing Dihindari';
+  String get exercisePickerSheetAddExerciseToAvoid =>
+      'Tambah Latihan sing Dihindari';
 
   @override
   String get exercisePickerSheetAddFavoriteExercise => 'Tambah Latihan Favorit';
@@ -9622,7 +10293,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePickerSheetAddStapleExercise => 'Tambah Latihan Utama';
 
   @override
-  String get exercisePickerSheetAddToExerciseQueue => 'Tambah menyang Antrean Latihan';
+  String get exercisePickerSheetAddToExerciseQueue =>
+      'Tambah menyang Antrean Latihan';
 
   @override
   String get exercisePickerSheetAi => 'AI';
@@ -9631,7 +10303,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePickerSheetBodyPart => 'Bagian Awak';
 
   @override
-  String get exercisePickerSheetCanTFindYour => 'Ora nemokake latihanmu? Tambahake minangka kustom';
+  String get exercisePickerSheetCanTFindYour =>
+      'Ora nemokake latihanmu? Tambahake minangka kustom';
 
   @override
   String get exercisePickerSheetClearAll => 'Busak kabeh';
@@ -9654,23 +10327,33 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetNoExercisesFound => 'Ora ana latihan sing ditemokake';
+  String get exercisePickerSheetNoExercisesFound =>
+      'Ora ana latihan sing ditemokake';
 
   @override
-  String get exercisePickerSheetOrTypeAboveTo => 'Utawa ketik ing ndhuwur kanggo nggoleki kabeh pustaka latihan';
+  String get exercisePickerSheetOrTypeAboveTo =>
+      'Utawa ketik ing ndhuwur kanggo nggoleki kabeh pustaka latihan';
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1) {
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
+    Object length,
+    Object length1,
+  ) {
     return 'Nuduhake $length saka $length1';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue(
+    Object customCount,
+  ) {
     return '($customCount)';
   }
 
   @override
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name) {
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(
+    Object count,
+    Object name,
+  ) {
     return '$name ($count)';
   }
 
@@ -9683,22 +10366,27 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetSearchForCoreLifts => 'Telusuri angkatan inti kanggo dikunci ing latihan sampeyan';
+  String get exercisePickerSheetSearchForCoreLifts =>
+      'Telusuri angkatan inti kanggo dikunci ing latihan sampeyan';
 
   @override
   String get exercisePickerSheetSearchForExercises => 'Goleki latihan';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToAdd => 'Telusuri latihan kanggo ditambahake menyang favorit sampeyan';
+  String get exercisePickerSheetSearchForExercisesToAdd =>
+      'Telusuri latihan kanggo ditambahake menyang favorit sampeyan';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToInclude => 'Telusuri latihan kanggo dilebokake ing latihan sabanjure';
+  String get exercisePickerSheetSearchForExercisesToInclude =>
+      'Telusuri latihan kanggo dilebokake ing latihan sabanjure';
 
   @override
-  String get exercisePickerSheetSearchForExercisesToSkip => 'Telusuri latihan sing pengin sampeyan liwati';
+  String get exercisePickerSheetSearchForExercisesToSkip =>
+      'Telusuri latihan sing pengin sampeyan liwati';
 
   @override
-  String get exercisePickerSheetSearchTryPushRow => 'Goleki — coba \"push\", \"row\", \"squat\"';
+  String get exercisePickerSheetSearchTryPushRow =>
+      'Goleki — coba \"push\", \"row\", \"squat\"';
 
   @override
   String get exercisePickerSheetSearching => 'Nggoleki...';
@@ -9707,22 +10395,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePickerSheetShowingResultsFor => 'Nuduhake asil kanggo ';
 
   @override
-  String get exercisePickerSheetTapExercisesToSelect => 'Tutul latihan kanggo milih luwih saka siji';
+  String get exercisePickerSheetTapExercisesToSelect =>
+      'Tutul latihan kanggo milih luwih saka siji';
 
   @override
-  String get exercisePickerSheetTryADifferentSearch => 'Coba goleki utawa filter liyane';
+  String get exercisePickerSheetTryADifferentSearch =>
+      'Coba goleki utawa filter liyane';
 
   @override
   String get exercisePickerSheetType => 'Tipe';
 
   @override
-  String get exercisePickerSheetTypeToSearchOr => 'Ketik kanggo nggoleki utawa gunakake filter kanggo njelajah';
+  String get exercisePickerSheetTypeToSearchOr =>
+      'Ketik kanggo nggoleki utawa gunakake filter kanggo njelajah';
 
   @override
   String get exercisePickerSheetYourCustomExercises => 'LATIHAN KUSTOMMU';
 
   @override
-  String get exercisePreferencesCardAiWillPrioritizeThese => 'AI bakal prioritasake iki';
+  String get exercisePreferencesCardAiWillPrioritizeThese =>
+      'AI bakal prioritasake iki';
 
   @override
   String exercisePreferencesCardAvoided(Object avoidedCount) {
@@ -9733,31 +10425,38 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePreferencesCardCooldownStretch => 'Peregangan Pendinginan';
 
   @override
-  String get exercisePreferencesCardCoreLiftsThatNever => 'Latihan inti sing ora bakal diganti';
+  String get exercisePreferencesCardCoreLiftsThatNever =>
+      'Latihan inti sing ora bakal diganti';
 
   @override
   String get exercisePreferencesCardCustomExercises => 'Latihan Kustom';
 
   @override
-  String get exercisePreferencesCardCustomizeStepPerEquipme => 'Kustomisasi langkah +/- saben peralatan';
+  String get exercisePreferencesCardCustomizeStepPerEquipme =>
+      'Kustomisasi langkah +/- saben peralatan';
 
   @override
-  String get exercisePreferencesCardCustomizeWhichExercisesAppe => 'Kustomisasi latihan sing muncul ing sesi latihan';
+  String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
+      'Kustomisasi latihan sing muncul ing sesi latihan';
 
   @override
-  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts => 'Pemanasan dinamis sadurunge latihan';
+  String get exercisePreferencesCardDynamicWarmupBeforeWorkouts =>
+      'Pemanasan dinamis sadurunge latihan';
 
   @override
-  String get exercisePreferencesCardEnableOrDisableWorkout => 'Aktifake utawa mateni fase latihan';
+  String get exercisePreferencesCardEnableOrDisableWorkout =>
+      'Aktifake utawa mateni fase latihan';
 
   @override
   String get exercisePreferencesCardExercisePreferences => 'Preferensi Latihan';
 
   @override
-  String get exercisePreferencesCardExercisePreferences2 => 'PREFERENSI LATIHAN';
+  String get exercisePreferencesCardExercisePreferences2 =>
+      'PREFERENSI LATIHAN';
 
   @override
-  String get exercisePreferencesCardExercisePreferencesExplained => 'Penjelasan Preferensi Latihan';
+  String get exercisePreferencesCardExercisePreferencesExplained =>
+      'Penjelasan Preferensi Latihan';
 
   @override
   String get exercisePreferencesCardExerciseQueue => 'Antrian Latihan';
@@ -9778,22 +10477,27 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardExercisesToAvoid => 'Latihan sing kudu dihindari';
+  String get exercisePreferencesCardExercisesToAvoid =>
+      'Latihan sing kudu dihindari';
 
   @override
   String get exercisePreferencesCardFavoriteExercises => 'Latihan Favorit';
 
   @override
-  String get exercisePreferencesCardFavoritesAvoidedQueue => 'Favorit, dihindari, antrian';
+  String get exercisePreferencesCardFavoritesAvoidedQueue =>
+      'Favorit, dihindari, antrian';
 
   @override
-  String get exercisePreferencesCardIncompleteExerciseWarning => 'Pènget Latihan Durung Rampung';
+  String get exercisePreferencesCardIncompleteExerciseWarning =>
+      'Pènget Latihan Durung Rampung';
 
   @override
-  String get exercisePreferencesCardMusclesToAvoid => 'Otot sing kudu dihindari';
+  String get exercisePreferencesCardMusclesToAvoid =>
+      'Otot sing kudu dihindari';
 
   @override
-  String get exercisePreferencesCardQueueExercisesForNext => 'Antri latihan kanggo sesi sabanjure';
+  String get exercisePreferencesCardQueueExercisesForNext =>
+      'Antri latihan kanggo sesi sabanjure';
 
   @override
   String exercisePreferencesCardQueued(Object queueCount) {
@@ -9801,16 +10505,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardSkipOrReduceMuscle => 'Nglwati utawa nyuda klompok otot';
+  String get exercisePreferencesCardSkipOrReduceMuscle =>
+      'Nglwati utawa nyuda klompok otot';
 
   @override
-  String get exercisePreferencesCardSkipSpecificExercises => 'Nglwati latihan tartamtu';
+  String get exercisePreferencesCardSkipSpecificExercises =>
+      'Nglwati latihan tartamtu';
 
   @override
   String get exercisePreferencesCardStapleExercises => 'Latihan Utama';
 
   @override
-  String get exercisePreferencesCardStretchingAfterWorkouts => 'Peregangan sawise latihan';
+  String get exercisePreferencesCardStretchingAfterWorkouts =>
+      'Peregangan sawise latihan';
 
   @override
   String get exercisePreferencesCardWarmupCooldown => 'PEMANASAN & PENDINGINAN';
@@ -9819,7 +10526,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePreferencesCardWarmupPhase => 'Fase Pemanasan';
 
   @override
-  String get exercisePreferencesCardWarnBeforeFinishingWith => 'Pènget sadurunge rampung karo set sing durung dicathet';
+  String get exercisePreferencesCardWarnBeforeFinishingWith =>
+      'Pènget sadurunge rampung karo set sing durung dicathet';
 
   @override
   String get exercisePreferencesCardWeightIncrements => 'Tambahan Beban';
@@ -9831,7 +10539,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exercisePreferencesCardWorkoutMode => 'MODE LATIHAN';
 
   @override
-  String get exercisePreferencesCardYourPersonalExerciseLibrary => 'Pustaka latihan pribadimu';
+  String get exercisePreferencesCardYourPersonalExerciseLibrary =>
+      'Pustaka latihan pribadimu';
 
   @override
   String get exercisePreviewOverlayFormDemo => 'Demo Gerakan';
@@ -9842,7 +10551,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exercisePreviewOverlayTapAnywhereToStart => 'Tutul ing ngendi wae kanggo miwiti';
+  String get exercisePreviewOverlayTapAnywhereToStart =>
+      'Tutul ing ngendi wae kanggo miwiti';
 
   @override
   String exercisePreviewOverlayTarget(Object muscles) {
@@ -9859,10 +10569,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseProgressDetailInsights => 'Wawasan';
 
   @override
-  String get exerciseProgressDetailNoDataForThis => 'Durung ana data kanggo latihan iki';
+  String get exerciseProgressDetailNoDataForThis =>
+      'Durung ana data kanggo latihan iki';
 
   @override
-  String get exerciseProgressDetailNoSessionsRecorded => 'Ora ana sesi sing kacathet';
+  String get exerciseProgressDetailNoSessionsRecorded =>
+      'Ora ana sesi sing kacathet';
 
   @override
   String get exerciseProgressDetailProgress => 'Kemajuan';
@@ -9880,10 +10592,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseProgressionsBestReps => 'Repetisi paling apik';
 
   @override
-  String get exerciseProgressionsEarnTheHarderVariant => 'Entuk varian sing luwih angel';
+  String get exerciseProgressionsEarnTheHarderVariant =>
+      'Entuk varian sing luwih angel';
 
   @override
-  String get exerciseProgressionsLoadingYourProgressions => 'Ngunggah progresmu...';
+  String get exerciseProgressionsLoadingYourProgressions =>
+      'Ngunggah progresmu...';
 
   @override
   String get exerciseProgressionsMasteryProgress => 'Progres penguasaan';
@@ -9895,10 +10609,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseProgressionsNotYet => 'Durung';
 
   @override
-  String get exerciseProgressionsOneMoreTooEasy => 'Siji sesi \"kegampangen\" maneh bakal mbukak varian sabanjure.';
+  String get exerciseProgressionsOneMoreTooEasy =>
+      'Siji sesi \"kegampangen\" maneh bakal mbukak varian sabanjure.';
 
   @override
-  String get exerciseProgressionsOtherTrackedExercises => 'LATIHAN LAIN SING DILACAK';
+  String get exerciseProgressionsOtherTrackedExercises =>
+      'LATIHAN LAIN SING DILACAK';
 
   @override
   String get exerciseProgressionsProgressions => 'Progresi';
@@ -9941,7 +10657,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy) {
+  String exerciseProgressionsScreenEasySessions(
+    Object _target,
+    Object consecutiveEasy,
+  ) {
     return '$consecutiveEasy / $_target sesi gampang';
   }
 
@@ -9961,7 +10680,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise) {
+  String exerciseProgressionsScreenYouWillMoveFrom(
+    Object exerciseName,
+    Object suggestedExercise,
+  ) {
     return 'Sampeyan bakal pindhah saka $exerciseName menyang $suggestedExercise. ';
   }
 
@@ -9975,7 +10697,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseProgressionsUnlocked => 'Dibukak';
 
   @override
-  String get exerciseProgressionsYourProgressionChains => 'RANTAI PROGRESI PANJENENGAN';
+  String get exerciseProgressionsYourProgressionChains =>
+      'RANTAI PROGRESI PANJENENGAN';
 
   @override
   String get exerciseQueue => ' • ';
@@ -9990,7 +10713,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseQueueNoExercisesQueued => 'Ora ana latihan ing antrean';
 
   @override
-  String get exerciseQueueQueuedExercisesWillBe => 'Latihan sing diantre bakal dilebokake ing latihan sabanjure. Item bakal kadaluwarsa sawise 7 dina.';
+  String get exerciseQueueQueuedExercisesWillBe =>
+      'Latihan sing diantre bakal dilebokake ing latihan sabanjure. Item bakal kadaluwarsa sawise 7 dina.';
 
   @override
   String get exerciseQueueRemove => 'Busak';
@@ -10014,13 +10738,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseQueueTheseExercisesWillBe => 'Latihan iki bakal dilebokake ing latihan sabanjure. Item antrean kadaluwarsa sawise 7 dina.';
+  String get exerciseQueueTheseExercisesWillBe =>
+      'Latihan iki bakal dilebokake ing latihan sabanjure. Item antrean kadaluwarsa sawise 7 dina.';
 
   @override
-  String get exerciseSafetyAuditAllExercisesTagged => 'Kabeh latihan wis diwenehi tag!';
+  String get exerciseSafetyAuditAllExercisesTagged =>
+      'Kabeh latihan wis diwenehi tag!';
 
   @override
-  String get exerciseSafetyAuditFailedToLoadExercises => 'Gagal ngunggah latihan';
+  String get exerciseSafetyAuditFailedToLoadExercises =>
+      'Gagal ngunggah latihan';
 
   @override
   String get exerciseSafetyAuditInjurySafeFlags => 'TANDA AMAN CEDERA';
@@ -10032,13 +10759,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSafetyAuditNoDifficulty => 'ora ana kangelan';
 
   @override
-  String get exerciseSafetyAuditNoExercisesPendingManual => 'Ora ana latihan sing nunggu audit manual.';
+  String get exerciseSafetyAuditNoExercisesPendingManual =>
+      'Ora ana latihan sing nunggu audit manual.';
 
   @override
   String get exerciseSafetyAuditNoPattern => 'ora ana pola';
 
   @override
-  String get exerciseSafetyAuditOptionalCiteSourceExplain => 'Opsional: sebutake sumber, jelasake kasus khusus, tandhani ambiguitas...';
+  String get exerciseSafetyAuditOptionalCiteSourceExplain =>
+      'Opsional: sebutake sumber, jelasake kasus khusus, tandhani ambiguitas...';
 
   @override
   String get exerciseSafetyAuditRefresh => 'Muat ulang';
@@ -10073,49 +10802,62 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSafetyAuditTryAgain => 'Coba maneh';
 
   @override
-  String get exerciseScienceResearchAllTrainingParametersAre => 'Kabeh parameter latihan dijupuk saka literatur ilmu olahraga sing wis ditinjau. Asil individu bisa beda-beda.';
+  String get exerciseScienceResearchAllTrainingParametersAre =>
+      'Kabeh parameter latihan dijupuk saka literatur ilmu olahraga sing wis ditinjau. Asil individu bisa beda-beda.';
 
   @override
-  String get exerciseScienceResearchAmericanCollegeOfSports => 'American College of Sports Medicine (ACSM)';
+  String get exerciseScienceResearchAmericanCollegeOfSports =>
+      'American College of Sports Medicine (ACSM)';
 
   @override
-  String get exerciseScienceResearchAndroulakisKorakakisPFis => 'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
+  String get exerciseScienceResearchAndroulakisKorakakisPFis =>
+      'Androulakis-Korakakis, P., Fisher, J. P. & Steele, J.';
 
   @override
   String get exerciseScienceResearchBarbaRuizCEt => 'Barba-Ruiz, C. et al.';
 
   @override
-  String get exerciseScienceResearchEffectsOfSupersetConfigurat => 'Effects of Superset Configuration on Kinetic, Kinematic, and Perceived Exertion in the Barbell Bench Press';
+  String get exerciseScienceResearchEffectsOfSupersetConfigurat =>
+      'Effects of Superset Configuration on Kinetic, Kinematic, and Perceived Exertion in the Barbell Bench Press';
 
   @override
-  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms => 'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
+  String get exerciseScienceResearchEpleyBrzyckiMayhewHelms =>
+      'Epley, Brzycki, Mayhew / Helms, E. R. et al.';
 
   @override
-  String get exerciseScienceResearchEssentialsOfStrengthTrainin => 'Essentials of Strength Training and Conditioning';
+  String get exerciseScienceResearchEssentialsOfStrengthTrainin =>
+      'Essentials of Strength Training and Conditioning';
 
   @override
-  String get exerciseScienceResearchEverySubmittedSourceIs => 'Saben sumber sing dikirim ditinjau lan divalidasi dening manungsa sadurunge ditambahake menyang basis pengetahuan.';
+  String get exerciseScienceResearchEverySubmittedSourceIs =>
+      'Saben sumber sing dikirim ditinjau lan divalidasi dening manungsa sadurunge ditambahake menyang basis pengetahuan.';
 
   @override
-  String get exerciseScienceResearchEvidenceBasedTraining => 'Latihan Adhedhasar Bukti';
+  String get exerciseScienceResearchEvidenceBasedTraining =>
+      'Latihan Adhedhasar Bukti';
 
   @override
-  String get exerciseScienceResearchFeedDataToRag => 'Lebokake Data menyang RAG';
+  String get exerciseScienceResearchFeedDataToRag =>
+      'Lebokake Data menyang RAG';
 
   @override
-  String get exerciseScienceResearchFeedYourOwnResearch => 'Lebokake makalah riset, basis data latihan, lan metodologi latihan sampeyan menyang sistem RAG (Retrieval-Augmented Generation) kita. Iki ngidini pelatih AI nggunakake sumber daya sing luwih berkualitas nalika nggawe rencana latihan pribadi sampeyan, nggawe saran luwih pinter lan luwih cocog karo ilmu pengetahuan paling anyar.';
+  String get exerciseScienceResearchFeedYourOwnResearch =>
+      'Lebokake makalah riset, basis data latihan, lan metodologi latihan sampeyan menyang sistem RAG (Retrieval-Augmented Generation) kita. Iki ngidini pelatih AI nggunakake sumber daya sing luwih berkualitas nalika nggawe rencana latihan pribadi sampeyan, nggawe saran luwih pinter lan luwih cocog karo ilmu pengetahuan paling anyar.';
 
   @override
   String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. et al.';
 
   @override
-  String get exerciseScienceResearchGoldsteinANLeung => 'Goldstein, A. N. & Leung, E.';
+  String get exerciseScienceResearchGoldsteinANLeung =>
+      'Goldstein, A. N. & Leung, E.';
 
   @override
-  String get exerciseScienceResearchGuidelinesForExerciseTestin => 'Guidelines for Exercise Testing and Prescription';
+  String get exerciseScienceResearchGuidelinesForExerciseTestin =>
+      'Guidelines for Exercise Testing and Prescription';
 
   @override
-  String get exerciseScienceResearchHaffGGTriplett => 'Haff, G. G. & Triplett, N. T.';
+  String get exerciseScienceResearchHaffGGTriplett =>
+      'Haff, G. G. & Triplett, N. T.';
 
   @override
   String get exerciseScienceResearchHowItWorks => 'Cara kerjane';
@@ -10124,7 +10866,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseScienceResearchImportantGuidelines => 'Pedoman penting';
 
   @override
-  String get exerciseScienceResearchIsraetelMRpStrength => 'Israetel, M. / RP Strength';
+  String get exerciseScienceResearchIsraetelMRpStrength =>
+      'Israetel, M. / RP Strength';
 
   @override
   String get exerciseScienceResearchKeyFindings => 'Temuan Utama';
@@ -10151,13 +10894,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseScienceResearchUploadData => 'Unggah Data';
 
   @override
-  String get exerciseScienceResearchUploadPdfsArticlesOr => 'Unggah PDF, artikel, utawa file teks sing ngemot riset ilmu olahraga. Sistem kita ngolah lan ngindeks konten kasebut, supaya bisa digunakake minangka konteks kanggo AI nalika nggawe latihan sampeyan.';
+  String get exerciseScienceResearchUploadPdfsArticlesOr =>
+      'Unggah PDF, artikel, utawa file teks sing ngemot riset ilmu olahraga. Sistem kita ngolah lan ngindeks konten kasebut, supaya bisa digunakake minangka konteks kanggo AI nalika nggawe latihan sampeyan.';
 
   @override
   String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. et al.';
 
   @override
-  String get exerciseSearchBarSearchExercisesOrEquipment => 'Golek latihan utawa peralatan...';
+  String get exerciseSearchBarSearchExercisesOrEquipment =>
+      'Golek latihan utawa peralatan...';
 
   @override
   String get exerciseSearchBarSearchPrograms => 'Golek program...';
@@ -10168,7 +10913,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseSearchResultsFailedToSearchExercises => 'Gagal nggoleki latihan';
+  String get exerciseSearchResultsFailedToSearchExercises =>
+      'Gagal nggoleki latihan';
 
   @override
   String exerciseSearchResultsMoreWorkouts(Object results) {
@@ -10176,7 +10922,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get exerciseSearchResultsNoResultsFound => 'Ora ana asil sing ditemokake';
+  String get exerciseSearchResultsNoResultsFound =>
+      'Ora ana asil sing ditemokake';
 
   @override
   String exerciseSearchResultsNoWorkoutsContainingIn(Object exerciseName) {
@@ -10189,7 +10936,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults) {
+  String exerciseSearchResultsWorkoutsFound(
+    Object exerciseName,
+    Object totalResults,
+  ) {
     return '\"$exerciseName\" - $totalResults latihan ditemokake';
   }
 
@@ -10267,7 +11017,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseStatsWidgetsEst1rm => 'Est. 1RM';
 
   @override
-  String get exerciseStatsWidgetsNotEnoughDataTo => 'Data ora cukup kanggo nampilake grafik';
+  String get exerciseStatsWidgetsNotEnoughDataTo =>
+      'Data ora cukup kanggo nampilake grafik';
 
   @override
   String get exerciseStatsWidgetsPersonalRecords => 'Rekor Pribadi';
@@ -10302,7 +11053,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapAiUnavailable => 'Saran AI ora kasedhiya';
 
   @override
-  String get exerciseSwapAskAiHint => 'tuladhane: sing cocok kanggo pundhakku sing lara...';
+  String get exerciseSwapAskAiHint =>
+      'tuladhane: sing cocok kanggo pundhakku sing lara...';
 
   @override
   String get exerciseSwapAskAiTitle => 'Nyuwun saran marang AI';
@@ -10314,7 +11066,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapBadgeTopPick => 'Pilihan Utama';
 
   @override
-  String get exerciseSwapFindingAlternatives => 'Nggoleki alternatif paling apik kanggo sampeyan';
+  String get exerciseSwapFindingAlternatives =>
+      'Nggoleki alternatif paling apik kanggo sampeyan';
 
   @override
   String get exerciseSwapGetAiSuggestions => 'Entuk Saran AI';
@@ -10326,7 +11079,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapListeningNow => 'Ngrungokake... ngomonga saiki';
 
   @override
-  String get exerciseSwapMatchingEquipment => 'Nyocogake peralatan, otot, lan riwayat latihanmu';
+  String get exerciseSwapMatchingEquipment =>
+      'Nyocogake peralatan, otot, lan riwayat latihanmu';
 
   @override
   String get exerciseSwapNoAlternatives => 'Ora ditemokake alternatif';
@@ -10353,13 +11107,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapSheetFailedToSwapExercise => 'Gagal ngganti latihan';
 
   @override
-  String get exerciseSwapSheetFindingMuscleMatchedAlterna => 'Nggoleki alternatif otot sing cocog...';
+  String get exerciseSwapSheetFindingMuscleMatchedAlterna =>
+      'Nggoleki alternatif otot sing cocog...';
 
   @override
-  String get exerciseSwapSheetFindingSimilarExercises => 'Nggoleki latihan sing padha...';
+  String get exerciseSwapSheetFindingSimilarExercises =>
+      'Nggoleki latihan sing padha...';
 
   @override
-  String get exerciseSwapSheetFindingYourBestAlternatives => 'Nggoleki alternatif paling apik kanggo sampeyan';
+  String get exerciseSwapSheetFindingYourBestAlternatives =>
+      'Nggoleki alternatif paling apik kanggo sampeyan';
 
   @override
   String get exerciseSwapSheetGetAiSuggestions => 'Entuk Saran AI';
@@ -10374,13 +11131,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapSheetLibrary => 'Pustaka';
 
   @override
-  String get exerciseSwapSheetListeningSpeakNow => 'Ngrungokake... ngomonga saiki';
+  String get exerciseSwapSheetListeningSpeakNow =>
+      'Ngrungokake... ngomonga saiki';
 
   @override
-  String get exerciseSwapSheetLoadingRecentExercises => 'Ngunggah latihan anyar...';
+  String get exerciseSwapSheetLoadingRecentExercises =>
+      'Ngunggah latihan anyar...';
 
   @override
-  String get exerciseSwapSheetMatchingEquipmentMusclesA => 'Nyocogake peralatan, otot, lan riwayat latihanmu';
+  String get exerciseSwapSheetMatchingEquipmentMusclesA =>
+      'Nyocogake peralatan, otot, lan riwayat latihanmu';
 
   @override
   String get exerciseSwapSheetNoAlternativesYet => 'Durung ana alternatif';
@@ -10389,7 +11149,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapSheetNoRecentSwaps => 'Ora ana panggantian anyar';
 
   @override
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName) {
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
+    Object newExerciseName,
+  ) {
     return 'Diganti dadi $newExerciseName';
   }
 
@@ -10415,7 +11177,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapSheetSnapped => 'Wis dipotret';
 
   @override
-  String get exerciseSwapSheetSpeechRecognitionNotAvailab => 'Pangenalan swara ora kasedhiya';
+  String get exerciseSwapSheetSpeechRecognitionNotAvailab =>
+      'Pangenalan swara ora kasedhiya';
 
   @override
   String get exerciseSwapSheetSwap => 'Ganti';
@@ -10448,10 +11211,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exerciseSwapSheetTryAiSuggestions => 'Coba Saran AI';
 
   @override
-  String get exerciseSwapSheetTryRephrasingYourRequest => 'Coba ganti ukara panjalukmu ing ndhuwur, pilih alesan sing beda, utawa priksa tab Pustaka.';
+  String get exerciseSwapSheetTryRephrasingYourRequest =>
+      'Coba ganti ukara panjalukmu ing ndhuwur, pilih alesan sing beda, utawa priksa tab Pustaka.';
 
   @override
-  String get exerciseSwapSheetYourSwapHistoryWill => 'Riwayat panggantianmu bakal katon ing kene';
+  String get exerciseSwapSheetYourSwapHistoryWill =>
+      'Riwayat panggantianmu bakal katon ing kene';
 
   @override
   String get exerciseSwapSwapToThis => 'Ganti menyang latihan iki';
@@ -10523,7 +11288,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get expandedExerciseCardFavorite => 'Favorit';
 
   @override
-  String get expandedExerciseCardLinkAsSuperset => 'Sambungake minangka Superset';
+  String get expandedExerciseCardLinkAsSuperset =>
+      'Sambungake minangka Superset';
 
   @override
   String get expandedExerciseCardMarkAsStaple => 'Tandhani minangka Pokok';
@@ -10568,7 +11334,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get expandedExerciseCardWhatDoTheseMean => 'Apa tegese iki?';
 
   @override
-  String get exportDataAlwaysIncludedForCardio => 'Tansah kalebu kanggo format khusus kardio.';
+  String get exportDataAlwaysIncludedForCardio =>
+      'Tansah kalebu kanggo format khusus kardio.';
 
   @override
   String get exportDataCardioSessions => 'Sesi kardio';
@@ -10577,7 +11344,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportDataCustom => 'Kustom…';
 
   @override
-  String get exportDataDisabledThisFormatIs => 'Dipateni — format iki mung kanggo kardio.';
+  String get exportDataDisabledThisFormatIs =>
+      'Dipateni — format iki mung kanggo kardio.';
 
   @override
   String get exportDataExportMyData => 'Ekspor Dataku';
@@ -10595,10 +11363,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportDataGenerating => 'Nggawe…';
 
   @override
-  String get exportDataNotApplicableForCardio => 'Ora ditrapake kanggo format khusus kardio.';
+  String get exportDataNotApplicableForCardio =>
+      'Ora ditrapake kanggo format khusus kardio.';
 
   @override
-  String get exportDataPickAtLeastOne => 'Pilih paling sethithik siji set data kanggo diekspor.';
+  String get exportDataPickAtLeastOne =>
+      'Pilih paling sethithik siji set data kanggo diekspor.';
 
   @override
   String get exportDataProgramTemplates => 'Cithakan program';
@@ -10617,7 +11387,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportDataStrengthHistory => 'Riwayat kekuatan';
 
   @override
-  String get exportDataYourDataIsYours => 'Data sampeyan yaiku duweke sampeyan — gawa menyang ngendi wae.';
+  String get exportDataYourDataIsYours =>
+      'Data sampeyan yaiku duweke sampeyan — gawa menyang ngendi wae.';
 
   @override
   String get exportDialogPartCsvZip => 'CSV/ZIP';
@@ -10667,16 +11438,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportDialogPartTimeRange => 'Rentang Wektu';
 
   @override
-  String get exportDialogPartYourDataWillBe => 'Data sampeyan bakal diekspor minangka file ZIP sing isine file CSV.';
+  String get exportDialogPartYourDataWillBe =>
+      'Data sampeyan bakal diekspor minangka file ZIP sing isine file CSV.';
 
   @override
   String get exportExportingYourData => 'Ngékspor data sampeyan...';
 
   @override
-  String get exportExportingYourDataAs => 'Ngékspor data sampeyan minangka teks...';
+  String get exportExportingYourDataAs =>
+      'Ngékspor data sampeyan minangka teks...';
 
   @override
-  String get exportNoDataReceivedFrom => 'Ora ana data sing ditampa saka server';
+  String get exportNoDataReceivedFrom =>
+      'Ora ana data sing ditampa saka server';
 
   @override
   String get exportStatsCsvZip => 'CSV / ZIP';
@@ -10685,16 +11459,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportStatsExportStats => 'Ekspor Statistik';
 
   @override
-  String get exportStatsFullDataExportWith => 'Ekspor data lengkap karo kabeh latihan, PR, lan pangukuran';
+  String get exportStatsFullDataExportWith =>
+      'Ekspor data lengkap karo kabeh latihan, PR, lan pangukuran';
 
   @override
   String get exportStatsPdfReport => 'Laporan PDF';
 
   @override
-  String get exportStatsQuickShareableTextSummary => 'Ringkesan teks cepet sing bisa dituduhake';
+  String get exportStatsQuickShareableTextSummary =>
+      'Ringkesan teks cepet sing bisa dituduhake';
 
   @override
-  String get exportStatsStyledReportWithStats => 'Laporan kanthi ringkesan statistik lan kemajuan';
+  String get exportStatsStyledReportWithStats =>
+      'Laporan kanthi ringkesan statistik lan kemajuan';
 
   @override
   String get exportStatsTextSummary => 'Ringkesan Teks';
@@ -10703,7 +11480,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportThisMayTakeA => 'Iki bisa mbutuhake sawetara detik';
 
   @override
-  String get exportUserDataNotFound => 'Data pangguna ora ditemokake. Mangga coba metu lan mlebu maneh.';
+  String get exportUserDataNotFound =>
+      'Data pangguna ora ditemokake. Mangga coba metu lan mlebu maneh.';
 
   @override
   String get exportWorkoutButtonExportAsFit => 'Ekspor minangka FIT';
@@ -10721,52 +11499,66 @@ class AppLocalizationsJv extends AppLocalizations {
   String get exportWorkoutButtonGarminWahooNative => 'Garmin / Wahoo asli';
 
   @override
-  String get exportWorkoutButtonMyfitnesspalSportstracks => 'MyFitnessPal / Sportstracks';
+  String get exportWorkoutButtonMyfitnesspalSportstracks =>
+      'MyFitnessPal / Sportstracks';
 
   @override
-  String get exportWorkoutButtonStravaGarminConnectKomo => 'Strava / Garmin Connect / Komoot';
+  String get exportWorkoutButtonStravaGarminConnectKomo =>
+      'Strava / Garmin Connect / Komoot';
 
   @override
   String get fastingAiInsightAiInsight => 'Wawasan AI';
 
   @override
-  String get fastingAiInsightCouldnTLoadYour => 'Ora bisa mbukak wawasan sampeyan. Priksa sambungan sampeyan.';
+  String get fastingAiInsightCouldnTLoadYour =>
+      'Ora bisa mbukak wawasan sampeyan. Priksa sambungan sampeyan.';
 
   @override
-  String get fastingAreYouSureYou => 'Apa sampeyan yakin pengin mungkasi pasa saiki?';
+  String get fastingAreYouSureYou =>
+      'Apa sampeyan yakin pengin mungkasi pasa saiki?';
 
   @override
   String get fastingAvgDuration => 'Durasi Rata-rata';
 
   @override
-  String get fastingBenefit_appetite => 'Hormon napsu mangan reset suwe-suwe, nggawe luwih gampang kanggo mangan luwih sithik.';
+  String get fastingBenefit_appetite =>
+      'Hormon napsu mangan reset suwe-suwe, nggawe luwih gampang kanggo mangan luwih sithik.';
 
   @override
-  String get fastingBenefit_autophagy => 'Autophagy seluler ngresiki protein sing rusak, sing ana gandhengane karo tuwa sing luwih alon.';
+  String get fastingBenefit_autophagy =>
+      'Autophagy seluler ngresiki protein sing rusak, sing ana gandhengane karo tuwa sing luwih alon.';
 
   @override
-  String get fastingBenefit_bs_control => 'Gula getih tetep luwih stabil, nyuda kepinginan mangan lan mudhune energi.';
+  String get fastingBenefit_bs_control =>
+      'Gula getih tetep luwih stabil, nyuda kepinginan mangan lan mudhune energi.';
 
   @override
-  String get fastingBenefit_cellular_repair => 'Jalur perbaikan DNA aktif sajrone pasa sing dawa.';
+  String get fastingBenefit_cellular_repair =>
+      'Jalur perbaikan DNA aktif sajrone pasa sing dawa.';
 
   @override
-  String get fastingBenefit_energy => 'Energi stabil sedina muput — ora ana rasa lemes sawise mangan.';
+  String get fastingBenefit_energy =>
+      'Energi stabil sedina muput — ora ana rasa lemes sawise mangan.';
 
   @override
-  String get fastingBenefit_gut_rest => 'Sistem pencernaan ngaso, ndhukung kesehatan mikrobioma usus.';
+  String get fastingBenefit_gut_rest =>
+      'Sistem pencernaan ngaso, ndhukung kesehatan mikrobioma usus.';
 
   @override
-  String get fastingBenefit_insulin_sensitivity => 'Sensitivitas insulin sing luwih apik nyuda risiko diabetes tipe 2.';
+  String get fastingBenefit_insulin_sensitivity =>
+      'Sensitivitas insulin sing luwih apik nyuda risiko diabetes tipe 2.';
 
   @override
-  String get fastingBenefit_longevity => 'Panaliten kewan ngubungake pasa karo umur dawa lan nyuda penandha penyakit.';
+  String get fastingBenefit_longevity =>
+      'Panaliten kewan ngubungake pasa karo umur dawa lan nyuda penandha penyakit.';
 
   @override
-  String get fastingBenefit_mental_clarity => 'Keton nguwatake otak luwih stabil tinimbang lonjakan glukosa.';
+  String get fastingBenefit_mental_clarity =>
+      'Keton nguwatake otak luwih stabil tinimbang lonjakan glukosa.';
 
   @override
-  String get fastingBenefit_weight_loss => 'Mudhunake bobot kanthi lestari kanthi ngarahake lemak sing disimpen tinimbang jaringan otot.';
+  String get fastingBenefit_weight_loss =>
+      'Mudhunake bobot kanthi lestari kanthi ngarahake lemak sing disimpen tinimbang jaringan otot.';
 
   @override
   String get fastingBodyStatusBeyondGoal => 'Ngluwihi target sampeyan';
@@ -10783,7 +11575,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fastingBodyStatusPreviewSubtitle => 'Pratinjau tahapan metabolik pasa.';
+  String get fastingBodyStatusPreviewSubtitle =>
+      'Pratinjau tahapan metabolik pasa.';
 
   @override
   String fastingBodyStatusScreenAtH(Object startHour) {
@@ -10801,7 +11594,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fastingBodyStatusStartFastHint => 'Miwiti pasa kanggo ndeleng garis wektu langsung sampeyan kanthi wektu jam sing pas saben tahap digayuh.';
+  String get fastingBodyStatusStartFastHint =>
+      'Miwiti pasa kanggo ndeleng garis wektu langsung sampeyan kanthi wektu jam sing pas saben tahap digayuh.';
 
   @override
   String get fastingBodyStatusYouAreHere => 'Sampeyan ana ing kene';
@@ -10822,7 +11616,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingCalendarWeight => 'Bobot';
 
   @override
-  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal) {
+  String fastingCalendarWidgetCompleted(
+    Object goalsCompleted,
+    Object goalsTotal,
+  ) {
     return '$goalsCompleted/$goalsTotal rampung';
   }
 
@@ -10842,7 +11639,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fastingCompleteYourFirstFast => 'Rampungake pasa pisanan sampeyan kanggo ndeleng ing kene';
+  String get fastingCompleteYourFirstFast =>
+      'Rampungake pasa pisanan sampeyan kanggo ndeleng ing kene';
 
   @override
   String get fastingContinueFasting => 'Terusake Pasa';
@@ -10877,7 +11675,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingEndFast2 => 'Mungkasi Pasa';
 
   @override
-  String get fastingFailedToEndFast => 'Gagal mungkasi pasa. Mangga coba maneh.';
+  String get fastingFailedToEndFast =>
+      'Gagal mungkasi pasa. Mangga coba maneh.';
 
   @override
   String get fastingFasting => 'Pasa';
@@ -10907,16 +11706,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingGuideIsItSafeFor => 'Apa iki aman kanggo aku?';
 
   @override
-  String get fastingGuideSafetyBody => 'Mandheg pasa lan mangan yen sampeyan krasa pusing, semaput, gemeter, utawa ora kepenak. Pasa luwih saka 24 jam mbutuhake perhatian ekstra marang elektrolit, lan pasa luwih saka 72 jam mung kudu ditindakake ing pengawasan medis. Pasa dudu pengganti perawatan medis — pandhuan iki mung kanggo pendidikan lan dudu saran medis.';
+  String get fastingGuideSafetyBody =>
+      'Mandheg pasa lan mangan yen sampeyan krasa pusing, semaput, gemeter, utawa ora kepenak. Pasa luwih saka 24 jam mbutuhake perhatian ekstra marang elektrolit, lan pasa luwih saka 72 jam mung kudu ditindakake ing pengawasan medis. Pasa dudu pengganti perawatan medis — pandhuan iki mung kanggo pendidikan lan dudu saran medis.';
 
   @override
   String get fastingGuideStaySafe => 'Tetep aman';
 
   @override
-  String get fastingGuideSubtitle => 'Kabeh sing sampeyan butuhake kanggo pasa kanthi yakin — apa iku, kepiye cara kerjane, lan apa sing kedadeyan ing awak sampeyan.';
+  String get fastingGuideSubtitle =>
+      'Kabeh sing sampeyan butuhake kanggo pasa kanthi yakin — apa iku, kepiye cara kerjane, lan apa sing kedadeyan ing awak sampeyan.';
 
   @override
-  String get fastingGuideSwipeTimeline => 'Geser kanggo ndeleng apa sing kedadeyan saben jam — saka dhaharan pungkasan sampeyan nganti pasa 30 dina.';
+  String get fastingGuideSwipeTimeline =>
+      'Geser kanggo ndeleng apa sing kedadeyan saben jam — saka dhaharan pungkasan sampeyan nganti pasa 30 dina.';
 
   @override
   String get fastingGuideTheFastingTimeline => 'Linimasa pasa';
@@ -10956,10 +11758,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fastingHydrationRowSyncedVisibleOnHome => 'Diselarasake — katon ing Ngarep lan Nutrisi uga.';
+  String get fastingHydrationRowSyncedVisibleOnHome =>
+      'Diselarasake — katon ing Ngarep lan Nutrisi uga.';
 
   @override
-  String get fastingHydrationRowWaterKeepsYouEnergized => 'Banyu njaga sampeyan tetep semangat nalika pasa';
+  String get fastingHydrationRowWaterKeepsYouEnergized =>
+      'Banyu njaga sampeyan tetep semangat nalika pasa';
 
   @override
   String get fastingImpactActivityCalendar => 'Kalender Aktivitas';
@@ -10973,16 +11777,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fastingImpactCompleteMoreFastsTo => 'Rampungna luwih akeh pasa kanggo entuk analisis dampak sing akurat. Disaranake paling sethithik 7 dina pasa.';
+  String get fastingImpactCompleteMoreFastsTo =>
+      'Rampungna luwih akeh pasa kanggo entuk analisis dampak sing akurat. Disaranake paling sethithik 7 dina pasa.';
 
   @override
-  String get fastingImpactCompleteSomeFastsAnd => 'Rampungna sawetara pasa lan cathet bobotmu kanggo ndeleng kepiye pasa mengaruhi tujuanmu.';
+  String get fastingImpactCompleteSomeFastsAnd =>
+      'Rampungna sawetara pasa lan cathet bobotmu kanggo ndeleng kepiye pasa mengaruhi tujuanmu.';
 
   @override
   String get fastingImpactFailedToLoadData => 'Gagal Muat Data';
 
   @override
-  String get fastingImpactFastingDaysMarkedWith => 'Dina pasa ditandhani nganggo titik wungu';
+  String get fastingImpactFastingDaysMarkedWith =>
+      'Dina pasa ditandhani nganggo titik wungu';
 
   @override
   String get fastingImpactFastingImpact => 'Dampak Pasa';
@@ -11057,7 +11864,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingMoodCheckinHowDoYouFeel => 'Kepiye perasaanmu?';
 
   @override
-  String get fastingMoodCheckinLogYourMoodAnd => 'Cathet swasana ati lan energimu sawise pasa (opsional).';
+  String get fastingMoodCheckinLogYourMoodAnd =>
+      'Cathet swasana ati lan energimu sawise pasa (opsional).';
 
   @override
   String fastingMoodCheckinValue(Object value) {
@@ -11085,61 +11893,71 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingPlanCardsPopular => 'Populer';
 
   @override
-  String get fastingProtocol_16_8_desc => 'Aja sarapan, mangan antarane jam 12 awan nganti 8 bengi';
+  String get fastingProtocol_16_8_desc =>
+      'Aja sarapan, mangan antarane jam 12 awan nganti 8 bengi';
 
   @override
   String get fastingProtocol_16_8_name => '16:8';
 
   @override
-  String get fastingProtocol_18_6_desc => 'Jeda wektu mangan sing luwih cendhak yaiku 6 jam';
+  String get fastingProtocol_18_6_desc =>
+      'Jeda wektu mangan sing luwih cendhak yaiku 6 jam';
 
   @override
   String get fastingProtocol_18_6_name => '18:6';
 
   @override
-  String get fastingProtocol_20_4_desc => 'Diet prajurit — mung siji dhaharan utama';
+  String get fastingProtocol_20_4_desc =>
+      'Diet prajurit — mung siji dhaharan utama';
 
   @override
   String get fastingProtocol_20_4_name => '20:4';
 
   @override
-  String get fastingProtocol_36h_desc => 'Pasa biksu — wektu autophagy sing luwih dawa';
+  String get fastingProtocol_36h_desc =>
+      'Pasa biksu — wektu autophagy sing luwih dawa';
 
   @override
   String get fastingProtocol_36h_name => '36-jam';
 
   @override
-  String get fastingProtocol_48h_desc => 'Pasa dawa — disaranake nganggo pengawasan medis';
+  String get fastingProtocol_48h_desc =>
+      'Pasa dawa — disaranake nganggo pengawasan medis';
 
   @override
   String get fastingProtocol_48h_name => '48-jam';
 
   @override
-  String get fastingProtocol_5_2_desc => '5 dina mangan normal, 2 dina 500-600 kalori';
+  String get fastingProtocol_5_2_desc =>
+      '5 dina mangan normal, 2 dina 500-600 kalori';
 
   @override
   String get fastingProtocol_5_2_name => '5:2';
 
   @override
-  String get fastingProtocol_72h_desc => 'Pasa pembaruan sel punca — mbutuhake pengawasan medis';
+  String get fastingProtocol_72h_desc =>
+      'Pasa pembaruan sel punca — mbutuhake pengawasan medis';
 
   @override
   String get fastingProtocol_72h_name => '72-jam';
 
   @override
-  String get fastingProtocol_adf_desc => 'Pasa Selang-seling — dina normal banjur dina kalori sithik';
+  String get fastingProtocol_adf_desc =>
+      'Pasa Selang-seling — dina normal banjur dina kalori sithik';
 
   @override
   String get fastingProtocol_adf_name => 'ADF';
 
   @override
-  String get fastingProtocol_custom_desc => 'Atur dhewe wektu mangan lan pasa sampeyan';
+  String get fastingProtocol_custom_desc =>
+      'Atur dhewe wektu mangan lan pasa sampeyan';
 
   @override
   String get fastingProtocol_custom_name => 'Kustom';
 
   @override
-  String get fastingProtocol_omad_desc => 'Mangan Siji Dina — kabeh nutrisi ing sepisan mangan';
+  String get fastingProtocol_omad_desc =>
+      'Mangan Siji Dina — kabeh nutrisi ing sepisan mangan';
 
   @override
   String get fastingProtocol_omad_name => 'OMAD';
@@ -11151,7 +11969,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingSavedRowSaved => 'Disimpen';
 
   @override
-  String get fastingScheduleEditorPickAProtocolFor => 'Pilih protokol kanggo saben dina';
+  String get fastingScheduleEditorPickAProtocolFor =>
+      'Pilih protokol kanggo saben dina';
 
   @override
   String get fastingScheduleEditorRestEatingDay => 'Dina ngaso / mangan';
@@ -11165,12 +11984,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String fastingScheduleEditorSheetValue(Object difficulty, Object displayName) {
+  String fastingScheduleEditorSheetValue(
+    Object difficulty,
+    Object displayName,
+  ) {
     return '$displayName  ·  $difficulty';
   }
 
   @override
-  String get fastingScheduleEditorWeeklyFastingScheduleSaved => 'Jadwal pasa mingguan disimpen';
+  String get fastingScheduleEditorWeeklyFastingScheduleSaved =>
+      'Jadwal pasa mingguan disimpen';
 
   @override
   String get fastingScheduleEditorWeeklySchedule => 'Jadwal Mingguan';
@@ -11221,7 +12044,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingScreenRedesignedBackToToday => 'Bali menyang dina iki';
 
   @override
-  String get fastingScreenRedesignedCompleteAFastTo => 'Rampungna pasa kanggo ndeleng ing kene';
+  String get fastingScreenRedesignedCompleteAFastTo =>
+      'Rampungna pasa kanggo ndeleng ing kene';
 
   @override
   String get fastingScreenRedesignedDayStreak => 'Dina Berturut-turut';
@@ -11243,7 +12067,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingScreenRedesignedFastPaused => 'Pasa Dijeda';
 
   @override
-  String get fastingScreenRedesignedFastResumedYourTimer => 'Pasa diterusake — timer-mu wis mlaku maneh.';
+  String get fastingScreenRedesignedFastResumedYourTimer =>
+      'Pasa diterusake — timer-mu wis mlaku maneh.';
 
   @override
   String get fastingScreenRedesignedFasting => 'Pasa';
@@ -11261,7 +12086,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingScreenRedesignedNoFastYet => 'Durung ana pasa';
 
   @override
-  String get fastingScreenRedesignedNoFastingHistoryYet => 'Durung ana riwayat pasa';
+  String get fastingScreenRedesignedNoFastingHistoryYet =>
+      'Durung ana riwayat pasa';
 
   @override
   String get fastingScreenRedesignedPauseFast => 'Jeda Pasa';
@@ -11281,7 +12107,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingScreenRedesignedResumeFast => 'Terusake Pasa';
 
   @override
-  String get fastingScreenRedesignedSignUpToUnlock => 'Daftar kanggo Mbukak Kunci';
+  String get fastingScreenRedesignedSignUpToUnlock =>
+      'Daftar kanggo Mbukak Kunci';
 
   @override
   String get fastingScreenRedesignedStartFast => 'Mulai Pasa';
@@ -11301,7 +12128,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingScreenRedesignedViewTrends => 'Deleng tren';
 
   @override
-  String get fastingScreenRedesignedYouDidNotLog => 'Sampeyan ora nyathet pasa ing dina iki.';
+  String get fastingScreenRedesignedYouDidNotLog =>
+      'Sampeyan ora nyathet pasa ing dina iki.';
 
   @override
   String fastingScreenYouVeBeenFasting(Object elapsedTimeFormatted) {
@@ -11333,16 +12161,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingSettingsGoalReached => 'Tujuan wis digayuh';
 
   @override
-  String get fastingSettingsNotifyWhenEnteringNew => 'Wenehi kabar nalika mlebu zona pasa anyar';
+  String get fastingSettingsNotifyWhenEnteringNew =>
+      'Wenehi kabar nalika mlebu zona pasa anyar';
 
   @override
-  String get fastingSettingsNotifyWhenYouReach => 'Wenehi kabar nalika sampeyan nggayuh tujuan pasa';
+  String get fastingSettingsNotifyWhenYouReach =>
+      'Wenehi kabar nalika sampeyan nggayuh tujuan pasa';
 
   @override
-  String get fastingSettingsRemindBeforeEatingWindow => 'Pangeling sadurunge jendhela mangan ditutup';
+  String get fastingSettingsRemindBeforeEatingWindow =>
+      'Pangeling sadurunge jendhela mangan ditutup';
 
   @override
-  String get fastingSettingsRemindWhenItS => 'Pangeling nalika wektune miwiti pasa';
+  String get fastingSettingsRemindWhenItS =>
+      'Pangeling nalika wektune miwiti pasa';
 
   @override
   String get fastingSettingsSaveSettings => 'Simpen Setelan';
@@ -11378,7 +12210,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingStageCardCurrentStage => 'Tahap saiki';
 
   @override
-  String get fastingStageCardFinalMetabolicStageReached => 'Tahap metabolik pungkasan wis digayuh';
+  String get fastingStageCardFinalMetabolicStageReached =>
+      'Tahap metabolik pungkasan wis digayuh';
 
   @override
   String fastingStageCardNext(Object name) {
@@ -11395,43 +12228,50 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingStageTimerReadyToFast => 'Siap pasa';
 
   @override
-  String get fastingStage_autophagy_desc => 'Sel wiwit ngrusak lan daur ulang protein lan organel sing rusak — reresik seluler sing jero.';
+  String get fastingStage_autophagy_desc =>
+      'Sel wiwit ngrusak lan daur ulang protein lan organel sing rusak — reresik seluler sing jero.';
 
   @override
   String get fastingStage_autophagy_name => 'Autophagy';
 
   @override
-  String get fastingStage_fat_burning_desc => 'Nalika glikogen sithik, sel lemak ngeculake asam lemak menyang aliran getih minangka bahan bakar.';
+  String get fastingStage_fat_burning_desc =>
+      'Nalika glikogen sithik, sel lemak ngeculake asam lemak menyang aliran getih minangka bahan bakar.';
 
   @override
   String get fastingStage_fat_burning_name => 'Pembakaran Lemak';
 
   @override
-  String get fastingStage_glycogen_depletion_desc => 'Awakmu nggunakake glukosa sing disimpen dhisik. Sawise 12–14 jam glikogen ati entek lan owah-owahan metabolisme diwiwiti.';
+  String get fastingStage_glycogen_depletion_desc =>
+      'Awakmu nggunakake glukosa sing disimpen dhisik. Sawise 12–14 jam glikogen ati entek lan owah-owahan metabolisme diwiwiti.';
 
   @override
   String get fastingStage_glycogen_depletion_name => 'Pengurangan Glikogen';
 
   @override
-  String get fastingStage_growth_hormone_desc => 'Tingkat HGH mundhak drastis, nglindhungi massa otot lan nyepetake metabolisme lemak.';
+  String get fastingStage_growth_hormone_desc =>
+      'Tingkat HGH mundhak drastis, nglindhungi massa otot lan nyepetake metabolisme lemak.';
 
   @override
   String get fastingStage_growth_hormone_name => 'Lonjakan Hormon Pertumbuhan';
 
   @override
-  String get fastingStage_inflammation_drop_desc => 'Penandha inflamasi mudhun nalika usus ngaso lan sel kekebalan ngalami regenerasi.';
+  String get fastingStage_inflammation_drop_desc =>
+      'Penandha inflamasi mudhun nalika usus ngaso lan sel kekebalan ngalami regenerasi.';
 
   @override
   String get fastingStage_inflammation_drop_name => 'Penurunan Inflamasi';
 
   @override
-  String get fastingStage_insulin_low_desc => 'Insulin tetep cedhak karo garis dasar, mbukak cadangan lemak lan nambah sensitivitas insulin.';
+  String get fastingStage_insulin_low_desc =>
+      'Insulin tetep cedhak karo garis dasar, mbukak cadangan lemak lan nambah sensitivitas insulin.';
 
   @override
   String get fastingStage_insulin_low_name => 'Insulin Rendah';
 
   @override
-  String get fastingStage_ketosis_desc => 'Ati ngowahi asam lemak dadi badan keton — bahan bakar sing resik lan efisien kanggo otak.';
+  String get fastingStage_ketosis_desc =>
+      'Ati ngowahi asam lemak dadi badan keton — bahan bakar sing resik lan efisien kanggo otak.';
 
   @override
   String get fastingStage_ketosis_name => 'Ketosis';
@@ -11440,7 +12280,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingStartFast => 'Mulai Pasa';
 
   @override
-  String get fastingStartYourFirstFast => 'Mulai pasa pertama sampeyan kanggo nggawe statistik';
+  String get fastingStartYourFirstFast =>
+      'Mulai pasa pertama sampeyan kanggo nggawe statistik';
 
   @override
   String get fastingStatsCardAvg => 'Rata-rata';
@@ -11546,40 +12387,51 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fastingTimerEndFast => 'Rampung Pasa';
 
   @override
-  String get fastingTip_bcaa_avoid => 'BCAA lan umume suplemen sing ngemot kalori utawa asam amino bakal ngrusak pasa.';
+  String get fastingTip_bcaa_avoid =>
+      'BCAA lan umume suplemen sing ngemot kalori utawa asam amino bakal ngrusak pasa.';
 
   @override
-  String get fastingTip_break_with_protein => 'Bukak pasa nganggo dhaharan sing sugih protein kanggo njaga otot lan supaya kenyang luwih suwe.';
+  String get fastingTip_break_with_protein =>
+      'Bukak pasa nganggo dhaharan sing sugih protein kanggo njaga otot lan supaya kenyang luwih suwe.';
 
   @override
-  String get fastingTip_coffee_ok => 'Kopi ireng ora bakal ngrusak pasa lan bisa nyuda rasa luwe.';
+  String get fastingTip_coffee_ok =>
+      'Kopi ireng ora bakal ngrusak pasa lan bisa nyuda rasa luwe.';
 
   @override
-  String get fastingTip_exercise_fasted_ok_intermediate => 'Kardio entheng nganti moderat nalika pasa ora masalah yen wis biasa. Rungokake awakmu.';
+  String get fastingTip_exercise_fasted_ok_intermediate =>
+      'Kardio entheng nganti moderat nalika pasa ora masalah yen wis biasa. Rungokake awakmu.';
 
   @override
-  String get fastingTip_exercise_high_intensity_eat_first => 'Kanggo angkat beban abot utawa interval intens, mangan dhisik bakal njaga performa.';
+  String get fastingTip_exercise_high_intensity_eat_first =>
+      'Kanggo angkat beban abot utawa interval intens, mangan dhisik bakal njaga performa.';
 
   @override
-  String get fastingTip_ramp_up_gradually => 'Miwiti karo 12 jam lan tambah 30 menit saben minggu — aja langsung OMAD ing dina pisanan.';
+  String get fastingTip_ramp_up_gradually =>
+      'Miwiti karo 12 jam lan tambah 30 menit saben minggu — aja langsung OMAD ing dina pisanan.';
 
   @override
-  String get fastingTip_refeed_carbs_carefully => 'Sawise pasa 36 jam luwih, lebokake karbohidrat kanthi bertahap supaya ora krasa ora nyaman.';
+  String get fastingTip_refeed_carbs_carefully =>
+      'Sawise pasa 36 jam luwih, lebokake karbohidrat kanthi bertahap supaya ora krasa ora nyaman.';
 
   @override
-  String get fastingTip_sleep_helps_extended => 'Ngatur pasa supaya pas karo wektu turu nggawe wektu pasa sing luwih dawa dadi luwih gampang.';
+  String get fastingTip_sleep_helps_extended =>
+      'Ngatur pasa supaya pas karo wektu turu nggawe wektu pasa sing luwih dawa dadi luwih gampang.';
 
   @override
-  String get fastingTip_stay_hydrated => 'Banyu, kopi ireng, lan teh tawar kabeh aman sajrone pasa.';
+  String get fastingTip_stay_hydrated =>
+      'Banyu, kopi ireng, lan teh tawar kabeh aman sajrone pasa.';
 
   @override
-  String get fastingTip_track_hunger_separate_from_appetite => 'Luwe lan napsu iku beda. Luwe ilang kanthi gelombang; napsu iku pakulinan.';
+  String get fastingTip_track_hunger_separate_from_appetite =>
+      'Luwe lan napsu iku beda. Luwe ilang kanthi gelombang; napsu iku pakulinan.';
 
   @override
   String get fastingTotalFasts => 'Total Pasa';
 
   @override
-  String get fastingTrackYourIntermittentFastin => 'Lacak pasa intermittent sampeyan nganggo notifikasi zona pinter, wawasan progres, lan riwayat rinci.';
+  String get fastingTrackYourIntermittentFastin =>
+      'Lacak pasa intermittent sampeyan nganggo notifikasi zona pinter, wawasan progres, lan riwayat rinci.';
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
@@ -11623,7 +12475,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertModalBodyweightExerciseDropThe => 'Latihan bobot awak — suda target repetisi tinimbang bobote.';
+  String get fatigueAlertModalBodyweightExerciseDropThe =>
+      'Latihan bobot awak — suda target repetisi tinimbang bobote.';
 
   @override
   String get fatigueAlertModalContinueAsPlanned => 'Terusake Sesuai Rencana';
@@ -11656,7 +12509,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fatigueAlertModalSuggestedAdjustment => 'PENYESUAIAN DISARANAKE';
 
   @override
-  String get fatigueAlertModalSuggestedRepTarget => 'TARGET REPETISI DISARANAKE';
+  String get fatigueAlertModalSuggestedRepTarget =>
+      'TARGET REPETISI DISARANAKE';
 
   @override
   String get fatigueAlertStopExercise => 'Mandheg latihan';
@@ -11691,13 +12545,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get favoriteExercisesTheAiWillPrioritize => 'AI bakal ngutamake latihan iki nalika nggawe jadwal latihan sampeyan.';
+  String get favoriteExercisesTheAiWillPrioritize =>
+      'AI bakal ngutamake latihan iki nalika nggawe jadwal latihan sampeyan.';
 
   @override
   String get favoriteWorkoutsFavoriteWorkouts => 'Latihan Favorit';
 
   @override
-  String get favoriteWorkoutsNoFavoriteWorkoutsYet => 'Durung ana latihan favorit';
+  String get favoriteWorkoutsNoFavoriteWorkoutsYet =>
+      'Durung ana latihan favorit';
 
   @override
   String favoriteWorkoutsSavedCount(num count) {
@@ -11710,7 +12566,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get favoriteWorkoutsTapTheHeartOn => 'Tutul lambang ati ing latihan apa wae kanggo nyimpen ing kene';
+  String get favoriteWorkoutsTapTheHeartOn =>
+      'Tutul lambang ati ing latihan apa wae kanggo nyimpen ing kene';
 
   @override
   String get favoriteWorkoutsWorkoutFallback => 'Latihan';
@@ -11722,10 +12579,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get favoritesCardYourGoTo => 'ANDALAN SAMPEYAN';
 
   @override
-  String get favoritesCardYourMostPerformedExercise => 'Latihan sing paling asring sampeyan lakoni';
+  String get favoritesCardYourMostPerformedExercise =>
+      'Latihan sing paling asring sampeyan lakoni';
 
   @override
-  String get favoritesCheckYourConnectionAnd => 'Priksa sambungan sampeyan lan coba maneh.';
+  String get favoritesCheckYourConnectionAnd =>
+      'Priksa sambungan sampeyan lan coba maneh.';
 
   @override
   String get favoritesFavorites => 'Favorit';
@@ -11734,7 +12593,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get favoritesNoFavoritesYet => 'Durung ana favorit';
 
   @override
-  String get favoritesTapU2665OnAny => 'Tutul ♥ ing resep apa wae ing Discover utawa perpustakaan sampeyan kanggo nyimpen ing kene.';
+  String get favoritesTapU2665OnAny =>
+      'Tutul ♥ ing resep apa wae ing Discover utawa perpustakaan sampeyan kanggo nyimpen ing kene.';
 
   @override
   String get favoritesTryAgain => 'Coba maneh';
@@ -11755,10 +12615,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get featureVotingVoting => 'Voting';
 
   @override
-  String get feedCompleteWorkoutsToSee => 'Rampungake latihan kanggo ndeleng sing dituduhake ing kene!\nTututi kanca kanggo ndeleng latihan dheweke uga.';
+  String get feedCompleteWorkoutsToSee =>
+      'Rampungake latihan kanggo ndeleng sing dituduhake ing kene!\nTututi kanca kanggo ndeleng latihan dheweke uga.';
 
   @override
-  String get feedCouldNotLoadYour => 'Ora bisa mbukak feed aktivitas sampeyan.\nTulung coba maneh mengko.';
+  String get feedCouldNotLoadYour =>
+      'Ora bisa mbukak feed aktivitas sampeyan.\nTulung coba maneh mengko.';
 
   @override
   String get feedCreateYourFirstPost => 'Gawe kiriman pisanan sampeyan!';
@@ -11776,7 +12638,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get feedNotLoggedIn => 'Durung Mlebu Akun';
 
   @override
-  String get feedPleaseLogInTo => 'Tulung mlebu akun kanggo ndeleng feed aktivitas sampeyan';
+  String get feedPleaseLogInTo =>
+      'Tulung mlebu akun kanggo ndeleng feed aktivitas sampeyan';
 
   @override
   String feedTabErrorLoadingFeed(Object error) {
@@ -11784,7 +12647,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get feelResultsCompleteWorkoutsWithMood => 'Rampungake latihan nganggo cek swasana ati kanggo ndeleng kepiye olahraga nambah perasaan sampeyan.';
+  String get feelResultsCompleteWorkoutsWithMood =>
+      'Rampungake latihan nganggo cek swasana ati kanggo ndeleng kepiye olahraga nambah perasaan sampeyan.';
 
   @override
   String get feelResultsFeelResults => 'Rasakake Hasil';
@@ -11816,12 +12680,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts) {
+  String feelResultsScreenYouFeltStrongerAfter(
+    Object feelingStrongerCount,
+    Object totalWorkouts,
+  ) {
     return 'Sampeyan krasa luwih kuwat sawise $feelingStrongerCount saka $totalWorkouts latihan!';
   }
 
   @override
-  String get feelResultsStartTrackingYourProgress => 'Mulai Lacak Progres Sampeyan!';
+  String get feelResultsStartTrackingYourProgress =>
+      'Mulai Lacak Progres Sampeyan!';
 
   @override
   String get feelResultsU1f4aa => '💪';
@@ -11858,16 +12726,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get firstActionPromptPickOneTakesUnder => 'Pilih siji — mbutuhake kurang saka semenit.';
+  String get firstActionPromptPickOneTakesUnder =>
+      'Pilih siji — mbutuhake kurang saka semenit.';
 
   @override
-  String get firstActionPromptPullInYourActivity => 'Tarik aktivitas, turu, lan riwayat bobot sampeyan.';
+  String get firstActionPromptPullInYourActivity =>
+      'Tarik aktivitas, turu, lan riwayat bobot sampeyan.';
 
   @override
   String get firstActionPromptQuickStart => 'Mulai cepet';
 
   @override
-  String get firstActionPromptTheyHaveAMessage => 'Dheweke duwe pesen kanggo sampeyan.';
+  String get firstActionPromptTheyHaveAMessage =>
+      'Dheweke duwe pesen kanggo sampeyan.';
 
   @override
   String get firstWorkoutForecastCaloriesBurned => 'Kalori sing diobong';
@@ -11876,16 +12747,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get firstWorkoutForecastDay1Complete => 'Dina 1 rampung';
 
   @override
-  String get firstWorkoutForecastIn30DaysAt => 'Ing 30 dina kanthi kacepetan iki';
+  String get firstWorkoutForecastIn30DaysAt =>
+      'Ing 30 dina kanthi kacepetan iki';
 
   @override
   String get firstWorkoutForecastLetSGo => 'Ayo budhal';
 
   @override
-  String get firstWorkoutForecastProjectedStrengthGainOn => 'Proyeksi peningkatan kekuatan ing angkatan utama';
+  String get firstWorkoutForecastProjectedStrengthGainOn =>
+      'Proyeksi peningkatan kekuatan ing angkatan utama';
 
   @override
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions) {
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(
+    Object effectiveSessions,
+  ) {
     return 'Perkiraan adhedhasar $effectiveSessions sesi/minggu';
   }
 
@@ -11920,28 +12795,36 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fitnessAssessmentCardioCapacity => 'Kapasitas Kardio';
 
   @override
-  String get fitnessAssessmentHelpUsPersonalizeYour => 'Bantu kita nggawe latihan sing pas kanggo sampeyan (~2 menit)';
+  String get fitnessAssessmentHelpUsPersonalizeYour =>
+      'Bantu kita nggawe latihan sing pas kanggo sampeyan (~2 menit)';
 
   @override
-  String get fitnessAssessmentHowLongCanYou => 'Suwene sampeyan bisa nahan posisi plank?';
+  String get fitnessAssessmentHowLongCanYou =>
+      'Suwene sampeyan bisa nahan posisi plank?';
 
   @override
-  String get fitnessAssessmentHowLongCanYou2 => 'Suwene sampeyan bisa nindakake kardio terus-terusan?';
+  String get fitnessAssessmentHowLongCanYou2 =>
+      'Suwene sampeyan bisa nindakake kardio terus-terusan?';
 
   @override
-  String get fitnessAssessmentHowLongHaveYou => 'Wis suwene sampeyan latihan angkat beban?';
+  String get fitnessAssessmentHowLongHaveYou =>
+      'Wis suwene sampeyan latihan angkat beban?';
 
   @override
-  String get fitnessAssessmentHowManyCanYou => 'Pira sing bisa sampeyan lakoni terus-terusan?';
+  String get fitnessAssessmentHowManyCanYou =>
+      'Pira sing bisa sampeyan lakoni terus-terusan?';
 
   @override
-  String get fitnessAssessmentHowManyConsecutivePush => 'Pira push-up berturut-turut kanthi posisi sing bener?';
+  String get fitnessAssessmentHowManyConsecutivePush =>
+      'Pira push-up berturut-turut kanthi posisi sing bener?';
 
   @override
-  String get fitnessAssessmentHowManyPullUps => 'Pira pull-ups sing bisa sampeyan lakoni?';
+  String get fitnessAssessmentHowManyPullUps =>
+      'Pira pull-ups sing bisa sampeyan lakoni?';
 
   @override
-  String get fitnessAssessmentNoWrongAnswersJust => 'Ora ana jawaban sing salah — jujur wae!';
+  String get fitnessAssessmentNoWrongAnswersJust =>
+      'Ora ana jawaban sing salah — jujur wae!';
 
   @override
   String get fitnessAssessmentPlankHold => 'Nahan Plank';
@@ -11959,13 +12842,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fitnessAssessmentTrainingExperience => 'Pengalaman Latihan';
 
   @override
-  String get fitnessAssessmentWhatGetsPersonalized => 'Apa sing dipersonalisasi';
+  String get fitnessAssessmentWhatGetsPersonalized =>
+      'Apa sing dipersonalisasi';
 
   @override
   String get fitnessAssessmentWhyThisMatters => 'Kenapa iki penting';
 
   @override
-  String get fitnessAssessmentYourAnswersHelpThe => 'Jawaban sampeyan mbantu AI nyetel latihan supaya pas karo tingkat kebugaran sampeyan — ora perlu ngira-ngira.';
+  String get fitnessAssessmentYourAnswersHelpThe =>
+      'Jawaban sampeyan mbantu AI nyetel latihan supaya pas karo tingkat kebugaran sampeyan — ora perlu ngira-ngira.';
 
   @override
   String get fitnessCrateCollect => 'JUPUK';
@@ -12013,10 +12898,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityAssessmentAllTests => 'Kabeh Tes';
 
   @override
-  String get flexibilityAssessmentCompleteSomeFlexibilityAsse => 'Rampungake sawetara tes kelenturan kanggo entuk rekomendasi peregangan sing pas';
+  String get flexibilityAssessmentCompleteSomeFlexibilityAsse =>
+      'Rampungake sawetara tes kelenturan kanggo entuk rekomendasi peregangan sing pas';
 
   @override
-  String get flexibilityAssessmentCompleteTheseTestsTo => 'Rampungake tes iki kanggo entuk profil kelenturan sing lengkap';
+  String get flexibilityAssessmentCompleteTheseTestsTo =>
+      'Rampungake tes iki kanggo entuk profil kelenturan sing lengkap';
 
   @override
   String get flexibilityAssessmentFailedToLoadData => 'Gagal ngunggah data';
@@ -12025,16 +12912,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityAssessmentFlexibilityAssessment => 'Tes Kelenturan';
 
   @override
-  String get flexibilityAssessmentFocusOnTheseAreas => 'Fokus ing area iki kanggo nambah kelenturan sampeyan';
+  String get flexibilityAssessmentFocusOnTheseAreas =>
+      'Fokus ing area iki kanggo nambah kelenturan sampeyan';
 
   @override
   String get flexibilityAssessmentMyPlans => 'Rencanaku';
 
   @override
-  String get flexibilityAssessmentNoFlexibilityTestsAvailable => 'Ora ana tes kelenturan sing kasedhiya';
+  String get flexibilityAssessmentNoFlexibilityTestsAvailable =>
+      'Ora ana tes kelenturan sing kasedhiya';
 
   @override
-  String get flexibilityAssessmentNoStretchPlansYet => 'Durung Ana Rencana Peregangan';
+  String get flexibilityAssessmentNoStretchPlansYet =>
+      'Durung Ana Rencana Peregangan';
 
   @override
   String get flexibilityAssessmentNotYetAssessed => 'Durung Dites';
@@ -12043,13 +12933,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityAssessmentOverview => 'Ringkesan';
 
   @override
-  String get flexibilityAssessmentPriorityImprovements => 'Prioritas Peningkatan';
+  String get flexibilityAssessmentPriorityImprovements =>
+      'Prioritas Peningkatan';
 
   @override
   String get flexibilityAssessmentRecentAssessments => 'Tes Paling Anyar';
 
   @override
-  String get flexibilityAssessmentRecommendedStretches => 'Peregangan sing Disaranake';
+  String get flexibilityAssessmentRecommendedStretches =>
+      'Peregangan sing Disaranake';
 
   @override
   String flexibilityAssessmentScreenCurrentRating(Object rating) {
@@ -12071,7 +12963,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityHistoryAssessmentHistory => 'Riwayat Tes';
 
   @override
-  String get flexibilityHistoryCompleteSomeFlexibilityTest => 'Rampungake sawetara tes kelenturan kanggo ndeleng riwayat sampeyan ing kene';
+  String get flexibilityHistoryCompleteSomeFlexibilityTest =>
+      'Rampungake sawetara tes kelenturan kanggo ndeleng riwayat sampeyan ing kene';
 
   @override
   String get flexibilityHistoryDeleteAssessment => 'Busak Tes';
@@ -12086,7 +12979,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityHistoryNotes => 'Cathetan';
 
   @override
-  String get flexibilityHistoryThisActionCannotBe => 'Tindakan iki ora bisa dibatalake.';
+  String get flexibilityHistoryThisActionCannotBe =>
+      'Tindakan iki ora bisa dibatalake.';
 
   @override
   String flexibilityProgressChartAssessments(Object totalAssessments) {
@@ -12103,7 +12997,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityProgressChartLatest => 'Paling anyar';
 
   @override
-  String get flexibilityProgressChartNoDataAvailable => 'Ora ana data sing kasedhiya';
+  String get flexibilityProgressChartNoDataAvailable =>
+      'Ora ana data sing kasedhiya';
 
   @override
   String get flexibilityScoreCardByArea => 'Miturut Area';
@@ -12137,10 +13032,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityTestDetailAboutThisTest => 'Babagan Tes Iki';
 
   @override
-  String get flexibilityTestDetailCommonMistakesToAvoid => 'Kesalahan Umum sing Perlu Dihindari';
+  String get flexibilityTestDetailCommonMistakesToAvoid =>
+      'Kesalahan Umum sing Perlu Dihindari';
 
   @override
-  String get flexibilityTestDetailEquipmentNeeded => 'Peralatan sing Dibutuhake';
+  String get flexibilityTestDetailEquipmentNeeded =>
+      'Peralatan sing Dibutuhake';
 
   @override
   String get flexibilityTestDetailFlexibilityTrends => 'Tren Kelenturan';
@@ -12161,7 +13058,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityTestDetailTakeTest => 'Nindakake Tes';
 
   @override
-  String get flexibilityTestDetailTakeThisTestTo => 'Nindakake tes iki kanggo entuk rating kelenturan lan rekomendasi sing pas kanggo sampeyan';
+  String get flexibilityTestDetailTakeThisTestTo =>
+      'Nindakake tes iki kanggo entuk rating kelenturan lan rekomendasi sing pas kanggo sampeyan';
 
   @override
   String get flexibilityTestDetailTargetMuscles => 'Otot Target';
@@ -12176,7 +13074,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get flexibilityTestDetailUpdate => 'Nganyari';
 
   @override
-  String get floatingChatBubbleAskMeAnythingAbout => 'Takon apa wae babagan kebugaran';
+  String get floatingChatBubbleAskMeAnythingAbout =>
+      'Takon apa wae babagan kebugaran';
 
   @override
   String get floatingChatBubbleAskYourAiCoach => 'Takon marang pelatih AI...';
@@ -12188,7 +13087,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get floatingChatBubbleErrorLoadingMessages => 'Gagal ngunggah pesen';
 
   @override
-  String get floatingChatBubbleHowCanIHelp => 'Apa sing bisa tak bantu dina iki?';
+  String get floatingChatBubbleHowCanIHelp =>
+      'Apa sing bisa tak bantu dina iki?';
 
   @override
   String get floatingChatBubbleOnline => 'Online';
@@ -12197,7 +13097,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get floatingChatBubbleTyping => 'Ngetik...';
 
   @override
-  String get floatingChatOverlayAskMeAnythingAbout => 'Takon apa wae babagan fitness';
+  String get floatingChatOverlayAskMeAnythingAbout =>
+      'Takon apa wae babagan fitness';
 
   @override
   String get floatingChatOverlayAskYourAiCoach => 'Takon marang pelatih AI...';
@@ -12211,16 +13112,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get floatingChatOverlayHowCanIHelp => 'Apa sing bisa tak bantu dina iki?';
+  String get floatingChatOverlayHowCanIHelp =>
+      'Apa sing bisa tak bantu dina iki?';
 
   @override
-  String get floatingChatOverlayMediaAttachmentsAvailableIn => 'Lampiran media kasedhiya ing chat lengkap';
+  String get floatingChatOverlayMediaAttachmentsAvailableIn =>
+      'Lampiran media kasedhiya ing chat lengkap';
 
   @override
   String get floatingChatOverlayOnline => 'Online';
 
   @override
-  String get floatingChatOverlayTypeYourNextMessage => 'Ketik pesen sabanjure...';
+  String get floatingChatOverlayTypeYourNextMessage =>
+      'Ketik pesen sabanjure...';
 
   @override
   String get floatingChatOverlayTyping => 'Ngetik...';
@@ -12234,7 +13138,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get focalStepperValue => 'Nilai';
 
   @override
-  String get focusAreasSelectorEnterCustomFocusArea => 'Ketik area fokus khusus (tuladhane, \"Rotator cuff\")';
+  String get focusAreasSelectorEnterCustomFocusArea =>
+      'Ketik area fokus khusus (tuladhane, \"Rotator cuff\")';
 
   @override
   String focusAreasSelectorSelected(Object selectedCount) {
@@ -12245,7 +13150,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get focusAreasSelectorTargetAreas => 'Area Target';
 
   @override
-  String get focusAreasSelectorWhichBodyRegionsTo => 'Area awak endi sing arep dilatih. Gabungke karo Gaya Latihan ing ndhuwur.';
+  String get focusAreasSelectorWhichBodyRegionsTo =>
+      'Area awak endi sing arep dilatih. Gabungke karo Gaya Latihan ing ndhuwur.';
 
   @override
   String get foldableWarmupLayoutPause => 'Jeda';
@@ -12282,7 +13188,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get fontScaleCardFontScale => 'Skala Font';
 
   @override
-  String get fontScaleCardPreciseFontScalingControl => 'Kontrol skala font sing presisi';
+  String get fontScaleCardPreciseFontScalingControl =>
+      'Kontrol skala font sing presisi';
 
   @override
   String fontScaleCardX(Object scale) {
@@ -12324,12 +13231,18 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodAnalysisInlineU00b7 => '·';
 
   @override
-  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex) {
+  String foodAnalysisLoadingElapsed(
+    Object _elapsedSeconds,
+    Object _stillWorkingIndex,
+  ) {
     return 'kepungkur-$_elapsedSeconds-$_stillWorkingIndex';
   }
 
   @override
-  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy) {
+  String foodAnalysisLoadingS(
+    Object _elapsedSeconds,
+    Object analysisLoadingCopy,
+  ) {
     return '$analysisLoadingCopy… ${_elapsedSeconds}d';
   }
 
@@ -12344,7 +13257,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodAnalysisResultAiNutritionAnalysisIs => 'Analisis nutrisi AI mung prakiraan. Konsultasi karo ahli gizi kanggo saran diet sing pas kanggo sampeyan.';
+  String get foodAnalysisResultAiNutritionAnalysisIs =>
+      'Analisis nutrisi AI mung prakiraan. Konsultasi karo ahli gizi kanggo saran diet sing pas kanggo sampeyan.';
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
@@ -12367,7 +13281,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining) {
+  String foodAnalysisResultCardLeavesYouCalFor(
+    Object mealLabel,
+    Object remaining,
+  ) {
     return 'Isih ana $remaining cal kanggo $mealLabel';
   }
 
@@ -12396,7 +13313,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodAnalysisResultInModeration => 'Ing Watesan';
 
   @override
-  String get foodAnalysisResultItemsLoggedToNutrition => 'Item wis dicathet ing pelacak nutrisi';
+  String get foodAnalysisResultItemsLoggedToNutrition =>
+      'Item wis dicathet ing pelacak nutrisi';
 
   @override
   String get foodAnalysisResultLimitThese => 'Watesi iki';
@@ -12477,7 +13395,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodBrowserPanelLog => 'Cathet';
 
   @override
-  String get foodBrowserPanelLogAMealTo => 'Cathet dhaharan kanggo ndeleng riwayat ing kene';
+  String get foodBrowserPanelLogAMealTo =>
+      'Cathet dhaharan kanggo ndeleng riwayat ing kene';
 
   @override
   String foodBrowserPanelLogSelectedItems(Object count) {
@@ -12485,7 +13404,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelLookingForASpecific => 'Nggoleki produk tartamtu? Golek wae';
+  String get foodBrowserPanelLookingForASpecific =>
+      'Nggoleki produk tartamtu? Golek wae';
 
   @override
   String get foodBrowserPanelLowCal => 'Kurang kalori';
@@ -12499,13 +13419,18 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelNoSavedFoodsYet => 'Durung ana panganan sing disimpen';
+  String get foodBrowserPanelNoSavedFoodsYet =>
+      'Durung ana panganan sing disimpen';
 
   @override
   String get foodBrowserPanelOnlyMatchFound => 'Mung siji sing cocog';
 
   @override
-  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt) {
+  String foodBrowserPanelPartExpandableSearchCardStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  ) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12525,7 +13450,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt) {
+  String foodBrowserPanelPartNLItemSectionStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  ) {
     return '$label ($opt$calDelta)';
   }
 
@@ -12541,7 +13470,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelSearch528000Foods => 'Golek 528.000+ panganan saka database USDA, Kanada, India, lan liya-liyane';
+  String get foodBrowserPanelSearch528000Foods =>
+      'Golek 528.000+ panganan saka database USDA, Kanada, India, lan liya-liyane';
 
   @override
   String get foodBrowserPanelSearchAlternatives => 'Golek alternatif...';
@@ -12562,16 +13492,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodBrowserPanelSize => 'Ukuran';
 
   @override
-  String get foodBrowserPanelStarFoodsAfterLogging => 'Bintangi panganan sawise dicathet supaya disimpen';
+  String get foodBrowserPanelStarFoodsAfterLogging =>
+      'Bintangi panganan sawise dicathet supaya disimpen';
 
   @override
   String get foodBrowserPanelStartTypingAbove => 'Mulai ngetik ing ndhuwur...';
 
   @override
-  String get foodBrowserPanelTapItemsToAdjust => 'Tutul item kanggo ngatur utawa milih alternatif';
+  String get foodBrowserPanelTapItemsToAdjust =>
+      'Tutul item kanggo ngatur utawa milih alternatif';
 
   @override
-  String get foodBrowserPanelUseAnalyzeForAi => 'Gunakake Analisis kanggo prakiraan AI';
+  String get foodBrowserPanelUseAnalyzeForAi =>
+      'Gunakake Analisis kanggo prakiraan AI';
 
   @override
   String get foodBrowserPanelYourFoods => 'PANGANANMU';
@@ -12586,7 +13519,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodHistoryFailedToReLog => 'Gagal nyathet maneh panganan';
 
   @override
-  String get foodHistoryFailedToUpdateFood => 'Gagal nganyari cathetan panganan';
+  String get foodHistoryFailedToUpdateFood =>
+      'Gagal nganyari cathetan panganan';
 
   @override
   String get foodHistoryFoodHistory => 'Riwayat Panganan';
@@ -12638,7 +13572,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodHistoryScreenMeals => 'Daharan';
 
   @override
-  String get foodHistoryScreenNoFoodHistoryYet => 'Dereng wonten riwayat daharan';
+  String get foodHistoryScreenNoFoodHistoryYet =>
+      'Dereng wonten riwayat daharan';
 
   @override
   String foodHistoryScreenPartDateRangeCal(Object calories) {
@@ -12671,12 +13606,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel) {
+  String foodHistoryScreenPartDateRangeValue(
+    Object _dateLabel,
+    Object _mealLabel,
+    Object _sourceLabel,
+  ) {
     return '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel';
   }
 
   @override
-  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG) {
+  String foodHistoryScreenPartFrequentFoodChipPCF(
+    Object carbsG,
+    Object fatG,
+    Object proteinG,
+  ) {
     return '${proteinG}P · ${carbsG}C · ${fatG}F';
   }
 
@@ -12708,10 +13651,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodHistoryScreenSearchError => 'Kesalahan pados';
 
   @override
-  String get foodHistoryScreenStartLoggingMealsTo => 'Mulai cathet daharan kanggo ningali riwayat sampeyan ing mriki!';
+  String get foodHistoryScreenStartLoggingMealsTo =>
+      'Mulai cathet daharan kanggo ningali riwayat sampeyan ing mriki!';
 
   @override
-  String get foodHistorySearchMealsFoodsHigh => 'Pados daharan, panganan, \"protein inggil\"...';
+  String get foodHistorySearchMealsFoodsHigh =>
+      'Pados daharan, panganan, \"protein inggil\"...';
 
   @override
   String get foodHistoryUndo => 'Batal';
@@ -12728,16 +13673,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodItemRankingScore => 'Skor';
 
   @override
-  String get foodItemRankingTapToHideDetails => 'Tutul kanggo ndhelikake rincian';
+  String get foodItemRankingTapToHideDetails =>
+      'Tutul kanggo ndhelikake rincian';
 
   @override
   String get foodItemRankingTapToSeeDetails => 'Tutul kanggo ndeleng rincian';
 
   @override
-  String get foodLibraryAHomemadeMealWith => 'Daharan damelan piyambak kanthi kathah bahan';
+  String get foodLibraryAHomemadeMealWith =>
+      'Daharan damelan piyambak kanthi kathah bahan';
 
   @override
-  String get foodLibraryASingleFoodType => 'Panganan tunggal — ketik utawi biarkan AI ngisi';
+  String get foodLibraryASingleFoodType =>
+      'Panganan tunggal — ketik utawi biarkan AI ngisi';
 
   @override
   String get foodLibraryAdd => 'Tambah';
@@ -12869,16 +13817,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodLibraryScreenSortBy => 'Urutaken Miturut';
 
   @override
-  String get foodLibraryScreenThisActionCannotBe => 'Tindakan iki mboten saged dibatalaken.';
+  String get foodLibraryScreenThisActionCannotBe =>
+      'Tindakan iki mboten saged dibatalaken.';
 
   @override
   String get foodLibrarySearchFoodsAndRecipes => 'Pados panganan lan resep...';
 
   @override
-  String get foodLibraryThisActionCannotBe => 'Tindakan iki mboten saged dibatalaken.';
+  String get foodLibraryThisActionCannotBe =>
+      'Tindakan iki mboten saged dibatalaken.';
 
   @override
-  String get foodLibraryUsingYourExistingCustom => 'Nggunakaken panganan khusus sampeyan';
+  String get foodLibraryUsingYourExistingCustom =>
+      'Nggunakaken panganan khusus sampeyan';
 
   @override
   String get foodLoggingRulesAddRule => 'Tambah aturan';
@@ -12893,7 +13844,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodLoggingRulesDeleteRule => 'Mbusak aturan?';
 
   @override
-  String get foodLoggingRulesEGNoBun => 'contoh \"Tanpa roti\" utawi \"kita masak nganggo sethithik lenga\"';
+  String get foodLoggingRulesEGNoBun =>
+      'contoh \"Tanpa roti\" utawi \"kita masak nganggo sethithik lenga\"';
 
   @override
   String get foodLoggingRulesEditRule => 'Sunting aturan';
@@ -12910,10 +13862,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodMoodAnalyticsAnalyzingMoodPatterns => 'Nganalisis pola swasana ati...';
+  String get foodMoodAnalyticsAnalyzingMoodPatterns =>
+      'Nganalisis pola swasana ati...';
 
   @override
-  String get foodMoodAnalyticsAvailableWhenLoggingMeals => 'Wonten nalika nyathet daharan';
+  String get foodMoodAnalyticsAvailableWhenLoggingMeals =>
+      'Wonten nalika nyathet daharan';
 
   @override
   String get foodMoodAnalyticsAverage => 'Rata-rata: ';
@@ -12936,16 +13890,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodMoodAnalyticsFoodMood => 'PANGANAN & SWASANA ATI';
 
   @override
-  String get foodMoodAnalyticsFoodMoodInsights => 'Wawasan Panganan & Swasana Ati';
+  String get foodMoodAnalyticsFoodMoodInsights =>
+      'Wawasan Panganan & Swasana Ati';
 
   @override
-  String get foodMoodAnalyticsFoodsThatBoostYour => 'PANGANAN SING NINGKATAKEN SWASANA ATI';
+  String get foodMoodAnalyticsFoodsThatBoostYour =>
+      'PANGANAN SING NINGKATAKEN SWASANA ATI';
 
   @override
   String get foodMoodAnalyticsFoodsToWatch => 'PANGANAN SING PERLU DIWASPADA';
 
   @override
-  String get foodMoodAnalyticsLogHowYouFeel => 'Cathet perasaan sampeyan sadurunge lan sawise dhahar kanggo nemokake pola';
+  String get foodMoodAnalyticsLogHowYouFeel =>
+      'Cathet perasaan sampeyan sadurunge lan sawise dhahar kanggo nemokake pola';
 
   @override
   String get foodMoodAnalyticsMealsTracked => 'Dhaharan direkam';
@@ -12957,7 +13914,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodMoodAnalyticsMoodImproved => 'Swasana ati saya apik';
 
   @override
-  String get foodMoodAnalyticsNoEnergyDataRecorded => 'Dereng wonten data energi sing kacathet';
+  String get foodMoodAnalyticsNoEnergyDataRecorded =>
+      'Dereng wonten data energi sing kacathet';
 
   @override
   String get foodMoodAnalyticsNoMoodDataYet => 'Dereng wonten data swasana ati';
@@ -12971,7 +13929,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodMoodAnalyticsStartTrackingMood => 'Mulai nglacak swasana ati';
 
   @override
-  String get foodMoodAnalyticsTrackYourMoodWhen => 'Lacak swasana ati sampeyan nalika nyathet daharan\nkanggo ningali pola lan wawasan';
+  String get foodMoodAnalyticsTrackYourMoodWhen =>
+      'Lacak swasana ati sampeyan nalika nyathet daharan\nkanggo ningali pola lan wawasan';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Dhaharan sing direkam';
@@ -12983,7 +13942,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodMoodAnalyticsUnableToLoadData => 'Mboten saged mbukak data';
 
   @override
-  String get foodMoodAnalyticsUnableToLoadMood => 'Mboten saged mbukak data swasana ati';
+  String get foodMoodAnalyticsUnableToLoadMood =>
+      'Mboten saged mbukak data swasana ati';
 
   @override
   String get foodReportCalories => 'Kalori';
@@ -13005,7 +13965,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get foodReportEGISearched => 'contoh kula nggoleki mexican coke, dudu burrito bowl';
+  String get foodReportEGISearched =>
+      'contoh kula nggoleki mexican coke, dudu burrito bowl';
 
   @override
   String get foodReportFat => 'Lemak';
@@ -13023,10 +13984,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodReportSubmitReport => 'Kirim Laporan';
 
   @override
-  String get foodReportWeLlReviewAnd => 'Kami bakal mriksa lan nganyari sajrone 48 jam.\nMatur nuwun wis mbantu ningkatake data kita!';
+  String get foodReportWeLlReviewAnd =>
+      'Kami bakal mriksa lan nganyari sajrone 48 jam.\nMatur nuwun wis mbantu ningkatake data kita!';
 
   @override
-  String get foodReportWhatFoodDidYou => 'Panganan apa sing sejatine sampeyan maksud?';
+  String get foodReportWhatFoodDidYou =>
+      'Panganan apa sing sejatine sampeyan maksud?';
 
   @override
   String get foodReportWrongFood => 'Panganan salah';
@@ -13083,10 +14046,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get foodSearchResultsSomethingWentWrong => 'Ana sing salah';
 
   @override
-  String get foodSearchResultsTypeToSearchYour => 'Ketik kanggo nggoleki panganan sing disimpen, dhaharan anyar, utawa database.';
+  String get foodSearchResultsTypeToSearchYour =>
+      'Ketik kanggo nggoleki panganan sing disimpen, dhaharan anyar, utawa database.';
 
   @override
-  String get formCheckResultAiFormAnalysisIs => 'Analisis formulir AI mung kanggo tujuan pendidikan. Konsultasi karo pelatih sing mumpuni kanggo pandhuan pribadi.';
+  String get formCheckResultAiFormAnalysisIs =>
+      'Analisis formulir AI mung kanggo tujuan pendidikan. Konsultasi karo pelatih sing mumpuni kanggo pandhuan pribadi.';
 
   @override
   String get formCheckResultAreasToImprove => 'Area sing Perlu Didandani';
@@ -13132,13 +14097,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get formCheckResultNeedsWork => 'Perlu Didandani';
 
   @override
-  String get formCheckResultSendAVideoOf => 'Kirim video latihan sampeyan lan aku bakal mriksa formulir sampeyan, ngetung repetisi, lan menehi koreksi.';
+  String get formCheckResultSendAVideoOf =>
+      'Kirim video latihan sampeyan lan aku bakal mriksa formulir sampeyan, ngetung repetisi, lan menehi koreksi.';
 
   @override
   String get formCheckResultTempo => 'Tempo';
 
   @override
-  String get formComparisonResultAiFormAnalysisIs => 'Analisis formulir AI mung kanggo tujuan pendidikan. Konsultasi karo pelatih sing mumpuni kanggo pandhuan pribadi.';
+  String get formComparisonResultAiFormAnalysisIs =>
+      'Analisis formulir AI mung kanggo tujuan pendidikan. Konsultasi karo pelatih sing mumpuni kanggo pandhuan pribadi.';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -13185,10 +14152,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get founderNoteRoadmap => 'Roadmap';
 
   @override
-  String get founderNoteFounderSoloStillOn => 'Founder, solo, isih ing versi siji.';
+  String get founderNoteFounderSoloStillOn =>
+      'Founder, solo, isih ing versi siji.';
 
   @override
-  String get founderNoteIUsedToLog => 'Aku biyen nyathet saben dhaharan suwene rong minggu, rumangsa bangga, banjur mlebu menyang panggonan Thai sing aku ora bisa maca menune, mangan apa wae sing katon aman, lan meneng-meneng mandheg mbukak aplikasi kasebut. Telung minggu sabanjure aku bakal nginstal maneh sing beda, sumpah iki wektune, lan nglakoni siklus sing padha maneh. Saben aplikasi nyathet dataku, ora ana sing ngerti nalika aku meneng — iku mung buku cathetan, dudu pelatih.';
+  String get founderNoteIUsedToLog =>
+      'Aku biyen nyathet saben dhaharan suwene rong minggu, rumangsa bangga, banjur mlebu menyang panggonan Thai sing aku ora bisa maca menune, mangan apa wae sing katon aman, lan meneng-meneng mandheg mbukak aplikasi kasebut. Telung minggu sabanjure aku bakal nginstal maneh sing beda, sumpah iki wektune, lan nglakoni siklus sing padha maneh. Saben aplikasi nyathet dataku, ora ana sing ngerti nalika aku meneng — iku mung buku cathetan, dudu pelatih.';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -13204,13 +14173,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get founderNoteSoIBuiltThe => 'Dadi aku mbangun wong, dudu buku besar. Snap menu apa wae - ing omah utawa ing luar negeri - lan pelatih maca maneh ing makro. Skip a Selasa lan narik sampeyan bali Rebo esuk tanpa trip sirno. Sinau panganan, gym, pola slip - kurang saka siji sesi PT saben wulan.';
+  String get founderNoteSoIBuiltThe =>
+      'Dadi aku mbangun wong, dudu buku besar. Snap menu apa wae - ing omah utawa ing luar negeri - lan pelatih maca maneh ing makro. Skip a Selasa lan narik sampeyan bali Rebo esuk tanpa trip sirno. Sinau panganan, gym, pola slip - kurang saka siji sesi PT saben wulan.';
 
   @override
-  String get founderNoteTheFriendsWhoActually => 'Kanca-kanca sing bener-bener dadi langsing duwe wong sing ngirim pesen marang dheweke. Akuntabilitas nyata regane kira-kira rong atus dolar saben wulan, sing dadi alesan kenapa akeh kita ora nate duwe, lan alesan kenapa jurang antarane \"tracking\" lan \"changing\" tetep mbukak nganti pirang-pirang taun.';
+  String get founderNoteTheFriendsWhoActually =>
+      'Kanca-kanca sing bener-bener dadi langsing duwe wong sing ngirim pesen marang dheweke. Akuntabilitas nyata regane kira-kira rong atus dolar saben wulan, sing dadi alesan kenapa akeh kita ora nate duwe, lan alesan kenapa jurang antarane \"tracking\" lan \"changing\" tetep mbukak nganti pirang-pirang taun.';
 
   @override
-  String get freshnessDecayCardControlsHowQuicklyExercise => 'Ngontrol sepira cepete kesegaran latihan mudhun: e^(-k * sesi)';
+  String get freshnessDecayCardControlsHowQuicklyExercise =>
+      'Ngontrol sepira cepete kesegaran latihan mudhun: e^(-k * sesi)';
 
   @override
   String get freshnessDecayCardFreshnessDecayTuner => 'Tuner Kesegaran';
@@ -13284,7 +14256,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendProfileFailedToOpenConversation => 'Gagal mbukak obrolan';
 
   @override
-  String get friendProfileFailedToUpdateFollow => 'Gagal nganyari status tututi';
+  String get friendProfileFailedToUpdateFollow =>
+      'Gagal nganyari status tututi';
 
   @override
   String get friendProfileFollow => 'Tututi';
@@ -13302,22 +14275,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendProfileMessage => 'Pesen';
 
   @override
-  String get friendProfileMoreDetailsComingSoon => 'Rincian liyane bakal teka rauh';
+  String get friendProfileMoreDetailsComingSoon =>
+      'Rincian liyane bakal teka rauh';
 
   @override
-  String get friendProfileThisUserWillNot => 'Panganggo iki ora bakal bisa ndeleng konten sampeyan utawa ngirim pesen. Sampeyan bisa mbukak blokir mengko.';
+  String get friendProfileThisUserWillNot =>
+      'Panganggo iki ora bakal bisa ndeleng konten sampeyan utawa ngirim pesen. Sampeyan bisa mbukak blokir mengko.';
 
   @override
   String get friendProfileUserBlocked => 'Panganggo diblokir';
 
   @override
-  String get friendProfileWorkoutHistoryPrsAnd => 'Riwayat latihan, PR, lan piala\nbakal ditampilake ing kene.';
+  String get friendProfileWorkoutHistoryPrsAnd =>
+      'Riwayat latihan, PR, lan piala\nbakal ditampilake ing kene.';
 
   @override
   String get friendSearchFindFriends => 'Golek Kanca';
 
   @override
-  String get friendSearchFollowFriendsToGet => 'Tututi kanca kanggo entuk saran sing luwih apik';
+  String get friendSearchFollowFriendsToGet =>
+      'Tututi kanca kanggo entuk saran sing luwih apik';
 
   @override
   String get friendSearchNoSuggestionsYet => 'Durung ana saran';
@@ -13329,7 +14306,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendSearchSearch => 'Golek';
 
   @override
-  String get friendSearchSearchByNameOr => 'Golek nganggo jeneng utawa jeneng panganggo...';
+  String get friendSearchSearchByNameOr =>
+      'Golek nganggo jeneng utawa jeneng panganggo...';
 
   @override
   String get friendSearchSearchForFriends => 'Golek kanca';
@@ -13341,19 +14319,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendSearchTryADifferentSearch => 'Coba istilah telusuran liyane';
 
   @override
-  String get friendSearchTypeANameOr => 'Ketik jeneng utawa jeneng panganggo kanggo nemokake panganggo';
+  String get friendSearchTypeANameOr =>
+      'Ketik jeneng utawa jeneng panganggo kanggo nemokake panganggo';
 
   @override
-  String get friendsAddFriendsToSee => 'Tambah kanca kanggo ndeleng latihan dheweke\nlan saingan ing tantangan bareng!';
+  String get friendsAddFriendsToSee =>
+      'Tambah kanca kanggo ndeleng latihan dheweke\nlan saingan ing tantangan bareng!';
 
   @override
-  String get friendsCouldNotLoadUsers => 'Ora bisa mbukak panganggo sing sampeyan tututi.\nCoba maneh.';
+  String get friendsCouldNotLoadUsers =>
+      'Ora bisa mbukak panganggo sing sampeyan tututi.\nCoba maneh.';
 
   @override
-  String get friendsCouldNotLoadYour => 'Ora bisa mbukak dhaptar kanca sampeyan.\nCoba maneh.';
+  String get friendsCouldNotLoadYour =>
+      'Ora bisa mbukak dhaptar kanca sampeyan.\nCoba maneh.';
 
   @override
-  String get friendsCouldNotLoadYour2 => 'Ora bisa mbukak dhaptar pengikut sampeyan.\nCoba maneh.';
+  String get friendsCouldNotLoadYour2 =>
+      'Ora bisa mbukak dhaptar pengikut sampeyan.\nCoba maneh.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Gagal Mbukak Pengikut';
@@ -13365,7 +14348,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendsFailedToLoadFriends => 'Gagal Mbukak Kanca';
 
   @override
-  String get friendsFollowFriendsToSee => 'Tututi kanca kanggo ndeleng latihan dheweke\nlan tetep semangat bareng!';
+  String get friendsFollowFriendsToSee =>
+      'Tututi kanca kanggo ndeleng latihan dheweke\nlan tetep semangat bareng!';
 
   @override
   String get friendsFollowers => 'Pengikut';
@@ -13377,7 +14361,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get friendsFriendRequests => 'Panjaluk Kanca';
 
   @override
-  String get friendsKeepCrushingYourWorkouts => 'Terus semangat latihanmu!\nKanca-kanca bakal pengin ngetutake progresmu.';
+  String get friendsKeepCrushingYourWorkouts =>
+      'Terus semangat latihanmu!\nKanca-kanca bakal pengin ngetutake progresmu.';
 
   @override
   String get friendsNoFollowersYet => 'Durung Ana Sing Ngetutake';
@@ -13449,7 +14434,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get futuristicSetCardSkipExercise => 'Liwati Latihan';
 
   @override
-  String get generatePlanCreateAHolisticPlan => 'Gawe rencana holistik sing nyelarasake latihan, nutrisi, lan pasa.';
+  String get generatePlanCreateAHolisticPlan =>
+      'Gawe rencana holistik sing nyelarasake latihan, nutrisi, lan pasa.';
 
   @override
   String get generatePlanFastingProtocol => 'Protokol Pasa';
@@ -13476,7 +14462,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get generatePlanWeeklyPlanGenerated => 'Rencana mingguan wis digawe!';
 
   @override
-  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo => 'Saben latihan nyesuekake supaya sampeyan maju kanthi aman!';
+  String get generateWorkoutPlaceholderEachWorkoutAdaptsTo =>
+      'Saben latihan nyesuekake supaya sampeyan maju kanthi aman!';
 
   @override
   String get generateWorkoutPlaceholderGenerateWorkout => 'GAWE LATIHAN';
@@ -13488,25 +14475,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get generateWorkoutPlaceholderGenerationFailed => 'Gagal nggawe';
 
   @override
-  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou => 'Dipersonalisasi nggunakake riwayat latihanmu';
+  String get generateWorkoutPlaceholderPersonalizedUsingYourWorkou =>
+      'Dipersonalisasi nggunakake riwayat latihanmu';
 
   @override
-  String get generateWorkoutPlaceholderTapBelowToTry => 'Tutul ing ngisor kanggo nyoba maneh';
+  String get generateWorkoutPlaceholderTapBelowToTry =>
+      'Tutul ing ngisor kanggo nyoba maneh';
 
   @override
   String get generateWorkoutPlaceholderTapToRetry => 'TUTUL KANGGO NYOBA MANEH';
 
   @override
-  String get generateWorkoutPlaceholderWhatPowersYourWorkout => 'Apa sing ndhukung latihanmu?';
+  String get generateWorkoutPlaceholderWhatPowersYourWorkout =>
+      'Apa sing ndhukung latihanmu?';
 
   @override
-  String get generateWorkoutPlaceholderYourAiCoachCreates => 'Pelatih AI sampeyan nggawe latihan adhedhasar:';
+  String get generateWorkoutPlaceholderYourAiCoachCreates =>
+      'Pelatih AI sampeyan nggawe latihan adhedhasar:';
 
   @override
   String get glassDragToResize => 'Seret kanggo ngowahi ukuran';
 
   @override
-  String get globalChatBubbleAskMeAnythingAbout => 'Takon apa wae babagan fitness';
+  String get globalChatBubbleAskMeAnythingAbout =>
+      'Takon apa wae babagan fitness';
 
   @override
   String get globalChatBubbleAskYourAiCoach => 'Takon pelatih AI sampeyan...';
@@ -13585,7 +14577,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get goalHistoryChartCompleteMoreWeeksTo => 'Rampungake luwih akeh minggu kanggo ndeleng tren targetmu';
+  String get goalHistoryChartCompleteMoreWeeksTo =>
+      'Rampungake luwih akeh minggu kanggo ndeleng tren targetmu';
 
   @override
   String get goalHistoryChartGoalTrends => 'Tren Target';
@@ -13600,7 +14593,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get goalHistoryThisWeek => 'Minggu Iki';
 
   @override
-  String get goalHistoryTipsForBeatingYour => 'Tips kanggo ngalahake PR sampeyan';
+  String get goalHistoryTipsForBeatingYour =>
+      'Tips kanggo ngalahake PR sampeyan';
 
   @override
   String get goalHistoryTryAgain => 'Coba Maneh';
@@ -13609,16 +14603,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get goalHistoryU2022 => '• ';
 
   @override
-  String get goalLeaderboardCouldNotLoadLeaderboard => 'Gagal ngemot papan peringkat';
+  String get goalLeaderboardCouldNotLoadLeaderboard =>
+      'Gagal ngemot papan peringkat';
 
   @override
   String get goalLeaderboardFriendsLeaderboard => 'Papan Peringkat Kanca';
 
   @override
-  String get goalLeaderboardInviteFriendsToCompete => 'Undang kanca kanggo kompetisi!';
+  String get goalLeaderboardInviteFriendsToCompete =>
+      'Undang kanca kanggo kompetisi!';
 
   @override
-  String get goalLeaderboardNoFriendsOnThis => 'Durung ana kanca ing target iki';
+  String get goalLeaderboardNoFriendsOnThis =>
+      'Durung ana kanca ing target iki';
 
   @override
   String get goalLeaderboardPr => 'PR';
@@ -13629,7 +14626,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectConnectGoogleCalendar => 'Sambungake Google Calendar';
+  String get googleCalendarConnectConnectGoogleCalendar =>
+      'Sambungake Google Calendar';
 
   @override
   String get googleCalendarConnectConnected => 'Wis disambungake';
@@ -13638,16 +14636,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get googleCalendarConnectDisconnect => 'Pedhot sambungan';
 
   @override
-  String get googleCalendarConnectFailedToConnectGoogle => 'Gagal nyambungake Google Calendar';
+  String get googleCalendarConnectFailedToConnectGoogle =>
+      'Gagal nyambungake Google Calendar';
 
   @override
   String get googleCalendarConnectGoogleCalendar => 'Google Calendar';
 
   @override
-  String get googleCalendarConnectGoogleCalendarConnected => 'Google Calendar wis disambungake!';
+  String get googleCalendarConnectGoogleCalendarConnected =>
+      'Google Calendar wis disambungake!';
 
   @override
-  String get googleCalendarConnectGoogleCalendarDisconnected => 'Google Calendar wis dipedhot';
+  String get googleCalendarConnectGoogleCalendarDisconnected =>
+      'Google Calendar wis dipedhot';
 
   @override
   String googleCalendarConnectSheetConnectYourGoogleCalendar(Object appName) {
@@ -13655,7 +14656,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get googleCalendarConnectWeOnlyAccessCalendar => 'Kita mung ngakses data kalender sing sampeyan idini';
+  String get googleCalendarConnectWeOnlyAccessCalendar =>
+      'Kita mung ngakses data kalender sing sampeyan idini';
 
   @override
   String get groceryListAdd => 'Tambah';
@@ -13679,7 +14681,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get groceryListHidePantryStaples => 'Singidaken bahan pawon';
 
   @override
-  String get groceryListHidingKeepsTheList => 'Nyingidaken bahan nggawe daftar luwih fokus marang sing bener-bener dibutuhake';
+  String get groceryListHidingKeepsTheList =>
+      'Nyingidaken bahan nggawe daftar luwih fokus marang sing bener-bener dibutuhake';
 
   @override
   String get groceryListItemName => 'Jeneng barang';
@@ -13697,7 +14700,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get groceryListShowPantryStaples => 'Tampilake bahan pawon';
 
   @override
-  String get groceryListTapTheButtonBelow => 'Tutul tombol + ing ngisor iki kanggo nambah bahan.';
+  String get groceryListTapTheButtonBelow =>
+      'Tutul tombol + ing ngisor iki kanggo nambah bahan.';
 
   @override
   String get groceryListUnitGCup => 'Unit (g, cup, ...)';
@@ -13718,12 +14722,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get groceryListsIndexNoListsYet => 'Durung ana daftar';
 
   @override
-  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount) {
+  String groceryListsIndexScreenOfChecked(
+    Object checkedCount,
+    Object itemCount,
+  ) {
     return '$checkedCount saka $itemCount dicenthang';
   }
 
   @override
-  String get groceryListsIndexTapToCreateA => 'Tutul + kanggo nggawe daftar, utawa tambahake saka resep.';
+  String get groceryListsIndexTapToCreateA =>
+      'Tutul + kanggo nggawe daftar, utawa tambahake saka resep.';
 
   @override
   String get groceryListsIndexUntitled => 'Tanpa jeneng';
@@ -13775,10 +14783,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get groupSettingsAdmin => 'Admin';
 
   @override
-  String get groupSettingsAllYourFriendsAre => 'Kabeh kancamu wis ana ing grup iki';
+  String get groupSettingsAllYourFriendsAre =>
+      'Kabeh kancamu wis ana ing grup iki';
 
   @override
-  String get groupSettingsAreYouSureYou => 'Apa kowe yakin arep metu saka grup iki? Kowe ora bakal nampa pesen maneh saka obrolan iki.';
+  String get groupSettingsAreYouSureYou =>
+      'Apa kowe yakin arep metu saka grup iki? Kowe ora bakal nampa pesen maneh saka obrolan iki.';
 
   @override
   String get groupSettingsGroupNameUpdated => 'Jeneng grup dianyari';
@@ -13793,7 +14803,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get groupSettingsLeaveGroup => 'Metu saka Grup';
 
   @override
-  String get groupSettingsMemberListWillLoad => 'Daftar anggota bakal dimuat saka server';
+  String get groupSettingsMemberListWillLoad =>
+      'Daftar anggota bakal dimuat saka server';
 
   @override
   String get groupSettingsMembers => 'Anggota';
@@ -13868,7 +14879,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestHomeScreenAiCoachChat => 'Obrolan AI Coach';
 
   @override
-  String get guestHomeScreenAskAnythingAboutFitness => 'Takon apa wae babagan fitness';
+  String get guestHomeScreenAskAnythingAboutFitness =>
+      'Takon apa wae babagan fitness';
 
   @override
   String guestHomeScreenExploreWhatCanDo(Object appName) {
@@ -13882,7 +14894,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestHomeScreenTapToTryAi => 'Tutul kanggo nyoba AI Coach';
 
   @override
-  String get guestHomeSeeHowYourPersonal => 'Deleng kepiye cara kerja AI coach pribadimu';
+  String get guestHomeSeeHowYourPersonal =>
+      'Deleng kepiye cara kerja AI coach pribadimu';
 
   @override
   String get guestHomeSessionEndingSoon => 'Sesi bakal rampung sedhela maneh';
@@ -13891,16 +14904,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestHomeSignUpFree => 'Daftar Gratis';
 
   @override
-  String get guestHomeSignUpFreeTo => 'Daftar gratis kanggo terus nggunakake kabeh fitur tanpa wates!';
+  String get guestHomeSignUpFreeTo =>
+      'Daftar gratis kanggo terus nggunakake kabeh fitur tanpa wates!';
 
   @override
-  String get guestHomeSignUpFreeTo2 => 'Daftar gratis kanggo mbukak kunci kabeh fitur lan miwiti perjalanan fitnessmu!';
+  String get guestHomeSignUpFreeTo2 =>
+      'Daftar gratis kanggo mbukak kunci kabeh fitur lan miwiti perjalanan fitnessmu!';
 
   @override
-  String get guestHomeSignUpFreeTo3 => 'Daftar gratis kanggo takon pitakonan fitness apa wae lan entuk saran pribadi 24/7';
+  String get guestHomeSignUpFreeTo3 =>
+      'Daftar gratis kanggo takon pitakonan fitness apa wae lan entuk saran pribadi 24/7';
 
   @override
-  String get guestHomeTapAQuestionTo => 'TUTUL PITAKONAN KANGGO DELENG WANGSULAN AI';
+  String get guestHomeTapAQuestionTo =>
+      'TUTUL PITAKONAN KANGGO DELENG WANGSULAN AI';
 
   @override
   String get guestHomeTryItNow => 'COBA SAIKI';
@@ -13912,7 +14929,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestHomeWhatYouLlGet => 'APA SING BAKAL KOWE ENTUK';
 
   @override
-  String get guestHomeYour10MinutePreview => 'Sesi pratinjau 10 menitmu wis rampung.';
+  String get guestHomeYour10MinutePreview =>
+      'Sesi pratinjau 10 menitmu wis rampung.';
 
   @override
   String get guestLibraryBrowseSampleExercises => 'Jelajahi conto latihan';
@@ -13939,7 +14957,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestLibraryPreview => 'PRATINJAU';
 
   @override
-  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit) {
+  String guestLibraryScreenShowingSampleExercisesSign(
+    Object guestExerciseLimit,
+  ) {
     return 'Nuduhake $guestExerciseLimit conto latihan. Daftar gratis kanggo ngakses 2300+ latihan!';
   }
 
@@ -13953,13 +14973,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestLibrarySignUpFree => 'Daftar Gratis';
 
   @override
-  String get guestLibrarySignUpFreeTo => 'Daftar gratis kanggo ngakses pustaka latihan lengkap kita kanthi demonstrasi video lan instruksi.';
+  String get guestLibrarySignUpFreeTo =>
+      'Daftar gratis kanggo ngakses pustaka latihan lengkap kita kanthi demonstrasi video lan instruksi.';
 
   @override
-  String get guestLibrarySignUpFreeTo2 => 'Daftar gratis kanggo ngakses pandhuan video HD kanggo kabeh latihan.';
+  String get guestLibrarySignUpFreeTo2 =>
+      'Daftar gratis kanggo ngakses pandhuan video HD kanggo kabeh latihan.';
 
   @override
-  String get guestLibrarySignUpToView => 'Daftar kanggo ndeleng instruksi rinci kanggo latihan iki.';
+  String get guestLibrarySignUpToView =>
+      'Daftar kanggo ndeleng instruksi rinci kanggo latihan iki.';
 
   @override
   String get guestLibraryUnlock1700Exercises => 'Buka Kunci 2300+ Latihan';
@@ -13977,7 +15000,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestSampleWorkoutFullBodyStrength => 'Kekuatan Awak Sakabehe';
 
   @override
-  String get guestSampleWorkoutGetPersonalizedWorkouts => 'Entuk Latihan Pribadi';
+  String get guestSampleWorkoutGetPersonalizedWorkouts =>
+      'Entuk Latihan Pribadi';
 
   @override
   String get guestSampleWorkoutSampleWorkout => 'Conto Latihan';
@@ -13989,10 +15013,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestSampleWorkoutSignUpFree => 'Daftar Gratis';
 
   @override
-  String get guestSampleWorkoutSignUpFreeTo => 'Daftar gratis kanggo entuk latihan sing digawe AI sing disesuaikan karo tujuan, peralatan, lan jadwalmu.';
+  String get guestSampleWorkoutSignUpFreeTo =>
+      'Daftar gratis kanggo entuk latihan sing digawe AI sing disesuaikan karo tujuan, peralatan, lan jadwalmu.';
 
   @override
-  String get guestSampleWorkoutTapToSeeWorkout => 'Tutul kanggo ndeleng demo latihan';
+  String get guestSampleWorkoutTapToSeeWorkout =>
+      'Tutul kanggo ndeleng demo latihan';
 
   @override
   String get guestSessionTimerFreeDemoDay => 'DINA DEMO GRATIS';
@@ -14010,7 +15036,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestSignUpGetYourPersonalPlan => 'Entuk Rencana Pribadimu';
 
   @override
-  String get guestSignUpSeeYourFullWorkout => 'Deleng rencana latihan lengkapmu sadurunge mbayar - ora perlu kertu kredit!';
+  String get guestSignUpSeeYourFullWorkout =>
+      'Deleng rencana latihan lengkapmu sadurunge mbayar - ora perlu kertu kredit!';
 
   @override
   String get guestSignUpSignUp => 'Daftar';
@@ -14033,10 +15060,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get guestUpgradeSignUpFree => 'Daftar Gratis';
 
   @override
-  String get guestUpgradeSignUpFreeFor => 'Daftar gratis kanggo akses tanpa wates';
+  String get guestUpgradeSignUpFreeFor =>
+      'Daftar gratis kanggo akses tanpa wates';
 
   @override
-  String get guestUpgradeYourGuestUsageToday => 'PANGGUNAAN TAMU SAMPEYAN DINA IKI';
+  String get guestUpgradeYourGuestUsageToday =>
+      'PANGGUNAAN TAMU SAMPEYAN DINA IKI';
 
   @override
   String get gymEquipmentDeselectAll => 'Batal Pilih Kabeh';
@@ -14048,13 +15077,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get gymEquipmentEquipment => 'Peralatan';
 
   @override
-  String get gymEquipmentFilterEquipmentByName => 'Saring peralatan miturut jeneng';
+  String get gymEquipmentFilterEquipmentByName =>
+      'Saring peralatan miturut jeneng';
 
   @override
-  String get gymEquipmentImportFromPdfPhotos => 'Impor saka PDF, foto, utawa URL';
+  String get gymEquipmentImportFromPdfPhotos =>
+      'Impor saka PDF, foto, utawa URL';
 
   @override
-  String get gymEquipmentLetAiPopulateYour => 'Ayo AI ngisi dhaptar peralatanmu kanthi otomatis';
+  String get gymEquipmentLetAiPopulateYour =>
+      'Ayo AI ngisi dhaptar peralatanmu kanthi otomatis';
 
   @override
   String get gymEquipmentResetAll => 'Reset Kabeh';
@@ -14076,7 +15108,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get gymLocationPickerGymLocation => 'Lokasi Gym';
 
   @override
-  String get gymLocationPickerMapBasedLocationPicker => 'Pamilih lokasi adhedhasar peta durung kasedhiya.\nKanggo saiki, atur jeneng gym ing profil.';
+  String get gymLocationPickerMapBasedLocationPicker =>
+      'Pamilih lokasi adhedhasar peta durung kasedhiya.\nKanggo saiki, atur jeneng gym ing profil.';
 
   @override
   String get gymProfileSwitcherActive => 'Aktif';
@@ -14103,7 +15136,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get gymProfileSwitcherDragToReorderProfiles => 'Seret kanggo ngurutake maneh profil';
+  String get gymProfileSwitcherDragToReorderProfiles =>
+      'Seret kanggo ngurutake maneh profil';
 
   @override
   String get gymProfileSwitcherDuplicate => 'Duplikat';
@@ -14112,10 +15146,14 @@ class AppLocalizationsJv extends AppLocalizations {
   String get gymProfileSwitcherDuplicateGym => 'Duplikat Gym';
 
   @override
-  String get gymProfileSwitcherEnterANameFor => 'Ketik jeneng kanggo gym sing diduplikat:';
+  String get gymProfileSwitcherEnterANameFor =>
+      'Ketik jeneng kanggo gym sing diduplikat:';
 
   @override
-  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount) {
+  String gymProfileSwitcherEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  ) {
     return '$equipmentCount piranti • $environmentDisplayName';
   }
 
@@ -14177,7 +15215,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitDetailScreenBest => 'Paling Apik';
 
   @override
-  String get habitDetailScreenCompleteThisHabitTo => 'Rampungake kabiasaan iki kanggo ndeleng riwayatm';
+  String get habitDetailScreenCompleteThisHabitTo =>
+      'Rampungake kabiasaan iki kanggo ndeleng riwayatm';
 
   @override
   String get habitDetailScreenCompleted => 'Rampung';
@@ -14207,7 +15246,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitDetailScreenNotEnoughDataYet => 'Data durung cukup';
 
   @override
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak) {
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
+    Object daysUntilBestStreak,
+  ) {
     return '$daysUntilBestStreak dina maneh kanggo ngalahake rekor pribadi sampeyan!';
   }
 
@@ -14263,7 +15304,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitProgressHeaderTodaySHabits => 'Kabiasaan Dina Iki';
 
   @override
-  String get habitProgressHeaderYouCompletedAllYour => 'Sampeyan wis ngrampungake kabeh kabiasaanmu dina iki!';
+  String get habitProgressHeaderYouCompletedAllYour =>
+      'Sampeyan wis ngrampungake kabeh kabiasaanmu dina iki!';
 
   @override
   String get habitTemplatesChooseATemplate => 'Pilih Cithakan';
@@ -14311,7 +15353,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitsCardQuickStart => 'Mulai Cepet:';
 
   @override
-  String get habitsCardStartTrackingDailyHabits => 'Miwiti nglacak pakulinan saben dina kanggo mbangun konsistensi lan nggayuh tujuanmu.';
+  String get habitsCardStartTrackingDailyHabits =>
+      'Miwiti nglacak pakulinan saben dina kanggo mbangun konsistensi lan nggayuh tujuanmu.';
 
   @override
   String get habitsCardTodaySHabits => 'Pakulinan Dina Iki';
@@ -14334,7 +15377,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitsDeleteHabit => 'Busak Pakulinan?';
 
   @override
-  String get habitsHoldToReorderSwipe => 'Tahan kanggo ngurutake • Geser kanggo mbusak';
+  String get habitsHoldToReorderSwipe =>
+      'Tahan kanggo ngurutake • Geser kanggo mbusak';
 
   @override
   String get habitsLog => '+ Cathet';
@@ -14364,10 +15408,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitsScreenPartCreateCustomHabit => 'Gawe Pakulinan Kustom';
 
   @override
-  String get habitsScreenPartDefineYourOwnHabit => 'Tentukake pakulinanmu dhewe nganggo jeneng & ikon kustom';
+  String get habitsScreenPartDefineYourOwnHabit =>
+      'Tentukake pakulinanmu dhewe nganggo jeneng & ikon kustom';
 
   @override
-  String get habitsScreenPartNoHabitsFound => 'Ora ana pakulinan sing ditemokake';
+  String get habitsScreenPartNoHabitsFound =>
+      'Ora ana pakulinan sing ditemokake';
 
   @override
   String get habitsScreenPartOrChooseATemplate => 'UTAWA PILIH TEMPLAT';
@@ -14406,7 +15452,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitsScreenUiHabitName => 'Jeneng Pakulinan';
 
   @override
-  String get habitsScreenUiPleaseEnterAHabit => 'Mangga lebokake jeneng pakulinan';
+  String get habitsScreenUiPleaseEnterAHabit =>
+      'Mangga lebokake jeneng pakulinan';
 
   @override
   String get habitsScreenUiPreview => 'Pratinjau';
@@ -14420,7 +15467,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get habitsTileCardAddHabit => 'Tambah Pakulinan';
 
   @override
-  String get habitsTileCardAllHabitsDoneToday => 'Kabeh pakulinan wis rampung dina iki!';
+  String get habitsTileCardAllHabitsDoneToday =>
+      'Kabeh pakulinan wis rampung dina iki!';
 
   @override
   String get habitsTileCardBuildHealthyHabits => 'Mbangun pakulinan sehat';
@@ -14464,7 +15512,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hardPaywallBestStreak => 'Streak paling apik';
 
   @override
-  String get hardPaywallCancelAnytimeInSettings => 'Bisa dibatalake kapan wae ing Setelan';
+  String get hardPaywallCancelAnytimeInSettings =>
+      'Bisa dibatalake kapan wae ing Setelan';
 
   @override
   String get hardPaywallDonTLoseYour => 'Aja nganti kelangan kemajuanmu';
@@ -14494,7 +15543,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hardPaywallYourAiCoachRemembers => 'Pelatih AI-mu ngelingi kabeh';
 
   @override
-  String get hardPaywallYourProgressIsStill => 'Kemajuanmu isih ana ing kene. Langganan kanggo nerusake apa sing wis ditinggal.';
+  String get hardPaywallYourProgressIsStill =>
+      'Kemajuanmu isih ana ing kene. Langganan kanggo nerusake apa sing wis ditinggal.';
 
   @override
   String get hardPaywallYourTrialHasEnded => 'Uji coba sampeyan wis rampung';
@@ -14516,13 +15566,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthBreakdownBloodSugar => 'Gula getih';
 
   @override
-  String get healthBreakdownChronicLowGradeInflammation => 'Inflamasi kronis tingkat rendah mengaruhi kenyamanan sendi, energi, lan pemulihan.';
+  String get healthBreakdownChronicLowGradeInflammation =>
+      'Inflamasi kronis tingkat rendah mengaruhi kenyamanan sendi, energi, lan pemulihan.';
 
   @override
   String get healthBreakdownFodmap => 'FODMAP';
 
   @override
-  String get healthBreakdownGlycemicLoadGiCarbs => 'Beban Glikemik = GI × karbohidrat ÷ 100. Luwih sithik = energi luwih stabil lan ora gampang munggah.';
+  String get healthBreakdownGlycemicLoadGiCarbs =>
+      'Beban Glikemik = GI × karbohidrat ÷ 100. Luwih sithik = energi luwih stabil lan ora gampang munggah.';
 
   @override
   String get healthBreakdownHealthBreakdown => 'Analisis kesehatan';
@@ -14531,19 +15583,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthBreakdownInflammation => 'Inflamasi';
 
   @override
-  String get healthBreakdownNoGlycemicLoadComputed => 'Beban glikemik ora diitung (bisa uga panganan tanpa karbohidrat).';
+  String get healthBreakdownNoGlycemicLoadComputed =>
+      'Beban glikemik ora diitung (bisa uga panganan tanpa karbohidrat).';
 
   @override
-  String get healthBreakdownNotClassifiedForThis => 'Ora diklasifikasikake kanggo panganan iki.';
+  String get healthBreakdownNotClassifiedForThis =>
+      'Ora diklasifikasikake kanggo panganan iki.';
 
   @override
-  String get healthBreakdownNotComputedForThis => 'Ora diitung kanggo panganan iki.';
+  String get healthBreakdownNotComputedForThis =>
+      'Ora diitung kanggo panganan iki.';
 
   @override
-  String get healthBreakdownNotComputedLikelyNo => 'Ora diitung — bisa uga ora ana gula tambahan ing panganan iki.';
+  String get healthBreakdownNotComputedLikelyNo =>
+      'Ora diitung — bisa uga ora ana gula tambahan ing panganan iki.';
 
   @override
-  String get healthBreakdownNovaGroup4Industrial => 'NOVA Grup 4 — resep industri nganggo emulsifier, HFCS, pemanis buatan, lsp.';
+  String get healthBreakdownNovaGroup4Industrial =>
+      'NOVA Grup 4 — resep industri nganggo emulsifier, HFCS, pemanis buatan, lsp.';
 
   @override
   String healthBreakdownSheetGl(Object gl) {
@@ -14561,7 +15618,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get healthBreakdownTapAnyRowFor => 'Tutul baris apa wae kanggo katrangan lengkap, skala, lan edukasi.';
+  String get healthBreakdownTapAnyRowFor =>
+      'Tutul baris apa wae kanggo katrangan lengkap, skala, lan edukasi.';
 
   @override
   String get healthBreakdownUltraProcessed => 'Ultra-proses';
@@ -14579,13 +15637,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthConnectMaybeLater => 'Mbok menawa mengko';
 
   @override
-  String get healthConnectOnboardingACoachThatSees => 'Pelatih sing ngerti kabeh';
+  String get healthConnectOnboardingACoachThatSees =>
+      'Pelatih sing ngerti kabeh';
 
   @override
-  String get healthConnectOnboardingHealthConnectIsnT => 'Health Connect ora diinstal — sambungake mengko ing Setelan.';
+  String get healthConnectOnboardingHealthConnectIsnT =>
+      'Health Connect ora diinstal — sambungake mengko ing Setelan.';
 
   @override
-  String get healthConnectOnboardingRecoveryAwareWorkouts => 'Latihan sing ngerti pemulihan';
+  String get healthConnectOnboardingRecoveryAwareWorkouts =>
+      'Latihan sing ngerti pemulihan';
 
   @override
   String healthConnectOnboardingScreenConnect(Object _platformName) {
@@ -14593,7 +15654,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String healthConnectOnboardingScreenConnectSoZealovaCan(Object _platformName) {
+  String healthConnectOnboardingScreenConnectSoZealovaCan(
+    Object _platformName,
+  ) {
     return 'Sambungake $_platformName supaya Zealova bisa ngowahi ';
   }
 
@@ -14601,10 +15664,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthConnectOnboardingSleepCoaching => 'Pelatihan turu';
 
   @override
-  String get healthConnectOnboardingUnlockYourAiHealth => 'Bukak kunci pelatih kesehatan AI-mu';
+  String get healthConnectOnboardingUnlockYourAiHealth =>
+      'Bukak kunci pelatih kesehatan AI-mu';
 
   @override
-  String get healthConnectSyncYourHealthData => 'Sinkronisasi data kesehatanmu kanggo wawasan fitness sing dipersonalisasi';
+  String get healthConnectSyncYourHealthData =>
+      'Sinkronisasi data kesehatanmu kanggo wawasan fitness sing dipersonalisasi';
 
   @override
   String get healthDevicesHealthDevices => 'Kesehatan & Piranti';
@@ -14628,13 +15693,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthMetricsCardBloodGlucose => 'GLUKOSA GETIH';
 
   @override
-  String get healthMetricsCardBloodGlucoseReadingsWill => 'Wacan glukosa getih bakal katon ing kene';
+  String get healthMetricsCardBloodGlucoseReadingsWill =>
+      'Wacan glukosa getih bakal katon ing kene';
 
   @override
-  String get healthMetricsCardConnectAGlucoseMonitor => 'Sambungake monitor glukosa liwat Health Connect';
+  String get healthMetricsCardConnectAGlucoseMonitor =>
+      'Sambungake monitor glukosa liwat Health Connect';
 
   @override
-  String get healthMetricsCardConnectHealthConnectTo => 'Sambungake Health Connect kanggo ndeleng glukosa getihmu';
+  String get healthMetricsCardConnectHealthConnectTo =>
+      'Sambungake Health Connect kanggo ndeleng glukosa getihmu';
 
   @override
   String get healthMetricsCardHealthMetrics => 'Metrik Kesehatan';
@@ -14646,7 +15714,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthMetricsCardInsulinDelivery => 'PANGIRIMAN INSULIN';
 
   @override
-  String get healthMetricsCardInsulinDeliveryData => 'Data pangiriman insulin saka piranti sing disambungake bakal katon ing kene';
+  String get healthMetricsCardInsulinDeliveryData =>
+      'Data pangiriman insulin saka piranti sing disambungake bakal katon ing kene';
 
   @override
   String get healthMetricsCardLoadingHealthData => 'Ngunggah data kesehatan...';
@@ -14661,7 +15730,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthMetricsCardMin => 'Menit';
 
   @override
-  String get healthMetricsCardNoBloodGlucoseReadings => 'Ora ana wacan glukosa getih';
+  String get healthMetricsCardNoBloodGlucoseReadings =>
+      'Ora ana wacan glukosa getih';
 
   @override
   String get healthMetricsCardNoDataForToday => 'Ora ana data kanggo dina iki';
@@ -14673,7 +15743,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthMetricsCardNoInsulinData => 'Ora ana data insulin';
 
   @override
-  String get healthMetricsCardNotEnoughDataFor => 'Data ora cukup kanggo grafik';
+  String get healthMetricsCardNotEnoughDataFor =>
+      'Data ora cukup kanggo grafik';
 
   @override
   String healthMetricsCardReadings(Object readingCount) {
@@ -14711,10 +15782,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthSyncEnable => 'Aktifake';
 
   @override
-  String get healthSyncEnableAiHealthCoaching => 'Aktifake coaching kesehatan AI?';
+  String get healthSyncEnableAiHealthCoaching =>
+      'Aktifake coaching kesehatan AI?';
 
   @override
-  String get healthSyncEnableAllDataYou => 'Aktifake kabeh data sing pengin disinkronake (langkah, detak jantung, turu, lsp.)';
+  String get healthSyncEnableAllDataYou =>
+      'Aktifake kabeh data sing pengin disinkronake (langkah, detak jantung, turu, lsp.)';
 
   @override
   String get healthSyncEnableSync => 'Aktifake Sinkronisasi';
@@ -14732,7 +15805,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthSyncGrantPermissions => 'Wenehi Izin';
 
   @override
-  String get healthSyncHealthConnectIsNot => 'Health Connect ora kasedhiya. Mangga instal saka Play Store.';
+  String get healthSyncHealthConnectIsNot =>
+      'Health Connect ora kasedhiya. Mangga instal saka Play Store.';
 
   @override
   String get healthSyncHealthSync => 'SINKRONISASI KESEHATAN';
@@ -14765,10 +15839,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthSyncOpenSamsungHealth => 'Bukak Samsung Health';
 
   @override
-  String get healthSyncReturnHereAndToggle => 'Bali mrene lan aktifake Health Connect';
+  String get healthSyncReturnHereAndToggle =>
+      'Bali mrene lan aktifake Health Connect';
 
   @override
-  String get healthSyncScrollDownAndTap => 'Gulung mudhun lan tutul \"Health Connect\"';
+  String get healthSyncScrollDownAndTap =>
+      'Gulung mudhun lan tutul \"Health Connect\"';
 
   @override
   String healthSyncSectionConnect(Object appName) {
@@ -14826,7 +15902,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthSyncSyncNow => 'Sinkronake Saiki';
 
   @override
-  String get healthSyncTurnOnSyncWith => 'Aktifake \"Sinkronisasi karo Health Connect\"';
+  String get healthSyncTurnOnSyncWith =>
+      'Aktifake \"Sinkronisasi karo Health Connect\"';
 
   @override
   String get healthSyncUsingSamsungHealth => 'Nggunakake Samsung Health?';
@@ -14838,16 +15915,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get healthSyncWriteToHealthApp => 'Tulis menyang aplikasi kesehatan';
 
   @override
-  String get hearInsightButtonNoAudioOutputAvailable => 'Ora ana output audio — sambungake headphone utawa aktifake swara.';
+  String get hearInsightButtonNoAudioOutputAvailable =>
+      'Ora ana output audio — sambungake headphone utawa aktifake swara.';
 
   @override
   String get hearInsightButtonStop => 'Mandheg';
 
   @override
-  String get hearInsightButtonStopInsightPlayback => 'Mandhegake puter maneh wawasan';
+  String get hearInsightButtonStopInsightPlayback =>
+      'Mandhegake puter maneh wawasan';
 
   @override
-  String get heartRateChartAddRestingHeartRate => 'Tambah detak jantung istirahat kanggo estimasi';
+  String get heartRateChartAddRestingHeartRate =>
+      'Tambah detak jantung istirahat kanggo estimasi';
 
   @override
   String get heartRateChartAerobic => 'Aerobik';
@@ -14856,7 +15936,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heartRateChartAnaerobic => 'Anaerobik';
 
   @override
-  String get heartRateChartConnectASmartwatchTo => 'Sambungake smartwatch kanggo nglacak detak jantung';
+  String get heartRateChartConnectASmartwatchTo =>
+      'Sambungake smartwatch kanggo nglacak detak jantung';
 
   @override
   String get heartRateChartEstimatedVo2Max => 'Estimasi VO2 Max';
@@ -14890,12 +15971,18 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heartRateChartNoHeartRateData => 'Ora ana data detak jantung';
 
   @override
-  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange) {
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(
+    Object percentageRange,
+  ) {
     return 'Detak Jantung: $percentageRange saka maksimal';
   }
 
   @override
-  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel) {
+  String heartRateChartPartZoneLegendItemM(
+    Object minutes,
+    Object percent,
+    Object shortLabel,
+  ) {
     return '$shortLabel ${minutes}m ($percent%)';
   }
 
@@ -14919,7 +16006,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heartRateChartSummaryMin => 'Menit';
 
   @override
-  String get heartRateChartSummaryNoDataRecorded => 'Ora ana data sing kacathet';
+  String get heartRateChartSummaryNoDataRecorded =>
+      'Ora ana data sing kacathet';
 
   @override
   String get heartRateChartSummaryPeak => 'Puncak';
@@ -14938,7 +16026,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get heartRateChartWearYourWatchDuring => 'Gunakake jam tangan nalika latihan kanggo nglacak detak jantung';
+  String get heartRateChartWearYourWatchDuring =>
+      'Gunakake jam tangan nalika latihan kanggo nglacak detak jantung';
 
   @override
   String get heartRateChartZoneBreakdown => 'Rincian Zona';
@@ -14989,7 +16078,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroActionCardFailedToLogWater => 'Gagal nyathet banyu';
 
   @override
-  String get heroActionCardFastEndedSuccessfully => 'Pasa rampung kanthi sukses';
+  String get heroActionCardFastEndedSuccessfully =>
+      'Pasa rampung kanthi sukses';
 
   @override
   String get heroActionCardFasting => 'Pasa';
@@ -15054,7 +16144,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroActionCardSipToXlJug => 'Saka sruput nganti jug XL';
 
   @override
-  String get heroActionCardTakeProgressPhoto => 'Jupuk foto progres kanggo nglacak transformasi sampeyan';
+  String get heroActionCardTakeProgressPhoto =>
+      'Jupuk foto progres kanggo nglacak transformasi sampeyan';
 
   @override
   String get heroActionCardTrackYourProgress => 'Lacak Progresmu';
@@ -15158,19 +16249,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardBodyweightVariant => 'VARIAN BERAT AWAK';
 
   @override
-  String get heroWorkoutCardCouldNotDismissWorkout => 'Ora bisa ngilangi latihan';
+  String get heroWorkoutCardCouldNotDismissWorkout =>
+      'Ora bisa ngilangi latihan';
 
   @override
-  String get heroWorkoutCardCouldNotMarkWorkout => 'Ora bisa menehi tandha latihan wis rampung';
+  String get heroWorkoutCardCouldNotMarkWorkout =>
+      'Ora bisa menehi tandha latihan wis rampung';
 
   @override
   String get heroWorkoutCardCouldNotSkipWorkout => 'Ora bisa ngliwati latihan';
 
   @override
-  String get heroWorkoutCardCouldNotUndoCompletion => 'Ora bisa mbatalake rampung';
+  String get heroWorkoutCardCouldNotUndoCompletion =>
+      'Ora bisa mbatalake rampung';
 
   @override
-  String get heroWorkoutCardCouldnTRegenerateWorkout => 'Ora bisa nggawe ulang latihan. Mangga coba maneh.';
+  String get heroWorkoutCardCouldnTRegenerateWorkout =>
+      'Ora bisa nggawe ulang latihan. Mangga coba maneh.';
 
   @override
   String get heroWorkoutCardDelayUntilFastEnds => 'Tunda nganti pasa rampung';
@@ -15182,7 +16277,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardDismissQuickWorkout => 'Batalake Quick Workout?';
 
   @override
-  String get heroWorkoutCardDismissedOfflineWillSync => 'Dibatalake nalika offline — bakal sinkron nalika online';
+  String get heroWorkoutCardDismissedOfflineWillSync =>
+      'Dibatalake nalika offline — bakal sinkron nalika online';
 
   @override
   String get heroWorkoutCardDoToday => 'Lakoni Dina Iki';
@@ -15196,7 +16292,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort) {
+  String heroWorkoutCardExtExercises(
+    Object exerciseCount,
+    Object formattedDurationShort,
+  ) {
     return '$formattedDurationShort • $exerciseCount latihan';
   }
 
@@ -15214,13 +16313,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardGlanceWorkout => 'Deleng Workout';
 
   @override
-  String get heroWorkoutCardLoadingYourWorkout => 'Ngunggah workout sampeyan...';
+  String get heroWorkoutCardLoadingYourWorkout =>
+      'Ngunggah workout sampeyan...';
 
   @override
   String get heroWorkoutCardLogASnack => 'CATET CEMILAN';
 
   @override
-  String get heroWorkoutCardLogPostWorkoutMeal => 'CATET PANGANAN SAWUSE WORKOUT';
+  String get heroWorkoutCardLogPostWorkoutMeal =>
+      'CATET PANGANAN SAWUSE WORKOUT';
 
   @override
   String get heroWorkoutCardMarkAsDone => 'Tandhani wis rampung?';
@@ -15232,7 +16333,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardMarkDone => 'Tandhani Rampung';
 
   @override
-  String get heroWorkoutCardMarkedAsARest => 'Ditandhani minangka dina ngaso. Muga cepet pulih.';
+  String get heroWorkoutCardMarkedAsARest =>
+      'Ditandhani minangka dina ngaso. Muga cepet pulih.';
 
   @override
   String get heroWorkoutCardMissedWorkout => 'Workout Keliwat';
@@ -15246,15 +16348,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardMoveToToday => 'PINDAH MENYANG DINA IKI';
 
   @override
-  String get heroWorkoutCardNothingToShareYet => 'Durung ana sing bisa dituduhake — catet workout dhisik';
+  String get heroWorkoutCardNothingToShareYet =>
+      'Durung ana sing bisa dituduhake — catet workout dhisik';
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
+    Object exerciseCount,
+  ) {
     return '$exerciseCount latihan';
   }
 
   @override
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes) {
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
+    Object bestDurationMinutes,
+  ) {
     return '$bestDurationMinutes menit';
   }
 
@@ -15342,13 +16449,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardThisMayTakeA => 'Iki mbutuhake wektu sedhela';
 
   @override
-  String get heroWorkoutCardThisWillMarkThe => 'Iki bakal nandhani workout minangka durung rampung.';
+  String get heroWorkoutCardThisWillMarkThe =>
+      'Iki bakal nandhani workout minangka durung rampung.';
 
   @override
-  String get heroWorkoutCardThisWorkoutWillBe => 'Workout iki bakal ditandhani minangka keliwat.';
+  String get heroWorkoutCardThisWorkoutWillBe =>
+      'Workout iki bakal ditandhani minangka keliwat.';
 
   @override
-  String get heroWorkoutCardTodaySWorkoutComplete => 'Workout dina iki rampung!';
+  String get heroWorkoutCardTodaySWorkoutComplete =>
+      'Workout dina iki rampung!';
 
   @override
   String get heroWorkoutCardUndo => 'Batalake';
@@ -15368,10 +16478,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get heroWorkoutCardWorkoutIsNotReady => 'Workout durung siap. Coba gawe maneh.';
+  String get heroWorkoutCardWorkoutIsNotReady =>
+      'Workout durung siap. Coba gawe maneh.';
 
   @override
-  String get heroWorkoutCardWorkoutMarkedAsDone => 'Workout ditandhani wis rampung!';
+  String get heroWorkoutCardWorkoutMarkedAsDone =>
+      'Workout ditandhani wis rampung!';
 
   @override
   String get heroWorkoutCardWorkoutRegenerated => 'Workout digawe maneh!';
@@ -15383,13 +16495,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCardWorkoutUnmarked => 'Workout ora ditandhani';
 
   @override
-  String get heroWorkoutCardYouLlLoseThis => 'Sampeyan bakal kelangan Quick iki. Set sing wis dicathet bakal ilang. Terusake?';
+  String get heroWorkoutCardYouLlLoseThis =>
+      'Sampeyan bakal kelangan Quick iki. Set sing wis dicathet bakal ilang. Terusake?';
 
   @override
-  String get heroWorkoutCarouselAllDoneForThis => 'Kabeh wis rampung kanggo minggu iki!';
+  String get heroWorkoutCarouselAllDoneForThis =>
+      'Kabeh wis rampung kanggo minggu iki!';
 
   @override
-  String get heroWorkoutCarouselCouldNotLoadWorkouts => 'Ora bisa ngunggah workout';
+  String get heroWorkoutCarouselCouldNotLoadWorkouts =>
+      'Ora bisa ngunggah workout';
 
   @override
   String get heroWorkoutCarouselGeneratingWorkout => 'Nggawe workout...';
@@ -15401,10 +16516,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroWorkoutCarouselRestUpForNext => 'Ngaso kanggo minggu ngarep';
 
   @override
-  String get heroWorkoutCarouselSetYourWorkoutDays => 'Setel dina workout sampeyan';
+  String get heroWorkoutCarouselSetYourWorkoutDays =>
+      'Setel dina workout sampeyan';
 
   @override
-  String get heroWorkoutCarouselSettingUpYourWorkout => 'Nyiapake workout sampeyan...';
+  String get heroWorkoutCarouselSettingUpYourWorkout =>
+      'Nyiapake workout sampeyan...';
 
   @override
   String get heroWorkoutCarouselTapToSetUp => 'Tutul kanggo nyetel ing Setelan';
@@ -15421,7 +16538,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeApply => 'Aplikasi';
 
   @override
-  String get homeCustomizeYourHomeLayout => 'Kustomisasi tata letak ngarep sampeyan, ganti profil gym, lan lacak level sampeyan — kabeh saka kene.';
+  String get homeCustomizeYourHomeLayout =>
+      'Kustomisasi tata letak ngarep sampeyan, ganti profil gym, lan lacak level sampeyan — kabeh saka kene.';
 
   @override
   String get homeDailyStepsGoal => 'Target langkah saben dina';
@@ -15430,304 +16548,402 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeDefaultLayoutRestored => 'Tata letak standar wis dibalekake!';
 
   @override
-  String get homeEmptyAchievements_v1 => 'Durung ana prestasi. Terus latihan kanggo mbukak kunci.';
+  String get homeEmptyAchievements_v1 =>
+      'Durung ana prestasi. Terus latihan kanggo mbukak kunci.';
 
   @override
-  String get homeEmptyAchievements_v2 => 'Prestasi bakal mbukak nalika sampeyan nggayuh target. Terusake.';
+  String get homeEmptyAchievements_v2 =>
+      'Prestasi bakal mbukak nalika sampeyan nggayuh target. Terusake.';
 
   @override
-  String get homeEmptyAchievements_v3 => 'Durung ana sing mbukak. Sing pisanan luwih cedhak tinimbang sing sampeyan kira.';
+  String get homeEmptyAchievements_v3 =>
+      'Durung ana sing mbukak. Sing pisanan luwih cedhak tinimbang sing sampeyan kira.';
 
   @override
-  String get homeEmptyAchievements_v4 => 'Miwiti nyathet latihan lan prestasi bakal teka.';
+  String get homeEmptyAchievements_v4 =>
+      'Miwiti nyathet latihan lan prestasi bakal teka.';
 
   @override
-  String get homeEmptyChallenges_v1 => 'Ora ana tantangan aktif. Jelajahi lan pilih siji kanggo miwiti.';
+  String get homeEmptyChallenges_v1 =>
+      'Ora ana tantangan aktif. Jelajahi lan pilih siji kanggo miwiti.';
 
   @override
-  String get homeEmptyChallenges_v2 => 'Tantangan iku cara sing apik kanggo mbangun semangat. Melua siji.';
+  String get homeEmptyChallenges_v2 =>
+      'Tantangan iku cara sing apik kanggo mbangun semangat. Melua siji.';
 
   @override
-  String get homeEmptyChallenges_v3 => 'Durung ana sing mlaku. Temokake tantangan sing cocog karo levelmu.';
+  String get homeEmptyChallenges_v3 =>
+      'Durung ana sing mlaku. Temokake tantangan sing cocog karo levelmu.';
 
   @override
-  String get homeEmptyChallenges_v4 => 'Ora ana tantangan? Ana sawetara sing apik nunggu sampeyan.';
+  String get homeEmptyChallenges_v4 =>
+      'Ora ana tantangan? Ana sawetara sing apik nunggu sampeyan.';
 
   @override
-  String get homeEmptyChat_v1 => 'Durung ana pesen. Takon apa wae marang pelatihmu.';
+  String get homeEmptyChat_v1 =>
+      'Durung ana pesen. Takon apa wae marang pelatihmu.';
 
   @override
-  String get homeEmptyChat_v2 => 'Pelatihmu wis siyap. Apa sing ana ing pikiranmu?';
+  String get homeEmptyChat_v2 =>
+      'Pelatihmu wis siyap. Apa sing ana ing pikiranmu?';
 
   @override
-  String get homeEmptyChat_v3 => 'Obrolan isih kosong. Takon utawa critakake perasaanmu.';
+  String get homeEmptyChat_v3 =>
+      'Obrolan isih kosong. Takon utawa critakake perasaanmu.';
 
   @override
   String get homeEmptyChat_v4 => 'Obrolan pisanan diwiwiti ing kene. Ayo sapa.';
 
   @override
-  String get homeEmptyCustomExercises_v1 => 'Durung ana latihan khusus. Gawe dhewe lan tambahake menyang latihan apa wae.';
+  String get homeEmptyCustomExercises_v1 =>
+      'Durung ana latihan khusus. Gawe dhewe lan tambahake menyang latihan apa wae.';
 
   @override
-  String get homeEmptyCustomExercises_v2 => 'Perpustakaan latihan khusus kosong. Gawe gerakan pisananmu.';
+  String get homeEmptyCustomExercises_v2 =>
+      'Perpustakaan latihan khusus kosong. Gawe gerakan pisananmu.';
 
   @override
-  String get homeEmptyCustomExercises_v3 => 'Durung ana apa-apa ing kene. Tambah latihan sing ora ana ing perpustakaan utama.';
+  String get homeEmptyCustomExercises_v3 =>
+      'Durung ana apa-apa ing kene. Tambah latihan sing ora ana ing perpustakaan utama.';
 
   @override
-  String get homeEmptyCustomExercises_v4 => 'Ora ana latihan khusus. Gawe siji lan bakal katon ing telusuran.';
+  String get homeEmptyCustomExercises_v4 =>
+      'Ora ana latihan khusus. Gawe siji lan bakal katon ing telusuran.';
 
   @override
-  String get homeEmptyFasting_v1 => 'Durung ana sesi pasa sing diwiwiti. Pilih protokol kanggo miwiti.';
+  String get homeEmptyFasting_v1 =>
+      'Durung ana sesi pasa sing diwiwiti. Pilih protokol kanggo miwiti.';
 
   @override
-  String get homeEmptyFasting_v2 => 'Pelacak pasa kosong. Miwiti sesi nalika sampeyan siyap.';
+  String get homeEmptyFasting_v2 =>
+      'Pelacak pasa kosong. Miwiti sesi nalika sampeyan siyap.';
 
   @override
-  String get homeEmptyFasting_v3 => 'Durung ana sing dicathet. Pilih wektu lan miwiti jam.';
+  String get homeEmptyFasting_v3 =>
+      'Durung ana sing dicathet. Pilih wektu lan miwiti jam.';
 
   @override
-  String get homeEmptyFasting_v4 => 'Ora ana data pasa. Tutul kanggo miwiti sesi pisananmu.';
+  String get homeEmptyFasting_v4 =>
+      'Ora ana data pasa. Tutul kanggo miwiti sesi pisananmu.';
 
   @override
-  String get homeEmptyFavorites_v1 => 'Durung ana favorit. Wenehi tandha ati ing latihan utawa gerakan kanggo nyimpen.';
+  String get homeEmptyFavorites_v1 =>
+      'Durung ana favorit. Wenehi tandha ati ing latihan utawa gerakan kanggo nyimpen.';
 
   @override
-  String get homeEmptyFavorites_v2 => 'Ora ana sing disimpen ing kene. Temokake sing sampeyan senengi lan simpen.';
+  String get homeEmptyFavorites_v2 =>
+      'Ora ana sing disimpen ing kene. Temokake sing sampeyan senengi lan simpen.';
 
   @override
-  String get homeEmptyFavorites_v3 => 'Dhaptar favoritmu nunggu. Jelajahi lan simpen.';
+  String get homeEmptyFavorites_v3 =>
+      'Dhaptar favoritmu nunggu. Jelajahi lan simpen.';
 
   @override
-  String get homeEmptyFavorites_v4 => 'Tutul tandha ati ing latihan apa wae kanggo nambah ing kene.';
+  String get homeEmptyFavorites_v4 =>
+      'Tutul tandha ati ing latihan apa wae kanggo nambah ing kene.';
 
   @override
-  String get homeEmptyFriends_v1 => 'Durung ana sambungan. Undang kanca kanggo latihan bareng.';
+  String get homeEmptyFriends_v1 =>
+      'Durung ana sambungan. Undang kanca kanggo latihan bareng.';
 
   @override
-  String get homeEmptyFriends_v2 => 'Dhaptar kanca kosong. Tanggung jawab iku penting banget.';
+  String get homeEmptyFriends_v2 =>
+      'Dhaptar kanca kosong. Tanggung jawab iku penting banget.';
 
   @override
-  String get homeEmptyFriends_v3 => 'Durung ana sapa-sapa ing kene. Nuduhake linkmu kanggo nambah kanca.';
+  String get homeEmptyFriends_v3 =>
+      'Durung ana sapa-sapa ing kene. Nuduhake linkmu kanggo nambah kanca.';
 
   @override
-  String get homeEmptyFriends_v4 => 'Ora ana kanca sing ditambahake. Latihan bareng wong liya iku mbantu — ayo tambah siji.';
+  String get homeEmptyFriends_v4 =>
+      'Ora ana kanca sing ditambahake. Latihan bareng wong liya iku mbantu — ayo tambah siji.';
 
   @override
-  String get homeEmptyGymProfiles_v1 => 'Ora ana profil gym. Tambah peralatanmu supaya latihan cocog karo setelanmu.';
+  String get homeEmptyGymProfiles_v1 =>
+      'Ora ana profil gym. Tambah peralatanmu supaya latihan cocog karo setelanmu.';
 
   @override
-  String get homeEmptyGymProfiles_v2 => 'Profil gym kosong. Kandhani peralatanmu sepisan — kita bakal nggunakake saben wektu.';
+  String get homeEmptyGymProfiles_v2 =>
+      'Profil gym kosong. Kandhani peralatanmu sepisan — kita bakal nggunakake saben wektu.';
 
   @override
-  String get homeEmptyGymProfiles_v3 => 'Ora ana setelan sing disimpen. Tambah profil gym kanggo entuk latihan sing pas.';
+  String get homeEmptyGymProfiles_v3 =>
+      'Ora ana setelan sing disimpen. Tambah profil gym kanggo entuk latihan sing pas.';
 
   @override
-  String get homeEmptyGymProfiles_v4 => 'Profil kosong. Konfigurasi peralatanmu lan AI bakal nindakake liyane.';
+  String get homeEmptyGymProfiles_v4 =>
+      'Profil kosong. Konfigurasi peralatanmu lan AI bakal nindakake liyane.';
 
   @override
-  String get homeEmptyHabits_v1 => 'Durung ana pakulinan sing disetel. Tambah siji pakulinan cilik saben dina kanggo miwiti.';
+  String get homeEmptyHabits_v1 =>
+      'Durung ana pakulinan sing disetel. Tambah siji pakulinan cilik saben dina kanggo miwiti.';
 
   @override
-  String get homeEmptyHabits_v2 => 'Pelacak pakulinan kosong. Bangun siji pakulinan lan lakoni kanthi otomatis.';
+  String get homeEmptyHabits_v2 =>
+      'Pelacak pakulinan kosong. Bangun siji pakulinan lan lakoni kanthi otomatis.';
 
   @override
-  String get homeEmptyHabits_v3 => 'Durung ana sing dilacak. Wiwiti karo siji pakulinan sing bisa sampeyan lakoni saben dina.';
+  String get homeEmptyHabits_v3 =>
+      'Durung ana sing dilacak. Wiwiti karo siji pakulinan sing bisa sampeyan lakoni saben dina.';
 
   @override
-  String get homeEmptyHabits_v4 => 'Ora ana pakulinan aktif. Tindakan cilik saben dina bakal ngasilake asil gedhe.';
+  String get homeEmptyHabits_v4 =>
+      'Ora ana pakulinan aktif. Tindakan cilik saben dina bakal ngasilake asil gedhe.';
 
   @override
-  String get homeEmptyHistory_v1 => 'Durung ana latihan sing dicathet. Rampungake siji kanggo miwiti riwayatmu.';
+  String get homeEmptyHistory_v1 =>
+      'Durung ana latihan sing dicathet. Rampungake siji kanggo miwiti riwayatmu.';
 
   @override
-  String get homeEmptyHistory_v2 => 'Riwayatmu isih resik — bakal owah sawise sesi pisananmu.';
+  String get homeEmptyHistory_v2 =>
+      'Riwayatmu isih resik — bakal owah sawise sesi pisananmu.';
 
   @override
-  String get homeEmptyHistory_v3 => 'Durung ana latihan sadurunge. Rampungake siji lan bakal katon ing kene.';
+  String get homeEmptyHistory_v3 =>
+      'Durung ana latihan sadurunge. Rampungake siji lan bakal katon ing kene.';
 
   @override
-  String get homeEmptyHistory_v4 => 'Riwayat kosong tegese sampeyan lagi miwiti. Ayo tulis riwayatmu.';
+  String get homeEmptyHistory_v4 =>
+      'Riwayat kosong tegese sampeyan lagi miwiti. Ayo tulis riwayatmu.';
 
   @override
-  String get homeEmptyJournal_v1 => 'Ora ana entri jurnal. Tulis kamenangan dina iki, sanajan cilik.';
+  String get homeEmptyJournal_v1 =>
+      'Ora ana entri jurnal. Tulis kamenangan dina iki, sanajan cilik.';
 
   @override
-  String get homeEmptyJournal_v2 => 'Jurnal kosong. Dokumentasikake perjalananmu — sampeyan bakal seneng mengko.';
+  String get homeEmptyJournal_v2 =>
+      'Jurnal kosong. Dokumentasikake perjalananmu — sampeyan bakal seneng mengko.';
 
   @override
-  String get homeEmptyJournal_v3 => 'Durung ana sing ditulis. Entri pisananmu diwiwiti ing kene.';
+  String get homeEmptyJournal_v3 =>
+      'Durung ana sing ditulis. Entri pisananmu diwiwiti ing kene.';
 
   @override
-  String get homeEmptyJournal_v4 => 'Ora ana entri. Luangake 2 menit lan tulis sing jujur.';
+  String get homeEmptyJournal_v4 =>
+      'Ora ana entri. Luangake 2 menit lan tulis sing jujur.';
 
   @override
-  String get homeEmptyMeasurements_v1 => 'Durung ana pangukuran sing dicathet. Tambah data dhasar kanggo nglacak progres.';
+  String get homeEmptyMeasurements_v1 =>
+      'Durung ana pangukuran sing dicathet. Tambah data dhasar kanggo nglacak progres.';
 
   @override
-  String get homeEmptyMeasurements_v2 => 'Durung ana sing dilacak. Miwiti karo angka sampeyan saiki.';
+  String get homeEmptyMeasurements_v2 =>
+      'Durung ana sing dilacak. Miwiti karo angka sampeyan saiki.';
 
   @override
-  String get homeEmptyMeasurements_v3 => 'Durung ana data awak. Cathet pangukuran kanggo ndeleng tren.';
+  String get homeEmptyMeasurements_v3 =>
+      'Durung ana data awak. Cathet pangukuran kanggo ndeleng tren.';
 
   @override
-  String get homeEmptyMeasurements_v4 => 'Pangukuran kosong. Tambah siji supaya sampeyan duwe target sing kudu dikalahake.';
+  String get homeEmptyMeasurements_v4 =>
+      'Pangukuran kosong. Tambah siji supaya sampeyan duwe target sing kudu dikalahake.';
 
   @override
-  String get homeEmptyMood_v1 => 'Ora ana entri swasana ati. Kepiye perasaanmu dina iki?';
+  String get homeEmptyMood_v1 =>
+      'Ora ana entri swasana ati. Kepiye perasaanmu dina iki?';
 
   @override
-  String get homeEmptyMood_v2 => 'Pelacak swasana ati kosong. Cathet perasaanmu sawise latihan sabanjure.';
+  String get homeEmptyMood_v2 =>
+      'Pelacak swasana ati kosong. Cathet perasaanmu sawise latihan sabanjure.';
 
   @override
-  String get homeEmptyMood_v3 => 'Durung ana sing dicathet. Pola swasana ati mbantu prédhiksi dina latihan paling apikmu.';
+  String get homeEmptyMood_v3 =>
+      'Durung ana sing dicathet. Pola swasana ati mbantu prédhiksi dina latihan paling apikmu.';
 
   @override
-  String get homeEmptyMood_v4 => 'Ora ana data swasana ati. Tutul kanggo nambah entri dina iki.';
+  String get homeEmptyMood_v4 =>
+      'Ora ana data swasana ati. Tutul kanggo nambah entri dina iki.';
 
   @override
-  String get homeEmptyNutrition_v1 => 'Durung ana sing dicathet. Jupuk foto kanggo miwiti.';
+  String get homeEmptyNutrition_v1 =>
+      'Durung ana sing dicathet. Jupuk foto kanggo miwiti.';
 
   @override
-  String get homeEmptyNutrition_v2 => 'Cathetan nutrisi sampeyan isih resik. Apa panganan pisananmu?';
+  String get homeEmptyNutrition_v2 =>
+      'Cathetan nutrisi sampeyan isih resik. Apa panganan pisananmu?';
 
   @override
-  String get homeEmptyNutrition_v3 => 'Durung ana panganan sing dicathet dina iki. Cathet siji kanggo ndeleng makro sampeyan.';
+  String get homeEmptyNutrition_v3 =>
+      'Durung ana panganan sing dicathet dina iki. Cathet siji kanggo ndeleng makro sampeyan.';
 
   @override
-  String get homeEmptyNutrition_v4 => 'Arep mangan? Jupuk foto lan kita sing bakal ngetung angkane.';
+  String get homeEmptyNutrition_v4 =>
+      'Arep mangan? Jupuk foto lan kita sing bakal ngetung angkane.';
 
   @override
-  String get homeEmptyPhotos_v1 => 'Ora ana foto progres. Jupuk foto pisananmu dina iki.';
+  String get homeEmptyPhotos_v1 =>
+      'Ora ana foto progres. Jupuk foto pisananmu dina iki.';
 
   @override
-  String get homeEmptyPhotos_v2 => 'Foto nyritakake apa sing ora bisa diomongake angka. Jupuk siji saiki.';
+  String get homeEmptyPhotos_v2 =>
+      'Foto nyritakake apa sing ora bisa diomongake angka. Jupuk siji saiki.';
 
   @override
-  String get homeEmptyPhotos_v3 => 'Durung ana apa-apa ing kene. Miwiti jurnal progres visualmu.';
+  String get homeEmptyPhotos_v3 =>
+      'Durung ana apa-apa ing kene. Miwiti jurnal progres visualmu.';
 
   @override
-  String get homeEmptyPhotos_v4 => 'Ora ana foto sing dicathet. Tambah siji kanggo nglacak owah-owahan visual saka wektu ke wektu.';
+  String get homeEmptyPhotos_v4 =>
+      'Ora ana foto sing dicathet. Tambah siji kanggo nglacak owah-owahan visual saka wektu ke wektu.';
 
   @override
-  String get homeEmptyPlans_v1 => 'Durung ana rencana. Ayo AI nggawe rencana adhedhasar jadwal lan tujuanmu.';
+  String get homeEmptyPlans_v1 =>
+      'Durung ana rencana. Ayo AI nggawe rencana adhedhasar jadwal lan tujuanmu.';
 
   @override
-  String get homeEmptyPlans_v2 => 'Rencana kosong. Gawe rencana latihan pribadi kanggo miwiti.';
+  String get homeEmptyPlans_v2 =>
+      'Rencana kosong. Gawe rencana latihan pribadi kanggo miwiti.';
 
   @override
-  String get homeEmptyPlans_v3 => 'Durung ana sing disetel. Gawe rencana lan lakoni kanthi konsisten.';
+  String get homeEmptyPlans_v3 =>
+      'Durung ana sing disetel. Gawe rencana lan lakoni kanthi konsisten.';
 
   @override
-  String get homeEmptyPlans_v4 => 'Ora ana rencana aktif. Wiwiti siji supaya ora bingung apa sing kudu dilakoni saben dina.';
+  String get homeEmptyPlans_v4 =>
+      'Ora ana rencana aktif. Wiwiti siji supaya ora bingung apa sing kudu dilakoni saben dina.';
 
   @override
-  String get homeEmptyPrograms_v1 => 'Ora ana program aktif. Jelajahi program kanggo nemokake tujuan sabanjure.';
+  String get homeEmptyPrograms_v1 =>
+      'Ora ana program aktif. Jelajahi program kanggo nemokake tujuan sabanjure.';
 
   @override
-  String get homeEmptyPrograms_v2 => 'Program menehi struktur latihanmu. Pilih siji kanggo miwiti.';
+  String get homeEmptyPrograms_v2 =>
+      'Program menehi struktur latihanmu. Pilih siji kanggo miwiti.';
 
   @override
-  String get homeEmptyPrograms_v3 => 'Durung ana sing mlaku. Miwiti program kanggo mbukak rencana mingguan.';
+  String get homeEmptyPrograms_v3 =>
+      'Durung ana sing mlaku. Miwiti program kanggo mbukak rencana mingguan.';
 
   @override
-  String get homeEmptyPrograms_v4 => 'Ora ana program aktif. Pilih siji sing cocog karo kahananmu saiki.';
+  String get homeEmptyPrograms_v4 =>
+      'Ora ana program aktif. Pilih siji sing cocog karo kahananmu saiki.';
 
   @override
-  String get homeEmptyRecipes_v1 => 'Durung ana resep. Jelajahi perpustakaan utawa takon pelatihmu.';
+  String get homeEmptyRecipes_v1 =>
+      'Durung ana resep. Jelajahi perpustakaan utawa takon pelatihmu.';
 
   @override
-  String get homeEmptyRecipes_v2 => 'Koleksi resepmu kosong. Tambah panganan sing sampeyan senengi.';
+  String get homeEmptyRecipes_v2 =>
+      'Koleksi resepmu kosong. Tambah panganan sing sampeyan senengi.';
 
   @override
-  String get homeEmptyRecipes_v3 => 'Ora ana sing disimpen ing kene. Jelajahi lan simpen resep sing sampeyan senengi.';
+  String get homeEmptyRecipes_v3 =>
+      'Ora ana sing disimpen ing kene. Jelajahi lan simpen resep sing sampeyan senengi.';
 
   @override
-  String get homeEmptyRecipes_v4 => 'Perpustakaan resep kosong. Tutul kanggo nemokake panganan anyar.';
+  String get homeEmptyRecipes_v4 =>
+      'Perpustakaan resep kosong. Tutul kanggo nemokake panganan anyar.';
 
   @override
-  String get homeEmptyRecovery_v1 => 'Ora ana data pemulihan. Cathet turu, HRV, utawa rasa nyeri kanggo entuk skor.';
+  String get homeEmptyRecovery_v1 =>
+      'Ora ana data pemulihan. Cathet turu, HRV, utawa rasa nyeri kanggo entuk skor.';
 
   @override
-  String get homeEmptyRecovery_v2 => 'Pelacakan pemulihan kosong. Sambungake piranti wearable utawa cathet kanthi manual.';
+  String get homeEmptyRecovery_v2 =>
+      'Pelacakan pemulihan kosong. Sambungake piranti wearable utawa cathet kanthi manual.';
 
   @override
-  String get homeEmptyRecovery_v3 => 'Durung ana sing dilacak. Data pemulihan mbantu sampeyan latihan luwih pinter.';
+  String get homeEmptyRecovery_v3 =>
+      'Durung ana sing dilacak. Data pemulihan mbantu sampeyan latihan luwih pinter.';
 
   @override
-  String get homeEmptyRecovery_v4 => 'Pemulihan kosong. Tambah data dina iki kanggo nglindhungi sesi sabanjure.';
+  String get homeEmptyRecovery_v4 =>
+      'Pemulihan kosong. Tambah data dina iki kanggo nglindhungi sesi sabanjure.';
 
   @override
-  String get homeEmptyScores_v1 => 'Durung ana skor. Cathet latihan kanggo ngasilake skor kesiapan pisananmu.';
+  String get homeEmptyScores_v1 =>
+      'Durung ana skor. Cathet latihan kanggo ngasilake skor kesiapan pisananmu.';
 
   @override
-  String get homeEmptyScores_v2 => 'Skor bakal katon sawise sampeyan wiwit nyathet data. Terusake ya.';
+  String get homeEmptyScores_v2 =>
+      'Skor bakal katon sawise sampeyan wiwit nyathet data. Terusake ya.';
 
   @override
-  String get homeEmptyScores_v3 => 'Durung ana skor. Rampungake sesi kanggo ndeleng rating pisananmu.';
+  String get homeEmptyScores_v3 =>
+      'Durung ana skor. Rampungake sesi kanggo ndeleng rating pisananmu.';
 
   @override
-  String get homeEmptyScores_v4 => 'Skor kosong. Data luwih akeh tegese wawasan luwih cetha — ayo wiwit nyathet.';
+  String get homeEmptyScores_v4 =>
+      'Skor kosong. Data luwih akeh tegese wawasan luwih cetha — ayo wiwit nyathet.';
 
   @override
-  String get homeEmptySleep_v1 => 'Ora ana data turu. Sambungake piranti wearable utawa cathet kanthi manual.';
+  String get homeEmptySleep_v1 =>
+      'Ora ana data turu. Sambungake piranti wearable utawa cathet kanthi manual.';
 
   @override
-  String get homeEmptySleep_v2 => 'Pelacak turu kosong. Pemulihan diwiwiti kanthi ngerti turumu.';
+  String get homeEmptySleep_v2 =>
+      'Pelacak turu kosong. Pemulihan diwiwiti kanthi ngerti turumu.';
 
   @override
-  String get homeEmptySleep_v3 => 'Durung ana turu sing dicathet. Tambah data bengi wingi kanggo ndeleng tren pemulihan.';
+  String get homeEmptySleep_v3 =>
+      'Durung ana turu sing dicathet. Tambah data bengi wingi kanggo ndeleng tren pemulihan.';
 
   @override
-  String get homeEmptySleep_v4 => 'Data turu ilang. Cathet lan kita bakal ngetung ing skor pemulihanmu.';
+  String get homeEmptySleep_v4 =>
+      'Data turu ilang. Cathet lan kita bakal ngetung ing skor pemulihanmu.';
 
   @override
-  String get homeEmptyTrends_v1 => 'Durung ana tren. Cathet kanthi konsisten sajrone 7 dina kanggo ndeleng pola.';
+  String get homeEmptyTrends_v1 =>
+      'Durung ana tren. Cathet kanthi konsisten sajrone 7 dina kanggo ndeleng pola.';
 
   @override
-  String get homeEmptyTrends_v2 => 'Tren butuh data. Terus nyathet lan grafik bakal keisi.';
+  String get homeEmptyTrends_v2 =>
+      'Tren butuh data. Terus nyathet lan grafik bakal keisi.';
 
   @override
-  String get homeEmptyTrends_v3 => 'Durung ana sing bisa dituduhake. Balia maneh sawise seminggu nglacak.';
+  String get homeEmptyTrends_v3 =>
+      'Durung ana sing bisa dituduhake. Balia maneh sawise seminggu nglacak.';
 
   @override
-  String get homeEmptyTrends_v4 => 'Tampilan tren kosong. Konsistensi bakal mbukak iki — ayo wiwit nyathet saben dina.';
+  String get homeEmptyTrends_v4 =>
+      'Tampilan tren kosong. Konsistensi bakal mbukak iki — ayo wiwit nyathet saben dina.';
 
   @override
-  String get homeEmptyVitals_v1 => 'Ora ana data vital sing dicathet. Sambungake piranti wearable utawa lebokake kanthi manual.';
+  String get homeEmptyVitals_v1 =>
+      'Ora ana data vital sing dicathet. Sambungake piranti wearable utawa lebokake kanthi manual.';
 
   @override
-  String get homeEmptyVitals_v2 => 'Pelacakan vital kosong. Tambah titik data kanggo miwiti.';
+  String get homeEmptyVitals_v2 =>
+      'Pelacakan vital kosong. Tambah titik data kanggo miwiti.';
 
   @override
-  String get homeEmptyVitals_v3 => 'Durung ana apa-apa ing kene. Cathet detak jantung istirahat, HRV, utawa tekanan getih.';
+  String get homeEmptyVitals_v3 =>
+      'Durung ana apa-apa ing kene. Cathet detak jantung istirahat, HRV, utawa tekanan getih.';
 
   @override
-  String get homeEmptyVitals_v4 => 'Ora ana data vital. Sambungake piranti wearable kanggo sinkronisasi otomatis.';
+  String get homeEmptyVitals_v4 =>
+      'Ora ana data vital. Sambungake piranti wearable kanggo sinkronisasi otomatis.';
 
   @override
-  String get homeEmptyWater_v1 => 'Durung ana banyu sing dicathet dina iki. Ngombe gelas pisananmu.';
+  String get homeEmptyWater_v1 =>
+      'Durung ana banyu sing dicathet dina iki. Ngombe gelas pisananmu.';
 
   @override
-  String get homeEmptyWater_v2 => 'Pelacak hidrasi kosong. Cathet gelas pisananmu.';
+  String get homeEmptyWater_v2 =>
+      'Pelacak hidrasi kosong. Cathet gelas pisananmu.';
 
   @override
-  String get homeEmptyWater_v3 => 'Durung ana sing dicathet. Miwiti asupan banyu kanggo dina iki.';
+  String get homeEmptyWater_v3 =>
+      'Durung ana sing dicathet. Miwiti asupan banyu kanggo dina iki.';
 
   @override
-  String get homeEmptyWater_v4 => 'Ora ana banyu sing dicathet. Aja nganti ngelak — cathet saiki.';
+  String get homeEmptyWater_v4 =>
+      'Ora ana banyu sing dicathet. Aja nganti ngelak — cathet saiki.';
 
   @override
-  String get homeEmptyWorkout_v1 => 'Durung ana latihan — tutul kanggo nggawe sesi dina iki.';
+  String get homeEmptyWorkout_v1 =>
+      'Durung ana latihan — tutul kanggo nggawe sesi dina iki.';
 
   @override
   String get homeEmptyWorkout_v2 => 'Dina istirahat? Utawa siap obah? Karepmu.';
 
   @override
-  String get homeEmptyWorkout_v3 => 'Antarane program — miwiti sing anyar supaya tetep ing jalur.';
+  String get homeEmptyWorkout_v3 =>
+      'Antarane program — miwiti sing anyar supaya tetep ing jalur.';
 
   @override
-  String get homeEmptyWorkout_v4 => 'Durung ana rencana. Ayo AI nggawe rencana sing cocog karo tujuanmu.';
+  String get homeEmptyWorkout_v4 =>
+      'Durung ana rencana. Ayo AI nggawe rencana sing cocog karo tujuanmu.';
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
@@ -15865,13 +17081,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get homeMySpaceStartFromAReady => 'Mulai saka tata letak sing wis ana, banjur atur ing Kustomisasi.';
+  String get homeMySpaceStartFromAReady =>
+      'Mulai saka tata letak sing wis ana, banjur atur ing Kustomisasi.';
 
   @override
   String get homeQuickActions => 'Tindakan Cepet';
 
   @override
-  String get homeQuickWorkoutGenerationWeig => 'Nggawe workout cepet, nyathet bobot, nyathet panganan lan liya-liyane.';
+  String get homeQuickWorkoutGenerationWeig =>
+      'Nggawe workout cepet, nyathet bobot, nyathet panganan lan liya-liyane.';
 
   @override
   String get homeReadinessCardCheckIn => 'Check In';
@@ -15897,7 +17115,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeScanFood => 'Scan panganan';
 
   @override
-  String get homeScanMealsWithYour => 'Scan panganan nganggo kamera sampeyan. Lacak makro kanthi gampang.';
+  String get homeScanMealsWithYour =>
+      'Scan panganan nganggo kamera sampeyan. Lacak makro kanthi gampang.';
 
   @override
   String get homeScreenApply => 'Gunakake';
@@ -15938,28 +17157,33 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeScreenResetToDefault => 'Reset menyang Default?';
 
   @override
-  String get homeScreenResetToDefaultBody => 'Iki bakal mbalekake layar ngarepmu menyang tata letak standar.';
+  String get homeScreenResetToDefaultBody =>
+      'Iki bakal mbalekake layar ngarepmu menyang tata letak standar.';
 
   @override
-  String get homeScreenTourCarouselDesc => 'Geser kanggo ndeleng rencana latihanmu. Tutul kanggo miwiti!';
+  String get homeScreenTourCarouselDesc =>
+      'Geser kanggo ndeleng rencana latihanmu. Tutul kanggo miwiti!';
 
   @override
   String get homeScreenTourCarouselTitle => 'Latihan Dina Iki';
 
   @override
-  String get homeScreenTourCommunityDesc => 'See the feed, challenges, ranks, and friends';
+  String get homeScreenTourCommunityDesc =>
+      'See the feed, challenges, ranks, and friends';
 
   @override
   String get homeScreenTourCommunityTitle => 'Community Tab';
 
   @override
-  String get homeScreenTourHealthDesc => 'Check your sleep, recovery, and body data';
+  String get homeScreenTourHealthDesc =>
+      'Check your sleep, recovery, and body data';
 
   @override
   String get homeScreenTourHealthTitle => 'Health Tab';
 
   @override
-  String get homeScreenTourNutritionDesc => 'Lacak makro lan nutrisi saben dina';
+  String get homeScreenTourNutritionDesc =>
+      'Lacak makro lan nutrisi saben dina';
 
   @override
   String get homeScreenTourNutritionTitle => 'Tab Nutrisi';
@@ -15971,19 +17195,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeScreenTourProfileTitle => 'Tab Profil';
 
   @override
-  String get homeScreenTourQuicklogDesc => 'Cathet panganan, banyu, lan latihan kanthi cepet';
+  String get homeScreenTourQuicklogDesc =>
+      'Cathet panganan, banyu, lan latihan kanthi cepet';
 
   @override
   String get homeScreenTourQuicklogTitle => 'Cathetan Cepet';
 
   @override
-  String get homeScreenTourTopbarDesc => 'Tutul kanggo ndeleng lan ngowahi profil fitnessmu';
+  String get homeScreenTourTopbarDesc =>
+      'Tutul kanggo ndeleng lan ngowahi profil fitnessmu';
 
   @override
   String get homeScreenTourTopbarTitle => 'Profilmu';
 
   @override
-  String get homeScreenTourWorkoutDesc => 'Akses rencana latihan lengkap lan riwayatu';
+  String get homeScreenTourWorkoutDesc =>
+      'Akses rencana latihan lengkap lan riwayatu';
 
   @override
   String get homeScreenTourWorkoutTitle => 'Tab Latihan';
@@ -16012,7 +17239,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeScreenUiAddTile => 'Tambah Ubin';
 
   @override
-  String get homeScreenUiChooseAPresetLayout => 'Pilih tata letak sing wis disiapake miturut fokusmu. Sampeyan bisa ngatur maneh sawise diterapake.';
+  String get homeScreenUiChooseAPresetLayout =>
+      'Pilih tata letak sing wis disiapake miturut fokusmu. Sampeyan bisa ngatur maneh sawise diterapake.';
 
   @override
   String get homeScreenUiCustomizeYourDashboard => 'Atur Dasbormu';
@@ -16021,7 +17249,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeScreenUiDiscoverLayouts => 'Temokake Tata Letak';
 
   @override
-  String get homeScreenUiDragToReorderTap => 'Seret kanggo ngurutake • Tutul ukuran kanggo ngowahi ukuran • Tutul mripat kanggo ndhelikake';
+  String get homeScreenUiDragToReorderTap =>
+      'Seret kanggo ngurutake • Tutul ukuran kanggo ngowahi ukuran • Tutul mripat kanggo ndhelikake';
 
   @override
   String get homeScreenUiGotIt => 'Siap!';
@@ -16047,16 +17276,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeStartWorkout => 'Wiwiti latihan';
 
   @override
-  String get homeStreak100Day_v1 => '100 dina. Sampeyan wis mbangun sesuatu sing nyata.';
+  String get homeStreak100Day_v1 =>
+      '100 dina. Sampeyan wis mbangun sesuatu sing nyata.';
 
   @override
   String get homeStreak100Day_v2 => 'Telung angka. Sampeyan ora tau absen.';
 
   @override
-  String get homeStreak100Day_v3 => '100 dina berturut-turut! Iki dedikasi tingkat elit.';
+  String get homeStreak100Day_v3 =>
+      '100 dina berturut-turut! Iki dedikasi tingkat elit.';
 
   @override
-  String get homeStreak100Day_v4 => '100 dina wis kelakon. Ora ana sing bisa ngalangi.';
+  String get homeStreak100Day_v4 =>
+      '100 dina wis kelakon. Ora ana sing bisa ngalangi.';
 
   @override
   String get homeStreak30Day_v1 => '30 dina. Sasi lengkap sing konsisten.';
@@ -16065,7 +17297,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeStreak30Day_v2 => 'Sasi siji. Iki wis dadi pakulinan.';
 
   @override
-  String get homeStreak30Day_v3 => 'Streak 30 dina! Umume wong mandheg saiki — nanging ora sampeyan.';
+  String get homeStreak30Day_v3 =>
+      'Streak 30 dina! Umume wong mandheg saiki — nanging ora sampeyan.';
 
   @override
   String get homeStreak30Day_v4 => 'Sasi konsistensi. Iku langka.';
@@ -16077,10 +17310,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeStreak365Day_v2 => 'Setahun berturut-turut. Legendaris.';
 
   @override
-  String get homeStreak365Day_v3 => '365 dina terus-terusan. Iku setahun muput.';
+  String get homeStreak365Day_v3 =>
+      '365 dina terus-terusan. Iku setahun muput.';
 
   @override
-  String get homeStreak365Day_v4 => 'Setahun wis liwat. Sampeyan nggawe standar anyar kanggo konsistensi.';
+  String get homeStreak365Day_v4 =>
+      'Setahun wis liwat. Sampeyan nggawe standar anyar kanggo konsistensi.';
 
   @override
   String get homeStreak7Day_v1 => 'Streak 1 minggu — mantep!';
@@ -16095,10 +17330,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeStreak7Day_v4 => '7 dina terus-terusan. Terusake semangatmu.';
 
   @override
-  String get homeSwipeToSeeThis => 'Geser kanggo ndeleng rencana minggu iki. Tutul kanggo miwiti latihan dina iki.';
+  String get homeSwipeToSeeThis =>
+      'Geser kanggo ndeleng rencana minggu iki. Tutul kanggo miwiti latihan dina iki.';
 
   @override
-  String get homeThisWillRestoreThe => 'Iki bakal mbalekake tata letak Minimalist (default aplikasi). Kustomisasi saiki bakal diganti.';
+  String get homeThisWillRestoreThe =>
+      'Iki bakal mbalekake tata letak Minimalist (default aplikasi). Kustomisasi saiki bakal diganti.';
 
   @override
   String get homeTimelineCouldnTLoadYour => 'Gagal mbukak linimasa sampeyan';
@@ -16126,13 +17363,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeTimelineLogYourMeals => 'Cathet dhaharanmu';
 
   @override
-  String get homeTimelineNothingLoggedOrPlanned => 'Durung ana sing dicathet utawa direncanakake';
+  String get homeTimelineNothingLoggedOrPlanned =>
+      'Durung ana sing dicathet utawa direncanakake';
 
   @override
-  String get homeTimelineNothingLoggedYetToday => 'Durung ana sing dicathet dina iki';
+  String get homeTimelineNothingLoggedYetToday =>
+      'Durung ana sing dicathet dina iki';
 
   @override
-  String get homeTimelineNothingPlannedForThis => 'Ora ana sing direncanakake kanggo dina iki';
+  String get homeTimelineNothingPlannedForThis =>
+      'Ora ana sing direncanakake kanggo dina iki';
 
   @override
   String homeTimelineProtocolNotStarted(Object defaultProtocol) {
@@ -16140,124 +17380,164 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get homeTip_ankle_mobility => 'Mobilitas tungkak sing kurang nggawe squat dadi ora bener. Latih lan regangake saben dina.';
+  String get homeTip_ankle_mobility =>
+      'Mobilitas tungkak sing kurang nggawe squat dadi ora bener. Latih lan regangake saben dina.';
 
   @override
-  String get homeTip_breathing_during_lifts => 'Buang napas nalika bagean angel, ambegan nalika bagean gampang. Kencengake otot inti sampeyan.';
+  String get homeTip_breathing_during_lifts =>
+      'Buang napas nalika bagean angel, ambegan nalika bagean gampang. Kencengake otot inti sampeyan.';
 
   @override
-  String get homeTip_caffeine_timing => 'Kafein tekan puncak 45–60 menit sawise diombe. Atur wektune sadurunge sesi latihan.';
+  String get homeTip_caffeine_timing =>
+      'Kafein tekan puncak 45–60 menit sawise diombe. Atur wektune sadurunge sesi latihan.';
 
   @override
-  String get homeTip_cardio_and_strength => 'Cardio ora ngrusak otot yen sampeyan dhahar cukup lan ora kakehan volume.';
+  String get homeTip_cardio_and_strength =>
+      'Cardio ora ngrusak otot yen sampeyan dhahar cukup lan ora kakehan volume.';
 
   @override
-  String get homeTip_cold_exposure => 'Adus banyu adhem utawa es bisa nyuda inflamasi sawise latihan. Simpen kanggo sawise latihan, dudu sadurunge.';
+  String get homeTip_cold_exposure =>
+      'Adus banyu adhem utawa es bisa nyuda inflamasi sawise latihan. Simpen kanggo sawise latihan, dudu sadurunge.';
 
   @override
-  String get homeTip_compound_before_isolation => 'Latih gerakan gedhe dhisik nalika sampeyan isih seger. Latihan isolasi ing pungkasan.';
+  String get homeTip_compound_before_isolation =>
+      'Latih gerakan gedhe dhisik nalika sampeyan isih seger. Latihan isolasi ing pungkasan.';
 
   @override
-  String get homeTip_compound_lifts => 'Squat, hinge, push, pull, carry. Kuasai lima gerakan kasebut lan sampeyan wis nutupi 80%.';
+  String get homeTip_compound_lifts =>
+      'Squat, hinge, push, pull, carry. Kuasai lima gerakan kasebut lan sampeyan wis nutupi 80%.';
 
   @override
-  String get homeTip_consistency_beats_perfection => 'Latihan 70% luwih apik tinimbang ora latihan babar pisan amarga ora bisa 100%.';
+  String get homeTip_consistency_beats_perfection =>
+      'Latihan 70% luwih apik tinimbang ora latihan babar pisan amarga ora bisa 100%.';
 
   @override
-  String get homeTip_core_in_every_lift => 'Otot inti sampeyan kerja ing saben gerakan compound. Sampeyan ora butuh 20 menit mung kanggo crunches.';
+  String get homeTip_core_in_every_lift =>
+      'Otot inti sampeyan kerja ing saben gerakan compound. Sampeyan ora butuh 20 menit mung kanggo crunches.';
 
   @override
-  String get homeTip_creatine_basics => 'Creatine monohydrate iku suplemen sing paling akeh diteliti ing ilmu olahraga. 3–5g saben dina iku efektif.';
+  String get homeTip_creatine_basics =>
+      'Creatine monohydrate iku suplemen sing paling akeh diteliti ing ilmu olahraga. 3–5g saben dina iku efektif.';
 
   @override
-  String get homeTip_deload_week => 'Saben 4–6 minggu, kurangi volume latihan nganti 40%. Awakmu bakal bali luwih kuwat.';
+  String get homeTip_deload_week =>
+      'Saben 4–6 minggu, kurangi volume latihan nganti 40%. Awakmu bakal bali luwih kuwat.';
 
   @override
-  String get homeTip_eat_before_training => 'Latihan nalika weteng kosong bisa wae, nanging dhahar sethithik 60–90 menit sadurunge mbantu kinerja luwih apik.';
+  String get homeTip_eat_before_training =>
+      'Latihan nalika weteng kosong bisa wae, nanging dhahar sethithik 60–90 menit sadurunge mbantu kinerja luwih apik.';
 
   @override
-  String get homeTip_eccentric_focus => 'Fase mudhun iku wektu otot rusak (lan tuwuh). Kontrol gerakane.';
+  String get homeTip_eccentric_focus =>
+      'Fase mudhun iku wektu otot rusak (lan tuwuh). Kontrol gerakane.';
 
   @override
-  String get homeTip_fiber_and_gut => '30g serat saben dina njaga energi stabil lan nyuda rasa kepingin dhahar. Umume wong mung entuk 15g.';
+  String get homeTip_fiber_and_gut =>
+      '30g serat saben dina njaga energi stabil lan nyuda rasa kepingin dhahar. Umume wong mung entuk 15g.';
 
   @override
-  String get homeTip_form_over_weight => 'Ego lifting kanthi teknik sing salah mung nggawe cedera, dudu otot. Fokus ing gerakan dhisik.';
+  String get homeTip_form_over_weight =>
+      'Ego lifting kanthi teknik sing salah mung nggawe cedera, dudu otot. Fokus ing gerakan dhisik.';
 
   @override
-  String get homeTip_grip_strength => 'Kekuatan genggeman prédhiksi umur dawa luwih apik tinimbang metrik liyane. Latih iku.';
+  String get homeTip_grip_strength =>
+      'Kekuatan genggeman prédhiksi umur dawa luwih apik tinimbang metrik liyane. Latih iku.';
 
   @override
-  String get homeTip_hydration_basics => 'Ngombe banyu sing cukup saben dina. Tambah maneh ing dina latihan.';
+  String get homeTip_hydration_basics =>
+      'Ngombe banyu sing cukup saben dina. Tambah maneh ing dina latihan.';
 
   @override
-  String get homeTip_meal_timing_simple => 'Dhahar panganan alami, cukupi protein, lan turu sing cukup. Sisane dudu perkara utama.';
+  String get homeTip_meal_timing_simple =>
+      'Dhahar panganan alami, cukupi protein, lan turu sing cukup. Sisane dudu perkara utama.';
 
   @override
-  String get homeTip_mind_muscle_connection => 'Alon-alon lan rasakake otot sing kerja. Iki dudu mung babagan mindhah bobot.';
+  String get homeTip_mind_muscle_connection =>
+      'Alon-alon lan rasakake otot sing kerja. Iki dudu mung babagan mindhah bobot.';
 
   @override
-  String get homeTip_mobility_daily => '10 menit mobilitas saben dina luwih apik tinimbang sesi 60 menit seminggu pisan.';
+  String get homeTip_mobility_daily =>
+      '10 menit mobilitas saben dina luwih apik tinimbang sesi 60 menit seminggu pisan.';
 
   @override
-  String get homeTip_no_junk_volume => '10 set sing fokus luwih apik tinimbang 20 set sing asal-asalan. Kualitas luwih penting tinimbang kuantitas.';
+  String get homeTip_no_junk_volume =>
+      '10 set sing fokus luwih apik tinimbang 20 set sing asal-asalan. Kualitas luwih penting tinimbang kuantitas.';
 
   @override
-  String get homeTip_omega3_basics => '1–2g EPA+DHA saben dina nyuda inflamasi lan ndhukung kesehatan sendi.';
+  String get homeTip_omega3_basics =>
+      '1–2g EPA+DHA saben dina nyuda inflamasi lan ndhukung kesehatan sendi.';
 
   @override
-  String get homeTip_periodization => 'Variasikake repetisi lan intensitasmu. Kemajuan linear ora bakal langgeng selawase.';
+  String get homeTip_periodization =>
+      'Variasikake repetisi lan intensitasmu. Kemajuan linear ora bakal langgeng selawase.';
 
   @override
-  String get homeTip_progressive_overload => 'Tambah bobot sethithik utawa tambah siji repetisi saben minggu. Iku carane sampeyan berkembang.';
+  String get homeTip_progressive_overload =>
+      'Tambah bobot sethithik utawa tambah siji repetisi saben minggu. Iku carane sampeyan berkembang.';
 
   @override
-  String get homeTip_protein_per_meal => 'Targetake 30–40g protein saben dhahar. Dibagi dadi sawetara wektu luwih apik tinimbang sepisan akeh.';
+  String get homeTip_protein_per_meal =>
+      'Targetake 30–40g protein saben dhahar. Dibagi dadi sawetara wektu luwih apik tinimbang sepisan akeh.';
 
   @override
-  String get homeTip_protein_sources_vary => 'Campur sumber protein — pitik, endhog, yogurt Yunani, kacang-kacangan. Variasi nyukupi kabeh asam amino.';
+  String get homeTip_protein_sources_vary =>
+      'Campur sumber protein — pitik, endhog, yogurt Yunani, kacang-kacangan. Variasi nyukupi kabeh asam amino.';
 
   @override
-  String get homeTip_rate_of_perceived_exertion => 'Rating usahamu 1–10. Tetep ing antarane 7–8 saben sesi iku sing paling pas.';
+  String get homeTip_rate_of_perceived_exertion =>
+      'Rating usahamu 1–10. Tetep ing antarane 7–8 saben sesi iku sing paling pas.';
 
   @override
-  String get homeTip_rest_days_grow_muscle => 'Dina istirahat dudu kesed — iku wektu otot bener-bener adaptasi.';
+  String get homeTip_rest_days_grow_muscle =>
+      'Dina istirahat dudu kesed — iku wektu otot bener-bener adaptasi.';
 
   @override
-  String get homeTip_scale_not_everything => 'Bobot awak fluktuasi 2–4 lbs saben dina amarga banyu lan panganan. Nilai adhedhasar rata-rata mingguan.';
+  String get homeTip_scale_not_everything =>
+      'Bobot awak fluktuasi 2–4 lbs saben dina amarga banyu lan panganan. Nilai adhedhasar rata-rata mingguan.';
 
   @override
-  String get homeTip_set_rep_ranges => '1–5 repetisi mbangun kekuatan. 6–12 mbangun ukuran. 12–20 mbangun daya tahan. Kabeh penting.';
+  String get homeTip_set_rep_ranges =>
+      '1–5 repetisi mbangun kekuatan. 6–12 mbangun ukuran. 12–20 mbangun daya tahan. Kabeh penting.';
 
   @override
-  String get homeTip_sleep_for_recovery => 'Ototmu ora tuwuh nalika latihan — otot tuwuh nalika sampeyan turu.';
+  String get homeTip_sleep_for_recovery =>
+      'Ototmu ora tuwuh nalika latihan — otot tuwuh nalika sampeyan turu.';
 
   @override
-  String get homeTip_sodium_and_water => 'Uyah dudu mungsuh — uyah mbantu hidrasi lan kinerja. Aja wedi.';
+  String get homeTip_sodium_and_water =>
+      'Uyah dudu mungsuh — uyah mbantu hidrasi lan kinerja. Aja wedi.';
 
   @override
-  String get homeTip_split_options => 'Push/pull/legs, upper/lower, full-body 3x — kabeh efektif yen sampeyan konsisten.';
+  String get homeTip_split_options =>
+      'Push/pull/legs, upper/lower, full-body 3x — kabeh efektif yen sampeyan konsisten.';
 
   @override
-  String get homeTip_stress_and_recovery => 'Stres dhuwur = kortisol dhuwur = pemulihan luwih alon. Atur kabeh kahananmu.';
+  String get homeTip_stress_and_recovery =>
+      'Stres dhuwur = kortisol dhuwur = pemulihan luwih alon. Atur kabeh kahananmu.';
 
   @override
-  String get homeTip_tempo_training => 'Coba tempo 3-0-1 (3 detik mudhun, 0 jeda, 1 detik munggah) kanggo ngrasakake latihan kanthi beda.';
+  String get homeTip_tempo_training =>
+      'Coba tempo 3-0-1 (3 detik mudhun, 0 jeda, 1 detik munggah) kanggo ngrasakake latihan kanthi beda.';
 
   @override
-  String get homeTip_track_to_progress => 'Yen sampeyan ora nglacak, sampeyan ora bisa ngatur. Cathet setmu.';
+  String get homeTip_track_to_progress =>
+      'Yen sampeyan ora nglacak, sampeyan ora bisa ngatur. Cathet setmu.';
 
   @override
-  String get homeTip_vitamin_d => 'Umume wong kurang vitamin D. 1000–2000 IU saben dina iku dhasar sing aman.';
+  String get homeTip_vitamin_d =>
+      'Umume wong kurang vitamin D. 1000–2000 IU saben dina iku dhasar sing aman.';
 
   @override
-  String get homeTip_walk_after_meals => 'Mlaku 10 menit sawise dhahar bisa nyuda lonjakan gula getih nganti 30%.';
+  String get homeTip_walk_after_meals =>
+      'Mlaku 10 menit sawise dhahar bisa nyuda lonjakan gula getih nganti 30%.';
 
   @override
-  String get homeTip_warm_up_matters => '5 menit pemanasan nggawe saben set luwih aman lan kuwat.';
+  String get homeTip_warm_up_matters =>
+      '5 menit pemanasan nggawe saben set luwih aman lan kuwat.';
 
   @override
-  String get homeTip_zone2_cardio => 'Zone 2 cardio (pace santai) mbangun dhasar aerobik sing penting kanggo kabeh.';
+  String get homeTip_zone2_cardio =>
+      'Zone 2 cardio (pace santai) mbangun dhasar aerobik sing penting kanggo kabeh.';
 
   @override
   String get homeTodaysNutrition => 'Nutrisi dina iki';
@@ -16269,10 +17549,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeTrackNutrition => 'Lacak Nutrisi';
 
   @override
-  String get homeViewStrengthChartsStreaks => 'Deleng grafik kekuatan, streak, XP, lan prestasi.';
+  String get homeViewStrengthChartsStreaks =>
+      'Deleng grafik kekuatan, streak, XP, lan prestasi.';
 
   @override
-  String get homeViewYourWorkoutHistory => 'Deleng riwayat latihan lan jelajahi perpustakaan latihan.';
+  String get homeViewYourWorkoutHistory =>
+      'Deleng riwayat latihan lan jelajahi perpustakaan latihan.';
 
   @override
   String get homeYourAiWorkout => 'Latihan AI-mu';
@@ -16284,10 +17566,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homeYourProgress => 'Kemajuanmu';
 
   @override
-  String get homescreenCustomizationChangesAreSavedAutomaticall => 'Owah-owahan disimpen kanthi otomatis lan langsung ditrapake.';
+  String get homescreenCustomizationChangesAreSavedAutomaticall =>
+      'Owah-owahan disimpen kanthi otomatis lan langsung ditrapake.';
 
   @override
-  String get homescreenCustomizationChooseWhichCardsTo => 'Pilih kertu sing bakal ditampilake ing layar ngarep';
+  String get homescreenCustomizationChooseWhichCardsTo =>
+      'Pilih kertu sing bakal ditampilake ing layar ngarep';
 
   @override
   String get homescreenCustomizationCustomizeHome => 'Atur Layar Ngarep';
@@ -16296,34 +17580,41 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homescreenCustomizationDailyActivity => 'Kegiatan Saben Dina';
 
   @override
-  String get homescreenCustomizationExerciseVariationThisWeek => 'Variasi latihan minggu iki';
+  String get homescreenCustomizationExerciseVariationThisWeek =>
+      'Variasi latihan minggu iki';
 
   @override
-  String get homescreenCustomizationFeatureVotingAndRoadmap => 'Voting fitur lan pratinjau peta dalan';
+  String get homescreenCustomizationFeatureVotingAndRoadmap =>
+      'Voting fitur lan pratinjau peta dalan';
 
   @override
   String get homescreenCustomizationFitnessScore => 'Skor Kebugaran';
 
   @override
-  String get homescreenCustomizationGoalsAndMilestonesFor => 'Target lan tonggak sejarah kanggo minggu iki';
+  String get homescreenCustomizationGoalsAndMilestonesFor =>
+      'Target lan tonggak sejarah kanggo minggu iki';
 
   @override
-  String get homescreenCustomizationHealthDeviceActivitySummary => 'Ringkesan kegiatan piranti kesehatan';
+  String get homescreenCustomizationHealthDeviceActivitySummary =>
+      'Ringkesan kegiatan piranti kesehatan';
 
   @override
-  String get homescreenCustomizationLogFoodStatsShare => 'Tombol Cathet Panganan, Statistik, Nuduhake, Banyu';
+  String get homescreenCustomizationLogFoodStatsShare =>
+      'Tombol Cathet Panganan, Statistik, Nuduhake, Banyu';
 
   @override
   String get homescreenCustomizationMoodCheckIn => 'Check-in Swasana Ati';
 
   @override
-  String get homescreenCustomizationOverallFitnessStrengthNu => 'Skor kebugaran, kekuatan & nutrisi sakabèhé';
+  String get homescreenCustomizationOverallFitnessStrengthNu =>
+      'Skor kebugaran, kekuatan & nutrisi sakabèhé';
 
   @override
   String get homescreenCustomizationQuickActions => 'Tindakan Cepet';
 
   @override
-  String get homescreenCustomizationQuickMoodPickerFor => 'Pemilih swasana ati cepet kanggo latihan instan';
+  String get homescreenCustomizationQuickMoodPickerFor =>
+      'Pemilih swasana ati cepet kanggo latihan instan';
 
   @override
   String get homescreenCustomizationResetToDefaults => 'Reset menyang standar';
@@ -16341,10 +17632,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get homescreenCustomizationWeeklyProgress => 'Kemajuan Mingguan';
 
   @override
-  String get homescreenCustomizationWorkoutCompletionProgressRi => 'Cincin kemajuan rampung latihan';
+  String get homescreenCustomizationWorkoutCompletionProgressRi =>
+      'Cincin kemajuan rampung latihan';
 
   @override
-  String get hormonalHealthFailedToLoadHormonal => 'Gagal mbukak data kesehatan hormonal';
+  String get hormonalHealthFailedToLoadHormonal =>
+      'Gagal mbukak data kesehatan hormonal';
 
   @override
   String get hormonalHealthGetStarted => 'Miwiti';
@@ -16353,7 +17646,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthHormonalHealth => 'Kesehatan Hormonal';
 
   @override
-  String get hormonalHealthHormonalHealthTracking => 'Pelacakan Kesehatan Hormonal';
+  String get hormonalHealthHormonalHealthTracking =>
+      'Pelacakan Kesehatan Hormonal';
 
   @override
   String get hormonalHealthLogHowYouRe => 'Cathet kepiye perasaanmu';
@@ -16385,7 +17679,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthSettingsAddHormoneGoal => 'Tambah Target Hormon';
 
   @override
-  String get hormonalHealthSettingsAdjustWorkoutIntensityBased => 'Atur intensitas latihan adhedhasar fase siklusmu';
+  String get hormonalHealthSettingsAdjustWorkoutIntensityBased =>
+      'Atur intensitas latihan adhedhasar fase siklusmu';
 
   @override
   String get hormonalHealthSettingsBirthSex => 'Jinis Kelamin Lair';
@@ -16394,34 +17689,43 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthSettingsCycleLength => 'Dawane Siklus';
 
   @override
-  String get hormonalHealthSettingsCycleSyncNutrition => 'Nutrisi Sinkronisasi Siklus';
+  String get hormonalHealthSettingsCycleSyncNutrition =>
+      'Nutrisi Sinkronisasi Siklus';
 
   @override
-  String get hormonalHealthSettingsCycleSyncWorkouts => 'Latihan Sinkronisasi Siklus';
+  String get hormonalHealthSettingsCycleSyncWorkouts =>
+      'Latihan Sinkronisasi Siklus';
 
   @override
-  String get hormonalHealthSettingsEnableCycleTracking => 'Aktifake Pelacakan Siklus';
+  String get hormonalHealthSettingsEnableCycleTracking =>
+      'Aktifake Pelacakan Siklus';
 
   @override
   String get hormonalHealthSettingsGenderIdentity => 'Identitas Jender';
 
   @override
-  String get hormonalHealthSettingsGetNutritionTipsBased => 'Entuk tips nutrisi adhedhasar fase siklusmu';
+  String get hormonalHealthSettingsGetNutritionTipsBased =>
+      'Entuk tips nutrisi adhedhasar fase siklusmu';
 
   @override
-  String get hormonalHealthSettingsHormonalHealthSettings => 'Setelan Kesehatan Hormonal';
+  String get hormonalHealthSettingsHormonalHealthSettings =>
+      'Setelan Kesehatan Hormonal';
 
   @override
-  String get hormonalHealthSettingsHormoneSupportiveExercises => 'Latihan Pendukung Hormon';
+  String get hormonalHealthSettingsHormoneSupportiveExercises =>
+      'Latihan Pendukung Hormon';
 
   @override
-  String get hormonalHealthSettingsHormoneSupportiveFoods => 'Panganan Pendukung Hormon';
+  String get hormonalHealthSettingsHormoneSupportiveFoods =>
+      'Panganan Pendukung Hormon';
 
   @override
-  String get hormonalHealthSettingsIncludeHormoneFriendlyFood => 'Kalebu saran panganan sing ramah hormon';
+  String get hormonalHealthSettingsIncludeHormoneFriendlyFood =>
+      'Kalebu saran panganan sing ramah hormon';
 
   @override
-  String get hormonalHealthSettingsLastPeriodStart => 'Wiwitan Periode Terakhir';
+  String get hormonalHealthSettingsLastPeriodStart =>
+      'Wiwitan Periode Terakhir';
 
   @override
   String get hormonalHealthSettingsNotSet => 'Durung disetel';
@@ -16430,7 +17734,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthSettingsPeriodDuration => 'Durasi Periode';
 
   @override
-  String get hormonalHealthSettingsPrioritizeExercisesThatSupp => 'Prioritasake latihan sing ndhukung targetmu';
+  String get hormonalHealthSettingsPrioritizeExercisesThatSupp =>
+      'Prioritasake latihan sing ndhukung targetmu';
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
@@ -16456,7 +17761,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthSettingsSelectHormoneGoals => 'Pilih Target Hormon';
 
   @override
-  String get hormonalHealthSettingsTrackYourMenstrualCycle => 'Lacak siklus menstruasimu kanggo latihan sing optimal';
+  String get hormonalHealthSettingsTrackYourMenstrualCycle =>
+      'Lacak siklus menstruasimu kanggo latihan sing optimal';
 
   @override
   String get hormonalHealthTodaySCheckIn => 'Check-in Dina Iki';
@@ -16465,7 +17771,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormonalHealthUnableToLoadToday => 'Ora bisa mbukak log dina iki';
 
   @override
-  String get hormoneGoalsCardNoHormoneGoalsSet => 'Ora ana target hormon sing disetel';
+  String get hormoneGoalsCardNoHormoneGoalsSet =>
+      'Ora ana target hormon sing disetel';
 
   @override
   String get hormoneGoalsCardSetGoals => 'Setel Target';
@@ -16489,7 +17796,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormoneLogDailyCheckIn => 'Check-in Saben Dina';
 
   @override
-  String get hormoneLogHelpsYourCoachTime => 'Mbantu pelatih sampeyan ngatur wektu kesuburan';
+  String get hormoneLogHelpsYourCoachTime =>
+      'Mbantu pelatih sampeyan ngatur wektu kesuburan';
 
   @override
   String get hormoneLogHowAreYouFeeling => 'Piye perasaanmu dina iki?';
@@ -16532,7 +17840,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hormoneLogSymptoms => 'Gejala';
 
   @override
-  String get hormoneLogTakeItFirstThing => 'Tindakake iki sepisanan saben esuk, sadurunge tangi.';
+  String get hormoneLogTakeItFirstThing =>
+      'Tindakake iki sepisanan saben esuk, sadurunge tangi.';
 
   @override
   String get hourlyActivityChartActive => 'Aktif';
@@ -16571,7 +17880,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get hrZonesCardAddYourDateOf => 'Tambah tanggal lahir sampeyan kanggo ngetung zona detak jantung sing dipersonalisasi';
+  String get hrZonesCardAddYourDateOf =>
+      'Tambah tanggal lahir sampeyan kanggo ngetung zona detak jantung sing dipersonalisasi';
 
   @override
   String hrZonesCardBpm(Object currentHR) {
@@ -16585,7 +17895,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hrZonesCardHeartRateZones => 'Zona Detak Jantung';
 
   @override
-  String get hrZonesCardHrZonesNotAvailable => 'Zona Detak Jantung Ora Kasedhiya';
+  String get hrZonesCardHrZonesNotAvailable =>
+      'Zona Detak Jantung Ora Kasedhiya';
 
   @override
   String hrZonesCardMaxHrBpm(Object maxHR) {
@@ -16596,7 +17907,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hrZonesCardMlKgMin => 'ml/kg/min';
 
   @override
-  String get hrZonesCardPersonalizedTrainingZones => 'Zona latihan sing dipersonalisasi';
+  String get hrZonesCardPersonalizedTrainingZones =>
+      'Zona latihan sing dipersonalisasi';
 
   @override
   String get hrZonesCardSetCustomMaxHr => 'Setel HR maksimal khusus';
@@ -16641,7 +17953,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get hydrationEnterAnyAmountIn => 'Lebokake jumlah apa wae ing mililiter';
+  String get hydrationEnterAnyAmountIn =>
+      'Lebokake jumlah apa wae ing mililiter';
 
   @override
   String get hydrationGoalMl => 'Target (ml)';
@@ -16665,7 +17978,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get hydrationQuickActionsVideo => 'Video';
 
   @override
-  String get hydrationRecommended20003000mlPer => 'Disaranake: 2000-3000ml saben dina';
+  String get hydrationRecommended20003000mlPer =>
+      'Disaranake: 2000-3000ml saben dina';
 
   @override
   String get hydrationRemaining => 'Sisa';
@@ -16684,7 +17998,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get hydrationSummaryBlockTapToViewDetails => 'Tutul kanggo ndeleng rincian';
+  String get hydrationSummaryBlockTapToViewDetails =>
+      'Tutul kanggo ndeleng rincian';
 
   @override
   String hydrationSummaryBlockValue(Object percentageInt) {
@@ -16789,13 +18104,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importEquipmentAnalyze => 'Analisis';
 
   @override
-  String get importEquipmentAnyPublicWebpageListing => 'Kaca web umum apa wae sing nampilake peralatan gym.';
+  String get importEquipmentAnyPublicWebpageListing =>
+      'Kaca web umum apa wae sing nampilake peralatan gym.';
 
   @override
-  String get importEquipmentEGNdumbbells5 => 'contone:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
+  String get importEquipmentEGNdumbbells5 =>
+      'contone:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
-  String get importEquipmentEverythingImportedGoesTo => 'Kabeh sing diimpor bakal menyang layar review — kita ora bakal ngganti peralatan sampeyan tanpa konfirmasi.';
+  String get importEquipmentEverythingImportedGoesTo =>
+      'Kabeh sing diimpor bakal menyang layar review — kita ora bakal ngganti peralatan sampeyan tanpa konfirmasi.';
 
   @override
   String get importEquipmentImportEquipment => 'Impor Peralatan';
@@ -16804,7 +18122,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importEquipmentImportFailed => 'Impor gagal';
 
   @override
-  String get importEquipmentLetAiReadYour => 'Ayo AI maca dhaptar peralatan gym sampeyan';
+  String get importEquipmentLetAiReadYour =>
+      'Ayo AI maca dhaptar peralatan gym sampeyan';
 
   @override
   String get importEquipmentPasteEquipmentText => 'Tempel teks peralatan';
@@ -16819,13 +18138,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importEquipmentResultCustom => 'Khusus ✓';
 
   @override
-  String get importEquipmentResultInferredFromImportedContent => 'Disimpulake saka konten sing diimpor';
+  String get importEquipmentResultInferredFromImportedContent =>
+      'Disimpulake saka konten sing diimpor';
 
   @override
-  String get importEquipmentResultNoEquipmentCouldBe => 'Ora ana peralatan sing cocog saka impor sampeyan.';
+  String get importEquipmentResultNoEquipmentCouldBe =>
+      'Ora ana peralatan sing cocog saka impor sampeyan.';
 
   @override
-  String get importEquipmentResultReviewBeforeSavingTap => 'Review sadurunge nyimpen. Tutul chip kanggo mbusak.';
+  String get importEquipmentResultReviewBeforeSavingTap =>
+      'Review sadurunge nyimpen. Tutul chip kanggo mbusak.';
 
   @override
   String get importEquipmentResultSaving => 'Nyimpen...';
@@ -16836,7 +18158,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched) {
+  String importEquipmentResultSheetMatched(
+    Object matchedKeptCount,
+    Object totalMatched,
+  ) {
     return 'Cocog ($matchedKeptCount/$totalMatched)';
   }
 
@@ -16856,7 +18181,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentResultWeCouldnTMatch => 'Kita ora bisa nyocogake iki karo peralatan sing dikenal. Skip utawa tetep minangka khusus.';
+  String get importEquipmentResultWeCouldnTMatch =>
+      'Kita ora bisa nyocogake iki karo peralatan sing dikenal. Skip utawa tetep minangka khusus.';
 
   @override
   String get importEquipmentResultWorkoutEnvironment => 'Lingkungan latihan';
@@ -16867,7 +18193,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get importEquipmentThisUsuallyTakes10 => 'Iki biasane mbutuhake 10–30 detik.';
+  String get importEquipmentThisUsuallyTakes10 =>
+      'Iki biasane mbutuhake 10–30 detik.';
 
   @override
   String get importEquipmentTryAgain => 'Coba maneh';
@@ -16876,16 +18203,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importEquipmentWorking => 'Sedang diproses...';
 
   @override
-  String get importEquipmentYourGymSEquipment => 'Dhaptar peralatan gym utawa brosur fasilitas sampeyan';
+  String get importEquipmentYourGymSEquipment =>
+      'Dhaptar peralatan gym utawa brosur fasilitas sampeyan';
 
   @override
   String get importExerciseDescribeTheExercise => 'Jelasake latihane';
 
   @override
-  String get importExerciseEGSeatedCable => 'tuladhane, \'Seated cable row nganggo genggaman netral, fokus ing geger tengah lan otot pundhak mburi\'';
+  String get importExerciseEGSeatedCable =>
+      'tuladhane, \'Seated cable row nganggo genggaman netral, fokus ing geger tengah lan otot pundhak mburi\'';
 
   @override
-  String get importExerciseExerciseNameHintOptional => 'Jeneng latihan (opsional)';
+  String get importExerciseExerciseNameHintOptional =>
+      'Jeneng latihan (opsional)';
 
   @override
   String get importExerciseFromGallery => 'Saka galeri';
@@ -16906,13 +18236,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importExercisePreviewAiSearchable => 'Bisa digoleki AI';
 
   @override
-  String get importExercisePreviewAlreadyInYourExercises => 'Wis ana ing latihan sampeyan';
+  String get importExercisePreviewAlreadyInYourExercises =>
+      'Wis ana ing latihan sampeyan';
 
   @override
   String get importExercisePreviewDiscard => 'Batal';
 
   @override
-  String get importExercisePreviewDiscardImportedExercise => 'Batal ngimpor latihan?';
+  String get importExercisePreviewDiscardImportedExercise =>
+      'Batal ngimpor latihan?';
 
   @override
   String get importExercisePreviewSaveExercise => 'Simpen latihan';
@@ -16960,7 +18292,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importImportSuccessful => 'Impor Sukses';
 
   @override
-  String get importNewDataWillBe => 'Data anyar bakal ditambahake bebarengan karo data sampeyan sing wis ana.';
+  String get importNewDataWillBe =>
+      'Data anyar bakal ditambahake bebarengan karo data sampeyan sing wis ana.';
 
   @override
   String get importSelectFile => 'Pilih File';
@@ -16969,10 +18302,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importThisWillImport => 'Iki bakal ngimpor:';
 
   @override
-  String get inProgressStripLogAWorkoutTo => 'Cathet latihan kanggo mbukak kunci lencana pisanan sampeyan sing lagi proses.';
+  String get inProgressStripLogAWorkoutTo =>
+      'Cathet latihan kanggo mbukak kunci lencana pisanan sampeyan sing lagi proses.';
 
   @override
-  String get inflammationAnalysisAiIsCheckingFor => 'AI lagi mriksa senyawa inflamasi';
+  String get inflammationAnalysisAiIsCheckingFor =>
+      'AI lagi mriksa senyawa inflamasi';
 
   @override
   String get inflammationAnalysisAnalyzingIngredients => 'Nganalisis bahan...';
@@ -16987,7 +18322,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inflammationAnalysisInflammationScore => 'Skor Inflamasi';
 
   @override
-  String get inflammationAnalysisIngredientAnalysisUnavailabl => 'Analisis bahan ora kasedhiya';
+  String get inflammationAnalysisIngredientAnalysisUnavailabl =>
+      'Analisis bahan ora kasedhiya';
 
   @override
   String get inflammationAnalysisIngredientsAnalysis => 'Analisis Bahan';
@@ -17004,10 +18340,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get inflammationTagsContainsUltraProcessedItems => 'Ngandhut panganan ultra-proses';
+  String get inflammationTagsContainsUltraProcessedItems =>
+      'Ngandhut panganan ultra-proses';
 
   @override
-  String get inflammationTagsExamplesSoftDrinksInstant => 'Tuladhane: omben-omben manis, mi instan, cemilan kemasan, nugget pitik, lan umume sereal sarapan.';
+  String get inflammationTagsExamplesSoftDrinksInstant =>
+      'Tuladhane: omben-omben manis, mi instan, cemilan kemasan, nugget pitik, lan umume sereal sarapan.';
 
   @override
   String get inflammationTagsHowTheScoreIs => 'Kepiye skor kasebut digawe';
@@ -17016,19 +18354,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inflammationTagsInflammationScore => 'Skor Inflamasi';
 
   @override
-  String get inflammationTagsLowerScoresReduceSystemic => 'Skor sing luwih murah nyuda inflamasi sistemik, iritasi usus, lan rasa kesel sawise mangan.';
+  String get inflammationTagsLowerScoresReduceSystemic =>
+      'Skor sing luwih murah nyuda inflamasi sistemik, iritasi usus, lan rasa kesel sawise mangan.';
 
   @override
-  String get inflammationTagsNovaProcessingLevelOmega => 'Tingkat pangolahan NOVA, rasio lemak omega-6:omega-3, beban gula olahan, kapadhetan serat & polifenol, beban glikemik, lan isi lenga wiji. Dikalibrasi miturut kategori Dietary Inflammatory Index (DII) sing wis ditinjau.';
+  String get inflammationTagsNovaProcessingLevelOmega =>
+      'Tingkat pangolahan NOVA, rasio lemak omega-6:omega-3, beban gula olahan, kapadhetan serat & polifenol, beban glikemik, lan isi lenga wiji. Dikalibrasi miturut kategori Dietary Inflammatory Index (DII) sing wis ditinjau.';
 
   @override
-  String get inflammationTagsResearchLinksRegularConsump => 'Riset ngubungake konsumsi rutin karo tambahing inflamasi, obesitas, penyakit jantung, lan masalah pencernaan.';
+  String get inflammationTagsResearchLinksRegularConsump =>
+      'Riset ngubungake konsumsi rutin karo tambahing inflamasi, obesitas, penyakit jantung, lan masalah pencernaan.';
 
   @override
   String get inflammationTagsUltraProcessedFoods => 'Panganan Ultra-Proses';
 
   @override
-  String get inflammationTagsUltraProcessedFoodsNova => 'Panganan ultra-proses (NOVA Grup 4) ngandhut aditif industri kaya emulsifier, lenga hidrogenasi, pemanis buatan, lan isolat protein — zat sing ora ditemokake ing masakan omah.';
+  String get inflammationTagsUltraProcessedFoodsNova =>
+      'Panganan ultra-proses (NOVA Grup 4) ngandhut aditif industri kaya emulsifier, lenga hidrogenasi, pemanis buatan, lan isolat protein — zat sing ora ditemokake ing masakan omah.';
 
   @override
   String get injuriesActive => 'Aktif';
@@ -17079,13 +18421,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get injuriesSelectorAiWillAvoidExercises => 'AI bakal ngindhari latihan sing bisa nambah nyeri ing area kasebut';
+  String get injuriesSelectorAiWillAvoidExercises =>
+      'AI bakal ngindhari latihan sing bisa nambah nyeri ing area kasebut';
 
   @override
-  String get injuriesSelectorEnterCustomInjuryE => 'Ketik cedera khusus (tuladhane, \"Tennis elbow\")';
+  String get injuriesSelectorEnterCustomInjuryE =>
+      'Ketik cedera khusus (tuladhane, \"Tennis elbow\")';
 
   @override
-  String get injuriesSelectorInjuriesToConsider => 'Cedera sing kudu digatekake';
+  String get injuriesSelectorInjuriesToConsider =>
+      'Cedera sing kudu digatekake';
 
   @override
   String injuriesSelectorSelected(Object selectedCount) {
@@ -17140,13 +18485,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get injuryDetailAffectedExercises => 'Latihan sing Kena Dampak';
 
   @override
-  String get injuryDetailAreYouSureThis => 'Apa sampeyan yakin cedera iki wis mari total? Iki bakal mindhah menyang riwayat cedera sampeyan.';
+  String get injuryDetailAreYouSureThis =>
+      'Apa sampeyan yakin cedera iki wis mari total? Iki bakal mindhah menyang riwayat cedera sampeyan.';
 
   @override
   String get injuryDetailCheckInLoggedSuccessfully => 'Check-in kasil dicathet';
 
   @override
-  String get injuryDetailCongratulationsOnYourRecove => 'Sugeng amarga wis mari!';
+  String get injuryDetailCongratulationsOnYourRecove =>
+      'Sugeng amarga wis mari!';
 
   @override
   String get injuryDetailGoBack => 'Mbalik';
@@ -17176,7 +18523,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get injuryDetailRehabExercises => 'Latihan Rehabilitasi';
 
   @override
-  String get injuryDetailScreenAnyNotesAboutHow => 'Cathetan babagan rasane dina iki...';
+  String get injuryDetailScreenAnyNotesAboutHow =>
+      'Cathetan babagan rasane dina iki...';
 
   @override
   String get injuryDetailScreenDailyCheckIn => 'Check-in Saben Dina';
@@ -17200,7 +18548,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get injuryDetailScreenLogCheckIn => 'Cathet Check-in';
 
   @override
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay) {
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
+    Object bodyPartDisplay,
+  ) {
     return 'Kepiye rasane $bodyPartDisplay sampeyan dina iki?';
   }
 
@@ -17213,7 +18563,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get injuryDetailSomethingWentWrong => 'Ana sing salah';
 
   @override
-  String get injuryDetailThisInjuryMayHave => 'Cidera iki mbokmenawa wis dibusak';
+  String get injuryDetailThisInjuryMayHave =>
+      'Cidera iki mbokmenawa wis dibusak';
 
   @override
   String get injuryDetailTryAgain => 'Coba maneh';
@@ -17225,7 +18576,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get injuryDetailYesHealed => 'Ya, Wis Mari';
 
   @override
-  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit) {
+  String inlineEditPillEditSetByReps(
+    Object _weightText,
+    Object reps,
+    Object unit,
+  ) {
     return 'Sunting set, $_weightText $unit kanthi $reps repetisi';
   }
 
@@ -17250,7 +18605,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inlineReferralExpanderEnterCode => 'LEBOKAKE KODE';
 
   @override
-  String get inlineReferralExpanderReferralCodeApplied => '✓ Kode referral wis digunakake';
+  String get inlineReferralExpanderReferralCodeApplied =>
+      '✓ Kode referral wis digunakake';
 
   @override
   String get inlineRestRow15s => '-15s';
@@ -17318,7 +18674,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get inlineWorkoutChatIntentIdentifyEquipmentWh => '[intent:identify_equipment] Iki mesin apa?';
+  String get inlineWorkoutChatIntentIdentifyEquipmentWh =>
+      '[intent:identify_equipment] Iki mesin apa?';
 
   @override
   String get inlineWorkoutChatRest => 'Istirahat';
@@ -17358,7 +18715,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get insightsDetailHighlights => 'Sorotan';
 
   @override
-  String get insightsDetailNoAiAnalysisYet => 'Durung ana analisis AI kanggo laporan iki';
+  String get insightsDetailNoAiAnalysisYet =>
+      'Durung ana analisis AI kanggo laporan iki';
 
   @override
   String get insightsDetailRegenerateAiAnalysis => 'Gawe maneh analisis AI';
@@ -17374,7 +18732,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled) {
+  String insightsDetailScreenOfWorkouts(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '$workoutsCompleted saka $workoutsScheduled latihan';
   }
 
@@ -17405,7 +18766,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get insightsNarrativeTemplateYourConsistencyIsCompoundin => 'Konsistensimu terus ngasilake. Terusake repetisimu.';
+  String get insightsNarrativeTemplateYourConsistencyIsCompoundin =>
+      'Konsistensimu terus ngasilake. Terusake repetisimu.';
 
   @override
   String get insightsPastReports => 'Laporan Sadurunge';
@@ -17453,7 +18815,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get insightsPrsTemplateShowingUpIsThe => 'Tekan latihan iku kamenangan sejati. Terusake repetisimu.';
+  String get insightsPrsTemplateShowingUpIsThe =>
+      'Tekan latihan iku kamenangan sejati. Terusake repetisimu.';
 
   @override
   String get insightsReportCardCalories => 'KALORI';
@@ -17498,7 +18861,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled) {
+  String insightsScreenPartBodyCardWorkoutsMinKcal(
+    Object caloriesBurnedEstimate,
+    Object totalTimeMinutes,
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '$workoutsCompleted/$workoutsScheduled latihan  |  ${totalTimeMinutes}menit  |  $caloriesBurnedEstimate kcal';
   }
 
@@ -17512,19 +18880,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get insightsScreenPartGenerateAiInsight => 'Gawe Wawasan AI';
 
   @override
-  String get insightsScreenPartGetPersonalizedAiAnalysis => 'Entuk analisis AI pribadi saka data latihanmu kanggo periode iki.';
+  String get insightsScreenPartGetPersonalizedAiAnalysis =>
+      'Entuk analisis AI pribadi saka data latihanmu kanggo periode iki.';
 
   @override
-  String get insightsScreenPartLogYourMeasurementsTo => 'Cathet pangukuranmu kanggo nglacak owah-owahan komposisi awak';
+  String get insightsScreenPartLogYourMeasurementsTo =>
+      'Cathet pangukuranmu kanggo nglacak owah-owahan komposisi awak';
 
   @override
-  String get insightsScreenPartLogYourReadinessAnd => 'Cathet kesiapan lan swasana atimu kanggo ndeleng wawasan pemulihan';
+  String get insightsScreenPartLogYourReadinessAnd =>
+      'Cathet kesiapan lan swasana atimu kanggo ndeleng wawasan pemulihan';
 
   @override
   String get insightsScreenPartMoodDistribution => 'Distribusi Swasana Ati';
 
   @override
-  String get insightsScreenPartNoPastReportsYet => 'Durung ana laporan sadurunge';
+  String get insightsScreenPartNoPastReportsYet =>
+      'Durung ana laporan sadurunge';
 
   @override
   String get insightsScreenPartOverview => 'Ringkesan';
@@ -17540,7 +18912,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get insightsScreenPartPleaseCheckYourConnection => 'Mangga priksa sambunganmu lan coba maneh.';
+  String get insightsScreenPartPleaseCheckYourConnection =>
+      'Mangga priksa sambunganmu lan coba maneh.';
 
   @override
   String get insightsScreenPartPrs => 'PR';
@@ -17549,13 +18922,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get insightsScreenPartShareThisReport => 'Paringake laporan iki';
 
   @override
-  String get insightsScreenPartStartTrackingNutritionTo => 'Mulai nglacak nutrisi kanggo ndeleng wawasan ing kene';
+  String get insightsScreenPartStartTrackingNutritionTo =>
+      'Mulai nglacak nutrisi kanggo ndeleng wawasan ing kene';
 
   @override
   String get insightsScreenPartTips => 'Tips';
 
   @override
-  String get insightsScreenPartWeeklyReportsWillAppear => 'Laporan mingguan bakal muncul ing kene nalika wis digawe.';
+  String get insightsScreenPartWeeklyReportsWillAppear =>
+      'Laporan mingguan bakal muncul ing kene nalika wis digawe.';
 
   @override
   String get insightsScreenPartWeight => 'Bobot';
@@ -17600,7 +18975,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get intensityPromptModerate => 'Sedheng';
 
   @override
-  String get intensityPromptPickAnEffortTo => 'Pilih tingkat usaha kanggo nerusake';
+  String get intensityPromptPickAnEffortTo =>
+      'Pilih tingkat usaha kanggo nerusake';
 
   @override
   String intensityPromptSheetSet(Object exerciseName, Object setNumber) {
@@ -17608,7 +18984,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get introAnAiCoachThat => 'Pelatih AI sing nggawe rencana, sinau babagan awakmu, lan nyesuekake saben minggu.';
+  String get introAnAiCoachThat =>
+      'Pelatih AI sing nggawe rencana, sinau babagan awakmu, lan nyesuekake saben minggu.';
 
   @override
   String get introBuildMyPlan => 'Gawe Rencanaku';
@@ -17625,7 +19002,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get introTagline => 'Pelatih AI sing nggawe rencana, sinau babagan awakmu, lan nyetel saben minggu.';
+  String get introTagline =>
+      'Pelatih AI sing nggawe rencana, sinau babagan awakmu, lan nyetel saben minggu.';
 
   @override
   String get introYourBody => 'Awakmu.';
@@ -17640,13 +19018,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventory2xXpActive => '⚡ 2x XP AKTIF';
 
   @override
-  String get inventory3RefsSticker10 => '3 referensi → Stiker · 10 → Shaker · 25 → Kaos';
+  String get inventory3RefsSticker10 =>
+      '3 referensi → Stiker · 10 → Shaker · 25 → Kaos';
 
   @override
   String get inventory730100Day => 'Streak 7, 30, 100 dina';
 
   @override
-  String get inventoryAddedToYourInventory => 'Ditambahake menyang inventarismu';
+  String get inventoryAddedToYourInventory =>
+      'Ditambahake menyang inventarismu';
 
   @override
   String get inventoryAddedToYourXp => 'Ditambahake menyang total XP-mu';
@@ -17655,7 +19035,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventoryAwesome => 'Keren!';
 
   @override
-  String get inventoryCompleteAllDailyGoals => 'Rampungake Kabeh Target Saben Dina';
+  String get inventoryCompleteAllDailyGoals =>
+      'Rampungake Kabeh Target Saben Dina';
 
   @override
   String get inventoryCosmetics => 'Kosmetik';
@@ -17670,16 +19051,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventoryEvery5Levels => 'Saben 5 level';
 
   @override
-  String get inventoryEveryXpEarnedRight => 'Saben XP sing dipikolehi saiki tikel kaping pindho.';
+  String get inventoryEveryXpEarnedRight =>
+      'Saben XP sing dipikolehi saiki tikel kaping pindho.';
 
   @override
-  String get inventoryFailedToActivate2x => 'Gagal ngaktifake token 2x XP. Coba maneh.';
+  String get inventoryFailedToActivate2x =>
+      'Gagal ngaktifake token 2x XP. Coba maneh.';
 
   @override
   String get inventoryFailedToOpenCrate => 'Gagal mbukak kothak';
 
   @override
-  String get inventoryFirstUnlockLevel50 => 'Buka kunci pisanan: Level 50 — paket stiker gratis';
+  String get inventoryFirstUnlockLevel50 =>
+      'Buka kunci pisanan: Level 50 — paket stiker gratis';
 
   @override
   String get inventoryGotIt => 'Oke';
@@ -17703,13 +19087,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventoryOf24hBoost => 'saka boost 24 jam';
 
   @override
-  String get inventoryOpenCratesToReceive => 'Bukak kothak kanggo nampa XP utawa barang konsumsi';
+  String get inventoryOpenCratesToReceive =>
+      'Bukak kothak kanggo nampa XP utawa barang konsumsi';
 
   @override
   String get inventoryPick1Of3 => 'Pilih 1 saka 3 kothak saben dina';
 
   @override
-  String get inventoryReferFriendsEarnMerch => 'Ajak kanca, entuk merch luwih cepet';
+  String get inventoryReferFriendsEarnMerch =>
+      'Ajak kanca, entuk merch luwih cepet';
 
   @override
   String inventoryScreenHM(Object hours, Object minutes) {
@@ -17732,7 +19118,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get inventoryScreenUiComeBackTomorrowFor => 'Balik maneh sesuk kanggo liyane!';
+  String get inventoryScreenUiComeBackTomorrowFor =>
+      'Balik maneh sesuk kanggo liyane!';
 
   @override
   String get inventoryScreenUiDailyCrates => 'Kothak Saben Dina';
@@ -17750,7 +19137,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventoryTapToBrowseOr => 'Tutul kanggo browsing utawa ngganti';
 
   @override
-  String get inventoryTrustLevelAffectsXp => 'Level kapercayan mengaruhi XP sing dipikolehi saka workout lan aktivitas.';
+  String get inventoryTrustLevelAffectsXp =>
+      'Level kapercayan mengaruhi XP sing dipikolehi saka workout lan aktivitas.';
 
   @override
   String get inventoryTrustLevels => 'Level Kapercayan';
@@ -17759,16 +19147,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get inventoryUnlockActivityCrate => 'Buka Kothak Aktivitas';
 
   @override
-  String get inventoryUsedAutomaticallyWhenYou => 'Digunakake kanthi otomatis nalika sampeyan lali sedina';
+  String get inventoryUsedAutomaticallyWhenYou =>
+      'Digunakake kanthi otomatis nalika sampeyan lali sedina';
 
   @override
   String get inventoryYouReceived => 'Sampeyan nampa:';
 
   @override
-  String get journalEmpty => 'Jurnalmu kosong. Cathet latihan kanggo miwiti timeline.';
+  String get journalEmpty =>
+      'Jurnalmu kosong. Cathet latihan kanggo miwiti timeline.';
 
   @override
-  String get journalLogAWorkoutMeal => 'Cathet workout, dhaharan, utawa foto kanggo miwiti timeline-mu.';
+  String get journalLogAWorkoutMeal =>
+      'Cathet workout, dhaharan, utawa foto kanggo miwiti timeline-mu.';
 
   @override
   String get journalSearchHint => 'Goleki latihan, panganan, foto…';
@@ -17780,7 +19171,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get journalYourJournalIsEmpty => 'Jurnalmu kosong';
 
   @override
-  String get kegelSessionAreYouSureYou => 'Apa sampeyan yakin pengin mungkasi sesi iki luwih awal? Progresmu ora bakal disimpen.';
+  String get kegelSessionAreYouSureYou =>
+      'Apa sampeyan yakin pengin mungkasi sesi iki luwih awal? Progresmu ora bakal disimpen.';
 
   @override
   String get kegelSessionBenefits => 'Paedah';
@@ -17804,7 +19196,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSessionKegelSession => 'Sesi Kegel';
 
   @override
-  String get kegelSessionNoExercisesAvailable => 'Ora ana latihan sing kasedhiya';
+  String get kegelSessionNoExercisesAvailable =>
+      'Ora ana latihan sing kasedhiya';
 
   @override
   String get kegelSessionQuickStart => 'Miwiti Cepet';
@@ -17820,7 +19213,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps) {
+  String kegelSessionScreenRepsXSHold(
+    Object defaultHoldSeconds,
+    Object defaultReps,
+  ) {
     return '$defaultReps reps x ${defaultHoldSeconds}s ditahan';
   }
 
@@ -17831,7 +19227,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSessionSqueeze => 'REMET';
 
   @override
-  String get kegelSessionSqueezeYourPelvicFloor => 'Remet otot panggulmu lan tahan...';
+  String get kegelSessionSqueezeYourPelvicFloor =>
+      'Remet otot panggulmu lan tahan...';
 
   @override
   String get kegelSessionStartABasicKegel => 'Miwiti sesi kegel dhasar saiki';
@@ -17840,10 +19237,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSessionStartExercise => 'Miwiti Latihan';
 
   @override
-  String get kegelSettingsAddKegelsToYour => 'Tambahake kegel menyang rutinitas pemanasanmu';
+  String get kegelSettingsAddKegelsToYour =>
+      'Tambahake kegel menyang rutinitas pemanasanmu';
 
   @override
-  String get kegelSettingsAddKegelsToYour2 => 'Tambahake kegel menyang peregangan pendinginanmu';
+  String get kegelSettingsAddKegelsToYour2 =>
+      'Tambahake kegel menyang peregangan pendinginanmu';
 
   @override
   String get kegelSettingsBeginner => 'Pemula';
@@ -17858,7 +19257,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSettingsDailySessionsGoal => 'Target Sesi Saben Dina';
 
   @override
-  String get kegelSettingsDedicatedPelvicFloorWorkout => 'Sesi latihan otot panggul khusus';
+  String get kegelSettingsDedicatedPelvicFloorWorkout =>
+      'Sesi latihan otot panggul khusus';
 
   @override
   String get kegelSettingsEnableKegelExercises => 'Aktifake Latihan Kegel';
@@ -17873,13 +19273,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSettingsGeneral => 'Umum';
 
   @override
-  String get kegelSettingsGetRemindedToDo => 'Entuk pangeling kanggo nindakake latihan kegel';
+  String get kegelSettingsGetRemindedToDo =>
+      'Entuk pangeling kanggo nindakake latihan kegel';
 
   @override
   String get kegelSettingsIncludeIn => 'Kalebu Ing';
 
   @override
-  String get kegelSettingsIncludePelvicFloorExercises => 'Kalebu latihan otot panggul ing latihanmu';
+  String get kegelSettingsIncludePelvicFloorExercises =>
+      'Kalebu latihan otot panggul ing latihanmu';
 
   @override
   String get kegelSettingsPelvicFloorTraining => 'Latihan Otot Panggul';
@@ -17894,7 +19296,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get kegelSettingsStandaloneSessions => 'Sesi Mandiri';
 
   @override
-  String get kegelSettingsStrengthenYourPelvicFloor => 'Kuatake otot panggulmu nganggo latihan kegel sing kalebu ing rutinitas latihanmu.';
+  String get kegelSettingsStrengthenYourPelvicFloor =>
+      'Kuatake otot panggulmu nganggo latihan kegel sing kalebu ing rutinitas latihanmu.';
 
   @override
   String get kegelSettingsWarmup => 'Pemanasan';
@@ -17921,13 +19324,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get lastNightSleepLastNightSSleep => 'Turu Bengi Mau';
 
   @override
-  String get layoutEditorAppliedYourDefaultLayout => 'Tata letak standar wis diterapake';
+  String get layoutEditorAppliedYourDefaultLayout =>
+      'Tata letak standar wis diterapake';
 
   @override
   String get layoutEditorFailedToLoadLayout => 'Gagal mbukak tata letak';
 
   @override
-  String get layoutEditorLayoutResetToOriginal => 'Tata letak dibalekake menyang asli';
+  String get layoutEditorLayoutResetToOriginal =>
+      'Tata letak dibalekake menyang asli';
 
   @override
   String get layoutEditorMySpace => 'Ruanganku';
@@ -17942,19 +19347,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get layoutEditorResetLayout => 'Reset Tata Letak';
 
   @override
-  String get layoutEditorSavedAsYourDefault => 'Disimpen minangka tata letak standarmu';
+  String get layoutEditorSavedAsYourDefault =>
+      'Disimpen minangka tata letak standarmu';
 
   @override
-  String get layoutEditorScreenAppliedYourDefaultLayout => 'Tata letak standar wis diterapake';
+  String get layoutEditorScreenAppliedYourDefaultLayout =>
+      'Tata letak standar wis diterapake';
 
   @override
   String get layoutEditorScreenApply => 'Terapake';
 
   @override
-  String get layoutEditorScreenChooseAPresetTo => 'Pilih prasetel kanggo ngatur layar ngarepmu kanthi cepet';
+  String get layoutEditorScreenChooseAPresetTo =>
+      'Pilih prasetel kanggo ngatur layar ngarepmu kanthi cepet';
 
   @override
-  String get layoutEditorScreenDragToReorderTap => 'Seret kanggo ngurutake • Tutul kanggo ngaktifake';
+  String get layoutEditorScreenDragToReorderTap =>
+      'Seret kanggo ngurutake • Tutul kanggo ngaktifake';
 
   @override
   String get layoutEditorScreenHidden => 'DIDHELIKAKE';
@@ -17986,7 +19395,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get layoutEditorScreenPreview => 'Pratinjau';
 
   @override
-  String get layoutEditorScreenYourSavedCustomLayout => 'Tata letak khusus sing wis disimpen';
+  String get layoutEditorScreenYourSavedCustomLayout =>
+      'Tata letak khusus sing wis disimpen';
 
   @override
   String get layoutEditorToggles => 'Tombol';
@@ -17995,7 +19405,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get leaderboardBeatTheirBest => 'Kalahake Rekore';
 
   @override
-  String get leaderboardChallengeWithoutNotification => 'Tantangan tanpa notifikasi (async)';
+  String get leaderboardChallengeWithoutNotification =>
+      'Tantangan tanpa notifikasi (async)';
 
   @override
   String get leaderboardEntryCardBeatTheirBest => 'Kalahake Rekore';
@@ -18012,13 +19423,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get leaderboardLockedStateCompleteMoreWorkoutsTo => 'Rampungake luwih akeh latihan kanggo mbukak!';
+  String get leaderboardLockedStateCompleteMoreWorkoutsTo =>
+      'Rampungake luwih akeh latihan kanggo mbukak!';
 
   @override
-  String get leaderboardLockedStateGlobalLeaderboardLocked => 'Papan Peringkat Global Dikunci';
+  String get leaderboardLockedStateGlobalLeaderboardLocked =>
+      'Papan Peringkat Global Dikunci';
 
   @override
-  String get leaderboardLockedStateViewFriendsLeaderboard => 'Deleng Papan Peringkat Kanca';
+  String get leaderboardLockedStateViewFriendsLeaderboard =>
+      'Deleng Papan Peringkat Kanca';
 
   @override
   String leaderboardLockedStateWorkouts(Object workoutsCompleted) {
@@ -18035,16 +19449,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get leaderboardPrivacyAnonymousMode => 'Mode anonim';
 
   @override
-  String get leaderboardPrivacyCouldnTLoadPrivacy => 'Gagal mbukak setelan privasi. Tarik kanggo nyoba maneh.';
+  String get leaderboardPrivacyCouldnTLoadPrivacy =>
+      'Gagal mbukak setelan privasi. Tarik kanggo nyoba maneh.';
 
   @override
   String get leaderboardPrivacyLeaderboardPrivacy => 'Privasi Papan Peringkat';
 
   @override
-  String get leaderboardPrivacyShowMeOnLeaderboards => 'Tampilake aku ing papan peringkat';
+  String get leaderboardPrivacyShowMeOnLeaderboards =>
+      'Tampilake aku ing papan peringkat';
 
   @override
-  String get leaderboardPrivacyShowMyStatsOn => 'Tampilake statistikku ing profilku';
+  String get leaderboardPrivacyShowMyStatsOn =>
+      'Tampilake statistikku ing profilku';
 
   @override
   String leaderboardRankCardOf(Object totalUsers) {
@@ -18070,7 +19487,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get leaderboardRowAdornmentsNoPreviousRankData => 'Durung ana data peringkat sadurunge';
+  String get leaderboardRowAdornmentsNoPreviousRankData =>
+      'Durung ana data peringkat sadurunge';
 
   @override
   String get leaderboardRowAdornmentsRankUnchanged => 'Peringkat ora owah';
@@ -18106,7 +19524,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get levelUpCatchAwesomeGotIt => 'Keren — paham';
 
   @override
-  String get levelUpCatchIncludesAFreePhysical => 'Kalebu hadiah fisik GRATIS — jupuk ing Merch Rewards';
+  String get levelUpCatchIncludesAFreePhysical =>
+      'Kalebu hadiah fisik GRATIS — jupuk ing Merch Rewards';
 
   @override
   String get levelUpCatchReveal => 'BUKAK';
@@ -18130,7 +19549,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel) {
+  String levelUpCatchUpBannerYouGainedLevelsUp(
+    Object count,
+    Object highestLevel,
+  ) {
     return 'Sampeyan entuk $count level (munggah menyang L$highestLevel)';
   }
 
@@ -18145,7 +19567,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get levelUpCatchYourRewardsAreAlready => 'Hadiahmu wis ana ing Inventaris';
+  String get levelUpCatchYourRewardsAreAlready =>
+      'Hadiahmu wis ana ing Inventaris';
 
   @override
   String get levelUpContinue => 'LANJUT';
@@ -18219,7 +19642,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get libraryLibrary => 'Pustaka';
 
   @override
-  String get libraryQuickAccessBrowseExercisesProgramsW => 'Telusuri latihan, program & riwayat latihan';
+  String get libraryQuickAccessBrowseExercisesProgramsW =>
+      'Telusuri latihan, program & riwayat latihan';
 
   @override
   String get libraryQuickAccessExerciseLibrary => 'Pustaka Latihan';
@@ -18228,12 +19652,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get librarySearchExercises => 'Telusuri latihan...';
 
   @override
-  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName) {
+  String lifetimeMemberBadgeDaysUntil(
+    Object daysRemaining,
+    Object nextTierName,
+  ) {
     return '$daysRemaining dina nganti $nextTierName';
   }
 
   @override
-  String get lifetimeMemberBadgeEstimatedValueReceived => 'Estimasi Nilai Diterima';
+  String get lifetimeMemberBadgeEstimatedValueReceived =>
+      'Estimasi Nilai Diterima';
 
   @override
   String get lifetimeMemberBadgeLifetime => 'Seumur Urip';
@@ -18259,16 +19687,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get listWorkoutNoSetsCompleted => 'Ora Ana Set sing Rampung';
 
   @override
-  String get listWorkoutYouHavenTCompleted => 'Sampeyan durung ngrampungake set apa wae. Apa sampeyan yakin pengin rampung?';
+  String get listWorkoutYouHavenTCompleted =>
+      'Sampeyan durung ngrampungake set apa wae. Apa sampeyan yakin pengin rampung?';
 
   @override
   String get liveChatAboutLiveChat => 'Babagan Live Chat';
 
   @override
-  String get liveChatAreYouSureYou => 'Apa sampeyan yakin arep mungkasi obrolan iki? Sampeyan bisa miwiti obrolan anyar mengko.';
+  String get liveChatAreYouSureYou =>
+      'Apa sampeyan yakin arep mungkasi obrolan iki? Sampeyan bisa miwiti obrolan anyar mengko.';
 
   @override
-  String get liveChatConnectWithOurSupport => 'Sambungake karo tim dhukungan kita kanggo bantuan wektu nyata. Agen kita kasedhiya nalika jam kerja kanggo mbantu pitakonan utawa masalah apa wae.';
+  String get liveChatConnectWithOurSupport =>
+      'Sambungake karo tim dhukungan kita kanggo bantuan wektu nyata. Agen kita kasedhiya nalika jam kerja kanggo mbantu pitakonan utawa masalah apa wae.';
 
   @override
   String get liveChatEndChat => 'Mungkasi Obrolan?';
@@ -18304,7 +19735,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get livePrSnackbarNewPr => 'PR Anyar!';
 
   @override
-  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr) {
+  String livePrSnackbarRm(
+    Object oneRmStr,
+    Object reps,
+    Object unitLabel,
+    Object weightStr,
+  ) {
     return '$weightStr$unitLabel×$reps  →  $oneRmStr $unitLabel 1RM, ';
   }
 
@@ -18319,19 +19755,23 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsAddALocationTo => 'Tambah lokasi menyang profil gym sampeyan kanggo ngaktifake ganti otomatis. Sunting profil lan tutul \"Tambah Lokasi\".';
+  String get locationSettingsAddALocationTo =>
+      'Tambah lokasi menyang profil gym sampeyan kanggo ngaktifake ganti otomatis. Sunting profil lan tutul \"Tambah Lokasi\".';
 
   @override
-  String get locationSettingsAutoSwitchGymProfiles => 'Ganti profil gym otomatis';
+  String get locationSettingsAutoSwitchGymProfiles =>
+      'Ganti profil gym otomatis';
 
   @override
-  String get locationSettingsAutoSwitchNeedsAlways => 'Ganti otomatis mbutuhake akses lokasi \"Tansah\" kanggo ndeteksi nalika sampeyan teka ing gym.';
+  String get locationSettingsAutoSwitchNeedsAlways =>
+      'Ganti otomatis mbutuhake akses lokasi \"Tansah\" kanggo ndeteksi nalika sampeyan teka ing gym.';
 
   @override
   String get locationSettingsAutoSwitchProfiles => 'GANTI PROFIL OTOMATIS';
 
   @override
-  String get locationSettingsBackgroundLocationRequired => 'Lokasi latar mburi dibutuhake';
+  String get locationSettingsBackgroundLocationRequired =>
+      'Lokasi latar mburi dibutuhake';
 
   @override
   String get locationSettingsGrantPermission => 'Wenehi Izin';
@@ -18350,7 +19790,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get locationSettingsSetAPreferredWorkout => 'Setel wektu latihan sing dikarepake ing profil gym sampeyan kanggo ngaktifake ganti adhedhasar wektu.';
+  String get locationSettingsSetAPreferredWorkout =>
+      'Setel wektu latihan sing dikarepake ing profil gym sampeyan kanggo ngaktifake ganti adhedhasar wektu.';
 
   @override
   String get locationSettingsTapToGrantPermission => 'Tutul kanggo menehi izin';
@@ -18359,13 +19800,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get locationSettingsTimeBasedSwitching => 'Ganti adhedhasar wektu';
 
   @override
-  String get locationSettingsYourLocationIsOnly => 'Lokasi sampeyan mung digunakake kanthi lokal kanggo mriksa jarak menyang gym sing disimpen.';
+  String get locationSettingsYourLocationIsOnly =>
+      'Lokasi sampeyan mung digunakake kanthi lokal kanggo mriksa jarak menyang gym sing disimpen.';
 
   @override
   String get log1rmCurrent1rm => '1RM Saiki: ';
 
   @override
-  String get log1rmEnterTheMaxWeight => 'Ketik bobot maksimal sing sampeyan angkat kanggo 1 repetisi';
+  String get log1rmEnterTheMaxWeight =>
+      'Ketik bobot maksimal sing sampeyan angkat kanggo 1 repetisi';
 
   @override
   String get log1rmEstimated1rm => 'Estimasi 1RM';
@@ -18380,7 +19823,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get log1rmPleaseEnterAValid => 'Mangga ketik bobot sing bener';
 
   @override
-  String get log1rmPleaseEnterAValid2 => 'Mangga ketik jumlah repetisi sing bener';
+  String get log1rmPleaseEnterAValid2 =>
+      'Mangga ketik jumlah repetisi sing bener';
 
   @override
   String get log1rmRepsCompleted => 'Repetisi Rampung';
@@ -18420,7 +19864,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logCardioDuration => 'DURASI';
 
   @override
-  String get logCardioHowDidTheSession => 'Kepiye rasane sesi iki? Cathetan apa wae...';
+  String get logCardioHowDidTheSession =>
+      'Kepiye rasane sesi iki? Cathetan apa wae...';
 
   @override
   String get logCardioLocation => 'LOKASI';
@@ -18522,7 +19967,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealLogThisMeal => 'Cathet Panganan Iki';
 
   @override
-  String get logMealLoggingThisMealWill => 'Nyathet panganan iki bakal mungkasi puasa sampeyan. Terusake?';
+  String get logMealLoggingThisMealWill =>
+      'Nyathet panganan iki bakal mungkasi puasa sampeyan. Terusake?';
 
   @override
   String get logMealMagnesium => 'Magnesium';
@@ -18543,22 +19989,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetAdd => 'Tambah';
 
   @override
-  String get logMealSheetAddABitMore => 'Tambah rincian sethithik maneh kanggo nyempurnakake.';
+  String get logMealSheetAddABitMore =>
+      'Tambah rincian sethithik maneh kanggo nyempurnakake.';
 
   @override
-  String get logMealSheetAddAPhotoOr => 'Tambah foto utawa deskripsikake panganan kanggo dianalisis.';
+  String get logMealSheetAddAPhotoOr =>
+      'Tambah foto utawa deskripsikake panganan kanggo dianalisis.';
 
   @override
   String get logMealSheetAddPhotos => 'Tambah foto';
 
   @override
-  String get logMealSheetAddedTheFirst5 => 'Nambahake 5 foto pisanan (maksimal).';
+  String get logMealSheetAddedTheFirst5 =>
+      'Nambahake 5 foto pisanan (maksimal).';
 
   @override
-  String get logMealSheetAiEstimatesFromA => 'Estimasi AI saka foto — sampeyan bisa ngowahi asile sawise.';
+  String get logMealSheetAiEstimatesFromA =>
+      'Estimasi AI saka foto — sampeyan bisa ngowahi asile sawise.';
 
   @override
-  String get logMealSheetAllItemsMatchedVerified => 'Kabeh item cocog karo data nutrisi sing wis diverifikasi';
+  String get logMealSheetAllItemsMatchedVerified =>
+      'Kabeh item cocog karo data nutrisi sing wis diverifikasi';
 
   @override
   String get logMealSheetAnalysisFailed => 'Analisis gagal. Mangga coba maneh.';
@@ -18570,7 +20021,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetAnalyzing => 'Nganalisis…';
 
   @override
-  String get logMealSheetAnythingElseInThe => 'Ana liyane ing foto? (tuladhane: wiji rami, whey protein)';
+  String get logMealSheetAnythingElseInThe =>
+      'Ana liyane ing foto? (tuladhane: wiji rami, whey protein)';
 
   @override
   String get logMealSheetBackToResults => 'Bali menyang asil';
@@ -18614,13 +20066,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetCouldnTApplyThat => 'Ora bisa ngetrapake koreksi kasebut — dhaharan tetep padha.';
+  String get logMealSheetCouldnTApplyThat =>
+      'Ora bisa ngetrapake koreksi kasebut — dhaharan tetep padha.';
 
   @override
-  String get logMealSheetCouldnTLogThose => 'Ora bisa nyathet item kasebut. Priksa sambungan sampeyan.';
+  String get logMealSheetCouldnTLogThose =>
+      'Ora bisa nyathet item kasebut. Priksa sambungan sampeyan.';
 
   @override
-  String get logMealSheetCouldnTRecognizeAny => 'Ora bisa ngenali panganan ing katrangan kasebut.';
+  String get logMealSheetCouldnTRecognizeAny =>
+      'Ora bisa ngenali panganan ing katrangan kasebut.';
 
   @override
   String logMealSheetCouldnTRefineError(Object message) {
@@ -18628,25 +20083,30 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetCouldnTSaveYour => 'Ora bisa nyimpen dhaharan sampeyan. Priksa sambungan sampeyan.';
+  String get logMealSheetCouldnTSaveYour =>
+      'Ora bisa nyimpen dhaharan sampeyan. Priksa sambungan sampeyan.';
 
   @override
   String get logMealSheetCustomEG1 => 'Kustom (tuladhane: 1.25)';
 
   @override
-  String get logMealSheetDidnTCatchAny => 'Ora nemokake panganan ing kono — coba maneh.';
+  String get logMealSheetDidnTCatchAny =>
+      'Ora nemokake panganan ing kono — coba maneh.';
 
   @override
-  String get logMealSheetEGGrilledChicken => 'tuladhane: \"mangkuk pitik bakar, aku mangan setengah\"';
+  String get logMealSheetEGGrilledChicken =>
+      'tuladhane: \"mangkuk pitik bakar, aku mangan setengah\"';
 
   @override
-  String get logMealSheetEnableMicrophoneAccessIn => 'Aktifake akses mikropon ing Setelan, utawa ketik dhaharan ing Goleki.';
+  String get logMealSheetEnableMicrophoneAccessIn =>
+      'Aktifake akses mikropon ing Setelan, utawa ketik dhaharan ing Goleki.';
 
   @override
   String get logMealSheetEstimatedNutrition => 'Estimasi Nutrisi';
 
   @override
-  String get logMealSheetEstimatesBasedOnYour => 'Estimasi adhedhasar foto/katrangan sampeyan';
+  String get logMealSheetEstimatesBasedOnYour =>
+      'Estimasi adhedhasar foto/katrangan sampeyan';
 
   @override
   String logMealSheetFailedToSaveError(Object error) {
@@ -18692,16 +20152,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get logMealSheetHandsFreeLoggingSpeak => 'Cathetan hands-free — ngomong kanthi alami, priksa teks, banjur konfirmasi. Cocog banget nalika masak.';
+  String get logMealSheetHandsFreeLoggingSpeak =>
+      'Cathetan hands-free — ngomong kanthi alami, priksa teks, banjur konfirmasi. Cocog banget nalika masak.';
 
   @override
-  String get logMealSheetHeardEditIfNeeded => 'Dirungokake — owahi yen perlu, banjur konfirmasi';
+  String get logMealSheetHeardEditIfNeeded =>
+      'Dirungokake — owahi yen perlu, banjur konfirmasi';
 
   @override
-  String get logMealSheetHowManyServingsDid => 'Pira porsi sing sampeyan pangan?';
+  String get logMealSheetHowManyServingsDid =>
+      'Pira porsi sing sampeyan pangan?';
 
   @override
-  String get logMealSheetImportALogFrom => 'Impor cathetan saka MyFitnessPal, Cronometer…';
+  String get logMealSheetImportALogFrom =>
+      'Impor cathetan saka MyFitnessPal, Cronometer…';
 
   @override
   String get logMealSheetInstructionsOptional => 'Instruksi (opsional)';
@@ -18808,7 +20272,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetMicrophoneUnavailable => 'Mikropon ora kasedhiya';
 
   @override
-  String get logMealSheetNeedToAddNotes => 'Perlu nambah cathetan utawa sawetara foto? Gunakake Deskripsi.';
+  String get logMealSheetNeedToAddNotes =>
+      'Perlu nambah cathetan utawa sawetara foto? Gunakake Deskripsi.';
 
   @override
   String logMealSheetNutritionFor(Object servingsLabel) {
@@ -18819,10 +20284,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetNutritionLabel => 'Label nutrisi';
 
   @override
-  String get logMealSheetOneTapInstantNutrition => 'Siji tutul — nutrisi instan';
+  String get logMealSheetOneTapInstantNutrition =>
+      'Siji tutul — nutrisi instan';
 
   @override
-  String get logMealSheetOverBudgetPickOne => 'Luwih saka anggaran — pilih siji:';
+  String get logMealSheetOverBudgetPickOne =>
+      'Luwih saka anggaran — pilih siji:';
 
   @override
   String get logMealSheetPhoto => 'Foto';
@@ -18834,19 +20301,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetPickFromGallery => 'Pilih saka galeri';
 
   @override
-  String get logMealSheetPickUpTo5 => 'Pilih nganti 5 saka perpustakaan sampeyan';
+  String get logMealSheetPickUpTo5 =>
+      'Pilih nganti 5 saka perpustakaan sampeyan';
 
   @override
-  String get logMealSheetPlannedHighOutputDay => 'Dina kanthi output dhuwur sing direncanakake — iki pancen disengaja.';
+  String get logMealSheetPlannedHighOutputDay =>
+      'Dina kanthi output dhuwur sing direncanakake — iki pancen disengaja.';
 
   @override
-  String get logMealSheetPortionsAdjustedReviewWei => 'Porsi diatur — priksa bobot ing ngisor iki';
+  String get logMealSheetPortionsAdjustedReviewWei =>
+      'Porsi diatur — priksa bobot ing ngisor iki';
 
   @override
   String get logMealSheetReTakePhoto => 'Jupuk foto maneh';
 
   @override
-  String get logMealSheetReadMacrosOffA => 'Waca makro saka label panganan kemasan';
+  String get logMealSheetReadMacrosOffA =>
+      'Waca makro saka label panganan kemasan';
 
   @override
   String get logMealSheetRefine => 'Owahi';
@@ -18888,10 +20359,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetSnapAPhoto => 'Jupuk foto';
 
   @override
-  String get logMealSheetSpeakNowTapMic => 'Ngomong saiki... tutul mikropon kanggo mandheg';
+  String get logMealSheetSpeakNowTapMic =>
+      'Ngomong saiki... tutul mikropon kanggo mandheg';
 
   @override
-  String get logMealSheetSpeechRecognitionNotAvailab => 'Pangenalan swara ora kasedhiya';
+  String get logMealSheetSpeechRecognitionNotAvailab =>
+      'Pangenalan swara ora kasedhiya';
 
   @override
   String get logMealSheetStartingAnalysis => 'Miwiti analisis...';
@@ -18912,31 +20385,38 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetTakePhoto => 'Jupuk foto';
 
   @override
-  String get logMealSheetTapAgainWhenYou => 'Tutul maneh nalika sampeyan rampung';
+  String get logMealSheetTapAgainWhenYou =>
+      'Tutul maneh nalika sampeyan rampung';
 
   @override
-  String get logMealSheetTapHereToSave => 'Tutul ing kene kanggo nyimpen dhaharan menyang cathetan saben dina. Nganalisis wae ora bakal nyathet!';
+  String get logMealSheetTapHereToSave =>
+      'Tutul ing kene kanggo nyimpen dhaharan menyang cathetan saben dina. Nganalisis wae ora bakal nyathet!';
 
   @override
-  String get logMealSheetTapToConfirmEach => 'Tutul kanggo konfirmasi saben item — utawa owahi nilai ing dhaptar ing ngisor iki.';
+  String get logMealSheetTapToConfirmEach =>
+      'Tutul kanggo konfirmasi saben item — utawa owahi nilai ing dhaptar ing ngisor iki.';
 
   @override
   String get logMealSheetTapToSpeak => 'Tutul kanggo ngomong';
 
   @override
-  String get logMealSheetTellTheAiAnything => 'Kandhani AI apa wae sing mbantu — porsi sing dipangan, ganti panganan, ukuran piring.';
+  String get logMealSheetTellTheAiAnything =>
+      'Kandhani AI apa wae sing mbantu — porsi sing dipangan, ganti panganan, ukuran piring.';
 
   @override
-  String get logMealSheetThatCorrectionProducedAn => 'Koreksi kasebut ngasilake dhaharan kosong — tetep nggunakake estimasi sadurunge.';
+  String get logMealSheetThatCorrectionProducedAn =>
+      'Koreksi kasebut ngasilake dhaharan kosong — tetep nggunakake estimasi sadurunge.';
 
   @override
-  String get logMealSheetThatLooksLikeA => 'Iku katon kaya resep — tempel menyang pengimpor resep.';
+  String get logMealSheetThatLooksLikeA =>
+      'Iku katon kaya resep — tempel menyang pengimpor resep.';
 
   @override
   String get logMealSheetThisPhotoWasHard => 'Foto iki angel diwaca';
 
   @override
-  String get logMealSheetTipAddBrandPortion => 'Tip: Tambah merek & porsi supaya luwih akurat (tuladhane \'Chipotle chicken bowl\' utawa \'2 slices Domino’s\')';
+  String get logMealSheetTipAddBrandPortion =>
+      'Tip: Tambah merek & porsi supaya luwih akurat (tuladhane \'Chipotle chicken bowl\' utawa \'2 slices Domino’s\')';
 
   @override
   String get logMealSheetTryAgain => 'Coba maneh';
@@ -18985,7 +20465,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount) {
+  String logMealSheetUiOfItemsMatchedVerified(
+    Object length,
+    Object verifiedCount,
+  ) {
     return '$verifiedCount saka $length item cocog karo data nutrisi sing diverifikasi';
   }
 
@@ -19006,10 +20489,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetUpTo5Pages => 'Nganti 5 kaca menu sing padha';
 
   @override
-  String get logMealSheetUpTo5Photos => 'Nganti 5 foto — busak siji kanggo nambah maneh.';
+  String get logMealSheetUpTo5Photos =>
+      'Nganti 5 foto — busak siji kanggo nambah maneh.';
 
   @override
-  String get logMealSheetUpTo5Shots => 'Nganti 5 jepretan — tambah siji maneh ing antarane foto';
+  String get logMealSheetUpTo5Shots =>
+      'Nganti 5 jepretan — tambah siji maneh ing antarane foto';
 
   @override
   String get logMealSheetUse => 'Gunakake';
@@ -19034,7 +20519,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSugar => 'Gula';
 
   @override
-  String get logMealTheseValuesAreAi => 'Nilai iki minangka estimasi AI adhedhasar katranganmu.';
+  String get logMealTheseValuesAreAi =>
+      'Nilai iki minangka estimasi AI adhedhasar katranganmu.';
 
   @override
   String get logMealVitaminA => 'Vitamin A';
@@ -19049,13 +20535,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealVitaminsMinerals => 'Vitamin & Mineral';
 
   @override
-  String get logMealYouHavenTLogged => 'Kowe durung nyathet panganan iki. Asil analisismu bakal ilang.';
+  String get logMealYouHavenTLogged =>
+      'Kowe durung nyathet panganan iki. Asil analisismu bakal ilang.';
 
   @override
   String get logMealZinc => 'Zinc';
 
   @override
-  String get logMeasurementAnyNotesAboutThis => 'Cathetan babagan pangukuran iki...';
+  String get logMeasurementAnyNotesAboutThis =>
+      'Cathetan babagan pangukuran iki...';
 
   @override
   String get logMeasurementLogMeasurements => 'Cathet Pangukuran';
@@ -19067,7 +20555,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMeasurementMeasurementsSaved => 'Pangukuran disimpen!';
 
   @override
-  String get logMeasurementPleaseEnterAtLeast => 'Tulung lebokake paling ora siji pangukuran';
+  String get logMeasurementPleaseEnterAtLeast =>
+      'Tulung lebokake paling ora siji pangukuran';
 
   @override
   String logMeasurementSheetFailedToSave(Object e) {
@@ -19123,7 +20612,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logWeightAddANoteOptional => 'Tambah cathetan (opsional)';
 
   @override
-  String get logWeightBodyFatDidnT => 'Lemak awak gagal disimpen — bobot wis dicathet';
+  String get logWeightBodyFatDidnT =>
+      'Lemak awak gagal disimpen — bobot wis dicathet';
 
   @override
   String get logWeightBodyFatOptional => 'LEMAK AWAK % (OPSIONAL)';
@@ -19144,7 +20634,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logWeightHideDetails => 'Singidake rincian';
 
   @override
-  String get logWeightIfThisWasA => 'Yen iki salah, cathet maneh nganggo bobot sing bener.';
+  String get logWeightIfThisWasA =>
+      'Yen iki salah, cathet maneh nganggo bobot sing bener.';
 
   @override
   String get logWeightLogWeight => 'Cathet Bobot';
@@ -19166,7 +20657,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue) {
+  String logWeightSheetValidRange(
+    Object label,
+    Object maxValue,
+    Object minValue,
+  ) {
     return 'Rentang valid: $minValue-$maxValue $label';
   }
 
@@ -19174,7 +20669,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logWeightSyncedFromAppleHealth => 'Diselarasake saka Apple Health';
 
   @override
-  String get logWeightSyncedToAppleHealth => 'Diselarasake menyang Apple Health';
+  String get logWeightSyncedToAppleHealth =>
+      'Diselarasake menyang Apple Health';
 
   @override
   String get logWeightTapToEdit => 'Tutul kanggo ngowahi';
@@ -19219,7 +20715,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsAddNote2 => 'Tambah Cathetan';
 
   @override
-  String get loggedMealsAddThisToShopping => 'Tambah iki menyang dhaptar blanja';
+  String get loggedMealsAddThisToShopping =>
+      'Tambah iki menyang dhaptar blanja';
 
   @override
   String get loggedMealsAddToShoppingList => 'Tambah menyang dhaptar blanja';
@@ -19249,7 +20746,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsCarbs => 'Karbohidrat';
 
   @override
-  String get loggedMealsContainsUltraProcessedItems => 'Ngandhut panganan ultra-proses';
+  String get loggedMealsContainsUltraProcessedItems =>
+      'Ngandhut panganan ultra-proses';
 
   @override
   String get loggedMealsCopyTo => 'Salin menyang...';
@@ -19267,7 +20765,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsDouble => 'Ping pindho';
 
   @override
-  String get loggedMealsEGAteAt => 'tuladhane mangan ing restoran, masakan omah...';
+  String get loggedMealsEGAteAt =>
+      'tuladhane mangan ing restoran, masakan omah...';
 
   @override
   String get loggedMealsEGMedium1 => 'tuladhane, medium, 1 cangkir, 350ml';
@@ -19297,7 +20796,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsEnergyLevel => 'Tingkat energi';
 
   @override
-  String get loggedMealsExamplesSoftDrinksInstant => 'Conto: ombenan manis, mi instan, jajanan kemasan, nugget pitik, lan umume sereal sarapan.';
+  String get loggedMealsExamplesSoftDrinksInstant =>
+      'Conto: ombenan manis, mi instan, jajanan kemasan, nugget pitik, lan umume sereal sarapan.';
 
   @override
   String get loggedMealsFG => 'L (g)';
@@ -19336,10 +20836,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsLogThisAgainTomorrow => 'Cathet iki maneh sesuk';
 
   @override
-  String get loggedMealsLooksOffTapTo => 'Katon ora pas — tutul kanggo konfirmasi';
+  String get loggedMealsLooksOffTapTo =>
+      'Katon ora pas — tutul kanggo konfirmasi';
 
   @override
-  String get loggedMealsLowerIsBetterFor => 'Sing luwih cendhek luwih apik kanggo nyuda inflamasi awak lan kesehatan usus.';
+  String get loggedMealsLowerIsBetterFor =>
+      'Sing luwih cendhek luwih apik kanggo nyuda inflamasi awak lan kesehatan usus.';
 
   @override
   String get loggedMealsMedium => 'Sedheng';
@@ -19372,7 +20874,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsQuantity => 'Cacahe';
 
   @override
-  String get loggedMealsRatesHowInflammatoryA => 'Ngetung sepira inflamasi panganan adhedhasar tingkat pangolahan, profil lemak, isi gula, serat, lan sifat antioksidan.';
+  String get loggedMealsRatesHowInflammatoryA =>
+      'Ngetung sepira inflamasi panganan adhedhasar tingkat pangolahan, profil lemak, isi gula, serat, lan sifat antioksidan.';
 
   @override
   String get loggedMealsRemove => 'Busak';
@@ -19389,7 +20892,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsReportIncorrectData => 'Lapurake data sing salah';
 
   @override
-  String get loggedMealsResearchLinksRegularConsump => 'Panaliten ngubungake konsumsi rutin karo tambahing inflamasi, obesitas, penyakit jantung, lan masalah pencernaan.';
+  String get loggedMealsResearchLinksRegularConsump =>
+      'Panaliten ngubungake konsumsi rutin karo tambahing inflamasi, obesitas, penyakit jantung, lan masalah pencernaan.';
 
   @override
   String get loggedMealsSaveAsRecipe => 'Simpen minangka resep';
@@ -19539,7 +21043,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsServings => 'Porsi';
 
   @override
-  String get loggedMealsSetACalorieTarget => 'Setel target kalori kanggo nglacak sisa';
+  String get loggedMealsSetACalorieTarget =>
+      'Setel target kalori kanggo nglacak sisa';
 
   @override
   String get loggedMealsShareMeal => 'Nuduhake dhaharan';
@@ -19557,7 +21062,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsTriple => 'Telung porsi';
 
   @override
-  String get loggedMealsTypeAFoodAnd => 'Ketik panganan lan tutul AI kanggo ngisi makro kanthi otomatis';
+  String get loggedMealsTypeAFoodAnd =>
+      'Ketik panganan lan tutul AI kanggo ngisi makro kanthi otomatis';
 
   @override
   String get loggedMealsU00bd => '½';
@@ -19569,7 +21075,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsUltraProcessedFoods => 'Panganan Ultra-Proses';
 
   @override
-  String get loggedMealsUltraProcessedFoodsNova => 'Panganan ultra-proses (NOVA Group 4) ngemot aditif industri kaya emulsifier, lenga hidrogenasi, pemanis buatan, lan isolat protein — zat sing ora ditemokake ing masakan omah.';
+  String get loggedMealsUltraProcessedFoodsNova =>
+      'Panganan ultra-proses (NOVA Group 4) ngemot aditif industri kaya emulsifier, lenga hidrogenasi, pemanis buatan, lan isolat protein — zat sing ora ditemokake ing masakan omah.';
 
   @override
   String get loggedMealsUndo => 'Batal';
@@ -19584,7 +21091,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get loggedMealsXLarge => 'X-Gedhe';
 
   @override
-  String get logoutAreYouSureYou => 'Apa sampeyan yakin pengin metu? Sampeyan bisa mlebu maneh kapan wae.';
+  String get logoutAreYouSureYou =>
+      'Apa sampeyan yakin pengin metu? Sampeyan bisa mlebu maneh kapan wae.';
 
   @override
   String get logoutSignOut => 'Metu';
@@ -19615,10 +21123,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get mainShellPartSignUp => 'Daftar';
 
   @override
-  String get mainShellPartSignUpFreeFor => 'Daftar gratis kanggo akses tanpa wates';
+  String get mainShellPartSignUpFreeFor =>
+      'Daftar gratis kanggo akses tanpa wates';
 
   @override
-  String get manageDuplicateImportsCouldNotLoadDuplicate => 'Ora bisa mbukak impor duplikat';
+  String get manageDuplicateImportsCouldNotLoadDuplicate =>
+      'Ora bisa mbukak impor duplikat';
 
   @override
   String get manageDuplicateImportsDuplicateImports => 'Impor duplikat';
@@ -19630,7 +21140,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get manageDuplicateImportsMakeThisPrimary => 'Dadekake iki utama';
 
   @override
-  String get manageDuplicateImportsNoDuplicateImportsDetected => 'Ora ana impor duplikat sing dideteksi';
+  String get manageDuplicateImportsNoDuplicateImportsDetected =>
+      'Ora ana impor duplikat sing dideteksi';
 
   @override
   String get manageDuplicateImportsPrimary => 'Utama';
@@ -19661,7 +21172,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get manageGymProfilesDeleteGymProfile => 'Busak Profil Gym?';
 
   @override
-  String get manageGymProfilesDragToReorderTap => 'Seret kanggo ngurutake • Tutul kanggo nyunting';
+  String get manageGymProfilesDragToReorderTap =>
+      'Seret kanggo ngurutake • Tutul kanggo nyunting';
 
   @override
   String get manageGymProfilesDuplicate => 'Duplikat';
@@ -19691,7 +21203,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount) {
+  String manageGymProfilesSheetEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  ) {
     return '$equipmentCount alat • $environmentDisplayName';
   }
 
@@ -19716,7 +21231,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get markFastingDayFastingProtocol => 'Protokol Puasa';
 
   @override
-  String get markFastingDayForgotToTrackA => 'Lali nglacak puasa? Tandhani dina kepungkur minangka dina puasa.';
+  String get markFastingDayForgotToTrackA =>
+      'Lali nglacak puasa? Tandhani dina kepungkur minangka dina puasa.';
 
   @override
   String get markFastingDayHowDidTheFast => 'Kepiye puasane?';
@@ -19739,7 +21255,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get markFastingDayYouCanMarkDays => 'Sampeyan bisa nandhani dina ing sajrone 30 dina pungkasan';
+  String get markFastingDayYouCanMarkDays =>
+      'Sampeyan bisa nandhani dina ing sajrone 30 dina pungkasan';
 
   @override
   String masteriesGridLv(Object level) {
@@ -19747,7 +21264,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get masteriesGridYourMasteriesWillLevel => 'Mastery sampeyan bakal mundhak level nalika sampeyan nyathet latihan, langkah, lan kardio.';
+  String get masteriesGridYourMasteriesWillLevel =>
+      'Mastery sampeyan bakal mundhak level nalika sampeyan nyathet latihan, langkah, lan kardio.';
 
   @override
   String get mealPlannerAddARecipe => 'Tambah resep';
@@ -19821,22 +21339,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get mealRemindersSettingsActiveSchedules => 'JADWAL AKTIF';
 
   @override
-  String get mealRemindersSettingsAutoSnapshotRecipeVersions => 'Snapshot otomatis versi resep';
+  String get mealRemindersSettingsAutoSnapshotRecipeVersions =>
+      'Snapshot otomatis versi resep';
 
   @override
   String get mealRemindersSettingsDeleteSchedule => 'Busak jadwal?';
 
   @override
-  String get mealRemindersSettingsMealReminderNotifications => 'Notifikasi pangeling dhahar';
+  String get mealRemindersSettingsMealReminderNotifications =>
+      'Notifikasi pangeling dhahar';
 
   @override
   String get mealRemindersSettingsMealReminders => 'Pangeling dhahar';
 
   @override
-  String get mealRemindersSettingsNoSchedulesYetAdd => 'Durung ana jadwal. Tambah siji saka layar detail resep.';
+  String get mealRemindersSettingsNoSchedulesYetAdd =>
+      'Durung ana jadwal. Tambah siji saka layar detail resep.';
 
   @override
-  String get mealRemindersSettingsPublicSharingDefault => 'Setelan nuduhake publik';
+  String get mealRemindersSettingsPublicSharingDefault =>
+      'Setelan nuduhake publik';
 
   @override
   String mealRemindersSettingsScreenCouldnTLoadSchedules(Object e) {
@@ -19849,7 +21371,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get mealRemindersSettingsSignInToSee => 'Mlebu kanggo ndeleng jadwal sampeyan.';
+  String get mealRemindersSettingsSignInToSee =>
+      'Mlebu kanggo ndeleng jadwal sampeyan.';
 
   @override
   String get mealScoreWidgetsGoalFit => 'Target fit';
@@ -19904,7 +21427,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get measurementDetailNotesOptional => 'CATETAN (OPSIONAL)';
 
   @override
-  String get measurementDetailPleaseEnterAValid => 'Mangga lebokake angka sing bener';
+  String get measurementDetailPleaseEnterAValid =>
+      'Mangga lebokake angka sing bener';
 
   @override
   String get measurementDetailPleaseEnterAValue => 'Mangga lebokake nilai';
@@ -19963,13 +21487,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get measurementDetailTrends => 'Tren';
 
   @override
-  String get measurementDetailTrySelectingAWider => 'Coba pilih rentang wektu sing luwih jembar utawa cathet entri anyar';
+  String get measurementDetailTrySelectingAWider =>
+      'Coba pilih rentang wektu sing luwih jembar utawa cathet entri anyar';
 
   @override
   String get measurementDetailViewTrends => 'Deleng tren';
 
   @override
-  String get measurementValuePillCouldNotSaveTry => 'Gagal nyimpen — coba maneh';
+  String get measurementValuePillCouldNotSaveTry =>
+      'Gagal nyimpen — coba maneh';
 
   @override
   String get measurementsAddEntry => 'Tambah entri';
@@ -20019,7 +21545,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get measurementsScreenPartAddAnyNotes => 'Tambah cathetan...';
 
   @override
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length) {
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
+    Object _selectedFormat,
+    Object length,
+  ) {
     return 'Ekspor jinis pangukuran (length) minangka .(_selectedFormat)';
   }
 
@@ -20029,7 +21558,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get measurementsScreenPartAvailableMeasurementTypes => 'Jinis Pangukuran sing Kasedhiya';
+  String get measurementsScreenPartAvailableMeasurementTypes =>
+      'Jinis Pangukuran sing Kasedhiya';
 
   @override
   String get measurementsScreenPartClear => 'Resiki';
@@ -20080,7 +21610,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get measurementsScreenPartNotesOptional => 'CATETAN (OPSIONAL)';
 
   @override
-  String get measurementsScreenPartPleaseEnterAValid => 'Mangga lebokake angka sing bener';
+  String get measurementsScreenPartPleaseEnterAValid =>
+      'Mangga lebokake angka sing bener';
 
   @override
   String get measurementsScreenPartPleaseEnterAValue => 'Mangga lebokake nilai';
@@ -20089,10 +21620,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get measurementsScreenPartSelectAll => 'Pilih Kabeh';
 
   @override
-  String get measurementsScreenPartWeightBodyFatChest => 'bobot, lemak_awak, dhadha, bangkekan, pinggul, gulu, pundhak, otot_lengan_kiwa, otot_lengan_tengen, lengen_ngisor_kiwa, lengen_ngisor_tengen, pupu_kiwa, pupu_tengen, pedhet_kiwa, pedhet_tengen';
+  String get measurementsScreenPartWeightBodyFatChest =>
+      'bobot, lemak_awak, dhadha, bangkekan, pinggul, gulu, pundhak, otot_lengan_kiwa, otot_lengan_tengen, lengen_ngisor_kiwa, lengen_ngisor_tengen, pupu_kiwa, pupu_tengen, pedhet_kiwa, pedhet_tengen';
 
   @override
-  String get measurementsScreenPartWorkoutsNutritionMeasureme => 'Latihan, nutrisi, pangukuran & liyane';
+  String get measurementsScreenPartWorkoutsNutritionMeasureme =>
+      'Latihan, nutrisi, pangukuran & liyane';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -20142,7 +21675,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get measurementsTakingLongerThanExpected => 'Luwih suwe tinimbang sing dikarepake...';
+  String get measurementsTakingLongerThanExpected =>
+      'Luwih suwe tinimbang sing dikarepake...';
 
   @override
   String get measurementsViewAll => 'Deleng kabeh';
@@ -20156,7 +21690,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get mediaPickerHelperAddMedia => 'Tambah Media';
 
   @override
-  String get mediaPickerHelperCameraPermissionRequired => 'Idin kamera dibutuhake';
+  String get mediaPickerHelperCameraPermissionRequired =>
+      'Idin kamera dibutuhake';
 
   @override
   String get mediaPickerHelperChooseMultiplePhotos => 'Pilih Akeh Foto';
@@ -20177,7 +21712,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get mediaPickerHelperFromGalleryMax60s => 'Saka galeri (maks 60d)';
 
   @override
-  String get mediaPickerHelperImagesMax10Mb => 'Gambar: maks 10 MB | Video: maks 60d (BETA)';
+  String get mediaPickerHelperImagesMax10Mb =>
+      'Gambar: maks 10 MB | Video: maks 60d (BETA)';
 
   @override
   String get mediaPickerHelperOpenSettings => 'Bukak Setelan';
@@ -20188,7 +21724,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get mediaPickerHelperPhotoLibraryPermissionRequi => 'Idin perpustakaan foto dibutuhake';
+  String get mediaPickerHelperPhotoLibraryPermissionRequi =>
+      'Idin perpustakaan foto dibutuhake';
 
   @override
   String get mediaPickerHelperRecordVideo => 'Rekam Video';
@@ -20221,19 +21758,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get medicalDisclaimerAiRecommendations => 'Rekomendasi AI';
 
   @override
-  String get medicalDisclaimerAlwaysSeekTheAdvice => 'Tansah njaluk saran saka dhokter utawa panyedhiya kesehatan liyane sing nduweni kualifikasi sadurunge miwiti program olahraga anyar, utamane yen sampeyan duwe kondisi medis, ciloko, utawa masalah kesehatan sadurunge. Aja nggatekake saran medis profesional utawa telat golek saran amarga apa sing sampeyan waca ing aplikasi iki.';
+  String get medicalDisclaimerAlwaysSeekTheAdvice =>
+      'Tansah njaluk saran saka dhokter utawa panyedhiya kesehatan liyane sing nduweni kualifikasi sadurunge miwiti program olahraga anyar, utamane yen sampeyan duwe kondisi medis, ciloko, utawa masalah kesehatan sadurunge. Aja nggatekake saran medis profesional utawa telat golek saran amarga apa sing sampeyan waca ing aplikasi iki.';
 
   @override
   String get medicalDisclaimerAssumptionOfRisk => 'Anggapan Risiko';
 
   @override
-  String get medicalDisclaimerBannerAiGeneratedContentNot => 'Konten sing digawe AI - dudu saran medis';
+  String get medicalDisclaimerBannerAiGeneratedContentNot =>
+      'Konten sing digawe AI - dudu saran medis';
 
   @override
-  String get medicalDisclaimerConsultYourDoctor => 'Konsultasi karo Dhokter Sampeyan';
+  String get medicalDisclaimerConsultYourDoctor =>
+      'Konsultasi karo Dhokter Sampeyan';
 
   @override
-  String get medicalDisclaimerImportantHealthNotice => 'Wara-wara Kesehatan Penting';
+  String get medicalDisclaimerImportantHealthNotice =>
+      'Wara-wara Kesehatan Penting';
 
   @override
   String get medicalDisclaimerListenToYourBody => 'Rungokake Awak Sampeyan';
@@ -20250,7 +21791,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName) {
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
+    Object appName,
+  ) {
     return 'Olahraga fisik duwe risiko. Kanthi nggunakake $appName, sampeyan ngakoni yen sampeyan melu kegiatan fisik kanthi sukarela lan nanggung kabeh risiko sing ana gandhengane karo kegiatan kasebut, kalebu nanging ora winates ing ciloko, penyakit, utawa pati.';
   }
 
@@ -20265,10 +21808,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get medicalDisclaimerStopExercisingImmediatelyIf => 'Mandheg olahraga sanalika yen sampeyan ngrasakake nyeri, pusing, sesak napas, mual, utawa rasa ora nyaman ngluwihi gaweyan normal. AI ora bisa netepake kondisi fisik sampeyan kanthi nyata, mula dadi tanggung jawab sampeyan kanggo olahraga miturut watesan sampeyan.';
+  String get medicalDisclaimerStopExercisingImmediatelyIf =>
+      'Mandheg olahraga sanalika yen sampeyan ngrasakake nyeri, pusing, sesak napas, mual, utawa rasa ora nyaman ngluwihi gaweyan normal. AI ora bisa netepake kondisi fisik sampeyan kanthi nyata, mula dadi tanggung jawab sampeyan kanggo olahraga miturut watesan sampeyan.';
 
   @override
-  String get medicalDisclaimerWorkoutRecommendationsAreGe => 'Rekomendasi latihan digawe adhedhasar informasi sing sampeyan wenehake (tingkat fitness, tujuan, peralatan, lsp). Sanajan AI ngupayakake akurasi, AI ora bisa ngetung kabeh faktor individu. Rekomendasi bisa uga ora cocog kanggo kabeh wong.';
+  String get medicalDisclaimerWorkoutRecommendationsAreGe =>
+      'Rekomendasi latihan digawe adhedhasar informasi sing sampeyan wenehake (tingkat fitness, tujuan, peralatan, lsp). Sanajan AI ngupayakake akurasi, AI ora bisa ngetung kabeh faktor individu. Rekomendasi bisa uga ora cocog kanggo kabeh wong.';
 
   @override
   String get menuAnalysisAddFood => 'Tambah panganan';
@@ -20283,7 +21828,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisAlreadySaved => 'Wis disimpen';
 
   @override
-  String get menuAnalysisAutoDetectedFromThe => 'Otomatis dideteksi saka menu — sunting yen salah';
+  String get menuAnalysisAutoDetectedFromThe =>
+      'Otomatis dideteksi saka menu — sunting yen salah';
 
   @override
   String get menuAnalysisCal => 'Kal';
@@ -20298,13 +21844,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisClearFilters => 'Busak saringan';
 
   @override
-  String get menuAnalysisCouldnTRecognizeAny => 'Ora bisa ngenali panganan ing katrangan kasebut.';
+  String get menuAnalysisCouldnTRecognizeAny =>
+      'Ora bisa ngenali panganan ing katrangan kasebut.';
 
   @override
-  String get menuAnalysisEG123Main => 'contone 123 Main St, utawa mung \"downtown\"';
+  String get menuAnalysisEG123Main =>
+      'contone 123 Main St, utawa mung \"downtown\"';
 
   @override
-  String get menuAnalysisEGIndianPlace => 'contone panggonan India cedhak kantor';
+  String get menuAnalysisEGIndianPlace =>
+      'contone panggonan India cedhak kantor';
 
   @override
   String get menuAnalysisEditSavedMenu => 'Sunting menu sing disimpen';
@@ -20322,13 +21871,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisHistoryClearSearch => 'Busak telusuran';
 
   @override
-  String get menuAnalysisHistoryCouldnTLoadYour => 'Ora bisa mbukak menu sing disimpen';
+  String get menuAnalysisHistoryCouldnTLoadYour =>
+      'Ora bisa mbukak menu sing disimpen';
 
   @override
-  String get menuAnalysisHistoryEG123Main => 'contone 123 Main St, utawa mung \"downtown\"';
+  String get menuAnalysisHistoryEG123Main =>
+      'contone 123 Main St, utawa mung \"downtown\"';
 
   @override
-  String get menuAnalysisHistoryEGIndianPlace => 'contone panggonan India cedhak kantor';
+  String get menuAnalysisHistoryEGIndianPlace =>
+      'contone panggonan India cedhak kantor';
 
   @override
   String get menuAnalysisHistoryEditDetails => 'Sunting rincian';
@@ -20340,7 +21892,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisHistoryNoMatchingMenus => 'Ora ana menu sing cocog';
 
   @override
-  String get menuAnalysisHistoryNoSavedMenusYet => 'Durung ana menu sing disimpen';
+  String get menuAnalysisHistoryNoSavedMenusYet =>
+      'Durung ana menu sing disimpen';
 
   @override
   String get menuAnalysisHistoryPin => 'Pin';
@@ -20359,10 +21912,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get menuAnalysisHistorySearchByNameRestaurant => 'Telusuri miturut jeneng, restoran, utawa alamat';
+  String get menuAnalysisHistorySearchByNameRestaurant =>
+      'Telusuri miturut jeneng, restoran, utawa alamat';
 
   @override
-  String get menuAnalysisHistoryTapTheBookmarkButton => 'Tutul tombol tetenger sawise pindai menu kanggo nyimpen ing kene.';
+  String get menuAnalysisHistoryTapTheBookmarkButton =>
+      'Tutul tombol tetenger sawise pindai menu kanggo nyimpen ing kene.';
 
   @override
   String get menuAnalysisHistoryTryADifferentSearch => 'Coba telusuran liyane.';
@@ -20374,13 +21929,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisHistoryUseRestaurantName => 'Gunakake jeneng restoran';
 
   @override
-  String get menuAnalysisHistoryYouReOfflineThis => 'Sampeyan offline — iki mbutuhake sambungan';
+  String get menuAnalysisHistoryYouReOfflineThis =>
+      'Sampeyan offline — iki mbutuhake sambungan';
 
   @override
   String get menuAnalysisItemAddedSugar => 'Gula tambahan';
 
   @override
-  String get menuAnalysisItemAdjustWhatYouAte => 'Setel apa sing sampeyan pangan';
+  String get menuAnalysisItemAdjustWhatYouAte =>
+      'Setel apa sing sampeyan pangan';
 
   @override
   String get menuAnalysisItemAdjusted => 'Disetel';
@@ -20432,7 +21989,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisNameOptional => 'Jeneng (opsional)';
 
   @override
-  String get menuAnalysisNoDishesMatchYour => 'Ora ana panganan sing cocog karo filter sampeyan';
+  String get menuAnalysisNoDishesMatchYour =>
+      'Ora ana panganan sing cocog karo filter sampeyan';
 
   @override
   String get menuAnalysisProtein => 'Protein';
@@ -20459,7 +22017,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisRemoveFromSaved2 => 'Busak saka sing disimpen?';
 
   @override
-  String get menuAnalysisRemovedFromSavedMenus => 'Wis dibusak saka menu sing disimpen';
+  String get menuAnalysisRemovedFromSavedMenus =>
+      'Wis dibusak saka menu sing disimpen';
 
   @override
   String get menuAnalysisResults => 'Hasil';
@@ -20480,7 +22039,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisSavedMenus => 'Menu sing disimpen';
 
   @override
-  String get menuAnalysisSavedToYourMenu => 'Disimpen menyang riwayat menu sampeyan';
+  String get menuAnalysisSavedToYourMenu =>
+      'Disimpen menyang riwayat menu sampeyan';
 
   @override
   String get menuAnalysisSearchDishes => 'Golek panganan';
@@ -20542,43 +22102,52 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuAnalysisSort2 => 'Urut';
 
   @override
-  String get menuAnalysisTourAiPicksTheBest => 'AI milih telung panganan paling apik adhedhasar makro, alergen, lan toleransi inflamasi sampeyan.';
+  String get menuAnalysisTourAiPicksTheBest =>
+      'AI milih telung panganan paling apik adhedhasar makro, alergen, lan toleransi inflamasi sampeyan.';
 
   @override
-  String get menuAnalysisTourFilterByDietAllergens => 'Filter miturut diet & alergen';
+  String get menuAnalysisTourFilterByDietAllergens =>
+      'Filter miturut diet & alergen';
 
   @override
-  String get menuAnalysisTourHideDishesThatDon => 'Singidaken panganan sing ora cocog karo diet utawa ngandhut alergen sampeyan — preferensi sampeyan bakal otomatis saka Setelan.';
+  String get menuAnalysisTourHideDishesThatDon =>
+      'Singidaken panganan sing ora cocog karo diet utawa ngandhut alergen sampeyan — preferensi sampeyan bakal otomatis saka Setelan.';
 
   @override
   String get menuAnalysisTourRecommendedForYou => 'Disaranake kanggo sampeyan';
 
   @override
-  String get menuAnalysisTourSelectDishesToLog => 'Pilih panganan kanggo dicathet';
+  String get menuAnalysisTourSelectDishesToLog =>
+      'Pilih panganan kanggo dicathet';
 
   @override
   String get menuAnalysisTourSortTheWholeMenu => 'Urut kabeh menu';
 
   @override
-  String get menuAnalysisTourTapProteinCarbsFat => 'Tutul Protein, Karbohidrat, Lemak, utawa Inflamasi kanggo ngurutake kabeh panganan sekaligus. Liyane… mbukak urutan lanjut.';
+  String get menuAnalysisTourTapProteinCarbsFat =>
+      'Tutul Protein, Karbohidrat, Lemak, utawa Inflamasi kanggo ngurutake kabeh panganan sekaligus. Liyane… mbukak urutan lanjut.';
 
   @override
-  String get menuAnalysisTourTickTheDishesYou => 'Centhang panganan sing bener-bener sampeyan pesen, banjur pencet Cathet kanggo ngirim menyang total harian sampeyan.';
+  String get menuAnalysisTourTickTheDishesYou =>
+      'Centhang panganan sing bener-bener sampeyan pesen, banjur pencet Cathet kanggo ngirim menyang total harian sampeyan.';
 
   @override
   String get menuAnalysisUpdateExisting => 'Anyari sing wis ana';
 
   @override
-  String get menuAnalysisUpdatedYourSavedMenu => 'Menu sing disimpen wis dianyari';
+  String get menuAnalysisUpdatedYourSavedMenu =>
+      'Menu sing disimpen wis dianyari';
 
   @override
   String get menuAnalysisUseRestaurantName => 'Gunakake jeneng restoran';
 
   @override
-  String get menuAnalysisYouReOfflineThis => 'Sampeyan offline — iki mbutuhake sambungan internet';
+  String get menuAnalysisYouReOfflineThis =>
+      'Sampeyan offline — iki mbutuhake sambungan internet';
 
   @override
-  String get menuDishAdjustAddABitMore => 'Tambah rincian sethithik kanggo nyempurnakake.';
+  String get menuDishAdjustAddABitMore =>
+      'Tambah rincian sethithik kanggo nyempurnakake.';
 
   @override
   String get menuDishAdjustAdjustThisDish => 'Setel panganan iki';
@@ -20587,13 +22156,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuDishAdjustApply => 'Aplikasi';
 
   @override
-  String get menuDishAdjustCouldnTRefineThat => 'Ora bisa nyempurnakake — coba gunakake tembung liya.';
+  String get menuDishAdjustCouldnTRefineThat =>
+      'Ora bisa nyempurnakake — coba gunakake tembung liya.';
 
   @override
   String get menuDishAdjustHowMuchDidYou => 'Pira sing sampeyan pangan?';
 
   @override
-  String get menuDishAdjustMenuMacrosAreAs => 'Makro menu iku \"kaya sing disajikake\" — kandhani apa sing bener-bener sampeyan pangan.';
+  String get menuDishAdjustMenuMacrosAreAs =>
+      'Makro menu iku \"kaya sing disajikake\" — kandhani apa sing bener-bener sampeyan pangan.';
 
   @override
   String get menuDishAdjustOrDescribeIt => 'Utawa deskripsikake';
@@ -20610,13 +22181,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuFilterAdvancedFilters => 'Filter lanjut';
 
   @override
-  String get menuFilterAppliesOnlyToDishes => 'Mung ditrapake kanggo panganan sing ana regane.';
+  String get menuFilterAppliesOnlyToDishes =>
+      'Mung ditrapake kanggo panganan sing ana regane.';
 
   @override
   String get menuFilterAvoid => 'Hindari';
 
   @override
-  String get menuFilterBasedOnIngredientProfile => 'Adhedhasar profil bahan (omega-3, serat, gula tambahan, lsp).';
+  String get menuFilterBasedOnIngredientProfile =>
+      'Adhedhasar profil bahan (omega-3, serat, gula tambahan, lsp).';
 
   @override
   String get menuFilterBloodSugar => 'Gula getih';
@@ -20646,10 +22219,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuFilterFodmapIbs => 'FODMAP (IBS)';
 
   @override
-  String get menuFilterForSpecificTargetsMost => 'Kanggo target tartamtu. Umume wong ora butuh iki.';
+  String get menuFilterForSpecificTargetsMost =>
+      'Kanggo target tartamtu. Umume wong ora butuh iki.';
 
   @override
-  String get menuFilterGlycemicLoadPerServing => 'Beban glikemik saben porsi — luwih sithik = energi luwih stabil.';
+  String get menuFilterGlycemicLoadPerServing =>
+      'Beban glikemik saben porsi — luwih sithik = energi luwih stabil.';
 
   @override
   String get menuFilterGood => '✅ Apik';
@@ -20658,13 +22233,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuFilterHideAdvancedFilters => 'Singidaken filter lanjut';
 
   @override
-  String get menuFilterHideDishesWithMy => 'Singidaken panganan sing ngandhut alergenku';
+  String get menuFilterHideDishesWithMy =>
+      'Singidaken panganan sing ngandhut alergenku';
 
   @override
-  String get menuFilterHideUltraProcessedDishes => 'Singidaken panganan ultra-proses';
+  String get menuFilterHideUltraProcessedDishes =>
+      'Singidaken panganan ultra-proses';
 
   @override
-  String get menuFilterHowTheAiRated => 'Kepiye AI menehi rating saben panganan kanggo target sampeyan.';
+  String get menuFilterHowTheAiRated =>
+      'Kepiye AI menehi rating saben panganan kanggo target sampeyan.';
 
   @override
   String get menuFilterInflammation => 'Inflamasi';
@@ -20682,7 +22260,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get menuFilterOkay => '👌 Oke';
 
   @override
-  String get menuFilterOnionGarlicWheatLactose => 'Bawang, bawang putih, gandum, laktosa bisa memicu gejala IBS.';
+  String get menuFilterOnionGarlicWheatLactose =>
+      'Bawang, bawang putih, gandum, laktosa bisa memicu gejala IBS.';
 
   @override
   String get menuFilterPerDishBudget => 'Anggaran saben panganan';
@@ -20704,22 +22283,27 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get menuFilterShowOnlyCertainParts => 'Tampilake bagean menu tartamtu wae.';
+  String get menuFilterShowOnlyCertainParts =>
+      'Tampilake bagean menu tartamtu wae.';
 
   @override
   String get menuFilterSkip => '⚠️ Lewati';
 
   @override
-  String get menuFilterSkipsNova4Foods => 'Nglewati panganan NOVA-4 (emulsifier industri, HFCS, lsp.)';
+  String get menuFilterSkipsNova4Foods =>
+      'Nglewati panganan NOVA-4 (emulsifier industri, HFCS, lsp.)';
 
   @override
-  String get menuFilterTapAnyThatApply => 'Tutul sing cocog — kita mung bakal nampilake panganan sing pas.';
+  String get menuFilterTapAnyThatApply =>
+      'Tutul sing cocog — kita mung bakal nampilake panganan sing pas.';
 
   @override
-  String get menuFilterUsesYourSavedAllergen => 'Nggunakake profil alergen sing wis disimpen';
+  String get menuFilterUsesYourSavedAllergen =>
+      'Nggunakake profil alergen sing wis disimpen';
 
   @override
-  String get menuFilterWeLlHideDishes => 'Kita bakal ndhelikake panganan sing ora cocog karo dietmu.';
+  String get menuFilterWeLlHideDishes =>
+      'Kita bakal ndhelikake panganan sing ora cocog karo dietmu.';
 
   @override
   String get menuFilterWhatAreYouIn => 'Pengin mangan apa?';
@@ -20775,19 +22359,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get merchClaimsMerchRewards => 'Hadiah Merchandise';
 
   @override
-  String get merchClaimsNoMerchUnlockedYet => 'Durung ana merchandise sing kabuka';
+  String get merchClaimsNoMerchUnlockedYet =>
+      'Durung ana merchandise sing kabuka';
 
   @override
   String get merchClaimsNotNow => 'Aja saiki';
 
   @override
-  String get merchClaimsPushEmailAlertsWhen => 'Notifikasi push + email nalika cedhak karo tier merchandise utawa nalika ana hadiah sing nunggu';
+  String get merchClaimsPushEmailAlertsWhen =>
+      'Notifikasi push + email nalika cedhak karo tier merchandise utawa nalika ana hadiah sing nunggu';
 
   @override
-  String get merchClaimsRealRewardsForReal => 'Hadiah nyata kanggo kemajuan nyata';
+  String get merchClaimsRealRewardsForReal =>
+      'Hadiah nyata kanggo kemajuan nyata';
 
   @override
-  String get merchClaimsRewardAcceptedWeLl => 'Hadiah ditampa! Kita bakal ngirim email kanggo njaluk detail pengiriman.';
+  String get merchClaimsRewardAcceptedWeLl =>
+      'Hadiah ditampa! Kita bakal ngirim email kanggo njaluk detail pengiriman.';
 
   @override
   String get merchClaimsRewardCancelled => 'Hadiah dibatalake.';
@@ -20823,7 +22411,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get merchClaimsTapAcceptToClaim => 'Tutul Tampa kanggo njupuk. Kita bakal ngirim email kanggo njaluk ukuran lan alamat pengiriman nalika wis siyap dikirim.';
+  String get merchClaimsTapAcceptToClaim =>
+      'Tutul Tampa kanggo njupuk. Kita bakal ngirim email kanggo njaluk ukuran lan alamat pengiriman nalika wis siyap dikirim.';
 
   @override
   String get merchClaimsTracking => 'Nomer pelacakan';
@@ -20837,7 +22426,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get merchClaimsViewTracking => 'Deleng pelacakan';
 
   @override
-  String get merchClaimsWeLlEmailYou => 'Kita bakal ngirim email ing sawetara minggu ngarep kanggo njaluk';
+  String get merchClaimsWeLlEmailYou =>
+      'Kita bakal ngirim email ing sawetara minggu ngarep kanggo njaluk';
 
   @override
   String merchClaimsYouWillForfeit(Object displayName, Object level) {
@@ -20845,7 +22435,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get messagesCouldNotLoadYour => 'Ora bisa mbukak obrolanmu.\nCoba maneh mengko.';
+  String get messagesCouldNotLoadYour =>
+      'Ora bisa mbukak obrolanmu.\nCoba maneh mengko.';
 
   @override
   String get messagesFailedToLoadMessages => 'Gagal Mbukak Pesen';
@@ -20860,10 +22451,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get messagesNotLoggedIn => 'Durung Mlebu Akun';
 
   @override
-  String get messagesPleaseLogInTo => 'Mangga mlebu akun kanggo ndeleng pesenmu';
+  String get messagesPleaseLogInTo =>
+      'Mangga mlebu akun kanggo ndeleng pesenmu';
 
   @override
-  String get messagesStartAConversationWith => 'Miwiti obrolan karo kanca-kancamu!\nPesenmu bakal katon ing kene.';
+  String get messagesStartAConversationWith =>
+      'Miwiti obrolan karo kanca-kancamu!\nPesenmu bakal katon ing kene.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Ora ana data kanggo dina iki';
@@ -20872,7 +22465,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricHistoryCardTrendUnavailable => 'Tren ora kasedhiya.';
 
   @override
-  String get metricHistoryCardTwoOrMoreSynced => 'Perlu rong dina utawa luwih sing wis disinkronake kanggo nggawe grafik tren.';
+  String get metricHistoryCardTwoOrMoreSynced =>
+      'Perlu rong dina utawa luwih sing wis disinkronake kanggo nggawe grafik tren.';
 
   @override
   String get metricPickerChooseAMetric => 'Pilih metrik';
@@ -20961,7 +22555,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricsDashboardTotalTime => 'Total Wektu';
 
   @override
-  String get metricsDashboardTrackYourProgressOver => 'Lacak kemajuanmu saka wektu ke wektu';
+  String get metricsDashboardTrackYourProgressOver =>
+      'Lacak kemajuanmu saka wektu ke wektu';
 
   @override
   String get metricsDashboardValue => 'Nilai';
@@ -20976,7 +22571,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricsDashboardWorkoutsThisWeek => 'Latihan Minggu Iki';
 
   @override
-  String get micronutrientsNoMicronutrientDataAvailabl => 'Ora ana data mikronutrien';
+  String get micronutrientsNoMicronutrientDataAvailabl =>
+      'Ora ana data mikronutrien';
 
   @override
   String get micronutrientsVitaminsMinerals => 'Vitamin & Mineral';
@@ -21027,12 +22623,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes) {
+  String milestonesScreenUiAverageMinWorkout(
+    Object averageWorkoutDurationMinutes,
+  ) {
     return 'Rata-rata: $averageWorkoutDurationMinutes menit/latihan';
   }
 
   @override
-  String get milestonesScreenUiCompleteWorkoutsToSee => 'Rampungake latihan kanggo ndeleng ROI-mu';
+  String get milestonesScreenUiCompleteWorkoutsToSee =>
+      'Rampungake latihan kanggo ndeleng ROI-mu';
 
   @override
   String milestonesScreenUiKg(Object totalWeightLiftedKg) {
@@ -21124,10 +22723,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get missedWorkoutBannerSkipWithoutReason => 'Lewati tanpa alesan';
 
   @override
-  String get missedWorkoutBannerThisHelpsUsAdjust => 'Iki mbantu kita nyetel jadwalmu';
+  String get missedWorkoutBannerThisHelpsUsAdjust =>
+      'Iki mbantu kita nyetel jadwalmu';
 
   @override
-  String get missedWorkoutBannerWhyAreYouSkipping => 'Kenapa sampeyan nglewati?';
+  String get missedWorkoutBannerWhyAreYouSkipping =>
+      'Kenapa sampeyan nglewati?';
 
   @override
   String get missedWorkoutBannerWorkoutSkipped => 'Latihan dilewati';
@@ -21163,7 +22764,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get moodCalendarHeatmapDaysTracked => 'Dina sing Dilacak';
 
   @override
-  String get moodCalendarHeatmapFailedToLoadCalendar => 'Gagal mbukak tanggalan';
+  String get moodCalendarHeatmapFailedToLoadCalendar =>
+      'Gagal mbukak tanggalan';
 
   @override
   String get moodCalendarHeatmapGood => 'Apik';
@@ -21212,7 +22814,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get moodCardTapCellsToTune => 'Tutul sel kanggo nyetel pangaturan adhedhasar swasana ati';
+  String get moodCardTapCellsToTune =>
+      'Tutul sel kanggo nyetel pangaturan adhedhasar swasana ati';
 
   @override
   String get moodCardVol => 'Vol.';
@@ -21268,7 +22871,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get moodHistoryStartTrackingYourMood => 'Mulai lacak swasana atimu kanggo entuk saran latihan sing dipersonalisasi lan ndeleng pola sampeyan saka wektu ke wektu.';
+  String get moodHistoryStartTrackingYourMood =>
+      'Mulai lacak swasana atimu kanggo entuk saran latihan sing dipersonalisasi lan ndeleng pola sampeyan saka wektu ke wektu.';
 
   @override
   String get moodHistoryYourMoodInsights => 'Wawasan Swasana Atimu';
@@ -21288,7 +22892,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get moodPickerCardGenerationFailed => 'Gagal Nggawe';
 
   @override
-  String get moodPickerCardGetAWorkoutFor => 'Entuk latihan kanggo swasana atimu';
+  String get moodPickerCardGetAWorkoutFor =>
+      'Entuk latihan kanggo swasana atimu';
 
   @override
   String get moodPickerCardHowAreYouFeeling => 'Piye perasaanmu?';
@@ -21310,7 +22915,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get moodPickerCardTryAgain => 'Coba maneh';
 
   @override
-  String get moodPickerCouldnTSaveYour => 'Ora bisa nyimpen swasana atimu. Mangga coba maneh.';
+  String get moodPickerCouldnTSaveYour =>
+      'Ora bisa nyimpen swasana atimu. Mangga coba maneh.';
 
   @override
   String get moodPickerGenerateWorkout => 'Gawe Latihan';
@@ -21375,13 +22981,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get moodWeeklyChartMoodTrends => 'Tren Swasana Ati';
 
   @override
-  String get moodWeeklyChartNoMoodDataThis => 'Ora ana data swasana ati minggu iki';
+  String get moodWeeklyChartNoMoodDataThis =>
+      'Ora ana data swasana ati minggu iki';
 
   @override
   String get moodWeeklyChartStable => 'Stabil';
 
   @override
-  String get moodWeeklyChartStartTrackingYourMood => 'Mulai lacak swasana atimu kanggo ndeleng tren';
+  String get moodWeeklyChartStartTrackingYourMood =>
+      'Mulai lacak swasana atimu kanggo ndeleng tren';
 
   @override
   String moodWeeklyChartValue(Object length) {
@@ -21389,7 +22997,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get morningRecoveryNudgeBody => 'Kesiagan saiki kurang. Ngurangi volume — bukak app kanggo regenerate.';
+  String get morningRecoveryNudgeBody =>
+      'Kesiagan saiki kurang. Ngurangi volume — bukak app kanggo regenerate.';
 
   @override
   String get morningRecoveryNudgeTitle => 'Saiki ayem dhisik';
@@ -21413,13 +23022,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleAnalyticsBalanced => 'Seimbang';
 
   @override
-  String get muscleAnalyticsCompleteMoreWorkoutsTo => 'Rampungake luwih akeh latihan kanggo ndeleng analisis keseimbangan ototmu.';
+  String get muscleAnalyticsCompleteMoreWorkoutsTo =>
+      'Rampungake luwih akeh latihan kanggo ndeleng analisis keseimbangan ototmu.';
 
   @override
-  String get muscleAnalyticsCompleteSomeWorkoutsTo => 'Rampungake sawetara latihan kanggo ndeleng heatmap latihan ototmu.';
+  String get muscleAnalyticsCompleteSomeWorkoutsTo =>
+      'Rampungake sawetara latihan kanggo ndeleng heatmap latihan ototmu.';
 
   @override
-  String get muscleAnalyticsCompleteWorkoutsOverMultipl => 'Rampungake latihan sajrone pirang-pirang minggu kanggo ndeleng frekuensi latihan.';
+  String get muscleAnalyticsCompleteWorkoutsOverMultipl =>
+      'Rampungake latihan sajrone pirang-pirang minggu kanggo ndeleng frekuensi latihan.';
 
   @override
   String get muscleAnalyticsFrequency => 'Frekuensi';
@@ -21481,7 +23093,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleAnalyticsUpperLower => 'Upper / Lower';
 
   @override
-  String get muscleAnalyticsWeeklyTrainingFrequency => 'Frekuensi Latihan Mingguan';
+  String get muscleAnalyticsWeeklyTrainingFrequency =>
+      'Frekuensi Latihan Mingguan';
 
   @override
   String get muscleBalanceChartBalanced => 'Seimbang';
@@ -21520,7 +23133,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleDetailMaxWeight => 'Bobot Maksimal';
 
   @override
-  String get muscleDetailNeedMoreDataFor => 'Butuh data luwih akeh kanggo grafik';
+  String get muscleDetailNeedMoreDataFor =>
+      'Butuh data luwih akeh kanggo grafik';
 
   @override
   String muscleDetailScreenSetsWk(Object weeklySets) {
@@ -21549,7 +23163,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleFrequencyChartLow1xWk => 'Endhek (<1x/minggu)';
 
   @override
-  String get muscleFrequencyChartNoFrequencyDataAvailable => 'Ora ana data frekuensi';
+  String get muscleFrequencyChartNoFrequencyDataAvailable =>
+      'Ora ana data frekuensi';
 
   @override
   String get muscleFrequencyChartOptimal13xWk => 'Optimal (1-3x/minggu)';
@@ -21594,7 +23209,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleHeatmapOther => 'Liyane';
 
   @override
-  String get muscleHeatmapTileCompleteWorkoutsToSee => 'Rampungake latihan kanggo ndeleng data otot';
+  String get muscleHeatmapTileCompleteWorkoutsToSee =>
+      'Rampungake latihan kanggo ndeleng data otot';
 
   @override
   String get muscleHeatmapTileCouldnTLoad => 'Gagal mbukak';
@@ -21614,7 +23230,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get muscleHeatmapUpperBody => 'Awak Dhuwur';
 
   @override
-  String get muscleScoreBreakdownNoExerciseDataIn => 'Ora ana data latihan ing 90 dina pungkasan.';
+  String get muscleScoreBreakdownNoExerciseDataIn =>
+      'Ora ana data latihan ing 90 dina pungkasan.';
 
   @override
   String muscleScoreBreakdownSheetEstimatedRmKg(Object e1rm) {
@@ -21633,7 +23250,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get my1rmsAddManually => 'Tambah manual';
 
   @override
-  String get my1rmsAddYourMaxLifts => 'Tambah angkatan maksimalmu kanggo entuk rekomendasi bobot pribadi adhedhasar intensitas latihanmu.';
+  String get my1rmsAddYourMaxLifts =>
+      'Tambah angkatan maksimalmu kanggo entuk rekomendasi bobot pribadi adhedhasar intensitas latihanmu.';
 
   @override
   String get my1rmsAutoPopulateFromWorkout => 'Otomatis saka riwayat latihan';
@@ -21695,7 +23313,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay) {
+  String my1rmsScreenPartOneRMCardKg(
+    Object derivedWeight,
+    Object multiplierDisplay,
+    Object relationshipDisplay,
+  ) {
     return '$multiplierDisplay = $derivedWeight kg • $relationshipDisplay';
   }
 
@@ -21710,12 +23332,17 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text) {
+  String my1rmsScreenPartOneRMCardLinkedTo(
+    Object primaryExerciseName,
+    Object text,
+  ) {
     return 'Ngasambungake $text menyang $primaryExerciseName';
   }
 
   @override
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName) {
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
+    Object linkedExerciseName,
+  ) {
     return 'Busak $linkedExerciseName saka latihan sing disambungake?';
   }
 
@@ -21767,7 +23394,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get myBadgesShowcaseLogYourFirstWorkout => 'Cathet latihan pisananmu kanggo entuk lencana pisanan';
+  String get myBadgesShowcaseLogYourFirstWorkout =>
+      'Cathet latihan pisananmu kanggo entuk lencana pisanan';
 
   @override
   String myExercisesAreYouSureDelete(Object exercise) {
@@ -21784,7 +23412,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myExercisesCreateExercise => 'Gawe Latihan';
 
   @override
-  String get myExercisesCreateYourOwnExercises => 'Gawe latihanmu dhewe kanggo digunakake ing sesi latihan';
+  String get myExercisesCreateYourOwnExercises =>
+      'Gawe latihanmu dhewe kanggo digunakake ing sesi latihan';
 
   @override
   String get myExercisesCustom => 'Kustom';
@@ -21814,7 +23443,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myFoodsCreateNewRecipe => 'Gawe Resep Anyar';
 
   @override
-  String get myFoodsCreateRecipesToQuickly => 'Gawe resep supaya cepet nyathet panganan sing asring kokpangan';
+  String get myFoodsCreateRecipesToQuickly =>
+      'Gawe resep supaya cepet nyathet panganan sing asring kokpangan';
 
   @override
   String get myFoodsCreateYourFirstRecipe => 'Gawe Resep Pisananmu';
@@ -21826,13 +23456,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myFoodsNoRecipesYet => 'Durung ana resep';
 
   @override
-  String get myFoodsNoSavedFoodsFound => 'Ora ditemokake panganan sing disimpen';
+  String get myFoodsNoSavedFoodsFound =>
+      'Ora ditemokake panganan sing disimpen';
 
   @override
-  String get myFoodsReopenARestaurantMenu => 'Bukak maneh menu restoran sing wis dipindai sadurunge';
+  String get myFoodsReopenARestaurantMenu =>
+      'Bukak maneh menu restoran sing wis dipindai sadurunge';
 
   @override
-  String get myFoodsSaveFoodsWhenLogging => 'Simpen panganan nalika nyathet dhahar';
+  String get myFoodsSaveFoodsWhenLogging =>
+      'Simpen panganan nalika nyathet dhahar';
 
   @override
   String get myFoodsSavedMenus => 'Menu sing disimpen';
@@ -21851,7 +23484,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3) {
+  String myFoodsSheetKcalUBP(
+    Object food,
+    Object food1,
+    Object food2,
+    Object food3,
+  ) {
     return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
@@ -21869,16 +23507,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myJourneyCardAmazingStreak => 'Streak sing luar biasa! Terusake!';
 
   @override
-  String get myJourneyCardBuildingGreatHabits => 'Sampeyan lagi mbangun kebiasaan sing apik!';
+  String get myJourneyCardBuildingGreatHabits =>
+      'Sampeyan lagi mbangun kebiasaan sing apik!';
 
   @override
-  String get myJourneyCardComesoFar => 'Sampeyan wis tekan kene. Terus semangat!';
+  String get myJourneyCardComesoFar =>
+      'Sampeyan wis tekan kene. Terus semangat!';
 
   @override
   String get myJourneyCardDayStreak => 'dina berturut-turut';
 
   @override
-  String get myJourneyCardEveryWorkoutCounts => 'Saben latihan iku penting. Sampeyan mesthi bisa!';
+  String get myJourneyCardEveryWorkoutCounts =>
+      'Saben latihan iku penting. Sampeyan mesthi bisa!';
 
   @override
   String get myJourneyCardKeepMomentum => 'Terusake momentum iki!';
@@ -21925,7 +23566,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myJourneyCardProgressCharts => 'Grafik Progres';
 
   @override
-  String get myJourneyCardTapToSeeFullJourney => 'Tutul kanggo ndeleng perjalanan lengkapmu';
+  String get myJourneyCardTapToSeeFullJourney =>
+      'Tutul kanggo ndeleng perjalanan lengkapmu';
 
   @override
   String get myJourneyCardThisWeek => 'minggu iki';
@@ -21937,7 +23579,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myJourneyCardViewCharts => 'Deleng grafik';
 
   @override
-  String get myJourneyCardViewStrengthAndVolume => 'Deleng tren kekuatan lan volume saka wektu ke wektu';
+  String get myJourneyCardViewStrengthAndVolume =>
+      'Deleng tren kekuatan lan volume saka wektu ke wektu';
 
   @override
   String myJourneyCardWeekNumber(Object week) {
@@ -21958,19 +23601,23 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get myLibraryTabAiPrioritizesTheseIn => 'AI ngutamakake iki ing latihanmu';
+  String get myLibraryTabAiPrioritizesTheseIn =>
+      'AI ngutamakake iki ing latihanmu';
 
   @override
-  String get myLibraryTabBuildSupersetsCombosOr => 'Gawe superset, kombo, utawa gerakan unik';
+  String get myLibraryTabBuildSupersetsCombosOr =>
+      'Gawe superset, kombo, utawa gerakan unik';
 
   @override
-  String get myLibraryTabCompleteWorkoutsToSee => 'Rampungake latihan kanggo ndeleng riwayat latihanmu';
+  String get myLibraryTabCompleteWorkoutsToSee =>
+      'Rampungake latihan kanggo ndeleng riwayat latihanmu';
 
   @override
   String get myLibraryTabCreate => 'Gawe';
 
   @override
-  String get myLibraryTabCreateYourFirstCustom => 'Gawe latihan kustom pisananmu';
+  String get myLibraryTabCreateYourFirstCustom =>
+      'Gawe latihan kustom pisananmu';
 
   @override
   String get myLibraryTabFailedToLoadActivity => 'Gagal mbukak aktivitas';
@@ -21979,10 +23626,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myLibraryTabGetStarted => 'Mulai';
 
   @override
-  String get myLibraryTabHeartExercisesToSave => 'Wenehi tandha ati ing latihan kanggo nyimpen ing kene';
+  String get myLibraryTabHeartExercisesToSave =>
+      'Wenehi tandha ati ing latihan kanggo nyimpen ing kene';
 
   @override
-  String get myLibraryTabMarkExercisesAsStaples => 'Tandhani latihan minangka pokok supaya AI ngutamakake';
+  String get myLibraryTabMarkExercisesAsStaples =>
+      'Tandhani latihan minangka pokok supaya AI ngutamakake';
 
   @override
   String get myLibraryTabMyExercises => 'Latihanku';
@@ -21998,7 +23647,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps) {
+  String myLibraryTabPartHistoryTimelineCardBestKgX(
+    Object item,
+    Object maxReps,
+  ) {
     return 'Paling apik: ${item}kg x $maxReps';
   }
 
@@ -22009,7 +23661,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myLibraryTabViewAll => 'Deleng Kabeh';
 
   @override
-  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays) {
+  String myProgramSummaryCardValue(
+    Object experience,
+    Object goal,
+    Object workoutDays,
+  ) {
     return '$workoutDays  •  $experience  •  $goal';
   }
 
@@ -22020,7 +23676,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get myStats1rm => '1RM';
 
   @override
-  String get myStatsCompleteWorkoutsToSee => 'Rampungake latihan kanggo ndeleng statistikmu';
+  String get myStatsCompleteWorkoutsToSee =>
+      'Rampungake latihan kanggo ndeleng statistikmu';
 
   @override
   String get myStatsExercisePerformance => 'Performa Latihan';
@@ -22040,10 +23697,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get myWrappedCompleteAtLeast3 => 'Rampungake paling sethithik 3 latihan sasi iki\nkanggo mbukak rekap pribadimu';
+  String get myWrappedCompleteAtLeast3 =>
+      'Rampungake paling sethithik 3 latihan sasi iki\nkanggo mbukak rekap pribadimu';
 
   @override
-  String get myWrappedEarnAUniquePersonality => 'Entuk kapribaden unik saben sasi kanthi ngrampungake paling sethithik 3 latihan.';
+  String get myWrappedEarnAUniquePersonality =>
+      'Entuk kapribaden unik saben sasi kanthi ngrampungake paling sethithik 3 latihan.';
 
   @override
   String get myWrappedFailedToLoadWrapped => 'Gagal mbukak data wrapped';
@@ -22071,7 +23730,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName) {
+  String myWrappedScreenWrappedDropsInDays(
+    Object daysUntilDrop,
+    Object monthName,
+  ) {
     return '$monthName Wrapped metu ing $daysUntilDrop dina';
   }
 
@@ -22131,7 +23793,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get communityRoutineSaved => 'Disimpen ing rutinitas sampeyan';
 
   @override
-  String get communityRoutineSaveFailed => 'Ora bisa nyimpen rutinitas kasebut. Coba maneh.';
+  String get communityRoutineSaveFailed =>
+      'Ora bisa nyimpen rutinitas kasebut. Coba maneh.';
 
   @override
   String get communityYourProfile => 'Profil sampeyan';
@@ -22142,7 +23805,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get healthSourceSyncingBody => 'Turu, kesiapan, lan vital sinkron kanthi otomatis.';
+  String get healthSourceSyncingBody =>
+      'Turu, kesiapan, lan vital sinkron kanthi otomatis.';
 
   @override
   String vitalsPercentBelowBaseline(Object percent) {
@@ -22184,7 +23848,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatActivityCardSetUpStepGoals => 'Setel target langkah →';
 
   @override
-  String get neatActivityCardTrackYourDailySteps => 'Lacak langkah lan aktivitas saben dinamu';
+  String get neatActivityCardTrackYourDailySteps =>
+      'Lacak langkah lan aktivitas saben dinamu';
 
   @override
   String get neatDashboardDailyActivity => 'Aktivitas Saben Dina';
@@ -22208,7 +23873,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatDashboardScreenComplete => 'RANGPUNG';
 
   @override
-  String get neatDashboardScreenGreatJobYouVe => 'Apik banget! Sampeyan wis nggayuh target jam aktif dina iki.';
+  String get neatDashboardScreenGreatJobYouVe =>
+      'Apik banget! Sampeyan wis nggayuh target jam aktif dina iki.';
 
   @override
   String get neatDashboardScreenHourlyActivity => 'Aktivitas Per Jam';
@@ -22251,7 +23917,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime) {
+  String neatDashboardScreenPartStreaksCardQuietHours(
+    Object endTime,
+    Object startTime,
+  ) {
     return 'Jam tenang: $startTime - $endTime';
   }
 
@@ -22290,7 +23959,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatDashboardScreenUpNext => 'Sabanjure';
 
   @override
-  String get neatDashboardScreenWorkHoursOnly9am => 'Jam kerja wae (09.00 - 17.00)';
+  String get neatDashboardScreenWorkHoursOnly9am =>
+      'Jam kerja wae (09.00 - 17.00)';
 
   @override
   String get neatDashboardUnableToLoadData => 'Ora bisa mbukak data';
@@ -22299,7 +23969,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatGamificationWidgetsAccept => 'Tampa';
 
   @override
-  String get neatGamificationWidgetsAchievementUnlocked => 'PENGHARGAAN DIBUKA!';
+  String get neatGamificationWidgetsAchievementUnlocked =>
+      'PENGHARGAAN DIBUKA!';
 
   @override
   String get neatGamificationWidgetsActive => 'Aktif';
@@ -22361,7 +24032,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatGamificationWidgetsNeatPts => 'Poin NEAT';
 
   @override
-  String get neatGamificationWidgetsNoRankingsYetThis => 'Durung ana peringkat minggu iki';
+  String get neatGamificationWidgetsNoRankingsYetThis =>
+      'Durung ana peringkat minggu iki';
 
   @override
   String neatGamificationWidgetsPartNeatMilestonePopupStateXp(Object xpEarned) {
@@ -22400,7 +24072,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get neatGamificationWidgetsViewAll => 'Deleng Kabeh';
 
   @override
-  String get neatGamificationWidgetsWeeklyLeaderboard => 'Papan Peringkat Mingguan';
+  String get neatGamificationWidgetsWeeklyLeaderboard =>
+      'Papan Peringkat Mingguan';
 
   @override
   String neatGamificationWidgetsXpToNext(Object levelName, Object xpToNext) {
@@ -22436,10 +24109,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get netflixExerciseCarouselSeeAll => 'Deleng Kabeh';
 
   @override
-  String get netflixExercisesAddYourOwnExercises => 'Tambah latihanmu dhewe nganggo repetisi, set, lan instruksi khusus.';
+  String get netflixExercisesAddYourOwnExercises =>
+      'Tambah latihanmu dhewe nganggo repetisi, set, lan instruksi khusus.';
 
   @override
-  String get netflixExercisesAiSearchEG => 'Pencarian AI (tuladhane \"sing kanggo dhadha\")';
+  String get netflixExercisesAiSearchEG =>
+      'Pencarian AI (tuladhane \"sing kanggo dhadha\")';
 
   @override
   String get netflixExercisesCustomExercises => 'Latihan Khusus';
@@ -22472,19 +24147,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get netflixExercisesTabCreate => 'Gawe';
 
   @override
-  String get netflixExercisesTabCreateYourOwnExercises => 'Gawe latihanmu dhewe nganggo foto lan analisis AI';
+  String get netflixExercisesTabCreateYourOwnExercises =>
+      'Gawe latihanmu dhewe nganggo foto lan analisis AI';
 
   @override
   String get netflixExercisesTabMyCustomExercises => 'Latihan Khususku';
 
   @override
-  String get netflixExercisesTabNoCustomExercisesYet => 'Durung ana latihan khusus';
+  String get netflixExercisesTabNoCustomExercisesYet =>
+      'Durung ana latihan khusus';
 
   @override
   String get netflixExercisesTabNoExercisesFound => 'Latihan ora ditemokake';
 
   @override
-  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration) {
+  String netflixExercisesTabPartExerciseListCardDaysWeek(
+    Object daysPerWeek,
+    Object duration,
+  ) {
     return '$daysPerWeek dina/minggu • $duration';
   }
 
@@ -22505,10 +24185,14 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get newTilesAmazingStreakKeepGoing => 'Streak sing luar biasa! Terusake!';
+  String get newTilesAmazingStreakKeepGoing =>
+      'Streak sing luar biasa! Terusake!';
 
   @override
-  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays) {
+  String newTilesPartActiveChallengeCardDayOf(
+    Object currentDay,
+    Object totalDays,
+  ) {
     return 'Dina $currentDay saka $totalDays';
   }
 
@@ -22518,7 +24202,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps) {
+  String newTilesPartActiveChallengeCardTodayReps(
+    Object targetReps,
+    Object todayReps,
+  ) {
     return 'Dina iki: $todayReps / $targetReps repetisi';
   }
 
@@ -22534,16 +24221,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get newTilesPartCoachTip => 'Tips Pelatih';
 
   @override
-  String get newTilesPartCompleteWorkoutsToEarn => 'Rampungake latihan kanggo entuk PR';
+  String get newTilesPartCompleteWorkoutsToEarn =>
+      'Rampungake latihan kanggo entuk PR';
 
   @override
-  String get newTilesPartConnectHealthToTrack => 'Sambungake Kesehatan kanggo nglacak';
+  String get newTilesPartConnectHealthToTrack =>
+      'Sambungake Kesehatan kanggo nglacak';
 
   @override
   String get newTilesPartDayStreak => 'dina streak';
 
   @override
-  String get newTilesPartGettingYourPersonalizedTip => 'Njaluk tips pribadimu...';
+  String get newTilesPartGettingYourPersonalizedTip =>
+      'Njaluk tips pribadimu...';
 
   @override
   String get newTilesPartHeartRate => 'Detak Jantung';
@@ -22588,7 +24278,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get newTilesPartSteps => 'Langkah';
 
   @override
-  String get newTilesPartTapToSeeYour => 'Tutul kanggo ndeleng perjalanan lengkapmu';
+  String get newTilesPartTapToSeeYour =>
+      'Tutul kanggo ndeleng perjalanan lengkapmu';
 
   @override
   String get newTilesPartThisWeek => 'minggu iki';
@@ -22600,7 +24291,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get newTilesPartViewCharts => 'Deleng grafik';
 
   @override
-  String get newTilesPartViewStrengthAndVolume => 'Deleng tren kekuatan lan volume saka wektu ke wektu';
+  String get newTilesPartViewStrengthAndVolume =>
+      'Deleng tren kekuatan lan volume saka wektu ke wektu';
 
   @override
   String get newTilesPartWater => 'Banyu';
@@ -22645,7 +24337,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nextSetPreviewCalculating => 'Ngetung set sabanjure...';
 
   @override
-  String get nextSetPreviewCalculatingOptimalNextSet => 'Ngetung set sabanjure sing optimal...';
+  String get nextSetPreviewCalculatingOptimalNextSet =>
+      'Ngetung set sabanjure sing optimal...';
 
   @override
   String nextSetPreviewCardIntensity(Object intensityPercentage) {
@@ -22678,7 +24371,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nextSetPreviewUseThis => 'Gunakake Iki';
 
   @override
-  String get nextWorkoutCardCouldNotSkipWorkout => 'Ora bisa ngliwati latihan. Coba maneh.';
+  String get nextWorkoutCardCouldNotSkipWorkout =>
+      'Ora bisa ngliwati latihan. Coba maneh.';
 
   @override
   String get nextWorkoutCardQuick => 'Cepet';
@@ -22690,7 +24384,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nextWorkoutCardSkipWorkout => 'Liwati Latihan?';
 
   @override
-  String get nextWorkoutCardThisWorkoutWillBe => 'Latihan iki bakal ditandhani minangka dilewati lan ora bakal diitung ing target mingguanmu.';
+  String get nextWorkoutCardThisWorkoutWillBe =>
+      'Latihan iki bakal ditandhani minangka dilewati lan ora bakal diitung ing target mingguanmu.';
 
   @override
   String get nextWorkoutCardUpcoming => 'Bakal teka';
@@ -22724,7 +24419,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get notificationPrimeStayOnTrackWith => 'Tetep ing jalur kanthi pangeling sing lembut';
+  String get notificationPrimeStayOnTrackWith =>
+      'Tetep ing jalur kanthi pangeling sing lembut';
 
   @override
   String get notificationPrimeStreakSaves => 'Panyimpenan streak';
@@ -22733,7 +24429,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationPrimeWorkoutReminders => 'Pangeling latihan';
 
   @override
-  String get notificationPrimeYouCanChangeThis => 'Sampeyan bisa ngowahi iki kapan wae ing Setelan.';
+  String get notificationPrimeYouCanChangeThis =>
+      'Sampeyan bisa ngowahi iki kapan wae ing Setelan.';
 
   @override
   String get notificationTestAiCoachMessage => 'Pesen Pelatih AI';
@@ -22760,16 +24457,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationTestGuilt3DaysMissed => 'Rasa Salah (3+ dina kelewat)';
 
   @override
-  String get notificationTestHeyYourAiCoach => '\"Hei! Pelatih AI-mu ing kene 💪\"';
+  String get notificationTestHeyYourAiCoach =>
+      '\"Hei! Pelatih AI-mu ing kene 💪\"';
 
   @override
-  String get notificationTestImmediateLocalNotification => 'Notifikasi Lokal Langsung';
+  String get notificationTestImmediateLocalNotification =>
+      'Notifikasi Lokal Langsung';
 
   @override
   String get notificationTestItSBeenX => '\"Wis X dina! 😱\"';
 
   @override
-  String get notificationTestKeepItUpAlmost => '\"Terus semangat! 💧 Sithik maneh!\"';
+  String get notificationTestKeepItUpAlmost =>
+      '\"Terus semangat! 💧 Sithik maneh!\"';
 
   @override
   String get notificationTestLowProgress40 => 'Kemajuan Kurang (40%)';
@@ -22778,7 +24478,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationTestLunchReminder => 'Pangeling Dhahar Siang';
 
   @override
-  String get notificationTestNoPendingNotificationsSched => 'Ora ana pangeling sing dijadwalake';
+  String get notificationTestNoPendingNotificationsSched =>
+      'Ora ana pangeling sing dijadwalake';
 
   @override
   String get notificationTestNoTitle => 'Tanpa irah-irahan';
@@ -22808,34 +24509,44 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get notificationTestShowsANotificationRight => 'Nampilake notifikasi SAIKI';
+  String get notificationTestShowsANotificationRight =>
+      'Nampilake notifikasi SAIKI';
 
   @override
-  String get notificationTestShowsAllScheduledNotificati => 'Nampilake kabeh notifikasi sing dijadwalake';
+  String get notificationTestShowsAllScheduledNotificati =>
+      'Nampilake kabeh notifikasi sing dijadwalake';
 
   @override
-  String get notificationTestShowsCurrentTimezoneSetting => 'Nampilake setelan zona wektu saiki';
+  String get notificationTestShowsCurrentTimezoneSetting =>
+      'Nampilake setelan zona wektu saiki';
 
   @override
-  String get notificationTestStayHydratedYouRe => '\"Ayo ngombe banyu! 💧 Sampeyan wis tekan 40%\"';
+  String get notificationTestStayHydratedYouRe =>
+      '\"Ayo ngombe banyu! 💧 Sampeyan wis tekan 40%\"';
 
   @override
-  String get notificationTestTestsScheduledNotificationD => 'Tes pangiriman notifikasi sing dijadwalake';
+  String get notificationTestTestsScheduledNotificationD =>
+      'Tes pangiriman notifikasi sing dijadwalake';
 
   @override
-  String get notificationTestTheseAreLocalNotifications => 'Iki notifikasi LOKAL (dudu Firebase). Gunakake iki kanggo ngetes apa notifikasi sing dijadwalake bisa mlaku ing piranti sampeyan.';
+  String get notificationTestTheseAreLocalNotifications =>
+      'Iki notifikasi LOKAL (dudu Firebase). Gunakake iki kanggo ngetes apa notifikasi sing dijadwalake bisa mlaku ing piranti sampeyan.';
 
   @override
-  String get notificationTestTheseNotificationsAreSent => 'Notifikasi iki dikirim liwat Firebase Cloud Messaging liwat backend sampeyan.';
+  String get notificationTestTheseNotificationsAreSent =>
+      'Notifikasi iki dikirim liwat Firebase Cloud Messaging liwat backend sampeyan.';
 
   @override
-  String get notificationTestTimeToLogYour => '\"Wektune nyathet sarapan sampeyan! 📸\"';
+  String get notificationTestTimeToLogYour =>
+      '\"Wektune nyathet sarapan sampeyan! 📸\"';
 
   @override
-  String get notificationTestTimeToLogYour2 => '\"Wektune nyathet dhahar siang sampeyan! 📸\"';
+  String get notificationTestTimeToLogYour2 =>
+      '\"Wektune nyathet dhahar siang sampeyan! 📸\"';
 
   @override
-  String get notificationTestTimeToLogYour3 => '\"Wektune nyathet dhahar bengi sampeyan! 📸\"';
+  String get notificationTestTimeToLogYour3 =>
+      '\"Wektune nyathet dhahar bengi sampeyan! 📸\"';
 
   @override
   String get notificationTestTimeToTrain => '\"Wektune latihan! 💪\"';
@@ -22844,7 +24555,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationTestTimezoneInfo => 'Info Zona Wektu';
 
   @override
-  String get notificationTestViewPendingNotifications => 'Deleng Notifikasi sing Nunggu';
+  String get notificationTestViewPendingNotifications =>
+      'Deleng Notifikasi sing Nunggu';
 
   @override
   String get notificationTestViewTimezoneInfo => 'Deleng Info Zona Wektu';
@@ -22853,13 +24565,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationTestWorkoutReminder => 'Pangeling Latihan';
 
   @override
-  String get notificationTestYourAiCoachIs => '\"AI Coach sampeyan krasa sepi... 🥺\"';
+  String get notificationTestYourAiCoachIs =>
+      '\"AI Coach sampeyan krasa sepi... 🥺\"';
 
   @override
-  String get notificationTestYourAiCoachIs2 => '\"AI Coach sampeyan wis siyap! 💪\"';
+  String get notificationTestYourAiCoachIs2 =>
+      '\"AI Coach sampeyan wis siyap! 💪\"';
 
   @override
-  String get notificationTestYourMusclesMissYou => '\"Otot sampeyan kangen sampeyan! 💪\"';
+  String get notificationTestYourMusclesMissYou =>
+      '\"Otot sampeyan kangen sampeyan! 💪\"';
 
   @override
   String get notifications3Day => '3/dina';
@@ -22883,7 +24598,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsBreakfast => 'Sarapan';
 
   @override
-  String get notificationsBreakfastLunchDinner => 'Sarapan, dhahar siang & dhahar bengi';
+  String get notificationsBreakfastLunchDinner =>
+      'Sarapan, dhahar siang & dhahar bengi';
 
   @override
   String get notificationsClearAll => 'Busak kabeh';
@@ -22898,13 +24614,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsDeliveryTime => 'Wektu pangiriman';
 
   @override
-  String get notificationsDifferentScheduleOnSat => 'Jadwal beda ing Setu & Minggu';
+  String get notificationsDifferentScheduleOnSat =>
+      'Jadwal beda ing Setu & Minggu';
 
   @override
   String get notificationsDinner => 'Dhahar bengi';
 
   @override
-  String get notificationsDuolingoStyleNudgesWhen => 'Pangeling gaya Duolingo nalika ora aktif';
+  String get notificationsDuolingoStyleNudgesWhen =>
+      'Pangeling gaya Duolingo nalika ora aktif';
 
   @override
   String get notificationsEnd => 'Pungkasan';
@@ -22913,19 +24631,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsEvening => 'Sore';
 
   @override
-  String get notificationsFailedToAcceptRequest => 'Gagal nampa panyuwunan. Coba maneh.';
+  String get notificationsFailedToAcceptRequest =>
+      'Gagal nampa panyuwunan. Coba maneh.';
 
   @override
-  String get notificationsFailedToIgnoreRequest => 'Gagal nglirwakake panyuwunan. Coba maneh.';
+  String get notificationsFailedToIgnoreRequest =>
+      'Gagal nglirwakake panyuwunan. Coba maneh.';
 
   @override
-  String get notificationsFailedToLoadNotifications => 'Gagal mbukak notifikasi';
+  String get notificationsFailedToLoadNotifications =>
+      'Gagal mbukak notifikasi';
 
   @override
-  String get notificationsFineTuneIndividualNotificat => 'Atur jinis notifikasi individu';
+  String get notificationsFineTuneIndividualNotificat =>
+      'Atur jinis notifikasi individu';
 
   @override
-  String get notificationsFriendRequestIgnored => 'Panyuwunan kanca dilirwakake';
+  String get notificationsFriendRequestIgnored =>
+      'Panyuwunan kanca dilirwakake';
 
   @override
   String get notificationsFullCoach => 'Pelatih Lengkap';
@@ -22934,7 +24657,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsGuiltNotifications => 'Notifikasi Rasa Luput';
 
   @override
-  String get notificationsHeadsUpWhenResting => 'Wara-wara nalika detak jantung istirahat dhuwur';
+  String get notificationsHeadsUpWhenResting =>
+      'Wara-wara nalika detak jantung istirahat dhuwur';
 
   @override
   String get notificationsHourlyDuringWorkHours => 'Saben jam nalika jam kerja';
@@ -22967,7 +24691,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsMovementHydration => 'Gerakan + Hidrasi';
 
   @override
-  String get notificationsNoNotificationsInThis => 'Ora ana notifikasi ing kategori iki';
+  String get notificationsNoNotificationsInThis =>
+      'Ora ana notifikasi ing kategori iki';
 
   @override
   String get notificationsNotificationFrequency => 'Frekuensi Notifikasi';
@@ -22979,7 +24704,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsNudgeTime => 'Wektu pangeling';
 
   @override
-  String get notificationsPeriodFertilityAndLogging => 'Pangeling periode, kesuburan, lan cathetan';
+  String get notificationsPeriodFertilityAndLogging =>
+      'Pangeling periode, kesuburan, lan cathetan';
 
   @override
   String get notificationsRecommended => 'Disaranake';
@@ -22994,7 +24720,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsReminderTime => 'Wektu pangeling';
 
   @override
-  String get notificationsReminderWhenYouRe => 'Pangeling nalika sampeyan kurang saka target langkah';
+  String get notificationsReminderWhenYouRe =>
+      'Pangeling nalika sampeyan kurang saka target langkah';
 
   @override
   String get notificationsScreenPartAccept => 'Tampa';
@@ -23003,13 +24730,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsScreenPartIgnore => 'Lirwakake';
 
   @override
-  String get notificationsScreenPartNoNotificationsYet => 'Durung ana notifikasi';
+  String get notificationsScreenPartNoNotificationsYet =>
+      'Durung ana notifikasi';
 
   @override
   String get notificationsScreenPartWhatToExpect => 'Apa sing dikarepake';
 
   @override
-  String get notificationsScreenPartYourAiCoachWill => 'AI Coach sampeyan bakal ngirim pangeling latihan, motivasi, lan nganyari kemajuan ing kene.';
+  String get notificationsScreenPartYourAiCoachWill =>
+      'AI Coach sampeyan bakal ngirim pangeling latihan, motivasi, lan nganyari kemajuan ing kene.';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -23017,10 +24746,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get notificationsShowEmojiInNotification => 'Tampilake emoji ing teks notifikasi';
+  String get notificationsShowEmojiInNotification =>
+      'Tampilake emoji ing teks notifikasi';
 
   @override
-  String get notificationsStayHydratedThroughoutThe => 'Tetep hidrasi sedina muput';
+  String get notificationsStayHydratedThroughoutThe =>
+      'Tetep hidrasi sedina muput';
 
   @override
   String get notificationsTime => 'Wektu';
@@ -23041,7 +24772,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notificationsWorkoutReminders => 'Pangeling Latihan';
 
   @override
-  String get notificationsYourFriendIsDoing => 'Kancamu lagi nindakake latihanmu!';
+  String get notificationsYourFriendIsDoing =>
+      'Kancamu lagi nindakake latihanmu!';
 
   @override
   String get notificationsYourProgressSummary => 'Ringkesan progresmu';
@@ -23053,7 +24785,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get notifsLaterButton => 'Sak mengko';
 
   @override
-  String get notifsPrimerBody => 'Tampa pangeling kanggo latihan lan check-in sampean.';
+  String get notifsPrimerBody =>
+      'Tampa pangeling kanggo latihan lan check-in sampean.';
 
   @override
   String get notifsPrimerTitle => 'Tetep konsisten';
@@ -23082,7 +24815,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerCurrent => 'Saiki';
 
   @override
-  String get nutrientExplorerFailedToUpdatePinned => 'Gagal nganyari nutrisi sing disematake';
+  String get nutrientExplorerFailedToUpdatePinned =>
+      'Gagal nganyari nutrisi sing disematake';
 
   @override
   String get nutrientExplorerFattyAcids => 'ASAM LEMAK';
@@ -23091,7 +24825,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerMinerals => 'MINERAL';
 
   @override
-  String get nutrientExplorerNutrientsThatMatterMost => 'Nutrisi sing paling penting ing fase siklusmu';
+  String get nutrientExplorerNutrientsThatMatterMost =>
+      'Nutrisi sing paling penting ing fase siklusmu';
 
   @override
   String get nutrientExplorerPartCeiling => 'Plafon';
@@ -23103,7 +24838,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerPartHigh => 'Dhuwur';
 
   @override
-  String get nutrientExplorerPartLogSomeFoodTo => 'Cathet panganan kanggo ndeleng asupan mikronutrisimu';
+  String get nutrientExplorerPartLogSomeFoodTo =>
+      'Cathet panganan kanggo ndeleng asupan mikronutrisimu';
 
   @override
   String get nutrientExplorerPartLow => 'Endhek';
@@ -23115,7 +24851,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerPartNutrientScore => 'Skor Nutrisi';
 
   @override
-  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit) {
+  String nutrientExplorerPartNutrientScoreCardCurrent(
+    Object currentValue,
+    Object unit,
+  ) {
     return 'Saiki: $currentValue$unit';
   }
 
@@ -23125,7 +24864,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount) {
+  String nutrientExplorerPartNutrientScoreCardOptimal(
+    Object optimalCount,
+    Object totalCount,
+  ) {
     return '$optimalCount/$totalCount optimal';
   }
 
@@ -23155,7 +24897,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerPinToDashboard => 'Sematake menyang dasbor';
 
   @override
-  String get nutrientExplorerPrioritisedForYourCycle => 'DIPRIORITASAKE KANGGO FASE SIKLUSMU';
+  String get nutrientExplorerPrioritisedForYourCycle =>
+      'DIPRIORITASAKE KANGGO FASE SIKLUSMU';
 
   @override
   String nutrientExplorerRemovedFromPinnedNutrients(Object displayName) {
@@ -23180,7 +24923,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutrientExplorerVitamins => 'VITAMIN';
 
   @override
-  String get nutrientRushGameCatchTheGoldenZealova => 'Tangkap tandha Zealova emas kanggo power-up!';
+  String get nutrientRushGameCatchTheGoldenZealova =>
+      'Tangkap tandha Zealova emas kanggo power-up!';
 
   @override
   String get nutrientRushGameNewBest => '🎉 REKOR ANYAR!';
@@ -23221,7 +24965,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionCaloriesByCyclePhase => 'Kalori miturut Fase Siklus';
 
   @override
-  String get nutritionCookingUpYourRecipe => 'Nyiapake resepmu ing latar mburi...';
+  String get nutritionCookingUpYourRecipe =>
+      'Nyiapake resepmu ing latar mburi...';
 
   @override
   String get nutritionCouldNotLoadCycle => 'Ora bisa mbukak overlay siklus';
@@ -23230,13 +24975,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionDailyTab => 'Saben dina';
 
   @override
-  String get nutritionErrorStatePleaseCheckYourConnection => 'Mangga priksa sambunganmu lan coba maneh';
+  String get nutritionErrorStatePleaseCheckYourConnection =>
+      'Mangga priksa sambunganmu lan coba maneh';
 
   @override
   String get nutritionErrorStateTryAgain => 'Coba Maneh';
 
   @override
-  String get nutritionErrorStateUnableToLoadNutrition => 'Ora bisa mbukak data nutrisi';
+  String get nutritionErrorStateUnableToLoadNutrition =>
+      'Ora bisa mbukak data nutrisi';
 
   @override
   String get nutritionFailedToSaveFood => 'Gagal nyimpen panganan';
@@ -23245,7 +24992,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alergen';
 
   @override
-  String get nutritionFastingCardBodyCompositionTarget => 'Target komposisi awak';
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Target komposisi awak';
 
   @override
   String nutritionFastingCardCal(Object currentCalories) {
@@ -23259,7 +25007,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionFastingCardDietType => 'Jinis Diet';
 
   @override
-  String get nutritionFastingCardEditNutritionSettings => 'Sunting setelan nutrisi';
+  String get nutritionFastingCardEditNutritionSettings =>
+      'Sunting setelan nutrisi';
 
   @override
   String get nutritionFastingCardFastingProtocol => 'Protokol Puasa';
@@ -23301,7 +25050,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionFastingCardWeeklyRate => 'Tingkat Mingguan';
 
   @override
-  String get nutritionFastingConfigureYourEatingSchedule => 'Konfigurasi jadwal manganmu';
+  String get nutritionFastingConfigureYourEatingSchedule =>
+      'Konfigurasi jadwal manganmu';
 
   @override
   String get nutritionFastingFastingProtocol => 'Protokol Puasa';
@@ -23325,7 +25075,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionFuel => 'Bahan Bakar';
 
   @override
-  String get nutritionGoalsCardBmrBasalMetabolicRate => 'BMR (Basal Metabolic Rate)';
+  String get nutritionGoalsCardBmrBasalMetabolicRate =>
+      'BMR (Basal Metabolic Rate)';
 
   @override
   String nutritionGoalsCardBurned(Object caloriesBurned) {
@@ -23354,7 +25105,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionGoalsCardFemaleConstant => 'Konstanta wanita';
 
   @override
-  String get nutritionGoalsCardFemalesHaveDifferentBody => 'wanita duwe komposisi awak sing beda';
+  String get nutritionGoalsCardFemalesHaveDifferentBody =>
+      'wanita duwe komposisi awak sing beda';
 
   @override
   String get nutritionGoalsCardGoalAdjustment => 'Panyesuaian Target';
@@ -23366,22 +25118,29 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionGoalsCardMaleConstant => 'Konstanta pria';
 
   @override
-  String get nutritionGoalsCardMalesHaveMoreLean => 'pria duwe massa otot luwih akeh';
+  String get nutritionGoalsCardMalesHaveMoreLean =>
+      'pria duwe massa otot luwih akeh';
 
   @override
-  String get nutritionGoalsCardMetabolismSlowsWithAge => 'metabolisme mudhun seiring umur';
+  String get nutritionGoalsCardMetabolismSlowsWithAge =>
+      'metabolisme mudhun seiring umur';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula => 'Rumus Mifflin-St Jeor · tutul kanggo ndeleng rincian';
+  String get nutritionGoalsCardMifflinStJeorFormula =>
+      'Rumus Mifflin-St Jeor · tutul kanggo ndeleng rincian';
 
   @override
-  String get nutritionGoalsCardMifflinStJeorFormula2 => 'Rumus Mifflin-St Jeor (data profil ora kasedhiya kanggo rincian)';
+  String get nutritionGoalsCardMifflinStJeorFormula2 =>
+      'Rumus Mifflin-St Jeor (data profil ora kasedhiya kanggo rincian)';
 
   @override
-  String get nutritionGoalsCardMoreMassMoreEnergy => 'massa luwih akeh = energi luwih akeh nalika istirahat';
+  String get nutritionGoalsCardMoreMassMoreEnergy =>
+      'massa luwih akeh = energi luwih akeh nalika istirahat';
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier) {
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
+    Object activityMultiplier,
+  ) {
     return 'Pengali Aktivitas (×$activityMultiplier)';
   }
 
@@ -23411,7 +25170,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct) {
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
+    Object carbPct,
+    Object displayName,
+    Object fatPct,
+    Object proteinPct,
+  ) {
     return 'Pemisahan Makro ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
@@ -23442,25 +25206,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionGoalsCardRecalculate => 'Etung maneh';
 
   @override
-  String get nutritionGoalsCardTallerLargerSurfaceArea => 'luwih dhuwur = area lumah luwih amba';
+  String get nutritionGoalsCardTallerLargerSurfaceArea =>
+      'luwih dhuwur = area lumah luwih amba';
 
   @override
-  String get nutritionGoalsCardTdeeDailyEnergyNeeds => 'TDEE (Kebutuhan Energi Saben Dina)';
+  String get nutritionGoalsCardTdeeDailyEnergyNeeds =>
+      'TDEE (Kebutuhan Energi Saben Dina)';
 
   @override
   String get nutritionJumpToToday => 'Lumpat menyang dina iki';
 
   @override
-  String get nutritionLogAFewDays => 'Cathet sawetara dina kanggo ndeleng overlay siklus';
+  String get nutritionLogAFewDays =>
+      'Cathet sawetara dina kanggo ndeleng overlay siklus';
 
   @override
   String get nutritionLogFood => 'Cathet panganan';
 
   @override
-  String get nutritionLogSomeFoodFirst => 'Cathet panganan dhisik kanggo nuduhake';
+  String get nutritionLogSomeFoodFirst =>
+      'Cathet panganan dhisik kanggo nuduhake';
 
   @override
-  String get nutritionLogSomeMealsFirst => 'Cathet dhaharan dhisik kanggo nuduhake';
+  String get nutritionLogSomeMealsFirst =>
+      'Cathet dhaharan dhisik kanggo nuduhake';
 
   @override
   String get nutritionMealDeleted => 'Dhaharan wis dibusak';
@@ -23475,7 +25244,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPatternsAiMoodGuesses => 'Tebakan swasana ati AI';
 
   @override
-  String get nutritionPatternsAutoInferMoodFrom => 'Otomatis nyimpulake swasana ati saka nutrisi nalika sampeyan ngliwati check-in';
+  String get nutritionPatternsAutoInferMoodFrom =>
+      'Otomatis nyimpulake swasana ati saka nutrisi nalika sampeyan ngliwati check-in';
 
   @override
   String get nutritionPatternsBasedOnTheLast => 'Adhedhasar 90 dina pungkasan';
@@ -23490,22 +25260,28 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPatternsCheckInsAreOff => 'Check-in dipateni';
 
   @override
-  String get nutritionPatternsFoodsHighestIn => 'Panganan sing paling dhuwur ing…';
+  String get nutritionPatternsFoodsHighestIn =>
+      'Panganan sing paling dhuwur ing…';
 
   @override
-  String get nutritionPatternsFoodsThatDragYou => 'Panganan sing nggawe sampeyan lemes';
+  String get nutritionPatternsFoodsThatDragYou =>
+      'Panganan sing nggawe sampeyan lemes';
 
   @override
-  String get nutritionPatternsFoodsThatEnergizeYou => 'Panganan sing nggawe sampeyan semangat';
+  String get nutritionPatternsFoodsThatEnergizeYou =>
+      'Panganan sing nggawe sampeyan semangat';
 
   @override
-  String get nutritionPatternsLog3MealsWith => 'Cathet 3+ dhaharan nganggo check-in kanggo ndeleng panganan apa sing menehi energi lan sing nggawe sampeyan lemes.';
+  String get nutritionPatternsLog3MealsWith =>
+      'Cathet 3+ dhaharan nganggo check-in kanggo ndeleng panganan apa sing menehi energi lan sing nggawe sampeyan lemes.';
 
   @override
-  String get nutritionPatternsLogAFewMeals => 'Cathet sawetara dhaharan kanggo ndeleng tren makro sampeyan.';
+  String get nutritionPatternsLogAFewMeals =>
+      'Cathet sawetara dhaharan kanggo ndeleng tren makro sampeyan.';
 
   @override
-  String get nutritionPatternsLoggedMealsWillShow => 'Dhaharan sing dicathet bakal katon ing kene minangka garis wektu.';
+  String get nutritionPatternsLoggedMealsWillShow =>
+      'Dhaharan sing dicathet bakal katon ing kene minangka garis wektu.';
 
   @override
   String get nutritionPatternsMealHistory => 'Riwayat dhaharan';
@@ -23517,13 +25293,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPatternsNoFoodsYet => 'Durung ana panganan';
 
   @override
-  String get nutritionPatternsNoMealsLogged => 'Durung ana dhaharan sing dicathet';
+  String get nutritionPatternsNoMealsLogged =>
+      'Durung ana dhaharan sing dicathet';
 
   @override
   String get nutritionPatternsNoPatternsYet => 'Durung ana pola';
 
   @override
-  String get nutritionPatternsNudgeIfYouSkip => 'Elingake yen sampeyan ngliwati check-in';
+  String get nutritionPatternsNudgeIfYouSkip =>
+      'Elingake yen sampeyan ngliwati check-in';
 
   @override
   String get nutritionPatternsNutritionTrends => 'Tren Nutrisi';
@@ -23535,10 +25313,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPatternsReEnable => 'Aktifake maneh';
 
   @override
-  String get nutritionPatternsReEnableThePost => 'Aktifake maneh lembar check-in sawise dhaharan kanggo miwiti mbangun pola panganan-swasana ati sampeyan.';
+  String get nutritionPatternsReEnableThePost =>
+      'Aktifake maneh lembar check-in sawise dhaharan kanggo miwiti mbangun pola panganan-swasana ati sampeyan.';
 
   @override
-  String get nutritionPatternsSignInToSee => 'Mlebu kanggo ndeleng pola sampeyan';
+  String get nutritionPatternsSignInToSee =>
+      'Mlebu kanggo ndeleng pola sampeyan';
 
   @override
   String get nutritionJournalTab => 'Jurnal';
@@ -23587,7 +25367,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get nutritionPatternsTheQuickHowDo => 'Lembar cepet \"piye perasaanmu?\" sawise nyathet';
+  String get nutritionPatternsTheQuickHowDo =>
+      'Lembar cepet \"piye perasaanmu?\" sawise nyathet';
 
   @override
   String get nutritionPatternsTodaySMacros => 'Makro Dina Iki';
@@ -23599,13 +25380,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPreferencesAdd => 'Tambah…';
 
   @override
-  String get nutritionPreferencesDailyFoodBudgetUsd => 'Anggaran panganan saben dina (USD, opsional)';
+  String get nutritionPreferencesDailyFoodBudgetUsd =>
+      'Anggaran panganan saben dina (USD, opsional)';
 
   @override
   String get nutritionPreferencesDietAllergens => 'Diet & Alergen';
 
   @override
-  String get nutritionPreferencesDishesOrIngredientsYou => 'Dhaharan utawa bahan sing luwih seneng kita ndhelikake saka rekomendasi';
+  String get nutritionPreferencesDishesOrIngredientsYou =>
+      'Dhaharan utawa bahan sing luwih seneng kita ndhelikake saka rekomendasi';
 
   @override
   String get nutritionPreferencesDislikes => 'Ora disenengi';
@@ -23632,7 +25415,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionPreferencesOtherAllergens => 'Alergen liyane';
 
   @override
-  String get nutritionPreferencesOutsideTheFdaBig => 'Ing njaba FDA Big 9 (tuladhane mangga, nightshade, jagung)';
+  String get nutritionPreferencesOutsideTheFdaBig =>
+      'Ing njaba FDA Big 9 (tuladhane mangga, nightshade, jagung)';
 
   @override
   String get nutritionRecipesTab => 'Resep';
@@ -23647,7 +25431,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionScheduling => 'Jadwal…';
 
   @override
-  String get nutritionScoreCardLogYourMealsTo => 'Cathet dhaharan sampeyan kanggo ndeleng rincian skor nutrisi.';
+  String get nutritionScoreCardLogYourMealsTo =>
+      'Cathet dhaharan sampeyan kanggo ndeleng rincian skor nutrisi.';
 
   @override
   String get nutritionScoreCardNutritionScore => 'Skor Nutrisi';
@@ -23658,7 +25443,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get nutritionScoreCardWeeklyNutritionAdherence => 'Kepatuhan nutrisi mingguan';
+  String get nutritionScoreCardWeeklyNutritionAdherence =>
+      'Kepatuhan nutrisi mingguan';
 
   @override
   String nutritionScreenUpdatedYourDailyTarget(Object newCalories) {
@@ -23671,7 +25457,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get nutritionSettingsAdjustAiCalorieEstimates => 'Setel estimasi kalori AI supaya cocog karo pengalaman sampeyan';
+  String get nutritionSettingsAdjustAiCalorieEstimates =>
+      'Setel estimasi kalori AI supaya cocog karo pengalaman sampeyan';
 
   @override
   String get nutritionSettingsAlwaysRules => 'Aturan-Tansah';
@@ -23689,7 +25476,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsDisableAiFoodTips => 'Pateni Tips Panganan AI';
 
   @override
-  String get nutritionSettingsManageYourFoodLibrary => 'Kelola perpustakaan panganan sampeyan kanggo nyathet kanthi cepet';
+  String get nutritionSettingsManageYourFoodLibrary =>
+      'Kelola perpustakaan panganan sampeyan kanggo nyathet kanthi cepet';
 
   @override
   String get nutritionSettingsNutritionSettings => 'Setelan Nutrisi';
@@ -23704,7 +25492,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsRestDayReduction => 'Pangurangan Dina Ngaso';
 
   @override
-  String get nutritionSettingsSavedFoodsRecipes => 'Panganan & Resep sing Disimpen';
+  String get nutritionSettingsSavedFoodsRecipes =>
+      'Panganan & Resep sing Disimpen';
 
   @override
   String get nutritionSettingsScreenAllergens => 'Alergen';
@@ -23713,7 +25502,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsScreenBudget => 'Anggaran';
 
   @override
-  String get nutritionSettingsScreenCalorieEstimateBias => 'Bias Estimasi Kalori';
+  String get nutritionSettingsScreenCalorieEstimateBias =>
+      'Bias Estimasi Kalori';
 
   @override
   String get nutritionSettingsScreenCalories => 'Kalori';
@@ -23737,7 +25527,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsScreenDue => 'Jatuh tempo';
 
   @override
-  String get nutritionSettingsScreenEditNutritionGoals => 'Sunting Target Nutrisi';
+  String get nutritionSettingsScreenEditNutritionGoals =>
+      'Sunting Target Nutrisi';
 
   @override
   String get nutritionSettingsScreenEditTargets => 'Sunting target';
@@ -23754,13 +25545,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsScreenFoodPreferences => 'Preferensi Panganan';
 
   @override
-  String get nutritionSettingsScreenGoalsUpdatedAndTargets => 'Tujuan wis dianyari lan target wis diitung maneh!';
+  String get nutritionSettingsScreenGoalsUpdatedAndTargets =>
+      'Tujuan wis dianyari lan target wis diitung maneh!';
 
   @override
   String get nutritionSettingsScreenMealPattern => 'Pola Dhahar';
 
   @override
-  String get nutritionSettingsScreenNoGoalsSet => 'Durung ana tujuan sing disetel';
+  String get nutritionSettingsScreenNoGoalsSet =>
+      'Durung ana tujuan sing disetel';
 
   @override
   String get nutritionSettingsScreenPrimary => 'Utama';
@@ -23772,19 +25565,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsScreenRateOfChange => 'Tingkat Owah-owahan';
 
   @override
-  String get nutritionSettingsScreenRecalculateFromProfile => 'Itung maneh saka profil';
+  String get nutritionSettingsScreenRecalculateFromProfile =>
+      'Itung maneh saka profil';
 
   @override
-  String get nutritionSettingsScreenReviewAdjustTargets => 'Deleng & Atur Target';
+  String get nutritionSettingsScreenReviewAdjustTargets =>
+      'Deleng & Atur Target';
 
   @override
-  String get nutritionSettingsScreenRunWeeklyCheckIn => 'Jalanake Check-In Mingguan';
+  String get nutritionSettingsScreenRunWeeklyCheckIn =>
+      'Jalanake Check-In Mingguan';
 
   @override
   String get nutritionSettingsScreenSaveRecalculate => 'Simpen & Itung maneh';
 
   @override
-  String get nutritionSettingsScreenSelectYourGoalsFirst => 'Pilih tujuanmu (sing dipilih dhisik = utama)';
+  String get nutritionSettingsScreenSelectYourGoalsFirst =>
+      'Pilih tujuanmu (sing dipilih dhisik = utama)';
 
   @override
   String get nutritionSettingsScreenTrainingDay => 'Dina Latihan';
@@ -23825,19 +25622,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionSettingsShowMacrosOnLog => 'Tampilake Makro ing Log';
 
   @override
-  String get nutritionSettingsStandingRulesZealovaApplies => 'Aturan tetep sing ditrapake Zealova kanggo saben analisis panganan';
+  String get nutritionSettingsStandingRulesZealovaApplies =>
+      'Aturan tetep sing ditrapake Zealova kanggo saben analisis panganan';
 
   @override
-  String get nutritionSettingsStreakFreezeUsedYour => 'Streak freeze digunakake! Streak-mu aman.';
+  String get nutritionSettingsStreakFreezeUsedYour =>
+      'Streak freeze digunakake! Streak-mu aman.';
 
   @override
-  String get nutritionSettingsTargetsRecalculatedFromYour => 'Target wis diitung maneh saka profilmu.';
+  String get nutritionSettingsTargetsRecalculatedFromYour =>
+      'Target wis diitung maneh saka profilmu.';
 
   @override
   String get nutritionSettingsTrainingDayBoost => 'Dorongan Dina Latihan';
 
   @override
-  String get nutritionSettingsWeeklyCheckInReminders => 'Pangeling Check-in Mingguan';
+  String get nutritionSettingsWeeklyCheckInReminders =>
+      'Pangeling Check-in Mingguan';
 
   @override
   String get nutritionSettingsWeeklyView => 'Tampilan Mingguan';
@@ -23876,7 +25677,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionShowcaseGrilledSalmonBowl => 'Grilled Salmon Bowl';
 
   @override
-  String get nutritionShowcaseIntroSubtitle => 'Pindai menu restoran apa wae — Zealova ngurutake saben masakan cocog karo tujuanmu 🍽️';
+  String get nutritionShowcaseIntroSubtitle =>
+      'Pindai menu restoran apa wae — Zealova ngurutake saben masakan cocog karo tujuanmu 🍽️';
 
   @override
   String get nutritionShowcaseIntroTitle => 'Ora perlu ndhuga menu maneh';
@@ -23891,7 +25693,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionShowcaseMultiplePagesSnapThem => 'Akeh kaca? Foto kabeh.';
 
   @override
-  String get nutritionShowcaseNoDishesSelectedGo => 'Ora ana sajian sing dipilih — bali lan pilih sawetara.';
+  String get nutritionShowcaseNoDishesSelectedGo =>
+      'Ora ana sajian sing dipilih — bali lan pilih sawetara.';
 
   @override
   String get nutritionShowcaseRecent => 'Anyar';
@@ -23931,10 +25734,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionShowcaseSort => 'Urut:';
 
   @override
-  String get nutritionShowcaseSortCleared => 'Urutan dibusak — urutan menu asli';
+  String get nutritionShowcaseSortCleared =>
+      'Urutan dibusak — urutan menu asli';
 
   @override
-  String get nutritionShowcaseSortHint => 'Coba — tutul Protein kanggo ngurutake miturut protein. Karbo, Lemak & Inflam uga ngatur ulang menu.';
+  String get nutritionShowcaseSortHint =>
+      'Coba — tutul Protein kanggo ngurutake miturut protein. Karbo, Lemak & Inflam uga ngatur ulang menu.';
 
   @override
   String nutritionShowcaseSortedHighest(Object field) {
@@ -23942,7 +25747,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get nutritionShowcaseSortedLeastInflammatory => 'Diurutake ✓ — paling ora inflamasi dhisik';
+  String get nutritionShowcaseSortedLeastInflammatory =>
+      'Diurutake ✓ — paling ora inflamasi dhisik';
 
   @override
   String nutritionShowcaseSortedLowest(Object field) {
@@ -23950,7 +25756,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get nutritionShowcaseSortedMostInflammatory => 'Diurutake ✓ — paling inflamasi dhisik';
+  String get nutritionShowcaseSortedMostInflammatory =>
+      'Diurutake ✓ — paling inflamasi dhisik';
 
   @override
   String get nutritionShowcaseStarters => 'Panganan Pambuka';
@@ -24006,10 +25813,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionStreakCardFreezesAvailable => 'Freeze kasedhiya';
 
   @override
-  String get nutritionStreakCardLogAMealTo => 'Log panganan kanggo miwiti streak-mu';
+  String get nutritionStreakCardLogAMealTo =>
+      'Log panganan kanggo miwiti streak-mu';
 
   @override
-  String get nutritionStreakCardStreakFreezeUsedYour => 'Streak freeze digunakake — streak-mu aman.';
+  String get nutritionStreakCardStreakFreezeUsedYour =>
+      'Streak freeze digunakake — streak-mu aman.';
 
   @override
   String get nutritionStreakCardThisWeek => 'Minggu iki';
@@ -24068,10 +25877,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionTabPartConsistency => 'Konsistensi';
 
   @override
-  String get nutritionTabPartCouldNotLoadAdherence => 'Ora bisa mbukak data kepatuhan';
+  String get nutritionTabPartCouldNotLoadAdherence =>
+      'Ora bisa mbukak data kepatuhan';
 
   @override
-  String get nutritionTabPartCouldNotLoadCalorie => 'Ora bisa mbukak data kalori';
+  String get nutritionTabPartCouldNotLoadCalorie =>
+      'Ora bisa mbukak data kalori';
 
   @override
   String get nutritionTabPartCouldNotLoadMacros => 'Ora bisa mbukak data makro';
@@ -24095,10 +25906,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionTabPartNoMacroDataThis => 'Ora ana data makro minggu iki';
 
   @override
-  String get nutritionTabPartNoNutritionDataThis => 'Ora ana data nutrisi minggu iki';
+  String get nutritionTabPartNoNutritionDataThis =>
+      'Ora ana data nutrisi minggu iki';
 
   @override
-  String get nutritionTabPartNotEnoughDataFor => 'Data ora cukup kanggo estimasi TDEE';
+  String get nutritionTabPartNotEnoughDataFor =>
+      'Data ora cukup kanggo estimasi TDEE';
 
   @override
   String get nutritionTabPartProtein => 'Protein';
@@ -24107,7 +25920,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionTabPartTdeeEnergyBalance => 'TDEE & Keseimbangan Energi';
 
   @override
-  String get nutritionTabPartWeeklyAverageDistribution => 'Distribusi rata-rata mingguan';
+  String get nutritionTabPartWeeklyAverageDistribution =>
+      'Distribusi rata-rata mingguan';
 
   @override
   String get nutritionTabPartWeeklyOverview => 'Ringkesan Mingguan';
@@ -24165,31 +25979,37 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nutritionTourSaved => 'Disimpen';
 
   @override
-  String get nutritionTourStartAndTrackA => 'Miwiti lan lacak pasa ing kene — jendhela pasa langsung sampeyan katon ing kertu iki.';
+  String get nutritionTourStartAndTrackA =>
+      'Miwiti lan lacak pasa ing kene — jendhela pasa langsung sampeyan katon ing kertu iki.';
 
   @override
   String get nutritionTourSwipeThroughDates => 'Geser tanggal';
 
   @override
-  String get nutritionTourTapTheCameraBarcode => 'Tutul kamera, barcode, utawa tombol + — vision OCR kanthi otomatis ngisi kalori lan makro.';
+  String get nutritionTourTapTheCameraBarcode =>
+      'Tutul kamera, barcode, utawa tombol + — vision OCR kanthi otomatis ngisi kalori lan makro.';
 
   @override
-  String get nutritionTourUseTheDateArrows => 'Gunakake panah tanggal utawa tutul Riwayat kanggo mriksa dina sing kepungkur.';
+  String get nutritionTourUseTheDateArrows =>
+      'Gunakake panah tanggal utawa tutul Riwayat kanggo mriksa dina sing kepungkur.';
 
   @override
-  String get nutritionTourYourSavedRecipesFoods => 'Resep, panganan, lan menu sing wis dipindai disimpen ing kene — cukup tutul sepisan kanggo nyathet maneh.';
+  String get nutritionTourYourSavedRecipesFoods =>
+      'Resep, panganan, lan menu sing wis dipindai disimpen ing kene — cukup tutul sepisan kanggo nyathet maneh.';
 
   @override
   String get nutritionUndo => 'Batal';
 
   @override
-  String get offlineBannerDismissSyncFailureBanner => 'Tutup spanduk gagal sinkronisasi';
+  String get offlineBannerDismissSyncFailureBanner =>
+      'Tutup spanduk gagal sinkronisasi';
 
   @override
   String get offlineModeOfflineMode => 'Mode Offline';
 
   @override
-  String get offlineModeWorkOutWithoutInternet => 'Latihan tanpa internet. AI ing piranti, latihan sing wis disimpen, unduhan video latihan, lan sinkronisasi latar mburi.';
+  String get offlineModeWorkOutWithoutInternet =>
+      'Latihan tanpa internet. AI ing piranti, latihan sing wis disimpen, unduhan video latihan, lan sinkronisasi latar mburi.';
 
   @override
   String get onboardingAlreadyHaveAccount => 'Aku wis duwe akun';
@@ -24198,25 +26018,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get onboardingBlockerLetSDoIt => 'Ayo lakoni';
 
   @override
-  String get onboardingBlockerNoJudgmentKnowingThe => 'Ora ana paukuman. Ngerti alangan iku cara kita ngrancang supaya bisa ngliwati.';
+  String get onboardingBlockerNoJudgmentKnowingThe =>
+      'Ora ana paukuman. Ngerti alangan iku cara kita ngrancang supaya bisa ngliwati.';
 
   @override
   String get onboardingBlockerThatMakesSense => 'Iku masuk akal.';
 
   @override
-  String get onboardingBlockerWhatSHeldYou => 'Apa sing nahan sampeyan sadurunge?';
+  String get onboardingBlockerWhatSHeldYou =>
+      'Apa sing nahan sampeyan sadurunge?';
 
   @override
-  String get onboardingConfidenceARealisticPlaceTo => 'Panggonan sing realistis kanggo miwiti.';
+  String get onboardingConfidenceARealisticPlaceTo =>
+      'Panggonan sing realistis kanggo miwiti.';
 
   @override
-  String get onboardingConfidenceBeHonestThereIs => 'Jujura. Ora ana jawaban sing salah ing kene.';
+  String get onboardingConfidenceBeHonestThereIs =>
+      'Jujura. Ora ana jawaban sing salah ing kene.';
 
   @override
   String get onboardingConfidenceFullyIn => 'Siap tenan';
 
   @override
-  String get onboardingConfidenceHowConfidentAreYou => 'Sepira yakin sampeyan bakal tekan kana?';
+  String get onboardingConfidenceHowConfidentAreYou =>
+      'Sepira yakin sampeyan bakal tekan kana?';
 
   @override
   String get onboardingConfidenceNotSureYet => 'Durung yakin';
@@ -24232,10 +26057,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get onboardingConfidenceStartingUnsureIsHonest => 'Miwiti kanthi rasa ora yakin iku jujur.';
+  String get onboardingConfidenceStartingUnsureIsHonest =>
+      'Miwiti kanthi rasa ora yakin iku jujur.';
 
   @override
-  String get onboardingConfidenceThatBeliefWillCarry => 'Kapercayan iku bakal nuntun sampeyan.';
+  String get onboardingConfidenceThatBeliefWillCarry =>
+      'Kapercayan iku bakal nuntun sampeyan.';
 
   @override
   String get onboardingContinueButton => 'Lanjutake';
@@ -24307,7 +26134,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get openAllCratesDoubleXpToken => 'Token XP Tikel';
 
   @override
-  String get openAllCratesFailedToOpenCrates => 'Gagal mbukak kothak. Mangga coba maneh.';
+  String get openAllCratesFailedToOpenCrates =>
+      'Gagal mbukak kothak. Mangga coba maneh.';
 
   @override
   String get openAllCratesFitnessCrate => 'Krat Kabugaran';
@@ -24390,7 +26218,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get overviewBodyMeasurements => 'Pangukuran Awak';
 
   @override
-  String get overviewCouldnTRefreshShowing => 'Gagal nyegerake. Nampilake data sing disimpen.';
+  String get overviewCouldnTRefreshShowing =>
+      'Gagal nyegerake. Nampilake data sing disimpen.';
 
   @override
   String get overviewCycle => 'Siklus';
@@ -24417,7 +26246,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get overviewPersonalRecords => 'Rekor Pribadi';
 
   @override
-  String get overviewPersonalRecordsAreTracked => 'Rekor pribadi dilacak nalika sampeyan ngrampungake latihan. Miwiti latihan kanggo ndeleng kemajuan sampeyan ing kene!';
+  String get overviewPersonalRecordsAreTracked =>
+      'Rekor pribadi dilacak nalika sampeyan ngrampungake latihan. Miwiti latihan kanggo ndeleng kemajuan sampeyan ing kene!';
 
   @override
   String get overviewQuickAccess => 'Akses Cepet';
@@ -24438,7 +26268,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get overviewSocial => 'SOSIAL';
 
   @override
-  String get overviewStatsRewardsTabHas => 'Tab Statistik & Hadiah duwe kabeh tambahan.';
+  String get overviewStatsRewardsTabHas =>
+      'Tab Statistik & Hadiah duwe kabeh tambahan.';
 
   @override
   String get overviewStreak => 'Streak';
@@ -24495,18 +26326,24 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps) {
+  String parsedExercisesPreviewSheetValue(
+    Object exercise,
+    Object formattedSetsReps,
+  ) {
     return '$formattedSetsReps @ $exercise';
   }
 
   @override
-  String get pauseInterceptGoingOnVacationLife => 'Arep liburan? Urip lagi sibuk?';
+  String get pauseInterceptGoingOnVacationLife =>
+      'Arep liburan? Urip lagi sibuk?';
 
   @override
-  String get pauseInterceptLongerBreakIllnessTransi => 'Ngaso luwih suwe — lara, transisi, urip';
+  String get pauseInterceptLongerBreakIllnessTransi =>
+      'Ngaso luwih suwe — lara, transisi, urip';
 
   @override
-  String get pauseInterceptNoThanksContinueWith => 'Ora matur nuwun, terusake pembatalan';
+  String get pauseInterceptNoThanksContinueWith =>
+      'Ora matur nuwun, terusake pembatalan';
 
   @override
   String get pauseInterceptPauseFor14Days => 'Ngaso 14 dina';
@@ -24515,10 +26352,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pauseInterceptPauseFor30Days => 'Ngaso 30 dina';
 
   @override
-  String get pauseInterceptPauseYourPlanInstead => 'Ngaso rencana sampeyan — lanjutake maneh saka titik pungkasan.';
+  String get pauseInterceptPauseYourPlanInstead =>
+      'Ngaso rencana sampeyan — lanjutake maneh saka titik pungkasan.';
 
   @override
-  String get pauseInterceptQuickBreakShortTrip => 'Ngaso cepet — lelungan cendhak, minggu sibuk';
+  String get pauseInterceptQuickBreakShortTrip =>
+      'Ngaso cepet — lelungan cendhak, minggu sibuk';
 
   @override
   String pauseInterceptSheetCouldnTPause(Object e) {
@@ -24575,7 +26414,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get pauseSubscriptionPremiumFeaturesAre => 'Fitur premium sauntara ora kasedhiya';
+  String get pauseSubscriptionPremiumFeaturesAre =>
+      'Fitur premium sauntara ora kasedhiya';
 
   @override
   String get pauseSubscriptionSelectADuration => 'Pilih durasi';
@@ -24584,19 +26424,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pauseSubscriptionShortBreak => 'Jeda sedhela';
 
   @override
-  String get pauseSubscriptionTakeABreakWithout => 'Jeda sedhela tanpa ngilangi data sampeyan';
+  String get pauseSubscriptionTakeABreakWithout =>
+      'Jeda sedhela tanpa ngilangi data sampeyan';
 
   @override
   String get pauseSubscriptionVacationMode => 'Mode liburan';
 
   @override
-  String get pauseSubscriptionWhatHappensWhenYou => 'Apa sing kedadeyan nalika sampeyan milih jeda';
+  String get pauseSubscriptionWhatHappensWhenYou =>
+      'Apa sing kedadeyan nalika sampeyan milih jeda';
 
   @override
-  String get pauseSubscriptionYouWontBeCharged => 'Sampeyan ora bakal dikenani biaya sajrone ngaso';
+  String get pauseSubscriptionYouWontBeCharged =>
+      'Sampeyan ora bakal dikenani biaya sajrone ngaso';
 
   @override
-  String get pauseSubscriptionYourWorkoutHistory => 'Riwayat & progres latihan sampeyan tetep aman';
+  String get pauseSubscriptionYourWorkoutHistory =>
+      'Riwayat & progres latihan sampeyan tetep aman';
 
   @override
   String get paywallFeatures14Features => '14+ fitur';
@@ -24608,7 +26452,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallFeatures52Skills => '52 katrampilan';
 
   @override
-  String get paywallFeatures7DayFreeTrial => 'Uji coba gratis 7 dina\nBatal kapan wae, ora bakal ditakoni';
+  String get paywallFeatures7DayFreeTrial =>
+      'Uji coba gratis 7 dina\nBatal kapan wae, ora bakal ditakoni';
 
   @override
   String get paywallFeaturesAiCoachChat => 'Chat pelatih AI';
@@ -24620,10 +26465,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallFeaturesAiWorkouts => 'Latihan AI';
 
   @override
-  String get paywallFeaturesAutoAdaptWorkoutsAround => 'Latihan sing otomatis adaptasi karo tatu sampeyan';
+  String get paywallFeaturesAutoAdaptWorkoutsAround =>
+      'Latihan sing otomatis adaptasi karo tatu sampeyan';
 
   @override
-  String get paywallFeaturesChartsHeatmapsAndDetailed => 'Grafik, heatmap, lan tren rinci';
+  String get paywallFeaturesChartsHeatmapsAndDetailed =>
+      'Grafik, heatmap, lan tren rinci';
 
   @override
   String get paywallFeaturesFoodPhotoScanning => 'Pindai foto panganan';
@@ -24638,19 +26485,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallFeaturesLearnMore => 'Sinau luwih lanjut';
 
   @override
-  String get paywallFeaturesNutritionFormRecoveryAs => 'Nutrisi, teknik, pemulihan — takon apa wae';
+  String get paywallFeaturesNutritionFormRecoveryAs =>
+      'Nutrisi, teknik, pemulihan — takon apa wae';
 
   @override
-  String get paywallFeaturesPersonalizedPlansForAny => 'Rencana pribadi kanggo peralatan & target apa wae';
+  String get paywallFeaturesPersonalizedPlansForAny =>
+      'Rencana pribadi kanggo peralatan & target apa wae';
 
   @override
-  String get paywallFeaturesProgressTrackingAnalytics => 'Pelacakan kemajuan & analitik';
+  String get paywallFeaturesProgressTrackingAnalytics =>
+      'Pelacakan kemajuan & analitik';
 
   @override
   String get paywallFeaturesSafety => 'Keamanan';
 
   @override
-  String get paywallFeaturesSnapAPhotoGet => 'Jupuk foto, entuk kalori & makro kanthi cepet';
+  String get paywallFeaturesSnapAPhotoGet =>
+      'Jupuk foto, entuk kalori & makro kanthi cepet';
 
   @override
   String get paywallFeaturesUnlimitedAiWorkouts => 'Latihan AI tanpa wates';
@@ -24668,7 +26519,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricing7DayFreeTrial => 'Uji coba gratis 7 dina';
 
   @override
-  String get paywallPricing7DayFreeTrial2 => 'Uji coba gratis 7 dina\nBatal kapan wae, ora bakal ditakoni';
+  String get paywallPricing7DayFreeTrial2 =>
+      'Uji coba gratis 7 dina\nBatal kapan wae, ora bakal ditakoni';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6 LATIHAN';
@@ -24677,7 +26529,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingBestValue => 'Pilihan paling apik';
 
   @override
-  String get paywallPricingBilledSecurelyThroughThe => 'Ditagih kanthi aman liwat App Store';
+  String get paywallPricingBilledSecurelyThroughThe =>
+      'Ditagih kanthi aman liwat App Store';
 
   @override
   String get paywallPricingCancelAnytime => 'Batal kapan wae';
@@ -24686,7 +26539,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingChangePlan => 'Ganti rencana';
 
   @override
-  String get paywallPricingChestShouldersTriceps => '· dhadha · pundhak · triceps';
+  String get paywallPricingChestShouldersTriceps =>
+      '· dhadha · pundhak · triceps';
 
   @override
   String get paywallPricingFreeFor7Days => 'Gratis 7 dina. Batal kapan wae.';
@@ -24701,7 +26555,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingIsReady => 'wis siyap';
 
   @override
-  String get paywallPricingLessThanThePrice => 'Kurang saka rega kopi saben minggu';
+  String get paywallPricingLessThanThePrice =>
+      'Kurang saka rega kopi saben minggu';
 
   @override
   String get paywallPricingMonthly => 'Saben wulan';
@@ -24716,10 +26571,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingNoPurchasesFound => 'Ora ana tuku sing ditemokake';
 
   @override
-  String get paywallPricingNoSurprisesCancelAnytime => 'Ora ana kejutan. Batal kapan wae ing Setelan sadurunge dina kaping 7.';
+  String get paywallPricingNoSurprisesCancelAnytime =>
+      'Ora ana kejutan. Batal kapan wae ing Setelan sadurunge dina kaping 7.';
 
   @override
-  String get paywallPricingPlanUpdatedSuccessfully => 'Rencana wis kasil dianyari!';
+  String get paywallPricingPlanUpdatedSuccessfully =>
+      'Rencana wis kasil dianyari!';
 
   @override
   String get paywallPricingPurchasesRestored => 'Tuku wis dipulihake!';
@@ -24740,7 +26597,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingScreenConfirmChange => 'Konfirmasi Ganti';
 
   @override
-  String get paywallPricingScreenConfirmPlanChange => 'Konfirmasi Ganti Rencana';
+  String get paywallPricingScreenConfirmPlanChange =>
+      'Konfirmasi Ganti Rencana';
 
   @override
   String get paywallPricingScreenConfirmUpgrade => 'Konfirmasi Upgrade';
@@ -24749,10 +26607,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingScreenCurrentPlan => 'Rencana Saiki';
 
   @override
-  String get paywallPricingScreenExclusiveYearlyDiscountJust => 'Diskon taunan khusus mung kanggo sampeyan!';
+  String get paywallPricingScreenExclusiveYearlyDiscountJust =>
+      'Diskon taunan khusus mung kanggo sampeyan!';
 
   @override
-  String get paywallPricingScreenGetYearlyFor37 => 'Entuk Taunan regane \$37.49';
+  String get paywallPricingScreenGetYearlyFor37 =>
+      'Entuk Taunan regane \$37.49';
 
   @override
   String get paywallPricingScreenJust312Month => 'Mung \$3.12/wulan';
@@ -24761,13 +26621,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingScreenNewPlan => 'Rencana Anyar';
 
   @override
-  String get paywallPricingScreenNoThanksILl => 'Ora matur nuwun, aku ora butuh';
+  String get paywallPricingScreenNoThanksILl =>
+      'Ora matur nuwun, aku ora butuh';
 
   @override
   String get paywallPricingScreenOfferExpired => 'Penawaran wis kadaluwarsa';
 
   @override
-  String get paywallPricingScreenOfferExpiresIn => 'Penawaran bakal kadaluwarsa ing ';
+  String get paywallPricingScreenOfferExpiresIn =>
+      'Penawaran bakal kadaluwarsa ing ';
 
   @override
   String get paywallPricingScreenPremiumYearly => 'PREMIUM TAUNAN';
@@ -24779,10 +26641,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingScreenSave125025 => 'HEMAT \$12.50 (DISKON 25%)';
 
   @override
-  String get paywallPricingScreenThatSJust0 => 'Iku mung \$0.10/dina — luwih murah tinimbang kopi';
+  String get paywallPricingScreenThatSJust0 =>
+      'Iku mung \$0.10/dina — luwih murah tinimbang kopi';
 
   @override
-  String get paywallPricingScreenThisSpecialDiscountIs => 'Diskon khusus iki wis ora kasedhiya.';
+  String get paywallPricingScreenThisSpecialDiscountIs =>
+      'Diskon khusus iki wis ora kasedhiya.';
 
   @override
   String get paywallPricingScreenWaitSpecialOffer => 'Enteni! Penawaran Khusus';
@@ -24793,16 +26657,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get paywallPricingScreenYouCanStillGet => 'Sampeyan isih bisa entuk Premium Taunan kanthi rega';
+  String get paywallPricingScreenYouCanStillGet =>
+      'Sampeyan isih bisa entuk Premium Taunan kanthi rega';
 
   @override
-  String get paywallPricingScreenYouWillBeUpgraded => 'Sampeyan bakal langsung di-upgrade';
+  String get paywallPricingScreenYouWillBeUpgraded =>
+      'Sampeyan bakal langsung di-upgrade';
 
   @override
-  String get paywallPricingStartWithA7 => 'Miwiti uji coba gratis 7 dina. Batal kapan wae — ora ana biaya nganti uji coba rampung.';
+  String get paywallPricingStartWithA7 =>
+      'Miwiti uji coba gratis 7 dina. Batal kapan wae — ora ana biaya nganti uji coba rampung.';
 
   @override
-  String get paywallPricingStartYour7Day => 'Miwiti uji coba GRATIS 7 dina\nsampeyan kanggo nerusake';
+  String get paywallPricingStartYour7Day =>
+      'Miwiti uji coba GRATIS 7 dina\nsampeyan kanggo nerusake';
 
   @override
   String get paywallPricingTerms => 'Katentuan';
@@ -24811,10 +26679,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingToday => 'Dina iki';
 
   @override
-  String get paywallPricingUnlockUnlimitedAiWorkouts => 'Bukak latihan AI tanpa wates, pindai panganan & makro, analisis teknik, lan pelacakan kemajuan lengkap.';
+  String get paywallPricingUnlockUnlimitedAiWorkouts =>
+      'Bukak latihan AI tanpa wates, pindai panganan & makro, analisis teknik, lan pelacakan kemajuan lengkap.';
 
   @override
-  String get paywallPricingWeLlSendYou => 'Kita bakal ngirim pangeling\nsadurunge uji coba gratis sampeyan rampung';
+  String get paywallPricingWeLlSendYou =>
+      'Kita bakal ngirim pangeling\nsadurunge uji coba gratis sampeyan rampung';
 
   @override
   String get paywallPricingWhatYouGet => 'Apa sing sampeyan entuk';
@@ -24823,22 +26693,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallPricingYearly => 'Taunan';
 
   @override
-  String get paywallPricingYouAreAlreadyOn => 'Sampeyan wis nggunakake rencana iki';
+  String get paywallPricingYouAreAlreadyOn =>
+      'Sampeyan wis nggunakake rencana iki';
 
   @override
-  String get paywallPricingYouReAllSet => 'Wis rampung. Uji coba sampeyan saiki wis aktif.';
+  String get paywallPricingYouReAllSet =>
+      'Wis rampung. Uji coba sampeyan saiki wis aktif.';
 
   @override
   String get paywallPricingYourAiCoach => 'Pelatih AI sampeyan';
 
   @override
-  String get paywallTimelineCancelAnytimeDuringOr => 'Batal kapan wae nalika utawa sawise uji coba. Ora ana biaya nganti uji coba rampung, lan sampeyan bisa ngatur langganan saka Google Play.';
+  String get paywallTimelineCancelAnytimeDuringOr =>
+      'Batal kapan wae nalika utawa sawise uji coba. Ora ana biaya nganti uji coba rampung, lan sampeyan bisa ngatur langganan saka Google Play.';
 
   @override
   String get paywallTimelineHowYourFree => 'Kepiye uji coba gratis';
 
   @override
-  String get paywallTimelineHowYourFreeTrial => 'Kepiye cara kerja uji coba gratis sampeyan';
+  String get paywallTimelineHowYourFreeTrial =>
+      'Kepiye cara kerja uji coba gratis sampeyan';
 
   @override
   String get paywallTimelineIn5Days => 'Ing 5 dina';
@@ -24863,10 +26737,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallTimelineTrialWorks => 'uji coba mlaku';
 
   @override
-  String get paywallTimelineUnlimitedWorkoutsFoodScann => 'Latihan tanpa wates, pindai panganan, nglacak tatu, progres skill & liyane';
+  String get paywallTimelineUnlimitedWorkoutsFoodScann =>
+      'Latihan tanpa wates, pindai panganan, nglacak tatu, progres skill & liyane';
 
   @override
-  String get paywallTimelineWeLlRemindYou => 'Kita bakal ngelingake sampeyan sadurunge uji coba rampung - ora ana kejutan';
+  String get paywallTimelineWeLlRemindYou =>
+      'Kita bakal ngelingake sampeyan sadurunge uji coba rampung - ora ana kejutan';
 
   @override
   String pendingRequestCardValue(Object message) {
@@ -24883,13 +26759,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get permissionsPrimerCamera => 'Kamera';
 
   @override
-  String get permissionsPrimerEachAppFeatureWill => 'Saben fitur aplikasi bakal njelasake dhewe sadurunge njaluk ijin menyang OS.';
+  String get permissionsPrimerEachAppFeatureWill =>
+      'Saben fitur aplikasi bakal njelasake dhewe sadurunge njaluk ijin menyang OS.';
 
   @override
   String get permissionsPrimerGrantPermissions => 'Wenehi ijin';
 
   @override
-  String get permissionsPrimerGrantingTheseNowMeans => 'Nyuwun ijin saiki tegese fitur bakal langsung mlaku — ora ana panyuwunan dadakan nalika latihan.';
+  String get permissionsPrimerGrantingTheseNowMeans =>
+      'Nyuwun ijin saiki tegese fitur bakal langsung mlaku — ora ana panyuwunan dadakan nalika latihan.';
 
   @override
   String get permissionsPrimerMicrophone => 'Mikrofon';
@@ -24927,7 +26805,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get personalGoalsDeleteGoal => 'Busak Target?';
 
   @override
-  String get personalGoalsFullRecordsViewComing => 'Tampilan rekor lengkap bakal teka ing nganyari mbesuk';
+  String get personalGoalsFullRecordsViewComing =>
+      'Tampilan rekor lengkap bakal teka ing nganyari mbesuk';
 
   @override
   String get personalGoalsMaxReps => 'Reps Maksimal';
@@ -24963,7 +26842,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get personalGoalsSetAWeeklyChallenge => 'Setel tantangan mingguan kanggo nguji watesan sampeyan!';
+  String get personalGoalsSetAWeeklyChallenge =>
+      'Setel tantangan mingguan kanggo nguji watesan sampeyan!';
 
   @override
   String get personalGoalsSetYourFirstGoal => 'Setel Target Kapisan Sampeyan';
@@ -24993,7 +26873,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get personalInfoDateOfBirth => 'TANGGAL LAIR';
 
   @override
-  String get personalInfoDoYouTrackA => 'Apa sampeyan nglacak siklus menstruasi?';
+  String get personalInfoDoYouTrackA =>
+      'Apa sampeyan nglacak siklus menstruasi?';
 
   @override
   String get personalInfoFirstName => 'Jeneng ngarep';
@@ -25002,7 +26883,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get personalInfoNoThanks => 'Ora, matur nuwun';
 
   @override
-  String get personalInfoPleaseCompleteTheBody => 'Mangga ngrampungake langkah metrik awak dhisik.';
+  String get personalInfoPleaseCompleteTheBody =>
+      'Mangga ngrampungake langkah metrik awak dhisik.';
 
   @override
   String personalInfoScreenFailedToSave(Object e) {
@@ -25010,13 +26892,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get personalInfoWeUseTheseTo => 'Kita nggunakake iki kanggo nggawe pelatih sampeyan luwih pribadi lan njaga akun sampeyan tetep aman.';
+  String get personalInfoWeUseTheseTo =>
+      'Kita nggunakake iki kanggo nggawe pelatih sampeyan luwih pribadi lan njaga akun sampeyan tetep aman.';
 
   @override
   String get personalInfoYesSetItUp => 'Ya, setel saiki';
 
   @override
-  String get personalInfoYouMustBeAt => 'Sampeyan kudu paling sethithik umur 16 taun kanggo nggunakake Zealova.';
+  String get personalInfoYouMustBeAt =>
+      'Sampeyan kudu paling sethithik umur 16 taun kanggo nggunakake Zealova.';
 
   @override
   String get personalInfoYourName => 'JENENG SAMPEYAN';
@@ -25031,19 +26915,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get personalRecordsCard1WeekAgo => '1 minggu kepungkur';
 
   @override
-  String get personalRecordsCardAfternoonTip => 'Tetep hidrasi! Usahakake ngombe banyu paling sethithik 500ml sadurunge latihan.';
+  String get personalRecordsCardAfternoonTip =>
+      'Tetep hidrasi! Usahakake ngombe banyu paling sethithik 500ml sadurunge latihan.';
 
   @override
-  String get personalRecordsCardAskCoachForMore => 'Takon pelatih kanggo tips liyane';
+  String get personalRecordsCardAskCoachForMore =>
+      'Takon pelatih kanggo tips liyane';
 
   @override
   String get personalRecordsCardCoachTip => 'Tips Pelatih';
 
   @override
-  String get personalRecordsCardCompleteWorkoutsToPR => 'Rampungake latihan kanggo nggawe rekor pribadi';
+  String get personalRecordsCardCompleteWorkoutsToPR =>
+      'Rampungake latihan kanggo nggawe rekor pribadi';
 
   @override
-  String get personalRecordsCardConnectHealthToTrack => 'Sambungake Health kanggo nglacak';
+  String get personalRecordsCardConnectHealthToTrack =>
+      'Sambungake Health kanggo nglacak';
 
   @override
   String personalRecordsCardDaysAgo(Object days) {
@@ -25051,10 +26939,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardEveningTip => 'Latihan sore bisa nambah swasana ati. Tetep ing intensitas sedheng yen pengin turu kepenak bengi iki.';
+  String get personalRecordsCardEveningTip =>
+      'Latihan sore bisa nambah swasana ati. Tetep ing intensitas sedheng yen pengin turu kepenak bengi iki.';
 
   @override
-  String get personalRecordsCardGettingPersonalizedTip => 'Njaluk tips pribadi…';
+  String get personalRecordsCardGettingPersonalizedTip =>
+      'Njaluk tips pribadi…';
 
   @override
   String personalRecordsCardGlasses(Object current, Object goal) {
@@ -25067,7 +26957,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsCardMorningTip => 'Miwiti latihanmu nganggo pemanasan dinamis 5 menit kanggo ningkatake performa lan nyuda risiko cidera.';
+  String get personalRecordsCardMorningTip =>
+      'Miwiti latihanmu nganggo pemanasan dinamis 5 menit kanggo ningkatake performa lan nyuda risiko cidera.';
 
   @override
   String personalRecordsCardOfUsers(Object count) {
@@ -25114,13 +27005,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get personalRecordsCardYesterday => 'Wingi';
 
   @override
-  String get personalRecordsCompleteWorkoutsToStart => 'Rampungake latihan kanggo miwiti nglacak PR sampeyan ing saben latihan.';
+  String get personalRecordsCompleteWorkoutsToStart =>
+      'Rampungake latihan kanggo miwiti nglacak PR sampeyan ing saben latihan.';
 
   @override
   String get personalRecordsNoPersonalRecordsYet => 'Durung Ana Rekor Pribadi';
 
   @override
-  String get personalRecordsNoPrsYetLog => 'Durung ana PR — cathet latihan kanggo nggawe siji!';
+  String get personalRecordsNoPrsYetLog =>
+      'Durung ana PR — cathet latihan kanggo nggawe siji!';
 
   @override
   String get personalRecordsPersonalRecords => 'Rekor Pribadi';
@@ -25145,7 +27038,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get personalityCardYourGymPersonalityIs => 'Kepribadian gym sampeyan yaiku...';
+  String get personalityCardYourGymPersonalityIs =>
+      'Kepribadian gym sampeyan yaiku...';
 
   @override
   String phaseRecommendationBannerBasedOn(Object evidenceCitation) {
@@ -25175,7 +27069,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get photoEditorCropPhoto => 'Potong Foto';
 
   @override
-  String get photoEditorFailedToCropImage => 'Gagal motong gambar. Mangga coba maneh.';
+  String get photoEditorFailedToCropImage =>
+      'Gagal motong gambar. Mangga coba maneh.';
 
   @override
   String get photoEditorFlip => 'Walik';
@@ -25184,7 +27079,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get photoEditorHideLogo => 'Singidake Logo';
 
   @override
-  String get photoEditorNoStickersUsedYet => 'Durung ana stiker sing digunakake';
+  String get photoEditorNoStickersUsedYet =>
+      'Durung ana stiker sing digunakake';
 
   @override
   String get photoEditorProcessing => 'Ngolah...';
@@ -25217,7 +27113,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get photoEditorSize => 'Ukuran';
 
   @override
-  String get photoEditorYourRecentlyUsedStickers => 'Stiker sing bubar sampeyan gunakake bakal katon ing kene';
+  String get photoEditorYourRecentlyUsedStickers =>
+      'Stiker sing bubar sampeyan gunakake bakal katon ing kene';
 
   @override
   String get photoOverlayTemplateAddYourPhoto => 'Tambah foto sampeyan';
@@ -25284,7 +27181,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get photosTabUiTakeFirstPhoto => 'Jupuk Foto Pisanan';
 
   @override
-  String get photosTabUiTakePhotosFromDifferent => 'Jupuk foto saka macem-macem sudut kanggo nglacak progres visualmu saka wektu ke wektu.';
+  String get photosTabUiTakePhotosFromDifferent =>
+      'Jupuk foto saka macem-macem sudut kanggo nglacak progres visualmu saka wektu ke wektu.';
 
   @override
   String get photosTakePhoto => 'Jupuk Foto';
@@ -25308,7 +27206,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pillarDetailActiveMin => 'Menit aktif';
 
   @override
-  String get pillarDetailBandShowsThe10th => 'Pita nuduhake persentil 10–90 saka 30 dina pungkasanmu.';
+  String get pillarDetailBandShowsThe10th =>
+      'Pita nuduhake persentil 10–90 saka 30 dina pungkasanmu.';
 
   @override
   String get pillarDetailCalorieHit => 'Target kalori';
@@ -25329,13 +27228,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pillarDetailCustomTrends => 'Tren Kustom';
 
   @override
-  String get pillarDetailDarkerCloserToGoal => 'Luwih peteng = luwih cedhak karo target. Sel sing ana watese wis nggayuh target.';
+  String get pillarDetailDarkerCloserToGoal =>
+      'Luwih peteng = luwih cedhak karo target. Sel sing ana watese wis nggayuh target.';
 
   @override
   String get pillarDetailDuration => 'Durasi';
 
   @override
-  String get pillarDetailFiveOrMoreLoggedDays => 'Lima dina utawa luwih wis dicathet';
+  String get pillarDetailFiveOrMoreLoggedDays =>
+      'Lima dina utawa luwih wis dicathet';
 
   @override
   String get pillarDetailHeatmap30d => 'heatmap-30d';
@@ -25344,7 +27245,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pillarDetailHourlyActivityRibbon => 'Pita aktivitas saben jam';
 
   @override
-  String get pillarDetailHourlyActivityRibbonBody => 'Isi pita aktivitas saben jam';
+  String get pillarDetailHourlyActivityRibbonBody =>
+      'Isi pita aktivitas saben jam';
 
   @override
   String get pillarDetailIntensity => 'Intensitas';
@@ -25437,7 +27339,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pillarDetailTracking => 'Nglacak';
 
   @override
-  String get pillarDetailTwoOrMoreLoggedDays => 'Rong dina utawa luwih wis dicathet';
+  String get pillarDetailTwoOrMoreLoggedDays =>
+      'Rong dina utawa luwih wis dicathet';
 
   @override
   String get pillarDetailVariety => 'Variasi';
@@ -25470,13 +27373,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get planAnalyzingBuildingYourPlan => 'Nggawe rencana sampeyan';
 
   @override
-  String get planAnalyzingCalculatingYourGoalDate => 'Ngetung tanggal target sampeyan';
+  String get planAnalyzingCalculatingYourGoalDate =>
+      'Ngetung tanggal target sampeyan';
 
   @override
-  String get planAnalyzingCalibratingYourSchedule => 'Kalibrasi jadwal sampeyan';
+  String get planAnalyzingCalibratingYourSchedule =>
+      'Kalibrasi jadwal sampeyan';
 
   @override
-  String get planAnalyzingMatchingYourBodyType => 'Nyocogake karo jinis awak sampeyan';
+  String get planAnalyzingMatchingYourBodyType =>
+      'Nyocogake karo jinis awak sampeyan';
 
   @override
   String get planAnalyzingPullingFrom1700 => 'Njupuk saka 2.300+ latihan';
@@ -25485,7 +27391,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get planAnalyzingReviewingYourGoals => 'Ninjau target sampeyan';
 
   @override
-  String get planAnalyzingThisWillTakeA => 'Iki bakal mbutuhake sawetara detik...';
+  String get planAnalyzingThisWillTakeA =>
+      'Iki bakal mbutuhake sawetara detik...';
 
   @override
   String get planHeaderAvgCalories => 'Rata-rata Kalori';
@@ -25513,13 +27420,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get planPreviewRestRecovery => 'Ngaso & Pemulihan';
 
   @override
-  String get planPreviewScreenAnalyzingYourGoalsFitness => 'Nganalisis target, tingkat kabugaran, lan peralatan sampeyan kanggo nggawe program sing sampurna';
+  String get planPreviewScreenAnalyzingYourGoalsFitness =>
+      'Nganalisis target, tingkat kabugaran, lan peralatan sampeyan kanggo nggawe program sing sampurna';
 
   @override
-  String get planPreviewScreenBuildStrengthFoundation => 'Mbangun dhasar kekuatan';
+  String get planPreviewScreenBuildStrengthFoundation =>
+      'Mbangun dhasar kekuatan';
 
   @override
-  String get planPreviewScreenBuildingYour4Week => 'Nggawe Rencana 4 Minggu Sampeyan...';
+  String get planPreviewScreenBuildingYour4Week =>
+      'Nggawe Rencana 4 Minggu Sampeyan...';
 
   @override
   String get planPreviewScreenContinueFree => 'Terusake Gratis';
@@ -25530,7 +27440,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get planPreviewScreenDesignedBasedOnYour => 'Dirancang adhedhasar jawaban kuis sampeyan';
+  String get planPreviewScreenDesignedBasedOnYour =>
+      'Dirancang adhedhasar jawaban kuis sampeyan';
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
@@ -25543,7 +27454,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get planPreviewScreenIncreaseIntensityVolume => 'Tambah intensitas volume';
+  String get planPreviewScreenIncreaseIntensityVolume =>
+      'Tambah intensitas volume';
 
   @override
   String get planPreviewScreenMasterTheMovement => 'Kuasai gerakan';
@@ -25555,10 +27467,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get planPreviewScreenSetsreps => 'setsReps';
 
   @override
-  String get planPreviewScreenSubscribeForFullAccess => 'Langganan kanggo Akses Penuh';
+  String get planPreviewScreenSubscribeForFullAccess =>
+      'Langganan kanggo Akses Penuh';
 
   @override
-  String get planPreviewScreenThisIsYourPersonalized => 'Iki Rencana Pribadi Sampeyan';
+  String get planPreviewScreenThisIsYourPersonalized =>
+      'Iki Rencana Pribadi Sampeyan';
 
   @override
   String get planPreviewScreenTryOneWorkoutFree => 'Coba Siji Latihan Gratis';
@@ -25572,7 +27486,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get planPreviewScreenWhatYouLlAchieve => 'Apa sing Bakal Sampeyan Gayuh';
+  String get planPreviewScreenWhatYouLlAchieve =>
+      'Apa sing Bakal Sampeyan Gayuh';
 
   @override
   String get planPreviewYour4WeekPlan => 'Rencana 4 Minggu Sampeyan';
@@ -25581,7 +27496,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get planTodaySPlan => 'Rencana dina iki';
 
   @override
-  String get plateauDashboardCompleteMoreWorkoutsAnd => 'Rampungake luwih akeh latihan lan cathet bobot sampeyan kanggo ndeleng wawasan deteksi plateau.';
+  String get plateauDashboardCompleteMoreWorkoutsAnd =>
+      'Rampungake luwih akeh latihan lan cathet bobot sampeyan kanggo ndeleng wawasan deteksi plateau.';
 
   @override
   String get plateauDashboardCurrentWeight => 'Bobot Saiki';
@@ -25648,7 +27564,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get portionAmountInputThreeQuarters => 'Telung prapat';
 
   @override
-  String get postMealReviewCheckInDisabledRe => 'Check-in dipateni. Aktifake maneh saka Nutrition → Patterns.';
+  String get postMealReviewCheckInDisabledRe =>
+      'Check-in dipateni. Aktifake maneh saka Nutrition → Patterns.';
 
   @override
   String get postMealReviewCheckInSaved => 'Check-in disimpen!';
@@ -25678,7 +27595,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get postMealReviewSaveCheckIn => 'Simpen Check-in';
 
   @override
-  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories) {
+  String postMealReviewSheetKcal(
+    Object extraCount,
+    Object foodSummary,
+    Object totalCalories,
+  ) {
     return '$foodSummary$extraCount · $totalCalories kcal';
   }
 
@@ -25708,7 +27629,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get postWorkoutHrMin => 'Min';
 
   @override
-  String get postWorkoutHrNoHeartRateData => 'Ora ana data detak jantung. Gunakake strap (tuladhane Amazfit Helios) lan wenehi ijin Health kanggo ndeleng HR langsung + grafik sawise latihan.';
+  String get postWorkoutHrNoHeartRateData =>
+      'Ora ana data detak jantung. Gunakake strap (tuladhane Amazfit Helios) lan wenehi ijin Health kanggo ndeleng HR langsung + grafik sawise latihan.';
 
   @override
   String get postWorkoutHrPeak => 'Puncak';
@@ -25726,7 +27648,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get postWorkoutNutritionLog => 'Cathet';
 
   @override
-  String get postWorkoutNutritionLogPostWorkoutMeal => 'Cathet Panganan Sawise Latihan';
+  String get postWorkoutNutritionLogPostWorkoutMeal =>
+      'Cathet Panganan Sawise Latihan';
 
   @override
   String get postWorkoutNutritionProtein => 'Protein';
@@ -25750,7 +27673,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get postureFindingsCardAddCorrectiveExercises => 'Tambah latihan korektif';
+  String get postureFindingsCardAddCorrectiveExercises =>
+      'Tambah latihan korektif';
 
   @override
   String get postureFindingsCardPostureFindings => 'Temuan postur';
@@ -25826,7 +27750,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get prFullCelebrationShareYourAchievement => 'Nuduhake Prestasi Sampeyan';
+  String get prFullCelebrationShareYourAchievement =>
+      'Nuduhake Prestasi Sampeyan';
 
   @override
   String prFullCelebrationValue(Object improvementPercent) {
@@ -25886,7 +27811,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get prSummaryCardLogYourWorkoutsAnd => 'Cathet latihan sampeyan lan kita bakal nglacak angkatan paling apik sampeyan kanthi otomatis!';
+  String get prSummaryCardLogYourWorkoutsAnd =>
+      'Cathet latihan sampeyan lan kita bakal nglacak angkatan paling apik sampeyan kanthi otomatis!';
 
   @override
   String get prSummaryCardNoPersonalRecordsYet => 'Durung Ana Catetan Pribadi';
@@ -25918,7 +27844,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get practiceAttemptNotesOptional => 'Cathetan (opsional)';
 
   @override
-  String get practiceAttemptPleaseEnterRepsOr => 'Mangga lebokake repetisi utawa wektu nahan';
+  String get practiceAttemptPleaseEnterRepsOr =>
+      'Mangga lebokake repetisi utawa wektu nahan';
 
   @override
   String get practiceAttemptQuickSelectReps => 'Pilih Repetisi Cepet';
@@ -25935,22 +27862,27 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get preAuthQuizConsistencyBeatsIntensity => 'Konsistensi ngalahake intensitas';
+  String get preAuthQuizConsistencyBeatsIntensity =>
+      'Konsistensi ngalahake intensitas';
 
   @override
-  String get preAuthQuizControlsHowQuicklyWeights => 'Ngontrol sepira cepet bobot, repetisi, lan kesulitan mundhak saben minggu.';
+  String get preAuthQuizControlsHowQuicklyWeights =>
+      'Ngontrol sepira cepet bobot, repetisi, lan kesulitan mundhak saben minggu.';
 
   @override
-  String get preAuthQuizEveryExerciseWillBe => 'Saben latihan bakal dipilih adhedhasar peralatan sing sampeyan duweni. Ora perlu substitusi.';
+  String get preAuthQuizEveryExerciseWillBe =>
+      'Saben latihan bakal dipilih adhedhasar peralatan sing sampeyan duweni. Ora perlu substitusi.';
 
   @override
-  String get preAuthQuizFailedToSaveOnboarding => 'Gagal nyimpen data onboarding. Mangga coba maneh.';
+  String get preAuthQuizFailedToSaveOnboarding =>
+      'Gagal nyimpen data onboarding. Mangga coba maneh.';
 
   @override
   String get preAuthQuizFineTuningYourPlan => 'Nyetel rencana sampeyan';
 
   @override
-  String get preAuthQuizFitnessLevelHelpsSet => 'Tingkat kabugaran mbantu nemtokake titik wiwitan sing bener — bobot, kisaran repetisi, lan kerumitan latihan sing pas.';
+  String get preAuthQuizFitnessLevelHelpsSet =>
+      'Tingkat kabugaran mbantu nemtokake titik wiwitan sing bener — bobot, kisaran repetisi, lan kerumitan latihan sing pas.';
 
   @override
   String get preAuthQuizFuelYourTraining => 'Nutrisi latihan sampeyan';
@@ -25965,7 +27897,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preAuthQuizMatchedToYourSetup => 'Cocog karo setelan sampeyan';
 
   @override
-  String get preAuthQuizNutritionTrackingIsOptional => 'Nglacak nutrisi iku opsional nanging migunani. AI ngetung makro adhedhasar target lan tingkat aktivitas sampeyan.';
+  String get preAuthQuizNutritionTrackingIsOptional =>
+      'Nglacak nutrisi iku opsional nanging migunani. AI ngetung makro adhedhasar target lan tingkat aktivitas sampeyan.';
 
   @override
   String get preAuthQuizSafetyFirst => 'Keamanan dhisik';
@@ -25977,19 +27910,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preAuthQuizSkipLetAiDecide => 'Liwati, karepke AI sing mutusake';
 
   @override
-  String get preAuthQuizSomethingWentWrongPlease => 'Ana sing salah. Mangga coba maneh.';
+  String get preAuthQuizSomethingWentWrongPlease =>
+      'Ana sing salah. Mangga coba maneh.';
 
   @override
-  String get preAuthQuizTellingUsAboutInjuries => 'Menehi ngerti babagan tatu njamin kita ngindhari latihan sing bisa nyebabake nyeri utawa masalah.';
+  String get preAuthQuizTellingUsAboutInjuries =>
+      'Menehi ngerti babagan tatu njamin kita ngindhari latihan sing bisa nyebabake nyeri utawa masalah.';
 
   @override
-  String get preAuthQuizTheseOptionalDetailsMake => 'Rincian opsional iki nggawe latihanmu luwih pribadi. Lewati yen luwih seneng setelan standar AI.';
+  String get preAuthQuizTheseOptionalDetailsMake =>
+      'Rincian opsional iki nggawe latihanmu luwih pribadi. Lewati yen luwih seneng setelan standar AI.';
 
   @override
-  String get preAuthQuizWeLlBuildThe => 'Kita bakal nggawe jadwal latihan sing optimal kanggo jadwalmu. Luwih akeh dina ora mesthi luwih apik — pemulihan iku penting.';
+  String get preAuthQuizWeLlBuildThe =>
+      'Kita bakal nggawe jadwal latihan sing optimal kanggo jadwalmu. Luwih akeh dina ora mesthi luwih apik — pemulihan iku penting.';
 
   @override
-  String get preAuthQuizWeUseYourGoals => 'Kita nggunakake tujuanmu kanggo nemtokake jadwal latihan, pilihan latihan, lan sepira cepet kemajuanmu.';
+  String get preAuthQuizWeUseYourGoals =>
+      'Kita nggunakake tujuanmu kanggo nemtokake jadwal latihan, pilihan latihan, lan sepira cepet kemajuanmu.';
 
   @override
   String get preAuthQuizWhichDaysWorkBest => 'Dina apa sing paling cocog?';
@@ -26018,7 +27956,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preAuthReferralSaveCode => 'Simpen kode';
 
   @override
-  String get preAuthReferralThatCodeDoesnT => 'Kode kasebut ora bener — coba maneh.';
+  String get preAuthReferralThatCodeDoesnT =>
+      'Kode kasebut ora bener — coba maneh.';
 
   @override
   String preSetCoachingBannerCoachingInsight(Object message) {
@@ -26052,7 +27991,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preWorkoutCheckinHowWasYourSleep => 'Piye turumu?';
 
   @override
-  String get preWorkoutCheckinQuickCheckBeforeYour => 'Priksa cepet sadurunge latihanmu';
+  String get preWorkoutCheckinQuickCheckBeforeYour =>
+      'Priksa cepet sadurunge latihanmu';
 
   @override
   String get preWorkoutCheckinSkipCheckIn => 'Lewati check-in';
@@ -26064,7 +28004,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preferencesAccentColor => 'Warna Aksen';
 
   @override
-  String get preferencesAutoDetectedOverrideIf => 'Otomatis kedeteksi, ganti yen lagi lelungan';
+  String get preferencesAutoDetectedOverrideIf =>
+      'Otomatis kedeteksi, ganti yen lagi lelungan';
 
   @override
   String get preferencesChooseYourAppAccent => 'Pilih warna aksen aplikasimu';
@@ -26076,7 +28017,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preferencesKilogramsOrPounds => 'Kilogram utawa Pound';
 
   @override
-  String get preferencesManageGymsEquipmentAnd => 'Kelola gym, peralatan, lan lokasi';
+  String get preferencesManageGymsEquipmentAnd =>
+      'Kelola gym, peralatan, lan lokasi';
 
   @override
   String get preferencesPreferences => 'PREFERENSI';
@@ -26097,7 +28039,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get preferencesWeightUnit => 'Unit Bobot';
 
   @override
-  String get preferencesXpProgressStripOn => 'Strip progres XP ing layar ngarep';
+  String get preferencesXpProgressStripOn =>
+      'Strip progres XP ing layar ngarep';
 
   @override
   String get premiumGatePremiumFeature => 'Fitur premium';
@@ -26121,10 +28064,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get previewTileMockGoodProgressKeepIt => 'Progres apik - terusake!';
 
   @override
-  String get previousWorkoutsCompleteYourFirstWorkout => 'Rampungake latihan pertamamu kanggo ndeleng ing kene';
+  String get previousWorkoutsCompleteYourFirstWorkout =>
+      'Rampungake latihan pertamamu kanggo ndeleng ing kene';
 
   @override
-  String get previousWorkoutsNoCompletedWorkoutsYet => 'Durung ana latihan sing rampung';
+  String get previousWorkoutsNoCompletedWorkoutsYet =>
+      'Durung ana latihan sing rampung';
 
   @override
   String get previousWorkoutsPreviousWorkouts => 'Latihan Sadurunge';
@@ -26133,7 +28078,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get privacyDataPrivacyData => 'Privasi & Data';
 
   @override
-  String get profileAddEquipmentThatWill => 'Tambah peralatan sing bakal digunakake nalika nggawe latihanmu.';
+  String get profileAddEquipmentThatWill =>
+      'Tambah peralatan sing bakal digunakake nalika nggawe latihanmu.';
 
   @override
   String get profileAiPrivacy => 'Privasi AI';
@@ -26174,19 +28120,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get profileScreenPartAdd => 'Tambah';
 
   @override
-  String get profileScreenPartAddEquipmentAboveTo => 'Tambah peralatan ing ndhuwur kanggo miwiti';
+  String get profileScreenPartAddEquipmentAboveTo =>
+      'Tambah peralatan ing ndhuwur kanggo miwiti';
 
   @override
-  String get profileScreenPartEnterEquipmentName => 'Lebokake jeneng peralatan...';
+  String get profileScreenPartEnterEquipmentName =>
+      'Lebokake jeneng peralatan...';
 
   @override
-  String get profileScreenPartNoCustomEquipmentYet => 'Durung ana peralatan kustom';
+  String get profileScreenPartNoCustomEquipmentYet =>
+      'Durung ana peralatan kustom';
 
   @override
-  String get profileScreenPartNoSyncedWorkoutsYet => 'Durung ana latihan sing disinkronake';
+  String get profileScreenPartNoSyncedWorkoutsYet =>
+      'Durung ana latihan sing disinkronake';
 
   @override
-  String get profileScreenPartPrimaryGoalMusclePrioriti => 'Tujuan utama & prioritas otot';
+  String get profileScreenPartPrimaryGoalMusclePrioriti =>
+      'Tujuan utama & prioritas otot';
 
   @override
   String get profileScreenPartSeeAll => 'Deleng kabeh';
@@ -26201,10 +28152,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get profileWorkoutHistoryImport => 'Impor Riwayat Latihan';
 
   @override
-  String get programBuilderPartAddYourWarmUp => 'Tambah pemanasan lan peregangan rutinmu menyang saben sesi.';
+  String get programBuilderPartAddYourWarmUp =>
+      'Tambah pemanasan lan peregangan rutinmu menyang saben sesi.';
 
   @override
-  String get programBuilderPartApplyMyStapleExercises => 'Gunakake latihan rutinmu';
+  String get programBuilderPartApplyMyStapleExercises =>
+      'Gunakake latihan rutinmu';
 
   @override
   String programBuilderPartExercisePickerAddTo(Object dayName) {
@@ -26212,7 +28165,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get programBuilderPartNoScheduledDeload => 'Ora ana deload sing dijadwalake';
+  String get programBuilderPartNoScheduledDeload =>
+      'Ora ana deload sing dijadwalake';
 
   @override
   String get programBuilderPartOff => 'Mati';
@@ -26275,7 +28229,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get programDurationSelectorHowFarAheadTo => 'Sepira adoh jadwal latihan sing bakal digawe';
+  String get programDurationSelectorHowFarAheadTo =>
+      'Sepira adoh jadwal latihan sing bakal digawe';
 
   @override
   String get programDurationSelectorProgramDuration => 'Durasi Program';
@@ -26284,7 +28239,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programHistoryCurrent => 'SAIKI';
 
   @override
-  String get programHistoryFailedToLoadProgram => 'Gagal mbukak riwayat program';
+  String get programHistoryFailedToLoadProgram =>
+      'Gagal mbukak riwayat program';
 
   @override
   String get programHistoryNoProgramHistoryYet => 'Durung Ana Riwayat Program';
@@ -26293,7 +28249,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programHistoryProgramHistory => 'Riwayat Program';
 
   @override
-  String get programHistoryProgramRestoredSuccessfully => 'Program kasil dipulihake!';
+  String get programHistoryProgramRestoredSuccessfully =>
+      'Program kasil dipulihake!';
 
   @override
   String get programHistoryRestoreProgram => 'Pulihake Program?';
@@ -26330,7 +28287,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programHistoryUnknownError => 'Kesalahan ora dingerteni';
 
   @override
-  String get programHistoryWhenYouCustomizeYour => 'Nalika sampeyan ngatur program, snapshot bakal disimpen ing kene.';
+  String get programHistoryWhenYouCustomizeYour =>
+      'Nalika sampeyan ngatur program, snapshot bakal disimpen ing kene.';
 
   @override
   String get programLibrary => '•  ';
@@ -26355,7 +28313,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programLibraryClearFilters => 'Busak filter';
 
   @override
-  String get programLibraryCouldNotImportThis => 'Ora bisa ngimpor program iki. Mangga coba maneh.';
+  String get programLibraryCouldNotImportThis =>
+      'Ora bisa ngimpor program iki. Mangga coba maneh.';
 
   @override
   String get programLibraryImportCustomize => 'Impor & atur';
@@ -26367,7 +28326,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programLibraryLevel => 'Level';
 
   @override
-  String get programLibraryNoProgramsMatchThese => 'Ora ana program sing cocog karo filter iki.';
+  String get programLibraryNoProgramsMatchThese =>
+      'Ora ana program sing cocog karo filter iki.';
 
   @override
   String get programLibraryProgramLibrary => 'Pustaka Program';
@@ -26394,13 +28354,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programMenuButtonBrowsePrograms => 'Jelajahi Program';
 
   @override
-  String get programMenuButtonChangeDaysEquipmentDiffic => 'Ganti dina, peralatan, tingkat kesulitan, lan liya-liyane';
+  String get programMenuButtonChangeDaysEquipmentDiffic =>
+      'Ganti dina, peralatan, tingkat kesulitan, lan liya-liyane';
 
   @override
   String get programMenuButtonCustomizeProgram => 'Atur Program';
 
   @override
-  String get programMenuButtonCustomizeYourWorkoutProgram => 'Atur program latihan sampeyan utawa gawe maneh nganggo setelan saiki.';
+  String get programMenuButtonCustomizeYourWorkoutProgram =>
+      'Atur program latihan sampeyan utawa gawe maneh nganggo setelan saiki.';
 
   @override
   String get programMenuButtonFailedToClearWorkouts => 'Gagal mbusak latihan';
@@ -26411,19 +28373,22 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get programMenuButtonGetFreshWorkoutsWith => 'Entuk latihan anyar nganggo setelan saiki';
+  String get programMenuButtonGetFreshWorkoutsWith =>
+      'Entuk latihan anyar nganggo setelan saiki';
 
   @override
   String get programMenuButtonMySpace => 'Ruanganku';
 
   @override
-  String get programMenuButtonPleaseLogInTo => 'Mangga mlebu kanggo nggawe maneh latihan';
+  String get programMenuButtonPleaseLogInTo =>
+      'Mangga mlebu kanggo nggawe maneh latihan';
 
   @override
   String get programMenuButtonProgramOptions => 'Opsi Program';
 
   @override
-  String get programMenuButtonProgramUpdatedYourNew => 'Program dianyari! Latihan anyar sampeyan wis siyap.';
+  String get programMenuButtonProgramUpdatedYourNew =>
+      'Program dianyari! Latihan anyar sampeyan wis siyap.';
 
   @override
   String get programMenuButtonRegenerateThisWeek => 'Gawe Maneh Minggu Iki';
@@ -26432,13 +28397,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programMenuButtonRegenerateWorkouts => 'Gawe Maneh Latihan?';
 
   @override
-  String get programMenuButtonSeeYourWorkoutDays => 'Deleng dina latihan, level pengalaman & target sampeyan';
+  String get programMenuButtonSeeYourWorkoutDays =>
+      'Deleng dina latihan, level pengalaman & target sampeyan';
 
   @override
-  String get programMenuButtonThisWillDeleteYour => 'Iki bakal mbusak latihan sing durung rampung lan nggawe sing anyar nggunakake setelan program saiki.\n\nLatihan sing wis rampung ORA bakal kena pengaruh.';
+  String get programMenuButtonThisWillDeleteYour =>
+      'Iki bakal mbusak latihan sing durung rampung lan nggawe sing anyar nggunakake setelan program saiki.\n\nLatihan sing wis rampung ORA bakal kena pengaruh.';
 
   @override
-  String get programMenuButtonTryCelebrityWorkoutsSport => 'Coba latihan selebriti, latihan olahraga & liya-liyane';
+  String get programMenuButtonTryCelebrityWorkoutsSport =>
+      'Coba latihan selebriti, latihan olahraga & liya-liyane';
 
   @override
   String get programMenuButtonViewMyPreferences => 'Deleng Preferensiku';
@@ -26462,16 +28430,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programMetaProgression => 'Progression';
 
   @override
-  String get programSummaryAdaptsWorkoutsBasedOn => 'Nyesuekake latihan adhedhasar kemajuan sampeyan';
+  String get programSummaryAdaptsWorkoutsBasedOn =>
+      'Nyesuekake latihan adhedhasar kemajuan sampeyan';
 
   @override
   String get programSummaryAdvancedLabel => 'Label mahir';
 
   @override
-  String get programSummaryAutomaticallyIncreasesChalle => 'Otomatis nambah tantangan saka wektu ke wektu';
+  String get programSummaryAutomaticallyIncreasesChalle =>
+      'Otomatis nambah tantangan saka wektu ke wektu';
 
   @override
-  String get programSummaryAvoidsExercisesThatStress => 'Ngindhari latihan sing ngganggu watesan fisik sampeyan';
+  String get programSummaryAvoidsExercisesThatStress =>
+      'Ngindhari latihan sing ngganggu watesan fisik sampeyan';
 
   @override
   String get programSummaryBeginnerLabel => 'Label pamula';
@@ -26513,7 +28484,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programSummaryLoseWeight => 'Ngurangi bobot awak';
 
   @override
-  String get programSummaryMacrosAndMealsAligned => 'Macro lan dhaharan sing selaras karo latihan sampeyan';
+  String get programSummaryMacrosAndMealsAligned =>
+      'Macro lan dhaharan sing selaras karo latihan sampeyan';
 
   @override
   String programSummaryNItems(Object arg0) {
@@ -26524,7 +28496,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programSummaryNutritionIntegration => 'Integrasi Nutrisi';
 
   @override
-  String get programSummaryPersonalizedForYourGoals => 'Dipersonalisasi kanggo target lan peralatan sampeyan';
+  String get programSummaryPersonalizedForYourGoals =>
+      'Dipersonalisasi kanggo target lan peralatan sampeyan';
 
   @override
   String get programSummaryProgressiveOverload => 'Progressive Overload';
@@ -26545,7 +28518,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programSummaryYourProgramIsReady => 'Program Sampeyan Wis Siyap';
 
   @override
-  String get programTemplateBuilderAProgramNeedsAt => 'Program mbutuhake paling ora siji dina latihan.';
+  String get programTemplateBuilderAProgramNeedsAt =>
+      'Program mbutuhake paling ora siji dina latihan.';
 
   @override
   String get programTemplateBuilderAddExercise => 'Tambah latihan';
@@ -26554,13 +28528,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programTemplateBuilderBuildFromScratch => 'Gawe saka nol';
 
   @override
-  String get programTemplateBuilderCopyDayToAnother => 'Salin dina menyang dina liyane';
+  String get programTemplateBuilderCopyDayToAnother =>
+      'Salin dina menyang dina liyane';
 
   @override
-  String get programTemplateBuilderCouldNotSaveThe => 'Ora bisa nyimpen template. Mangga coba maneh.';
+  String get programTemplateBuilderCouldNotSaveThe =>
+      'Ora bisa nyimpen template. Mangga coba maneh.';
 
   @override
-  String get programTemplateBuilderDropInASplit => 'Lebokake split sing wis sampeyan tulis lan kita bakal maca.';
+  String get programTemplateBuilderDropInASplit =>
+      'Lebokake split sing wis sampeyan tulis lan kita bakal maca.';
 
   @override
   String get programTemplateBuilderEditProgram => 'Sunting Program';
@@ -26569,13 +28546,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programTemplateBuilderEmpty => 'Kosong';
 
   @override
-  String get programTemplateBuilderGiveYourProgramA => 'Wenehi jeneng program sampeyan.';
+  String get programTemplateBuilderGiveYourProgramA =>
+      'Wenehi jeneng program sampeyan.';
 
   @override
   String get programTemplateBuilderImportFromLibrary => 'Impor saka pustaka';
 
   @override
-  String get programTemplateBuilderLayOutEachTraining => 'Atur saben dina latihan latihan demi latihan.';
+  String get programTemplateBuilderLayOutEachTraining =>
+      'Atur saben dina latihan latihan demi latihan.';
 
   @override
   String get programTemplateBuilderMakeRestDay => 'Dadekake dina ngaso';
@@ -26630,12 +28609,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String programTemplateBuilderScreenWeeksWhenScheduled(Object repeatWeeksHint) {
+  String programTemplateBuilderScreenWeeksWhenScheduled(
+    Object repeatWeeksHint,
+  ) {
     return '$repeatWeeksHint minggu nalika dijadwalake.';
   }
 
   @override
-  String get programTemplateBuilderStartFromAStructured => 'Mulai saka program terstruktur lan gawe dadi duweke sampeyan dhewe.';
+  String get programTemplateBuilderStartFromAStructured =>
+      'Mulai saka program terstruktur lan gawe dadi duweke sampeyan dhewe.';
 
   @override
   String get programsAll => 'Kabeh';
@@ -26668,13 +28650,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programsIntroFlexibleDuration => 'Durasi Fleksibel';
 
   @override
-  String get programsIntroProfessionalExerciseTutorial => 'Tutorial latihan profesional';
+  String get programsIntroProfessionalExerciseTutorial =>
+      'Tutorial latihan profesional';
 
   @override
   String get programsIntroProgramsFrom1To => 'Program saka 1 nganti 16 minggu';
 
   @override
-  String get programsIntroStrengthCardioMobilityM => 'Strength, cardio, mobility & liyane';
+  String get programsIntroStrengthCardioMobilityM =>
+      'Strength, cardio, mobility & liyane';
 
   @override
   String get programsIntroVideoDemos => 'Demo Video';
@@ -26695,7 +28679,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get programsSearchPrograms => 'Goleki program...';
 
   @override
-  String get programsTapAnyProgramTo => 'Tutul program apa wae kanggo sinau luwih lanjut';
+  String get programsTapAnyProgramTo =>
+      'Tutul program apa wae kanggo sinau luwih lanjut';
 
   @override
   String get programsTryAgain => 'Coba maneh';
@@ -26704,10 +28689,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressAll => 'Kabeh';
 
   @override
-  String get progressChartsCompleteSomeWorkoutsTo => 'Rampungake sawetara latihan kanggo ndeleng progres volume sampeyan saka wektu ke wektu.';
+  String get progressChartsCompleteSomeWorkoutsTo =>
+      'Rampungake sawetara latihan kanggo ndeleng progres volume sampeyan saka wektu ke wektu.';
 
   @override
-  String get progressChartsCompleteWeightedExercisesTo => 'Rampungake latihan mawa beban kanggo ndeleng progres kekuatan sampeyan.';
+  String get progressChartsCompleteWeightedExercisesTo =>
+      'Rampungake latihan mawa beban kanggo ndeleng progres kekuatan sampeyan.';
 
   @override
   String get progressChartsFailedToLoadData => 'Gagal Ngunggah Data';
@@ -26754,7 +28741,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressDeletePhoto => 'Busak Foto?';
 
   @override
-  String get progressFailedToProcessPhoto => 'Gagal ngolah foto. Mangga coba maneh.';
+  String get progressFailedToProcessPhoto =>
+      'Gagal ngolah foto. Mangga coba maneh.';
 
   @override
   String get progressFitness => 'KABUGARAN';
@@ -26775,7 +28763,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressPhotoTileProgressPhotos => 'Foto Progres';
 
   @override
-  String get progressPhotoTileTakeYourFirstPhoto => 'Jupuk foto pisanan sampeyan';
+  String get progressPhotoTileTakeYourFirstPhoto =>
+      'Jupuk foto pisanan sampeyan';
 
   @override
   String get progressPhotos => 'Foto';
@@ -26790,16 +28779,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScores => 'Skor';
 
   @override
-  String get progressScreenExtCompleteWorkoutsTargetingTh => 'Rampungake latihan sing targete otot iki\nkanggo ndeleng progres kekuatan sampeyan.';
+  String get progressScreenExtCompleteWorkoutsTargetingTh =>
+      'Rampungake latihan sing targete otot iki\nkanggo ndeleng progres kekuatan sampeyan.';
 
   @override
   String get progressScreenExtDetails => 'Rincian';
 
   @override
-  String get progressScreenExtNoDataForThis => 'Durung ana data kanggo klompok otot iki';
+  String get progressScreenExtNoDataForThis =>
+      'Durung ana data kanggo klompok otot iki';
 
   @override
-  String get progressScreenExtProgressToNextLevel => 'Progres menyang level sabanjure';
+  String get progressScreenExtProgressToNextLevel =>
+      'Progres menyang level sabanjure';
 
   @override
   String progressScreenExtSetsWk(Object weeklySets) {
@@ -26813,7 +28805,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScreenUiAddPhoto => 'Tambah Foto';
 
   @override
-  String get progressScreenUiAi100RatingBody => 'Rating AI /100, ring lemak awak & umpan balik postur';
+  String get progressScreenUiAi100RatingBody =>
+      'Rating AI /100, ring lemak awak & umpan balik postur';
 
   @override
   String get progressScreenUiBodyAnalyzer => 'Penganalisis Awak';
@@ -26831,7 +28824,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScreenUiExerciseProgressions => 'Progresi Latihan';
 
   @override
-  String get progressScreenUiFailedToLoadMeasurements => 'Gagal ngunggah pangukuran';
+  String get progressScreenUiFailedToLoadMeasurements =>
+      'Gagal ngunggah pangukuran';
 
   @override
   String get progressScreenUiLatestByView => 'Paling Anyar miturut Tampilan';
@@ -26843,7 +28837,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScreenUiLogMeasurements => 'Cathet Pangukuran';
 
   @override
-  String get progressScreenUiMasterEasierVariantsThen => 'Kuasai varian sing luwih gampang, banjur lanjut menyang sing luwih angel';
+  String get progressScreenUiMasterEasierVariantsThen =>
+      'Kuasai varian sing luwih gampang, banjur lanjut menyang sing luwih angel';
 
   @override
   String get progressScreenUiMuscleAnalytics => 'Analitik Otot';
@@ -26852,7 +28847,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScreenUiNoProgressPhotosYet => 'Durung Ana Foto Progres';
 
   @override
-  String get progressScreenUiPerExerciseProgressPrs => 'Progres saben latihan & PRs';
+  String get progressScreenUiPerExerciseProgressPrs =>
+      'Progres saben latihan & PRs';
 
   @override
   String get progressScreenUiPhotoProgress => 'Progres Foto';
@@ -26864,13 +28860,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressScreenUiTakeFirstPhoto => 'Jupuk Foto Pisanan';
 
   @override
-  String get progressScreenUiTakePhotosFromDifferent => 'Jupuk foto saka macem-macem sudut kanggo nglacak progres visual sampeyan saka wektu ke wektu.';
+  String get progressScreenUiTakePhotosFromDifferent =>
+      'Jupuk foto saka macem-macem sudut kanggo nglacak progres visual sampeyan saka wektu ke wektu.';
 
   @override
-  String get progressScreenUiTrackYourBodyMeasurements => 'Lacak pangukuran awak sampeyan kanggo ndeleng progres rinci ngluwihi timbangan.';
+  String get progressScreenUiTrackYourBodyMeasurements =>
+      'Lacak pangukuran awak sampeyan kanggo ndeleng progres rinci ngluwihi timbangan.';
 
   @override
-  String get progressScreenUiTrainingVolumeBalance => 'Volume latihan & keseimbangan';
+  String get progressScreenUiTrainingVolumeBalance =>
+      'Volume latihan & keseimbangan';
 
   @override
   String progressScreenWeight(Object formattedWeight) {
@@ -26894,13 +28893,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get progressShareGalleryShareYourTransformation => 'Paringake Transformasi Sampeyan';
+  String get progressShareGalleryShareYourTransformation =>
+      'Paringake Transformasi Sampeyan';
 
   @override
   String get progressShareGalleryTapToOpen => 'tutul kanggo mbukak';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy => 'STUDI\nTRANSFORMASI';
+  String get progressShareTemplatesANtransformationNstudy =>
+      'STUDI\nTRANSFORMASI';
 
   @override
   String get progressShareTemplatesBreaking => 'BREAKING';
@@ -26914,7 +28915,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesFromILlStart => 'SAKA \"AKU BAKAL MULAI SENEN\"';
+  String get progressShareTemplatesFromILlStart =>
+      'SAKA \"AKU BAKAL MULAI SENEN\"';
 
   @override
   String progressShareTemplatesHowSheLost(Object weightLostText) {
@@ -26928,7 +28930,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressShareTemplatesInTheBooks => 'WIS KACATHET';
 
   @override
-  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText) {
+  String progressShareTemplatesLocalLegendShedsIn(
+    Object durationText,
+    Object weightLostText,
+  ) {
     return 'LOCAL LEGEND MUDUN $weightLostText SAJRONING $durationText';
   }
 
@@ -26966,7 +28971,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressShareTemplatesReportedBy => 'DILAPORAKE DENING';
 
   @override
-  String get progressShareTemplatesSourcesCloseToThe => 'Sumber sing cedhak karo subjek ngonfirmasi owah-owahan iki amarga latihan sing konsisten, mangan sing bener, lan ora nate ngliwati dina latihan sikil. Para ahli nyebut iki \"dedikasi sing durung nate ana sadurunge.\"';
+  String get progressShareTemplatesSourcesCloseToThe =>
+      'Sumber sing cedhak karo subjek ngonfirmasi owah-owahan iki amarga latihan sing konsisten, mangan sing bener, lan ora nate ngliwati dina latihan sikil. Para ahli nyebut iki \"dedikasi sing durung nate ana sadurunge.\"';
 
   @override
   String get progressShareTemplatesTheDailyGains => 'HASIL SABEN DINA';
@@ -26996,7 +29002,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday => '#TRANSFORMASI\nSELASA';
+  String get progressShareTemplatesTransformationNtuesday =>
+      '#TRANSFORMASI\nSELASA';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMASI';
@@ -27027,7 +29034,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts) {
+  String progressShareTemplatesWorkoutsDayStreak(
+    Object currentStreak,
+    Object totalWorkouts,
+  ) {
     return '$totalWorkouts latihan · $currentStreak-dina streak';
   }
 
@@ -27065,7 +29075,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressThisActionCannotBe => 'Tindakan iki ora bisa dibatalake.';
 
   @override
-  String get progressTrackYourFitnessJourney => 'Lacak perjalanan fitness sampeyan nganggo foto kemajuan, ukuran awak, lan skor kekuatan. Deleng sepira adoh sampeyan wis mlaku!';
+  String get progressTrackYourFitnessJourney =>
+      'Lacak perjalanan fitness sampeyan nganggo foto kemajuan, ukuran awak, lan skor kekuatan. Deleng sepira adoh sampeyan wis mlaku!';
 
   @override
   String get progressUploadFailed => 'Gagal Ngunggah';
@@ -27077,7 +29088,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressUseCamera => 'Gunakake kamera';
 
   @override
-  String get progressWeCouldnTSave => 'Kita ora bisa nyimpen foto sampeyan. Coba maneh.';
+  String get progressWeCouldnTSave =>
+      'Kita ora bisa nyimpen foto sampeyan. Coba maneh.';
 
   @override
   String progressionChainCardStepOf(Object chain, Object currentStepOrder) {
@@ -27098,7 +29110,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressionPaceAutoDeloadWeeks => 'Minggu Deload Otomatis';
 
   @override
-  String get progressionPaceControlHowQuicklyThe => 'Kontrol sepira cepet AI nambah bobot latihan sampeyan. Progres sing luwih alon luwih aman kanggo pamula, dene sing luwih cepet cocok kanggo sing wis pengalaman.';
+  String get progressionPaceControlHowQuicklyThe =>
+      'Kontrol sepira cepet AI nambah bobot latihan sampeyan. Progres sing luwih alon luwih aman kanggo pamula, dene sing luwih cepet cocok kanggo sing wis pengalaman.';
 
   @override
   String get progressionPaceDeloadFrequency => 'Frekuensi Deload';
@@ -27110,13 +29123,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressionPaceFineTuneSettings => 'Setelan Fine-Tune';
 
   @override
-  String get progressionPaceHowManyWeeksBefore => 'Pira minggu sadurunge nambah bobot';
+  String get progressionPaceHowManyWeeksBefore =>
+      'Pira minggu sadurunge nambah bobot';
 
   @override
-  String get progressionPaceHowMuchToIncrease => 'Pira bobot sing ditambah saben progres';
+  String get progressionPaceHowMuchToIncrease =>
+      'Pira bobot sing ditambah saben progres';
 
   @override
-  String get progressionPacePeriodicallyReduceIntensity => 'Kurangi intensitas kanthi berkala kanggo pemulihan';
+  String get progressionPacePeriodicallyReduceIntensity =>
+      'Kurangi intensitas kanthi berkala kanggo pemulihan';
 
   @override
   String get progressionPaceProgressionPace => 'Laju Progres';
@@ -27156,13 +29172,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressionSelectorAutoAdjusts => 'Otomatis nyetel';
 
   @override
-  String get progressionSelectorChooseHowWeightChanges => 'Pilih carane bobot owah ing saben set';
+  String get progressionSelectorChooseHowWeightChanges =>
+      'Pilih carane bobot owah ing saben set';
 
   @override
   String get progressionSelectorSetProgression => 'Setel Progres';
 
   @override
-  String get progressionSelectorSubtitle => 'Pilih carane bobot owah ing saben set';
+  String get progressionSelectorSubtitle =>
+      'Pilih carane bobot owah ing saben set';
 
   @override
   String get progressionSelectorTitle => 'Progresi Set';
@@ -27171,7 +29189,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressionSelectorWhenToUse => 'Kapan digunakake';
 
   @override
-  String get progressionStepCardCompletePreviousStepTo => 'Rampungake langkah sadurunge kanggo mbukak';
+  String get progressionStepCardCompletePreviousStepTo =>
+      'Rampungake langkah sadurunge kanggo mbukak';
 
   @override
   String get progressionStepCardCompleted => 'Rampung';
@@ -27188,7 +29207,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get progressionStripTarget => 'Target ';
 
   @override
-  String get progressionSuggestionCardCompleteAFewMore => 'Rampungake sawetara sesi \"gampang\" maneh kanggo mbukak progres';
+  String get progressionSuggestionCardCompleteAFewMore =>
+      'Rampungake sawetara sesi \"gampang\" maneh kanggo mbukak progres';
 
   @override
   String get progressionSuggestionCardCurrent => 'Saiki';
@@ -27214,7 +29234,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise) {
+  String progressionSuggestionCardValue2(
+    Object currentExercise,
+    Object suggestedExercise,
+  ) {
     return '$currentExercise -> $suggestedExercise';
   }
 
@@ -27224,7 +29247,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get progressionSuggestionCardWhyThisProgression => 'Kenapa progres iki?';
+  String get progressionSuggestionCardWhyThisProgression =>
+      'Kenapa progres iki?';
 
   @override
   String get proposedChangeCardApplied => 'Ditrapake';
@@ -27236,7 +29260,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get proposedChangeCardDismissed => 'Ditolak';
 
   @override
-  String get proposedChangeCardExpiredAskAgainFor => 'Kadaluwarsa — takon maneh kanggo saran anyar';
+  String get proposedChangeCardExpiredAskAgainFor =>
+      'Kadaluwarsa — takon maneh kanggo saran anyar';
 
   @override
   String get proposedChangeCardNotNow => 'Ora saiki';
@@ -27301,7 +29326,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get publicRecipeSaveToMyRecipes => 'Simpen menyang resepku';
 
   @override
-  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount) {
+  String publicRecipeScreenByViewsSaves(
+    Object authorDisplayName,
+    Object saveCount,
+    Object viewCount,
+  ) {
     return 'dening $authorDisplayName · $viewCount tampilan · $saveCount disimpen';
   }
 
@@ -27319,7 +29348,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get queuePositionCardPleaseWaitWhileWe => 'Mangga ngenteni nalika kita nyambungake sampeyan\nkaro agen dhukungan';
+  String get queuePositionCardPleaseWaitWhileWe =>
+      'Mangga ngenteni nalika kita nyambungake sampeyan\nkaro agen dhukungan';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -27336,10 +29366,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsCustomizeQuickActions => 'Kustomisasi Tindakan Cepet';
 
   @override
-  String get quickActionsDisplayExtraShortcutsOn => 'Tampilake trabasan tambahan ing ngarep';
+  String get quickActionsDisplayExtraShortcutsOn =>
+      'Tampilake trabasan tambahan ing ngarep';
 
   @override
-  String get quickActionsFailedToLogWater => 'Gagal nyathet banyu. Mangga coba maneh.';
+  String get quickActionsFailedToLogWater =>
+      'Gagal nyathet banyu. Mangga coba maneh.';
 
   @override
   String get quickActionsNoActionsFound => 'Ora ana tindakan sing ditemokake';
@@ -27429,10 +29461,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsRowEnter15000Ml => 'Lebokna 1–5000 ml';
 
   @override
-  String get quickActionsRowFailedToLogWater => 'Gagal nyathet banyu. Mangga coba maneh.';
+  String get quickActionsRowFailedToLogWater =>
+      'Gagal nyathet banyu. Mangga coba maneh.';
 
   @override
-  String get quickActionsRowFastEndedSuccessfully => 'Pasa rampung kanthi sukses';
+  String get quickActionsRowFastEndedSuccessfully =>
+      'Pasa rampung kanthi sukses';
 
   @override
   String get quickActionsRowFasting => 'Pasa';
@@ -27488,7 +29522,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsRowPhotoLog => 'Cathetan Foto';
 
   @override
-  String get quickActionsRowPleaseLogInTo => 'Mangga login kanggo nglacak hidrasi';
+  String get quickActionsRowPleaseLogInTo =>
+      'Mangga login kanggo nglacak hidrasi';
 
   @override
   String get quickActionsRowQuick => 'Cepet';
@@ -27503,7 +29538,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsRowSip => 'Sruput';
 
   @override
-  String get quickActionsRowSipToXlJug => 'Sruput nganti jug XL, utawa ketik pas';
+  String get quickActionsRowSipToXlJug =>
+      'Sruput nganti jug XL, utawa ketik pas';
 
   @override
   String get quickActionsRowSmallCup => 'Cangkir cilik';
@@ -27515,7 +29551,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsRowSportsBottle => 'Botol olahraga';
 
   @override
-  String get quickActionsRowTakeAProgressPhoto => 'Jupuk foto progres kanggo ndeleng transformasi sampeyan';
+  String get quickActionsRowTakeAProgressPhoto =>
+      'Jupuk foto progres kanggo ndeleng transformasi sampeyan';
 
   @override
   String get quickActionsRowTallGlass => 'Gelas dhuwur';
@@ -27545,7 +29582,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickActionsSheetEnd => 'Pungkasan';
 
   @override
-  String get quickActionsSheetFastEndedSuccessfully => 'Pasa rampung kanthi sukses';
+  String get quickActionsSheetFastEndedSuccessfully =>
+      'Pasa rampung kanthi sukses';
 
   @override
   String get quickActionsSheetFasting => 'Pasa';
@@ -27561,7 +29599,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get quickActionsSheetTakeAProgressPhoto => 'Jupuk foto progres kanggo ndeleng transformasi sampeyan';
+  String get quickActionsSheetTakeAProgressPhoto =>
+      'Jupuk foto progres kanggo ndeleng transformasi sampeyan';
 
   @override
   String get quickActionsSheetTrackYourProgress => 'Lacak Progres Sampeyan';
@@ -27579,7 +29618,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickAdjustAdaptWorkout => 'Adaptasi latihan';
 
   @override
-  String get quickAdjustAdjustTodaySWorkout => 'Setel latihan dina iki ing kene.';
+  String get quickAdjustAdjustTodaySWorkout =>
+      'Setel latihan dina iki ing kene.';
 
   @override
   String get quickAdjustDrained => 'Kuras';
@@ -27651,13 +29691,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickLogMeasurementsNotLoggedYet => 'Durung dicathet';
 
   @override
-  String get quickLogMeasurementsPleaseSignInTo => 'Mangga mlebu kanggo nyathet pangukuran';
+  String get quickLogMeasurementsPleaseSignInTo =>
+      'Mangga mlebu kanggo nyathet pangukuran';
 
   @override
-  String get quickLogMeasurementsTapToViewFull => 'Tutul kanggo ndeleng riwayat lan tren lengkap';
+  String get quickLogMeasurementsTapToViewFull =>
+      'Tutul kanggo ndeleng riwayat lan tren lengkap';
 
   @override
-  String get quickLogMeasurementsTrackYourBodyChanges => 'Lacak owah-owahan awakmu saka wektu ke wektu';
+  String get quickLogMeasurementsTrackYourBodyChanges =>
+      'Lacak owah-owahan awakmu saka wektu ke wektu';
 
   @override
   String get quickLogMeasurementsUpdate => 'Anyari';
@@ -27695,10 +29738,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickLogOverlaySnack => 'Cemilan';
 
   @override
-  String get quickLogOverlayTapAMealType => 'Tutul jinis dhaharan kanggo nyathet, utawa menyang aplikasi kanggo pilihan liyane';
+  String get quickLogOverlayTapAMealType =>
+      'Tutul jinis dhaharan kanggo nyathet, utawa menyang aplikasi kanggo pilihan liyane';
 
   @override
-  String get quickLogWeightLogMoreWeightsTo => 'Cathet luwih akeh bobot kanggo ndeleng tren';
+  String get quickLogWeightLogMoreWeightsTo =>
+      'Cathet luwih akeh bobot kanggo ndeleng tren';
 
   @override
   String get quickLogWeightLogged => 'Wis dicathet!';
@@ -27710,7 +29755,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickStartCardCouldNotLoadWorkout => 'Ora bisa ngunggah latihan';
 
   @override
-  String get quickStartCardGenerateAWorkoutProgram => 'Gawe program latihan kanggo miwiti!';
+  String get quickStartCardGenerateAWorkoutProgram =>
+      'Gawe program latihan kanggo miwiti!';
 
   @override
   String quickStartCardInDays(Object daysUntilNext) {
@@ -27750,7 +29796,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickStatsCardActiveFeatures => 'Fitur Aktif';
 
   @override
-  String get quickStatsCardConfigureYourHormonalHealth => 'Konfigurasi preferensi kesehatan hormonalmu kanggo entuk wawasan sing dipersonalisasi.';
+  String get quickStatsCardConfigureYourHormonalHealth =>
+      'Konfigurasi preferensi kesehatan hormonalmu kanggo entuk wawasan sing dipersonalisasi.';
 
   @override
   String get quickStatsCardCycleSyncedNutrition => 'Nutrisi Selaras Siklus';
@@ -27797,7 +29844,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickWorkoutConflictTitle => 'Latihan Wis Dijadwalake';
 
   @override
-  String get quickWorkoutDiscoverSubtitle => 'Saran pribadi adhedhasar profilmu';
+  String get quickWorkoutDiscoverSubtitle =>
+      'Saran pribadi adhedhasar profilmu';
 
   @override
   String get quickWorkoutDiscoverWorkouts => 'Temokake Latihan';
@@ -27872,16 +29920,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickWorkoutSheetInjuriesOptional => 'Cidera (Opsional)';
 
   @override
-  String get quickWorkoutSheetInstantGenerationPoweredBy => 'Generasi instan didhukung dening riset ilmu olahraga.';
+  String get quickWorkoutSheetInstantGenerationPoweredBy =>
+      'Generasi instan didhukung dening riset ilmu olahraga.';
 
   @override
   String get quickWorkoutSheetMoodOptional => 'Swasana ati (Opsional)';
 
   @override
-  String get quickWorkoutSheetNoAdditionalSuggestionsAvai => 'Ora ana saran tambahan sing kasedhiya.';
+  String get quickWorkoutSheetNoAdditionalSuggestionsAvai =>
+      'Ora ana saran tambahan sing kasedhiya.';
 
   @override
-  String get quickWorkoutSheetPairOpposingMusclesTo => 'Pasangake otot sing nglawan kanggo ngirit wektu';
+  String get quickWorkoutSheetPairOpposingMusclesTo =>
+      'Pasangake otot sing nglawan kanggo ngirit wektu';
 
   @override
   String quickWorkoutSheetPartQuickWorkoutSheetStateExt1X(Object qty) {
@@ -27889,30 +29940,41 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
+    Object _selectedDuration,
+  ) {
     return 'Gawe Latihan $_selectedDuration menit';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
+    Object phaseDisplayName,
+  ) {
     return 'Mesocycle: $phaseDisplayName';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
+    Object _selectedDuration,
+  ) {
     return '$_selectedDuration menit';
   }
 
   @override
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber) {
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
+    Object totalWeeks,
+    Object weekNumber,
+  ) {
     return 'Minggu $weekNumber/$totalWeeks';
   }
 
   @override
-  String get quickWorkoutSheetPerfectForBusyDays => 'Sampurna kanggo dina sing sibuk';
+  String get quickWorkoutSheetPerfectForBusyDays =>
+      'Sampurna kanggo dina sing sibuk';
 
   @override
-  String get quickWorkoutSheetPersonalizedSuggestionsBased => 'Saran sing dipersonalisasi adhedhasar profilmu';
+  String get quickWorkoutSheetPersonalizedSuggestionsBased =>
+      'Saran sing dipersonalisasi adhedhasar profilmu';
 
   @override
   String get quickWorkoutSheetQuickWorkout => 'Latihan Cepet';
@@ -27927,7 +29989,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickWorkoutSheetSupersets => 'Superset';
 
   @override
-  String get quickWorkoutSheetTapToAddTap => 'Tutul kanggo nambah (tutul maneh kanggo pasangan)';
+  String get quickWorkoutSheetTapToAddTap =>
+      'Tutul kanggo nambah (tutul maneh kanggo pasangan)';
 
   @override
   String get quickWorkoutSheetUnfavorite => 'Batal Favorit';
@@ -27936,7 +29999,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickWorkoutSheetWithPlates => 'Kanthi piringan beban';
 
   @override
-  String get quickWorkoutSheetWorkoutAlreadyScheduled => 'Latihan Wis Dijadwalake';
+  String get quickWorkoutSheetWorkoutAlreadyScheduled =>
+      'Latihan Wis Dijadwalake';
 
   @override
   String get quickWorkoutSheetWorkoutFocus => 'Fokus Latihan';
@@ -27945,7 +30009,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quickWorkoutSubtitle => 'Pas kanggo dina sing sibuk';
 
   @override
-  String get quickWorkoutTapToAddPairs => 'Tutul kanggo nambah pasangan dumbbell';
+  String get quickWorkoutTapToAddPairs =>
+      'Tutul kanggo nambah pasangan dumbbell';
 
   @override
   String get quickWorkoutTitle => 'Latihan Cepet';
@@ -27960,7 +30025,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quitWorkoutAddANoteOptional => 'Tambah cathetan (opsional)...';
 
   @override
-  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets) {
+  String quitWorkoutDialogCompleteSetsDone(
+    Object progressPercent,
+    Object totalCompletedSets,
+  ) {
     return '$progressPercent% rampung • $totalCompletedSets set rampung';
   }
 
@@ -27997,7 +30065,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quitWorkoutTooTired => 'Kesel banget';
 
   @override
-  String get quitWorkoutWhyAreYouEnding => 'Kenapa sampeyan mungkasi luwih awal?';
+  String get quitWorkoutWhyAreYouEnding =>
+      'Kenapa sampeyan mungkasi luwih awal?';
 
   @override
   String quizBodyMetricsEnterAValueBetween(Object dialogMax, Object unit) {
@@ -28046,7 +30115,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get quizBodyMetricsWeLlUseThis => 'Kita bakal nggunakake iki kanggo ngetung target pribadi sampeyan';
+  String get quizBodyMetricsWeLlUseThis =>
+      'Kita bakal nggunakake iki kanggo ngetung target pribadi sampeyan';
 
   @override
   String get quizBodyMetricsWeight => 'Bobot';
@@ -28055,7 +30125,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizBodyMetricsWeightGoal => 'Target bobot';
 
   @override
-  String get quizBodyMetricsWhatShouldWeCall => 'Apa sing kudu kita celuk marang sampeyan?';
+  String get quizBodyMetricsWhatShouldWeCall =>
+      'Apa sing kudu kita celuk marang sampeyan?';
 
   @override
   String get quizBodyMetricsYourName => 'Jeneng sampeyan';
@@ -28064,13 +30135,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizContinueButtonSeeMyPlan => 'Deleng Rencanaku';
 
   @override
-  String get quizDaysSelectorAiGeneratesWorkoutsWithin => 'AI nggawe latihan ing jero rentang sing sampeyan pilih';
+  String get quizDaysSelectorAiGeneratesWorkoutsWithin =>
+      'AI nggawe latihan ing jero rentang sing sampeyan pilih';
 
   @override
   String get quizDaysSelectorBest => 'Paling apik';
 
   @override
-  String get quizDaysSelectorConsistencyBeatsIntensity => 'Konsistensi luwih apik tinimbang intensitas - pilih sing bisa sampeyan jaga';
+  String get quizDaysSelectorConsistencyBeatsIntensity =>
+      'Konsistensi luwih apik tinimbang intensitas - pilih sing bisa sampeyan jaga';
 
   @override
   String quizDaysSelectorDays(int arg0) {
@@ -28095,7 +30168,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizDaysSelectorHowLongAreYour => 'Suwene latihan sampeyan?';
 
   @override
-  String get quizDaysSelectorHowManyDaysPer => 'Pira dina saben minggu sampeyan bisa latihan?';
+  String get quizDaysSelectorHowManyDaysPer =>
+      'Pira dina saben minggu sampeyan bisa latihan?';
 
   @override
   String get quizDaysSelectorMin => 'Min';
@@ -28127,7 +30201,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizDaysSelectorWhichDaysWorkBest => 'Dina apa sing paling pas?';
 
   @override
-  String get quizEquipmentAddMoreGymsLaterHint => 'sampeyan bisa nambah gym liyane mengko';
+  String get quizEquipmentAddMoreGymsLaterHint =>
+      'sampeyan bisa nambah gym liyane mengko';
 
   @override
   String get quizEquipmentApartmentFriendly => 'Cocog kanggo apartemen';
@@ -28172,13 +30247,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentCableMachine => 'Mesin kabel';
 
   @override
-  String get quizEquipmentCouldnTLoadIdentified => 'Gagal ngemot peralatan sing diidentifikasi. Pilih saka dhaptar ing ngisor iki.';
+  String get quizEquipmentCouldnTLoadIdentified =>
+      'Gagal ngemot peralatan sing diidentifikasi. Pilih saka dhaptar ing ngisor iki.';
 
   @override
-  String get quizEquipmentCouldnTOpenThe => 'Gagal mbukak kamera. Pilih peralatan sampeyan ing ngisor iki.';
+  String get quizEquipmentCouldnTOpenThe =>
+      'Gagal mbukak kamera. Pilih peralatan sampeyan ing ngisor iki.';
 
   @override
-  String get quizEquipmentDedicatedSpaceWithDumbbells => 'Papan khusus karo dumbbell, barbell, bangku';
+  String get quizEquipmentDedicatedSpaceWithDumbbells =>
+      'Papan khusus karo dumbbell, barbell, bangku';
 
   @override
   String get quizEquipmentDoYouHaveA => 'Apa sampeyan duwe bangku bobot?';
@@ -28202,7 +30280,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentFullGymAccess => 'Akses gym';
 
   @override
-  String get quizEquipmentFullGymWithMachines => 'Gym lengkap karo mesin, kabel, lan beban bebas';
+  String get quizEquipmentFullGymWithMachines =>
+      'Gym lengkap karo mesin, kabel, lan beban bebas';
 
   @override
   String get quizEquipmentGym => 'Gym';
@@ -28234,13 +30313,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentMedicineBall => 'Medicine ball';
 
   @override
-  String get quizEquipmentMinimalEquipmentBodyweight => 'Peralatan minimal - bobot awak, matras';
+  String get quizEquipmentMinimalEquipmentBodyweight =>
+      'Peralatan minimal - bobot awak, matras';
 
   @override
   String get quizEquipmentNeededForBarbell => 'Perlu kanggo barbell';
 
   @override
-  String get quizEquipmentNoEquipmentIdentifiedPick => 'Ora ana peralatan sing diidentifikasi. Pilih saka dhaptar ing ngisor iki.';
+  String get quizEquipmentNoEquipmentIdentifiedPick =>
+      'Ora ana peralatan sing diidentifikasi. Pilih saka dhaptar ing ngisor iki.';
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
@@ -28272,25 +30353,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentSnapTitle => 'Foto gym-mu';
 
   @override
-  String get quizEquipmentRequiredForBarbellSquat => 'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
+  String get quizEquipmentRequiredForBarbellSquat =>
+      'Dibutuhake kanggo: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
   String get quizEquipmentResistanceBands => 'Resistance bands';
 
   @override
-  String get quizEquipmentSelectAllThatApply => 'Pilih kabeh sing cocog - kita bakal ngrancang latihan adhedhasar apa sing sampeyan duwe';
+  String get quizEquipmentSelectAllThatApply =>
+      'Pilih kabeh sing cocog - kita bakal ngrancang latihan adhedhasar apa sing sampeyan duwe';
 
   @override
-  String get quizEquipmentSelectingYourWorkoutEnviron => 'Milih lingkungan latihan mbantu kita menehi saran latihan lan peralatan sing pas kanggo setelan sampeyan.';
+  String get quizEquipmentSelectingYourWorkoutEnviron =>
+      'Milih lingkungan latihan mbantu kita menehi saran latihan lan peralatan sing pas kanggo setelan sampeyan.';
 
   @override
   String get quizEquipmentSquatRack => 'Squat rack';
 
   @override
-  String get quizEquipmentTakeAFewPhotos => 'Jupuk sawetara foto lan AI kita bakal ngenali peralatan sampeyan.';
+  String get quizEquipmentTakeAFewPhotos =>
+      'Jupuk sawetara foto lan AI kita bakal ngenali peralatan sampeyan.';
 
   @override
-  String get quizEquipmentTravelFriendlyDumbbellsC => 'Cocog kanggo lelungan - dumbbell, mesin kardio';
+  String get quizEquipmentTravelFriendlyDumbbellsC =>
+      'Cocog kanggo lelungan - dumbbell, mesin kardio';
 
   @override
   String get quizEquipmentTrxSuspension => 'Trx suspension';
@@ -28311,10 +30397,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentU1f9f3 => '🧳';
 
   @override
-  String get quizEquipmentUnlocksBenchPressIncline => 'Mbukak: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+  String get quizEquipmentUnlocksBenchPressIncline =>
+      'Mbukak: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get quizEquipmentUnlocksChestSupportedKb => 'Mbukak: Chest-Supported KB Row, alternatif KB Floor Press';
+  String get quizEquipmentUnlocksChestSupportedKb =>
+      'Mbukak: Chest-Supported KB Row, alternatif KB Floor Press';
 
   @override
   String quizEquipmentUsersSnappedEquipment(Object apiBaseUrl, Object userId) {
@@ -28322,7 +30410,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get quizEquipmentWhatEquipmentDoYou => 'Peralatan apa sing bisa sampeyan gunakake?';
+  String get quizEquipmentWhatEquipmentDoYou =>
+      'Peralatan apa sing bisa sampeyan gunakake?';
 
   @override
   String get quizEquipmentWhereDoYouWorkout => 'Ing ngendi sampeyan latihan?';
@@ -28334,7 +30423,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizEquipmentYesAddIt => 'Ya, Tambah Iki';
 
   @override
-  String get quizEquipmentYouCanCustomizeEquipment => 'Sampeyan bisa ngatur peralatan sawise milih lingkungan, utawa ngliwati iki lan milih peralatan kanthi manual.';
+  String get quizEquipmentYouCanCustomizeEquipment =>
+      'Sampeyan bisa ngatur peralatan sawise milih lingkungan, utawa ngliwati iki lan milih peralatan kanthi manual.';
 
   @override
   String get quizFastingApplyCustomProtocol => 'Gunakake Protokol Kustom';
@@ -28343,7 +30433,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFastingChooseAFastingProtocol => 'Pilih protokol pasa';
 
   @override
-  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours) {
+  String quizFastingCustomProtocol(
+    Object _customEatingHours,
+    Object _customFastingHours,
+  ) {
     return 'Protokol khusus $_customFastingHours:$_customEatingHours';
   }
 
@@ -28364,10 +30457,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get quizFastingIntermittentFastingCanHelp => 'Pasa intermittent bisa mbantu sampeyan nggayuh target luwih cepet';
+  String get quizFastingIntermittentFastingCanHelp =>
+      'Pasa intermittent bisa mbantu sampeyan nggayuh target luwih cepet';
 
   @override
-  String get quizFastingOptionalYouCanSet => 'Opsional - sampeyan bisa ngatur iki mengko';
+  String get quizFastingOptionalYouCanSet =>
+      'Opsional - sampeyan bisa ngatur iki mengko';
 
   @override
   String get quizFastingPopular => 'Populer';
@@ -28376,7 +30471,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFastingRecommended => 'Disaranake';
 
   @override
-  String get quizFastingSetYourCustomFasting => 'Atur jendhela pasa kustom sampeyan';
+  String get quizFastingSetYourCustomFasting =>
+      'Atur jendhela pasa kustom sampeyan';
 
   @override
   String quizFastingUiAHEatingWindow(Object eatingHours, Object maxMeals) {
@@ -28392,7 +30488,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFastingUiBedtime => 'Wektu turu';
 
   @override
-  String get quizFastingUiHelpsOptimizeYourFasting => 'Mbantu ngoptimalake jendhela pasa sampeyan';
+  String get quizFastingUiHelpsOptimizeYourFasting =>
+      'Mbantu ngoptimalake jendhela pasa sampeyan';
 
   @override
   String quizFastingUiMealScheduleInH(Object eatingHours) {
@@ -28400,12 +30497,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals) {
+  String quizFastingUiMealsSpacedHoursApart(
+    Object hoursBetweenMeals,
+    Object meals,
+  ) {
     return '$meals dhahar kanthi jarak ~$hoursBetweenMeals jam';
   }
 
   @override
-  String get quizFastingUiTipConsiderLargerNutrient => 'Tip: Coba dhaharan sing luwih gedhe lan nutrisi padhet';
+  String get quizFastingUiTipConsiderLargerNutrient =>
+      'Tip: Coba dhaharan sing luwih gedhe lan nutrisi padhet';
 
   @override
   String get quizFastingUiWakeUp => 'Wektu tangi';
@@ -28417,13 +30518,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFastingYesLetSTry => 'Ya, ayo dicoba';
 
   @override
-  String get quizFitnessLevel2To5Years => 'Kuis tingkat kabugaran 2 nganti 5 taun';
+  String get quizFitnessLevel2To5Years =>
+      'Kuis tingkat kabugaran 2 nganti 5 taun';
 
   @override
-  String get quizFitnessLevel5PlusYears => 'Kuis tingkat kabugaran 5 taun luwih';
+  String get quizFitnessLevel5PlusYears =>
+      'Kuis tingkat kabugaran 5 taun luwih';
 
   @override
-  String get quizFitnessLevel6MonTo2Yrs => 'Kuis tingkat kabugaran 6 wulan nganti 2 taun';
+  String get quizFitnessLevel6MonTo2Yrs =>
+      'Kuis tingkat kabugaran 6 wulan nganti 2 taun';
 
   @override
   String get quizFitnessLevelAdvanced => 'Lanjut';
@@ -28432,7 +30536,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFitnessLevelAdvancedDesc => 'Katrangan tingkat lanjut';
 
   @override
-  String get quizFitnessLevelBeHonestWeLl => 'Jujura - kita bakal nyetel nalika sampeyan maju';
+  String get quizFitnessLevelBeHonestWeLl =>
+      'Jujura - kita bakal nyetel nalika sampeyan maju';
 
   @override
   String get quizFitnessLevelBeginner => 'Pemula';
@@ -28441,19 +30546,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFitnessLevelBeginnerDesc => 'Katrangan tingkat pemula';
 
   @override
-  String get quizFitnessLevelBrandNewToLifting => 'Anyar banget ing angkat beban';
+  String get quizFitnessLevelBrandNewToLifting =>
+      'Anyar banget ing angkat beban';
 
   @override
   String get quizFitnessLevelBuildingConsistency => 'Mbangun konsistensi';
 
   @override
-  String get quizFitnessLevelDailyActivityLevelOutside => 'Tingkat aktivitas saben dina (ing njaba gym)?';
+  String get quizFitnessLevelDailyActivityLevelOutside =>
+      'Tingkat aktivitas saben dina (ing njaba gym)?';
 
   @override
-  String get quizFitnessLevelHelpsCalculateYourCalorie => 'Mbantu ngetung kabutuhan kalori sampeyan';
+  String get quizFitnessLevelHelpsCalculateYourCalorie =>
+      'Mbantu ngetung kabutuhan kalori sampeyan';
 
   @override
-  String get quizFitnessLevelHowLongHaveYou => 'Wis suwene sampeyan latihan angkat beban?';
+  String get quizFitnessLevelHowLongHaveYou =>
+      'Wis suwene sampeyan latihan angkat beban?';
 
   @override
   String get quizFitnessLevelIntermediate => 'Menengah';
@@ -28492,7 +30601,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFitnessLevelSolidFoundation => 'Dhasar sing kuat';
 
   @override
-  String get quizFitnessLevelThisHelpsUsPick => 'Iki mbantu kita milih latihan sing pas';
+  String get quizFitnessLevelThisHelpsUsPick =>
+      'Iki mbantu kita milih latihan sing pas';
 
   @override
   String get quizFitnessLevelVeryActive => 'Aktif banget';
@@ -28504,19 +30614,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizFitnessLevelVeteranLifter => 'Atlet angkat beban veteran';
 
   @override
-  String get quizFitnessLevelWhatSYourCurrent => 'Apa tingkat kabugaran sampeyan saiki?';
+  String get quizFitnessLevelWhatSYourCurrent =>
+      'Apa tingkat kabugaran sampeyan saiki?';
 
   @override
-  String get quizLimitationsAnyInjuriesOrLimitations => 'Apa ana cidera utawa watesan?';
+  String get quizLimitationsAnyInjuriesOrLimitations =>
+      'Apa ana cidera utawa watesan?';
 
   @override
   String get quizLimitationsDescribeYourLimitation => 'Jelasna watesanmu';
 
   @override
-  String get quizLimitationsEGCarpalTunnel => 'tuladhane: Carpal tunnel, herniated disc, lsp.';
+  String get quizLimitationsEGCarpalTunnel =>
+      'tuladhane: Carpal tunnel, herniated disc, lsp.';
 
   @override
-  String get quizLimitationsWeLlAvoidExercises => 'Kita bakal ngindhari latihan sing ngganggu area kasebut';
+  String get quizLimitationsWeLlAvoidExercises =>
+      'Kita bakal ngindhari latihan sing ngganggu area kasebut';
 
   @override
   String get quizMotivationBeHealthierOverall => 'Dadi luwih sehat sakabehe';
@@ -28537,7 +30651,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizMotivationLookBetter => 'Katon luwih apik';
 
   @override
-  String get quizMotivationSelectAllThatResonate => 'Pilih kabeh sing cocog karo kowe';
+  String get quizMotivationSelectAllThatResonate =>
+      'Pilih kabeh sing cocog karo kowe';
 
   @override
   String get quizMotivationSleepBetter => 'Turu luwih nyenyak';
@@ -28546,10 +30661,14 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizMotivationSportsPerformance => 'Performa olahraga';
 
   @override
-  String get quizMotivationWhatSDrivingYou => 'Apa sing nggawe kowe semangat olahraga?';
+  String get quizMotivationWhatSDrivingYou =>
+      'Apa sing nggawe kowe semangat olahraga?';
 
   @override
-  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints) {
+  String quizMuscleFocusAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  ) {
     return '$availablePoints/$maxTotalPoints kasedhiya';
   }
 
@@ -28572,7 +30691,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizNutritionGateDietaryPreferences => 'Preferensi panganan';
 
   @override
-  String get quizNutritionGateGetPersonalizedCalorieAnd => 'Entuk target kalori lan makro sing dipersonalisasi kanggo ndhukung tujuan fitnessmu';
+  String get quizNutritionGateGetPersonalizedCalorieAnd =>
+      'Entuk target kalori lan makro sing dipersonalisasi kanggo ndhukung tujuan fitnessmu';
 
   @override
   String get quizNutritionGateMealTimingGuidance => 'Pandhuan wektu mangan';
@@ -28581,7 +30701,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizNutritionGateNotNow => 'Ora saiki';
 
   @override
-  String get quizNutritionGateOptimizeWhenYouEat => 'Optimalke wektu manganmu kanggo asil sing luwih apik';
+  String get quizNutritionGateOptimizeWhenYouEat =>
+      'Optimalke wektu manganmu kanggo asil sing luwih apik';
 
   @override
   String get quizNutritionGateOptional => 'Opsional';
@@ -28590,19 +30711,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizNutritionGateRecommendedForYou => 'Disaranake kanggo kowe';
 
   @override
-  String get quizNutritionGateRespectsYourRestrictionsAnd => 'Nghormati watesan lan preferensimu';
+  String get quizNutritionGateRespectsYourRestrictionsAnd =>
+      'Nghormati watesan lan preferensimu';
 
   @override
-  String get quizNutritionGateTailoredToYourGoals => 'Diselarasake karo tujuan lan tingkat aktivitasmu';
+  String get quizNutritionGateTailoredToYourGoals =>
+      'Diselarasake karo tujuan lan tingkat aktivitasmu';
 
   @override
-  String get quizNutritionGateWantNutritionGuidanceToo => 'Pengin pandhuan nutrisi uga?';
+  String get quizNutritionGateWantNutritionGuidanceToo =>
+      'Pengin pandhuan nutrisi uga?';
 
   @override
   String get quizNutritionGateYesSetNutrition => 'Ya, Setel Nutrisi';
 
   @override
-  String get quizNutritionGoalsAnyDietaryRestrictions => 'Apa ana watesan panganan?';
+  String get quizNutritionGoalsAnyDietaryRestrictions =>
+      'Apa ana watesan panganan?';
 
   @override
   String quizNutritionGoalsG(Object protein) {
@@ -28620,18 +30745,24 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get quizNutritionGoalsHelpsPersonalizeMealSuggest => 'Mbantu nggawe saran dhaharan sing pribadi';
+  String get quizNutritionGoalsHelpsPersonalizeMealSuggest =>
+      'Mbantu nggawe saran dhaharan sing pribadi';
 
   @override
-  String get quizNutritionGoalsIncludeAllMealsAnd => 'Kalebu kabeh dhaharan lan cemilan';
+  String get quizNutritionGoalsIncludeAllMealsAnd =>
+      'Kalebu kabeh dhaharan lan cemilan';
 
   @override
-  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal) {
+  String quizNutritionGoalsKcalGProteinPer(
+    Object calPerMeal,
+    Object proteinPerMeal,
+  ) {
     return '~$calPerMeal kcal & ${proteinPerMeal}g protein saben dhahar';
   }
 
   @override
-  String get quizNutritionGoalsMealsSnacksPerDay => 'Dhaharan + cemilan saben dina?';
+  String get quizNutritionGoalsMealsSnacksPerDay =>
+      'Dhaharan + cemilan saben dina?';
 
   @override
   String get quizNutritionGoalsSelectAllThatApply => 'Pilih kabeh sing cocog';
@@ -28640,10 +30771,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizNutritionGoalsWhatAreYourNutrition => 'Apa tujuan nutrisimu?';
 
   @override
-  String get quizNutritionGoalsYourEstimatedDailyTargets => 'Target Harian Estimasi Panjenengan';
+  String get quizNutritionGoalsYourEstimatedDailyTargets =>
+      'Target Harian Estimasi Panjenengan';
 
   @override
-  String get quizPersonalizationGateAFewQuickMeasurements => 'Sawetara pangukuran cepet';
+  String get quizPersonalizationGateAFewQuickMeasurements =>
+      'Sawetara pangukuran cepet';
 
   @override
   String get quizPersonalizationGateCurrentWeight => 'BOBOT SAIKI';
@@ -28670,13 +30803,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizPersonalizationGateQuickStart => 'Mulai cepet';
 
   @override
-  String get quizPersonalizationGateUsedToPersonalizeYour => 'Digunakake kanggo nggawe rencana lan proyeksi pribadimu';
+  String get quizPersonalizationGateUsedToPersonalizeYour =>
+      'Digunakake kanggo nggawe rencana lan proyeksi pribadimu';
 
   @override
-  String get quizPrimaryGoalAdjustsRestPeriodsExercise => 'Nyetel wektu istirahat, kangelan latihan, lan volume latihan sakabèhé adhedhasar fokusmu.';
+  String get quizPrimaryGoalAdjustsRestPeriodsExercise =>
+      'Nyetel wektu istirahat, kangelan latihan, lan volume latihan sakabèhé adhedhasar fokusmu.';
 
   @override
-  String get quizPrimaryGoalAiPicksExercisesThat => 'AI milih latihan sing paling cocog karo tujuanmu—latihan majemuk kanggo kekuatan, gerakan isolasi kanggo hipertrofi.';
+  String get quizPrimaryGoalAiPicksExercisesThat =>
+      'AI milih latihan sing paling cocog karo tujuanmu—latihan majemuk kanggo kekuatan, gerakan isolasi kanggo hipertrofi.';
 
   @override
   String get quizPrimaryGoalCanChangeAnytime => 'Bisa Diganti Kapan Wae';
@@ -28694,37 +30830,43 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizPrimaryGoalRepRanges => 'Rentang Repetisi';
 
   @override
-  String get quizPrimaryGoalSetsTheNumberOf => 'Nyetel jumlah repetisi saben latihan. Hipertrofi nggunakake 8-12 repetisi, Kekuatan nggunakake 3-6, Daya tahan nggunakake 12+.';
+  String get quizPrimaryGoalSetsTheNumberOf =>
+      'Nyetel jumlah repetisi saben latihan. Hipertrofi nggunakake 8-12 repetisi, Kekuatan nggunakake 3-6, Daya tahan nggunakake 12+.';
 
   @override
   String get quizPrimaryGoalWorkoutIntensity => 'Intensitas Latihan';
 
   @override
-  String get quizPrimaryGoalYouCanUpdateYour => 'Kowe bisa nganyari fokus latihanmu ing Setelan kapan wae tujuanmu owah.';
+  String get quizPrimaryGoalYouCanUpdateYour =>
+      'Kowe bisa nganyari fokus latihanmu ing Setelan kapan wae tujuanmu owah.';
 
   @override
   String get quizProgressionConstraintsBalanced => 'Seimbang';
 
   @override
-  String get quizProgressionConstraintsBuildStrengthGraduallyLowe => 'Mbangun kekuatan kanthi bertahap, nyuda risiko cilaka';
+  String get quizProgressionConstraintsBuildStrengthGraduallyLowe =>
+      'Mbangun kekuatan kanthi bertahap, nyuda risiko cilaka';
 
   @override
   String get quizProgressionConstraintsFastAggressive => 'Cepet & Agresif';
 
   @override
-  String get quizProgressionConstraintsHowFastDoYou => 'Sepira cepet kowe pengin maju?';
+  String get quizProgressionConstraintsHowFastDoYou =>
+      'Sepira cepet kowe pengin maju?';
 
   @override
   String get quizProgressionConstraintsProgressionPace => 'Laju Kemajuan';
 
   @override
-  String get quizProgressionConstraintsPushHardFasterGains => 'Push hard, entuk asil luwih cepet (lanjutan)';
+  String get quizProgressionConstraintsPushHardFasterGains =>
+      'Push hard, entuk asil luwih cepet (lanjutan)';
 
   @override
   String get quizProgressionConstraintsSlowSteady => 'Alon & Mantep';
 
   @override
-  String get quizProgressionConstraintsSteadyProgressWithManageabl => 'Kemajuan mantep kanthi tantangan sing bisa dikelola';
+  String get quizProgressionConstraintsSteadyProgressWithManageabl =>
+      'Kemajuan mantep kanthi tantangan sing bisa dikelola';
 
   @override
   String get quizTrainingPreferencesAllOptional => 'Kabeh opsional';
@@ -28733,19 +30875,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizTrainingPreferencesBiggestObstacles => 'Hambatan Paling Gedhe';
 
   @override
-  String get quizTrainingPreferencesNotSureTapTo => 'Ora yakin? Tutul kanggo sinau luwih lanjut';
+  String get quizTrainingPreferencesNotSureTapTo =>
+      'Ora yakin? Tutul kanggo sinau luwih lanjut';
 
   @override
   String get quizTrainingPreferencesProgressionPace => 'Laju Kemajuan';
 
   @override
-  String get quizTrainingPreferencesProgressiveOverloadRirInt => 'Progressive overload & RIR terintegrasi';
+  String get quizTrainingPreferencesProgressiveOverloadRirInt =>
+      'Progressive overload & RIR terintegrasi';
 
   @override
   String get quizTrainingPreferencesTrainingPreferences => 'Preferensi Latihan';
 
   @override
-  String get quizTrainingPreferencesTrainingSplitsExplained => 'Penjelasan Split Latihan';
+  String get quizTrainingPreferencesTrainingSplitsExplained =>
+      'Penjelasan Split Latihan';
 
   @override
   String quizTrainingPreferencesValue(Object selectedCount) {
@@ -28759,7 +30904,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizTrainingStyleArnoldSplit => 'Arnold Split';
 
   @override
-  String get quizTrainingStyleAutomaticallyOptimizedForYo => 'Otomatis dioptimalke kanggo jadwalmu (Disaranake)';
+  String get quizTrainingStyleAutomaticallyOptimizedForYo =>
+      'Otomatis dioptimalke kanggo jadwalmu (Disaranake)';
 
   @override
   String get quizTrainingStyleBestFor56 => 'Paling apik kanggo 5-6 dina/minggu';
@@ -28768,13 +30914,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizTrainingStyleBodyPartSplit => 'Body Part Split';
 
   @override
-  String get quizTrainingStyleChestBackShouldersArms => 'Dhadha/Punggung, Pundhak/Lengên, Sikil (6 dina)';
+  String get quizTrainingStyleChestBackShouldersArms =>
+      'Dhadha/Punggung, Pundhak/Lengên, Sikil (6 dina)';
 
   @override
-  String get quizTrainingStyleChooseHowYouWant => 'Pilih kepiye kowe pengin ngatur latihanmu';
+  String get quizTrainingStyleChooseHowYouWant =>
+      'Pilih kepiye kowe pengin ngatur latihanmu';
 
   @override
-  String get quizTrainingStyleDoYouPreferThe => 'Apa kowe luwih seneng latihan sing padha saben minggu utawa variasi?';
+  String get quizTrainingStyleDoYouPreferThe =>
+      'Apa kowe luwih seneng latihan sing padha saben minggu utawa variasi?';
 
   @override
   String get quizTrainingStyleExerciseVariety => 'Variasi Latihan';
@@ -28786,28 +30935,34 @@ class AppLocalizationsJv extends AppLocalizations {
   String get quizTrainingStyleLetAiDecide => 'Ayo AI sing mutusake';
 
   @override
-  String get quizTrainingStyleOneMuscleGroupPer => 'Siji klompok otot saben dina (5+ dina)';
+  String get quizTrainingStyleOneMuscleGroupPer =>
+      'Siji klompok otot saben dina (5+ dina)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyAdaptiveTra => 'Power Hypertrophy Adaptive Training (5 dina)';
+  String get quizTrainingStylePowerHypertrophyAdaptiveTra =>
+      'Power Hypertrophy Adaptive Training (5 dina)';
 
   @override
-  String get quizTrainingStylePowerHypertrophyUpperL => 'Power + Hypertrophy, Upper + Lower (4 dina)';
+  String get quizTrainingStylePowerHypertrophyUpperL =>
+      'Power + Hypertrophy, Upper + Lower (4 dina)';
 
   @override
   String get quizTrainingStylePushPullLegsPpl => 'Push / Pull / Legs (PPL)';
 
   @override
-  String get quizTrainingStylePushPullLegsUpper => 'Push/Pull/Legs/Upper/Lower (5 dina)';
+  String get quizTrainingStylePushPullLegsUpper =>
+      'Push/Pull/Legs/Upper/Lower (5 dina)';
 
   @override
   String get quizTrainingStyleScheduleConflict => 'Konflik jadwal';
 
   @override
-  String get quizTrainingStyleSplitBetweenUpperAnd => 'Dibagi antar awak bagian ndhuwur lan ngisor (4 dina)';
+  String get quizTrainingStyleSplitBetweenUpperAnd =>
+      'Dibagi antar awak bagian ndhuwur lan ngisor (4 dina)';
 
   @override
-  String get quizTrainingStyleTrainAllMusclesEach => 'Latih kabeh otot saben latihan (2-4 dina)';
+  String get quizTrainingStyleTrainAllMusclesEach =>
+      'Latih kabeh otot saben latihan (2-4 dina)';
 
   @override
   String get quizTrainingStyleTrainingSplit => 'Pemisahan Latihan';
@@ -28833,16 +30988,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get racePredictorCardRacePredictor => 'Prediktor balapan';
 
   @override
-  String get racePredictorCardRunAMeasuredKm => 'Mlayu sak kilometer utawa rong kilometer kanggo prediksi pisananmu';
+  String get racePredictorCardRunAMeasuredKm =>
+      'Mlayu sak kilometer utawa rong kilometer kanggo prediksi pisananmu';
 
   @override
   String get racePredictorDetailAskCoach => 'Takon pelatih';
 
   @override
-  String get racePredictorDetailHowPredictionsAreCalculated => 'Kepiye prediksi diitung';
+  String get racePredictorDetailHowPredictionsAreCalculated =>
+      'Kepiye prediksi diitung';
 
   @override
-  String get racePredictorDetailLogAtLeastThree => 'Cathet paling sethithik telung mlayu, kalebu siji kilometer sing diukur, lan prediksi bakal muncul.';
+  String get racePredictorDetailLogAtLeastThree =>
+      'Cathet paling sethithik telung mlayu, kalebu siji kilometer sing diukur, lan prediksi bakal muncul.';
 
   @override
   String get racePredictorDetailNeedMoreData => 'Butuh data luwih akeh';
@@ -28865,7 +31023,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get ratingPromptBannerGot30Seconds => 'Duwe 30 detik?';
 
   @override
-  String get ratingPromptBannerHelpUsOutRate => 'Tulung kita — wenehi rating Zealova ing App Store.';
+  String get ratingPromptBannerHelpUsOutRate =>
+      'Tulung kita — wenehi rating Zealova ing App Store.';
 
   @override
   String get ratingPromptDonTAskAgain => 'Aja takon maneh';
@@ -28889,13 +31048,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get readinessCheckinCardGotIt => 'Siap!';
 
   @override
-  String get readinessCheckinCardHowAreYouFeeling => 'Kepiye perasaanmu dina iki?';
+  String get readinessCheckinCardHowAreYouFeeling =>
+      'Kepiye perasaanmu dina iki?';
 
   @override
   String get readinessCheckinCardMuscleSoreness => 'Otot lara';
 
   @override
-  String get readinessCheckinCardQuickCheckInHelps => 'Check-in cepet mbantu ngoptimalake latihanmu';
+  String get readinessCheckinCardQuickCheckInHelps =>
+      'Check-in cepet mbantu ngoptimalake latihanmu';
 
   @override
   String readinessCheckinCardReadiness(Object readinessScore) {
@@ -28918,7 +31079,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get readinessCheckinCardTodaySReadiness => 'Kesiapan dina iki';
 
   @override
-  String get readinessTileBuildingBaselineCheckIn => 'Mbangun dhasar — check-in saben dina suwene 14 dina';
+  String get readinessTileBuildingBaselineCheckIn =>
+      'Mbangun dhasar — check-in saben dina suwene 14 dina';
 
   @override
   String get readinessTileRecoveryReadiness => 'Kesiapan pemulihan';
@@ -28927,7 +31089,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get receiptTemplate => '─────────────────────────────';
 
   @override
-  String get receiptTemplateNoExercisesLogged => 'Ora ana latihan sing dicathet';
+  String get receiptTemplateNoExercisesLogged =>
+      'Ora ana latihan sing dicathet';
 
   @override
   String receiptTemplateOrder(Object workoutName) {
@@ -28935,7 +31098,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get receiptTemplateThankYouComeAgain => 'MATUR NUWUN — MANGGA MAMPIR MENEH';
+  String get receiptTemplateThankYouComeAgain =>
+      'MATUR NUWUN — MANGGA MAMPIR MENEH';
 
   @override
   String receiptTemplateX(Object reps, Object sets) {
@@ -28946,7 +31110,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeBuilderAddIngredient => 'Tambah Bahan';
 
   @override
-  String get recipeBuilderCalculatePortionToLog => 'Itung Porsi kanggo Dicathet';
+  String get recipeBuilderCalculatePortionToLog =>
+      'Itung Porsi kanggo Dicathet';
 
   @override
   String get recipeBuilderConverter => 'Konverter';
@@ -29026,12 +31191,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName) {
+  String recipeBuilderSheetLoggedServingSOf(
+    Object portionEaten,
+    Object recipeName,
+  ) {
     return 'Ngasilake $portionEaten porsi saka \"$recipeName\": ';
   }
 
   @override
-  String get recipeBuilderSheetNutritionPerAmountAbove => 'NUTRISI (per jumlah ing ndhuwur)';
+  String get recipeBuilderSheetNutritionPerAmountAbove =>
+      'NUTRISI (per jumlah ing ndhuwur)';
 
   @override
   String recipeBuilderSheetPartIngredientEntryFailedToAnalyze(Object e) {
@@ -29089,7 +31258,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeCreateEG4Oz => 'tuladhane, 4 oz dhadha pitik panggang';
 
   @override
-  String get recipeCreateEGPostWorkout => 'tuladhane, Sawise latihan, Persiapan, Smoothie';
+  String get recipeCreateEGPostWorkout =>
+      'tuladhane, Sawise latihan, Persiapan, Smoothie';
 
   @override
   String get recipeCreateEditCustom => '✏️ Sunting kustom';
@@ -29148,7 +31318,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeDetailImprovize => 'Improvisasi';
 
   @override
-  String get recipeDetailImprovizedEditAndSave => 'Diimprovisasi! Edit dan simpan versimu.';
+  String get recipeDetailImprovizedEditAndSave =>
+      'Diimprovisasi! Edit dan simpan versimu.';
 
   @override
   String get recipeDetailImprovizing => 'Sedang mengimprovisasi…';
@@ -29163,7 +31334,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeDetailLog => 'Catat';
 
   @override
-  String get recipeDetailLogged1ServingAs => 'Tercatat 1 porsi sebagai makan siang';
+  String get recipeDetailLogged1ServingAs =>
+      'Tercatat 1 porsi sebagai makan siang';
 
   @override
   String get recipeDetailNoIngredients => 'Tidak ada bahan';
@@ -29251,7 +31423,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeFromFridgeFromYourFridge => 'Dari kulkasmu';
 
   @override
-  String get recipeFromFridgeNoRecipesFoundFor => 'Tidak ada resep ditemukan untuk bahan-bahan ini. Coba tambahkan item lain.';
+  String get recipeFromFridgeNoRecipesFoundFor =>
+      'Tidak ada resep ditemukan untuk bahan-bahan ini. Coba tambahkan item lain.';
 
   @override
   String get recipeFromFridgeScanComplete => 'Pemindaian selesai';
@@ -29293,13 +31466,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeFromFridgeSuggestions => 'Saran';
 
   @override
-  String get recipeFromFridgeTapFindRecipesTo => 'Ketuk \"Cari resep\" untuk mendapatkan saran menggunakan bahan-bahan ini';
+  String get recipeFromFridgeTapFindRecipesTo =>
+      'Ketuk \"Cari resep\" untuk mendapatkan saran menggunakan bahan-bahan ini';
 
   @override
-  String get recipeFromFridgeTypeIngredientEggsSpinach => 'Ketik bahan (telur, bayam…)';
+  String get recipeFromFridgeTypeIngredientEggsSpinach =>
+      'Ketik bahan (telur, bayam…)';
 
   @override
-  String get recipeFromFridgeTypeIngredientsOrSnap => 'Ketik bahan atau ambil foto';
+  String get recipeFromFridgeTypeIngredientsOrSnap =>
+      'Ketik bahan atau ambil foto';
 
   @override
   String get recipeHistoryCompare => 'Bandingkan';
@@ -29308,7 +31484,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeHistoryNoDifferences => 'Tidak ada perbedaan';
 
   @override
-  String get recipeHistoryNoEditsYetVersioning => 'Belum ada editan — pembuatan versi dimulai setelah perubahan pertamamu.';
+  String get recipeHistoryNoEditsYetVersioning =>
+      'Belum ada editan — pembuatan versi dimulai setelah perubahan pertamamu.';
 
   @override
   String get recipeHistoryNowPickASecond => 'Sekarang pilih versi kedua';
@@ -29343,10 +31520,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeHistoryUpdated => 'Diperbarui';
 
   @override
-  String get recipeImportAimAtARecipe => 'Arahkan ke kartu resep, halaman buku masak, atau tangkapan layar. Penuhi bingkai, pegang dengan stabil.';
+  String get recipeImportAimAtARecipe =>
+      'Arahkan ke kartu resep, halaman buku masak, atau tangkapan layar. Penuhi bingkai, pegang dengan stabil.';
 
   @override
-  String get recipeImportAlignRecipeInsideFrame => 'Sejajarkan resep di dalam bingkai';
+  String get recipeImportAlignRecipeInsideFrame =>
+      'Sejajarkan resep di dalam bingkai';
 
   @override
   String get recipeImportChooseFromGalleryInstead => 'Pilih dari galeri saja';
@@ -29364,7 +31543,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeImportParseText => 'Urai teks';
 
   @override
-  String get recipeImportPasteARecipeTitle => 'Tempel resep (judul, bahan, langkah)…';
+  String get recipeImportPasteARecipeTitle =>
+      'Tempel resep (judul, bahan, langkah)…';
 
   @override
   String get recipeImportPhoto => 'Foto';
@@ -29378,7 +31558,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get recipeImportTapTheLargeWhite => 'Ketuk lingkaran putih besar di bawah untuk memotret';
+  String get recipeImportTapTheLargeWhite =>
+      'Ketuk lingkaran putih besar di bawah untuk memotret';
 
   @override
   String get recipeImportText => 'Teks';
@@ -29390,10 +31571,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipePreferencesRecipePreferences => 'Preferensi Resep';
 
   @override
-  String get recipePreferencesSelectCuisinesYouEnjoy => 'Pilih masakan yang kamu sukai (ketuk untuk beralih)';
+  String get recipePreferencesSelectCuisinesYouEnjoy =>
+      'Pilih masakan yang kamu sukai (ketuk untuk beralih)';
 
   @override
-  String get recipePreferencesYourBodyTypeHelps => 'Tipe tubuhmu membantu kami menyarankan resep yang dioptimalkan untuk metabolisme Anda';
+  String get recipePreferencesYourBodyTypeHelps =>
+      'Tipe tubuhmu membantu kami menyarankan resep yang dioptimalkan untuk metabolisme Anda';
 
   @override
   String recipeSaveJobsListenerCouldnTSaveRecipe(Object job) {
@@ -29424,7 +31607,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeSaveJobsView => 'Lihat';
 
   @override
-  String get recipeScheduleAddASlotFor => 'Tambahkan slot untuk setiap porsi yang rencananya akan kamu makan';
+  String get recipeScheduleAddASlotFor =>
+      'Tambahkan slot untuk setiap porsi yang rencananya akan kamu makan';
 
   @override
   String get recipeScheduleAddSlot => 'Tambah slot';
@@ -29461,13 +31645,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get recipeScheduleSilentAutoLogAdvanced => 'Pencatatan otomatis senyap (lanjutan)';
+  String get recipeScheduleSilentAutoLogAdvanced =>
+      'Pencatatan otomatis senyap (lanjutan)';
 
   @override
   String get recipeSearchBarRecentSearches => 'Pencarian terkini';
 
   @override
-  String get recipeSearchBarSearchYourRecipesIngredien => 'Cari resep, bahan, tag milikmu…';
+  String get recipeSearchBarSearchYourRecipesIngredien =>
+      'Cari resep, bahan, tag milikmu…';
 
   @override
   String get recipeShareCopiedToClipboard => 'Disalin ke papan klip';
@@ -29534,7 +31720,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionsAnySpecificRequirementsE => 'Ana syarat khusus? (tuladhane: ngisor 400 kalori, dhuwur serat)';
+  String get recipeSuggestionsAnySpecificRequirementsE =>
+      'Ana syarat khusus? (tuladhane: ngisor 400 kalori, dhuwur serat)';
 
   @override
   String get recipeSuggestionsGenerateSuggestions => 'Gawe saran';
@@ -29546,7 +31733,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeSuggestionsMarkedAsCooked => 'Ditandhani wis dimasak!';
 
   @override
-  String get recipeSuggestionsNoSavedRecipes => 'Durung ana resep sing disimpen';
+  String get recipeSuggestionsNoSavedRecipes =>
+      'Durung ana resep sing disimpen';
 
   @override
   String get recipeSuggestionsNoSuggestionsYet => 'Durung ana saran';
@@ -29555,7 +31743,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeSuggestionsRecipeSuggestions => 'Saran resep';
 
   @override
-  String get recipeSuggestionsSaveRecipesYouLike => 'Simpen resep sing mbok senengi supaya gampang ditemokake ing kene';
+  String get recipeSuggestionsSaveRecipesYouLike =>
+      'Simpen resep sing mbok senengi supaya gampang ditemokake ing kene';
 
   @override
   String get recipeSuggestionsSaved => 'Disimpen';
@@ -29569,7 +31758,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipeSuggestionsSuggestions => 'Saran';
 
   @override
-  String get recipeSuggestionsTapGenerateSuggestionsTo => 'Tutul \"Gawe saran\" kanggo entuk ide resep saka AI adhedhasar pilihanmu';
+  String get recipeSuggestionsTapGenerateSuggestionsTo =>
+      'Tutul \"Gawe saran\" kanggo entuk ide resep saka AI adhedhasar pilihanmu';
 
   @override
   String get recipeSuggestionsWhatMealAreYou => 'Arep masak apa?';
@@ -29669,7 +31859,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recipesTakePhoto => 'Jupuk foto';
 
   @override
-  String get recipesTapBuildToCreate => 'Tutul Gawe kanggo nggawe resep pisananmu, utawa coba fitur kulkas / impor ing dhuwur.';
+  String get recipesTapBuildToCreate =>
+      'Tutul Gawe kanggo nggawe resep pisananmu, utawa coba fitur kulkas / impor ing dhuwur.';
 
   @override
   String get recipesUpTo5Photos => 'Maksimal 5 foto — kulkas, pawon, freezer';
@@ -29688,7 +31879,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get recordAssessmentAnyNotesAboutThis => 'Cathetan babagan penilaian iki...';
+  String get recordAssessmentAnyNotesAboutThis =>
+      'Cathetan babagan penilaian iki...';
 
   @override
   String get recordAssessmentEnterMeasurement => 'Lebokake ukuran';
@@ -29749,7 +31941,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recordAttemptPersonalBest => 'Personal Best';
 
   @override
-  String get recordAttemptPleaseEnterAValid => 'Tulung lebokake angka sing bener';
+  String get recordAttemptPleaseEnterAValid =>
+      'Tulung lebokake angka sing bener';
 
   @override
   String get recordAttemptRecordAttempt => 'Rekam upaya';
@@ -29767,16 +31960,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get recovery1rmCalculatorPlayground => 'Playground Kalkulator 1RM';
 
   @override
-  String get recoveryColorCodedRed40 => 'Werna: abang <40% | kuning 40-70% | ijo >70%';
+  String get recoveryColorCodedRed40 =>
+      'Werna: abang <40% | kuning 40-70% | ijo >70%';
 
   @override
-  String get recoveryCompareEpleyBrzyckiAnd => 'Bandingake estimasi Epley, Brzycki, lan Mayhew';
+  String get recoveryCompareEpleyBrzyckiAnd =>
+      'Bandingake estimasi Epley, Brzycki, lan Mayhew';
 
   @override
   String get recoveryLabel => 'Pulihan';
 
   @override
-  String get recoveryPerMuscleExponentialDecay => 'Tingkat pemulihan saben otot (nilai k)';
+  String get recoveryPerMuscleExponentialDecay =>
+      'Tingkat pemulihan saben otot (nilai k)';
 
   @override
   String get recoveryPerMuscleRecoveryGrid => 'Grid Pemulihan Saben Otot';
@@ -29845,7 +32041,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get referralsQualified => 'Kualifikasi';
 
   @override
-  String get referralsRedeemItHereBoth => 'Tukerke ing kene — sampeyan lan kanca bakal entuk XP lan kothak.';
+  String get referralsRedeemItHereBoth =>
+      'Tukerke ing kene — sampeyan lan kanca bakal entuk XP lan kothak.';
 
   @override
   String referralsScreenMoreQualifiedReferral(Object neededForNext) {
@@ -29868,13 +32065,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get referralsYouVeUnlockedEvery => 'Sampeyan wis mbukak kunci kabeh hadiah referensi. Legendaris.';
+  String get referralsYouVeUnlockedEvery =>
+      'Sampeyan wis mbukak kunci kabeh hadiah referensi. Legendaris.';
 
   @override
   String get referralsYourReferralCode => 'KODE REFERENSI SAMPEYAN';
 
   @override
-  String get refuelWindowCardAskCoachAboutRecovery => 'Takon pelatih babagan pemulihan nutrisi';
+  String get refuelWindowCardAskCoachAboutRecovery =>
+      'Takon pelatih babagan pemulihan nutrisi';
 
   @override
   String get refuelWindowCardCarbs => 'Karbohidrat';
@@ -29895,7 +32094,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetAddingVariety => 'Nambah variasi';
 
   @override
-  String get regenerateSheetAiGenerationTakes => 'Generasi AI biasane butuh 15–30 detik';
+  String get regenerateSheetAiGenerationTakes =>
+      'Generasi AI biasane butuh 15–30 detik';
 
   @override
   String get regenerateSheetAiSuggestions => 'Saran AI';
@@ -29904,7 +32104,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetAlmostThere => 'Sithik maneh…';
 
   @override
-  String get regenerateSheetAnalyzingYourPreferences => 'Nganalisis preferensi sampeyan…';
+  String get regenerateSheetAnalyzingYourPreferences =>
+      'Nganalisis preferensi sampeyan…';
 
   @override
   String get regenerateSheetApply => 'Aplikasi';
@@ -29913,7 +32114,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetApplyThisWorkout => 'Gunakake latihan iki';
 
   @override
-  String get regenerateSheetBalancingMuscleGroups => 'Nyeimbangake klompok otot';
+  String get regenerateSheetBalancingMuscleGroups =>
+      'Nyeimbangake klompok otot';
 
   @override
   String get regenerateSheetBootingUpTheAi => 'Ngurupake AI';
@@ -29940,19 +32142,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetCustomize => 'Kustomisasi';
 
   @override
-  String get regenerateSheetCustomizeOrLetAi => 'Kustomisasi utawa jarno AI menehi saran';
+  String get regenerateSheetCustomizeOrLetAi =>
+      'Kustomisasi utawa jarno AI menehi saran';
 
   @override
-  String get regenerateSheetCustomizeOrLetAiSuggest => 'Atur dhewe utawa kareben AI menehi saran';
+  String get regenerateSheetCustomizeOrLetAiSuggest =>
+      'Atur dhewe utawa kareben AI menehi saran';
 
   @override
-  String get regenerateSheetDescribeYourIdealWorkout => 'Jelasake latihan ideal sampeyan';
+  String get regenerateSheetDescribeYourIdealWorkout =>
+      'Jelasake latihan ideal sampeyan';
 
   @override
-  String get regenerateSheetDesigningYourWorkout => 'Ngrancang latihan sampeyan';
+  String get regenerateSheetDesigningYourWorkout =>
+      'Ngrancang latihan sampeyan';
 
   @override
-  String get regenerateSheetDialingInSetsAndReps => 'Nentokake set lan repetisi';
+  String get regenerateSheetDialingInSetsAndReps =>
+      'Nentokake set lan repetisi';
 
   @override
   String get regenerateSheetDoThisToday => 'Lakoni iki dina iki';
@@ -29967,13 +32174,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetFilteringByEquipment => 'Nyaring miturut peralatan';
 
   @override
-  String get regenerateSheetFilteringByYourEquipment => 'Nyaring miturut peralatan sampeyan';
+  String get regenerateSheetFilteringByYourEquipment =>
+      'Nyaring miturut peralatan sampeyan';
 
   @override
   String get regenerateSheetFinalizingDetails => 'Ngrampungake rincian…';
 
   @override
-  String get regenerateSheetFinalizingYourWorkout => 'Ngrampungake latihan sampeyan';
+  String get regenerateSheetFinalizingYourWorkout =>
+      'Ngrampungake latihan sampeyan';
 
   @override
   String get regenerateSheetFineTuningTheDetails => 'Nyetel rincian';
@@ -30019,13 +32228,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetMatchingIntensity => 'Nyelarasake intensitas';
 
   @override
-  String get regenerateSheetMatchingYourFitnessLevel => 'Nyelarasake tingkat kabugaran sampeyan';
+  String get regenerateSheetMatchingYourFitnessLevel =>
+      'Nyelarasake tingkat kabugaran sampeyan';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Durung ana saran';
 
   @override
-  String get regenerateSheetOptimizingForYourGoals => 'Ngoptimalake kanggo target sampeyan';
+  String get regenerateSheetOptimizingForYourGoals =>
+      'Ngoptimalake kanggo target sampeyan';
 
   @override
   String get regenerateSheetPairingPushAndPull => 'Nggabungake push lan pull';
@@ -30037,7 +32248,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetPickingYourExercises => 'Milih latihan sampeyan';
 
   @override
-  String get regenerateSheetPreparingYourRequest => 'Nyiapake panyuwunan sampeyan';
+  String get regenerateSheetPreparingYourRequest =>
+      'Nyiapake panyuwunan sampeyan';
 
   @override
   String get regenerateSheetPrimingTheEngine => 'Nyiapake mesin';
@@ -30049,7 +32261,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetReadingYourProfile => 'Maca profil sampeyan';
 
   @override
-  String get regenerateSheetRegenerateCurrentWorkout => 'Regenerasi Latihan Saiki';
+  String get regenerateSheetRegenerateCurrentWorkout =>
+      'Regenerasi Latihan Saiki';
 
   @override
   String get regenerateSheetRegenerateWorkout => 'Gawe maneh latihan';
@@ -30061,25 +32274,32 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateSheetReset => 'Reset';
 
   @override
-  String get regenerateSheetRespectingYourInjuryList => 'Nggatekake dhaptar cidera sampeyan';
+  String get regenerateSheetRespectingYourInjuryList =>
+      'Nggatekake dhaptar cidera sampeyan';
 
   @override
-  String get regenerateSheetRestoredFromLastRegen => 'Dipulihake saka regen pungkasan';
+  String get regenerateSheetRestoredFromLastRegen =>
+      'Dipulihake saka regen pungkasan';
 
   @override
-  String get regenerateSheetRestoredFromLastRegeneration => 'Dipulihake saka regenerasi pungkasan';
+  String get regenerateSheetRestoredFromLastRegeneration =>
+      'Dipulihake saka regenerasi pungkasan';
 
   @override
-  String get regenerateSheetSavingToYourPlan => 'Nyimpen menyang rencana sampeyan';
+  String get regenerateSheetSavingToYourPlan =>
+      'Nyimpen menyang rencana sampeyan';
 
   @override
-  String get regenerateSheetScanningTheExerciseLibrary => 'Nggoleki perpustakaan latihan';
+  String get regenerateSheetScanningTheExerciseLibrary =>
+      'Nggoleki perpustakaan latihan';
 
   @override
-  String get regenerateSheetSchedulingYourWorkout => 'Njadwalake latihan sampeyan';
+  String get regenerateSheetSchedulingYourWorkout =>
+      'Njadwalake latihan sampeyan';
 
   @override
-  String get regenerateSheetSequencingCompoundLifts => 'Ngurutake compound lifts';
+  String get regenerateSheetSequencingCompoundLifts =>
+      'Ngurutake compound lifts';
 
   @override
   String get regenerateSheetShapingTheSession => 'Ngrancang sesi';
@@ -30093,10 +32313,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get regenerateSheetTodayNotInSchedule => 'Dina iki ora ana ing jadwal latihan biasane';
+  String get regenerateSheetTodayNotInSchedule =>
+      'Dina iki ora ana ing jadwal latihan biasane';
 
   @override
-  String get regenerateSheetTodayNotInUsualDays => 'Dina iki ora ana ing jadwal biasane';
+  String get regenerateSheetTodayNotInUsualDays =>
+      'Dina iki ora ana ing jadwal biasane';
 
   @override
   String get regenerateSheetTuningRestPeriods => 'Nyetel wektu istirahat';
@@ -30117,7 +32339,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateWithNewContinueCurrent => 'Terusake sing saiki';
 
   @override
-  String get regenerateWithNewEitherWayFutureWorkouts => 'Apa wae pilihane, latihan mbesuk bakal nggunakake peralatan sampeyan sing wis dianyari.';
+  String get regenerateWithNewEitherWayFutureWorkouts =>
+      'Apa wae pilihane, latihan mbesuk bakal nggunakake peralatan sampeyan sing wis dianyari.';
 
   @override
   String get regenerateWithNewEquipmentUpdated => 'Peralatan dianyari';
@@ -30126,7 +32349,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateWithNewRegenerateThisWorkout => 'Gawe ulang latihan iki';
 
   @override
-  String get regenerateWorkoutSheetAiGenerationTypicallyTakes => 'Generasi AI biasane butuh 15-30 detik';
+  String get regenerateWorkoutSheetAiGenerationTypicallyTakes =>
+      'Generasi AI biasane butuh 15-30 detik';
 
   @override
   String get regenerateWorkoutSheetAiSuggestions => 'Saran AI';
@@ -30135,28 +32359,34 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateWorkoutSheetApplyThisWorkout => 'Gunakake Latihan Iki';
 
   @override
-  String get regenerateWorkoutSheetCouldnTKeepYour => 'Ora bisa nyimpen latihan asli sampeyan — mung sing anyar sing katon.';
+  String get regenerateWorkoutSheetCouldnTKeepYour =>
+      'Ora bisa nyimpen latihan asli sampeyan — mung sing anyar sing katon.';
 
   @override
   String get regenerateWorkoutSheetCustomize => 'Sesuaikan';
 
   @override
-  String get regenerateWorkoutSheetCustomizeOrLetAi => 'Sesuaikan utawa jarke AI menehi saran';
+  String get regenerateWorkoutSheetCustomizeOrLetAi =>
+      'Sesuaikan utawa jarke AI menehi saran';
 
   @override
-  String get regenerateWorkoutSheetDefaultedToReplaceYour => 'Otomatis diganti — latihan sadurunge sampeyan wis ditimpa.';
+  String get regenerateWorkoutSheetDefaultedToReplaceYour =>
+      'Otomatis diganti — latihan sadurunge sampeyan wis ditimpa.';
 
   @override
-  String get regenerateWorkoutSheetDescribeYourIdealWorkout => 'Jelasake latihan ideal sampeyan';
+  String get regenerateWorkoutSheetDescribeYourIdealWorkout =>
+      'Jelasake latihan ideal sampeyan';
 
   @override
   String get regenerateWorkoutSheetDoThisToday => 'Lakoni iki dina iki';
 
   @override
-  String get regenerateWorkoutSheetEGAQuick => 'tuladhane, \"Latihan awak ndhuwur cepet tanpa peralatan\"';
+  String get regenerateWorkoutSheetEGAQuick =>
+      'tuladhane, \"Latihan awak ndhuwur cepet tanpa peralatan\"';
 
   @override
-  String get regenerateWorkoutSheetEnterAPromptAbove => 'Ketik pituduh ing ndhuwur utawa tutul refresh kanggo entuk saran latihan saka AI';
+  String get regenerateWorkoutSheetEnterAPromptAbove =>
+      'Ketik pituduh ing ndhuwur utawa tutul refresh kanggo entuk saran latihan saka AI';
 
   @override
   String get regenerateWorkoutSheetGeneratingSuggestions => 'Nggawe saran...';
@@ -30168,30 +32398,44 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateWorkoutSheetNoSuggestionsYet => 'Durung ana saran';
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
+    Object message,
+  ) {
     return 'Gagal ngetrapake saran: $message';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
+    Object e,
+  ) {
     return 'Gagal ngetrapake saran: $e';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
+    Object message,
+  ) {
     return 'Gagal nggawe ulang: $message';
   }
 
   @override
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e) {
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
+    Object e,
+  ) {
     return 'Gagal nggawe ulang: $e';
   }
 
   @override
-  String get regenerateWorkoutSheetPreviewNotSupportedBy => 'Pratinjau ora didhukung dening server. Mangga nganyari aplikasi utawa hubungi dhukungan.';
+  String get regenerateWorkoutSheetPreviewNotSupportedBy =>
+      'Pratinjau ora didhukung dening server. Mangga nganyari aplikasi utawa hubungi dhukungan.';
 
   @override
-  String get regenerateWorkoutSheetRegenerateCurrentWorkout => 'Gawe Ulang Latihan Saiki';
+  String get regenerateWorkoutSheetRegenerateCurrentWorkout =>
+      'Gawe Ulang Latihan Saiki';
 
   @override
   String get regenerateWorkoutSheetRegenerateWorkout => 'Gawe Ulang Latihan';
@@ -30200,16 +32444,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get regenerateWorkoutSheetReset => 'Reset';
 
   @override
-  String get regenerateWorkoutSheetRestoredFromYourLast => 'Dipulihake saka generasi pungkasan sampeyan';
+  String get regenerateWorkoutSheetRestoredFromYourLast =>
+      'Dipulihake saka generasi pungkasan sampeyan';
 
   @override
-  String get regenerateWorkoutSheetTodayIsnTIn => 'Dina iki ora ana ing jadwal latihan biasane — kita bakal nambahake.';
+  String get regenerateWorkoutSheetTodayIsnTIn =>
+      'Dina iki ora ana ing jadwal latihan biasane — kita bakal nambahake.';
 
   @override
   String get regenerateWorkoutSheetWhen => 'KAPAN?';
 
   @override
-  String get regionVariantDropdownCouldNotSwapVariant => 'Ora bisa ngganti varian. Mangga coba maneh.';
+  String get regionVariantDropdownCouldNotSwapVariant =>
+      'Ora bisa ngganti varian. Mangga coba maneh.';
 
   @override
   String regionVariantDropdownKcalG(Object v) {
@@ -30234,31 +32481,37 @@ class AppLocalizationsJv extends AppLocalizations {
   String get repPreferencesAvoidHighRepSets => 'Aja Set Repetisi Dhuwur';
 
   @override
-  String get repPreferencesChooseYourPrimaryTraining => 'Pilih tujuan latihan utama sampeyan';
+  String get repPreferencesChooseYourPrimaryTraining =>
+      'Pilih tujuan latihan utama sampeyan';
 
   @override
-  String get repPreferencesConfigureYourSetVolume => 'Konfigurasi volume set sampeyan';
+  String get repPreferencesConfigureYourSetVolume =>
+      'Konfigurasi volume set sampeyan';
 
   @override
   String get repPreferencesEnforceRepCeiling => 'Watesi repetisi maksimal';
 
   @override
-  String get repPreferencesHowShouldWeProgress => 'Kepiye kita kudu nambah latihan sampeyan?';
+  String get repPreferencesHowShouldWeProgress =>
+      'Kepiye kita kudu nambah latihan sampeyan?';
 
   @override
-  String get repPreferencesPreventBoring15Rep => 'Cegah set 15+ repetisi sing mboseni';
+  String get repPreferencesPreventBoring15Rep =>
+      'Cegah set 15+ repetisi sing mboseni';
 
   @override
   String get repPreferencesProgressionStyle => 'Gaya Progresi';
 
   @override
-  String get repPreferencesRepProgressionPreferences => 'Preferensi Repetisi & Progresi';
+  String get repPreferencesRepProgressionPreferences =>
+      'Preferensi Repetisi & Progresi';
 
   @override
   String get repPreferencesRepRange => 'Rentang Repetisi';
 
   @override
-  String get repPreferencesSectionConfigureYourSetVolume => 'Konfigurasi volume set kanggo saben latihan';
+  String get repPreferencesSectionConfigureYourSetVolume =>
+      'Konfigurasi volume set kanggo saben latihan';
 
   @override
   String get repPreferencesSectionEndurance1520 => 'Daya Tahan (15-20)';
@@ -30276,7 +32529,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get repPreferencesSectionMaxSets => 'Set Maksimal';
 
   @override
-  String get repPreferencesSectionMaximumNumberOfSets => 'Jumlah set maksimal kanggo saben latihan';
+  String get repPreferencesSectionMaximumNumberOfSets =>
+      'Jumlah set maksimal kanggo saben latihan';
 
   @override
   String get repPreferencesSectionMin => 'Minimal';
@@ -30288,15 +32542,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get repPreferencesSectionMinimal12 => 'Minimal (1-2)';
 
   @override
-  String get repPreferencesSectionMinimumSetsToEnsure => 'Set minimal kanggo njamin volume sing cukup';
+  String get repPreferencesSectionMinimumSetsToEnsure =>
+      'Set minimal kanggo njamin volume sing cukup';
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
+    Object maxSets,
+  ) {
     return 'Set Maksimal: $maxSets';
   }
 
   @override
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets) {
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
+    Object minSets,
+  ) {
     return 'Set Minimal: $minSets';
   }
 
@@ -30304,10 +32563,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get repPreferencesSectionRecommended => 'Disaranake';
 
   @override
-  String get repPreferencesSectionRepRangePreference => 'Preferensi Rentang Repetisi';
+  String get repPreferencesSectionRepRangePreference =>
+      'Preferensi Rentang Repetisi';
 
   @override
-  String get repPreferencesSectionSetYourPreferredReps => 'Setel repetisi sing dikarepake saben set';
+  String get repPreferencesSectionSetYourPreferredReps =>
+      'Setel repetisi sing dikarepake saben set';
 
   @override
   String get repPreferencesSectionSetsPerExercise => 'Set Saben Latihan';
@@ -30319,45 +32580,56 @@ class AppLocalizationsJv extends AppLocalizations {
   String get repPreferencesSectionStrength15 => 'Kekuatan (1-5)';
 
   @override
-  String get repPreferencesSectionTheAiWillGenerate => 'AI bakal nggawe latihan kanthi rentang set iki. Set luwih akeh = volume luwih akeh = stimulasi otot luwih akeh.';
+  String get repPreferencesSectionTheAiWillGenerate =>
+      'AI bakal nggawe latihan kanthi rentang set iki. Set luwih akeh = volume luwih akeh = stimulasi otot luwih akeh.';
 
   @override
-  String get repPreferencesSectionTheAiWillTry => 'AI bakal nyoba njaga latihan ing rentang iki kanthi nyetel bobot utawa menehi saran progresi.';
+  String get repPreferencesSectionTheAiWillTry =>
+      'AI bakal nyoba njaga latihan ing rentang iki kanthi nyetel bobot utawa menehi saran progresi.';
 
   @override
   String get repPreferencesSetsPerExercise => 'Set Saben Latihan';
 
   @override
-  String get repPreferencesStrictlyEnforceYourMaximum => 'Watesi repetisi maksimal sampeyan kanthi ketat';
+  String get repPreferencesStrictlyEnforceYourMaximum =>
+      'Watesi repetisi maksimal sampeyan kanthi ketat';
 
   @override
   String get repPreferencesTrainingFocus => 'Fokus Latihan';
 
   @override
-  String get repPreferencesYourPreferredRepsPer => 'Repetisi sing dikarepake saben set';
+  String get repPreferencesYourPreferredRepsPer =>
+      'Repetisi sing dikarepake saben set';
 
   @override
-  String get repProgressionCardFineTuneRepRanges => 'Atur rentang repetisi lan gaya progresi';
+  String get repProgressionCardFineTuneRepRanges =>
+      'Atur rentang repetisi lan gaya progresi';
 
   @override
   String get repProgressionCardRepProgression => 'Repetisi & Progresi';
 
   @override
-  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps) {
+  String repProgressionCardReps(
+    Object preferredMaxReps,
+    Object preferredMinReps,
+  ) {
     return '$preferredMinReps-$preferredMaxReps repetisi';
   }
 
   @override
-  String get reportInjuryAdditionalNotesOptional => 'Cathetan Tambahan (Opsional)';
+  String get reportInjuryAdditionalNotesOptional =>
+      'Cathetan Tambahan (Opsional)';
 
   @override
   String get reportInjuryCurrentPainLevel => 'Tingkat Nyeri Saiki';
 
   @override
-  String get reportInjuryDescribeHowTheInjury => 'Jelasake kepiye ciloko kedadeyan, gejala, lsp.';
+  String get reportInjuryDescribeHowTheInjury =>
+      'Jelasake kepiye ciloko kedadeyan, gejala, lsp.';
 
   @override
-  String get reportInjuryInjuryReportedSuccessfully => 'Ciloko wis dilaporake kanthi sukses';
+  String get reportInjuryInjuryReportedSuccessfully =>
+      'Ciloko wis dilaporake kanthi sukses';
 
   @override
   String get reportInjuryInjuryTypeOptional => 'Jinis cidra (Opsional)';
@@ -30386,19 +32658,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportInjurySeverity => 'Tingkat keparahan';
 
   @override
-  String get reportInjuryThisIsForTracking => 'Iki mung kanggo tujuan pelacakan. Mangga konsultasi karo tenaga medis kanggo diagnosis lan perawatan sing bener.';
+  String get reportInjuryThisIsForTracking =>
+      'Iki mung kanggo tujuan pelacakan. Mangga konsultasi karo tenaga medis kanggo diagnosis lan perawatan sing bener.';
 
   @override
   String get reportInjuryWhenDidItOccur => 'Kapan kedadeyane?';
 
   @override
-  String get reportMessageAdditionalDetailsOptional => 'Katrangan tambahan (opsional)';
+  String get reportMessageAdditionalDetailsOptional =>
+      'Katrangan tambahan (opsional)';
 
   @override
-  String get reportMessageHelpUsImproveOur => 'Bantu kita ningkatake pelatih AI kita';
+  String get reportMessageHelpUsImproveOur =>
+      'Bantu kita ningkatake pelatih AI kita';
 
   @override
-  String get reportMessageReportSubmittedThankYou => 'Laporan wis dikirim. Matur nuwun kanggo masukan sampeyan!';
+  String get reportMessageReportSubmittedThankYou =>
+      'Laporan wis dikirim. Matur nuwun kanggo masukan sampeyan!';
 
   @override
   String get reportMessageReportThisResponse => 'Laporke tanggapan iki';
@@ -30412,10 +32688,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportMessageSubmitReport => 'Kirim Laporan';
 
   @override
-  String get reportMessageTellUsMoreAbout => 'Critakake luwih akeh babagan masalah iki...';
+  String get reportMessageTellUsMoreAbout =>
+      'Critakake luwih akeh babagan masalah iki...';
 
   @override
-  String get reportMessageWhatSWrongWith => 'Apa sing salah karo tanggapan iki?';
+  String get reportMessageWhatSWrongWith =>
+      'Apa sing salah karo tanggapan iki?';
 
   @override
   String get reportNewspaperTemplateExclusiveReport => 'LAPORAN EKSKLUSIF';
@@ -30432,7 +32710,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get reportPainCouldNotSavePlease => 'Gagal nyimpen — mangga coba maneh.';
+  String get reportPainCouldNotSavePlease =>
+      'Gagal nyimpen — mangga coba maneh.';
 
   @override
   String get reportPainPainOnThisExercise => 'Nyeri ing latihan iki?';
@@ -30477,7 +32756,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportShareShowWatermark => 'Tampilake Watermark';
 
   @override
-  String get reportStrainAiWillSuggestLighter => 'AI bakal menehi saran latihan sing luwih entheng';
+  String get reportStrainAiWillSuggestLighter =>
+      'AI bakal menehi saran latihan sing luwih entheng';
 
   @override
   String get reportStrainReportStrain => 'Laporke Ketegangan';
@@ -30486,10 +32766,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportStrainRequestRestDay => 'Nyuwun Dina Ngaso';
 
   @override
-  String get reportStrainSelectAtLeastOne => 'Pilih paling sethithik siji klompok otot';
+  String get reportStrainSelectAtLeastOne =>
+      'Pilih paling sethithik siji klompok otot';
 
   @override
-  String get reportStrainStrainReportSubmitted => 'Laporan ketegangan wis dikirim';
+  String get reportStrainStrainReportSubmitted =>
+      'Laporan ketegangan wis dikirim';
 
   @override
   String get reportStrainSubmitReport => 'Kirim Laporan';
@@ -30504,7 +32786,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportsHub1RepMaxes => '1RM';
 
   @override
-  String get reportsHubBadgesUnlockedAlongYour => 'Lencana sing dibukak sajrone perjalanan sampeyan';
+  String get reportsHubBadgesUnlockedAlongYour =>
+      'Lencana sing dibukak sajrone perjalanan sampeyan';
 
   @override
   String get reportsHubBodyMeasurements => 'Ukuran Awak';
@@ -30521,10 +32804,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportsHubDetail => 'DETAIL';
 
   @override
-  String get reportsHubEstimated1rmsForEvery => 'Estimasi 1RM kanggo saben angkatan utama';
+  String get reportsHubEstimated1rmsForEvery =>
+      'Estimasi 1RM kanggo saben angkatan utama';
 
   @override
-  String get reportsHubEveryLiftPrYou => 'Saben PR angkatan sing wis sampeyan lakoni, dirangking';
+  String get reportsHubEveryLiftPrYou =>
+      'Saben PR angkatan sing wis sampeyan lakoni, dirangking';
 
   @override
   String get reportsHubExerciseHistory => 'Riwayat Latihan';
@@ -30547,7 +32832,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get reportsHubNotEnoughDataYet => 'Data durung cukup — coba maneh sawise latihan sabanjure';
+  String get reportsHubNotEnoughDataYet =>
+      'Data durung cukup — coba maneh sawise latihan sabanjure';
 
   @override
   String get reportsHubPeriodInsights => 'Wawasan Periode';
@@ -30559,7 +32845,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportsHubProgressCharts => 'Grafik Kemajuan';
 
   @override
-  String get reportsHubProgressionCurveForEvery => 'Kurva kemajuan kanggo saben latihan sing wis sampeyan lakoni';
+  String get reportsHubProgressionCurveForEvery =>
+      'Kurva kemajuan kanggo saben latihan sing wis sampeyan lakoni';
 
   @override
   String get reportsHubReadinessRecovery => 'Kesiapan & Pemulihan';
@@ -30568,7 +32855,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportsHubReportsInsights => 'Laporan & Wawasan';
 
   @override
-  String get reportsHubScorePerMuscleGroup => 'Skor saben klompok otot, tren & heatmap';
+  String get reportsHubScorePerMuscleGroup =>
+      'Skor saben klompok otot, tren & heatmap';
 
   @override
   String reportsHubScreenEverythingYouVeEarned(Object appName) {
@@ -30576,7 +32864,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get reportsHubSleepFatigueStressReadin => 'Turu, kesel, stres, skor kesiapan';
+  String get reportsHubSleepFatigueStressReadin =>
+      'Turu, kesel, stres, skor kesiapan';
 
   @override
   String get reportsHubTraining => 'LATIHAN';
@@ -30585,16 +32874,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get reportsHubViewReport => 'Deleng laporan';
 
   @override
-  String get reportsHubVolumeStrengthAndConsiste => 'Volume, kekuatan, lan konsistensi saka wektu ke wektu';
+  String get reportsHubVolumeStrengthAndConsiste =>
+      'Volume, kekuatan, lan konsistensi saka wektu ke wektu';
 
   @override
-  String get reportsHubWeightBodyFatCircumferenc => 'Tren bobot, lemak awak, lan ukuran';
+  String get reportsHubWeightBodyFatCircumferenc =>
+      'Tren bobot, lemak awak, lan ukuran';
 
   @override
-  String get reportsHubWorkoutsTimeCaloriesBy => 'Latihan, wektu, kalori miturut 1W / 1M / 3M / 6M / 1Y / YTD / Kustom';
+  String get reportsHubWorkoutsTimeCaloriesBy =>
+      'Latihan, wektu, kalori miturut 1W / 1M / 3M / 6M / 1Y / YTD / Kustom';
 
   @override
-  String get requestRefundAdditionalCommentsOptional => 'Komentar Tambahan (Opsional)';
+  String get requestRefundAdditionalCommentsOptional =>
+      'Komentar Tambahan (Opsional)';
 
   @override
   String get requestRefundCheckYourEmail => 'Priksa email sampeyan';
@@ -30606,7 +32899,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get requestRefundOneTime2 => 'Sepisan';
 
   @override
-  String get requestRefundPleaseSelectTheReason => 'Mangga pilih alesan sing paling cocog karo kahanan sampeyan';
+  String get requestRefundPleaseSelectTheReason =>
+      'Mangga pilih alesan sing paling cocog karo kahanan sampeyan';
 
   @override
   String get requestRefundReasonForRefund => 'Alesan Pengembalian Dana';
@@ -30615,10 +32909,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get requestRefundRefundPolicy => 'Kebijakan Pengembalian Dana';
 
   @override
-  String get requestRefundRefundRequestSubmitted => 'Panjaluk Pengembalian Dana Dikirim';
+  String get requestRefundRefundRequestSubmitted =>
+      'Panjaluk Pengembalian Dana Dikirim';
 
   @override
-  String get requestRefundRefundRequestsAreTypically => 'Panjaluk pengembalian dana biasane diproses sajrone 5-7 dina kerja. Sampeyan bakal nampa konfirmasi email sawise panjaluk sampeyan ditinjau.';
+  String get requestRefundRefundRequestsAreTypically =>
+      'Panjaluk pengembalian dana biasane diproses sajrone 5-7 dina kerja. Sampeyan bakal nampa konfirmasi email sawise panjaluk sampeyan ditinjau.';
 
   @override
   String get requestRefundRequestId => 'ID Panjaluk';
@@ -30627,7 +32923,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get requestRefundRequestRefund => 'Nyuwun Pengembalian Dana';
 
   @override
-  String get requestRefundSaveThisIdFor => 'Simpen ID iki kanggo cathetan sampeyan';
+  String get requestRefundSaveThisIdFor =>
+      'Simpen ID iki kanggo cathetan sampeyan';
 
   @override
   String requestRefundScreenPer(Object _billingPeriod) {
@@ -30640,22 +32937,27 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get requestRefundSubmitRefundRequest => 'Kirim Panjaluk Pengembalian Dana';
+  String get requestRefundSubmitRefundRequest =>
+      'Kirim Panjaluk Pengembalian Dana';
 
   @override
-  String get requestRefundSubscriptionBeingRefunded => 'Langganan sing Lagi Dibalekake Danane';
+  String get requestRefundSubscriptionBeingRefunded =>
+      'Langganan sing Lagi Dibalekake Danane';
 
   @override
-  String get requestRefundTellUsMoreAbout => 'Critakake luwih akeh babagan pengalaman sampeyan...';
+  String get requestRefundTellUsMoreAbout =>
+      'Critakake luwih akeh babagan pengalaman sampeyan...';
 
   @override
-  String get requestRefundWeWillSendYou => 'Kita bakal ngirim konfirmasi email karo rincian babagan panjaluk pengembalian dana sampeyan. Proses biasane mbutuhake 5-7 dina kerja.';
+  String get requestRefundWeWillSendYou =>
+      'Kita bakal ngirim konfirmasi email karo rincian babagan panjaluk pengembalian dana sampeyan. Proses biasane mbutuhake 5-7 dina kerja.';
 
   @override
   String get rescheduleFailedToLoadSuggestions => 'Gagal ngemot saran';
 
   @override
-  String get rescheduleFailedToRescheduleWorkout => 'Gagal njadwalake maneh latihan';
+  String get rescheduleFailedToRescheduleWorkout =>
+      'Gagal njadwalake maneh latihan';
 
   @override
   String get reschedulePickADifferentDay => 'Pilih dina liyane';
@@ -30681,13 +32983,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get restSuggestionAiRestCoach => 'Pelatih istirahat AI';
 
   @override
-  String get restSuggestionCalculatingOptimalRestTime => 'Ngetung wektu istirahat optimal';
+  String get restSuggestionCalculatingOptimalRestTime =>
+      'Ngetung wektu istirahat optimal';
 
   @override
   String get restSuggestionCardAiRestCoach => 'PELATIH ISTIRAHAT AI';
 
   @override
-  String get restSuggestionCardCalculatingOptimalRestTime => 'Ngetung wektu ngaso sing optimal...';
+  String get restSuggestionCardCalculatingOptimalRestTime =>
+      'Ngetung wektu ngaso sing optimal...';
 
   @override
   String get restSuggestionCardQuickRest => 'Ngaso Cepet';
@@ -30719,7 +33023,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get restTimerCardBaseRest => 'Ngaso Dasar';
 
   @override
-  String get restTimerCardControlRestPeriodsBetween => 'Kontrol wektu ngaso ing antarane set';
+  String get restTimerCardControlRestPeriodsBetween =>
+      'Kontrol wektu ngaso ing antarane set';
 
   @override
   String get restTimerCardCustomRestTimer => 'Timer Ngaso Kustom';
@@ -30752,7 +33057,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get restTimerCardVariablesBaseRpeMultipli => 'Variabel: dhasar, RPE, pengganda, tingkat';
+  String get restTimerCardVariablesBaseRpeMultipli =>
+      'Variabel: dhasar, RPE, pengganda, tingkat';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -30763,7 +33069,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get restTimerOverlayAiWeightCoach => 'PELATIH BEBAN AI';
 
   @override
-  String get restTimerOverlayAnalyzingYourPerformance => 'Nganalisis performa sampeyan...';
+  String get restTimerOverlayAnalyzingYourPerformance =>
+      'Nganalisis performa sampeyan...';
 
   @override
   String restTimerOverlayAsk(Object coachName) {
@@ -30774,7 +33081,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get restTimerOverlayCoachReview => 'ULASAN PELATIH';
 
   @override
-  String get restTimerOverlayGetTipsForYour => 'Entuk tips kanggo set sabanjure';
+  String get restTimerOverlayGetTipsForYour =>
+      'Entuk tips kanggo set sabanjure';
 
   @override
   String get restTimerOverlayGotIt => 'Oke';
@@ -30795,7 +33103,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get restTimerOverlayRirRepsInReserve => 'RIR (Reps in Reserve)';
 
   @override
-  String get restTimerOverlayRpeRateOfPerceived => 'RPE (Rate of Perceived Exertion)';
+  String get restTimerOverlayRpeRateOfPerceived =>
+      'RPE (Rate of Perceived Exertion)';
 
   @override
   String restTimerOverlayS(Object restSecondsRemaining) {
@@ -30862,7 +33171,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get retuneProposalPreviewUnavailable => 'Pratinjau ora kasedhiya.';
 
   @override
-  String get retuneProposalProgramRetunedNextPlan => 'Program wis diatur maneh. Rencana sabanjure bakal nggambarake owah-owahan.';
+  String get retuneProposalProgramRetunedNextPlan =>
+      'Program wis diatur maneh. Rencana sabanjure bakal nggambarake owah-owahan.';
 
   @override
   String get retuneProposalRetuneProposal => 'Usulan pangaturan maneh';
@@ -30885,7 +33195,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get rewardsConfirm => 'Konfirmasi';
 
   @override
-  String get rewardsKeepLevelingUpTo => 'Terus munggah level kanggo mbukak kunci hadiah!';
+  String get rewardsKeepLevelingUpTo =>
+      'Terus munggah level kanggo mbukak kunci hadiah!';
 
   @override
   String get rewardsNoRewardsAvailableYet => 'Durung ana hadiah sing kasedhiya';
@@ -30974,7 +33285,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get roiSummaryCardCalories => 'Kalori';
 
   @override
-  String get roiSummaryCardCompleteYourFirstWorkout => 'Rampungake latihan pisanan sampeyan kanggo miwiti nglacak kemajuan!';
+  String get roiSummaryCardCompleteYourFirstWorkout =>
+      'Rampungake latihan pisanan sampeyan kanggo miwiti nglacak kemajuan!';
 
   @override
   String get roiSummaryCardInvested => 'Diinvestasikake';
@@ -30994,7 +33306,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get routeMapOpenstreetmapContributors => '© Kontributor OpenStreetMap';
 
   @override
-  String get rpeCardAutomaticallyAdjustBasedOn => 'Otomatis nyetel adhedhasar umpan balik RPE';
+  String get rpeCardAutomaticallyAdjustBasedOn =>
+      'Otomatis nyetel adhedhasar umpan balik RPE';
 
   @override
   String get rpeCardRpeAutoRegulation => 'Otomatisasi RPE';
@@ -31048,7 +33361,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get rtpAdvancePhase => 'Aku wis tekan milestone';
 
   @override
-  String get rtpDisclaimer => 'Kerangka mandhiri. Idin saka panyedhiya kesehatan dibutuhake sadurunge maju fase.';
+  String get rtpDisclaimer =>
+      'Kerangka mandhiri. Idin saka panyedhiya kesehatan dibutuhake sadurunge maju fase.';
 
   @override
   String get rtpGraduated => 'Rampung';
@@ -31098,7 +33412,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get saunaLogSaunaTime => 'Cathet Wektu Sauna';
 
   @override
-  String get savedHubCheckYourConnectionAnd => 'Priksa sambungan sampeyan lan coba maneh.';
+  String get savedHubCheckYourConnectionAnd =>
+      'Priksa sambungan sampeyan lan coba maneh.';
 
   @override
   String get savedHubCouldnTLoadYour => 'Ora bisa mbukak item sing disimpen.';
@@ -31107,22 +33422,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get savedHubNothingSavedYet => 'Durung ana sing disimpen';
 
   @override
-  String get savedHubSaveAMealOr => 'Simpen dhaharan utawa panganan saka log panganan kanggo ditambahake kanthi cepet mengko.';
+  String get savedHubSaveAMealOr =>
+      'Simpen dhaharan utawa panganan saka log panganan kanggo ditambahake kanthi cepet mengko.';
 
   @override
   String get savedHubSaved => 'Disimpen';
 
   @override
-  String get savedHubScanARestaurantMenu => 'Pindai menu restoran utawa prasmanan — pindai sing disimpen bakal ana ing kene.';
+  String get savedHubScanARestaurantMenu =>
+      'Pindai menu restoran utawa prasmanan — pindai sing disimpen bakal ana ing kene.';
 
   @override
-  String get savedHubSignInToSee => 'Mlebu kanggo ndeleng resep sing disimpen ing kene.';
+  String get savedHubSignInToSee =>
+      'Mlebu kanggo ndeleng resep sing disimpen ing kene.';
 
   @override
-  String get savedHubSignInToSee2 => 'Mlebu kanggo ndeleng panganan sing disimpen ing kene.';
+  String get savedHubSignInToSee2 =>
+      'Mlebu kanggo ndeleng panganan sing disimpen ing kene.';
 
   @override
-  String get savedHubTapOnAnyRecipe => 'Tutul ♥ ing resep apa wae ing Discover utawa perpustakaanmu kanggo nyimpen ing kene.';
+  String get savedHubTapOnAnyRecipe =>
+      'Tutul ♥ ing resep apa wae ing Discover utawa perpustakaanmu kanggo nyimpen ing kene.';
 
   @override
   String get savedHubTryAgain => 'Coba maneh';
@@ -31145,7 +33465,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scheduleMealInterval => 'Interval';
 
   @override
-  String get scheduleMealPickACadenceWe => 'Pilih jadwal; kita bakal ngatur panyimpenan resep AI kanggo sampeyan.';
+  String get scheduleMealPickACadenceWe =>
+      'Pilih jadwal; kita bakal ngatur panyimpenan resep AI kanggo sampeyan.';
 
   @override
   String get scheduleMealPickADate => 'Pilih tanggal';
@@ -31184,7 +33505,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName) {
+  String scheduleMismatchDialogRequiresDaysPerWeek(
+    Object currentDayCount,
+    Object requiredDays,
+    Object splitName,
+  ) {
     return '$splitName mbutuhake $requiredDays dina saben minggu, nanging sampeyan saiki milih $currentDayCount dina.';
   }
 
@@ -31232,7 +33557,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate) {
+  String scheduleScreenGenerating(
+    Object _generatedCount,
+    Object _totalToGenerate,
+  ) {
     return 'Nggawe $_generatedCount/$_totalToGenerate...';
   }
 
@@ -31294,7 +33622,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scheduleWorkoutSchedulingWorkout => 'Njadwalake latihan...';
 
   @override
-  String get scheduleWorkoutThisWorkoutWillBe => 'Latihan iki bakal ditambahake bebarengan karo liyane.';
+  String get scheduleWorkoutThisWorkoutWillBe =>
+      'Latihan iki bakal ditambahake bebarengan karo liyane.';
 
   @override
   String get scoreBreakdownConsistency => 'Konsistensi';
@@ -31326,7 +33655,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreChangeAnnouncementSleep => 'Turu';
 
   @override
-  String get scoreChangeAnnouncementSleepNowCountsToward => 'Turu saiki diitung menyang skor saben dinamu.';
+  String get scoreChangeAnnouncementSleepNowCountsToward =>
+      'Turu saiki diitung menyang skor saben dinamu.';
 
   @override
   String get scoreChangeAnnouncementTrain => 'Latihan';
@@ -31359,7 +33689,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainAddedSugar => 'Gula tambahan';
 
   @override
-  String get scoreExplainAddedSugarIsThe => 'Gula tambahan minangka prediktor diet paling kuat kanggo sindrom metabolik ing diet Kulon.';
+  String get scoreExplainAddedSugarIsThe =>
+      'Gula tambahan minangka prediktor diet paling kuat kanggo sindrom metabolik ing diet Kulon.';
 
   @override
   String scoreExplainAddedSugarValue(Object value) {
@@ -31367,16 +33698,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainAiPicksATrafficLight => 'AI milih rating lampu lalu lintas kanggo saben dhaharan adhedhasar target kesehatan pribadi Panjenengan.';
+  String get scoreExplainAiPicksATrafficLight =>
+      'AI milih rating lampu lalu lintas kanggo saben dhaharan adhedhasar target kesehatan pribadi Panjenengan.';
 
   @override
-  String get scoreExplainAimForADailyAverage => 'Usahakake rata-rata saben dina ing ngisor 4. Panganan anti-inflamasi skor 1–3; panganan inflamasi dhuwur skor 7–10.';
+  String get scoreExplainAimForADailyAverage =>
+      'Usahakake rata-rata saben dina ing ngisor 4. Panganan anti-inflamasi skor 1–3; panganan inflamasi dhuwur skor 7–10.';
 
   @override
-  String get scoreExplainCertainPortionsOfAvocado => 'Porsi alpukat, ubi, almond tartamtu — OK ing porsi cilik, kurang apik ing porsi gedhe.';
+  String get scoreExplainCertainPortionsOfAvocado =>
+      'Porsi alpukat, ubi, almond tartamtu — OK ing porsi cilik, kurang apik ing porsi gedhe.';
 
   @override
-  String get scoreExplainChronicLowGradeInflammation => 'Inflamasi kronis tingkat rendah saka diet ana gandhengane karo penyakit metabolik, nyeri sendi, lan penurunan kognitif.';
+  String get scoreExplainChronicLowGradeInflammation =>
+      'Inflamasi kronis tingkat rendah saka diet ana gandhengane karo penyakit metabolik, nyeri sendi, lan penurunan kognitif.';
 
   @override
   String get scoreExplainCurrentLabelAntiInfl => 'ANTI-INFL.';
@@ -31415,28 +33750,35 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainCurrentLabelWhole => 'WHOLE';
 
   @override
-  String get scoreExplainDailyAverageAbove6 => 'Rata-rata saben dina ing ndhuwur 6 digandhengake karo kesehatan metabolik jangka panjang sing luwih apik.';
+  String get scoreExplainDailyAverageAbove6 =>
+      'Rata-rata saben dina ing ndhuwur 6 digandhengake karo kesehatan metabolik jangka panjang sing luwih apik.';
 
   @override
-  String get scoreExplainDessertsSugaryDrinksCandy => 'Panganan cuci mulut, ombenan manis, permen, akeh sereal sarapan. Nggawe insulin munggah, energi mudhun.';
+  String get scoreExplainDessertsSugaryDrinksCandy =>
+      'Panganan cuci mulut, ombenan manis, permen, akeh sereal sarapan. Nggawe insulin munggah, energi mudhun.';
 
   @override
-  String get scoreExplainEachMealGets => 'Saben dhaharan entuk skor kesehatan 1–10 adhedhasar kepadatan nutrisi, tingkat pangolahan, lan keselarasan karo target Panjenengan.';
+  String get scoreExplainEachMealGets =>
+      'Saben dhaharan entuk skor kesehatan 1–10 adhedhasar kepadatan nutrisi, tingkat pangolahan, lan keselarasan karo target Panjenengan.';
 
   @override
-  String get scoreExplainEngineeredFoodProductsChip => 'Produk panganan rekayasa: kripik, soda, mi instan, jajanan kemasan, umume panganan cepet saji.';
+  String get scoreExplainEngineeredFoodProductsChip =>
+      'Produk panganan rekayasa: kripik, soda, mi instan, jajanan kemasan, umume panganan cepet saji.';
 
   @override
   String get scoreExplainFodmapRating => 'Rating FODMAP';
 
   @override
-  String get scoreExplainFodmapsAreShortChain => 'FODMAPs yaiku karbohidrat rantai cendhak sing kurang diserap lan difermentasi dening bakteri usus.';
+  String get scoreExplainFodmapsAreShortChain =>
+      'FODMAPs yaiku karbohidrat rantai cendhak sing kurang diserap lan difermentasi dening bakteri usus.';
 
   @override
-  String get scoreExplainFriedFoodsProcessedMeats => 'Panganan goreng, daging olahan, ombenan manis, lenga wiji olahan, cemilan kemasan.';
+  String get scoreExplainFriedFoodsProcessedMeats =>
+      'Panganan goreng, daging olahan, ombenan manis, lenga wiji olahan, cemilan kemasan.';
 
   @override
-  String get scoreExplainGlycemicLoadCombines => 'Beban glikemik nggabungake jumlah lan kualitas karbohidrat. Iki prédhiksi sepira dhaharan nambah gula getih.';
+  String get scoreExplainGlycemicLoadCombines =>
+      'Beban glikemik nggabungake jumlah lan kualitas karbohidrat. Iki prédhiksi sepira dhaharan nambah gula getih.';
 
   @override
   String scoreExplainGlycemicLoadValue(Object v) {
@@ -31464,19 +33806,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainHigh20 => 'Dhuwur (20+)';
 
   @override
-  String get scoreExplainHighInflammationUltraProce => 'Inflamasi dhuwur, ultra-proses, utawa adoh saka target makro. Ganti menyang pilihan sing Apik yen bisa.';
+  String get scoreExplainHighInflammationUltraProce =>
+      'Inflamasi dhuwur, ultra-proses, utawa adoh saka target makro. Ganti menyang pilihan sing Apik yen bisa.';
 
   @override
-  String get scoreExplainHighProteinOrFiber => 'Protein utawa serat dhuwur, panganan alami, sithik gula tambahan, bahan anti-inflamasi.';
+  String get scoreExplainHighProteinOrFiber =>
+      'Protein utawa serat dhuwur, panganan alami, sithik gula tambahan, bahan anti-inflamasi.';
 
   @override
-  String get scoreExplainHitsYourGoalMacros => 'Pas karo target makro, umume panganan alami, inflamasi sithik-sedheng. Pilih kanthi bebas.';
+  String get scoreExplainHitsYourGoalMacros =>
+      'Pas karo target makro, umume panganan alami, inflamasi sithik-sedheng. Pilih kanthi bebas.';
 
   @override
-  String get scoreExplainHowThisDishRates => 'Kepiye rating sajian iki kanggo sampeyan';
+  String get scoreExplainHowThisDishRates =>
+      'Kepiye rating sajian iki kanggo sampeyan';
 
   @override
-  String get scoreExplainImportantIfYouHaveDiabetes => 'Penting yen Panjenengan duwe diabetes, resistensi insulin, utawa ngatur tingkat energi.';
+  String get scoreExplainImportantIfYouHaveDiabetes =>
+      'Penting yen Panjenengan duwe diabetes, resistensi insulin, utawa ngatur tingkat energi.';
 
   @override
   String scoreExplainInflammationScoreValue(Object v) {
@@ -31484,10 +33831,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainLargePopulationStudies => 'Studi populasi gedhe ngubungake konsumsi panganan ultra-proses karo kanker, penyakit kardiovaskular, lan kematian dini.';
+  String get scoreExplainLargePopulationStudies =>
+      'Studi populasi gedhe ngubungake konsumsi panganan ultra-proses karo kanker, penyakit kardiovaskular, lan kematian dini.';
 
   @override
-  String get scoreExplainLeafyGreensBerriesWild => 'Sayuran ijo, woh beri, salmon liar, kunir, lenga zaitun extra-virgin, kacang-kacangan, legum.';
+  String get scoreExplainLeafyGreensBerriesWild =>
+      'Sayuran ijo, woh beri, salmon liar, kunir, lenga zaitun extra-virgin, kacang-kacangan, legum.';
 
   @override
   String get scoreExplainLow => 'Endhek';
@@ -31499,7 +33848,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainLowUnder5G => 'Endhek (ing ngisor 5 g)';
 
   @override
-  String get scoreExplainMeatEggsRiceOats => 'Daging, endhog, sega, gandum, produk susu bebas laktosa, wortel, zucchini, bayem, woh beri, jeruk.';
+  String get scoreExplainMeatEggsRiceOats =>
+      'Daging, endhog, sega, gandum, produk susu bebas laktosa, wortel, zucchini, bayem, woh beri, jeruk.';
 
   @override
   String get scoreExplainMedium => 'Sedheng';
@@ -31508,7 +33858,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainMedium1019 => 'Sedheng (10 – 19)';
 
   @override
-  String get scoreExplainMinimalBloodSugarSpike => 'Lonjakan gula getih minimal. Sayuran non-pati, endhog, daging, woh beri, umume produk susu.';
+  String get scoreExplainMinimalBloodSugarSpike =>
+      'Lonjakan gula getih minimal. Sayuran non-pati, endhog, daging, woh beri, umume produk susu.';
 
   @override
   String get scoreExplainModerate => 'Sedheng';
@@ -31517,40 +33868,51 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainModerate514G => 'Sedheng (5 – 14 g)';
 
   @override
-  String get scoreExplainModerateSpikeOatsWhole => 'Lonjakan sedheng. Gandum, roti gandum wutuh, gedhang, ubi, sega basmati.';
+  String get scoreExplainModerateSpikeOatsWhole =>
+      'Lonjakan sedheng. Gandum, roti gandum wutuh, gedhang, ubi, sega basmati.';
 
   @override
-  String get scoreExplainMostSavouryDishesPlain => 'Umume sajian gurih, produk susu tawar, woh wutuh. Ora ana pengaruh gula getih sing signifikan.';
+  String get scoreExplainMostSavouryDishesPlain =>
+      'Umume sajian gurih, produk susu tawar, woh wutuh. Ora ana pengaruh gula getih sing signifikan.';
 
   @override
-  String get scoreExplainOnionGarlicWheatRye => 'Bawang, bawang putih, gandum, rye, susu/es krim, apel, pir, madu, kacang-kacangan, kembang kol.';
+  String get scoreExplainOnionGarlicWheatRye =>
+      'Bawang, bawang putih, gandum, rye, susu/es krim, apel, pir, madu, kacang-kacangan, kembang kol.';
 
   @override
-  String get scoreExplainOnlyRelevantIfYouHaveIbs => 'Mung relevan yen Panjenengan duwe IBS utawa kondisi usus sing didiagnosis. Aman kanggo diabaikan yen ora.';
+  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
+      'Mung relevan yen Panjenengan duwe IBS utawa kondisi usus sing didiagnosis. Aman kanggo diabaikan yen ora.';
 
   @override
-  String get scoreExplainRatingsArePersonalised => 'Rating dipersonalisasi kanggo target, alergi, lan riwayat dhaharan Panjenengan.';
+  String get scoreExplainRatingsArePersonalised =>
+      'Rating dipersonalisasi kanggo target, alergi, lan riwayat dhaharan Panjenengan.';
 
   @override
-  String get scoreExplainRawOrBasicCooked => 'Panganan mentah utawa dimasak prasaja: daging, endhog, sayuran, yogurt tawar, keju, biji-bijian wutuh.';
+  String get scoreExplainRawOrBasicCooked =>
+      'Panganan mentah utawa dimasak prasaja: daging, endhog, sayuran, yogurt tawar, keju, biji-bijian wutuh.';
 
   @override
-  String get scoreExplainReasonableChoiceCouldBe => 'Pilihan sing cukup — bisa ditingkatake ing siji utawa rong aspek (luwih akeh serat, kurang proses).';
+  String get scoreExplainReasonableChoiceCouldBe =>
+      'Pilihan sing cukup — bisa ditingkatake ing siji utawa rong aspek (luwih akeh serat, kurang proses).';
 
   @override
-  String get scoreExplainReasonableChoiceWithA => 'Pilihan sing cukup kanthi kompromi — gatekake porsi utawa pasangake karo sisih sing luwih sehat.';
+  String get scoreExplainReasonableChoiceWithA =>
+      'Pilihan sing cukup kanthi kompromi — gatekake porsi utawa pasangake karo sisih sing luwih sehat.';
 
   @override
-  String get scoreExplainScoreDetailUnavailable => 'Rincian skor ora kasedhiya kanggo dhaharan iki.';
+  String get scoreExplainScoreDetailUnavailable =>
+      'Rincian skor ora kasedhiya kanggo dhaharan iki.';
 
   @override
   String get scoreExplainSkip => 'Liwati';
 
   @override
-  String get scoreExplainSteepSpikeCrashWhite => 'Lonjakan drastis + mudhun. Bowl sega putih, ombenan manis, jajanan, piring pasta gedhe.';
+  String get scoreExplainSteepSpikeCrashWhite =>
+      'Lonjakan drastis + mudhun. Bowl sega putih, ombenan manis, jajanan, piring pasta gedhe.';
 
   @override
-  String get scoreExplainSweetenedYogurtASmall => 'Yogurt legi, jajanan cilik, setengah omben-omben olahraga. Camilan sing wajar — ora saben dina.';
+  String get scoreExplainSweetenedYogurtASmall =>
+      'Yogurt legi, jajanan cilik, setengah omben-omben olahraga. Camilan sing wajar — ora saben dina.';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -31561,19 +33923,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainUltraProcessed => 'Ultra-diproses';
 
   @override
-  String get scoreExplainUltraProcessedDeepFried => 'Ultra-diproses, digoreng, kurang serat, utawa dhuwur banget gula/natrium tambahan.';
+  String get scoreExplainUltraProcessedDeepFried =>
+      'Ultra-diproses, digoreng, kurang serat, utawa dhuwur banget gula/natrium tambahan.';
 
   @override
   String get scoreExplainUltraProcessedNova4 => 'Ultra-diproses (NOVA 4)';
 
   @override
-  String get scoreExplainWeUseTheNovaClassification => 'Kita nggunakake sistem klasifikasi NOVA sing dikembangake ing Universitas São Paulo.';
+  String get scoreExplainWeUseTheNovaClassification =>
+      'Kita nggunakake sistem klasifikasi NOVA sing dikembangake ing Universitas São Paulo.';
 
   @override
-  String get scoreExplainWhiteRicePlainEggs => 'Sego putih, endhog biasa, keju atos, daging abang tanpa lemak ing porsi cilik.';
+  String get scoreExplainWhiteRicePlainEggs =>
+      'Sego putih, endhog biasa, keju atos, daging abang tanpa lemak ing porsi cilik.';
 
   @override
-  String get scoreExplainWhoRecommendsAdults => 'WHO nyaranake wong diwasa mbatesi gula tambahan nganti < 25 g/dina (5% saka total energi).';
+  String get scoreExplainWhoRecommendsAdults =>
+      'WHO nyaranake wong diwasa mbatesi gula tambahan nganti < 25 g/dina (5% saka total energi).';
 
   @override
   String get scoreExplainWholeMinimallyProcessed => 'Wutuh / diproses minimal';
@@ -31582,7 +33948,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoreExplainWhyThisScore => 'Kenapa skor iki';
 
   @override
-  String get scoringCard6FactorWeightedSelection => 'Algoritma pilihan bobot 6-faktor';
+  String get scoringCard6FactorWeightedSelection =>
+      'Algoritma pilihan bobot 6-faktor';
 
   @override
   String get scoringCardExerciseScoringBreakdown => 'Rincian Skor Latihan';
@@ -31621,25 +33988,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get scoringHowScoresAreCalculated => 'Kepiye Skor Dihitung';
 
   @override
-  String get scoringYourOverallFitnessScore => 'Skor kebugaran sakabèhé sampeyan nggabungake faktor-faktor iki kanggo menehi tampilan lengkap babagan perjalanan kebugaran sampeyan.';
+  String get scoringYourOverallFitnessScore =>
+      'Skor kebugaran sakabèhé sampeyan nggabungake faktor-faktor iki kanggo menehi tampilan lengkap babagan perjalanan kebugaran sampeyan.';
 
   @override
   String get sectionHeaderWhatSThis => 'Apa iki?';
 
   @override
-  String get sectionedHeroAreaCalendarDisplayOptions => 'Opsi tampilan kalender';
+  String get sectionedHeroAreaCalendarDisplayOptions =>
+      'Opsi tampilan kalender';
 
   @override
   String get sectionedHeroAreaMon => 'Sen';
 
   @override
-  String get sectionedHeroAreaShowSyncedWorkouts => 'Tampilake latihan sing disinkronake';
+  String get sectionedHeroAreaShowSyncedWorkouts =>
+      'Tampilake latihan sing disinkronake';
 
   @override
-  String get sectionedHeroAreaStartWeekOnMonday => 'Mulai minggu ing dina Senin';
+  String get sectionedHeroAreaStartWeekOnMonday =>
+      'Mulai minggu ing dina Senin';
 
   @override
-  String get sectionedHeroAreaStartWeekOnSunday => 'Mulai minggu ing dina Minggu';
+  String get sectionedHeroAreaStartWeekOnSunday =>
+      'Mulai minggu ing dina Minggu';
 
   @override
   String get sectionedHeroAreaSun => 'Min';
@@ -31665,7 +34037,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get seniorCardTodaySWorkout => 'LATIHAN DINA IKI';
 
   @override
-  String get seniorFitnessAgeAdaptedWorkouts => 'Latihan sing Diselarasake karo Umur';
+  String get seniorFitnessAgeAdaptedWorkouts =>
+      'Latihan sing Diselarasake karo Umur';
 
   @override
   String get seniorFitnessRestBetweenSets => 'Ngaso Antar Set';
@@ -31685,7 +34058,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get seniorFitnessSettingsSaved => 'Setelan disimpen';
 
   @override
-  String get seniorFitnessTheseSettingsHelpCustomize => 'Setelan iki mbantu ngatur latihan kanggo kabutuhan kebugaran lansia, kalebu wektu pemulihan sing luwih suwe lan latihan sing ramah sendi.';
+  String get seniorFitnessTheseSettingsHelpCustomize =>
+      'Setelan iki mbantu ngatur latihan kanggo kabutuhan kebugaran lansia, kalebu wektu pemulihan sing luwih suwe lan latihan sing ramah sendi.';
 
   @override
   String get seniorNavFood => 'Panganan';
@@ -31713,7 +34087,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get sessionDetailWeight => 'Bobot';
 
   @override
-  String get setAdjustmentAdditionalNotesOptional => 'Cathetan tambahan (opsional)';
+  String get setAdjustmentAdditionalNotesOptional =>
+      'Cathetan tambahan (opsional)';
 
   @override
   String get setAdjustmentConfirm => 'Konfirmasi';
@@ -31728,7 +34103,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setAdjustmentSheet1Set2 => '-1 Set';
 
   @override
-  String get setAdjustmentSheetAdditionalNotesOptional => 'Cathetan tambahan (opsional)';
+  String get setAdjustmentSheetAdditionalNotesOptional =>
+      'Cathetan tambahan (opsional)';
 
   @override
   String get setAdjustmentSheetApply => 'Aplikasi';
@@ -31737,28 +34113,37 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setAdjustmentSheetCopyLast => 'Salin Pungkasan';
 
   @override
-  String get setAdjustmentSheetDoneWithThisExercise => 'Wis rampung karo latihan iki?';
+  String get setAdjustmentSheetDoneWithThisExercise =>
+      'Wis rampung karo latihan iki?';
 
   @override
   String get setAdjustmentSheetEditSets => 'Sunting Set';
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
+    Object originalSetCount,
+  ) {
     return '+$originalSetCount ditambah';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
+    Object completedCount,
+  ) {
     return '$completedCount rampung';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
+    Object remainingCount,
+  ) {
     return '$remainingCount isih ana';
   }
 
   @override
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length) {
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
+    Object length,
+  ) {
     return '$length dibusak';
   }
 
@@ -31768,7 +34153,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets) {
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
+    Object completedSets,
+  ) {
     return '$completedSets set rampung';
   }
 
@@ -31785,10 +34172,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setAdjustmentSheetWeight => 'Bobot';
 
   @override
-  String get setAdjustmentSheetWhyAreYouReducing => 'Kenapa sampeyan ngurangi set?';
+  String get setAdjustmentSheetWhyAreYouReducing =>
+      'Kenapa sampeyan ngurangi set?';
 
   @override
-  String get setAdjustmentSheetWhyAreYouStopping => 'Kenapa sampeyan mandheg luwih awal?';
+  String get setAdjustmentSheetWhyAreYouStopping =>
+      'Kenapa sampeyan mandheg luwih awal?';
 
   @override
   String get setAdjustmentWhyAreYouAdjusting => 'Kenapa sampeyan nyetel?';
@@ -31849,10 +34238,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setRowPartRepsInReserve => 'Reps in Reserve';
 
   @override
-  String get setRowPartRirHowManyMore => 'RIR = Pira maneh reps sing bisa sampeyan lakoni?';
+  String get setRowPartRirHowManyMore =>
+      'RIR = Pira maneh reps sing bisa sampeyan lakoni?';
 
   @override
-  String get setRowPartRpeMeasuresHowHard => 'RPE ngukur sepira abote set ing skala 6-10:';
+  String get setRowPartRpeMeasuresHowHard =>
+      'RPE ngukur sepira abote set ing skala 6-10:';
 
   @override
   String setRowPartRpeRirSelectorStateLeft(Object value) {
@@ -31860,7 +34251,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get setRowPartThisHelpsUsAdjust => 'Iki mbantu kita nyetel set sabanjure sampeyan';
+  String get setRowPartThisHelpsUsAdjust =>
+      'Iki mbantu kita nyetel set sabanjure sampeyan';
 
   @override
   String setRowPartWeightIncrementsValue(Object actualPercent) {
@@ -31929,7 +34321,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingOverlayAnalytics => 'Analitik';
 
   @override
-  String get setTrackingOverlayBackToCurrentExercise => 'Bali menyang Latihan Saiki';
+  String get setTrackingOverlayBackToCurrentExercise =>
+      'Bali menyang Latihan Saiki';
 
   @override
   String get setTrackingOverlayEffectiveSets => 'Set efektif';
@@ -31956,7 +34349,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingOverlayStraight => 'Lurus';
 
   @override
-  String get setTrackingOverlayTapToAddNotes => 'Tutul kanggo nambah cathetan...';
+  String get setTrackingOverlayTapToAddNotes =>
+      'Tutul kanggo nambah cathetan...';
 
   @override
   String get setTrackingOverlayTarget => 'TARGET';
@@ -31986,7 +34380,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets) {
+  String setTrackingSectionSetTapToExpand(
+    Object currentSetNumber,
+    Object totalSets,
+  ) {
     return 'Set $currentSetNumber/$totalSets • Tutul kanggo nggedhekake';
   }
 
@@ -32001,7 +34398,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get setTrackingSheetsAmountToAdjustWeight => 'Jumlah kanggo nyetel bobot';
+  String get setTrackingSheetsAmountToAdjustWeight =>
+      'Jumlah kanggo nyetel bobot';
 
   @override
   String get setTrackingSheetsDropSet => 'Drop Set';
@@ -32013,22 +34411,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingSheetsGotIt => 'Siap';
 
   @override
-  String get setTrackingSheetsImmediatelyReduceWeightAfte => 'Langsung suda bobot sawise gagal lan terusake repetisi. Apik kanggo pertumbuhan otot!';
+  String get setTrackingSheetsImmediatelyReduceWeightAfte =>
+      'Langsung suda bobot sawise gagal lan terusake repetisi. Apik kanggo pertumbuhan otot!';
 
   @override
   String get setTrackingSheetsLastSession => 'Sesi Pungkasan';
 
   @override
-  String get setTrackingSheetsLightWeightToPrepare => 'Bobot entheng kanggo nyiapake otot. Ora diitung ing volume latihan.';
+  String get setTrackingSheetsLightWeightToPrepare =>
+      'Bobot entheng kanggo nyiapake otot. Ora diitung ing volume latihan.';
 
   @override
-  String get setTrackingSheetsMarkWhenYouCouldn => 'Tandhani nalika sampeyan ora bisa ngrampungake target repetisi. Mbantu nglacak intensitas.';
+  String get setTrackingSheetsMarkWhenYouCouldn =>
+      'Tandhani nalika sampeyan ora bisa ngrampungake target repetisi. Mbantu nglacak intensitas.';
 
   @override
   String get setTrackingSheetsPersonalRecord => 'Rekor Pribadi';
 
   @override
-  String get setTrackingSheetsRateOfPerceivedExertion => 'Rate of Perceived Exertion ngukur sepira abote set sing dirasakake:';
+  String get setTrackingSheetsRateOfPerceivedExertion =>
+      'Rate of Perceived Exertion ngukur sepira abote set sing dirasakake:';
 
   @override
   String get setTrackingSheetsReps => 'Repetisi';
@@ -32061,19 +34463,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingSheetsWhatIsRpe => 'Apa iku RPE?';
 
   @override
-  String get setTrackingTableALowerRir0 => 'RIR sing luwih cendhek (0–1) tegese sampeyan wis nganti wates maksimal. RIR sing luwih dhuwur (kaya 4–6+) tegese set kasebut krasa luwih gampang lan sampeyan isih duwe tenaga akeh.';
+  String get setTrackingTableALowerRir0 =>
+      'RIR sing luwih cendhek (0–1) tegese sampeyan wis nganti wates maksimal. RIR sing luwih dhuwur (kaya 4–6+) tegese set kasebut krasa luwih gampang lan sampeyan isih duwe tenaga akeh.';
 
   @override
-  String get setTrackingTableALowerRir02 => 'RIR sing luwih cendhek (0–1) tegese sampeyan wis cedhak karo wates maksimal. RIR sing luwih dhuwur (kaya 3–4) tegese sampeyan isih duwe tenaga kanggo repetisi liyane.';
+  String get setTrackingTableALowerRir02 =>
+      'RIR sing luwih cendhek (0–1) tegese sampeyan wis cedhak karo wates maksimal. RIR sing luwih dhuwur (kaya 3–4) tegese sampeyan isih duwe tenaga kanggo repetisi liyane.';
 
   @override
   String get setTrackingTableAddSet => 'Tambah Set';
 
   @override
-  String get setTrackingTableBeginnersGetExtraBuffer => 'Wong anyar entuk buffer tambahan kanggo sinau teknik. Sing wis ahli bisa latihan luwih cedhak karo wates gagal kanthi aman.';
+  String get setTrackingTableBeginnersGetExtraBuffer =>
+      'Wong anyar entuk buffer tambahan kanggo sinau teknik. Sing wis ahli bisa latihan luwih cedhak karo wates gagal kanthi aman.';
 
   @override
-  String get setTrackingTableCompoundLiftsSquatsPresse => 'Latihan majemuk (squats, presses) tetep luwih ati-ati tinimbang gerakan isolasi (curls, raises). Hipertrofi luwih cedhak karo wates gagal tinimbang kekuatan.';
+  String get setTrackingTableCompoundLiftsSquatsPresse =>
+      'Latihan majemuk (squats, presses) tetep luwih ati-ati tinimbang gerakan isolasi (curls, raises). Hipertrofi luwih cedhak karo wates gagal tinimbang kekuatan.';
 
   @override
   String get setTrackingTableEasiest => 'Paling Gampang';
@@ -32085,13 +34491,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingTableHardest => 'Paling Abot';
 
   @override
-  String get setTrackingTableHowYourTargetRir => 'Kepiye target RIR sampeyan diitung';
+  String get setTrackingTableHowYourTargetRir =>
+      'Kepiye target RIR sampeyan diitung';
 
   @override
   String get setTrackingTableLeft => 'Kiwa';
 
   @override
-  String get setTrackingTableMachinesCablesAreSafer => 'Mesin & kabel luwih aman kanggo latihan abot. Barbell & kettlebell butuh cadangan luwih akeh amarga risiko cilaka.';
+  String get setTrackingTableMachinesCablesAreSafer =>
+      'Mesin & kabel luwih aman kanggo latihan abot. Barbell & kettlebell butuh cadangan luwih akeh amarga risiko cilaka.';
 
   @override
   String get setTrackingTableManyRepsInReserve => 'Akeh repetisi cadangan';
@@ -32116,10 +34524,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingTableRight => 'Tengen';
 
   @override
-  String get setTrackingTableRirDecreasesAcrossSets => 'RIR suda ing saben set — set pungkasan paling abot dene set sadurunge dadi pemanasan.';
+  String get setTrackingTableRirDecreasesAcrossSets =>
+      'RIR suda ing saben set — set pungkasan paling abot dene set sadurunge dadi pemanasan.';
 
   @override
-  String get setTrackingTableRirStandsForReps => 'RIR tegese Reps in Reserve—cara gampang kanggo njlentrehake sepira abote set sing dirasakake.';
+  String get setTrackingTableRirStandsForReps =>
+      'RIR tegese Reps in Reserve—cara gampang kanggo njlentrehake sepira abote set sing dirasakake.';
 
   @override
   String get setTrackingTableSet => 'Set';
@@ -32128,22 +34538,26 @@ class AppLocalizationsJv extends AppLocalizations {
   String get setTrackingTableTarget => 'TARGET';
 
   @override
-  String get setTrackingTableTrainingGoalExerciseType => 'Tujuan Latihan + Jinis Latihan';
+  String get setTrackingTableTrainingGoalExerciseType =>
+      'Tujuan Latihan + Jinis Latihan';
 
   @override
   String get setTrackingTableWhatIsRir => 'Apa iku RIR?';
 
   @override
-  String get setTrackingTableWhatYouSeeAbove => 'Sing sampeyan deleng ing ndhuwur yaiku skala RIR';
+  String get setTrackingTableWhatYouSeeAbove =>
+      'Sing sampeyan deleng ing ndhuwur yaiku skala RIR';
 
   @override
-  String get setTrackingTableYouAreNotRequired => 'Sampeyan ora diwajibake nglacak RIR, nanging kita banget nyaranake. Ngerteni wates kemampuan sampeyan bakal mbantu aplikasi iki luwih cocog karo tingkat kekuatan lan rasa kesel sampeyan saiki.';
+  String get setTrackingTableYouAreNotRequired =>
+      'Sampeyan ora diwajibake nglacak RIR, nanging kita banget nyaranake. Ngerteni wates kemampuan sampeyan bakal mbantu aplikasi iki luwih cocog karo tingkat kekuatan lan rasa kesel sampeyan saiki.';
 
   @override
   String get setTrackingTableYourFitnessLevel => 'Tingkat Kebugaran Sampeyan';
 
   @override
-  String get setTrackingTableYourRirTargetIs => 'Target RIR sampeyan dipersonalisasi nggunakake telung faktor:';
+  String get setTrackingTableYourRirTargetIs =>
+      'Target RIR sampeyan dipersonalisasi nggunakake telung faktor:';
 
   @override
   String get settings24UpcomingFeatures => '24 fitur sing bakal teka';
@@ -32180,7 +34594,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get settingsCardChangingDaysWillReschedule => 'Ngganti dina bakal ngatur ulang jadwal latihan sampeyan kanthi otomatis.';
+  String get settingsCardChangingDaysWillReschedule =>
+      'Ngganti dina bakal ngatur ulang jadwal latihan sampeyan kanthi otomatis.';
 
   @override
   String settingsCardExercises(Object length) {
@@ -32196,7 +34611,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardFailedToUpdate => 'Gagal nganyari';
 
   @override
-  String get settingsCardHowMuchExerciseVariety => 'Sepira akeh variasi latihan saben minggu?';
+  String get settingsCardHowMuchExerciseVariety =>
+      'Sepira akeh variasi latihan saben minggu?';
 
   @override
   String settingsCardLifts(Object length) {
@@ -32236,12 +34652,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region) {
+  String settingsCardPartAccentColorGridValue(
+    Object currentOffset,
+    Object region,
+  ) {
     return '$region • $currentOffset';
   }
 
   @override
-  String get settingsCardPartChangingDaysWillReschedule => 'Ngganti dina bakal ngatur ulang jadwal latihan sampeyan kanthi otomatis.';
+  String get settingsCardPartChangingDaysWillReschedule =>
+      'Ngganti dina bakal ngatur ulang jadwal latihan sampeyan kanthi otomatis.';
 
   @override
   String get settingsCardPartClearAll => 'Busak kabeh';
@@ -32286,10 +34706,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardPartSearchEquipment => 'Golek alat...';
 
   @override
-  String get settingsCardPartSelectAllEquipmentYou => 'Pilih kabeh peralatan sing sampeyan duwe akses menyang';
+  String get settingsCardPartSelectAllEquipmentYou =>
+      'Pilih kabeh peralatan sing sampeyan duwe akses menyang';
 
   @override
-  String get settingsCardPartSelectWhichDaysYou => 'Pilih dina sing arep dienggo';
+  String get settingsCardPartSelectWhichDaysYou =>
+      'Pilih dina sing arep dienggo';
 
   @override
   String get settingsCardPartSun => 'Srengéngé';
@@ -32319,7 +34741,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardPartWorkoutDays => 'POSTERS PREACH';
 
   @override
-  String get settingsCardPleaseSelectAtLeastOne => 'Tulung pilih paling sethithik siji dina latihan';
+  String get settingsCardPleaseSelectAtLeastOne =>
+      'Tulung pilih paling sethithik siji dina latihan';
 
   @override
   String settingsCardQueued(Object length) {
@@ -32330,7 +34753,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardSaveChanges => 'Simpen Owah-owahan';
 
   @override
-  String get settingsCardSelectWhichDaysYou => 'Pilih dina apa wae sing pengin sampeyan nggunakake kanggo latihan';
+  String get settingsCardSelectWhichDaysYou =>
+      'Pilih dina apa wae sing pengin sampeyan nggunakake kanggo latihan';
 
   @override
   String get settingsCardSunday => 'Senin-Minggu';
@@ -32345,10 +34769,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardUiBodyWeight => 'Bobot awak';
 
   @override
-  String get settingsCardUiChooseAnAccentColor => 'Pilih warna aksen kanggo tombol lan sorotan';
+  String get settingsCardUiChooseAnAccentColor =>
+      'Pilih warna aksen kanggo tombol lan sorotan';
 
   @override
-  String get settingsCardUiChooseHowToStructure => 'Pilih cara ngatur latihan mingguan';
+  String get settingsCardUiChooseHowToStructure =>
+      'Pilih cara ngatur latihan mingguan';
 
   @override
   String get settingsCardUiChooseTimezone => 'Pilih Timezone';
@@ -32357,22 +34783,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardUiExerciseConsistency => 'Olah raga konsistensi';
 
   @override
-  String get settingsCardUiForLoggingLiftsSets => 'Kanggo ngangkat kayu, set, bobot olahraga';
+  String get settingsCardUiForLoggingLiftsSets =>
+      'Kanggo ngangkat kayu, set, bobot olahraga';
 
   @override
-  String get settingsCardUiForWaistChestHips => 'Pinggang, dada, pinggul, lengan, kaki';
+  String get settingsCardUiForWaistChestHips =>
+      'Pinggang, dada, pinggul, lengan, kaki';
 
   @override
-  String get settingsCardUiForWeighingYourselfBmi => 'Kanggo timbang-timbang dhewe, perhitungan BMI';
+  String get settingsCardUiForWeighingYourselfBmi =>
+      'Kanggo timbang-timbang dhewe, perhitungan BMI';
 
   @override
-  String get settingsCardUiHowFastShouldWe => 'Sepira cepeté awaké dhéwé kudu nambah bobot?';
+  String get settingsCardUiHowFastShouldWe =>
+      'Sepira cepeté awaké dhéwé kudu nambah bobot?';
 
   @override
   String get settingsCardUiHowHardShouldYour => 'Sepira angelé latihanmu?';
 
   @override
-  String get settingsCardUiHowShouldTheAi => 'Kepiye AI milih latihan kanggo latihan sampeyan?';
+  String get settingsCardUiHowShouldTheAi =>
+      'Kepiye AI milih latihan kanggo latihan sampeyan?';
 
   @override
   String get settingsCardUiProgressionPace => 'Laju Progres';
@@ -32387,10 +34818,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsCardUiUnits => 'PANASONIC';
 
   @override
-  String get settingsCardUiWeightWorkoutAndBody => 'Bobot, latihan, lan unit pangukuran awak';
+  String get settingsCardUiWeightWorkoutAndBody =>
+      'Bobot, latihan, lan unit pangukuran awak';
 
   @override
-  String get settingsCardUiWhatTypeOfWorkouts => 'Apa jinis latihan sing luwih disenengi?';
+  String get settingsCardUiWhatTypeOfWorkouts =>
+      'Apa jinis latihan sing luwih disenengi?';
 
   @override
   String get settingsCardUiWorkoutType => 'Tipe Olah Raga';
@@ -32467,7 +34900,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsFavoritesAvoidedQueue => 'POSTERS PREACH';
 
   @override
-  String get settingsHealthConnect => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get settingsHealthConnect =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String get settingsHealthDevices => 'POSTERS PREACH';
@@ -32488,7 +34922,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsLogout => 'Metu';
 
   @override
-  String get settingsMealReminders => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get settingsMealReminders =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String get settingsMyGyms => 'Gymsku';
@@ -32515,10 +34950,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsRateApp => 'RATE APP';
 
   @override
-  String get settingsRecipeSchedulesSharingV => 'Resep jadul + sharing + versioning';
+  String get settingsRecipeSchedulesSharingV =>
+      'Resep jadul + sharing + versioning';
 
   @override
-  String get settingsReplayToursOrReset => 'Muter ulang tur utawa ngreset petunjuk inline';
+  String get settingsReplayToursOrReset =>
+      'Muter ulang tur utawa ngreset petunjuk inline';
 
   @override
   String get settingsResearchScience => 'Dipl.-Ing. (FH)';
@@ -32558,13 +34995,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsScreenExtReplay => 'REPLAY';
 
   @override
-  String get settingsScreenExtReplayIndividualTours => 'Main ulang tur individu';
+  String get settingsScreenExtReplayIndividualTours =>
+      'Main ulang tur individu';
 
   @override
-  String get settingsScreenExtReplayOnboardingWalkthrough => 'Onboarding walkthrough';
+  String get settingsScreenExtReplayOnboardingWalkthrough =>
+      'Onboarding walkthrough';
 
   @override
-  String get settingsScreenExtReplayTheOnboardingWalkthro => 'Muter maneh walkthrough onboarding, tur layar individu, utawa ngreset petunjuk inline.';
+  String get settingsScreenExtReplayTheOnboardingWalkthro =>
+      'Muter maneh walkthrough onboarding, tur layar individu, utawa ngreset petunjuk inline.';
 
   @override
   String get settingsScreenExtResetInlineHints => 'Undo-type';
@@ -32573,7 +35013,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsScreenExtSearchSettings => 'Setelan telusuran...';
 
   @override
-  String get settingsScreenExtSmallEmptyStateHints => 'Petunjuk negara kosong cilik sing disebar liwat aplikasi kasebut. Nguripake maneh kanggo ndeleng teks pitulung maneh.';
+  String get settingsScreenExtSmallEmptyStateHints =>
+      'Petunjuk negara kosong cilik sing disebar liwat aplikasi kasebut. Nguripake maneh kanggo ndeleng teks pitulung maneh.';
 
   @override
   String get settingsScreenExtTutorialsHints => 'POSTERS PREACH';
@@ -32589,10 +35030,14 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get settingsScreenExtYourAiPoweredPersonal => 'Pelatih kebugaran pribadi sing dikuwasani AI. Njaluk rencana latihan sing dipersonalisasi, nglacak kemajuan, lan nggayuh tujuan kebugaran.';
+  String get settingsScreenExtYourAiPoweredPersonal =>
+      'Pelatih kebugaran pribadi sing dikuwasani AI. Njaluk rencana latihan sing dipersonalisasi, nglacak kemajuan, lan nggayuh tujuan kebugaran.';
 
   @override
-  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail) {
+  String settingsScreenMailtoSubjectSupportRequest(
+    Object appName,
+    Object supportEmail,
+  ) {
     return 'mailto:$supportEmail?subject=Panjaluk Dhukungan $appName';
   }
 
@@ -32608,7 +35053,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsScreenUiNoSettingsFound => 'Setelan Ora Ditemokake';
 
   @override
-  String get settingsScreenUiTryDifferentKeywordsLike => 'Coba tembung kunci liya kaya \"tema\", \"notifikasi\", utawa \"swara AI\"';
+  String get settingsScreenUiTryDifferentKeywordsLike =>
+      'Coba tembung kunci liya kaya \"tema\", \"notifikasi\", utawa \"swara AI\"';
 
   @override
   String settingsScreenV(Object appName, Object version) {
@@ -32628,7 +35074,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsSharingExportEmail => 'Nuduhake, ngekspor, email';
 
   @override
-  String get settingsSingleLevelWithCrate => 'Tingkat tunggal, kanthi ganjaran kothak';
+  String get settingsSingleLevelWithCrate =>
+      'Tingkat tunggal, kanthi ganjaran kothak';
 
   @override
   String get settingsSoundNotifs => 'Swara & Notifs';
@@ -32664,7 +35111,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsTitle => 'Setelan';
 
   @override
-  String get settingsTitleChangeBeginnerNovic => 'Owah-owahan judhul: Beginner → Novice';
+  String get settingsTitleChangeBeginnerNovic =>
+      'Owah-owahan judhul: Beginner → Novice';
 
   @override
   String get settingsTraining => 'Trololololol';
@@ -32709,7 +35157,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get shareableGallerySortTooltip => 'Urutake cithakan';
 
   @override
-  String get shareArtifactCardCouldNotCreateShare => 'Ora bisa nggawe link nuduhake.';
+  String get shareArtifactCardCouldNotCreateShare =>
+      'Ora bisa nggawe link nuduhake.';
 
   @override
   String get shareArtifactCardOpenInApp => 'Bukak ing APP';
@@ -32790,7 +35239,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get shareStatsInstagram => 'Instagram';
 
   @override
-  String get shareStatsLogAWorkoutTo => 'Log latihan kanggo mbukak kunci template nuduhake.';
+  String get shareStatsLogAWorkoutTo =>
+      'Log latihan kanggo mbukak kunci template nuduhake.';
 
   @override
   String get shareStatsSaveOnly => 'SAVE ONLY';
@@ -32907,7 +35357,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get shareWorkoutSheetPinchToZoomTap => 'To zoom_Ketik ing endi wae kanggo nutup';
+  String get shareWorkoutSheetPinchToZoomTap =>
+      'To zoom_Ketik ing endi wae kanggo nutup';
 
   @override
   String get shareWorkoutSheetReset => 'PANASONIC';
@@ -32925,10 +35376,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get sharedWorkoutDetailAcceptChallenge => 'Nampa Tantangan';
 
   @override
-  String get sharedWorkoutDetailExerciseDetailsNotAvailable => 'Rincian latihan ora kasedhiya';
+  String get sharedWorkoutDetailExerciseDetailsNotAvailable =>
+      'Rincian latihan ora kasedhiya';
 
   @override
-  String get sharedWorkoutDetailScheduleForLater => 'SaveSave Jadwal Untuk Nanti';
+  String get sharedWorkoutDetailScheduleForLater =>
+      'SaveSave Jadwal Untuk Nanti';
 
   @override
   String sharedWorkoutDetailScreenBy(Object _actionVerb, Object posterName) {
@@ -32998,7 +35451,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get skillProgressSummaryYourProgress => 'Progress Panjenengan';
 
   @override
-  String get skillProgressionsActiveProgressions => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get skillProgressionsActiveProgressions =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String get skillProgressionsAllSkills => 'Sakabehing Keterampilan';
@@ -33007,37 +35461,46 @@ class AppLocalizationsJv extends AppLocalizations {
   String get skillProgressionsBrowseSkills => 'POSTERS PREACH';
 
   @override
-  String get skillProgressionsChooseASkillProgression => 'Pilih kemajuan katrampilan kanggo miwiti nguwasani gerakan bobot awak langkah demi langkah.';
+  String get skillProgressionsChooseASkillProgression =>
+      'Pilih kemajuan katrampilan kanggo miwiti nguwasani gerakan bobot awak langkah demi langkah.';
 
   @override
-  String get skillProgressionsDiscoverMoreSkills => 'Temokake Keterampilan Liyane';
+  String get skillProgressionsDiscoverMoreSkills =>
+      'Temokake Keterampilan Liyane';
 
   @override
-  String get skillProgressionsMasterBodyweightSkillsStep => 'Keterampilan bobot awak master langkah demi langkah';
+  String get skillProgressionsMasterBodyweightSkillsStep =>
+      'Keterampilan bobot awak master langkah demi langkah';
 
   @override
-  String get skillProgressionsMyProgress => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get skillProgressionsMyProgress =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
-  String get skillProgressionsNoSkillsInThis => 'Ora ana katrampilan ing kategori iki';
+  String get skillProgressionsNoSkillsInThis =>
+      'Ora ana katrampilan ing kategori iki';
 
   @override
-  String get skillProgressionsSkillProgressions => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get skillProgressionsSkillProgressions =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String get skillProgressionsSomethingWentWrong => 'Ana sing salah';
 
   @override
-  String get skillProgressionsStartYourJourney => 'Miwiti Lelampahan Panjenengan';
+  String get skillProgressionsStartYourJourney =>
+      'Miwiti Lelampahan Panjenengan';
 
   @override
   String get skillProgressionsTryAgain => 'Coba Deui';
 
   @override
-  String get skillsMasterBodyweightSkillsStep => 'Keterampilan bobot awak master langkah demi langkah kanthi rantai kemajuan sing dipandu.';
+  String get skillsMasterBodyweightSkillsStep =>
+      'Keterampilan bobot awak master langkah demi langkah kanthi rantai kemajuan sing dipandu.';
 
   @override
-  String get skillsSkillProgressions => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get skillsSkillProgressions =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String sleepCorrelationCardPairedSessionsR(Object n, Object r) {
@@ -33060,13 +35523,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get sleepDetailCoachingTips => 'POSTERS PREACH';
 
   @override
-  String get sleepDetailConnectHealth => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get sleepDetailConnectHealth =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
-  String get sleepDetailConnectHealthToSee => 'Sambungake Kesehatan kanggo ndeleng turu';
+  String get sleepDetailConnectHealthToSee =>
+      'Sambungake Kesehatan kanggo ndeleng turu';
 
   @override
-  String get sleepDetailCouldNotLoadSleep => 'Ora bisa mbukak data turu. Mundur lan coba maneh.';
+  String get sleepDetailCouldNotLoadSleep =>
+      'Ora bisa mbukak data turu. Mundur lan coba maneh.';
 
   @override
   String get sleepDetailCouldNotSaveSleep => 'Aku ora bisa ngirit gol turu.';
@@ -33096,7 +35562,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get sleepDetailNightsWithNaps => 'Wengi karo naps';
 
   @override
-  String get sleepDetailNoSleepTrackedIn => 'Ora ana turu sing dilacak ing 7 wengi pungkasan.';
+  String get sleepDetailNoSleepTrackedIn =>
+      'Ora ana turu sing dilacak ing 7 wengi pungkasan.';
 
   @override
   String get sleepDetailRegularity => 'Regularitas';
@@ -33160,7 +35627,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get sleepDetailTrendUnavailable => 'Tren ora kasedhiya.';
 
   @override
-  String get sleepDetailTwoOrMoreSynced => 'Rong utawa luwih wengi sing disinkronake dibutuhake kanggo nggambarake tren.';
+  String get sleepDetailTwoOrMoreSynced =>
+      'Rong utawa luwih wengi sing disinkronake dibutuhake kanggo nggambarake tren.';
 
   @override
   String get sleepHypnogramAwake => 'Awake dhewe isih duwe akeh.';
@@ -33180,16 +35648,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get smartInsightCardSmartInsight => 'INFOINFOINFO';
 
   @override
-  String get snappedEquipmentCouldnTReuseThat => 'Aku ora bisa nggunakake maneh snap sing. Coba maneh.';
+  String get snappedEquipmentCouldnTReuseThat =>
+      'Aku ora bisa nggunakake maneh snap sing. Coba maneh.';
 
   @override
-  String get snappedEquipmentNoMatchingExercisesFor => 'Ora ana latihan sing cocog kanggo peralatan iki.';
+  String get snappedEquipmentNoMatchingExercisesFor =>
+      'Ora ana latihan sing cocog kanggo peralatan iki.';
 
   @override
-  String get snappedEquipmentNoSnappedEquipmentYet => 'Durung ana peralatan sing cepet-cepet';
+  String get snappedEquipmentNoSnappedEquipmentYet =>
+      'Durung ana peralatan sing cepet-cepet';
 
   @override
-  String get snappedEquipmentTapTheCameraButton => 'Ketik tombol kamera kanggo ngenali gear ing ngarep sampeyan.';
+  String get snappedEquipmentTapTheCameraButton =>
+      'Ketik tombol kamera kanggo ngenali gear ing ngarep sampeyan.';
 
   @override
   String get socialAutoScrollFeed => 'Auto-gulung Feed';
@@ -33216,10 +35688,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get socialPrivacyAllowFriendRequests => 'Ngidini Panjaluk Kanca';
 
   @override
-  String get socialPrivacyAllowGeneratingShareableWor => 'Ngidini ngasilake URL latihan sing bisa dituduhake sapa wae bisa mbukak';
+  String get socialPrivacyAllowGeneratingShareableWor =>
+      'Ngidini ngasilake URL latihan sing bisa dituduhake sapa wae bisa mbukak';
 
   @override
-  String get socialPrivacyAppearInPublicAnd => 'Muncul ing papan peringkat umum lan kanca';
+  String get socialPrivacyAppearInPublicAnd =>
+      'Muncul ing papan peringkat umum lan kanca';
 
   @override
   String get socialPrivacyChallengeInvites => 'Tantangan Undangan';
@@ -33234,13 +35708,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get socialPrivacyFriendRequests => 'POSTERS PREACH';
 
   @override
-  String get socialPrivacyLetOthersInviteYou => 'Ayo wong liya ngajak panjenengan ngadhepi tantangan';
+  String get socialPrivacyLetOthersInviteYou =>
+      'Ayo wong liya ngajak panjenengan ngadhepi tantangan';
 
   @override
-  String get socialPrivacyLetOthersSeeWhen => 'Ayo wong liya ndeleng nalika sampeyan wis maca pesen sing';
+  String get socialPrivacyLetOthersSeeWhen =>
+      'Ayo wong liya ndeleng nalika sampeyan wis maca pesen sing';
 
   @override
-  String get socialPrivacyLetOthersSendYou => 'Ayo wong liya ngirim panjaluk kanca';
+  String get socialPrivacyLetOthersSendYou =>
+      'Ayo wong liya ngirim panjaluk kanca';
 
   @override
   String get socialPrivacyPrivateAccount => 'Akun Pribadi';
@@ -33255,7 +35732,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get socialPrivacyReadReceipts => 'Maca kuitansi';
 
   @override
-  String get socialPrivacyRequireApprovalForFollow => 'Nyuwun persetujuan kanggo panjaluk ing ngisor iki';
+  String get socialPrivacyRequireApprovalForFollow =>
+      'Nyuwun persetujuan kanggo panjaluk ing ngisor iki';
 
   @override
   String get socialPrivacyShowOnLeaderboards => 'POSTERS PREACH';
@@ -33267,25 +35745,31 @@ class AppLocalizationsJv extends AppLocalizations {
   String get socialPrivacySocialPrivacy => 'POSTERS PREACH';
 
   @override
-  String get socialPrivacyWhenFriendsCompleteWorkouts => 'Nalika kanca ngrampungake latihan utawa tekan tonggak sejarah';
+  String get socialPrivacyWhenFriendsCompleteWorkouts =>
+      'Nalika kanca ngrampungake latihan utawa tekan tonggak sejarah';
 
   @override
-  String get socialPrivacyWhenSomeoneCommentsOn => 'Nalika ana wong sing menehi komentar ing kiriman sampeyan';
+  String get socialPrivacyWhenSomeoneCommentsOn =>
+      'Nalika ana wong sing menehi komentar ing kiriman sampeyan';
 
   @override
-  String get socialPrivacyWhenSomeoneInvitesYou => 'Nalika ana wong sing ngajak sampeyan kanggo tantangan';
+  String get socialPrivacyWhenSomeoneInvitesYou =>
+      'Nalika ana wong sing ngajak sampeyan kanggo tantangan';
 
   @override
-  String get socialPrivacyWhenSomeoneReactsTo => 'Nalika ana wong sing nanggapi postingan sampeyan';
+  String get socialPrivacyWhenSomeoneReactsTo =>
+      'Nalika ana wong sing nanggapi postingan sampeyan';
 
   @override
-  String get socialPrivacyWhenSomeoneSendsYou => 'Nalika ana sing ngirim panjaluk kanca';
+  String get socialPrivacyWhenSomeoneSendsYou =>
+      'Nalika ana sing ngirim panjaluk kanca';
 
   @override
   String get socialRanks => 'PANASONIC';
 
   @override
-  String get socialScreenPartEnterAGroupName => 'Ketik jeneng klompok lan pilih paling ora 2 anggota';
+  String get socialScreenPartEnterAGroupName =>
+      'Ketik jeneng klompok lan pilih paling ora 2 anggota';
 
   @override
   String get socialScreenPartFailedToCreateGroup => 'Gagal nggawe klompok';
@@ -33297,7 +35781,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get socialScreenPartFailedToLoadFriends => 'Gagal mbukak kanca';
 
   @override
-  String get socialScreenPartFailedToStartConversation => 'Gagal miwiti obrolan';
+  String get socialScreenPartFailedToStartConversation =>
+      'Gagal miwiti obrolan';
 
   @override
   String get socialScreenPartGroupName => 'NAME GROUP';
@@ -33316,16 +35801,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get socialScreenPartNewGroup => 'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
+  String get socialScreenPartNewGroup =>
+      'ЭэээээээээээээээээээээээээээээээээээээээээээЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭЭ';
 
   @override
   String get socialScreenPartNewMessage => 'Pesen Anyar';
 
   @override
-  String get socialScreenPartNoConversationsFound => 'Ora ana obrolan sing ditemokake';
+  String get socialScreenPartNoConversationsFound =>
+      'Ora ana obrolan sing ditemokake';
 
   @override
-  String get socialScreenPartNoFriendsToAdd => 'Ora ana kanca sing bisa ditambahake';
+  String get socialScreenPartNoFriendsToAdd =>
+      'Ora ana kanca sing bisa ditambahake';
 
   @override
   String get socialScreenPartNoFriendsToMessage => 'Ora ana kanca kanggo pesen';
@@ -33387,16 +35875,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get soundSettingsExerciseCompletion => 'Olah raga Rampung';
 
   @override
-  String get soundSettingsPlaySoundWhenAll => 'Muter swara nalika kabeh set latihan rampung';
+  String get soundSettingsPlaySoundWhenAll =>
+      'Muter swara nalika kabeh set latihan rampung';
 
   @override
-  String get soundSettingsPlaySoundWhenEntire => 'Muter swara nalika kabeh latihan rampung';
+  String get soundSettingsPlaySoundWhenEntire =>
+      'Muter swara nalika kabeh latihan rampung';
 
   @override
-  String get soundSettingsPlaySoundWhenRest => 'Puter swara nalika wektu ngaso rampung';
+  String get soundSettingsPlaySoundWhenRest =>
+      'Puter swara nalika wektu ngaso rampung';
 
   @override
-  String get soundSettingsPlaySoundsDuringCountdown => 'Puter swara nalika countdown (3, 2, 1)';
+  String get soundSettingsPlaySoundsDuringCountdown =>
+      'Puter swara nalika countdown (3, 2, 1)';
 
   @override
   String get soundSettingsRestTimerEnd => 'Pungkasan Timer Ngaso';
@@ -33411,7 +35903,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get soundSettingsSoundVolume => 'Volume Swara';
 
   @override
-  String get soundSettingsTapToSelectLong => 'Tutul kanggo milih. Pencet suwe kanggo pratinjau.';
+  String get soundSettingsTapToSelectLong =>
+      'Tutul kanggo milih. Pencet suwe kanggo pratinjau.';
 
   @override
   String get soundSettingsWorkoutCompletion => 'Latihan Rampung';
@@ -33444,10 +35937,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stackedBannerPanelFailedToClaimCrate => 'Gagal njupuk kothak';
 
   @override
-  String get stackedBannerPanelFollowUsOnInstagram => 'Tututi kita ing Instagram';
+  String get stackedBannerPanelFollowUsOnInstagram =>
+      'Tututi kita ing Instagram';
 
   @override
-  String get stackedBannerPanelGetHelpShareWins => 'Entuk bantuan, nuduhake kamenangan, lan njaluk fitur ing Discord';
+  String get stackedBannerPanelGetHelpShareWins =>
+      'Entuk bantuan, nuduhake kamenangan, lan njaluk fitur ing Discord';
 
   @override
   String get stackedBannerPanelJoinTheCommunity => 'Gabung karo Komunitas';
@@ -33461,7 +35956,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription) {
+  String stackedBannerPanelMinExercises(
+    Object durationMinutes,
+    Object exercisesCount,
+    Object missedDescription,
+  ) {
     return '$missedDescription · ${durationMinutes}menit · $exercisesCount latihan';
   }
 
@@ -33474,19 +35973,25 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stackedBannerPanelNewPr => 'PR Anyar!';
 
   @override
-  String get stackedBannerPanelNoCratesAvailableRight => 'Ora ana kothak sing kasedhiya saiki';
+  String get stackedBannerPanelNoCratesAvailableRight =>
+      'Ora ana kothak sing kasedhiya saiki';
 
   @override
   String get stackedBannerPanelOpenAll => 'Bukak Kabeh';
 
   @override
-  String get stackedBannerPanelOpenThemBeforeDismissing => 'Bukak dhisik sadurunge dicopot?';
+  String get stackedBannerPanelOpenThemBeforeDismissing =>
+      'Bukak dhisik sadurunge dicopot?';
 
   @override
   String get stackedBannerPanelOpeningCrate => 'Mbukak kothak...';
 
   @override
-  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel) {
+  String stackedBannerPanelRenewsInDaysFor(
+    Object days,
+    Object formattedAmount,
+    Object tierLabel,
+  ) {
     return '$tierLabel bakal dianyari ing $days dina kanthi rega $formattedAmount';
   }
 
@@ -33494,7 +35999,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stackedBannerPanelSubscriptionRenewing => 'Langganan Dianyari';
 
   @override
-  String get stackedBannerPanelTapToRevisitYour => 'Tutul kanggo ndeleng maneh kepribadian gym sampeyan';
+  String get stackedBannerPanelTapToRevisitYour =>
+      'Tutul kanggo ndeleng maneh kepribadian gym sampeyan';
 
   @override
   String stackedBannerPanelValue(Object eventName, Object timeStr) {
@@ -33507,7 +36013,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr) {
+  String stackedBannerPanelWorkoutsLifted(
+    Object totalWorkouts,
+    Object volumeStr,
+  ) {
     return '$totalWorkouts latihan · $volumeStr diangkat';
   }
 
@@ -33532,7 +36041,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get stackedBannerPanelYouHaveUnopenedCrates => 'Sampeyan duwe kothak sing durung dibukak!';
+  String get stackedBannerPanelYouHaveUnopenedCrates =>
+      'Sampeyan duwe kothak sing durung dibukak!';
 
   @override
   String stackedBannerPanelYouReAwayFrom(Object remaining, Object workoutWord) {
@@ -33578,7 +36088,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleChoiceDuration => 'Durasi';
 
   @override
-  String get stapleChoiceEGFocusOn => 'tuladhane Fokus ing remet ing ndhuwur, eccentric alon';
+  String get stapleChoiceEGFocusOn =>
+      'tuladhane Fokus ing remet ing ndhuwur, eccentric alon';
 
   @override
   String get stapleChoiceEveryDay => 'Saben Dina';
@@ -33602,7 +36113,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleChoiceNotes => 'Cathetan';
 
   @override
-  String get stapleChoiceReplaceAnExerciseIn => 'Ganti latihan ing latihan dina iki';
+  String get stapleChoiceReplaceAnExerciseIn =>
+      'Ganti latihan ing latihan dina iki';
 
   @override
   String get stapleChoiceReps => 'Reps';
@@ -33632,10 +36144,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleChoiceSheetIncline => 'Incline';
 
   @override
-  String get stapleChoiceSheetNoExercisesInWorkout => 'Ora ana latihan ing sesi iki';
+  String get stapleChoiceSheetNoExercisesInWorkout =>
+      'Ora ana latihan ing sesi iki';
 
   @override
-  String get stapleChoiceSheetNoWorkoutAvailable => 'Ora ana latihan sing kasedhiya';
+  String get stapleChoiceSheetNoWorkoutAvailable =>
+      'Ora ana latihan sing kasedhiya';
 
   @override
   String get stapleChoiceSheetResistance => 'Resistansi';
@@ -33671,7 +36185,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleChoiceWorkoutDays => 'Dina Latihan';
 
   @override
-  String get stapleChoiceYourExerciseWonT => 'Latihan sampeyan ora bakal disimpen minangka staple.';
+  String get stapleChoiceYourExerciseWonT =>
+      'Latihan sampeyan ora bakal disimpen minangka staple.';
 
   @override
   String get stapleExercisesBikeSettings => 'Setelan Sepeda';
@@ -33692,7 +36207,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleExercisesEllipticalSettings => 'Setelan Elliptical';
 
   @override
-  String get stapleExercisesHighlightedYourWorkoutDay => 'Sing disorot = dina latihan sampeyan';
+  String get stapleExercisesHighlightedYourWorkoutDay =>
+      'Sing disorot = dina latihan sampeyan';
 
   @override
   String get stapleExercisesIncline => 'Incline';
@@ -33782,7 +36298,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stapleExercisesTargetDays => 'Target Dina';
 
   @override
-  String get stapleExercisesTheseCoreLiftsWill => 'Latihan inti iki ORA bakal diowahi saka jadwal latihanmu, ora preduli setelan variasi sing dipilih.';
+  String get stapleExercisesTheseCoreLiftsWill =>
+      'Latihan inti iki ORA bakal diowahi saka jadwal latihanmu, ora preduli setelan variasi sing dipilih.';
 
   @override
   String get stapleExercisesTreadmillSettings => 'Setelan Treadmill';
@@ -33803,7 +36320,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get startFastChooseAPlan => 'Pilih Rencana';
 
   @override
-  String get startFastChooseProtocolStartTime => 'Pilih protokol & wektu wiwitan';
+  String get startFastChooseProtocolStartTime =>
+      'Pilih protokol & wektu wiwitan';
 
   @override
   String get startFastDuration => 'Durasi';
@@ -33835,7 +36353,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get statsAchievementsTemplateAchievements => 'PENCAPAIAN';
 
   @override
-  String get statsAchievementsTemplateAchievementsUnlocked => 'Pencapaian Dibukak';
+  String get statsAchievementsTemplateAchievementsUnlocked =>
+      'Pencapaian Dibukak';
 
   @override
   String get statsAchievementsTemplateDayStreak => 'Streak Dina';
@@ -33867,7 +36386,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get statsOverviewTemplateWorkouts => 'LATIHAN';
 
   @override
-  String get statsPrsTemplateKeepPushingToSet => 'Terus usaha kanggo nggawe rekor anyar!';
+  String get statsPrsTemplateKeepPushingToSet =>
+      'Terus usaha kanggo nggawe rekor anyar!';
 
   @override
   String get statsPrsTemplateNoPrsYet => 'Durung ana PR';
@@ -33902,7 +36422,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get statsRewardsLeaderboard => 'Papan Peringkat';
 
   @override
-  String get statsRewardsOverlayAnyTwoMetrics => 'Tumpang tindih rong metrik apa wae & deleng korelasine';
+  String get statsRewardsOverlayAnyTwoMetrics =>
+      'Tumpang tindih rong metrik apa wae & deleng korelasine';
 
   @override
   String get statsRewardsProgress => 'PROGRES';
@@ -34009,10 +36530,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stepGoalCardGoalReached => 'Target wis digayuh';
 
   @override
-  String get stepGoalCardGoalReachedGreatJob => 'Target wis digayuh! Apik banget!';
+  String get stepGoalCardGoalReachedGreatJob =>
+      'Target wis digayuh! Apik banget!';
 
   @override
-  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage) {
+  String stepGoalCardStepGoalProgressOf(
+    Object currentSteps,
+    Object goalSteps,
+    Object percentage,
+  ) {
     return 'Kemajuan target langkah: $currentSteps saka $goalSteps langkah, $percentage persen rampung';
   }
 
@@ -34025,7 +36551,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get stepGoalEditorAutomaticallyIncreasesYourG => 'Otomatis nambah targetmu nalika progresmu mundhak';
+  String get stepGoalEditorAutomaticallyIncreasesYourG =>
+      'Otomatis nambah targetmu nalika progresmu mundhak';
 
   @override
   String get stepGoalEditorQuickSelect => 'PILIH CEPAT';
@@ -34047,7 +36574,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal) {
+  String stepGoalEditorSheetStepGoalSliderFrom(
+    Object _maxGoal,
+    Object _minGoal,
+  ) {
     return 'Panggeser target langkah, saka $_minGoal nganti $_maxGoal langkah';
   }
 
@@ -34063,7 +36593,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stepGoalEditorUseProgressiveGoal => 'Gunakake Target Progresif';
 
   @override
-  String get stepGoalEditorWhenYouHitYour => 'Nalika sampeyan nggayuh target 5 dina berturut-turut, kita bakal nambah 500 langkah. Yen bolong 3 dina, bakal reset menyang target dhasar.';
+  String get stepGoalEditorWhenYouHitYour =>
+      'Nalika sampeyan nggayuh target 5 dina berturut-turut, kita bakal nambah 500 langkah. Yen bolong 3 dina, bakal reset menyang target dhasar.';
 
   @override
   String stepsCounterCardConnect(Object sourceLabel) {
@@ -34100,7 +36631,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get storyCreateUploading => 'Ngunggah...';
 
   @override
-  String get storyCreateYourStoryWillBe => 'Crita sampeyan bakal katon suwene 24 jam';
+  String get storyCreateYourStoryWillBe =>
+      'Crita sampeyan bakal katon suwene 24 jam';
 
   @override
   String get storyViewerNoStories => 'Ora ana crita';
@@ -34109,13 +36641,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get strainCoachCardConnect => 'Sambungake';
 
   @override
-  String get strainCoachCardConnectHealthForAn => 'Sambungake kesehatan kanggo nelpon intensitas.';
+  String get strainCoachCardConnectHealthForAn =>
+      'Sambungake kesehatan kanggo nelpon intensitas.';
 
   @override
   String get strainCoachCardTodaySIntensity => 'INTENSITAS DINA IKI';
 
   @override
-  String get strainDashboardCompleteSomeWorkoutsTo => 'Rampungake sawetara latihan kanggo ndeleng wawasan pencegahan ketegangan sampeyan.';
+  String get strainDashboardCompleteSomeWorkoutsTo =>
+      'Rampungake sawetara latihan kanggo ndeleng wawasan pencegahan ketegangan sampeyan.';
 
   @override
   String get strainDashboardFailedToLoadData => 'Gagal Muat Data';
@@ -34169,7 +36703,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get streakBadgesHitYourGoalTo => 'Gayuh target sampeyan kanggo miwiti streak!';
+  String get streakBadgesHitYourGoalTo =>
+      'Gayuh target sampeyan kanggo miwiti streak!';
 
   @override
   String streakBadgesMoreDaysToBronze(Object currentStreak) {
@@ -34235,7 +36770,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get streakMilestoneStreakMilestone => 'MILESTONE STREAK!';
 
   @override
-  String get streakMilestoneYouVeReachedThe => 'Sampeyan wis tekan milestone streak utama!';
+  String get streakMilestoneYouVeReachedThe =>
+      'Sampeyan wis tekan milestone streak utama!';
 
   @override
   String streakSavedDialogWeUsedStreakShield(Object savedStreakCount) {
@@ -34270,19 +36806,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get strengthOverviewCardCheckIn => 'Check in';
 
   @override
-  String get strengthOverviewCardCompleteWorkoutsWithResista => 'Rampungake latihan kanthi latihan resistensi\nkanggo nglacak kemajuan kekuwatan sampeyan.';
+  String get strengthOverviewCardCompleteWorkoutsWithResista =>
+      'Rampungake latihan kanthi latihan resistensi\nkanggo nglacak kemajuan kekuwatan sampeyan.';
 
   @override
-  String get strengthOverviewCardDragU2630ToReorder => 'Seret ☰ kanggo ngurutake maneh · Tutul pin kanggo tetep ing ndhuwur';
+  String get strengthOverviewCardDragU2630ToReorder =>
+      'Seret ☰ kanggo ngurutake maneh · Tutul pin kanggo tetep ing ndhuwur';
 
   @override
-  String get strengthOverviewCardHowAreYouFeeling => 'Kepiye perasaan sampeyan dina iki?';
+  String get strengthOverviewCardHowAreYouFeeling =>
+      'Kepiye perasaan sampeyan dina iki?';
 
   @override
   String get strengthOverviewCardHowScoresWork => 'Kepiye cara kerja skor';
 
   @override
-  String get strengthOverviewCardHowStrengthScoresWork => 'Kepiye Cara Kerja Skor Kekuwatan';
+  String get strengthOverviewCardHowStrengthScoresWork =>
+      'Kepiye Cara Kerja Skor Kekuwatan';
 
   @override
   String get strengthOverviewCardLevels => 'Level';
@@ -34297,13 +36837,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get strengthOverviewCardMuscle => 'Otot';
 
   @override
-  String get strengthOverviewCardNoStrengthDataYet => 'Durung Ana Data Kekuwatan';
+  String get strengthOverviewCardNoStrengthDataYet =>
+      'Durung Ana Data Kekuwatan';
 
   @override
   String get strengthOverviewCardOptimal => 'Optimal';
 
   @override
-  String get strengthOverviewCardOverallScoreHeroRing => 'Skor Sakabèhé (Hero Ring)';
+  String get strengthOverviewCardOverallScoreHeroRing =>
+      'Skor Sakabèhé (Hero Ring)';
 
   @override
   String get strengthOverviewCardReadiness => 'Kesiapan';
@@ -34312,16 +36854,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get strengthOverviewCardRecalculate => 'Etung maneh';
 
   @override
-  String get strengthOverviewCardScoreIsCalculatedFrom => 'Skor diitung saka set paling apik sampeyan (bobot x repetisi) kanggo saben klompok otot ing 90 dina pungkasan. Rasio bobot awak luwih dhuwur = skor luwih dhuwur.';
+  String get strengthOverviewCardScoreIsCalculatedFrom =>
+      'Skor diitung saka set paling apik sampeyan (bobot x repetisi) kanggo saben klompok otot ing 90 dina pungkasan. Rasio bobot awak luwih dhuwur = skor luwih dhuwur.';
 
   @override
-  String get strengthOverviewCardScoresUpdateAutomaticallyAf => 'Skor nganyari kanthi otomatis sawise saben latihan. Mung latihan resistensi sing dilacak sing diitung — latihan kardio sing diimpor ora mengaruhi skor.';
+  String get strengthOverviewCardScoresUpdateAutomaticallyAf =>
+      'Skor nganyari kanthi otomatis sawise saben latihan. Mung latihan resistensi sing dilacak sing diitung — latihan kardio sing diimpor ora mengaruhi skor.';
 
   @override
   String get strengthOverviewCardStrengthScore => 'Skor Kekuwatan';
 
   @override
-  String get strengthOverviewCardTheRingDisplaysA => 'Ring kasebut nampilake rata-rata bobot saka kabeh skor klompok otot sampeyan. 1RM diitung nggunakake rata-rata rumus Brzycki/Epley/Lombardi saka set paling apik sing dicathet ing 90 dina pungkasan.';
+  String get strengthOverviewCardTheRingDisplaysA =>
+      'Ring kasebut nampilake rata-rata bobot saka kabeh skor klompok otot sampeyan. 1RM diitung nggunakake rata-rata rumus Brzycki/Epley/Lombardi saka set paling apik sing dicathet ing 90 dina pungkasan.';
 
   @override
   String get strengthOverviewCardTrainingStatus => 'Status Latihan';
@@ -34332,16 +36877,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get strengthOverviewCardValuesAreForIntermediate => 'Nilai kasebut kanggo lifter tingkat menengah lan nyetel kanthi otomatis adhedhasar level latihan sampeyan. Status uga nimbang check-in kesiapan sampeyan.';
+  String get strengthOverviewCardValuesAreForIntermediate =>
+      'Nilai kasebut kanggo lifter tingkat menengah lan nyetel kanthi otomatis adhedhasar level latihan sampeyan. Status uga nimbang check-in kesiapan sampeyan.';
 
   @override
-  String get strengthOverviewCardVolumeGuidelinesSetsWeek => 'Pedoman Volume (set/minggu)';
+  String get strengthOverviewCardVolumeGuidelinesSetsWeek =>
+      'Pedoman Volume (set/minggu)';
 
   @override
-  String get strengthOverviewCardYourOverallFitnessScore => 'Skor kebugaran sakabèhé sampeyan diwenehi bobot:\nKekuwatan 40% + Konsistensi 30% + Nutrisi 20% + Kesiapan 10%';
+  String get strengthOverviewCardYourOverallFitnessScore =>
+      'Skor kebugaran sakabèhé sampeyan diwenehi bobot:\nKekuwatan 40% + Konsistensi 30% + Nutrisi 20% + Kesiapan 10%';
 
   @override
-  String get strengthOverviewCardYourStrengthScore0 => 'Skor kekuwatan sampeyan (0-100) ngukur sepira akeh sing bisa sampeyan angkat relatif marang bobot awak sampeyan, dibandhingake karo standar sing wis ditemtokake.';
+  String get strengthOverviewCardYourStrengthScore0 =>
+      'Skor kekuwatan sampeyan (0-100) ngukur sepira akeh sing bisa sampeyan angkat relatif marang bobot awak sampeyan, dibandhingake karo standar sing wis ditemtokake.';
 
   @override
   String get strengthRecentPersonalRecords => 'Rekor Pribadi Anyar';
@@ -34377,7 +36926,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get stretchPhaseFinish => 'Rampung';
 
   @override
-  String get stretchPhaseGreatJobTimeTo => 'Pakaryan apik! Wektune kanggo nggulung lan pulih.';
+  String get stretchPhaseGreatJobTimeTo =>
+      'Pakaryan apik! Wektune kanggo nggulung lan pulih.';
 
   @override
   String get stretchPhasePause => 'Jeda';
@@ -34397,22 +36947,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get subscriptionManagementBillingInformation => 'Informasi Tagihan';
 
   @override
-  String get subscriptionManagementCouldNotOpenSubscription => 'Ora bisa mbukak setelan langganan';
+  String get subscriptionManagementCouldNotOpenSubscription =>
+      'Ora bisa mbukak setelan langganan';
 
   @override
-  String get subscriptionManagementFailedToLoadSubscription => 'Gagal mbukak langganan';
+  String get subscriptionManagementFailedToLoadSubscription =>
+      'Gagal mbukak langganan';
 
   @override
-  String get subscriptionManagementGetUnlimitedWorkoutsAi => 'Entuk latihan tanpa wates, pelatihan AI, lan liya-liyane';
+  String get subscriptionManagementGetUnlimitedWorkoutsAi =>
+      'Entuk latihan tanpa wates, pelatihan AI, lan liya-liyane';
 
   @override
   String get subscriptionManagementManageSubscription => 'Kelola Langganan';
 
   @override
-  String get subscriptionManagementNoBillingInformationAvailab => 'Ora ana informasi tagihan sing kasedhiya';
+  String get subscriptionManagementNoBillingInformationAvailab =>
+      'Ora ana informasi tagihan sing kasedhiya';
 
   @override
-  String get subscriptionManagementPurchasesRestoredSuccessfull => 'Tuku wis kasil dipulihake';
+  String get subscriptionManagementPurchasesRestoredSuccessfull =>
+      'Tuku wis kasil dipulihake';
 
   @override
   String get subscriptionManagementRequestRefund => 'Nyuwun Pangembalian Dana';
@@ -34421,13 +36976,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get subscriptionManagementRestorePurchases => 'Pulihake Tuku';
 
   @override
-  String get subscriptionManagementScreenAccessNeverExpires => 'Akses ora bakal kadaluwarsa';
+  String get subscriptionManagementScreenAccessNeverExpires =>
+      'Akses ora bakal kadaluwarsa';
 
   @override
-  String get subscriptionManagementScreenCancelAutoRenewal => 'Batalake perpanjangan otomatis';
+  String get subscriptionManagementScreenCancelAutoRenewal =>
+      'Batalake perpanjangan otomatis';
 
   @override
-  String get subscriptionManagementScreenCancelSubscription => 'Batalake Langganan';
+  String get subscriptionManagementScreenCancelSubscription =>
+      'Batalake Langganan';
 
   @override
   String subscriptionManagementScreenFailedToPauseSubscription(Object e) {
@@ -34446,45 +37004,55 @@ class AppLocalizationsJv extends AppLocalizations {
   String get subscriptionManagementScreenLifetime => 'SAUMUR URIP';
 
   @override
-  String get subscriptionManagementScreenManageSubscription => 'KELOLA LANGGANAN';
+  String get subscriptionManagementScreenManageSubscription =>
+      'KELOLA LANGGANAN';
 
   @override
   String get subscriptionManagementScreenPauseSubscription => 'Jeda Langganan';
 
   @override
-  String get subscriptionManagementScreenResumeSubscription => 'Lanjutake Langganan';
+  String get subscriptionManagementScreenResumeSubscription =>
+      'Lanjutake Langganan';
 
   @override
-  String get subscriptionManagementScreenStartBillingAgain => 'Mulai tagihan maneh';
+  String get subscriptionManagementScreenStartBillingAgain =>
+      'Mulai tagihan maneh';
 
   @override
-  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays) {
+  String subscriptionManagementScreenSubscriptionPausedForDays(
+    Object durationDays,
+  ) {
     return 'Langganan dipaose suwene $durationDays dina';
   }
 
   @override
-  String get subscriptionManagementScreenTakeABreakFor => 'Istirahat nganti 3 wulan';
+  String get subscriptionManagementScreenTakeABreakFor =>
+      'Istirahat nganti 3 wulan';
 
   @override
   String get subscriptionManagementScreenTrialEnded => 'Uji coba rampung';
 
   @override
-  String get subscriptionManagementSubmitARefundRequest => 'Kirim panyuwunan pengembalian dana';
+  String get subscriptionManagementSubmitARefundRequest =>
+      'Kirim panyuwunan pengembalian dana';
 
   @override
   String get subscriptionManagementSubscriptionPaused => 'Langganan Dijeda';
 
   @override
-  String get subscriptionManagementSubscriptionResumedSuccessfu => 'Langganan kasil dilanjutake';
+  String get subscriptionManagementSubscriptionResumedSuccessfu =>
+      'Langganan kasil dilanjutake';
 
   @override
-  String get subscriptionManagementSyncWithAppStore => 'Sinkronisasi karo App Store / Play Store';
+  String get subscriptionManagementSyncWithAppStore =>
+      'Sinkronisasi karo App Store / Play Store';
 
   @override
   String get subscriptionManagementUnknownError => 'Kesalahan ora dingerteni';
 
   @override
-  String get subscriptionManagementUpgradeToPremium => 'Upgrade menyang Premium';
+  String get subscriptionManagementUpgradeToPremium =>
+      'Upgrade menyang Premium';
 
   @override
   String get subscriptionManagementViewPlans => 'Deleng Paket';
@@ -34493,16 +37061,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get suggestFeatureCategory => 'Kategori';
 
   @override
-  String get suggestFeatureDescribeYourFeatureIdea => 'Jlentrehake ide fitur sampeyan kanthi rinci...';
+  String get suggestFeatureDescribeYourFeatureIdea =>
+      'Jlentrehake ide fitur sampeyan kanthi rinci...';
 
   @override
   String get suggestFeatureDescription => 'Katrangan';
 
   @override
-  String get suggestFeatureEGSocialWorkout => 'tuladhane, nuduhake latihan sosial';
+  String get suggestFeatureEGSocialWorkout =>
+      'tuladhane, nuduhake latihan sosial';
 
   @override
-  String get suggestFeatureFeatureSuggestionSubmittedS => 'Saran fitur kasil dikirim!';
+  String get suggestFeatureFeatureSuggestionSubmittedS =>
+      'Saran fitur kasil dikirim!';
 
   @override
   String get suggestFeatureFeatureTitle => 'Judhul Fitur';
@@ -34519,7 +37090,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get suggestFeatureSuggestAFeature => 'Saranake Fitur';
 
   @override
-  String get suggestFeatureYouHaveReachedThe => 'Sampeyan wis tekan wates maksimal 2 saran fitur';
+  String get suggestFeatureYouHaveReachedThe =>
+      'Sampeyan wis tekan wates maksimal 2 saran fitur';
 
   @override
   String get suggestedReplyChipsBodyweightVersion => 'Versi bobot awak';
@@ -34528,7 +37100,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get suggestedReplyChipsCycleadjusted => 'cycleAdjusted';
 
   @override
-  String get suggestedReplyChipsHowShouldITrain => 'Kepiye carane aku latihan fase iki?';
+  String get suggestedReplyChipsHowShouldITrain =>
+      'Kepiye carane aku latihan fase iki?';
 
   @override
   String get suggestedReplyChipsILlDoIt => 'Aku bakal nindakake bengi iki';
@@ -34567,7 +37140,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get suggestedReplyChipsStartAnyway => 'Mulai wae';
 
   @override
-  String get suggestedReplyChipsSwitchToLighter => 'Ganti menyang sing luwih entheng';
+  String get suggestedReplyChipsSwitchToLighter =>
+      'Ganti menyang sing luwih entheng';
 
   @override
   String get suggestedReplyChipsWhatSNext => 'Apa sabanjure?';
@@ -34594,7 +37168,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get suggestionCardWhyThisGoal => 'Kenapa target iki?';
 
   @override
-  String get suggestionCarouselCouldNotLoadSuggestions => 'Ora bisa mbukak saran';
+  String get suggestionCarouselCouldNotLoadSuggestions =>
+      'Ora bisa mbukak saran';
 
   @override
   String get suggestionCarouselSuggestedGoals => 'Target sing Disaranake';
@@ -34731,7 +37306,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get summaryDuration => 'Durasi';
 
   @override
-  String get summaryEpleyFormula => 'Adhedhasar rumus Epley saka set paling apikmu';
+  String get summaryEpleyFormula =>
+      'Adhedhasar rumus Epley saka set paling apikmu';
 
   @override
   String summaryEquipmentIncrement(Object name) {
@@ -34753,10 +37329,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get summaryExerciseOrderAndTime => 'Urutan & Wektu Latihan';
 
   @override
-  String get summaryExerciseTableNoNotesOrPhotos => 'Ora ana cathetan utawa foto sing disimpen ing set iki.';
+  String get summaryExerciseTableNoNotesOrPhotos =>
+      'Ora ana cathetan utawa foto sing disimpen ing set iki.';
 
   @override
-  String get summaryExerciseTableNoNotesSavedOn => 'Ora ana cathetan sing disimpen ing set iki.';
+  String get summaryExerciseTableNoNotesSavedOn =>
+      'Ora ana cathetan sing disimpen ing set iki.';
 
   @override
   String summaryExerciseTableNotes(Object n) {
@@ -34854,10 +37432,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get summaryNoCompletedSets => 'Ora ana set sing rampung dicathet kanggo latihan iki.';
+  String get summaryNoCompletedSets =>
+      'Ora ana set sing rampung dicathet kanggo latihan iki.';
 
   @override
-  String get summaryNoDetailedData => 'Data pelacakan rinci ora kasedhiya kanggo latihan iki.';
+  String get summaryNoDetailedData =>
+      'Data pelacakan rinci ora kasedhiya kanggo latihan iki.';
 
   @override
   String get summaryNoPlanData => 'Ora ana data rencana';
@@ -34985,7 +37565,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetAlgorithmCardAddPair => 'Tambah Pasangan';
 
   @override
-  String get supersetAlgorithmCardAddYourGoTo => 'Tambah kombinasi latihan andalan sampeyan';
+  String get supersetAlgorithmCardAddYourGoTo =>
+      'Tambah kombinasi latihan andalan sampeyan';
 
   @override
   String get supersetAlgorithmCardEGBenchPress => 'tuladhane, Bench Press';
@@ -34994,19 +37575,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetAlgorithmCardEGBentOver => 'tuladhane, Bent Over Rows';
 
   @override
-  String get supersetAlgorithmCardEnterTwoExercisesYou => 'Ketik rong latihan sing pengin digabungake dadi superset';
+  String get supersetAlgorithmCardEnterTwoExercisesYou =>
+      'Ketik rong latihan sing pengin digabungake dadi superset';
 
   @override
   String get supersetAlgorithmCardFavoritePairs => 'PASANGAN FAVORIT';
 
   @override
-  String get supersetAlgorithmCardFineTuneSupersetGeneration => 'Atur generasi superset';
+  String get supersetAlgorithmCardFineTuneSupersetGeneration =>
+      'Atur generasi superset';
 
   @override
   String get supersetAlgorithmCardFirstExercise => 'Latihan Kapisan';
 
   @override
-  String get supersetAlgorithmCardNoFavoritePairsYet => 'Durung ana pasangan favorit';
+  String get supersetAlgorithmCardNoFavoritePairsYet =>
+      'Durung ana pasangan favorit';
 
   @override
   String supersetAlgorithmCardSaved(Object length) {
@@ -35031,7 +37615,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get supersetExercisePickerAddExercisesToYour => 'Tambah latihan menyang latihanmu dhisik';
+  String get supersetExercisePickerAddExercisesToYour =>
+      'Tambah latihan menyang latihanmu dhisik';
 
   @override
   String get supersetExercisePickerSearchExercises => 'Golek latihan...';
@@ -35046,7 +37631,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetIndicatorNoRestBetween => 'Ora ana ngaso ing antarane';
 
   @override
-  String get supersetIndicatorSelectTwoExercisesTo => 'Pilih rong latihan kanggo dipasangake';
+  String get supersetIndicatorSelectTwoExercisesTo =>
+      'Pilih rong latihan kanggo dipasangake';
 
   @override
   String supersetIndicatorSs(Object groupNumber) {
@@ -35074,10 +37660,14 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetPairSheetCreateSupersetPair => 'Gawe Pasangan Superset';
 
   @override
-  String get supersetPairSheetPairTwoExercisesFor => 'Pasangake rong latihan kanggo latihan sing efisien';
+  String get supersetPairSheetPairTwoExercisesFor =>
+      'Pasangake rong latihan kanggo latihan sing efisien';
 
   @override
-  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1) {
+  String supersetPairSheetPartSupersetPairSheetStateValue(
+    Object name,
+    Object name1,
+  ) {
     return '$name + $name1';
   }
 
@@ -35085,13 +37675,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetPairSheetRestAfterSuperset => 'Ngaso sawise superset';
 
   @override
-  String get supersetPairSheetRestBetweenExercises => 'Ngaso ing antarane latihan';
+  String get supersetPairSheetRestBetweenExercises =>
+      'Ngaso ing antarane latihan';
 
   @override
   String get supersetPairSheetRestSettings => 'Setelan Ngaso';
 
   @override
-  String get supersetPairSheetReuseThisPairIn => 'Gunakake maneh pasangan iki ing latihan mbesuk';
+  String get supersetPairSheetReuseThisPairIn =>
+      'Gunakake maneh pasangan iki ing latihan mbesuk';
 
   @override
   String get supersetPairSheetSaveToFavorites => 'Simpen menyang Favorit';
@@ -35112,16 +37704,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetPairSheetTapToSelect => 'Tutul kanggo milih';
 
   @override
-  String get supersetPairSubtitle => 'Pasangake rong latihan kanggo ganti-ganti kanthi istirahat minimal';
+  String get supersetPairSubtitle =>
+      'Pasangake rong latihan kanggo ganti-ganti kanthi istirahat minimal';
 
   @override
-  String get supersetReorderASupersetNeedsAt => 'Superset mbutuhake paling sethithik 2 latihan';
+  String get supersetReorderASupersetNeedsAt =>
+      'Superset mbutuhake paling sethithik 2 latihan';
 
   @override
   String get supersetReorderApplyChanges => 'Aplikasi Owah-owahan';
 
   @override
-  String get supersetReorderDragToReorderSwipe => 'Seret kanggo ngurutake, geser ngiwa kanggo mbusak';
+  String get supersetReorderDragToReorderSwipe =>
+      'Seret kanggo ngurutake, geser ngiwa kanggo mbusak';
 
   @override
   String get supersetReorderNoChanges => 'Ora ana owah-owahan';
@@ -35136,7 +37731,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetReorderReset => 'Reset';
 
   @override
-  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber) {
+  String supersetReorderSheetEdit(
+    Object _originalTypeLabel,
+    Object groupNumber,
+  ) {
     return 'Sunting $_originalTypeLabel $groupNumber';
   }
 
@@ -35153,22 +37751,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get supersetSaveToFavorites => 'Simpen menyang Favorit';
 
   @override
-  String get supersetSaveToFavoritesSubtitle => 'Simpen kombinasi iki supaya gampang digunakake maneh';
+  String get supersetSaveToFavoritesSubtitle =>
+      'Simpen kombinasi iki supaya gampang digunakake maneh';
 
   @override
   String get supersetSettingsAutoGenerateSupersets => 'Gawe superset otomatis';
 
   @override
-  String get supersetSettingsChestBackBicepsTriceps => 'Pasangan dhadha/mburi, bisep/trisep';
+  String get supersetSettingsChestBackBicepsTriceps =>
+      'Pasangan dhadha/mburi, bisep/trisep';
 
   @override
-  String get supersetSettingsControlHowSupersetsAre => 'Kontrol carane superset digawe ing latihanmu';
+  String get supersetSettingsControlHowSupersetsAre =>
+      'Kontrol carane superset digawe ing latihanmu';
 
   @override
-  String get supersetSettingsIncludeSupersetPairsIn => 'Kalebu pasangan superset ing latihan sing digawe AI';
+  String get supersetSettingsIncludeSupersetPairsIn =>
+      'Kalebu pasangan superset ing latihan sing digawe AI';
 
   @override
-  String get supersetSettingsPreferAntagonistPairs => 'Luwih milih pasangan antagonis';
+  String get supersetSettingsPreferAntagonistPairs =>
+      'Luwih milih pasangan antagonis';
 
   @override
   String get supersetSettingsSupersetSettings => 'SETELAN SUPERSET';
@@ -35198,7 +37801,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncDetailsExport => 'Ekspor';
 
   @override
-  String get syncDetailsNoFailedSyncItems => 'Ora ana item sinkronisasi sing gagal.';
+  String get syncDetailsNoFailedSyncItems =>
+      'Ora ana item sinkronisasi sing gagal.';
 
   @override
   String get syncDetailsRetryAll => 'Coba Kabeh Maneh';
@@ -35220,7 +37824,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncDetailsSyncDetails => 'Detail Sinkronisasi';
 
   @override
-  String get syncDetailsThisErrorWonT => 'Kesalahan iki ora bakal bener dhewe nalika dicoba maneh. Gunakake Edit & mlebu maneh utawa Busak.';
+  String get syncDetailsThisErrorWonT =>
+      'Kesalahan iki ora bakal bener dhewe nalika dicoba maneh. Gunakake Edit & mlebu maneh utawa Busak.';
 
   @override
   String get syncStatusSyncNow => 'Sinkronake Saiki';
@@ -35244,7 +37849,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedSummaryMaxHr => 'Maks HR';
 
   @override
-  String get syncedSummaryNoActivityMetricsWere => 'Ora ana metrik aktivitas sing direkam kanggo sesi iki.';
+  String get syncedSummaryNoActivityMetricsWere =>
+      'Ora ana metrik aktivitas sing direkam kanggo sesi iki.';
 
   @override
   String get syncedSummarySyncedActivity => 'Aktivitas sing Disinkronake';
@@ -35306,19 +37912,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedWorkoutDetailCadence => 'Cadence';
 
   @override
-  String get syncedWorkoutDetailCapturedAroundYourSession => 'Direkam ing sekitar sesimu';
+  String get syncedWorkoutDetailCapturedAroundYourSession =>
+      'Direkam ing sekitar sesimu';
 
   @override
   String get syncedWorkoutDetailDate => 'Tanggal';
 
   @override
-  String get syncedWorkoutDetailDeleteThisSyncedWorkout => 'Busak latihan sing disinkronake iki?';
+  String get syncedWorkoutDetailDeleteThisSyncedWorkout =>
+      'Busak latihan sing disinkronake iki?';
 
   @override
   String get syncedWorkoutDetailDistance => 'Jarak';
 
   @override
-  String get syncedWorkoutDetailDuplicateOfAnotherImport => 'Duplikat saka impor liyane — sumber utama luwih diutamake.';
+  String get syncedWorkoutDetailDuplicateOfAnotherImport =>
+      'Duplikat saka impor liyane — sumber utama luwih diutamake.';
 
   @override
   String get syncedWorkoutDetailDuration => 'Durasi';
@@ -35345,7 +37954,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedWorkoutDetailHrvPre => 'HRV (sadurunge)';
 
   @override
-  String get syncedWorkoutDetailItWillReAppear => 'Iki bakal muncul maneh nalika sampeyan sinkronisasi karo Health Connect.';
+  String get syncedWorkoutDetailItWillReAppear =>
+      'Iki bakal muncul maneh nalika sampeyan sinkronisasi karo Health Connect.';
 
   @override
   String get syncedWorkoutDetailManage => 'Kelola';
@@ -35366,13 +37976,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedWorkoutDetailPeak => 'Puncak';
 
   @override
-  String get syncedWorkoutDetailPullingRicherDataFrom => 'Njupuk data luwih jero saka Health Connect…';
+  String get syncedWorkoutDetailPullingRicherDataFrom =>
+      'Njupuk data luwih jero saka Health Connect…';
 
   @override
   String get syncedWorkoutDetailRestingHr => 'HR Istirahat';
 
   @override
-  String get syncedWorkoutDetailRpeRateOfPerceived => 'RPE · Rate of Perceived Exertion';
+  String get syncedWorkoutDetailRpeRateOfPerceived =>
+      'RPE · Rate of Perceived Exertion';
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
@@ -35517,7 +38129,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedWorkoutsHistoryMiles => 'Mil';
 
   @override
-  String get syncedWorkoutsHistoryNoSyncedWorkoutsYet => 'Durung ana latihan sing disinkronake';
+  String get syncedWorkoutsHistoryNoSyncedWorkoutsYet =>
+      'Durung ana latihan sing disinkronake';
 
   @override
   String syncedWorkoutsHistoryScreenM(Object bestElev) {
@@ -35595,13 +38208,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get syncedWorkoutsSummarySynced => 'DISINKRONAKE';
 
   @override
-  String get syncedWorkoutsSummaryTodaySSyncedWorkouts => 'Latihan sing disinkronake dina iki';
+  String get syncedWorkoutsSummaryTodaySSyncedWorkouts =>
+      'Latihan sing disinkronake dina iki';
 
   @override
   String get tappableCellSelectBias => 'Pilih Bias';
 
   @override
-  String get templateAddOneOrUse => 'Tambah siji utawa gunakake template sing wis ana ing ngisor';
+  String get templateAddOneOrUse =>
+      'Tambah siji utawa gunakake template sing wis ana ing ngisor';
 
   @override
   String get templateEditorAddTemplate => 'Tambah Template';
@@ -35619,13 +38234,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get templateEditorSupersets => 'Superset';
 
   @override
-  String get templateListAMondayInThe => 'Dina Senin ing program diwiwiti ing dina Senin sabanjure.';
+  String get templateListAMondayInThe =>
+      'Dina Senin ing program diwiwiti ing dina Senin sabanjure.';
 
   @override
-  String get templateListAddYourWarmUp => 'Tambahake pemanasan lan peregangan rutinmu ing saben sesi.';
+  String get templateListAddYourWarmUp =>
+      'Tambahake pemanasan lan peregangan rutinmu ing saben sesi.';
 
   @override
-  String get templateListAlignToCalendarWeekdays => 'Selarasake karo dina ing tanggalan';
+  String get templateListAlignToCalendarWeekdays =>
+      'Selarasake karo dina ing tanggalan';
 
   @override
   String get templateListApplyMyStaples => 'Gunakake rutinku';
@@ -35634,13 +38252,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get templateListCouldNotDeletePlease => 'Gagal mbusak. Coba maneh.';
 
   @override
-  String get templateListCouldNotSchedulePlease => 'Gagal nggawe jadwal. Coba maneh.';
+  String get templateListCouldNotSchedulePlease =>
+      'Gagal nggawe jadwal. Coba maneh.';
 
   @override
   String get templateListCreateAProgram => 'Gawe program';
 
   @override
-  String get templateListDay1OfThe => 'Dina 1 program diwiwiti ing tanggal sing dipilih.';
+  String get templateListDay1OfThe =>
+      'Dina 1 program diwiwiti ing tanggal sing dipilih.';
 
   @override
   String get templateListDeleteProgram => 'Busak program?';
@@ -35652,7 +38272,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get templateListNewProgram => 'Program anyar';
 
   @override
-  String get templateListNoSavedProgramsYet => 'Durung ana program sing disimpen.';
+  String get templateListNoSavedProgramsYet =>
+      'Durung ana program sing disimpen.';
 
   @override
   String get templateListScheduleThis => 'Jadwalake iki';
@@ -35699,7 +38320,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get templateListStartDay1On => 'Mulai dina 1 ing tanggal wiwitanku';
 
   @override
-  String get templateListTapADayTo => 'Tutul dina kanggo nyetel wektu sing beda.';
+  String get templateListTapADayTo =>
+      'Tutul dina kanggo nyetel wektu sing beda.';
 
   @override
   String get templateListWeCouldNotLoad => 'Gagal mbukak programmu.';
@@ -35722,7 +38344,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get templatePickerStartWithAPre => 'Mulai nganggo tata letak sing wis dirancang';
+  String get templatePickerStartWithAPre =>
+      'Mulai nganggo tata letak sing wis dirancang';
 
   @override
   String get templatePickerTemplates => 'Templat';
@@ -35743,7 +38366,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get tierComparisonFeature => 'FITUR';
 
   @override
-  String get tierComparisonLongPressTheEasy => 'Pencet suwe tombol Gampang / Lanjut kapan wae kanggo mbukak iki maneh.';
+  String get tierComparisonLongPressTheEasy =>
+      'Pencet suwe tombol Gampang / Lanjut kapan wae kanggo mbukak iki maneh.';
 
   @override
   String get tierComparisonWhichTierIsRight => 'Tier endi sing pas kanggo aku?';
@@ -35764,7 +38388,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get tileFactoryFoodPatterns => 'Pola Pangan';
 
   @override
-  String get tileFactorySeeWhichFoodsFuel => 'Deleng panganan apa sing menehi energi lan apa sing nggawe lemes';
+  String get tileFactorySeeWhichFoodsFuel =>
+      'Deleng panganan apa sing menehi energi lan apa sing nggawe lemes';
 
   @override
   String get tilePickerAdd => 'Tambah';
@@ -35802,7 +38427,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get timedExerciseTimerTapPauseToRest => 'Tutul jeda kanggo ngaso, banjur terusake';
+  String get timedExerciseTimerTapPauseToRest =>
+      'Tutul jeda kanggo ngaso, banjur terusake';
 
   @override
   String get timelineBusy => 'Sibuk';
@@ -35820,7 +38446,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get timelineEntryDetailEditDurationMin => 'Sunting durasi (menit)';
 
   @override
-  String get timelineEntryDetailFailedToDeleteRefresh => 'Gagal mbusak — refresh kanggo nyoba maneh.';
+  String get timelineEntryDetailFailedToDeleteRefresh =>
+      'Gagal mbusak — refresh kanggo nyoba maneh.';
 
   @override
   String get timelineEntryDetailFailedToUpdate => 'Gagal nganyari';
@@ -35829,7 +38456,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get timelineEntryDetailReLog => 'Log maneh';
 
   @override
-  String get timelineEntryDetailReLogQueuedComing => 'Log maneh wis antri — bakal diproses';
+  String get timelineEntryDetailReLogQueuedComing =>
+      'Log maneh wis antri — bakal diproses';
 
   @override
   String get timelineEntryDetailRefresh => 'Segerake';
@@ -35838,7 +38466,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get timelineEntryDetailRelog => 'reLog';
 
   @override
-  String get timelineEntryDetailShareSheetComingSoon => 'Fitur nuduhake bakal teka';
+  String get timelineEntryDetailShareSheetComingSoon =>
+      'Fitur nuduhake bakal teka';
 
   @override
   String get timelineEntryDetailUpdated => 'Dianyari ✓';
@@ -35852,7 +38481,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get timelineLoadEarlierDays => 'Muat dina sadurunge';
 
   @override
-  String get timelineLogYourFirstWorkout => 'Log latihan, dhaharan, utawa banyu pisananmu ing chat utawa nganggo tombol + — bakal muncul ing kene.';
+  String get timelineLogYourFirstWorkout =>
+      'Log latihan, dhaharan, utawa banyu pisananmu ing chat utawa nganggo tombol + — bakal muncul ing kene.';
 
   @override
   String get timelineNothingLogged => 'Durung ana sing dicathet.';
@@ -35922,7 +38552,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get timerRestMixinGotIt => 'Oke';
 
   @override
-  String get timerRestMixinRateOfPerceivedExertion => 'RPE ngukur sepira abote set sing dirasakake:';
+  String get timerRestMixinRateOfPerceivedExertion =>
+      'RPE ngukur sepira abote set sing dirasakake:';
 
   @override
   String get timerRestMixinWhatIsRpe => 'Apa iku RPE?';
@@ -35942,7 +38573,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get todayFertilityWindowFertilityWindow => 'Jendhela kesuburan';
 
   @override
-  String get todayFertilityWindowLowConfidenceEstimate => 'Kapercayan kurang · estimasi';
+  String get todayFertilityWindowLowConfidenceEstimate =>
+      'Kapercayan kurang · estimasi';
 
   @override
   String get todayScoreCardConnect => 'Sambungake';
@@ -36035,7 +38667,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get todayWorkoutCardCouldNotLoadWorkout => 'Gagal mbukak latihan';
 
   @override
-  String get todayWorkoutCardGenerateAWorkoutProgram => 'Gawe program latihan kanggo miwiti!';
+  String get todayWorkoutCardGenerateAWorkoutProgram =>
+      'Gawe program latihan kanggo miwiti!';
 
   @override
   String get todayWorkoutCardGenerateWorkouts => 'Gawe Latihan';
@@ -36046,7 +38679,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get todayWorkoutCardLoadingTodaySWorkout => 'Mbukak latihan dina iki...';
+  String get todayWorkoutCardLoadingTodaySWorkout =>
+      'Mbukak latihan dina iki...';
 
   @override
   String todayWorkoutCardNext(Object name) {
@@ -36063,7 +38697,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get todayWorkoutCardStartWorkout => 'MULAI LATIHAN';
 
   @override
-  String get todayWorkoutCardTakeItEasyToday => 'Santai wae dina iki! Ototmu lagi pemulihan.';
+  String get todayWorkoutCardTakeItEasyToday =>
+      'Santai wae dina iki! Ototmu lagi pemulihan.';
 
   @override
   String get todayWorkoutCardViewUpcoming => 'Deleng Jadwal';
@@ -36087,13 +38722,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get todaysHealthCardRestingHr => 'HR Ngaso';
 
   @override
-  String get todaysHealthCardSyncStepsHeartRate => 'Sinkronisasi langkah, detak jantung, lan turu';
+  String get todaysHealthCardSyncStepsHeartRate =>
+      'Sinkronisasi langkah, detak jantung, lan turu';
 
   @override
   String get todaysHealthCardTodaySHealth => 'Kesehatan Dina Iki';
 
   @override
-  String get trainingFocusAllocateUpTo5 => 'Alokasi nganti 5 titik fokus kanggo prioritas klompok otot tartamtu';
+  String get trainingFocusAllocateUpTo5 =>
+      'Alokasi nganti 5 titik fokus kanggo prioritas klompok otot tartamtu';
 
   @override
   String get trainingFocusFocusPoints => 'Titik Fokus';
@@ -36105,7 +38742,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingFocusPrimaryTrainingGoal => 'TUJUAN LATIHAN UTAMA';
 
   @override
-  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints) {
+  String trainingFocusScreenAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  ) {
     return '$availablePoints/$maxTotalPoints kasedhiya';
   }
 
@@ -36124,7 +38764,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingLoadAcute7d => 'Akut (7d)';
 
   @override
-  String get trainingLoadAskCoachAboutYour => 'Takon pelatih babagan beban latihanmu';
+  String get trainingLoadAskCoachAboutYour =>
+      'Takon pelatih babagan beban latihanmu';
 
   @override
   String get trainingLoadChartBuildingBaseline => 'Mbangun baseline';
@@ -36135,7 +38776,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trainingLoadChartNoCardioActivityYet => 'Durung ana aktivitas kardio — log lari, sepedaan, utawa dayung kanggo mbangun baseline.';
+  String get trainingLoadChartNoCardioActivityYet =>
+      'Durung ana aktivitas kardio — log lari, sepedaan, utawa dayung kanggo mbangun baseline.';
 
   @override
   String get trainingLoadChronic28d => 'Kronis (28d)';
@@ -36157,16 +38799,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingMethodsTrainingMethods => 'Metode Latihan';
 
   @override
-  String get trainingPreferencesAddPastWorkoutsFor => 'Tambah latihan kepungkur kanggo bobot AI sing luwih apik';
+  String get trainingPreferencesAddPastWorkoutsFor =>
+      'Tambah latihan kepungkur kanggo bobot AI sing luwih apik';
 
   @override
-  String get trainingPreferencesBoostedInSelectionCan => 'Ditingkatake ing pilihan, bisa dirotasi';
+  String get trainingPreferencesBoostedInSelectionCan =>
+      'Ditingkatake ing pilihan, bisa dirotasi';
 
   @override
-  String get trainingPreferencesCustomizeHowWorkoutsAre => 'Kustomisasi cara latihan digawe';
+  String get trainingPreferencesCustomizeHowWorkoutsAre =>
+      'Kustomisasi cara latihan digawe';
 
   @override
-  String get trainingPreferencesEquipmentAvailableForWorkou => 'Peralatan sing kasedhiya kanggo latihan';
+  String get trainingPreferencesEquipmentAvailableForWorkou =>
+      'Peralatan sing kasedhiya kanggo latihan';
 
   @override
   String get trainingPreferencesExerciseConsistency => 'Konsistensi Latihan';
@@ -36181,16 +38827,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingPreferencesFavoriteExercises => 'Latihan favorit';
 
   @override
-  String get trainingPreferencesFirstDayOfThe => 'Dina kapisan ing minggu ing tanggalan';
+  String get trainingPreferencesFirstDayOfThe =>
+      'Dina kapisan ing minggu ing tanggalan';
 
   @override
-  String get trainingPreferencesGuaranteedNeverRotateOut => 'Dijamin, ora bakal diganti';
+  String get trainingPreferencesGuaranteedNeverRotateOut =>
+      'Dijamin, ora bakal diganti';
 
   @override
-  String get trainingPreferencesHowFastToIncrease => 'Sepira cepet nambah beban';
+  String get trainingPreferencesHowFastToIncrease =>
+      'Sepira cepet nambah beban';
 
   @override
-  String get trainingPreferencesHowMuchExercisesChange => 'Sepira owah-owahane latihan saben minggu';
+  String get trainingPreferencesHowMuchExercisesChange =>
+      'Sepira owah-owahane latihan saben minggu';
 
   @override
   String get trainingPreferencesImportWorkoutHistory => 'Impor riwayat latihan';
@@ -36211,22 +38861,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingPreferencesProgressionPace => 'Laju progres';
 
   @override
-  String get trainingPreferencesPushPullLegsFull => 'Push/Pull/Legs, Full Body, lsp.';
+  String get trainingPreferencesPushPullLegsFull =>
+      'Push/Pull/Legs, Full Body, lsp.';
 
   @override
-  String get trainingPreferencesQueueExercisesForNext => 'Antri latihan kanggo sesi sabanjure';
+  String get trainingPreferencesQueueExercisesForNext =>
+      'Antri latihan kanggo sesi sabanjure';
 
   @override
-  String get trainingPreferencesSkipOrReduceMuscle => 'Nglwati utawa nyuda klompok otot';
+  String get trainingPreferencesSkipOrReduceMuscle =>
+      'Nglwati utawa nyuda klompok otot';
 
   @override
-  String get trainingPreferencesSkipSpecificExercises => 'Nglwati latihan tartamtu';
+  String get trainingPreferencesSkipSpecificExercises =>
+      'Nglwati latihan tartamtu';
 
   @override
   String get trainingPreferencesStapleExercises => 'Latihan utama';
 
   @override
-  String get trainingPreferencesStrengthCardioOrMixed => 'Strength, cardio, utawa campuran';
+  String get trainingPreferencesStrengthCardioOrMixed =>
+      'Strength, cardio, utawa campuran';
 
   @override
   String get trainingPreferencesTraining => 'LATIHAN';
@@ -36238,13 +38893,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingPreferencesTrainingSplit => 'Pemisahan latihan';
 
   @override
-  String get trainingPreferencesVaryOrKeepSame => 'Variasi utawa tetepake latihan';
+  String get trainingPreferencesVaryOrKeepSame =>
+      'Variasi utawa tetepake latihan';
 
   @override
-  String get trainingPreferencesViewAndEditYour => 'Deleng lan sunting angkatan maksimal sampeyan';
+  String get trainingPreferencesViewAndEditYour =>
+      'Deleng lan sunting angkatan maksimal sampeyan';
 
   @override
-  String get trainingPreferencesVisualizeStrengthVolumeOv => 'Visualisasi kekuatan & volume saka wektu ke wektu';
+  String get trainingPreferencesVisualizeStrengthVolumeOv =>
+      'Visualisasi kekuatan & volume saka wektu ke wektu';
 
   @override
   String get trainingPreferencesWeekStartsOn => 'Minggu diwiwiti ing';
@@ -36256,10 +38914,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingPreferencesWhereYouTrain => 'Panggonan sampeyan latihan';
 
   @override
-  String get trainingPreferencesWhichDaysYouTrain => 'Dina apa sampeyan latihan';
+  String get trainingPreferencesWhichDaysYouTrain =>
+      'Dina apa sampeyan latihan';
 
   @override
-  String get trainingPreferencesWorkAtAPercentage => 'Latihan nganggo persentase maksimal sampeyan';
+  String get trainingPreferencesWorkAtAPercentage =>
+      'Latihan nganggo persentase maksimal sampeyan';
 
   @override
   String get trainingPreferencesWorkoutDays => 'Dina latihan';
@@ -36271,28 +38931,33 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingPreferencesWorkoutType => 'Jinis latihan';
 
   @override
-  String get trainingProgramSelectorChooseYourTrainingSplit => 'Pilih pemisahan latihan sampeyan';
+  String get trainingProgramSelectorChooseYourTrainingSplit =>
+      'Pilih pemisahan latihan sampeyan';
 
   @override
   String get trainingProgramSelectorCustomProgram => 'Program khusus';
 
   @override
-  String get trainingProgramSelectorDescribeWhatYouWant => 'Jelasake apa sing pengin dilatih lan AI bakal nggawe program sing dipersonalisasi.';
+  String get trainingProgramSelectorDescribeWhatYouWant =>
+      'Jelasake apa sing pengin dilatih lan AI bakal nggawe program sing dipersonalisasi.';
 
   @override
-  String get trainingProgramSelectorEGTrainFor => 'tuladhane, \"Latihan kanggo kompetisi HYROX\"';
+  String get trainingProgramSelectorEGTrainFor =>
+      'tuladhane, \"Latihan kanggo kompetisi HYROX\"';
 
   @override
   String get trainingProgramSelectorExamples => 'Tuladha';
 
   @override
-  String get trainingProgramSelectorSaveCustomProgram => 'Simpen program khusus';
+  String get trainingProgramSelectorSaveCustomProgram =>
+      'Simpen program khusus';
 
   @override
   String get trainingProgramSelectorTrainingProgram => 'Program latihan';
 
   @override
-  String get trainingSetupCardAddEquipmentNotIn => 'Tambah peralatan sing ora ana ing daftar standar';
+  String get trainingSetupCardAddEquipmentNotIn =>
+      'Tambah peralatan sing ora ana ing daftar standar';
 
   @override
   String get trainingSetupCardEnvironment => 'Lingkungan';
@@ -36307,7 +38972,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trainingSetupCardFocusAreas => 'Area fokus';
 
   @override
-  String get trainingSetupCardHowMuchExerciseVariety => 'Sepira akeh variasi latihan saben minggu?';
+  String get trainingSetupCardHowMuchExerciseVariety =>
+      'Sepira akeh variasi latihan saben minggu?';
 
   @override
   String get trainingSetupCardMyCustomEquipment => 'Peralatan khusus kula';
@@ -36336,7 +39002,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get transitionCountdownOverlayGetReady => 'SIAP-SIAP';
 
   @override
-  String get transitionCountdownOverlayNextExerciseStartingSoon => 'Latihan sabanjure bakal diwiwiti';
+  String get transitionCountdownOverlayNextExerciseStartingSoon =>
+      'Latihan sabanjure bakal diwiwiti';
 
   @override
   String get transitionCountdownOverlayStartNow => 'Mulai saiki';
@@ -36348,7 +39015,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trendAiInsightAiInsight => 'Wawasan AI';
 
   @override
-  String get trendAiInsightCouldnTGenerateAn => 'Ora bisa ngasilake wawasan saiki.';
+  String get trendAiInsightCouldnTGenerateAn =>
+      'Ora bisa ngasilake wawasan saiki.';
 
   @override
   String get trendAiInsightReadingYourTrends => 'Maca tren sampeyan…';
@@ -36357,10 +39025,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trendChartNoDataInThis => 'Ora ana data ing rentang iki';
 
   @override
-  String get trendChartPinchToZoomTap => 'Pinch kanggo zoom · tutul kanggo reset';
+  String get trendChartPinchToZoomTap =>
+      'Pinch kanggo zoom · tutul kanggo reset';
 
   @override
-  String get trendChartTryAWiderTime => 'Coba rentang wektu sing luwih jembar utawa cathet entri anyar';
+  String get trendChartTryAWiderTime =>
+      'Coba rentang wektu sing luwih jembar utawa cathet entri anyar';
 
   @override
   String get trialProgress1DayLeft => 'Sisa 1 dina';
@@ -36379,7 +39049,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trophiesCardKeepShowingUpBadges => 'Terus latihan — lencana bakal mbukak nalika sampeyan nggayuh tonggak sejarah.';
+  String get trophiesCardKeepShowingUpBadges =>
+      'Terus latihan — lencana bakal mbukak nalika sampeyan nggayuh tonggak sejarah.';
 
   @override
   String trophiesCardNewBadgesThisPeriod(Object length) {
@@ -36387,7 +39058,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trophiesCardNoNewBadgesThis => 'Durung ana lencana anyar ing periode iki.';
+  String get trophiesCardNoNewBadgesThis =>
+      'Durung ana lencana anyar ing periode iki.';
 
   @override
   String trophiesCardWrapped(Object appName) {
@@ -36419,7 +39091,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trophiesEarnedMilestoneReached => 'Tonggak wis digayuh';
 
   @override
-  String get trophiesEarnedMilestoneReachedNice => 'Tonggak sejarah digayuh — apik!';
+  String get trophiesEarnedMilestoneReachedNice =>
+      'Tonggak sejarah digayuh — apik!';
 
   @override
   String get trophiesEarnedMilestones => 'Tonggak sejarah';
@@ -36452,7 +39125,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trophiesEarnedNoNewRecords => 'Ora ana rekor anyar';
 
   @override
-  String get trophiesEarnedNoNewRecordsThis => 'Ora ana rekor anyar ing sesi iki — iki sing lagi sampeyan upayakake:';
+  String get trophiesEarnedNoNewRecordsThis =>
+      'Ora ana rekor anyar ing sesi iki — iki sing lagi sampeyan upayakake:';
 
   @override
   String get trophiesEarnedPersonalRecords => 'Rekor pribadi';
@@ -36491,7 +39165,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trophiesEarnedViewAllCardioPrs => 'Deleng kabeh PR cardio';
 
   @override
-  String get trophiesEarnedYouVeClearedEvery => 'Sampeyan wis ngrampungake saben milestone — tetep konsisten lan sing anyar bakal muncul!';
+  String get trophiesEarnedYouVeClearedEvery =>
+      'Sampeyan wis ngrampungake saben milestone — tetep konsisten lan sing anyar bakal muncul!';
 
   @override
   String get trophiesEarnedYourFitnessJourney => 'Perjalanan fitness sampeyan';
@@ -36518,13 +39193,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trophyCelebrationOverlayKeepTheMomentumGoing => 'Terusake momentum iki';
+  String get trophyCelebrationOverlayKeepTheMomentumGoing =>
+      'Terusake momentum iki';
 
   @override
   String get trophyCelebrationOverlayMilestoneReached => 'Milestone Digayuh!';
 
   @override
-  String get trophyCelebrationOverlayTapAnywhereToContinue => 'Tutul ngendi wae kanggo nerusake';
+  String get trophyCelebrationOverlayTapAnywhereToContinue =>
+      'Tutul ngendi wae kanggo nerusake';
 
   @override
   String get trophyCelebrationOverlayTrophiesEarned => 'TROPHY KEPARING!';
@@ -36535,7 +39212,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trophyCeremonyOverlayCongratsOnEarningThis => 'Sugeng amarga wis entuk trophy iki!';
+  String get trophyCeremonyOverlayCongratsOnEarningThis =>
+      'Sugeng amarga wis entuk trophy iki!';
 
   @override
   String trophyCeremonyOverlayLv(Object level) {
@@ -36582,7 +39260,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get trophyRoomScreenProgressHiddenUntilDiscover => 'Progres didhelikake nganti ditemokake';
+  String get trophyRoomScreenProgressHiddenUntilDiscover =>
+      'Progres didhelikake nganti ditemokake';
 
   @override
   String get trophyRoomScreenTrophyRoom => 'Ruang Trophy';
@@ -36594,37 +39273,47 @@ class AppLocalizationsJv extends AppLocalizations {
   String get trustAndExpectationsABitOfHonesty => 'Sethithik kejujuran';
 
   @override
-  String get trustAndExpectationsBeforeWeBuildYour => 'Sadurunge kita nggawe rencana sampeyan';
+  String get trustAndExpectationsBeforeWeBuildYour =>
+      'Sadurunge kita nggawe rencana sampeyan';
 
   @override
-  String get trustAndExpectationsDeleteAnythingAnytime => 'Busak apa wae, kapan wae.';
+  String get trustAndExpectationsDeleteAnythingAnytime =>
+      'Busak apa wae, kapan wae.';
 
   @override
-  String get trustAndExpectationsEncryptedInTransitAnd => 'Di-enkripsi nalika transit lan nalika disimpen.';
+  String get trustAndExpectationsEncryptedInTransitAnd =>
+      'Di-enkripsi nalika transit lan nalika disimpen.';
 
   @override
-  String get trustAndExpectationsReadOurFullPrivacy => 'Waca kabijakan privasi lengkap kita';
+  String get trustAndExpectationsReadOurFullPrivacy =>
+      'Waca kabijakan privasi lengkap kita';
 
   @override
-  String get trustAndExpectationsRealChangeShowsUp => 'Owah-owahan nyata katon ing minggu kaping 3.';
+  String get trustAndExpectationsRealChangeShowsUp =>
+      'Owah-owahan nyata katon ing minggu kaping 3.';
 
   @override
   String get trustAndExpectationsSoundsGood => 'Oke, setuju';
 
   @override
-  String get trustAndExpectationsTls13Aes => 'TLS 1.3 + AES-256. Standar sing padha karo bank sampeyan.';
+  String get trustAndExpectationsTls13Aes =>
+      'TLS 1.3 + AES-256. Standar sing padha karo bank sampeyan.';
 
   @override
-  String get trustAndExpectationsTwoThingsYouShould => 'Rong bab sing kudu sampeyan ngerteni.';
+  String get trustAndExpectationsTwoThingsYouShould =>
+      'Rong bab sing kudu sampeyan ngerteni.';
 
   @override
-  String get trustAndExpectationsWeNeverSellYour => 'Kita ora bakal ngedol data sampeyan.';
+  String get trustAndExpectationsWeNeverSellYour =>
+      'Kita ora bakal ngedol data sampeyan.';
 
   @override
-  String get trustAndExpectationsWeWonTSugarcoat => 'Kita ora bakal nutupi kasunyatan.';
+  String get trustAndExpectationsWeWonTSugarcoat =>
+      'Kita ora bakal nutupi kasunyatan.';
 
   @override
-  String get trustAndExpectationsWeek1WillFeel => 'Minggu kaping 1 bakal krasa alon.';
+  String get trustAndExpectationsWeek1WillFeel =>
+      'Minggu kaping 1 bakal krasa alon.';
 
   @override
   String typingIndicatorIsTyping(Object agentName) {
@@ -36672,7 +39361,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get unifiedHomeWidgetsDrink16ozPostWorkout => 'Ngombe 16oz sawise latihan';
+  String get unifiedHomeWidgetsDrink16ozPostWorkout =>
+      'Ngombe 16oz sawise latihan';
 
   @override
   String unifiedHomeWidgetsEndTheDayAtGoal(Object arg0) {
@@ -36711,7 +39401,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get unifiedHomeWidgetsNoData => 'Ora ana data';
 
   @override
-  String get unifiedHomeWidgetsNoWorkoutWasScheduled => 'Ora ana jadwal latihan';
+  String get unifiedHomeWidgetsNoWorkoutWasScheduled =>
+      'Ora ana jadwal latihan';
 
   @override
   String get unifiedHomeWidgetsNutrition => 'NUTRISI';
@@ -36732,13 +39423,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get unifiedHomeWidgetsRefuelHydration => 'Isi maneh hidrasi';
 
   @override
-  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled => 'Dina istirahat ora ana jadwal latihan';
+  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled =>
+      'Dina istirahat ora ana jadwal latihan';
 
   @override
-  String get unifiedHomeWidgetsRestDayNothingScheduled => 'Dina istirahat ora ana jadwal';
+  String get unifiedHomeWidgetsRestDayNothingScheduled =>
+      'Dina istirahat ora ana jadwal';
 
   @override
-  String get unifiedHomeWidgetsSeeYourStepsCalories => 'Deleng langkah, kalori & turu sampeyan ing layar ngarep';
+  String get unifiedHomeWidgetsSeeYourStepsCalories =>
+      'Deleng langkah, kalori & turu sampeyan ing layar ngarep';
 
   @override
   String get unifiedHomeWidgetsSleep => 'Turu';
@@ -36753,25 +39447,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get unifiedHomeWidgetsWater => 'Banyu';
 
   @override
-  String get unifiedHomeWidgetsWorkoutCompleteGreatJob => 'Latihan rampung, kerja apik';
+  String get unifiedHomeWidgetsWorkoutCompleteGreatJob =>
+      'Latihan rampung, kerja apik';
 
   @override
   String get unresolvedExercisesApplyMapping => 'Aplikasi pemetaan';
 
   @override
-  String get unresolvedExercisesBulkFixUnresolvedExercises => 'Ndandani latihan sing durung dipetakan';
+  String get unresolvedExercisesBulkFixUnresolvedExercises =>
+      'Ndandani latihan sing durung dipetakan';
 
   @override
-  String get unresolvedExercisesBulkMapRawNamesFrom => 'Petakake jeneng mentah saka impor sampeyan menyang latihan perpustakaan.';
+  String get unresolvedExercisesBulkMapRawNamesFrom =>
+      'Petakake jeneng mentah saka impor sampeyan menyang latihan perpustakaan.';
 
   @override
   String get unresolvedExercisesBulkMore => 'Liyane…';
 
   @override
-  String get unresolvedExercisesBulkNoAutoSuggestionOpen => 'Ora ana saran otomatis — bukak kanggo milih kanthi manual.';
+  String get unresolvedExercisesBulkNoAutoSuggestionOpen =>
+      'Ora ana saran otomatis — bukak kanggo milih kanthi manual.';
 
   @override
-  String get unresolvedExercisesBulkNothingToFixEvery => 'Ora ana sing kudu didandani — saben latihan sing diimpor wis dipetakan!';
+  String get unresolvedExercisesBulkNothingToFixEvery =>
+      'Ora ana sing kudu didandani — saben latihan sing diimpor wis dipetakan!';
 
   @override
   String unresolvedExercisesBulkSheetCouldNotLoad(Object error) {
@@ -36784,7 +39483,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected) {
+  String unresolvedExercisesBulkSheetMappedRowsTo(
+    Object canonicalName,
+    Object rowsAffected,
+  ) {
     return 'Ngasambungake $rowsAffected baris menyang \"$canonicalName\".';
   }
 
@@ -36802,16 +39504,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get unresolvedExercisesBulkUndo => 'Batal';
 
   @override
-  String get unresolvedExercisesEGBarbellBack => 'tuladhane, Barbell Back Squat';
+  String get unresolvedExercisesEGBarbellBack =>
+      'tuladhane, Barbell Back Squat';
 
   @override
   String get unresolvedExercisesMapExercise => 'Petakake latihan';
 
   @override
-  String get unresolvedExercisesNoAutomaticSuggestionsFor => 'Ora ana saran otomatis kanggo jeneng iki.';
+  String get unresolvedExercisesNoAutomaticSuggestionsFor =>
+      'Ora ana saran otomatis kanggo jeneng iki.';
 
   @override
-  String get unresolvedExercisesOrTypeACanonical => 'Utawa ketik jeneng kanonik';
+  String get unresolvedExercisesOrTypeACanonical =>
+      'Utawa ketik jeneng kanonik';
 
   @override
   String get unresolvedExercisesSearchLibrary => 'Golek perpustakaan…';
@@ -36828,7 +39533,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get upNextCardCouldNotLoadSchedule => 'Ora bisa mbukak jadwal';
 
   @override
-  String get upNextCardNoUpcomingItemsTap => 'Ora ana item sing bakal teka. Tutul + kanggo nambah menyang jadwal sampeyan';
+  String get upNextCardNoUpcomingItemsTap =>
+      'Ora ana item sing bakal teka. Tutul + kanggo nambah menyang jadwal sampeyan';
 
   @override
   String get upNextCardTapToRetry => 'Tutul kanggo nyoba maneh';
@@ -36845,10 +39551,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get upcomingWorkoutsAiWillCreateYour => 'AI bakal nggawe latihan sampeyan';
+  String get upcomingWorkoutsAiWillCreateYour =>
+      'AI bakal nggawe latihan sampeyan';
 
   @override
-  String get upcomingWorkoutsCreatingYourPersonalizedWor => 'Nggawe latihan pribadi sampeyan';
+  String get upcomingWorkoutsCreatingYourPersonalizedWor =>
+      'Nggawe latihan pribadi sampeyan';
 
   @override
   String get upcomingWorkoutsEditGymProfile => 'Sunting Profil Gym';
@@ -36860,7 +39568,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get upcomingWorkoutsLater => 'Mengko';
 
   @override
-  String get upcomingWorkoutsNoWorkoutDaysScheduled => 'Ora ana dina latihan sing dijadwalake';
+  String get upcomingWorkoutsNoWorkoutDaysScheduled =>
+      'Ora ana dina latihan sing dijadwalake';
 
   @override
   String get upcomingWorkoutsNotEnoughEquipment => 'Peralatan ora cukup';
@@ -36876,7 +39585,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get upcomingWorkoutsTapADateTo => 'Tutul tanggal kanggo nggawe latihan sampeyan';
+  String get upcomingWorkoutsTapADateTo =>
+      'Tutul tanggal kanggo nggawe latihan sampeyan';
 
   @override
   String get upcomingWorkoutsTapToGenerate => 'Tutul kanggo Nggawe';
@@ -36885,7 +39595,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get upcomingWorkoutsUpcomingWorkouts => 'Latihan Sabanjure';
 
   @override
-  String get upcomingWorkoutsUpdateYourWorkoutSchedule => 'Nganyari jadwal latihan sampeyan ing Setelan';
+  String get upcomingWorkoutsUpdateYourWorkoutSchedule =>
+      'Nganyari jadwal latihan sampeyan ing Setelan';
 
   @override
   String get upgradePromptDismiss => 'Tutup';
@@ -36923,7 +39634,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get vacationModeEndDate => 'Tanggal rampung';
 
   @override
-  String get vacationModeLeaveEmptyForOpen => 'Kosongna kanggo preian tanpa wates';
+  String get vacationModeLeaveEmptyForOpen =>
+      'Kosongna kanggo preian tanpa wates';
 
   @override
   String get vacationModeLeaveEmptyToStart => 'Kosongna kanggo miwiti saiki';
@@ -36943,16 +39655,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get vacationModeStartDate => 'Tanggal wiwit';
 
   @override
-  String get vacationModeSuppressingNonCriticalNotif => 'Ngasah notifikasi sing ora penting';
+  String get vacationModeSuppressingNonCriticalNotif =>
+      'Ngasah notifikasi sing ora penting';
 
   @override
   String get vacationModeVacationMode => 'Mode Preian';
 
   @override
-  String get vacationModeVacationModeSettingsSaved => 'Setelan mode preian wis disimpen';
+  String get vacationModeVacationModeSettingsSaved =>
+      'Setelan mode preian wis disimpen';
 
   @override
-  String get vacationModeVacationStartMustBe => 'Wiwit preian kudu sadurunge utawa pas tanggal rampung';
+  String get vacationModeVacationStartMustBe =>
+      'Wiwit preian kudu sadurunge utawa pas tanggal rampung';
 
   @override
   String get vacationModeWhatVacationModeDoes => 'Apa gunane mode preian';
@@ -37007,16 +39722,19 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get vo2maxDetailTrendWillAppearAfter => 'Tren bakal katon sawise sawetara pangukuran dicathet.';
+  String get vo2maxDetailTrendWillAppearAfter =>
+      'Tren bakal katon sawise sawetara pangukuran dicathet.';
 
   @override
   String get vo2maxDetailVo2max => 'VO2max';
 
   @override
-  String get voiceAnnouncementsAnnouncingExerciseNamesDuri => 'Ngumumake jeneng latihan nalika transisi';
+  String get voiceAnnouncementsAnnouncingExerciseNamesDuri =>
+      'Ngumumake jeneng latihan nalika transisi';
 
   @override
-  String get voiceAnnouncementsMicFabOnActive => 'Mic FAB nalika latihan aktif — \"225 kanggo 5\"';
+  String get voiceAnnouncementsMicFabOnActive =>
+      'Mic FAB nalika latihan aktif — \"225 kanggo 5\"';
 
   @override
   String get voiceAnnouncementsTestVoice => 'Tes Swara';
@@ -37031,7 +39749,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get voiceAnnouncementsVoiceSetLogging => 'Pencatatan set swara';
 
   @override
-  String get voiceAnnouncementsWhenEnabledYouWill => 'Nalika diaktifake, sampeyan bakal krungu:';
+  String get voiceAnnouncementsWhenEnabledYouWill =>
+      'Nalika diaktifake, sampeyan bakal krungu:';
 
   @override
   String get voiceMicFabHearing => 'Ngrungokake...';
@@ -37040,7 +39759,10 @@ class AppLocalizationsJv extends AppLocalizations {
   String get volumeAlertCardAcknowledge => 'Ngerti';
 
   @override
-  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay) {
+  String volumeAlertCardIncrease(
+    Object formattedIncrease,
+    Object muscleGroupDisplay,
+  ) {
     return '$muscleGroupDisplay: $formattedIncrease mundhak';
   }
 
@@ -37059,13 +39781,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get volumeChartAverage => 'Rata-rata';
 
   @override
-  String get volumeChartCompleteSomeWorkoutsTo => 'Rampungna sawetara latihan kanggo ndeleng tren volume sampeyan.';
+  String get volumeChartCompleteSomeWorkoutsTo =>
+      'Rampungna sawetara latihan kanggo ndeleng tren volume sampeyan.';
 
   @override
   String get volumeChartDangerousIncrease => 'Peningkatan Mbebayani';
 
   @override
-  String get volumeChartLogAFewWeighted => 'Cathet sawetara set bobot kanggo ndeleng tren volume sampeyan.';
+  String get volumeChartLogAFewWeighted =>
+      'Cathet sawetara set bobot kanggo ndeleng tren volume sampeyan.';
 
   @override
   String volumeChartMuscleGroupVolume(Object muscleGroup) {
@@ -37107,7 +39831,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get volumeHistoryCompleteWorkoutsToSee => 'Rampungna latihan kanggo ndeleng tren volume';
+  String get volumeHistoryCompleteWorkoutsToSee =>
+      'Rampungna latihan kanggo ndeleng tren volume';
 
   @override
   String get volumeHistoryFailedToLoad => 'Gagal mbukak';
@@ -37132,10 +39857,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get volumeHistoryVolumeHistory => 'Riwayat Volume';
 
   @override
-  String get volumeProgressionCardDefineCustomProgressionVia => 'Nemtokake progres khusus liwat JSON (lanjutan)';
+  String get volumeProgressionCardDefineCustomProgressionVia =>
+      'Nemtokake progres khusus liwat JSON (lanjutan)';
 
   @override
-  String get volumeProgressionCardHowTrainingVolumeIncreases => 'Kepiye volume latihan mundhak saka wektu';
+  String get volumeProgressionCardHowTrainingVolumeIncreases =>
+      'Kepiye volume latihan mundhak saka wektu';
 
   @override
   String volumeProgressionCardValue(Object v) {
@@ -37143,7 +39870,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardVolumeProgressionCurves => 'Kurva Progres Volume';
+  String get volumeProgressionCardVolumeProgressionCurves =>
+      'Kurva Progres Volume';
 
   @override
   String volumeProgressionCardW(Object v) {
@@ -37151,7 +39879,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get volumeProgressionCardWavePatternVolumeCycles => 'Pola gelombang: siklus volume munggah mudhun saben minggu';
+  String get volumeProgressionCardWavePatternVolumeCycles =>
+      'Pola gelombang: siklus volume munggah mudhun saben minggu';
 
   @override
   String get warmupControllerPause => 'Jeda';
@@ -37177,7 +39906,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get warmupCooldownCardPreciseDurationControl1 => 'Kontrol durasi sing pas (1-15 menit)';
+  String get warmupCooldownCardPreciseDurationControl1 =>
+      'Kontrol durasi sing pas (1-15 menit)';
 
   @override
   String get warmupCooldownCardWarmupCooldown => 'Pemanasan & Pendinginan';
@@ -37212,22 +39942,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get warmupPhaseWarmUp => 'PEMANASAN';
 
   @override
-  String get warmupSettingsCooldownStretchDuration => 'Durasi Peregangan Pendinginan';
+  String get warmupSettingsCooldownStretchDuration =>
+      'Durasi Peregangan Pendinginan';
 
   @override
-  String get warmupSettingsEnableCooldownStretch => 'Aktifake Peregangan Pendinginan';
+  String get warmupSettingsEnableCooldownStretch =>
+      'Aktifake Peregangan Pendinginan';
 
   @override
   String get warmupSettingsEnableWarmupPhase => 'Aktifake Fase Pemanasan';
 
   @override
-  String get warmupSettingsHowLongToStretch => 'Suwene peregangan sawise latihan';
+  String get warmupSettingsHowLongToStretch =>
+      'Suwene peregangan sawise latihan';
 
   @override
-  String get warmupSettingsHowLongToWarm => 'Suwene pemanasan sadurunge latihan';
+  String get warmupSettingsHowLongToWarm =>
+      'Suwene pemanasan sadurunge latihan';
 
   @override
-  String get warmupSettingsIncompleteExerciseWarning => 'Pènget Latihan Durung Rampung';
+  String get warmupSettingsIncompleteExerciseWarning =>
+      'Pènget Latihan Durung Rampung';
 
   @override
   String warmupSettingsSectionMin(Object label, Object minutes) {
@@ -37235,13 +39970,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get warmupSettingsShowStretchScreenAfter => 'Tampilake layar peregangan sawise latihan';
+  String get warmupSettingsShowStretchScreenAfter =>
+      'Tampilake layar peregangan sawise latihan';
 
   @override
-  String get warmupSettingsShowWarmupScreenBefore => 'Tampilake layar pemanasan sadurunge latihan';
+  String get warmupSettingsShowWarmupScreenBefore =>
+      'Tampilake layar pemanasan sadurunge latihan';
 
   @override
-  String get warmupSettingsTipsForEffectiveWarm => 'Tips kanggo pemanasan sing efektif:';
+  String get warmupSettingsTipsForEffectiveWarm =>
+      'Tips kanggo pemanasan sing efektif:';
 
   @override
   String get warmupSettingsWarmupCooldown => 'PEMANASAN & PENDINGINAN';
@@ -37250,13 +39988,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get warmupSettingsWarmupDuration => 'Durasi Pemanasan';
 
   @override
-  String get warmupSettingsWarnBeforeFinishingWith => 'Pènget sadurunge rampung karo set sing durung dicathet';
+  String get warmupSettingsWarnBeforeFinishingWith =>
+      'Pènget sadurunge rampung karo set sing durung dicathet';
 
   @override
-  String get watchInstallBannerCouldNotOpenPlay => 'Ora bisa mbukak Play Store ing jam tangan. Mangga instal kanthi manual.';
+  String get watchInstallBannerCouldNotOpenPlay =>
+      'Ora bisa mbukak Play Store ing jam tangan. Mangga instal kanthi manual.';
 
   @override
-  String get watchInstallBannerFailedToConnectTo => 'Gagal nyambung menyang jam tangan. Mangga coba malih.';
+  String get watchInstallBannerFailedToConnectTo =>
+      'Gagal nyambung menyang jam tangan. Mangga coba malih.';
 
   @override
   String get watchInstallBannerInstallOnWatch => 'Pasang ing Jam Tangan';
@@ -37265,7 +40006,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get watchInstallBannerNotNow => 'Ora Saiki';
 
   @override
-  String get watchInstallBannerTrackWorkoutsFromYour => 'Rekam latihan saka bangkekanmu';
+  String get watchInstallBannerTrackWorkoutsFromYour =>
+      'Rekam latihan saka bangkekanmu';
 
   @override
   String get watchInstallBannerWatchDetected => 'Jam Tangan Ditemokake';
@@ -37277,13 +40019,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get wearOsComingFeatures => 'Fitur sing bakal teka:';
 
   @override
-  String get wearOsLogSetsDirectlyFromWatch => 'Cathet set langsung saka jam tangan';
+  String get wearOsLogSetsDirectlyFromWatch =>
+      'Cathet set langsung saka jam tangan';
 
   @override
-  String get wearOsQuickFoodLoggingViaVoice => 'Cathet panganan cepet liwat swara';
+  String get wearOsQuickFoodLoggingViaVoice =>
+      'Cathet panganan cepet liwat swara';
 
   @override
-  String get wearOsRealTimeHeartRateTracking => 'Pelacakan detak jantung wektu nyata';
+  String get wearOsRealTimeHeartRateTracking =>
+      'Pelacakan detak jantung wektu nyata';
 
   @override
   String get wearOsSmartwatch => 'Jam pinter';
@@ -37383,7 +40128,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinApplyChanges => 'Aplikasi Owah-owahan';
 
   @override
-  String get weeklyCheckinConservativeModerateOrAgg => 'Konservatif, Sedheng, utawa Agresif — saben duwe target kalori lan owah-owahan mingguan sing dikarepake.';
+  String get weeklyCheckinConservativeModerateOrAgg =>
+      'Konservatif, Sedheng, utawa Agresif — saben duwe target kalori lan owah-owahan mingguan sing dikarepake.';
 
   @override
   String get weeklyCheckinDisable => 'Pateni';
@@ -37407,19 +40153,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinKeepIt => 'Tetep Iki';
 
   @override
-  String get weeklyCheckinPickAPlanTo => 'Pilih rencana kanggo nganyari targetmu, utawa liwati kanggo tetep kaya saiki. Ora ana sing owah kanthi otomatis.';
+  String get weeklyCheckinPickAPlanTo =>
+      'Pilih rencana kanggo nganyari targetmu, utawa liwati kanggo tetep kaya saiki. Ora ana sing owah kanthi otomatis.';
 
   @override
   String get weeklyCheckinPleaseTryAgainLater => 'Mangga coba maneh mengko';
 
   @override
-  String get weeklyCheckinReviewProgressChooseYour => 'Deleng progres & pilih dalanmu';
+  String get weeklyCheckinReviewProgressChooseYour =>
+      'Deleng progres & pilih dalanmu';
 
   @override
   String get weeklyCheckinSheetAdherence => 'Kepatuhan';
 
   @override
-  String get weeklyCheckinSheetAdherenceSustainability => 'Kepatuhan & Keberlanjutan';
+  String get weeklyCheckinSheetAdherenceSustainability =>
+      'Kepatuhan & Keberlanjutan';
 
   @override
   String get weeklyCheckinSheetAvgCalories => 'Rata-rata Kalori';
@@ -37428,7 +40177,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetAvgProtein => 'Rata-rata Protein';
 
   @override
-  String get weeklyCheckinSheetBasedOnActualIntake => 'Adhedhasar asupan nyata & owah-owahan bobot';
+  String get weeklyCheckinSheetBasedOnActualIntake =>
+      'Adhedhasar asupan nyata & owah-owahan bobot';
 
   @override
   String get weeklyCheckinSheetBuildingYourProfile => 'Nggawe Profilmu';
@@ -37458,7 +40208,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetDaysLogged => 'Dina sing Dicathet';
 
   @override
-  String get weeklyCheckinSheetEmaSmoothedCalculation => 'Kalkulasi EMA-smoothed';
+  String get weeklyCheckinSheetEmaSmoothedCalculation =>
+      'Kalkulasi EMA-smoothed';
 
   @override
   String weeklyCheckinSheetEveryWeekAnalysesYour(Object appName) {
@@ -37475,16 +40226,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetKeepLogging => 'Terus Nyathet!';
 
   @override
-  String get weeklyCheckinSheetKeepLoggingYourMeals => 'Terus cathet dhaharan lan bobotmu kanggo mbukak kunci kalkulasi TDEE sing dipersonalisasi.';
+  String get weeklyCheckinSheetKeepLoggingYourMeals =>
+      'Terus cathet dhaharan lan bobotmu kanggo mbukak kunci kalkulasi TDEE sing dipersonalisasi.';
 
   @override
-  String get weeklyCheckinSheetLogMealsConsistentlyFor => 'Cathet dhaharan kanthi konsisten kanggo asil paling apik';
+  String get weeklyCheckinSheetLogMealsConsistentlyFor =>
+      'Cathet dhaharan kanthi konsisten kanggo asil paling apik';
 
   @override
-  String get weeklyCheckinSheetMetabolicAdaptationDetected => 'Adaptasi Metabolik Dideteksi';
+  String get weeklyCheckinSheetMetabolicAdaptationDetected =>
+      'Adaptasi Metabolik Dideteksi';
 
   @override
-  String get weeklyCheckinSheetNeed60DataQuality => 'Perlu 60% kualitas data kanggo kalkulasi sing akurat';
+  String get weeklyCheckinSheetNeed60DataQuality =>
+      'Perlu 60% kualitas data kanggo kalkulasi sing akurat';
 
   @override
   String get weeklyCheckinSheetNewTargets => 'Target Anyar';
@@ -37495,7 +40250,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target) {
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(
+    Object current,
+    Object target,
+  ) {
     return '$current / $target dina';
   }
 
@@ -37525,7 +40283,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent) {
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
+    Object dataQualityPercent,
+  ) {
     return '$dataQualityPercent%';
   }
 
@@ -37535,7 +40295,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate) {
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
+    Object formattedWeeklyRate,
+  ) {
     return 'Tren bobot: $formattedWeeklyRate';
   }
 
@@ -37549,10 +40311,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetRecommended => 'DIREKOMENDASIKAKE';
 
   @override
-  String get weeklyCheckinSheetRecommendedAdjustment => 'Penyesuaian sing Disaranake';
+  String get weeklyCheckinSheetRecommendedAdjustment =>
+      'Penyesuaian sing Disaranake';
 
   @override
-  String get weeklyCheckinSheetSelectARecommendationBased => 'Pilih rekomendasi adhedhasar pilihanmu';
+  String get weeklyCheckinSheetSelectARecommendationBased =>
+      'Pilih rekomendasi adhedhasar pilihanmu';
 
   @override
   String weeklyCheckinSheetSuggestedAction(Object action) {
@@ -37571,10 +40335,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetThisWeek => 'Minggu Iki';
 
   @override
-  String get weeklyCheckinSheetTipsForBetterResults => 'Tips kanggo Asil Luwih Apik';
+  String get weeklyCheckinSheetTipsForBetterResults =>
+      'Tips kanggo Asil Luwih Apik';
 
   @override
-  String get weeklyCheckinSheetWeNeedABit => 'Kita butuh data luwih akeh kanggo ngetung TDEE pribadimu.';
+  String get weeklyCheckinSheetWeNeedABit =>
+      'Kita butuh data luwih akeh kanggo ngetung TDEE pribadimu.';
 
   @override
   String get weeklyCheckinSheetWeightChange => 'Owah-owahan Bobot';
@@ -37589,7 +40355,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinSheetYourAdaptiveTdee => 'TDEE Adaptifmu';
 
   @override
-  String get weeklyCheckinSheetYourCurrentTargetsAre => 'Target saikimu wis selaras karo progresmu. Terusake pakaryan apik iki!';
+  String get weeklyCheckinSheetYourCurrentTargetsAre =>
+      'Target saikimu wis selaras karo progresmu. Terusake pakaryan apik iki!';
 
   @override
   String get weeklyCheckinSkipThisWeek => 'Liwati minggu iki';
@@ -37601,13 +40368,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinUnableToLoadData => 'Ora bisa mbukak data';
 
   @override
-  String get weeklyCheckinWeAnalyseYourWeek => 'Kita nganalisis minggu sampeyan';
+  String get weeklyCheckinWeAnalyseYourWeek =>
+      'Kita nganalisis minggu sampeyan';
 
   @override
   String get weeklyCheckinWeeklyCheckIn => 'Check-In Mingguan';
 
   @override
-  String get weeklyCheckinWhatHappensEachWeek => 'Apa sing kedadeyan saben minggu';
+  String get weeklyCheckinWhatHappensEachWeek =>
+      'Apa sing kedadeyan saben minggu';
 
   @override
   String get weeklyCheckinWhatIsThis => 'Apa iki?';
@@ -37616,10 +40385,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinWhatIsWeeklyCheck => 'Apa iku Weekly Check-In?';
 
   @override
-  String get weeklyCheckinYouCanReEnable => 'Sampeyan bisa ngaktifake maneh iki kapan wae ing Setelan Nutrisi.';
+  String get weeklyCheckinYouCanReEnable =>
+      'Sampeyan bisa ngaktifake maneh iki kapan wae ing Setelan Nutrisi.';
 
   @override
-  String get weeklyCheckinYouCanTurnThis => 'Sampeyan bisa mateni iki kapan wae ing Setelan Nutrisi → Pangeling Weekly Check-in.';
+  String get weeklyCheckinYouCanTurnThis =>
+      'Sampeyan bisa mateni iki kapan wae ing Setelan Nutrisi → Pangeling Weekly Check-in.';
 
   @override
   String get weeklyCheckinYouChooseOrSkip => 'Sampeyan milih — utawa liwati';
@@ -37631,7 +40402,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyCheckinYouSee23 => 'Sampeyan ndeleng 2–3 pilihan rencana';
 
   @override
-  String get weeklyCheckinYourLoggedMealsAnd => 'Panganan lan data bobot sing wis dicathet digunakake kanggo ngetung TDEE nyata sampeyan — luwih akurat tinimbang rumus apa wae.';
+  String get weeklyCheckinYourLoggedMealsAnd =>
+      'Panganan lan data bobot sing wis dicathet digunakake kanggo ngetung TDEE nyata sampeyan — luwih akurat tinimbang rumus apa wae.';
 
   @override
   String weeklyGoalsCardNewPr(Object prsThisWeek) {
@@ -37639,7 +40411,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get weeklyGoalsCardSetAChallengeTo => 'Gawe tantangan kanggo ngunggahake watesanmu!';
+  String get weeklyGoalsCardSetAChallengeTo =>
+      'Gawe tantangan kanggo ngunggahake watesanmu!';
 
   @override
   String get weeklyGoalsCardWeeklyGoals => 'Target Mingguan';
@@ -37648,13 +40421,17 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyHighlightsTemplateAiHighlights => 'SOROTAN AI';
 
   @override
-  String get weeklyHighlightsTemplateAnotherWeekInThe => 'Minggu liyane wis rampung. Konsistensi iku kunci sing bener.';
+  String get weeklyHighlightsTemplateAnotherWeekInThe =>
+      'Minggu liyane wis rampung. Konsistensi iku kunci sing bener.';
 
   @override
   String get weeklyHighlightsTemplateThisWeek => 'MINGGU IKI';
 
   @override
-  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank) {
+  String weeklyPercentileHeroOfActiveUsersTap(
+    Object totalActive,
+    Object yourRank,
+  ) {
     return '#$yourRank saka $totalActive pangguna aktif · tutul kanggo Discover';
   }
 
@@ -37667,7 +40444,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyPlanCardCreateYourWeeklyPlan => 'Gawe Rencana Mingguanmu';
 
   @override
-  String get weeklyPlanCardGetAHolisticPlan => 'Entuk rencana holistik sing nggabungake latihan, nutrisi, lan pasa';
+  String get weeklyPlanCardGetAHolisticPlan =>
+      'Entuk rencana holistik sing nggabungake latihan, nutrisi, lan pasa';
 
   @override
   String get weeklyPlanCardTodaySPlan => 'Rencana Dina Iki';
@@ -37676,7 +40454,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyPlanCardWeeklyPlan => 'Rencana Mingguan';
 
   @override
-  String get weeklyPlanCreateAHolisticPlan => 'Gawe rencana holistik sing nggabungake jadwal latihan, nutrisi, lan pasa kanggo minggu iki.';
+  String get weeklyPlanCreateAHolisticPlan =>
+      'Gawe rencana holistik sing nggabungake jadwal latihan, nutrisi, lan pasa kanggo minggu iki.';
 
   @override
   String get weeklyPlanErrorLoadingPlan => 'Gagal mbukak rencana';
@@ -37718,7 +40497,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get weeklyPrsTemplateShowingUpIsThe => 'Teka iku wis dadi kamenangan. Minggu ngarep dadi duweke sampeyan.';
+  String get weeklyPrsTemplateShowingUpIsThe =>
+      'Teka iku wis dadi kamenangan. Minggu ngarep dadi duweke sampeyan.';
 
   @override
   String get weeklyRecap => '🛡️';
@@ -37727,7 +40507,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyRecapBonusRound => 'Babak Bonus';
 
   @override
-  String get weeklyRecapCatchNutrientsWinBonus => 'Entuk nutrisi, menang bonus XP';
+  String get weeklyRecapCatchNutrientsWinBonus =>
+      'Entuk nutrisi, menang bonus XP';
 
   @override
   String weeklyRecapDialogRankShieldsActivated(Object count) {
@@ -37767,7 +40548,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyRecapPassedBy => 'Diliwati dening';
 
   @override
-  String get weeklyRecapRankShieldActivatedStreak => 'Rank Shield diaktifake — streak tetep kejaga';
+  String get weeklyRecapRankShieldActivatedStreak =>
+      'Rank Shield diaktifake — streak tetep kejaga';
 
   @override
   String get weeklyRecapRewardsUnlocked => 'HADIAH DIBUKA';
@@ -37798,7 +40580,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String weeklyReportCardOfWorkoutsThisWeek(Object completed, Object scheduled) {
+  String weeklyReportCardOfWorkoutsThisWeek(
+    Object completed,
+    Object scheduled,
+  ) {
     return '$completed saka $scheduled latihan minggu iki';
   }
 
@@ -37820,7 +40605,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklySummaryGenerateSummary => 'Gawe Ringkesan';
 
   @override
-  String get weeklySummaryGenerateYourFirstWeekly => 'Gawe ringkesan mingguan pisananmu kanggo ndeleng kemajuanmu nganggo wawasan berbasis AI';
+  String get weeklySummaryGenerateYourFirstWeekly =>
+      'Gawe ringkesan mingguan pisananmu kanggo ndeleng kemajuanmu nganggo wawasan berbasis AI';
 
   @override
   String get weeklySummaryHighlights => 'Sorotan';
@@ -37844,7 +40630,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled) {
+  String weeklySummaryScreenWorkoutsCompleted(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  ) {
     return '$workoutsCompleted/$workoutsScheduled latihan rampung';
   }
 
@@ -37861,16 +40650,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklySummaryWeeklySummaries => 'Ringkesan Mingguan';
 
   @override
-  String get weeklySummaryWeeklySummaryGenerated => 'Ringkesan mingguan wis digawe!';
+  String get weeklySummaryWeeklySummaryGenerated =>
+      'Ringkesan mingguan wis digawe!';
 
   @override
-  String get weeklyVolumeBarsWeeklyVolumePerMuscle => 'Volume mingguan saben otot';
+  String get weeklyVolumeBarsWeeklyVolumePerMuscle =>
+      'Volume mingguan saben otot';
 
   @override
   String get weeklyWrappedFromYourCoach => 'SAKA PELATIH SAMPEYAN';
 
   @override
-  String get weeklyWrappedNoWorkoutsScheduledYet => 'Durung ana latihan sing dijadwalake. Gawe rencana saka Beranda.';
+  String get weeklyWrappedNoWorkoutsScheduledYet =>
+      'Durung ana latihan sing dijadwalake. Gawe rencana saka Beranda.';
 
   @override
   String get weeklyWrappedPrs => 'PR';
@@ -37885,7 +40677,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weeklyWrappedYourWeek => 'Minggumu';
 
   @override
-  String get weightFastingChartNoWeightDataAvailable => 'Data bobot ora kasedhiya';
+  String get weightFastingChartNoWeightDataAvailable =>
+      'Data bobot ora kasedhiya';
 
   @override
   String get weightFastingChartWeightTrends => 'Tren Bobot';
@@ -37894,13 +40687,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weightIncrementsBarbell => 'Barbell';
 
   @override
-  String get weightIncrementsBasedOnStandardCommercial => 'Adhedhasar peralatan gym komersial standar:';
+  String get weightIncrementsBasedOnStandardCommercial =>
+      'Adhedhasar peralatan gym komersial standar:';
 
   @override
   String get weightIncrementsCardConfigureIncrements => 'Konfigurasi Tambahan';
 
   @override
-  String get weightIncrementsCardCustomizeStepPerEquipme => 'Kustomisasi langkah +/- saben jinis peralatan';
+  String get weightIncrementsCardCustomizeStepPerEquipme =>
+      'Kustomisasi langkah +/- saben jinis peralatan';
 
   @override
   String get weightIncrementsCardWeightIncrements => 'Tambahan Bobot';
@@ -37909,7 +40704,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weightIncrementsCustomIncrement => 'Tambahan Kustom';
 
   @override
-  String get weightIncrementsCustomizeStepSizePer => 'Kustomisasi ukuran langkah +/- saben peralatan';
+  String get weightIncrementsCustomizeStepSizePer =>
+      'Kustomisasi ukuran langkah +/- saben peralatan';
 
   @override
   String get weightIncrementsEG25 => 'contone 2.5';
@@ -37934,7 +40730,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get weightIncrementsSourcesRogueLifeFitness => 'Sumber: Rogue, Life Fitness, Eleiko';
+  String get weightIncrementsSourcesRogueLifeFitness =>
+      'Sumber: Rogue, Life Fitness, Eleiko';
 
   @override
   String get weightIncrementsUseDefaults => 'Gunakake Standar';
@@ -37946,16 +40743,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weightProjectionCurrent => 'Saiki';
 
   @override
-  String get weightProjectionHowFastDoYou => 'Sepira cepet sampeyan pengin ngilangi bobot?';
+  String get weightProjectionHowFastDoYou =>
+      'Sepira cepet sampeyan pengin ngilangi bobot?';
 
   @override
   String get weightProjectionPerWeek => 'Saben minggu';
 
   @override
-  String get weightProjectionSafeRate05 => 'Tingkat aman: 0.5–1 kg/minggu. Rencana sampeyan ngetutake pedoman berbasis bukti.';
+  String get weightProjectionSafeRate05 =>
+      'Tingkat aman: 0.5–1 kg/minggu. Rencana sampeyan ngetutake pedoman berbasis bukti.';
 
   @override
-  String get weightProjectionScreenContinueToYourPlan => 'Lanjut menyang rencana sampeyan';
+  String get weightProjectionScreenContinueToYourPlan =>
+      'Lanjut menyang rencana sampeyan';
 
   @override
   String weightProjectionScreenDaysWk(Object workoutDays) {
@@ -37963,10 +40763,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get weightProjectionScreenLetSKeepYou => 'Ayo tetep kaya ngono! Kita bakal fokus njaga fisik sampeyan saiki nalika ningkatake kabugaran, kekuatan, lan tingkat energi sampeyan.';
+  String get weightProjectionScreenLetSKeepYou =>
+      'Ayo tetep kaya ngono! Kita bakal fokus njaga fisik sampeyan saiki nalika ningkatake kabugaran, kekuatan, lan tingkat energi sampeyan.';
 
   @override
-  String get weightProjectionScreenYouReAtYour => 'Sampeyan wis ing bobot ideal!';
+  String get weightProjectionScreenYouReAtYour =>
+      'Sampeyan wis ing bobot ideal!';
 
   @override
   String get weightProjectionToGain => 'Kanggo nambah';
@@ -38008,7 +40810,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get weightTrendCardLoadingWeight => 'Ngunggah bobot...';
 
   @override
-  String get weightTrendCardLogYourWeightTo => 'Cathet bobot sampeyan kanggo ndeleng tren';
+  String get weightTrendCardLogYourWeightTo =>
+      'Cathet bobot sampeyan kanggo ndeleng tren';
 
   @override
   String get weightTrendCardMaintaining => 'Njaga';
@@ -38062,22 +40865,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get welcomeAffirmationLetSBegin => 'Ayo diwiwiti';
 
   @override
-  String get welcomeAffirmationMostUsersHitTheir => 'Umume pangguna nggayuh tonggak sejarah pisanan sajrone 30 dina';
+  String get welcomeAffirmationMostUsersHitTheir =>
+      'Umume pangguna nggayuh tonggak sejarah pisanan sajrone 30 dina';
 
   @override
-  String get welcomeAffirmationYouReAboutTo => 'Sampeyan bakal dadi salah siji saka wong-wong mau.';
+  String get welcomeAffirmationYouReAboutTo =>
+      'Sampeyan bakal dadi salah siji saka wong-wong mau.';
 
   @override
-  String get welcomeAffirmationYouReInThe => 'Sampeyan ana ing panggonan sing bener.\nAyo bangun rencana sampeyan bareng-bareng.';
+  String get welcomeAffirmationYouReInThe =>
+      'Sampeyan ana ing panggonan sing bener.\nAyo bangun rencana sampeyan bareng-bareng.';
 
   @override
-  String get wellnessCheckinCardAddANoteOptional => 'Tambah cathetan (opsional)';
+  String get wellnessCheckinCardAddANoteOptional =>
+      'Tambah cathetan (opsional)';
 
   @override
   String get wellnessCheckinCardCheckedInU2713 => 'Wis check-in ✓';
 
   @override
-  String get wellnessCheckinCardDailyWellnessCheckIn => 'Check-in kabugaran saben dina';
+  String get wellnessCheckinCardDailyWellnessCheckIn =>
+      'Check-in kabugaran saben dina';
 
   @override
   String wellnessCheckinCardEnergy(Object energyLevel) {
@@ -38121,7 +40929,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutActionsChangeWorkoutDate => 'Ganti tanggal latihan';
 
   @override
-  String get workoutActionsCompleteTheWorkoutFirst => 'Rampungake latihan dhisik kanggo nggawe link bareng';
+  String get workoutActionsCompleteTheWorkoutFirst =>
+      'Rampungake latihan dhisik kanggo nggawe link bareng';
 
   @override
   String get workoutActionsCoolDownStretches => 'Peregangan pendinginan';
@@ -38130,7 +40939,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutActionsCouldNotCreateShare => 'Gagal nggawe link bareng';
 
   @override
-  String get workoutActionsCreateCoolDownStretches => 'Gawe peregangan pendinginan';
+  String get workoutActionsCreateCoolDownStretches =>
+      'Gawe peregangan pendinginan';
 
   @override
   String get workoutActionsCreateWarmupExercises => 'Gawe latihan pemanasan';
@@ -38145,19 +40955,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutActionsDeleteWorkout2 => 'Busak latihan?';
 
   @override
-  String get workoutActionsFailedToGenerateStretches => 'Gagal nggawe peregangan';
+  String get workoutActionsFailedToGenerateStretches =>
+      'Gagal nggawe peregangan';
 
   @override
   String get workoutActionsFailedToGenerateWarmup => 'Gagal nggawe pemanasan';
 
   @override
-  String get workoutActionsFailedToRegenerateWorkout => 'Gagal nggawe maneh latihan';
+  String get workoutActionsFailedToRegenerateWorkout =>
+      'Gagal nggawe maneh latihan';
 
   @override
-  String get workoutActionsFailedToRescheduleWorkout => 'Gagal njadwalake maneh latihan';
+  String get workoutActionsFailedToRescheduleWorkout =>
+      'Gagal njadwalake maneh latihan';
 
   @override
-  String get workoutActionsFinishThisWorkoutTo => 'Rampungake latihan iki kanggo nuduhake';
+  String get workoutActionsFinishThisWorkoutTo =>
+      'Rampungake latihan iki kanggo nuduhake';
 
   @override
   String get workoutActionsGenerateStretches => 'Gawe peregangan';
@@ -38166,7 +40980,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutActionsGenerateWarmup => 'Gawe pemanasan';
 
   @override
-  String get workoutActionsLinkCopiedToClipboard => 'Link disalin menyang clipboard';
+  String get workoutActionsLinkCopiedToClipboard =>
+      'Link disalin menyang clipboard';
 
   @override
   String get workoutActionsNoVersionHistory => 'Ora ana riwayat versi';
@@ -38213,7 +41028,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps) {
+  String workoutActionsSheetValue(
+    Object _regenerateMessage,
+    Object _regenerateStep,
+    Object _regenerateTotalSteps,
+  ) {
     return '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)';
   }
 
@@ -38223,19 +41042,23 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutActionsThisActionCannotBe => 'Tindakan iki ora bisa dibatalake.';
+  String get workoutActionsThisActionCannotBe =>
+      'Tindakan iki ora bisa dibatalake.';
 
   @override
-  String get workoutActionsThisWillCreateA => 'Iki bakal nggawe rencana latihan anyar kanggo dina iki. Latihan saiki bakal disimpen ing riwayat versi.';
+  String get workoutActionsThisWillCreateA =>
+      'Iki bakal nggawe rencana latihan anyar kanggo dina iki. Latihan saiki bakal disimpen ing riwayat versi.';
 
   @override
-  String get workoutActionsThisWorkoutCannotBe => 'Latihan iki durung bisa dituduhake';
+  String get workoutActionsThisWorkoutCannotBe =>
+      'Latihan iki durung bisa dituduhake';
 
   @override
   String get workoutActionsVersionHistory => 'Riwayat versi';
 
   @override
-  String get workoutActionsViewAndRestorePrevious => 'Deleng lan pulihake versi sadurunge';
+  String get workoutActionsViewAndRestorePrevious =>
+      'Deleng lan pulihake versi sadurunge';
 
   @override
   String get workoutActionsWarmupExercises => 'Latihan pemanasan';
@@ -38250,13 +41073,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutActionsWorkoutRegenerated => 'Latihan wis digawe maneh';
 
   @override
-  String get workoutActionsWorkoutRescheduled => 'Latihan wis dijadwalake maneh';
+  String get workoutActionsWorkoutRescheduled =>
+      'Latihan wis dijadwalake maneh';
 
   @override
   String get workoutAiCoachAddAMessageOptional => 'Tambah pesen (opsional)...';
 
   @override
-  String get workoutAiCoachAskMeAnythingAbout => 'Takon apa wae babagan latihan sampeyan!';
+  String get workoutAiCoachAskMeAnythingAbout =>
+      'Takon apa wae babagan latihan sampeyan!';
 
   @override
   String get workoutAiCoachChangeCoach => 'Ganti pelatih';
@@ -38363,7 +41188,9 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant) {
+  String workoutCompleteScreenExt1GreatWillBeIncluded(
+    Object suggestedNextVariant,
+  ) {
     return 'Apik! $suggestedNextVariant bakal dilebokake ing latihan sabanjure.';
   }
 
@@ -38378,10 +41205,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenFailedToExtendWorkout => 'Gagal nambah durasi latihan. Coba maneh.';
+  String get workoutCompleteScreenFailedToExtendWorkout =>
+      'Gagal nambah durasi latihan. Coba maneh.';
 
   @override
-  String get workoutCompleteScreenFeelingStrongerToday => 'Rasane luwih kuwat dina iki!';
+  String get workoutCompleteScreenFeelingStrongerToday =>
+      'Rasane luwih kuwat dina iki!';
 
   @override
   String get workoutCompleteScreenGoBack => 'Bali';
@@ -38410,7 +41239,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes) {
+  String workoutCompleteScreenMinSaunaCal(
+    Object _saunaCalories,
+    Object _saunaMinutes,
+  ) {
     return '$_saunaMinutes menit sauna · ~$_saunaCalories kal';
   }
 
@@ -38424,22 +41256,27 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutCompleteScreenNoData => 'Ora ana data';
 
   @override
-  String get workoutCompleteScreenNoWorkoutDataTo => 'Durung ana data latihan kanggo dituduhake';
+  String get workoutCompleteScreenNoWorkoutDataTo =>
+      'Durung ana data latihan kanggo dituduhake';
 
   @override
   String get workoutCompleteScreenNotYet => 'Durung';
 
   @override
-  String get workoutCompleteScreenNoticeImprovementsInYour => 'Apa krasa ana kemajuan ing kekuwatan utawa daya tahanmu?';
+  String get workoutCompleteScreenNoticeImprovementsInYour =>
+      'Apa krasa ana kemajuan ing kekuwatan utawa daya tahanmu?';
 
   @override
-  String get workoutCompleteScreenPleaseRateYourWorkout => 'Tulung wenehi rating latihanmu';
+  String get workoutCompleteScreenPleaseRateYourWorkout =>
+      'Tulung wenehi rating latihanmu';
 
   @override
-  String get workoutCompleteScreenRateIndividualExercises => 'Wenehi Rating Latihan Individu';
+  String get workoutCompleteScreenRateIndividualExercises =>
+      'Wenehi Rating Latihan Individu';
 
   @override
-  String get workoutCompleteScreenRatingsHelpOurAi => 'Rating mbantu AI kita nggawe latihan sing luwih apik. Tetep arep dilewati?';
+  String get workoutCompleteScreenRatingsHelpOurAi =>
+      'Rating mbantu AI kita nggawe latihan sing luwih apik. Tetep arep dilewati?';
 
   @override
   String get workoutCompleteScreenReadyToLevelUp => 'SIAP LEVEL UP!';
@@ -38466,24 +41303,31 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutCompleteScreenTotalWorkout => 'TOTAL LATIHAN';
 
   @override
-  String get workoutCompleteScreenTrackYourMoodTo => 'Cathet swasana atimu kanggo ndeleng progresmu';
+  String get workoutCompleteScreenTrackYourMoodTo =>
+      'Cathet swasana atimu kanggo ndeleng progresmu';
 
   @override
   String get workoutCompleteScreenTrophiesEarned => 'Trofi sing Diperoleh!';
 
   @override
-  String get workoutCompleteScreenTrophiesMilestones => 'Trofi & Tonggak Sejarah';
+  String get workoutCompleteScreenTrophiesMilestones =>
+      'Trofi & Tonggak Sejarah';
 
   @override
   String get workoutCompleteScreenU1f4aa => '💪';
 
   @override
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts) {
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
+    Object streak,
+    Object totalWorkouts,
+  ) {
     return '$streak dina berturut-turut, $totalWorkouts total latihan';
   }
 
   @override
-  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions) {
+  String workoutCompleteScreenUi1MarkedAsTooEasy(
+    Object consecutiveEasySessions,
+  ) {
     return 'Ditandhani \"kegampangen\" ${consecutiveEasySessions}x berturut-turut';
   }
 
@@ -38503,15 +41347,20 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets) {
+  String workoutCompleteScreenUi2SetsReps(
+    Object currentReps,
+    Object currentSets,
+  ) {
     return '$currentSets set, $currentReps reps';
   }
 
   @override
-  String get workoutCompleteScreenUnableToChallengeFriends => 'Ora bisa nantang kanca saiki';
+  String get workoutCompleteScreenUnableToChallengeFriends =>
+      'Ora bisa nantang kanca saiki';
 
   @override
-  String get workoutCompleteScreenUnableToExtendWorkout => 'Ora bisa nambah durasi latihan';
+  String get workoutCompleteScreenUnableToExtendWorkout =>
+      'Ora bisa nambah durasi latihan';
 
   @override
   String get workoutCompleteScreenViewAllMetrics => 'Deleng Kabeh Metrik';
@@ -38528,10 +41377,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutCompleteScreenYouDonTHave => 'Sampeyan durung duwe kanca. Tambah kanca dhisik!';
+  String get workoutCompleteScreenYouDonTHave =>
+      'Sampeyan durung duwe kanca. Tambah kanca dhisik!';
 
   @override
-  String get workoutCompleteScreenYouVeMasteredThese => 'Sampeyan wis nguwasani latihan iki. Coba varian sing luwih abot?';
+  String get workoutCompleteScreenYouVeMasteredThese =>
+      'Sampeyan wis nguwasani latihan iki. Coba varian sing luwih abot?';
 
   @override
   String get workoutCompleteSkipRating => 'Lewati rating';
@@ -38552,7 +41403,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutCompleteWorkoutComplete => 'Latihan Rampung!';
 
   @override
-  String get workoutCompleteYourRatingsHelpUs => 'Ratingmu mbantu kita nggawe latihan sing luwih pas kanggo sampeyan';
+  String get workoutCompleteYourRatingsHelpUs =>
+      'Ratingmu mbantu kita nggawe latihan sing luwih pas kanggo sampeyan';
 
   @override
   String get workoutDayDetailAvgHr => 'Rata-rata HR';
@@ -38585,7 +41437,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutDayDetailMusclesWorked => 'Otot sing Dilatih';
 
   @override
-  String get workoutDayDetailRecoveryIsJustAs => 'Pemulihan iku padha pentinge karo latihan. Ototmu tuwuh nalika istirahat!';
+  String get workoutDayDetailRecoveryIsJustAs =>
+      'Pemulihan iku padha pentinge karo latihan. Ototmu tuwuh nalika istirahat!';
 
   @override
   String get workoutDayDetailRestDay => 'Dina Istirahat';
@@ -38610,10 +41463,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutDayDetailWorkoutMissed => 'Latihan Keliwat';
 
   @override
-  String get workoutDaysChangingWorkoutDaysWill => 'Ngganti dina latihan bakal nganyari jadwalmu. Latihan ing mangarepe bakal digawe maneh.';
+  String get workoutDaysChangingWorkoutDaysWill =>
+      'Ngganti dina latihan bakal nganyari jadwalmu. Latihan ing mangarepe bakal digawe maneh.';
 
   @override
-  String get workoutDaysSelectWhichDaysYou => 'Pilih dina apa sampeyan pengin latihan';
+  String get workoutDaysSelectWhichDaysYou =>
+      'Pilih dina apa sampeyan pengin latihan';
 
   @override
   String workoutDaysSelectorDaysWeek(Object length) {
@@ -38621,7 +41476,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutDaysSelectorSelectWhichDaysYou => 'Pilih dina apa sampeyan pengin latihan';
+  String get workoutDaysSelectorSelectWhichDaysYou =>
+      'Pilih dina apa sampeyan pengin latihan';
 
   @override
   String get workoutDaysSelectorWorkoutDays => 'Dina Latihan';
@@ -38677,16 +41533,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutDetailAiRegenerateInsights => 'Gawe maneh wawasan';
 
   @override
-  String get workoutDetailAiTapToSeeAi => 'Tutul kanggo ndeleng alesan AI kanggo pilihan latihan';
+  String get workoutDetailAiTapToSeeAi =>
+      'Tutul kanggo ndeleng alesan AI kanggo pilihan latihan';
 
   @override
-  String get workoutDetailAiTheseParametersWereUsed => 'Parameter iki digunakake dening AI kanggo nggawe latihan pribadi sing cocog karo level fitness, target, lan peralatan sing kasedhiya.';
+  String get workoutDetailAiTheseParametersWereUsed =>
+      'Parameter iki digunakake dening AI kanggo nggawe latihan pribadi sing cocog karo level fitness, target, lan peralatan sing kasedhiya.';
 
   @override
   String get workoutDetailAiUserProfile => 'Profil Panganggo';
 
   @override
-  String get workoutDetailAiViewAllParametersSent => 'Deleng Kabeh Parameter sing Dikirim menyang AI';
+  String get workoutDetailAiViewAllParametersSent =>
+      'Deleng Kabeh Parameter sing Dikirim menyang AI';
 
   @override
   String get workoutDetailAiWhyTheseExercises => 'KENAPA LATIHAN IKI?';
@@ -38741,31 +41600,38 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenCannotMergeSupersets => 'Ora bisa nggabungake Superset';
+  String get workoutDetailScreenCannotMergeSupersets =>
+      'Ora bisa nggabungake Superset';
 
   @override
-  String get workoutDetailScreenCannotRemoveTheLast => 'Ora bisa mbusak latihan pungkasan';
+  String get workoutDetailScreenCannotRemoveTheLast =>
+      'Ora bisa mbusak latihan pungkasan';
 
   @override
   String get workoutDetailScreenChallenge => 'TANTANGAN';
 
   @override
-  String get workoutDetailScreenDiscardTheEquipmentChange => 'Busak kabeh owah-owahan peralatan.';
+  String get workoutDetailScreenDiscardTheEquipmentChange =>
+      'Busak kabeh owah-owahan peralatan.';
 
   @override
   String get workoutDetailScreenEquipmentUpdated => 'Peralatan dianyari';
 
   @override
-  String get workoutDetailScreenFailedToBlockExercise => 'Gagal mblokir latihan';
+  String get workoutDetailScreenFailedToBlockExercise =>
+      'Gagal mblokir latihan';
 
   @override
-  String get workoutDetailScreenFailedToRemoveExercise => 'Gagal mbusak latihan';
+  String get workoutDetailScreenFailedToRemoveExercise =>
+      'Gagal mbusak latihan';
 
   @override
-  String get workoutDetailScreenFailedToUpdateFavorite => 'Gagal nganyari favorit';
+  String get workoutDetailScreenFailedToUpdateFavorite =>
+      'Gagal nganyari favorit';
 
   @override
-  String get workoutDetailScreenKeepThisSessionUnchanged => 'Tetepake sesi iki. Peralatan anyar bakal ditrapake kanggo latihan sabanjure.';
+  String get workoutDetailScreenKeepThisSessionUnchanged =>
+      'Tetepake sesi iki. Peralatan anyar bakal ditrapake kanggo latihan sabanjure.';
 
   @override
   String get workoutDetailScreenLetSGo => 'Ayo Mulai';
@@ -38796,7 +41662,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutDetailScreenRevertToOriginal => 'Baleni menyang Asli?';
 
   @override
-  String get workoutDetailScreenSaveForNextWorkout => 'Simpen kanggo latihan sabanjure';
+  String get workoutDetailScreenSaveForNextWorkout =>
+      'Simpen kanggo latihan sabanjure';
 
   @override
   String get workoutDetailScreenSaveToProfile => 'Simpen menyang Profil?';
@@ -38805,19 +41672,24 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutDetailScreenSupersetCreated => 'Superset digawe!';
 
   @override
-  String get workoutDetailScreenSwapThoseExercisesIn => 'Ganti latihan kasebut ing sesi iki. Set sing wis rampung bakal tetep kacathet.';
+  String get workoutDetailScreenSwapThoseExercisesIn =>
+      'Ganti latihan kasebut ing sesi iki. Set sing wis rampung bakal tetep kacathet.';
 
   @override
-  String get workoutDetailScreenTapAnotherExerciseTo => 'Tutul latihan liyane kanggo disambungake dadi superset';
+  String get workoutDetailScreenTapAnotherExerciseTo =>
+      'Tutul latihan liyane kanggo disambungake dadi superset';
 
   @override
-  String get workoutDetailScreenThisIsAnOptional => 'Iki latihan tambahan sing opsional. Coba nalika sampeyan wis siyap!';
+  String get workoutDetailScreenThisIsAnOptional =>
+      'Iki latihan tambahan sing opsional. Coba nalika sampeyan wis siyap!';
 
   @override
-  String get workoutDetailScreenThisWillRestoreAll => 'Iki bakal mbalekake kabeh latihan menyang kahanan asli sadurunge owah-owahan peralatan ditrapake.';
+  String get workoutDetailScreenThisWillRestoreAll =>
+      'Iki bakal mbalekake kabeh latihan menyang kahanan asli sadurunge owah-owahan peralatan ditrapake.';
 
   @override
-  String get workoutDetailScreenThisWillUnlinkThese => 'Iki bakal medhot sambungan latihan iki supaya bisa ditindakake kanthi kapisah.';
+  String get workoutDetailScreenThisWillUnlinkThese =>
+      'Iki bakal medhot sambungan latihan iki supaya bisa ditindakake kanthi kapisah.';
 
   @override
   String workoutDetailScreenUi1AddToCreateA(Object name, Object newSetType) {
@@ -38870,7 +41742,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailScreenWouldYouLikeTo => 'Apa sampeyan pengin nyimpen konfigurasi peralatan iki menyang profil kanggo latihan sabanjure?';
+  String get workoutDetailScreenWouldYouLikeTo =>
+      'Apa sampeyan pengin nyimpen konfigurasi peralatan iki menyang profil kanggo latihan sabanjure?';
 
   @override
   String get workoutDetailScreenYesSave => 'Ya, Simpen';
@@ -38903,7 +41776,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutFlowMixinKeepGoing => 'Terusake';
 
   @override
-  String get workoutGalleryCompleteAWorkoutAnd => 'Rampungake latihan lan bagikake\nkanggo miwiti galeri sampeyan';
+  String get workoutGalleryCompleteAWorkoutAnd =>
+      'Rampungake latihan lan bagikake\nkanggo miwiti galeri sampeyan';
 
   @override
   String get workoutGalleryDeleteImage => 'Busak Gambar?';
@@ -38915,7 +41789,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutGalleryShareAgain => 'Bagikake Maneh';
 
   @override
-  String get workoutGalleryThisWillRemoveThe => 'Iki bakal mbusak gambar saka galeri sampeyan.';
+  String get workoutGalleryThisWillRemoveThe =>
+      'Iki bakal mbusak gambar saka galeri sampeyan.';
 
   @override
   String get workoutGalleryWorkoutGallery => 'Galeri Latihan';
@@ -38927,28 +41802,35 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutGenerate => 'Gawe latihan';
 
   @override
-  String get workoutGenerationAnalyzingYourFitnessProfile => 'Nganalisis profil fitness sampeyan';
+  String get workoutGenerationAnalyzingYourFitnessProfile =>
+      'Nganalisis profil fitness sampeyan';
 
   @override
-  String get workoutGenerationDesigningYourTrainingSplit => 'Ngrancang pamérangan latihan panjenengan';
+  String get workoutGenerationDesigningYourTrainingSplit =>
+      'Ngrancang pamérangan latihan panjenengan';
 
   @override
-  String get workoutGenerationFinalizingYourPlan => 'Ngrampungake rencana panjenengan';
+  String get workoutGenerationFinalizingYourPlan =>
+      'Ngrampungake rencana panjenengan';
 
   @override
-  String get workoutGenerationGeneratingYourPersonalizedP => 'Nggawe rencana pribadi panjenengan';
+  String get workoutGenerationGeneratingYourPersonalizedP =>
+      'Nggawe rencana pribadi panjenengan';
 
   @override
-  String get workoutGenerationGeneratingYourPlan => 'Nggawe Rencana Panjenengan';
+  String get workoutGenerationGeneratingYourPlan =>
+      'Nggawe Rencana Panjenengan';
 
   @override
   String get workoutGenerationGenerationFailed => 'Gagal Nggawe';
 
   @override
-  String get workoutGenerationOptimizingWorkoutStructure => 'Ngoptimalake struktur latihan';
+  String get workoutGenerationOptimizingWorkoutStructure =>
+      'Ngoptimalake struktur latihan';
 
   @override
-  String get workoutGenerationSelectingExercisesForYour => 'Milih latihan kanggo target panjenengan';
+  String get workoutGenerationSelectingExercisesForYour =>
+      'Milih latihan kanggo target panjenengan';
 
   @override
   String get workoutGenerationSomethingWentWrong => 'Ana sing salah';
@@ -38969,10 +41851,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportAddToHistory => 'Tambah menyang Riwayat';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout => 'Tambah data latihan kepungkur supaya AI bisa nggawe latihan kanthi bobot sing cocog karo tingkat kekuwatan panjenengan.';
+  String get workoutHistoryImportAddYourPastWorkout =>
+      'Tambah data latihan kepungkur supaya AI bisa nggawe latihan kanthi bobot sing cocog karo tingkat kekuwatan panjenengan.';
 
   @override
-  String get workoutHistoryImportAddYourPastWorkout2 => 'Tambah data latihan kepungkur ing ndhuwur supaya AI bisa nggawe latihan sing luwih apik kanggo panjenengan.';
+  String get workoutHistoryImportAddYourPastWorkout2 =>
+      'Tambah data latihan kepungkur ing ndhuwur supaya AI bisa nggawe latihan sing luwih apik kanggo panjenengan.';
 
   @override
   String get workoutHistoryImportAppleHealth => 'Apple Health';
@@ -38987,7 +41871,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportChooseFile => 'Pilih Berkas';
 
   @override
-  String get workoutHistoryImportCouldNotReadThat => 'Ora bisa maca berkas kasebut.';
+  String get workoutHistoryImportCouldNotReadThat =>
+      'Ora bisa maca berkas kasebut.';
 
   @override
   String get workoutHistoryImportDeleteEntry => 'Busak Entri?';
@@ -39002,7 +41887,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportEG60 => 'tuladhane, 60';
 
   @override
-  String get workoutHistoryImportEGBenchPress => 'tuladhane, Bench Press, Squat';
+  String get workoutHistoryImportEGBenchPress =>
+      'tuladhane, Bench Press, Squat';
 
   @override
   String get workoutHistoryImportEntryDeleted => 'Entri wis dibusak';
@@ -39016,7 +41902,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportExerciseName => 'Jeneng Latihan';
 
   @override
-  String get workoutHistoryImportExportFromHevy => 'Ekspor saka Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton, lan liya-liyane.';
+  String get workoutHistoryImportExportFromHevy =>
+      'Ekspor saka Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton, lan liya-liyane.';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -39039,7 +41926,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportImportFromFile => 'Impor saka berkas';
 
   @override
-  String get workoutHistoryImportImportWorkoutHistory => 'Impor Riwayat Latihan';
+  String get workoutHistoryImportImportWorkoutHistory =>
+      'Impor Riwayat Latihan';
 
   @override
   String get workoutHistoryImportInvalid => 'Ora valid';
@@ -39064,19 +41952,22 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutHistoryImportNoWorkoutHistoryYet => 'Durung ana riwayat latihan';
+  String get workoutHistoryImportNoWorkoutHistoryYet =>
+      'Durung ana riwayat latihan';
 
   @override
   String get workoutHistoryImportNsuns => 'nSuns';
 
   @override
-  String get workoutHistoryImportOtherGenericSpreadsheet => 'Spreadsheet liyane / umum';
+  String get workoutHistoryImportOtherGenericSpreadsheet =>
+      'Spreadsheet liyane / umum';
 
   @override
   String get workoutHistoryImportPeloton => 'Peloton';
 
   @override
-  String get workoutHistoryImportPleaseEnterExerciseName => 'Tulung lebokake jeneng latihan';
+  String get workoutHistoryImportPleaseEnterExerciseName =>
+      'Tulung lebokake jeneng latihan';
 
   @override
   String get workoutHistoryImportPoundsLb => 'Pon (lb)';
@@ -39093,7 +41984,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutHistoryImportRenaissancePeriodization => 'Renaissance Periodization';
+  String get workoutHistoryImportRenaissancePeriodization =>
+      'Renaissance Periodization';
 
   @override
   String get workoutHistoryImportReps => 'Repetisi';
@@ -39107,7 +41999,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg) {
+  String workoutHistoryImportScreenSetsRepsKg(
+    Object reps,
+    Object sets,
+    Object weightKg,
+  ) {
     return '$sets set × $reps repetisi @ $weightKg kg';
   }
 
@@ -39130,10 +42026,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportStronglifts => 'StrongLifts';
 
   @override
-  String get workoutHistoryImportSupportsCsvXlsxXlsm => 'Ndhukung CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP.';
+  String get workoutHistoryImportSupportsCsvXlsxXlsm =>
+      'Ndhukung CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP.';
 
   @override
-  String get workoutHistoryImportTheAiUsesThis => 'AI nggunakake data iki kanggo nemtokake bobot sing cocog';
+  String get workoutHistoryImportTheAiUsesThis =>
+      'AI nggunakake data iki kanggo nemtokake bobot sing cocog';
 
   @override
   String get workoutHistoryImportViewAll => 'Deleng Kabeh';
@@ -39148,10 +42046,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutHistoryImportWendler531 => 'Wendler 5/3/1';
 
   @override
-  String get workoutHistoryImportWhichUnitIsThe => 'Kolom bobot nggunakake unit apa? Lan yen panjenengan ngerti aplikasi sumberé, pilih aplikasi kasebut — iki mbantu mbedakake format sing meh padha (Hevy vs. Strong CSV).';
+  String get workoutHistoryImportWhichUnitIsThe =>
+      'Kolom bobot nggunakake unit apa? Lan yen panjenengan ngerti aplikasi sumberé, pilih aplikasi kasebut — iki mbantu mbedakake format sing meh padha (Hevy vs. Strong CSV).';
 
   @override
-  String get workoutHistoryImportYourStrengthData => 'Data Kekuwatan Panjenengan';
+  String get workoutHistoryImportYourStrengthData =>
+      'Data Kekuwatan Panjenengan';
 
   @override
   String get workoutImportCalories => 'Kalori';
@@ -39189,7 +42089,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutImportHowHardWasThis => 'Sepira abote latihan iki?';
 
   @override
-  String get workoutImportImportAsSeparateWorkout => 'Impor minangka latihan kapisah';
+  String get workoutImportImportAsSeparateWorkout =>
+      'Impor minangka latihan kapisah';
 
   @override
   String get workoutImportImportWorkout => 'Impor Latihan';
@@ -39213,7 +42114,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutImportPreviewNo => 'Ora';
 
   @override
-  String get workoutImportPreviewNoSampleRowsProduced => 'Ora ana baris conto sing digawe (berkas bisa uga kosong utawa ora dikenali).';
+  String get workoutImportPreviewNoSampleRowsProduced =>
+      'Ora ana baris conto sing digawe (berkas bisa uga kosong utawa ora dikenali).';
 
   @override
   String get workoutImportPreviewPreviewImport => 'Pratinjau impor';
@@ -39243,16 +42145,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutImportPreviewTemplate => 'Templat';
 
   @override
-  String get workoutImportPreviewTheseWillStillImport => 'Iki bakal tetep diimpor — panjenengan bisa ngganti jenengé dadi jeneng standar sawise proses rampung.';
+  String get workoutImportPreviewTheseWillStillImport =>
+      'Iki bakal tetep diimpor — panjenengan bisa ngganti jenengé dadi jeneng standar sawise proses rampung.';
 
   @override
-  String get workoutImportPreviewUnmatchedExercises => 'Latihan sing durung cocog';
+  String get workoutImportPreviewUnmatchedExercises =>
+      'Latihan sing durung cocog';
 
   @override
-  String get workoutImportProgressImportIsStillIn => 'Impor isih lumaku — nyuwun ngenteni.';
+  String get workoutImportProgressImportIsStillIn =>
+      'Impor isih lumaku — nyuwun ngenteni.';
 
   @override
-  String get workoutImportProgressImportingWorkoutHistory => 'Ngimpor riwayat latihan';
+  String get workoutImportProgressImportingWorkoutHistory =>
+      'Ngimpor riwayat latihan';
 
   @override
   String workoutImportProgressSheetJobId(Object jobId) {
@@ -39260,7 +42166,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutImportProgressThisUsuallyFinishesIn => 'Iki biasane rampung ing 10–30 detik.';
+  String get workoutImportProgressThisUsuallyFinishesIn =>
+      'Iki biasane rampung ing 10–30 detik.';
 
   @override
   String get workoutImportRunning => 'Mlaku';
@@ -39290,10 +42197,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutImportSummaryActivateProgram => 'Aktifake program';
 
   @override
-  String get workoutImportSummaryCardioSessionsAdded => 'Sesi kardio ditambahake';
+  String get workoutImportSummaryCardioSessionsAdded =>
+      'Sesi kardio ditambahake';
 
   @override
-  String get workoutImportSummaryCreatorProgramDetected => 'Program kreator dideteksi';
+  String get workoutImportSummaryCreatorProgramDetected =>
+      'Program kreator dideteksi';
 
   @override
   String get workoutImportSummaryDuplicatesSkipped => 'Duplikat dilewati';
@@ -39321,25 +42230,31 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutImportSummaryStrengthSetsAdded => 'Set kekuatan ditambahake';
+  String get workoutImportSummaryStrengthSetsAdded =>
+      'Set kekuatan ditambahake';
 
   @override
-  String get workoutImportSummaryTheseRowsWereImported => 'Baris iki wis diimpor nanging durung dicocogake karo latihan ing pustaka. Nggandhengake iki bakal nambah saran bobot + grafik.';
+  String get workoutImportSummaryTheseRowsWereImported =>
+      'Baris iki wis diimpor nanging durung dicocogake karo latihan ing pustaka. Nggandhengake iki bakal nambah saran bobot + grafik.';
 
   @override
-  String get workoutImportSummaryUnknownErrorPleaseTry => 'Ana kesalahan sing ora dingerteni — nyoba maneh utawa hubungi dhukungan.';
+  String get workoutImportSummaryUnknownErrorPleaseTry =>
+      'Ana kesalahan sing ora dingerteni — nyoba maneh utawa hubungi dhukungan.';
 
   @override
   String get workoutImportSummaryWarnings => 'Pènget';
 
   @override
-  String get workoutImportSummaryWeCouldnTFinish => 'Kita ora bisa ngrampungake impor sampeyan.';
+  String get workoutImportSummaryWeCouldnTFinish =>
+      'Kita ora bisa ngrampungake impor sampeyan.';
 
   @override
-  String get workoutImportSummaryWeParsedAMulti => 'Kita wis maca cithakan program pirang-pirang minggu. Ngaktifake iki bakal njadwalake latihane wiwit dina Senin ngarep.';
+  String get workoutImportSummaryWeParsedAMulti =>
+      'Kita wis maca cithakan program pirang-pirang minggu. Ngaktifake iki bakal njadwalake latihane wiwit dina Senin ngarep.';
 
   @override
-  String get workoutImportSummaryWeightSuggestionsAcrossThe => 'Saran bobot ing saindhenging aplikasi bakal wiwit nampilake riwayat iki sajrone semenit.';
+  String get workoutImportSummaryWeightSuggestionsAcrossThe =>
+      'Saran bobot ing saindhenging aplikasi bakal wiwit nampilake riwayat iki sajrone semenit.';
 
   @override
   String get workoutImportSwimming => 'Nglangi';
@@ -39396,7 +42311,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutMiniPlayerYourWorkoutProgressWill => 'Kemajuan latihan sampeyan ora bakal disimpen.';
+  String get workoutMiniPlayerYourWorkoutProgressWill =>
+      'Kemajuan latihan sampeyan ora bakal disimpen.';
 
   @override
   String get workoutOptionsDismissQuickWorkout => 'Batalake Latihan Cepet?';
@@ -39433,16 +42349,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutOptionsSkipWorkout => 'Liwati Latihan?';
 
   @override
-  String get workoutOptionsThisWillMarkThe => 'Iki bakal nandhani latihan wis rampung tanpa ngrekam set.';
+  String get workoutOptionsThisWillMarkThe =>
+      'Iki bakal nandhani latihan wis rampung tanpa ngrekam set.';
 
   @override
-  String get workoutOptionsThisWorkoutWillBe => 'Latihan iki bakal ditandhani minangka dilewati.';
+  String get workoutOptionsThisWorkoutWillBe =>
+      'Latihan iki bakal ditandhani minangka dilewati.';
 
   @override
   String get workoutPermissionsPrimeGotItLetU2019s => 'Siap, ayo budhal';
 
   @override
-  String get workoutPermissionsPrimeLetsUsAutoConnect => 'Ngidini kita nyambungake tali detak jantung BLE kanthi otomatis yen ana ing cedhak.';
+  String get workoutPermissionsPrimeLetsUsAutoConnect =>
+      'Ngidini kita nyambungake tali detak jantung BLE kanthi otomatis yen ana ing cedhak.';
 
   @override
   String get workoutPermissionsPrimeMicrophone => 'Mikrofon';
@@ -39451,13 +42370,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutPermissionsPrimeNearbyDevices => 'Piranti ing cedhak';
 
   @override
-  String get workoutPermissionsPrimeTapTheMicMid => 'Tutul mikrofon nalika lagi set kanggo takon utawa nyathet cathetan nganggo swara.';
+  String get workoutPermissionsPrimeTapTheMicMid =>
+      'Tutul mikrofon nalika lagi set kanggo takon utawa nyathet cathetan nganggo swara.';
 
   @override
   String get workoutPermissionsPrimeTwoQuickHeadsUps => 'Rong kabar cepet';
 
   @override
-  String get workoutPermissionsPrimeYouMaySeeThese => 'Sampeyan bisa uga ndeleng pituduh sistem iki sajrone latihan. Loro-lorone opsional — liwati salah siji lan latihan isih bisa mlaku.';
+  String get workoutPermissionsPrimeYouMaySeeThese =>
+      'Sampeyan bisa uga ndeleng pituduh sistem iki sajrone latihan. Loro-lorone opsional — liwati salah siji lan latihan isih bisa mlaku.';
 
   @override
   String get workoutPlanDrawerAddExercise => 'Tambah Latihan';
@@ -39505,7 +42426,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutPlannerMon => 'Sen';
 
   @override
-  String get workoutPlannerShowSyncedWorkouts => 'Tampilake latihan sing wis disinkronake';
+  String get workoutPlannerShowSyncedWorkouts =>
+      'Tampilake latihan sing wis disinkronake';
 
   @override
   String get workoutPlannerStartWeekOnMonday => 'Mulai minggu ing dina Senin';
@@ -39576,13 +42498,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutReviewYourWorkout => 'Latihan Sampeyan';
 
   @override
-  String get workoutSettingsAddPastWorkoutsFor => 'Tambah latihan kepungkur kanggo bobot AI sing luwih apik';
+  String get workoutSettingsAddPastWorkoutsFor =>
+      'Tambah latihan kepungkur kanggo bobot AI sing luwih apik';
 
   @override
-  String get workoutSettingsAutoDeloadDeloadFrequency => 'Auto-deload, frekuensi deload & minggu kanggo progres';
+  String get workoutSettingsAutoDeloadDeloadFrequency =>
+      'Auto-deload, frekuensi deload & minggu kanggo progres';
 
   @override
-  String get workoutSettingsCustomizeWhichExercisesAppe => 'Kustomisasi latihan sing muncul ing latihan';
+  String get workoutSettingsCustomizeWhichExercisesAppe =>
+      'Kustomisasi latihan sing muncul ing latihan';
 
   @override
   String get workoutSettingsExercisePreferences => 'PREFERENSI LATIHAN';
@@ -39591,25 +42516,30 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSettingsFatigueDetection => 'Deteksi Kesel';
 
   @override
-  String get workoutSettingsFavoritesAvoidedAndQueue => 'Favorit, sing dihindari, lan antrean';
+  String get workoutSettingsFavoritesAvoidedAndQueue =>
+      'Favorit, sing dihindari, lan antrean';
 
   @override
   String get workoutSettingsHowFastToIncrease => 'Sepira cepet nambah bobot';
 
   @override
-  String get workoutSettingsHowHeavyAndHow => 'Sepira abot lan sepira cepet sampeyan progres';
+  String get workoutSettingsHowHeavyAndHow =>
+      'Sepira abot lan sepira cepet sampeyan progres';
 
   @override
-  String get workoutSettingsHowMuchExercisesChange => 'Sepira owah-owahan latihan saben minggu';
+  String get workoutSettingsHowMuchExercisesChange =>
+      'Sepira owah-owahan latihan saben minggu';
 
   @override
-  String get workoutSettingsHowWeightsAreDisplayed => 'Kepiye bobot ditampilake lan dicathet';
+  String get workoutSettingsHowWeightsAreDisplayed =>
+      'Kepiye bobot ditampilake lan dicathet';
 
   @override
   String get workoutSettingsImportWorkoutHistory => 'Impor Riwayat Latihan';
 
   @override
-  String get workoutSettingsIncompleteExerciseWarning => 'Pènget Latihan Durung Rampung';
+  String get workoutSettingsIncompleteExerciseWarning =>
+      'Pènget Latihan Durung Rampung';
 
   @override
   String get workoutSettingsLiveCoaching => 'LIVE COACHING';
@@ -39644,10 +42574,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSettingsProgressionPace => 'Laju Progres';
 
   @override
-  String get workoutSettingsPushPullLegsFull => 'Push/Pull/Legs, Full Body, lsp.';
+  String get workoutSettingsPushPullLegsFull =>
+      'Push/Pull/Legs, Full Body, lsp.';
 
   @override
-  String get workoutSettingsStrengthCardioOrMixed => 'Kekuwatan, cardio, utawa campuran';
+  String get workoutSettingsStrengthCardioOrMixed =>
+      'Kekuwatan, cardio, utawa campuran';
 
   @override
   String get workoutSettingsTrainingIntensity => 'Intensitas Latihan';
@@ -39656,16 +42588,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSettingsTrainingSplit => 'Split Latihan';
 
   @override
-  String get workoutSettingsUnitForLoggingExercise => 'Unit kanggo nyathet bobot latihan sajrone latihan';
+  String get workoutSettingsUnitForLoggingExercise =>
+      'Unit kanggo nyathet bobot latihan sajrone latihan';
 
   @override
   String get workoutSettingsUnitsTracking => 'UNIT & PELACAKAN';
 
   @override
-  String get workoutSettingsViewAndEditYour => 'Deleng lan sunting angkatan maksimal sampeyan';
+  String get workoutSettingsViewAndEditYour =>
+      'Deleng lan sunting angkatan maksimal sampeyan';
 
   @override
-  String get workoutSettingsVisualizeStrengthVolumeOv => 'Visualisasikake kekuwatan & volume saka wektu ke wektu';
+  String get workoutSettingsVisualizeStrengthVolumeOv =>
+      'Visualisasikake kekuwatan & volume saka wektu ke wektu';
 
   @override
   String get workoutSettingsWeeklyVariety => 'Variasi Mingguan';
@@ -39674,16 +42609,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSettingsWeightIncrements => 'Tambahan Bobot';
 
   @override
-  String get workoutSettingsWhatHappensDuringA => 'Apa sing kedadeyan sajrone latihan';
+  String get workoutSettingsWhatHappensDuringA =>
+      'Apa sing kedadeyan sajrone latihan';
 
   @override
-  String get workoutSettingsWhatYouTrainAnd => 'Apa sing sampeyan latih lan kapan';
+  String get workoutSettingsWhatYouTrainAnd =>
+      'Apa sing sampeyan latih lan kapan';
 
   @override
   String get workoutSettingsWhichDaysYouTrain => 'Dina apa sampeyan latihan';
 
   @override
-  String get workoutSettingsWorkAtAPercentage => 'Latihan ing persentase maksimal sampeyan';
+  String get workoutSettingsWorkAtAPercentage =>
+      'Latihan ing persentase maksimal sampeyan';
 
   @override
   String get workoutSettingsWorkoutDays => 'Dina Latihan';
@@ -39698,10 +42636,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSettingsWorkoutWeightUnit => 'Unit Bobot Latihan';
 
   @override
-  String get workoutSheetsMixinAiCoachHiddenFor => 'AI Coach disimpen kanggo sesi iki';
+  String get workoutSheetsMixinAiCoachHiddenFor =>
+      'AI Coach disimpen kanggo sesi iki';
 
   @override
-  String get workoutSheetsMixinAiTargetsWillBe => 'Target AI bakal digawe adhedhasar riwayat sampeyan.';
+  String get workoutSheetsMixinAiTargetsWillBe =>
+      'Target AI bakal digawe adhedhasar riwayat sampeyan.';
 
   @override
   String get workoutSheetsMixinBarType => 'Jinis Bar';
@@ -39746,13 +42686,16 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutSheetsMixinNoPreviousDataFor => 'Ora ana data sadurunge kanggo latihan iki.';
+  String get workoutSheetsMixinNoPreviousDataFor =>
+      'Ora ana data sadurunge kanggo latihan iki.';
 
   @override
-  String get workoutSheetsMixinOrDragExercisesTogether => 'Utawa seret latihan bebarengan kanggo nambah liyane';
+  String get workoutSheetsMixinOrDragExercisesTogether =>
+      'Utawa seret latihan bebarengan kanggo nambah liyane';
 
   @override
-  String get workoutSheetsMixinSelectTheTypeOf => 'Pilih jinis bar sing sampeyan gunakake';
+  String get workoutSheetsMixinSelectTheTypeOf =>
+      'Pilih jinis bar sing sampeyan gunakake';
 
   @override
   String get workoutSheetsMixinSetTargets => 'Setel Target';
@@ -39761,10 +42704,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSheetsMixinSupersetRemoved => 'Superset dibusak';
 
   @override
-  String get workoutSheetsMixinSupersetsHelpYouSave => 'Superset mbantu sampeyan ngirit wektu kanthi selang-seling antarane latihan kanthi istirahat minimal.';
+  String get workoutSheetsMixinSupersetsHelpYouSave =>
+      'Superset mbantu sampeyan ngirit wektu kanthi selang-seling antarane latihan kanthi istirahat minimal.';
 
   @override
-  String get workoutSheetsMixinTheAiCoachWill => 'AI Coach bakal disimpen kanggo sesi latihan iki. Sampeyan isih bisa ngakses saka Setelan.';
+  String get workoutSheetsMixinTheAiCoachWill =>
+      'AI Coach bakal disimpen kanggo sesi latihan iki. Sampeyan isih bisa ngakses saka Setelan.';
 
   @override
   String workoutSheetsMixinUiChangedTo(Object displayName) {
@@ -39783,13 +42728,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSheetsMixinWarmUp => 'Pemanasan';
 
   @override
-  String get workoutSheetsMixinWarmingUpHelpsPrevent => 'Pemanasan mbantu nyegah ciloko lan nambah kinerja.\n\nDisaranake: 1-2 set luwih entheng sadurunge set latihan.';
+  String get workoutSheetsMixinWarmingUpHelpsPrevent =>
+      'Pemanasan mbantu nyegah ciloko lan nambah kinerja.\n\nDisaranake: 1-2 set luwih entheng sadurunge set latihan.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';
 
   @override
-  String get workoutShowcaseViralFormatsTap => '200+ format viral kanggo latihan & panganan — tutul kanggo pratinjau';
+  String get workoutShowcaseViralFormatsTap =>
+      '200+ format viral kanggo latihan & panganan — tutul kanggo pratinjau';
 
   @override
   String get workoutShowcase1rmEstimate => 'ESTIMASI 1RM';
@@ -39816,7 +42763,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcaseAllSetsLogged => '✓ Kabeh set wis dicathet';
 
   @override
-  String get workoutShowcaseAllSetsLoggedProgression => 'Kabeh set dicathet — progresi lagi mlaku';
+  String get workoutShowcaseAllSetsLoggedProgression =>
+      'Kabeh set dicathet — progresi lagi mlaku';
 
   @override
   String get workoutShowcaseAskCoach => 'Takon pelatih';
@@ -39920,7 +42868,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcaseFormatWrapped => 'Wrapped';
 
   @override
-  String get workoutShowcaseHowYourWeightReps => 'Kepiye bobot + reps sampeyan maju ing saben set.';
+  String get workoutShowcaseHowYourWeightReps =>
+      'Kepiye bobot + reps sampeyan maju ing saben set.';
 
   @override
   String get workoutShowcaseInfo => 'Info';
@@ -39929,7 +42878,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcaseInstructions => 'Instruksi';
 
   @override
-  String get workoutShowcaseIntroSubtitle => 'Zealova nglatih saben set — lan mundhakake bobotmu otomatis 💪';
+  String get workoutShowcaseIntroSubtitle =>
+      'Zealova nglatih saben set — lan mundhakake bobotmu otomatis 💪';
 
   @override
   String get workoutShowcaseIntroTitle => 'Ayo miwiti latihan sepisananmu';
@@ -39964,7 +42914,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcaseNewPr => 'PR ANYAR';
 
   @override
-  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight) {
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  ) {
     return 'Set $set dicatet — target sabanjure munggah dadi $weight lb (+$delta lb)';
   }
 
@@ -39975,7 +42929,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcasePlan => 'Rencana';
 
   @override
-  String get workoutShowcasePlanAutoAdjustsNext => 'Rencana otomatis nyetel sesi sabanjure — bobot + reps dikalibrasi maneh saka kinerja nyata sampeyan.';
+  String get workoutShowcasePlanAutoAdjustsNext =>
+      'Rencana otomatis nyetel sesi sabanjure — bobot + reps dikalibrasi maneh saka kinerja nyata sampeyan.';
 
   @override
   String get workoutShowcasePoweredByZealova => 'Didhukung dening Zealova';
@@ -40016,7 +42971,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume) {
+  String workoutShowcaseScreenTotalPrs(
+    Object duration,
+    Object prs,
+    Object volume,
+  ) {
     return 'TOTAL $duration · $volume · $prs PRS';
   }
 
@@ -40114,19 +43073,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutShowcaseZealova => 'ZEALOVA';
 
   @override
-  String get workoutStateCardsAiPoweredPersonalizedProgra => 'Program pribadi berbasis AI';
+  String get workoutStateCardsAiPoweredPersonalizedProgra =>
+      'Program pribadi berbasis AI';
 
   @override
   String get workoutStateCardsCreatingYourWorkouts => 'Nggawe Latihan Sampeyan';
 
   @override
-  String get workoutStateCardsGeneratingYourWorkouts => 'Nggawe latihan sampeyan...';
+  String get workoutStateCardsGeneratingYourWorkouts =>
+      'Nggawe latihan sampeyan...';
 
   @override
   String get workoutStateCardsGetStarted => 'Mulai';
 
   @override
-  String get workoutStateCardsGetYourPersonalizedWorkout => 'Entuk rencana latihan pribadi sampeyan';
+  String get workoutStateCardsGetYourPersonalizedWorkout =>
+      'Entuk rencana latihan pribadi sampeyan';
 
   @override
   String get workoutStateCardsReadyToStart => 'Siap Mulai?';
@@ -40135,7 +43097,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutStateCardsTryAgain => 'Coba Maneh';
 
   @override
-  String get workoutStateCardsYourPersonalizedWorkoutPlan => 'Rencana latihan pribadi sampeyan lagi digawe';
+  String get workoutStateCardsYourPersonalizedWorkoutPlan =>
+      'Rencana latihan pribadi sampeyan lagi digawe';
 
   @override
   String get workoutStatsStripCalories => 'Kalori';
@@ -40152,7 +43115,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutStatsStripVolume => 'Volume';
 
   @override
-  String get workoutSummaryAddASetOr => 'Tambah set utawa sunting latihan kanggo ngisi ringkesan iki.';
+  String get workoutSummaryAddASetOr =>
+      'Tambah set utawa sunting latihan kanggo ngisi ringkesan iki.';
 
   @override
   String get workoutSummaryAddExercise => 'Tambah Latihan';
@@ -40176,7 +43140,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedAvgSets => 'Rata-rata (Set)';
 
   @override
-  String get workoutSummaryAdvancedBasedOnEpleyFormula => 'Adhedhasar rumus Epley saka set paling apik sampeyan';
+  String get workoutSummaryAdvancedBasedOnEpleyFormula =>
+      'Adhedhasar rumus Epley saka set paling apik sampeyan';
 
   @override
   String get workoutSummaryAdvancedCardioSession => 'Sesi kardio';
@@ -40185,7 +43150,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedConfidence => 'Kapercayan';
 
   @override
-  String get workoutSummaryAdvancedDetailedTrackingDataIs => 'Data pelacakan rinci ora kasedhiya kanggo latihan iki.';
+  String get workoutSummaryAdvancedDetailedTrackingDataIs =>
+      'Data pelacakan rinci ora kasedhiya kanggo latihan iki.';
 
   @override
   String get workoutSummaryAdvancedDuration => 'Durasi';
@@ -40200,10 +43166,14 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedEstimated1rm => 'Estimasi 1RM';
 
   @override
-  String get workoutSummaryAdvancedExerciseOrderTime => 'Urutan & Wektu Latihan';
+  String get workoutSummaryAdvancedExerciseOrderTime =>
+      'Urutan & Wektu Latihan';
 
   @override
-  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned) {
+  String workoutSummaryAdvancedExercises(
+    Object completedCount,
+    Object totalPlanned,
+  ) {
     return '$completedCount / $totalPlanned latihan';
   }
 
@@ -40258,7 +43228,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedMoreDetails => 'Rincian liyane';
 
   @override
-  String get workoutSummaryAdvancedMuscleMapNotApplicable => 'Peta otot ora ditrapake';
+  String get workoutSummaryAdvancedMuscleMapNotApplicable =>
+      'Peta otot ora ditrapake';
 
   @override
   String get workoutSummaryAdvancedMusclesHit => 'OTOT SING DILATIH';
@@ -40272,7 +43243,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedNo => 'Ora';
 
   @override
-  String get workoutSummaryAdvancedNoCompletedSetsLogged => 'Ora ana set rampung sing dicathet kanggo latihan iki.';
+  String get workoutSummaryAdvancedNoCompletedSetsLogged =>
+      'Ora ana set rampung sing dicathet kanggo latihan iki.';
 
   @override
   String get workoutSummaryAdvancedNoVolumeDataYet => 'Durung ana data volume';
@@ -40287,13 +43259,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedPerExercise => 'Saben Latihan';
 
   @override
-  String get workoutSummaryAdvancedPerExerciseDeepDive => 'Analisis Jero Saben Latihan';
+  String get workoutSummaryAdvancedPerExerciseDeepDive =>
+      'Analisis Jero Saben Latihan';
 
   @override
-  String get workoutSummaryAdvancedPerExerciseDeepDive2 => 'ANALISIS JERO SABEN LATIHAN';
+  String get workoutSummaryAdvancedPerExerciseDeepDive2 =>
+      'ANALISIS JERO SABEN LATIHAN';
 
   @override
-  String get workoutSummaryAdvancedPerformanceComparison => 'Perbandingan Kinerja';
+  String get workoutSummaryAdvancedPerformanceComparison =>
+      'Perbandingan Kinerja';
 
   @override
   String get workoutSummaryAdvancedPlan => 'Rencana';
@@ -40414,7 +43389,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryAdvancedWeightSuggestions => 'Saran Bobot';
 
   @override
-  String get workoutSummaryAdvancedWorkoutEndedEarly => 'Latihan Rampung Luwih Awal';
+  String get workoutSummaryAdvancedWorkoutEndedEarly =>
+      'Latihan Rampung Luwih Awal';
 
   @override
   String get workoutSummaryAdvancedYesU2705 => 'Ya ✅';
@@ -40441,7 +43417,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryGeneralCalories => 'Kalori';
 
   @override
-  String get workoutSummaryGeneralConnectAHeartRate => 'Sambungake monitor detak jantung\nkanggo nglacak zona sampeyan';
+  String get workoutSummaryGeneralConnectAHeartRate =>
+      'Sambungake monitor detak jantung\nkanggo nglacak zona sampeyan';
 
   @override
   String get workoutSummaryGeneralDifficulty => 'Kangelan';
@@ -40459,7 +43436,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Detak Jantung';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs) {
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
     return '$weightLbs $unit x $reps reps';
   }
 
@@ -40475,7 +43456,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryGeneralPersonalRecords => 'Rekor Pribadi';
 
   @override
-  String get workoutSummaryGeneralPostWorkoutFeedback => 'UMPAN BALIK SAWUSE LATIHAN';
+  String get workoutSummaryGeneralPostWorkoutFeedback =>
+      'UMPAN BALIK SAWUSE LATIHAN';
 
   @override
   String get workoutSummaryGeneralRating => 'Rating';
@@ -40495,16 +43477,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryGeneralVolumeLb => 'Volume (lb)';
 
   @override
-  String get workoutSummaryManuallyMarkedDone => 'Ditandhani rampung kanthi manual';
+  String get workoutSummaryManuallyMarkedDone =>
+      'Ditandhani rampung kanthi manual';
 
   @override
-  String get workoutSummaryNoSetsLoggedFor => 'Ora ana set sing dicathet kanggo latihan iki';
+  String get workoutSummaryNoSetsLoggedFor =>
+      'Ora ana set sing dicathet kanggo latihan iki';
 
   @override
-  String get workoutSummaryNoWorkoutDataTo => 'Durung ana data latihan kanggo dituduhake';
+  String get workoutSummaryNoWorkoutDataTo =>
+      'Durung ana data latihan kanggo dituduhake';
 
   @override
-  String get workoutSummaryPleaseCheckYourConnection => 'Mangga priksa sambungan sampeyan lan coba maneh.';
+  String get workoutSummaryPleaseCheckYourConnection =>
+      'Mangga priksa sambungan sampeyan lan coba maneh.';
 
   @override
   String get workoutSummaryRevertMarkAsNot => 'Batal - Tandhani durung rampung';
@@ -40519,10 +43505,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryScreenAreasToWatch => 'Area sing kudu digatekake';
 
   @override
-  String get workoutSummaryScreenFailedToLoadSummary => 'Gagal mbukak ringkesan';
+  String get workoutSummaryScreenFailedToLoadSummary =>
+      'Gagal mbukak ringkesan';
 
   @override
-  String get workoutSummaryScreenFirstTimePerformingThis => 'Pisanan nindakake jinis latihan iki!';
+  String get workoutSummaryScreenFirstTimePerformingThis =>
+      'Pisanan nindakake jinis latihan iki!';
 
   @override
   String get workoutSummaryScreenHighlights => 'Sorotan';
@@ -40536,10 +43524,14 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryScreenPleaseCheckYourConnection => 'Mangga priksa sambungan sampeyan lan coba maneh.';
+  String get workoutSummaryScreenPleaseCheckYourConnection =>
+      'Mangga priksa sambungan sampeyan lan coba maneh.';
 
   @override
-  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets) {
+  String workoutSummaryScreenRepsAcrossSets(
+    Object totalReps,
+    Object totalSets,
+  ) {
     return '$totalReps repetisi ing $totalSets set';
   }
 
@@ -40557,7 +43549,11 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg) {
+  String workoutSummaryScreenUiKgXRepsEst(
+    Object estimated1rmKg,
+    Object reps,
+    Object weightKg,
+  ) {
     return '$weightKg kg x $reps reps  |  Est. 1RM: $estimated1rmKg kg';
   }
 
@@ -40591,10 +43587,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutTopOverlayPaused => 'DIJEDA';
 
   @override
-  String get workoutTypeSelectorEnterCustomWorkoutType => 'Ketik jinis latihan khusus (tuladhane, \"Mobilitas\")';
+  String get workoutTypeSelectorEnterCustomWorkoutType =>
+      'Ketik jinis latihan khusus (tuladhane, \"Mobilitas\")';
 
   @override
-  String get workoutTypeSelectorHowYouWantTo => 'Kepiye sampeyan pengin latihan. Pilih wilayah awak ing Area Target ing ngisor iki.';
+  String get workoutTypeSelectorHowYouWantTo =>
+      'Kepiye sampeyan pengin latihan. Pilih wilayah awak ing Area Target ing ngisor iki.';
 
   @override
   String get workoutTypeSelectorTrainingStyle => 'Gaya Latihan';
@@ -40609,13 +43607,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutUiBuildersDrink => 'Ngombe';
 
   @override
-  String get workoutUiBuildersHeardRepsButNot => 'Krungu reps nanging ora bobote. Coba \"225 kanggo 5\".';
+  String get workoutUiBuildersHeardRepsButNot =>
+      'Krungu reps nanging ora bobote. Coba \"225 kanggo 5\".';
 
   @override
   String get workoutUiBuildersHowTo => 'Carane';
 
   @override
-  String get workoutUiBuildersLoadingYourPersonalizedWarm => 'Mbukak latihan pemanasan pribadi sampeyan';
+  String get workoutUiBuildersLoadingYourPersonalizedWarm =>
+      'Mbukak latihan pemanasan pribadi sampeyan';
 
   @override
   String workoutUiBuildersMixinUi2HeardKg(Object parsed) {
@@ -40623,7 +43623,10 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String workoutUiBuildersMixinUi2LoggedReps(Object reps, Object weightDisplay) {
+  String workoutUiBuildersMixinUi2LoggedReps(
+    Object reps,
+    Object weightDisplay,
+  ) {
     return 'Nyathet $weightDisplay × $reps reps';
   }
 
@@ -40662,16 +43665,20 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutUiModeAdvanced => 'Lanjut';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchLb => 'Kabeh — fase pemanasan/peregangan, RPE/RIR, piramida, superset, drop set, tambahan ±5 lb, grafik piringan.';
+  String get workoutUiModeEverythingWarmupStretchLb =>
+      'Kabeh — fase pemanasan/peregangan, RPE/RIR, piramida, superset, drop set, tambahan ±5 lb, grafik piringan.';
 
   @override
-  String get workoutUiModeEverythingWarmupStretchPh => 'Kabeh — fase pemanasan/peregangan, RPE/RIR, piramida, superset, drop set, tambahan ±2.5 kg, grafik piringan.';
+  String get workoutUiModeEverythingWarmupStretchPh =>
+      'Kabeh — fase pemanasan/peregangan, RPE/RIR, piramida, superset, drop set, tambahan ±2.5 kg, grafik piringan.';
 
   @override
-  String get workoutUiModePickTheLevelOf => 'Pilih tingkat detail sing sampeyan pengin nalika nyathet set. Sampeyan bisa ngganti iki kapan wae.';
+  String get workoutUiModePickTheLevelOf =>
+      'Pilih tingkat detail sing sampeyan pengin nalika nyathet set. Sampeyan bisa ngganti iki kapan wae.';
 
   @override
-  String get workoutUiModePolishedDefaultSteppersAi => 'Default sing apik. Stepper, pelatih AI, timer istirahat, cathetan nganggo audio + foto, tutul kanggo ngowahi set sadurunge. Sampurna kanggo umume sesi.';
+  String get workoutUiModePolishedDefaultSteppersAi =>
+      'Default sing apik. Stepper, pelatih AI, timer istirahat, cathetan nganggo audio + foto, tutul kanggo ngowahi set sadurunge. Sampurna kanggo umume sesi.';
 
   @override
   String get workoutUiModeSelected => 'Dipilih';
@@ -40685,13 +43692,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutUiModeWorkoutMode => 'Mode Latihan';
 
   @override
-  String get workoutsBenchSquatDeadliftBest => 'Bench, squat, deadlift — paling apik yen sampeyan mung ngerti set paling dhuwur';
+  String get workoutsBenchSquatDeadliftBest =>
+      'Bench, squat, deadlift — paling apik yen sampeyan mung ngerti set paling dhuwur';
 
   @override
   String get workoutsCollapseWeekView => 'Tutup tampilan minggu';
 
   @override
-  String get workoutsCompleteYourFirstWorkout => 'Rampungake latihan pisanan sampeyan kanggo ndeleng ing kene';
+  String get workoutsCompleteYourFirstWorkout =>
+      'Rampungake latihan pisanan sampeyan kanggo ndeleng ing kene';
 
   @override
   String get workoutsCsvOrJsonFile => 'File CSV utawa JSON';
@@ -40715,10 +43724,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutsGym => 'Gym';
 
   @override
-  String get workoutsHealthConnectAppleHealth => 'Health Connect / Apple Health';
+  String get workoutsHealthConnectAppleHealth =>
+      'Health Connect / Apple Health';
 
   @override
-  String get workoutsHevyStrongLiftinFitbod => 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, CSV khusus';
+  String get workoutsHevyStrongLiftinFitbod =>
+      'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, CSV khusus';
 
   @override
   String get workoutsImportWorkouts => 'Impor latihan';
@@ -40730,7 +43741,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutsMoreOptions => 'Pilihan liyane';
 
   @override
-  String get workoutsNoCompletedWorkoutsYet => 'Durung ana latihan sing rampung';
+  String get workoutsNoCompletedWorkoutsYet =>
+      'Durung ana latihan sing rampung';
 
   @override
   String get workoutsPlan => 'Rencana';
@@ -40747,16 +43759,19 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutsStrength => 'KEKUATAN';
 
   @override
-  String get workoutsSyncSessionsFromYour => 'Sinkronisasi sesi saka jam tangan sampeyan (wis sinkronisasi ing latar mburi)';
+  String get workoutsSyncSessionsFromYour =>
+      'Sinkronisasi sesi saka jam tangan sampeyan (wis sinkronisasi ing latar mburi)';
 
   @override
-  String get workoutsTourHitStartOnToday => 'Pencet Mulai ing Latihan Dina Iki kanggo nyathet set, reps, lan bobot nganggo timer istirahat.';
+  String get workoutsTourHitStartOnToday =>
+      'Pencet Mulai ing Latihan Dina Iki kanggo nyathet set, reps, lan bobot nganggo timer istirahat.';
 
   @override
   String get workoutsTourMakeItYours => 'Gawe dadi duweke sampeyan';
 
   @override
-  String get workoutsTourPinFavoritesHideExercises => 'Pin favorit, sembunyikake latihan sing mbok hindari, utawa antriake gerakan sing mbok karepake sabanjure.';
+  String get workoutsTourPinFavoritesHideExercises =>
+      'Pin favorit, sembunyikake latihan sing mbok hindari, utawa antriake gerakan sing mbok karepake sabanjure.';
 
   @override
   String get workoutsTourSetYourPreferences => 'Setel preferensimu';
@@ -40765,7 +43780,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutsTourStartAWorkout => 'Mulai latihan';
 
   @override
-  String get workoutsTourUseCustomBrowseOr => 'Gunakake Custom, Browse, utawa Favorites kanggo nggawe, ngganti, utawa mbaleni latihan.';
+  String get workoutsTourUseCustomBrowseOr =>
+      'Gunakake Custom, Browse, utawa Favorites kanggo nggawe, ngganti, utawa mbaleni latihan.';
 
   @override
   String get workoutsTypeAFewPrs => 'Ketik sawetara PR kanthi manual';
@@ -40774,13 +43790,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutsUpcoming => 'Bakal teka';
 
   @override
-  String get workoutsYouCanEditUndo => 'Sampeyan bisa ngowahi, mbatalake, utawa ngatur maneh impor apa wae sawise iku — ora ana sing ngrusak.';
+  String get workoutsYouCanEditUndo =>
+      'Sampeyan bisa ngowahi, mbatalake, utawa ngatur maneh impor apa wae sawise iku — ora ana sing ngrusak.';
 
   @override
-  String get workoutsYourNextWorkoutIs => 'Latihan sabanjure digawe kanthi otomatis sawise saben sesi';
+  String get workoutsYourNextWorkoutIs =>
+      'Latihan sabanjure digawe kanthi otomatis sawise saben sesi';
 
   @override
-  String get wrappedBannerTapToRevealYour => 'Tutul kanggo mbukak kepribadian gym-mu';
+  String get wrappedBannerTapToRevealYour =>
+      'Tutul kanggo mbukak kepribadian gym-mu';
 
   @override
   String get wrappedBannerViewMyWrapped => 'Deleng Wrapped-ku';
@@ -40874,19 +43893,23 @@ class AppLocalizationsJv extends AppLocalizations {
   String get xpGoalsDialogDailyGoals => 'Target saben dina';
 
   @override
-  String get xpGoalsDialogFirstChatWithAiCoachXp => 'Obrolan Pisanan karo Pelatih AI: +15 XP';
+  String get xpGoalsDialogFirstChatWithAiCoachXp =>
+      'Obrolan Pisanan karo Pelatih AI: +15 XP';
 
   @override
-  String get xpGoalsDialogFirstMealWeightMeasurementsXp => 'Dhaharan/Bobot/Ukuran Pisanan: +50 XP saben siji';
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
+      'Dhaharan/Bobot/Ukuran Pisanan: +50 XP saben siji';
 
   @override
   String get xpGoalsDialogFirstPrXp => 'PR Pisanan: +100 XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp => 'Foto Kemajuan Pisanan: +75 XP';
+  String get xpGoalsDialogFirstProgressPhotoXp =>
+      'Foto Kemajuan Pisanan: +75 XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'Target Protein Pisanan: +100 XP';
+  String get xpGoalsDialogFirstProteinGoalXp =>
+      'Target Protein Pisanan: +100 XP';
 
   @override
   String get xpGoalsDialogFirstWorkoutXp => 'Latihan Pisanan: +150 XP';
@@ -40937,7 +43960,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get xpGoalsScreenChatWithAiCoach => 'Chat karo Pelatih AI';
 
   @override
-  String get xpGoalsScreenCheckYourConnectionAnd => 'Priksa sambunganmu lan coba maneh';
+  String get xpGoalsScreenCheckYourConnectionAnd =>
+      'Priksa sambunganmu lan coba maneh';
 
   @override
   String get xpGoalsScreenComplete1Workout => 'Rampungake 1 latihan';
@@ -40946,13 +43970,16 @@ class AppLocalizationsJv extends AppLocalizations {
   String get xpGoalsScreenCompleteFirstWorkout => 'Rampungake Latihan Kapisan';
 
   @override
-  String get xpGoalsScreenConsumableLegend => 'Katrangan barang sing bisa dikonsumsi';
+  String get xpGoalsScreenConsumableLegend =>
+      'Katrangan barang sing bisa dikonsumsi';
 
   @override
-  String get xpGoalsScreenErrorLoadingMonthlyAchievem => 'Gagal mbukak prestasi saben wulan';
+  String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
+      'Gagal mbukak prestasi saben wulan';
 
   @override
-  String get xpGoalsScreenErrorLoadingWeeklyProgress => 'Gagal mbukak progres saben minggu';
+  String get xpGoalsScreenErrorLoadingWeeklyProgress =>
+      'Gagal mbukak progres saben minggu';
 
   @override
   String get xpGoalsScreenFailedToLoadLevels => 'Gagal mbukak level';
@@ -41014,10 +44041,14 @@ class AppLocalizationsJv extends AppLocalizations {
   String get xpGoalsScreenReward => 'HADIAH';
 
   @override
-  String get xpGoalsScreenSetFirstPersonalRecord => 'Setel Rekor Pribadi Kapisan';
+  String get xpGoalsScreenSetFirstPersonalRecord =>
+      'Setel Rekor Pribadi Kapisan';
 
   @override
-  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length) {
+  String xpGoalsScreenUi1CheckpointsComplete(
+    Object completedCount,
+    Object length,
+  ) {
     return '$completedCount/$length titik pemeriksaan rampung';
   }
 
@@ -41139,7 +44170,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get xpLeaderboardNoLeaderboardDataYet => 'Durung ana data papan peringkat.\nMulai golek XP kanggo munggah peringkat!';
+  String get xpLeaderboardNoLeaderboardDataYet =>
+      'Durung ana data papan peringkat.\nMulai golek XP kanggo munggah peringkat!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {
@@ -41235,7 +44267,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get xpProgressCardStartYourFitnessJourney => 'Mulai perjalanan fitness-mu!';
+  String get xpProgressCardStartYourFitnessJourney =>
+      'Mulai perjalanan fitness-mu!';
 
   @override
   String get xpProgressCardStreak => 'Streak';
@@ -41291,13 +44324,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get chatLanguageResetSystem => '🌐 Basa AI Coach wis disetel maneh — nggunakake basa aplikasi';
+  String get chatLanguageResetSystem =>
+      '🌐 Basa AI Coach wis disetel maneh — nggunakake basa aplikasi';
 
   @override
   String get settingsChatLanguageTitle => 'Basa AI Coach';
 
   @override
-  String get settingsChatLanguageDescription => 'Basa kanggo wangsulan AI Coach (beda karo UI aplikasi)';
+  String get settingsChatLanguageDescription =>
+      'Basa kanggo wangsulan AI Coach (beda karo UI aplikasi)';
 
   @override
   String get settingsChatLanguageSameAsApp => 'Padha karo basa aplikasi';
@@ -41312,7 +44347,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get settingsImportsTitle => 'Impor';
 
   @override
-  String get settingsImportsSubtitle => 'Kabeh sing wis dituduhake menyang Zealova';
+  String get settingsImportsSubtitle =>
+      'Kabeh sing wis dituduhake menyang Zealova';
 
   @override
   String get settingsCycleTrackingTitle => 'Nglacak siklus';
@@ -41334,7 +44370,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Kabar wis ngaso. Pateni kapan wae kanggo nerusake.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Kabar wis ngaso. Pateni kapan wae kanggo nerusake.';
 
   @override
   String get vacationModeBannerScheduled => 'dijadwal';
@@ -41348,7 +44385,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get vacationModeBannerOn => 'Kabar aktif';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Aktifake mode liburan ing ngisor iki kanggo ngaso pangeling sing ora kritis.';
+  String get vacationModeBannerOnSubtitle =>
+      'Aktifake mode liburan ing ngisor iki kanggo ngaso pangeling sing ora kritis.';
 
   @override
   String get difficultyEasy => 'pamula';
@@ -41404,7 +44442,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importsEmptyTitle => 'Ora ana sing dienggo bareng';
 
   @override
-  String get importsEmptyBody => 'Pencet Nuduhake ing endi wae - Foto, YouTube, ChatGPT, memo swara - lan bakal teka ing kene kanthi otomatis.';
+  String get importsEmptyBody =>
+      'Pencet Nuduhake ing endi wae - Foto, YouTube, ChatGPT, memo swara - lan bakal teka ing kene kanthi otomatis.';
 
   @override
   String get importsActionOpen => 'Mbukak';
@@ -41419,10 +44458,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importsSnackRetrying => 'Nyoba maneh ngimpor…';
 
   @override
-  String get importsSnackRetryFailed => 'Ora bisa nyoba maneh - coba maneh mengko.';
+  String get importsSnackRetryFailed =>
+      'Ora bisa nyoba maneh - coba maneh mengko.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Reclassify queued - nuduhake item maneh kanggo reroute.';
+  String get importsSnackReclassifyQueued =>
+      'Reclassify queued - nuduhake item maneh kanggo reroute.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -41430,7 +44471,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Cathetan dibusak saka riwayat impor sampeyan. Latihan / resep / log panganan sing diimpor dhewe tetep.';
+  String get importsDeleteConfirmBody =>
+      'Cathetan dibusak saka riwayat impor sampeyan. Latihan / resep / log panganan sing diimpor dhewe tetep.';
 
   @override
   String get importsActionCancel => 'Batal';
@@ -41484,7 +44526,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'watesan';
 
   @override
-  String get importsLimitsFooter => 'Tutup saben dina padha kanggo saben wong. Padha njaga kualitas impor dhuwur lan nglindhungi saka biaya runaway.';
+  String get importsLimitsFooter =>
+      'Tutup saben dina padha kanggo saben wong. Padha njaga kualitas impor dhuwur lan nglindhungi saka biaya runaway.';
 
   @override
   String get importsPrivacySectionTitle => 'Impor';
@@ -41493,28 +44536,35 @@ class AppLocalizationsJv extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Tansah takon sadurunge nuntun';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Skip countdown rute otomatis - saben bagean mbukak pamilih.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Skip countdown rute otomatis - saben bagean mbukak pamilih.';
 
   @override
-  String get importsPrivacyClearHistoryTitle => 'Mbusak riwayat sing dienggo bareng';
+  String get importsPrivacyClearHistoryTitle =>
+      'Mbusak riwayat sing dienggo bareng';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Mbusak saben rekaman saka dhaptar Impor. Latihan, resep, lan log panganan sing diimpor dhewe tetep.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Mbusak saben rekaman saka dhaptar Impor. Latihan, resep, lan log panganan sing diimpor dhewe tetep.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'Mbusak riwayat sing dienggo bareng?';
+  String get importsPrivacyClearConfirmTitle =>
+      'Mbusak riwayat sing dienggo bareng?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Saben baris ing dhaptar Impor dibusak. Latihan, resep, lan log panganan sing sampeyan impor tetep ana ing papan kasebut.';
+  String get importsPrivacyClearConfirmBody =>
+      'Saben baris ing dhaptar Impor dibusak. Latihan, resep, lan log panganan sing sampeyan impor tetep ana ing papan kasebut.';
 
   @override
   String get importsPrivacyClearAction => 'Cetha';
 
   @override
-  String get importsPrivacyClearedSnack => 'Riwayat sing dienggo bareng dibusak.';
+  String get importsPrivacyClearedSnack =>
+      'Riwayat sing dienggo bareng dibusak.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Ora bisa mbusak - coba maneh mengko.';
+  String get importsPrivacyClearFailedSnack =>
+      'Ora bisa mbusak - coba maneh mengko.';
 
   @override
   String get bottomNavLeaderboard => 'Pangkat';
@@ -41526,7 +44576,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get discoverResetsSunday => 'Reset dina Minggu';
 
   @override
-  String get discoverNoEntriesYet => 'Durung ana entri · Cathet latihan minggu iki kanggo munggah';
+  String get discoverNoEntriesYet =>
+      'Durung ana entri · Cathet latihan minggu iki kanggo munggah';
 
   @override
   String get discoverViewTop10 => 'Deleng 10 teratas';
@@ -41544,7 +44595,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroModesPillOffline => 'OFFLINE';
 
   @override
-  String get heroModesBodyOffline => 'Ora bisa muat workout dina iki. Tap kanggo nyoba manèh.';
+  String get heroModesBodyOffline =>
+      'Ora bisa muat workout dina iki. Tap kanggo nyoba manèh.';
 
   @override
   String get heroModesActionRetry => 'COBA';
@@ -41553,7 +44605,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroModesPillSlowConnection => 'TAKING A WHILE';
 
   @override
-  String get heroModesBodySlowConnection => 'Taking longer than usual to load — retrying automatically.';
+  String get heroModesBodySlowConnection =>
+      'Taking longer than usual to load — retrying automatically.';
 
   @override
   String get heroModesPillLive => 'LIVE';
@@ -41574,31 +44627,36 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroModesPillLighter => 'LUWIH ÈNTHÈNG';
 
   @override
-  String get heroModesBodyLighter => 'Turu ora apik. Coba variasi luwih ènthèng dina iki?';
+  String get heroModesBodyLighter =>
+      'Turu ora apik. Coba variasi luwih ènthèng dina iki?';
 
   @override
   String get heroModesPillEquipmentGap => 'PERALATAN KURANG';
 
   @override
-  String get heroModesBodyEquipmentGap => 'Sawetara peralatan ora ana ing profil gym sampeyan saiki.';
+  String get heroModesBodyEquipmentGap =>
+      'Sawetara peralatan ora ana ing profil gym sampeyan saiki.';
 
   @override
   String get heroModesPillFasted => 'PASA';
 
   @override
-  String get heroModesBodyFasted => 'Latihan pasa ora apa-apa. Intensitas sedeng; isi manèh sajroning 30 menit sawisé.';
+  String get heroModesBodyFasted =>
+      'Latihan pasa ora apa-apa. Intensitas sedeng; isi manèh sajroning 30 menit sawisé.';
 
   @override
   String get heroModesPillFuelGap => 'KEKURANGAN BAHAN BAKAR';
 
   @override
-  String get heroModesBodyFuelGap => 'Mangan pungkasan wis suwé. Mangan ~200 kkal karbo?';
+  String get heroModesBodyFuelGap =>
+      'Mangan pungkasan wis suwé. Mangan ~200 kkal karbo?';
 
   @override
   String get heroModesPillComeback => 'BALI';
 
   @override
-  String get heroModesBodyComeback => 'Sesi pisanan kanggo grup otot iki sawisé suwé. Miwiti alon-alon.';
+  String get heroModesBodyComeback =>
+      'Sesi pisanan kanggo grup otot iki sawisé suwé. Miwiti alon-alon.';
 
   @override
   String get heroModesPillPrWindow => 'JENDÉLA PR';
@@ -41613,13 +44671,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroModesPillBodyAsksRest => 'AWAK NJALUK NGASO';
 
   @override
-  String get heroModesBodyBodyAsksRest => '5 dina abot, turu mudhun. Dina iki investasi kanggo minggu ngarep.';
+  String get heroModesBodyBodyAsksRest =>
+      '5 dina abot, turu mudhun. Dina iki investasi kanggo minggu ngarep.';
 
   @override
   String get heroModesPillRefuelWindow => 'JENDÉLA ISI MANÈH';
 
   @override
-  String get heroModesBodyRefuelWindow => 'Jendéla 30 menit: protein + karbo ngunci asil.';
+  String get heroModesBodyRefuelWindow =>
+      'Jendéla 30 menit: protein + karbo ngunci asil.';
 
   @override
   String get heroModesPillBonus => 'BONUS';
@@ -41631,7 +44691,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get heroModesPillYesterday => 'WINGI';
 
   @override
-  String get heroModesBodyYesterday => 'Sesi wingi isih mbukak. Pindhah menyang dina iki?';
+  String get heroModesBodyYesterday =>
+      'Sesi wingi isih mbukak. Pindhah menyang dina iki?';
 
   @override
   String get metricsDashboardKeyMetrics => 'KEY METRICS';
@@ -41694,7 +44755,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricsDashboardHrHigh => 'High';
 
   @override
-  String get metricsDashboardHrDisclaimer => 'Informational only, not medical advice. Talk to a clinician about any concerns.';
+  String get metricsDashboardHrDisclaimer =>
+      'Informational only, not medical advice. Talk to a clinician about any concerns.';
 
   @override
   String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
@@ -41719,7 +44781,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricsDashboardGetStartedTitle => 'Start tracking';
 
   @override
-  String get metricsDashboardGetStartedCta => 'Connect a wearable or log a meal to see your metrics.';
+  String get metricsDashboardGetStartedCta =>
+      'Connect a wearable or log a meal to see your metrics.';
 
   @override
   String quizMinutesLeft(int minutes) {
@@ -41791,13 +44854,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get introDemoPrChip => '🏆 PR ANYAR · 225 lb';
 
   @override
-  String get introDemoCoachPrLine => 'Coach: “225 — kuwi PR 10 lb. Minggu ngarep awake dhewe menyang 230.”';
+  String get introDemoCoachPrLine =>
+      'Coach: “225 — kuwi PR 10 lb. Minggu ngarep awake dhewe menyang 230.”';
 
   @override
   String get introDemoPhotoLogging => 'NYATHET NGANGGO FOTO';
 
   @override
-  String get introDemoLoggedLine => '✓ Kacathet kanggo dina iki — 1 foto, 2 detik';
+  String get introDemoLoggedLine =>
+      '✓ Kacathet kanggo dina iki — 1 foto, 2 detik';
 
   @override
   String get introDemoKcalChip => '540 kcal';
@@ -41854,7 +44919,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get planAnalyzingSubtitleV7 => '~20 detik · pelatihmu lagi milih saben set';
+  String get planAnalyzingSubtitleV7 =>
+      '~20 detik · pelatihmu lagi milih saben set';
 
   @override
   String get signInV7DontLoseIt => 'AJA NGANTI ILANG.';
@@ -41887,10 +44953,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallFounderKicker => 'CATHETAN SAKA PANDHIRI';
 
   @override
-  String get paywallFounderHeadline => 'AKU GAWE COACH SING ORA KUWAT TAKBAYAR.';
+  String get paywallFounderHeadline =>
+      'AKU GAWE COACH SING ORA KUWAT TAKBAYAR.';
 
   @override
-  String get paywallFounderQuote => '“Personal trainer sing apik regane \$400/sasi. Aku ora kuwat mbayar kuwi, dadi rong taun aku gawe dhewe: 2.300 latihan, logika progresi tenanan, coach sing tenan ndeleng minggumu. Aku nganggo saben dina.”';
+  String get paywallFounderQuote =>
+      '“Personal trainer sing apik regane \$400/sasi. Aku ora kuwat mbayar kuwi, dadi rong taun aku gawe dhewe: 2.300 latihan, logika progresi tenanan, coach sing tenan ndeleng minggumu. Aku nganggo saben dina.”';
 
   @override
   String get paywallFounderName => 'Chetan · pandhiri';
@@ -41899,19 +44967,22 @@ class AppLocalizationsJv extends AppLocalizations {
   String get paywallFounderSub => 'latihan karo Zealova wiwit dina kapisan';
 
   @override
-  String get paywallTesterQuote => '“Dheweke ngerti aku tansah ngliwati latihan sikil dina Jumat lan mung… mindhah menyang Setu.”';
+  String get paywallTesterQuote =>
+      '“Dheweke ngerti aku tansah ngliwati latihan sikil dina Jumat lan mung… mindhah menyang Setu.”';
 
   @override
   String get paywallTesterName => 'Keertan · penguji awal';
 
   @override
-  String get paywallTesterQuote2 => '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
+  String get paywallTesterQuote2 =>
+      '“Eating out used to be a guessing game for hitting my macros. Now I scan the menu and it tells me exactly what fits — and Recipe from Fridge turns whatever I\'ve got into dinner without blowing my carb budget.”';
 
   @override
   String get paywallTesterName2 => 'Toby · macro tracker';
 
   @override
-  String get paywallEarlyAccess => 'Akses awal · dadia salah siji saka 1.000 anggota kapisan';
+  String get paywallEarlyAccess =>
+      'Akses awal · dadia salah siji saka 1.000 anggota kapisan';
 
   @override
   String get paywallRemindMeCta => 'Elingna aku 🔔';
@@ -41958,13 +45029,15 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get paywallTrialToggleOff => 'Paket saben sasi — diwiwiti dina iki, tanpa uji coba';
+  String get paywallTrialToggleOff =>
+      'Paket saben sasi — diwiwiti dina iki, tanpa uji coba';
 
   @override
   String get paywallV7DownsellHeadline => 'RENCANAMU BAKAL DIBUSAK?';
 
   @override
-  String get paywallV7DownsellSub => 'Rega founding member mung sapisan, karo uji coba gratis 7 dina sing padha. Tawaran iki ora bakal bali.';
+  String get paywallV7DownsellSub =>
+      'Rega founding member mung sapisan, karo uji coba gratis 7 dina sing padha. Tawaran iki ora bakal bali.';
 
   @override
   String metricSetupPanelKicker(num count) {
@@ -41990,22 +45063,26 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String get metricSetupPanelLogBody => 'Iki kaisi saka apa sing sampeyan cathet.';
+  String get metricSetupPanelLogBody =>
+      'Iki kaisi saka apa sing sampeyan cathet.';
 
   @override
   String get metricSetupPanelLogCta => 'Cathet apa wae';
 
   @override
-  String get metricSetupPanelSetupBody => 'Diwiwiti nalika rencana sampeyan diwiwiti.';
+  String get metricSetupPanelSetupBody =>
+      'Diwiwiti nalika rencana sampeyan diwiwiti.';
 
   @override
   String get metricSetupPanelSetupCta => 'Rampungake persiapan';
 
   @override
-  String get metricSetupPanelFooter => 'Ora ana sing dikira-kira kanggo sampeyan.';
+  String get metricSetupPanelFooter =>
+      'Ora ana sing dikira-kira kanggo sampeyan.';
 
   @override
-  String get metricTileNoSourceConnectHealth => 'Ora ana sumber · sambungake Health';
+  String get metricTileNoSourceConnectHealth =>
+      'Ora ana sumber · sambungake Health';
 
   @override
   String get metricTileConnectHealthShort => 'Sambungake Health';
@@ -42023,7 +45100,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricTileNothingLoggedShort => 'Ora ana cathetan';
 
   @override
-  String get metricTileNoPlanYetFinishSetup => 'Durung ana rencana · rampungake persiapan';
+  String get metricTileNoPlanYetFinishSetup =>
+      'Durung ana rencana · rampungake persiapan';
 
   @override
   String get metricTileNeedsHrv => 'Butuh HRV';
@@ -42047,7 +45125,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricGridChangesSaveInstantly => 'OWAHAN LANGSUNG KASIMPEN';
 
   @override
-  String get metricGridEditHint => 'SERET KANGGO NATA · TUTUK UBIN KANGGO UKURAN · − KANGGO MBUSAK';
+  String get metricGridEditHint =>
+      'SERET KANGGO NATA · TUTUK UBIN KANGGO UKURAN · − KANGGO MBUSAK';
 
   @override
   String get metricGridDone => 'RAMPUNG';
@@ -42091,13 +45170,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get metricGridAddMetric => 'TAMBAH METRIK';
 
   @override
-  String get metricGridConnectBody => 'Langkah, turu, lan kesiapan kaisi otomatis — ora ana sing dikira-kira kanggo sampeyan.';
+  String get metricGridConnectBody =>
+      'Langkah, turu, lan kesiapan kaisi otomatis — ora ana sing dikira-kira kanggo sampeyan.';
 
   @override
   String get metricGridConnectCta => 'SAMBUNGAKE HEALTH';
 
   @override
-  String get metricGridEveryMetricPlaced => 'Kabeh metrik wis ana ing grid sampeyan.';
+  String get metricGridEveryMetricPlaced =>
+      'Kabeh metrik wis ana ing grid sampeyan.';
 
   @override
   String get metricGridSourceHealth => 'Health';

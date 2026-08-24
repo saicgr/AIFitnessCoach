@@ -81,18 +81,28 @@ def generate_mock_user_assignment(
     week_number: int = 1,
     completed_at: str = None,
 ):
-    """Generate a mock user program assignment."""
+    """Generate a mock user program assignment.
+
+    Shaped like the real `user_program_assignments` row, which has no
+    `program_name`/`week_number` columns (see the ASSIGNMENT NAME / WEEK
+    RESOLUTION comment in api/v1/programs.py) — the display name lives in
+    `custom_program_name` and the week counter in `current_week`. When a
+    caller only passes `program_name` (the common case in these tests), it
+    is copied into `custom_program_name` so `_assignment_display_name`
+    resolves it exactly like a real row would.
+    """
     now = datetime.utcnow().isoformat()
     return {
         "id": assignment_id or str(uuid.uuid4()),
         "user_id": user_id,
         "branded_program_id": branded_program_id,
-        "custom_program_name": custom_program_name,
+        "custom_program_name": custom_program_name or program_name,
         "program_name": program_name,
         "started_at": now,
         "completed_at": completed_at,
         "is_active": is_active,
         "week_number": week_number,
+        "current_week": week_number,
         "created_at": now,
         "updated_at": now,
     }

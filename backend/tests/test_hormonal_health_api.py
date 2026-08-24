@@ -459,9 +459,18 @@ class TestCyclePhaseEndpoints:
         assert data["current_cycle_day"] == 3
 
     def test_get_cycle_phase_follicular(self, client, mock_supabase):
-        """Test cycle phase calculation - follicular phase."""
-        # Day 10 should be follicular phase
-        self._seed_cycle(mock_supabase, days_since_period_start=9)
+        """Test cycle phase calculation - follicular phase.
+
+        The endpoint is backed by services.cycle.cycle_predictor's
+        ovulation-based fertile window, not a hardcoded day-number boundary
+        (see get_cycle_phase's docstring). For a default 28-day cycle with
+        no logged BBT/LH/mucus signals, ovulation is estimated 14 days
+        before the next predicted period, with a 5-day-before/1-day-after
+        fertile window — so the fertile (ovulation-phase) window starts at
+        cycle day 10. Day 8 (days_since_period_start=7) sits safely in
+        follicular: past the day-5 period end, short of that day-10 window.
+        """
+        self._seed_cycle(mock_supabase, days_since_period_start=7)
 
         response = client.get(f"/api/v1/hormonal-health/cycle-phase/{TEST_USER_ID}")
         assert response.status_code == 200

@@ -344,6 +344,12 @@ class TestDeleteFoodLog:
 
         A missing row means `get_food_log` returns None AND the soft-delete
         lookup finds nothing — only then is it a true 404.
+
+        The id must be a real UUID: a non-UUID id (e.g. a stale optimistic id
+        that never persisted) is short-circuited to an idempotent 200 by
+        is_uuid() before this row-existence check ever runs (see
+        `delete_food_log`'s "never_persisted" branch) — that path can't reach
+        a 404, so it doesn't belong in this test.
         """
         from api.v1.nutrition import delete_food_log
         from fastapi import HTTPException
@@ -357,7 +363,7 @@ class TestDeleteFoodLog:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                delete_food_log("nonexistent", current_user)
+                delete_food_log("3e5f6a2b-9c1d-4e8f-8a2b-1c2d3e4f5a6b", current_user)
             )
 
         assert exc_info.value.status_code == 404

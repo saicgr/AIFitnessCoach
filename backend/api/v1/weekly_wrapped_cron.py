@@ -23,12 +23,14 @@ Hard requirements per memory feedback:
   the "schedule-aware" concern is: if the user literally did zero workouts
   AND zero logs this week, skip the push entirely (nothing to recap).
 """
+import hmac
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Request
 
+from core.config import get_settings
 from core.db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
@@ -37,6 +39,36 @@ from services.notification_service import get_notification_service
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+
+def _verify_cron_secret(request: Request, x_cron_secret: Optional[str]) -> None:
+    """Same pattern as push_nudge_cron / fitness_profile_cron / retention_cron.
+
+    NOTE (E2E audit): this endpoint used to have NO auth check at all, unlike
+    every sibling cron endpoint (email_cron, push_nudge_cron, retention_cron,
+    fitness_profile_cron all require X-Cron-Secret) -- it was public, gated
+    only by a 6/minute rate limit. Anyone could trigger real Gemini calls and
+    real FCM pushes to real users by hitting it directly.
+    """
+    settings = get_settings()
+    secret = settings.cron_secret
+    if not secret:
+        raise HTTPException(
+            status_code=503,
+            detail="Cron not configured — set CRON_SECRET env var",
+        )
+    if not x_cron_secret or not hmac.compare_digest(x_cron_secret, secret):
+        logger.warning("Weekly wrapped cron called with invalid secret")
+        raise HTTPException(status_code=401, detail="Invalid cron secret")
+
+    allowed_ips_str = settings.cron_allowed_ips
+    if allowed_ips_str:
+        allowed_ips = [ip.strip() for ip in allowed_ips_str.split(",") if ip.strip()]
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else None)
+        if not client_ip or client_ip not in allowed_ips:
+            logger.warning(f"Weekly wrapped cron called from disallowed IP: {client_ip}")
+            raise HTTPException(status_code=403, detail="IP not allowed")
 
 
 # ── Timezone helpers ───────────────────────────────────────────────────────
@@ -110,7 +142,10 @@ def _last_complete_week(local_today: date) -> tuple[date, date]:
 
 @router.post("/weekly-wrapped-cron")
 @limiter.limit("6/minute")
-async def run_weekly_wrapped_cron(request: Request):
+async def run_weekly_wrapped_cron(
+    request: Request,
+    x_cron_secret: Optional[str] = Header(default=None, alias="X-Cron-Secret"),
+):
     """Scan all users, fire Sunday Wrapped push for those whose local time
     matches their configured weekly-summary slot.
 
@@ -118,6 +153,8 @@ async def run_weekly_wrapped_cron(request: Request):
     Returns a summary of how many pushes were sent + skipped reasons so the
     cron is observable.
     """
+    _verify_cron_secret(request, x_cron_secret)
+
     db = get_supabase_db()
     sb = db.client
 

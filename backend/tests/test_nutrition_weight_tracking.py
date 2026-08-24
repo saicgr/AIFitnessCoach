@@ -75,6 +75,7 @@ def mock_supabase_db():
         mock_table.neq.return_value = mock_table
         mock_table.gte.return_value = mock_table
         mock_table.lte.return_value = mock_table
+        mock_table.lt.return_value = mock_table
         mock_table.order.return_value = mock_table
         mock_table.limit.return_value = mock_table
         mock_table.is_.return_value = mock_table
@@ -89,8 +90,13 @@ def mock_supabase_db():
 
 
 @pytest.fixture
-def sample_user_id():
-    return str(uuid.uuid4())
+def sample_user_id(mock_current_user):
+    """Must match mock_current_user["id"] — these endpoints now call
+    verify_user_ownership(current_user, user_id) (IDOR fix), so a user_id
+    that isn't the authenticated caller's own id gets a 403 before the
+    endpoint body under test ever runs.
+    """
+    return mock_current_user["id"]
 
 
 @pytest.fixture
@@ -206,7 +212,7 @@ class TestWeightLogs:
         # The prior-row lookup short-circuits: no INSERT is ever issued.
         mock_supabase_db._mock_table.insert.assert_not_called()
 
-    def test_get_weight_logs_success(self, mock_supabase_db, mock_current_user, sample_user_id, sample_weight_history):
+    def test_get_weight_logs_success(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id, sample_weight_history):
         """Test successful weight logs retrieval."""
         from api.v1.nutrition.weight_tracking import get_weight_logs
 
@@ -215,12 +221,12 @@ class TestWeightLogs:
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
         result = asyncio.run(
-            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=30)
+            get_weight_logs(mock_request, sample_user_id, current_user=mock_current_user, limit=30, from_date=None, to_date=None)
         )
 
         assert len(result) == 14
 
-    def test_get_weight_logs_with_limit(self, mock_supabase_db, mock_current_user, sample_user_id, sample_weight_history):
+    def test_get_weight_logs_with_limit(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id, sample_weight_history):
         """Test weight logs with limit parameter."""
         from api.v1.nutrition.weight_tracking import get_weight_logs
 
@@ -231,14 +237,14 @@ class TestWeightLogs:
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
         result = asyncio.run(
-            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=5)
+            get_weight_logs(mock_request, sample_user_id, current_user=mock_current_user, limit=5, from_date=None, to_date=None)
         )
 
         assert len(result) == 5
         # The limit is pushed down to the query, not applied in Python.
         mock_supabase_db._mock_table.limit.assert_called_once_with(5)
 
-    def test_get_weight_logs_empty(self, mock_supabase_db, mock_current_user, sample_user_id):
+    def test_get_weight_logs_empty(self, mock_supabase_db, mock_request, mock_current_user, sample_user_id):
         """Test weight logs when none exist."""
         from api.v1.nutrition.weight_tracking import get_weight_logs
 
@@ -247,7 +253,7 @@ class TestWeightLogs:
         mock_supabase_db._mock_table.execute.return_value = mock_result
 
         result = asyncio.run(
-            get_weight_logs(sample_user_id, current_user=mock_current_user, limit=30)
+            get_weight_logs(mock_request, sample_user_id, current_user=mock_current_user, limit=30, from_date=None, to_date=None)
         )
 
         assert len(result) == 0

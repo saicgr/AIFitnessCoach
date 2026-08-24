@@ -82,35 +82,12 @@ class PersonalizedSampleWorkoutRequest(BaseModel):
     session_id: Optional[str] = None
 
 
-class TourStartRequest(BaseModel):
-    """Request to start an app tour session."""
-    user_id: Optional[str] = None
-    device_id: Optional[str] = None
-    source: str = "new_user"  # new_user, settings, deep_link
-    device_info: Optional[Dict[str, Any]] = None
-    app_version: Optional[str] = None
-    platform: Optional[str] = None
-
-
-class TourStepCompletedRequest(BaseModel):
-    """Request when a tour step is completed."""
-    session_id: str
-    step_id: str
-    duration_seconds: Optional[int] = None
-    action_taken: Optional[str] = None  # skip, next, deep_link
-    deep_link_target: Optional[str] = None
-
-
-class TourCompletedRequest(BaseModel):
-    """Request when tour is completed or skipped."""
-    session_id: str
-    status: str  # completed, skipped
-    skip_step: Optional[str] = None
-    demo_workout_started: bool = False
-    demo_workout_completed: bool = False
-    plan_preview_viewed: bool = False
-    deep_links_clicked: List[str] = []
-    total_duration_seconds: Optional[int] = None
+# NOTE: TourStartRequest / TourStepCompletedRequest / TourCompletedRequest are
+# defined in demo_models.py (imported above via `from .demo_models import *`).
+# They used to be redefined here too, shadowing the demo_models versions for
+# anything importing from this module while the actual /tour/* endpoints
+# (demo_endpoints.py) imported the demo_models versions directly — so the two
+# definitions silently drifted out of sync. Do not redefine them here again.
 
 
 # ============================================================================

@@ -84,7 +84,7 @@ def test_user(db):
     cur.execute(
         """
         INSERT INTO users (id, email, fitness_level, goals, equipment)
-        VALUES (%s, %s, 'beginner', 'general_fitness', 'none')
+        VALUES (%s, %s, 'beginner', '["general_fitness"]', 'none')
         """,
         (user_id, f"e2e-66-{user_id}@test.invalid"),
     )

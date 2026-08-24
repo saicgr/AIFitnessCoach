@@ -434,7 +434,11 @@ class TestNutritionStreak:
         ]
 
         result = asyncio.get_event_loop().run_until_complete(
-            use_streak_freeze(make_request(), sample_nutrition_streak["user_id"])
+            use_streak_freeze(
+                make_request(),
+                sample_nutrition_streak["user_id"],
+                current_user={"id": sample_nutrition_streak["user_id"]},
+            )
         )
 
         assert result.freezes_available == 1
@@ -454,7 +458,11 @@ class TestNutritionStreak:
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.get_event_loop().run_until_complete(
-                use_streak_freeze(make_request(), sample_nutrition_streak["user_id"])
+                use_streak_freeze(
+                    make_request(),
+                    sample_nutrition_streak["user_id"],
+                    current_user={"id": sample_nutrition_streak["user_id"]},
+                )
             )
 
         assert exc_info.value.status_code == 400

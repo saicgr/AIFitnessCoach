@@ -45,7 +45,7 @@ def sample_workout():
         "id": 123,
         "user_id": 100,
         "name": "Upper Body",
-        "exercises": [
+        "exercises_json": [
             {"exercise_id": "ex_bench_press", "name": "Bench Press", "sets": 3, "reps": 8, "rest_seconds": 60},
             {"exercise_id": "ex_rows", "name": "Rows", "sets": 3, "reps": 10, "rest_seconds": 60},
         ],
@@ -60,7 +60,7 @@ def sample_workout_json_exercises():
         "id": 124,
         "user_id": 100,
         "name": "Leg Day",
-        "exercises": json.dumps([
+        "exercises_json": json.dumps([
             {"exercise_id": "ex_squat", "name": "Squat", "sets": 4, "reps": 6, "rest_seconds": 90},
         ]),
         "modification_history": json.dumps([])
@@ -77,7 +77,7 @@ class TestAddExercises:
     def test_add_exercises_success(self, workout_modifier, mock_db, sample_workout):
         """Test successfully adding exercises."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.add_exercises_to_workout(
@@ -93,10 +93,10 @@ class TestAddExercises:
         update_data = call_args[0][1]
 
         # Should have 4 exercises now
-        assert len(update_data["exercises"]) == 4
+        assert len(update_data["exercises_json"]) == 4
 
         # Check new exercises were added
-        exercise_names = [ex["name"] for ex in update_data["exercises"]]
+        exercise_names = [ex["name"] for ex in update_data["exercises_json"]]
         assert "Bicep Curl" in exercise_names
         assert "Tricep Extension" in exercise_names
 
@@ -119,7 +119,7 @@ class TestAddExercises:
     def test_add_exercises_duplicate_not_added(self, workout_modifier, mock_db, sample_workout):
         """Test duplicate exercises are not added."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.add_exercises_to_workout(
@@ -132,12 +132,12 @@ class TestAddExercises:
         update_data = call_args[0][1]
 
         # Should still have 2 exercises (duplicate not added)
-        assert len(update_data["exercises"]) == 2
+        assert len(update_data["exercises_json"]) == 2
 
     def test_add_exercises_case_insensitive_duplicate(self, workout_modifier, mock_db, sample_workout):
         """Test duplicate check is case insensitive."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.add_exercises_to_workout(
@@ -150,12 +150,12 @@ class TestAddExercises:
         update_data = call_args[0][1]
 
         # Should still have 2 exercises
-        assert len(update_data["exercises"]) == 2
+        assert len(update_data["exercises_json"]) == 2
 
     def test_add_exercises_json_string_exercises(self, workout_modifier, mock_db, sample_workout_json_exercises):
         """Test adding exercises when exercises are stored as JSON string."""
         mock_db.get_workout.return_value = sample_workout_json_exercises
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.add_exercises_to_workout(
@@ -168,12 +168,12 @@ class TestAddExercises:
         update_data = call_args[0][1]
 
         # Should have 2 exercises now
-        assert len(update_data["exercises"]) == 2
+        assert len(update_data["exercises_json"]) == 2
 
     def test_add_exercises_creates_exercise_structure(self, workout_modifier, mock_db, sample_workout):
         """Test new exercises have correct structure."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.add_exercises_to_workout(
@@ -186,7 +186,7 @@ class TestAddExercises:
         update_data = call_args[0][1]
 
         # Find the new exercise
-        new_exercise = [ex for ex in update_data["exercises"] if ex["name"] == "Lateral Raise"][0]
+        new_exercise = [ex for ex in update_data["exercises_json"] if ex["name"] == "Lateral Raise"][0]
 
         assert new_exercise["exercise_id"] == "ex_lateral_raise"
         assert new_exercise["sets"] == 3
@@ -216,7 +216,7 @@ class TestRemoveExercises:
     def test_remove_exercises_success(self, workout_modifier, mock_db, sample_workout):
         """Test successfully removing exercises."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.remove_exercises_from_workout(
@@ -229,8 +229,8 @@ class TestRemoveExercises:
         update_data = call_args[0][1]
 
         # Should have 1 exercise now
-        assert len(update_data["exercises"]) == 1
-        assert update_data["exercises"][0]["name"] == "Rows"
+        assert len(update_data["exercises_json"]) == 1
+        assert update_data["exercises_json"][0]["name"] == "Rows"
 
         # Check modification history
         assert update_data["modification_history"][0]["type"] == "remove_exercises"
@@ -250,7 +250,7 @@ class TestRemoveExercises:
     def test_remove_exercises_case_insensitive(self, workout_modifier, mock_db, sample_workout):
         """Test removal is case insensitive."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.remove_exercises_from_workout(
@@ -263,13 +263,13 @@ class TestRemoveExercises:
         update_data = call_args[0][1]
 
         # Should have 0 exercises now
-        assert len(update_data["exercises"]) == 0
+        assert len(update_data["exercises_json"]) == 0
         assert update_data["modification_history"][0]["removed_count"] == 2
 
     def test_remove_exercises_nonexistent_name(self, workout_modifier, mock_db, sample_workout):
         """Test removing exercise that doesn't exist."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.remove_exercises_from_workout(
@@ -282,13 +282,13 @@ class TestRemoveExercises:
         update_data = call_args[0][1]
 
         # Should still have 2 exercises
-        assert len(update_data["exercises"]) == 2
+        assert len(update_data["exercises_json"]) == 2
         assert update_data["modification_history"][0]["removed_count"] == 0
 
     def test_remove_exercises_json_string_exercises(self, workout_modifier, mock_db, sample_workout_json_exercises):
         """Test removing when exercises are stored as JSON string."""
         mock_db.get_workout.return_value = sample_workout_json_exercises
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.remove_exercises_from_workout(
@@ -301,7 +301,7 @@ class TestRemoveExercises:
         update_data = call_args[0][1]
 
         # Should have 0 exercises now
-        assert len(update_data["exercises"]) == 0
+        assert len(update_data["exercises_json"]) == 0
 
     def test_remove_exercises_error_handling(self, workout_modifier, mock_db, sample_workout):
         """Test error handling during remove."""
@@ -326,7 +326,7 @@ class TestModifyIntensity:
     def test_modify_intensity_easier(self, workout_modifier, mock_db, sample_workout):
         """Test making workout easier."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.modify_workout_intensity(
@@ -339,7 +339,7 @@ class TestModifyIntensity:
         update_data = call_args[0][1]
 
         # Check first exercise was made easier
-        first_exercise = update_data["exercises"][0]
+        first_exercise = update_data["exercises_json"][0]
         assert first_exercise["sets"] <= 3  # Reduced or same
         assert first_exercise["reps"] <= 8  # Reduced or same
         assert first_exercise["rest_seconds"] >= 60  # Increased or same
@@ -347,7 +347,7 @@ class TestModifyIntensity:
     def test_modify_intensity_harder(self, workout_modifier, mock_db, sample_workout):
         """Test making workout harder."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.modify_workout_intensity(
@@ -360,7 +360,7 @@ class TestModifyIntensity:
         update_data = call_args[0][1]
 
         # Check first exercise was made harder
-        first_exercise = update_data["exercises"][0]
+        first_exercise = update_data["exercises_json"][0]
         assert first_exercise["sets"] >= 3  # Increased or same
         assert first_exercise["reps"] >= 8  # Increased or same
         assert first_exercise["rest_seconds"] <= 60  # Reduced or same
@@ -368,7 +368,7 @@ class TestModifyIntensity:
     def test_modify_intensity_reduce(self, workout_modifier, mock_db, sample_workout):
         """Test reducing workout intensity."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.modify_workout_intensity(
@@ -381,7 +381,7 @@ class TestModifyIntensity:
     def test_modify_intensity_increase(self, workout_modifier, mock_db, sample_workout):
         """Test increasing workout intensity."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.modify_workout_intensity(
@@ -438,14 +438,14 @@ class TestModifyIntensity:
             "id": 123,
             "user_id": 100,
             "name": "Minimal",
-            "exercises": [
+            "exercises_json": [
                 {"name": "Exercise", "sets": 1, "reps": 5, "rest_seconds": 30}
             ],
             "modification_history": []
         }
         mock_db.get_workout.return_value = minimal_workout
         mock_db.get_user.return_value = {"fitness_level": fitness_level}
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         # Try to make easier (should hit minimums)
@@ -459,7 +459,7 @@ class TestModifyIntensity:
         update_data = call_args[0][1]
 
         # Check bounds are respected
-        first_exercise = update_data["exercises"][0]
+        first_exercise = update_data["exercises_json"][0]
         assert first_exercise["sets"] >= 1
         assert first_exercise["sets"] == 1  # already at the floor, stays there
         assert first_exercise["reps"] >= expected_reps
@@ -493,14 +493,14 @@ class TestModifyIntensity:
             "id": 123,
             "user_id": 100,
             "name": "Maximal",
-            "exercises": [
+            "exercises_json": [
                 {"name": "Exercise", "sets": 5, "reps": 20, "rest_seconds": 120}
             ],
             "modification_history": []
         }
         mock_db.get_workout.return_value = max_workout
         mock_db.get_user.return_value = {"fitness_level": fitness_level}
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         # Try to make harder (should hit maximums)
@@ -514,7 +514,7 @@ class TestModifyIntensity:
         update_data = call_args[0][1]
 
         # Check bounds are respected
-        first_exercise = update_data["exercises"][0]
+        first_exercise = update_data["exercises_json"][0]
         assert first_exercise["sets"] <= sets_max
         assert first_exercise["reps"] <= reps_max
         assert first_exercise["sets"] == expected_sets
@@ -524,7 +524,7 @@ class TestModifyIntensity:
     def test_modify_intensity_updates_history(self, workout_modifier, mock_db, sample_workout):
         """Test modification history is updated."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         result = workout_modifier.modify_workout_intensity(
@@ -563,7 +563,7 @@ class TestLogWorkoutChange:
     def test_log_workout_change_called(self, workout_modifier, mock_db, sample_workout):
         """Test that workout changes are logged."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         workout_modifier.add_exercises_to_workout(
@@ -582,7 +582,7 @@ class TestLogWorkoutChange:
     def test_log_workout_change_error_handled(self, workout_modifier, mock_db, sample_workout):
         """Test that logging errors don't fail the operation."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.side_effect = Exception("Logging error")
 
         # Operation should still succeed even if logging fails
@@ -613,7 +613,7 @@ class TestModificationHistory:
             ]
         }
         mock_db.get_workout.return_value = workout_with_history
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         workout_modifier.add_exercises_to_workout(
@@ -632,7 +632,7 @@ class TestModificationHistory:
     def test_history_includes_timestamp(self, workout_modifier, mock_db, sample_workout):
         """Test modification history includes timestamp."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         workout_modifier.add_exercises_to_workout(
@@ -648,7 +648,7 @@ class TestModificationHistory:
     def test_history_includes_method(self, workout_modifier, mock_db, sample_workout):
         """Test modification history includes method."""
         mock_db.get_workout.return_value = sample_workout
-        mock_db.update_workout.return_value = None
+        mock_db.update_workout.return_value = {"id": 123}
         mock_db.create_workout_change.return_value = None
 
         workout_modifier.add_exercises_to_workout(

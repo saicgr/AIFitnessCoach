@@ -223,6 +223,7 @@ async def complete_app_tour(request: Request, body: TourCompletedRequest):
             "status": body.status,
             "completed_at": datetime.utcnow().isoformat(),
             "skip_step": body.skip_step,
+            "skip_reason": body.skip_reason,
             "demo_workout_started": body.demo_workout_started,
             "demo_workout_completed": body.demo_workout_completed,
             "plan_preview_viewed": body.plan_preview_viewed,

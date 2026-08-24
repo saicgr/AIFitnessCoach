@@ -110,7 +110,7 @@ def test_user(pg):
     cur.execute(
         "INSERT INTO users (id, email, fitness_level, goals, equipment, "
         "onboarding_completed, timezone) VALUES (%s, %s, 'beginner', "
-        "'general_fitness', 'none', false, %s)",
+        "'[\"general_fitness\"]', 'none', false, %s)",
         (user_id, f"e2e-80-{user_id}@test.invalid", tz),
     )
     try:

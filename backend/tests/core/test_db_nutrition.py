@@ -152,13 +152,17 @@ class TestNutritionDBGetFoodLog:
 
     def test_get_food_log_found(self, mock_supabase_manager):
         """Should return food log when found."""
-        log_data = {"id": "log-123", "user_id": "user-123", "meal_type": "breakfast"}
+        # food_logs.id is a real uuid column; get_food_log short-circuits any
+        # non-UUID id to None (guards against Postgres 22P02 on synthetic
+        # optimistic ids), so the id under test must be a valid UUID.
+        log_id = "3e5f6a2b-9c1d-4e8f-8a2b-1c2d3e4f5a6b"
+        log_data = {"id": log_id, "user_id": "user-123", "meal_type": "breakfast"}
         mock_supabase_manager._client._table_data["food_logs"] = [log_data]
 
         from core.db.nutrition_db import NutritionDB
         db = NutritionDB(mock_supabase_manager)
 
-        result = db.get_food_log("log-123")
+        result = db.get_food_log(log_id)
         assert result == log_data
 
     def test_get_food_log_not_found(self, nutrition_db):
@@ -211,7 +215,10 @@ class TestNutritionDBDeleteFoodLog:
 
     def test_delete_food_log_success(self, nutrition_db):
         """Should delete food log."""
-        result = nutrition_db.delete_food_log("log-123")
+        # delete_food_log short-circuits any non-UUID id to False (guards
+        # against Postgres 22P02 on synthetic optimistic ids), so the id
+        # under test must be a valid UUID.
+        result = nutrition_db.delete_food_log("3e5f6a2b-9c1d-4e8f-8a2b-1c2d3e4f5a6b")
         assert result is True
 
 

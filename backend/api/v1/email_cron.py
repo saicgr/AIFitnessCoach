@@ -2229,21 +2229,31 @@ async def _job_week1_day7_email(supabase, email_svc):
 
 # ─── Merch Milestone Email Jobs (migration 1931) ────────────────────────────
 
-_MERCH_PROXIMITY_LEVELS = {47, 48, 49, 97, 98, 99, 147, 148, 149, 197, 198, 199, 247, 248, 249}
-_MERCH_NEXT_FOR_PROXIMITY = {
-    47: 50, 48: 50, 49: 50,
-    97: 100, 98: 100, 99: 100,
-    147: 150, 148: 150, 149: 150,
-    197: 200, 198: 200, 199: 200,
-    247: 250, 248: 250, 249: 250,
-}
+
+def _get_merch_levels(supabase) -> Dict[int, str]:
+    """level -> merch_type, read from the DB (single source of truth: the
+    `merch_type_for_level()` SQL function, migration 2424) via the
+    `get_all_merch_levels` bulk RPC (migration 2432). See E2E #371 -- this
+    used to be a hardcoded Python dict/level-set at the OLD (pre-2424)
+    thresholds (50/100/150/200/250) that had drifted from the DB's
+    rescaled ladder (20/40/60/80/100). No hardcoded fallback ladder on RPC
+    failure: an empty dict just means no proximity email fires this run,
+    rather than silently reintroducing a second, staler source of truth."""
+    try:
+        result = supabase.client.rpc("get_all_merch_levels").execute()
+        return {row["lvl"]: row["merch_type"] for row in (result.data or [])}
+    except Exception as e:
+        logger.warning(f"Failed to fetch merch level ladder from DB: {e}")
+        return {}
 
 
-def _merch_type_for_level(level: int) -> Optional[str]:
-    return {
-        50: "sticker_pack", 100: "t_shirt", 150: "hoodie",
-        200: "full_merch_kit", 250: "signed_premium_kit",
-    }.get(level)
+def _next_merch_proximity_map(merch_by_level: Dict[int, str]) -> Dict[int, int]:
+    """level -> next merch tier level, for the 1-3 levels below any tier."""
+    out: Dict[int, int] = {}
+    for lvl in sorted(merch_by_level):
+        for away in (1, 2, 3):
+            out.setdefault(lvl - away, lvl)
+    return out
 
 
 async def _job_merch_proximity_email(supabase, email_svc) -> int:
@@ -2255,10 +2265,15 @@ async def _job_merch_proximity_email(supabase, email_svc) -> int:
     email_type = "merch_proximity"
     sent = 0
 
+    merch_by_level = _get_merch_levels(supabase)
+    if not merch_by_level:
+        return 0
+    next_for_proximity = _next_merch_proximity_map(merch_by_level)
+
     try:
         rows = supabase.client.table("user_xp") \
             .select("user_id,current_level") \
-            .in_("current_level", list(_MERCH_PROXIMITY_LEVELS)) \
+            .in_("current_level", list(next_for_proximity.keys())) \
             .execute()
         if not rows.data:
             return 0
@@ -2286,10 +2301,10 @@ async def _job_merch_proximity_email(supabase, email_svc) -> int:
                     continue
 
                 level = by_user.get(uid)
-                next_merch = _MERCH_NEXT_FOR_PROXIMITY.get(level)
+                next_merch = next_for_proximity.get(level)
                 if not next_merch:
                     continue
-                merch_type = _merch_type_for_level(next_merch)
+                merch_type = merch_by_level.get(next_merch)
                 if not merch_type:
                     continue
 
@@ -2396,7 +2411,6 @@ async def _job_level_milestone_celebration_email(supabase, email_svc) -> int:
     """
     email_type = "level_milestone_celebration"
     sent = 0
-    milestone_levels = {5, 10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250}
 
     try:
         cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
@@ -2410,12 +2424,17 @@ async def _job_level_milestone_celebration_email(supabase, email_svc) -> int:
         if not events.data:
             return 0
 
-        # Highest-level event per user in the window
+        # Highest-level event per user in the window. is_milestone=True is
+        # already enforced by the query above -- that column (set by
+        # distribute_level_rewards(), migration 1935) is the single source
+        # of truth for which levels count as a major milestone. A hardcoded
+        # `milestone_levels = {5, 10, 25, 50, 75, ...}` set used to live
+        # here and had drifted from the SQL function's actual set (missing
+        # 15/20/30/40/60), silently swallowing the celebration email for
+        # those level-ups (E2E #371 class). Do not reintroduce it.
         top_by_user: Dict[str, Dict[str, Any]] = {}
         for row in events.data:
             level = row.get("level_reached")
-            if level not in milestone_levels:
-                continue
             existing = top_by_user.get(row["user_id"])
             if not existing or level > existing["level_reached"]:
                 top_by_user[row["user_id"]] = row

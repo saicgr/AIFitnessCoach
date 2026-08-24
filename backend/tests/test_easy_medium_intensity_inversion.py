@@ -144,15 +144,24 @@ def conn():
         c.close()
 
 
-def test_current_live_catalog_has_the_100pct_inversion(conn):
-    """Pins the DEFECT (pre-fix state) for the reported program."""
+def test_current_live_catalog_no_longer_has_the_inversion(conn):
+    """Pins the FIX for the reported program on the live catalog.
+
+    Originally pinned the pre-fix defect (100% Easy>Medium reps inversion,
+    asserted BEFORE applying migrations/2410_fix_easy_medium_intensity_label_swap.sql
+    within this test's rolled-back transaction). Migration 2410 has since
+    been applied to the live database directly (see git log on that file),
+    so the untouched `conn` here already reflects the fixed state — this now
+    pins that the fix has landed and holds, instead of re-pinning a defect
+    that no longer exists live.
+    """
     cur = conn.cursor()
     total, inversions = _inversions_for_program(cur, "Gentle Start (Zealova Library)")
     assert total > 0
-    assert inversions == total, (
-        f"expected the CURRENT (unfixed) catalog to show 100% Easy>Medium reps "
-        f"inversion for Gentle Start, got {inversions}/{total} — if this fails, "
-        f"migration 2410 was already applied and this pin is stale"
+    assert inversions == 0, (
+        f"expected the CURRENT (already-fixed) live catalog to show zero Easy>Medium "
+        f"reps inversions for Gentle Start, got {inversions}/{total} — the fix may "
+        f"have regressed"
     )
 
 

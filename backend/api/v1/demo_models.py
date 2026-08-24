@@ -1,6 +1,6 @@
 """Pydantic models for demo."""
 from datetime import datetime, date
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 
 
@@ -57,6 +57,28 @@ class TourStartRequest(BaseModel):
     platform: Optional[str] = None
 
 
+# Valid values for TourStepCompletedRequest.action_taken. Deliberately NOT
+# validated against the app_tour_step_events.action CHECK constraint
+# (viewed/interacted/skipped/deep_linked/back_navigated/replayed/
+# help_clicked) — nothing writes to that table today, and this field's own
+# vocabulary (skip/next/deep_link) is what every current caller actually
+# sends.
+VALID_TOUR_STEP_ACTIONS = {"skip", "next", "deep_link"}
+
+# Valid values for app_tour_sessions.skip_reason, mirroring the DB CHECK
+# constraint in migrations/102_app_tour_tracking.sql so bad values are
+# rejected at the API boundary instead of being silently dropped (the field
+# didn't exist on this model before) or reaching the DB and 500ing.
+VALID_TOUR_SKIP_REASONS = {
+    "already_familiar",
+    "too_long",
+    "not_interested",
+    "accidental",
+    "will_do_later",
+    "other",
+}
+
+
 class TourStepCompletedRequest(BaseModel):
     """Request when a tour step is completed."""
     session_id: str
@@ -65,17 +87,36 @@ class TourStepCompletedRequest(BaseModel):
     action_taken: Optional[str] = None  # skip, next, deep_link
     deep_link_target: Optional[str] = None
 
+    @field_validator("action_taken")
+    @classmethod
+    def _validate_action_taken(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if v not in VALID_TOUR_STEP_ACTIONS:
+            raise ValueError(f"action_taken must be one of {sorted(VALID_TOUR_STEP_ACTIONS)} (got '{v}')")
+        return v
+
 
 class TourCompletedRequest(BaseModel):
     """Request when tour is completed or skipped."""
     session_id: str
     status: str  # completed, skipped
     skip_step: Optional[str] = None
+    skip_reason: Optional[str] = None
     demo_workout_started: bool = False
     demo_workout_completed: bool = False
     plan_preview_viewed: bool = False
     deep_links_clicked: List[str] = []
     total_duration_seconds: Optional[int] = None
+
+    @field_validator("skip_reason")
+    @classmethod
+    def _validate_skip_reason(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        if v not in VALID_TOUR_SKIP_REASONS:
+            raise ValueError(f"skip_reason must be one of {sorted(VALID_TOUR_SKIP_REASONS)} (got '{v}')")
+        return v
 
 
 # ============================================================================

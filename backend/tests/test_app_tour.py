@@ -1058,13 +1058,10 @@ class TestTourEdgeCases:
     async def test_complete_step_invalid_action(self, async_client: AsyncClient, test_device_id):
         """Test completing a step with invalid action value.
 
-        *** KNOWN FAILURE — OPEN QUESTION, NOT A TEST BUG. ***
-        Same shape as test_complete_step_invalid_step_id: `action_taken` is an
-        unvalidated str on TourStepCompletedRequest. Its docstring enumerates
-        skip / next / deep_link, while the app_tour_step_events.action CHECK
-        enumerates viewed / interacted / skipped / deep_linked / back_navigated /
-        replayed / help_clicked — two different vocabularies, neither enforced.
-        Any string is accepted and stored.
+        `action_taken` on TourStepCompletedRequest is now validated against
+        its documented vocabulary (skip / next / deep_link), matching the
+        only values any current caller actually sends. A bad value now
+        raises a pydantic ValidationError -> 422.
         """
         # Start a tour
         start_response = await async_client.post(
@@ -1094,18 +1091,12 @@ class TestTourEdgeCases:
     async def test_skip_tour_invalid_reason(self, async_client: AsyncClient, test_device_id):
         """Test skipping a tour with invalid skip_reason.
 
-        *** KNOWN FAILURE — OPEN QUESTION, NOT A TEST BUG. ***
-        app_tour_sessions.skip_reason exists, carries a CHECK constraint
-        (already_familiar / too_long / not_interested / accidental /
-        will_do_later / other) and is the sole input of the app_tour_skip_analysis
-        view — but TourCompletedRequest has NO skip_reason field, so the API
-        cannot accept one, silently drops it, and the column is never populated
-        (the skip-analysis view can only ever be empty).
-
-        Either the field should be added to TourCompletedRequest and forwarded
-        (then the DB CHECK rejects a bad value exactly like `source`), or
-        skip_reason + its view are dead schema and should be dropped. That is a
-        product call, so the test is left failing rather than deleted.
+        TourCompletedRequest now has a skip_reason field, validated against
+        the same vocabulary as the app_tour_sessions.skip_reason CHECK
+        constraint (already_familiar / too_long / not_interested / accidental
+        / will_do_later / other) and forwarded to the DB update, so a good
+        value populates app_tour_skip_analysis and a bad one is rejected at
+        the API boundary with a 422.
         """
         # Start a tour
         start_response = await async_client.post(

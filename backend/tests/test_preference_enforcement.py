@@ -332,20 +332,55 @@ class TestPostGenerationValidation:
         assert filtered[0]["name"] == "Squat"
 
 
+def _fake_workout_response():
+    """A response shaped like the real google-genai SDK object
+    generate_workout_plan reads: `.parsed` must be a dict with a non-empty
+    `exercises` list, where every exercise carries `set_targets`
+    (validate_set_targets_strict has no fallback and raises otherwise)."""
+    resp = MagicMock()
+    resp.parsed = {
+        "name": "Test Workout",
+        "type": "strength",
+        "difficulty": "medium",
+        "exercises": [{
+            "name": "Push-ups",
+            "set_targets": [
+                {"set_number": 1, "set_type": "working", "target_reps": 10, "target_weight_kg": 0},
+            ],
+        }],
+    }
+    return resp
+
+
 class TestGeminiPromptContainsPreferences:
-    """Test that Gemini prompt includes user preferences."""
+    """Test that Gemini prompt includes user preferences.
+
+    `generate_workout_plan` never calls `GeminiService.chat` — it calls the
+    module-level `gemini_generate_with_retry` (services/gemini/constants.py)
+    directly with the built prompt as `contents`, which then hits the real
+    `client.aio.models.generate_content`. Patching `GeminiService.chat` (as
+    these tests originally did) patches a method this code path never
+    touches, so every run silently made a REAL Gemini network call instead
+    of using the mock (and would have raised on the mocked JSON's empty
+    `exercises` list, had the mock ever actually been hit). Patch the real
+    call site instead, and assert on the actual prompt text the call
+    receives — the original tests had no assertion at all beyond "didn't
+    raise".
+    """
 
     @pytest.mark.asyncio
     async def test_gemini_prompt_includes_avoided_exercises(self):
         """Test that the Gemini prompt includes avoided exercises instruction."""
         from services.gemini_service import GeminiService
 
-        with patch.object(GeminiService, 'chat', new_callable=AsyncMock) as mock_chat:
-            mock_chat.return_value = '{"name": "Test Workout", "type": "strength", "difficulty": "medium", "exercises": []}'
+        with patch(
+            "services.gemini.workout_generation_helpers.gemini_generate_with_retry",
+            new_callable=AsyncMock,
+        ) as mock_generate:
+            mock_generate.return_value = _fake_workout_response()
 
             service = GeminiService()
 
-            # Call with avoided exercises
             await service.generate_workout_plan(
                 fitness_level="intermediate",
                 goals=["build_muscle"],
@@ -353,26 +388,38 @@ class TestGeminiPromptContainsPreferences:
                 avoided_exercises=["deadlift", "barbell row"]
             )
 
-            # The prompt should contain avoided exercises instruction
-            # This is a smoke test - actual prompt verification would need access to the prompt
+            mock_generate.assert_awaited_once()
+            prompt = mock_generate.await_args.kwargs["contents"]
+            assert "EXERCISES TO AVOID" in prompt
+            assert "deadlift" in prompt
+            assert "barbell row" in prompt
 
     @pytest.mark.asyncio
     async def test_gemini_prompt_includes_avoided_muscles(self):
         """Test that the Gemini prompt includes avoided muscles instruction."""
         from services.gemini_service import GeminiService
 
-        with patch.object(GeminiService, 'chat', new_callable=AsyncMock) as mock_chat:
-            mock_chat.return_value = '{"name": "Test Workout", "type": "strength", "difficulty": "medium", "exercises": []}'
+        with patch(
+            "services.gemini.workout_generation_helpers.gemini_generate_with_retry",
+            new_callable=AsyncMock,
+        ) as mock_generate:
+            mock_generate.return_value = _fake_workout_response()
 
             service = GeminiService()
 
-            # Call with avoided muscles
             await service.generate_workout_plan(
                 fitness_level="intermediate",
                 goals=["build_muscle"],
                 equipment=["dumbbells"],
                 avoided_muscles={"avoid": ["lower_back"], "reduce": ["shoulders"]}
             )
+
+            mock_generate.assert_awaited_once()
+            prompt = mock_generate.await_args.kwargs["contents"]
+            assert "MUSCLE GROUPS TO AVOID" in prompt
+            assert "lower_back" in prompt
+            assert "MUSCLE GROUPS TO MINIMIZE" in prompt
+            assert "shoulders" in prompt
 
 
 class TestExtendWorkoutPreferences:

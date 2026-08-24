@@ -1,0 +1,311 @@
+"""
+Activity database operations.
+
+Handles daily activity and health metrics from:
+- Health Connect (Android)
+- Apple Health (iOS)
+"""
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timedelta
+
+from core.db.base import BaseDB
+from core.timezone_utils import _safe_zone
+
+
+class ActivityDB(BaseDB):
+    """
+    Database operations for daily activity tracking.
+
+    Handles steps, calories, distance, heart rate, and other
+    health metrics from mobile health platforms.
+    """
+
+    # ==================== DAILY ACTIVITY ====================
+
+    def upsert_daily_activity(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Upsert daily activity data (from Health Connect / Apple Health).
+
+        Uses activity_date + user_id as unique key.
+
+        Args:
+            data: Activity data including user_id, activity_date,
+                  steps, calories_burned, distance_meters, etc.
+
+        Returns:
+            Upserted activity record or None
+        """
+        # Ensure activity_date is a string
+        if isinstance(data.get("activity_date"), datetime):
+            data["activity_date"] = data["activity_date"].strftime("%Y-%m-%d")
+
+        # Gap 13 — multi-device reconciliation. A plain upsert is last-writer-
+        # wins, so a less-complete source syncing later (e.g. an Oura ring after
+        # an Apple Watch) could OVERWRITE the day's totals DOWNWARD. For
+        # cumulative whole-day metrics we instead keep the MAX across sources:
+        # the device that captured the most of your day is the most complete,
+        # and MAX (never SUM) avoids double-counting the same steps twice. Only
+        # applies when an existing row already has a higher value.
+        uid = data.get("user_id")
+        adate = data.get("activity_date")
+        # A manual edit / user override (Gap 5) must WIN — never clamp it up to a
+        # stale wearable reading. Only reconcile-by-max for automatic syncs.
+        _src = str(data.get("source") or data.get("source_app") or "").lower()
+        _is_manual = _src in ("manual", "user", "override", "user_override")
+        if uid and adate and not _is_manual:
+            try:
+                existing = self.get_daily_activity(uid, adate)
+            except Exception:
+                existing = None
+            if existing:
+                # Gap 5 — user-locked columns win over any automatic sync. A
+                # manual edit recorded these in `manual_override_fields`; an
+                # auto-sync must preserve them exactly (and keep the lock).
+                locked = existing.get("manual_override_fields") or []
+                if locked:
+                    for key in locked:
+                        if key in existing:
+                            data[key] = existing[key]
+                    data["manual_override_fields"] = locked
+
+                _CUMULATIVE_MAX_KEYS = (
+                    "steps", "calories_burned", "active_calories",
+                    "distance_meters", "floors_climbed", "exercise_minutes",
+                )
+                for key in _CUMULATIVE_MAX_KEYS:
+                    if key in locked:
+                        continue  # locked columns already pinned above
+                    new_v = data.get(key)
+                    old_v = existing.get(key)
+                    if new_v is None:
+                        continue
+                    try:
+                        if old_v is not None and float(old_v) > float(new_v):
+                            data[key] = old_v
+                    except (TypeError, ValueError):
+                        pass
+
+        result = self.client.table("daily_activity").upsert(
+            data, on_conflict="user_id,activity_date"
+        ).execute()
+        return result.data[0] if result.data else None
+
+    def get_daily_activity(
+        self, user_id: str, activity_date: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get daily activity for a specific date.
+
+        Args:
+            user_id: User's UUID
+            activity_date: Date in YYYY-MM-DD format
+
+        Returns:
+            Activity record or None
+        """
+        # SELECT * — row_to_activity_response picks the columns it needs and
+        # drops stale ones. Naming columns explicitly here drifted out of sync
+        # with the real schema (phantom `active_minutes`/`sleep_hours` → 42703;
+        # missing `synced_at`/`active_calories` → response-model 500s).
+        result = (
+            self.client.table("daily_activity")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("activity_date", activity_date)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def list_daily_activity(
+        self,
+        user_id: str,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        limit: int = 30,
+    ) -> List[Dict[str, Any]]:
+        """
+        List daily activity for a user within a date range.
+
+        Args:
+            user_id: User's UUID
+            from_date: Start date filter
+            to_date: End date filter
+            limit: Maximum records to return
+
+        Returns:
+            List of daily activity records
+        """
+        # SELECT * — see get_daily_activity: an explicit column list drifted
+        # from the real schema and 500'd both on phantom columns and on
+        # required response-model fields it forgot to select.
+        query = (
+            self.client.table("daily_activity").select("*")
+            .eq("user_id", user_id)
+        )
+
+        if from_date:
+            query = query.gte("activity_date", from_date)
+        if to_date:
+            query = query.lte("activity_date", to_date)
+
+        result = query.order("activity_date", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def _resolve_user_timezone(self, user_id: str) -> str:
+        """Look up the user's IANA timezone from the users table.
+
+        The activity-summary date range must be expressed in the user's own
+        local calendar — "the last 7 days" means the last 7 of *their* days,
+        not 7 UTC days, otherwise a user east/west of UTC sees a window that
+        is off by one day near midnight. The DB layer has no request object,
+        so we read users.timezone directly. Falls back to "UTC" on any miss.
+        """
+        try:
+            result = (
+                self.client.table("users")
+                .select("timezone")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                tz = (result.data[0] or {}).get("timezone")
+                if tz:
+                    return tz
+        except Exception:
+            # Never let a timezone lookup failure break the summary — UTC is
+            # the same safe default the rest of the codebase uses.
+            pass
+        return "UTC"
+
+    def get_activity_summary(
+        self, user_id: str, days: int = 7
+    ) -> Dict[str, Any]:
+        """
+        Get activity summary (totals and averages) for the last N days.
+
+        Args:
+            user_id: User's UUID
+            days: Number of days to include
+
+        Returns:
+            Dictionary with activity statistics
+        """
+        # Resolve the date range in the user's local timezone so "today" and
+        # "N days ago" match the user's calendar, not the server's UTC clock.
+        tz = _safe_zone(self._resolve_user_timezone(user_id))
+        now_local = datetime.now(tz)
+        end_date = now_local.strftime("%Y-%m-%d")
+        start_date = (now_local - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        activities = self.list_daily_activity(
+            user_id=user_id,
+            from_date=start_date,
+            to_date=end_date,
+            limit=days,
+        )
+
+        if not activities:
+            return {
+                "total_steps": 0,
+                "total_calories": 0,
+                "total_distance_meters": 0,
+                "avg_steps": 0,
+                "avg_calories": 0,
+                "avg_resting_hr": None,
+                "days_with_data": 0,
+            }
+
+        total_steps = sum(a.get("steps", 0) or 0 for a in activities)
+        total_calories = sum(a.get("calories_burned", 0) or 0 for a in activities)
+        total_distance = sum(a.get("distance_meters", 0) or 0 for a in activities)
+        days_with_data = len(activities)
+
+        # Calculate average resting HR (only from days with data)
+        hr_values = [
+            a.get("resting_heart_rate")
+            for a in activities
+            if a.get("resting_heart_rate")
+        ]
+        avg_resting_hr = round(sum(hr_values) / len(hr_values)) if hr_values else None
+
+        return {
+            "total_steps": total_steps,
+            "total_calories": round(total_calories, 1),
+            "total_distance_meters": round(total_distance, 1),
+            "avg_steps": round(total_steps / days_with_data) if days_with_data > 0 else 0,
+            "avg_calories": (
+                round(total_calories / days_with_data, 1) if days_with_data > 0 else 0
+            ),
+            "avg_resting_hr": avg_resting_hr,
+            "days_with_data": days_with_data,
+        }
+
+    def delete_daily_activity(self, user_id: str, activity_date: str) -> bool:
+        """
+        Delete a specific daily activity entry.
+
+        Args:
+            user_id: User's UUID
+            activity_date: Date in YYYY-MM-DD format
+
+        Returns:
+            True on success
+        """
+        self.client.table("daily_activity").delete().eq("user_id", user_id).eq(
+            "activity_date", activity_date
+        ).execute()
+        return True
+
+    def delete_daily_activity_by_user(self, user_id: str) -> bool:
+        """
+        Delete all daily activity for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            True on success
+        """
+        self.client.table("daily_activity").delete().eq("user_id", user_id).execute()
+        return True
+
+    # ==================== HEALTH GOALS ====================
+
+    def get_health_goals(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get the per-user activity/sleep goals row (table `health_goals`).
+
+        One row per user, keyed by user_id (migration 2088).
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            health_goals record or None when the user has never saved goals
+        """
+        result = (
+            self.client.table("health_goals")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def upsert_health_goals(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Upsert the per-user activity/sleep goals row (table `health_goals`).
+
+        Uses user_id as the unique key — one row per user (migration 2088).
+
+        Args:
+            data: Goal data including user_id, step_goal, active_minutes_goal,
+                  sleep_duration_goal_minutes, bedtime_goal.
+
+        Returns:
+            Upserted health_goals record or None
+        """
+        result = self.client.table("health_goals").upsert(
+            data, on_conflict="user_id"
+        ).execute()
+        return result.data[0] if result.data else None

@@ -15,7 +15,7 @@ Run with: pytest backend/tests/test_today_workout.py -v
 """
 
 import pytest
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 import uuid
@@ -30,6 +30,20 @@ from core.auth import get_current_user
 
 
 client = TestClient(app)
+
+
+def _utc_today() -> date:
+    """'Today' as the endpoint will actually resolve it.
+
+    None of these requests send an X-User-Timezone header and the mocked
+    user has no `timezone` field, so `resolve_timezone` always falls back to
+    UTC. Building fixture dates from the local system clock (`date.today()`)
+    instead of UTC made every same-day/next-day assertion flaky whenever the
+    suite runs in the local-evening/UTC-past-midnight window (any US timezone
+    after ~7pm local). Anchor here so fixture dates always agree with what
+    the endpoint computes.
+    """
+    return datetime.now(timezone.utc).date()
 
 
 # ============================================================
@@ -73,6 +87,19 @@ def mock_supabase_db():
     with patch("api.v1.workouts.today.get_supabase_db") as mock:
         db_mock = MagicMock()
         mock.return_value = db_mock
+        # `db.client.table(...)` chained-query calls (e.g. the completed_today_rows
+        # completed_at fallback, active-assignment lookup) must resolve to no
+        # data rather than leaking a truthy MagicMock through every
+        # `.select()/.eq()/.gte()/.lt()/.order()/.limit()` link. Self-referential
+        # so any chain shape/length still bottoms out at an empty `.execute()`.
+        query_chain = MagicMock()
+        for method in (
+            "select", "eq", "neq", "gte", "lte", "gt", "lt",
+            "order", "limit", "single", "maybe_single",
+        ):
+            getattr(query_chain, method).return_value = query_chain
+        query_chain.execute.return_value = MagicMock(data=None)
+        db_mock.client.table.return_value = query_chain
         yield db_mock
 
 
@@ -87,7 +114,7 @@ def mock_user_context_service():
 @pytest.fixture
 def today_workout_row(sample_workout_id):
     """Sample workout row for today."""
-    today_str = date.today().isoformat()
+    today_str = _utc_today().isoformat()
     return {
         "id": sample_workout_id,
         "name": "Upper Body Strength",
@@ -125,7 +152,7 @@ def today_workout_row(sample_workout_id):
 @pytest.fixture
 def future_workout_row():
     """Sample workout row for future date."""
-    future_date = (date.today() + timedelta(days=2)).isoformat()
+    future_date = (_utc_today() + timedelta(days=2)).isoformat()
     return {
         "id": str(uuid.uuid4()),
         "name": "Lower Body Power",
@@ -164,9 +191,16 @@ class TestGetTodayWorkout:
         self, mock_supabase_db, mock_user_context_service, sample_user_id, today_workout_row
     ):
         """Test getting today's workout when one is scheduled."""
-        mock_supabase_db.list_workouts.return_value = [today_workout_row]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [today_workout_row],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -181,7 +215,8 @@ class TestGetTodayWorkout:
         assert data["today_workout"]["is_today"] is True
         assert data["today_workout"]["is_completed"] is False
         assert len(data["today_workout"]["primary_muscles"]) > 0
-        assert data["rest_day_message"] is None
+        # `rest_day_message` was retired from TodayWorkoutResponse in 436ffed5
+        # (Jan 2026) — the Flutter client now composes its own rest-day copy.
         assert data["next_workout"] is None
 
     def test_get_today_workout_rest_day_with_upcoming(
@@ -191,9 +226,11 @@ class TestGetTodayWorkout:
         mock_supabase_db.list_workouts.side_effect = [
             [],
             [future_workout_row],
+            [],
         ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -203,14 +240,14 @@ class TestGetTodayWorkout:
         assert data["next_workout"] is not None
         assert data["next_workout"]["name"] == "Lower Body Power"
         assert data["days_until_next"] == 2
-        assert data["rest_day_message"] is not None
-        assert "rest day" in data["rest_day_message"].lower()
+        # `rest_day_message` was retired from TodayWorkoutResponse in 436ffed5
+        # (Jan 2026) — the Flutter client now composes its own rest-day copy.
 
     def test_get_today_workout_rest_day_tomorrow_workout(
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test rest day message when next workout is tomorrow."""
-        tomorrow = (date.today() + timedelta(days=1)).isoformat()
+        tomorrow = (_utc_today() + timedelta(days=1)).isoformat()
         tomorrow_workout = {
             "id": str(uuid.uuid4()),
             "name": "Full Body Circuit",
@@ -225,16 +262,19 @@ class TestGetTodayWorkout:
         mock_supabase_db.list_workouts.side_effect = [
             [],
             [tomorrow_workout],
+            [],
         ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
 
         assert data["has_workout_today"] is False
         assert data["days_until_next"] == 1
-        assert "tomorrow" in data["rest_day_message"].lower()
+        # `rest_day_message` was retired from TodayWorkoutResponse in 436ffed5
+        # (Jan 2026) — the Flutter client now composes its own rest-day copy.
 
     def test_get_today_workout_no_upcoming_workouts(
         self, mock_supabase_db, mock_user_context_service, sample_user_id
@@ -243,9 +283,11 @@ class TestGetTodayWorkout:
         mock_supabase_db.list_workouts.side_effect = [
             [],
             [],
+            [],
         ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -254,8 +296,8 @@ class TestGetTodayWorkout:
         assert data["today_workout"] is None
         assert data["next_workout"] is None
         assert data["days_until_next"] is None
-        assert data["rest_day_message"] is not None
-        assert "no upcoming" in data["rest_day_message"].lower()
+        # `rest_day_message` was retired from TodayWorkoutResponse in 436ffed5
+        # (Jan 2026) — the Flutter client now composes its own rest-day copy.
 
     def test_get_today_workout_completed_workout_not_returned(
         self, mock_supabase_db, mock_user_context_service, sample_user_id
@@ -264,25 +306,38 @@ class TestGetTodayWorkout:
         mock_supabase_db.list_workouts.side_effect = [
             [],
             [],
+            [],
         ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
         assert data["has_workout_today"] is False
 
-    def test_get_today_workout_missing_user_id(self):
-        """Test that missing user_id returns validation error."""
-        response = client.get("/api/v1/workouts/today")
+    def test_get_today_workout_missing_user_id(
+        self, mock_supabase_db, mock_user_context_service, sample_user_id
+    ):
+        """Test that an omitted user_id derives the user from the JWT instead
+        of 422ing — the /workout/today deep-link (coach "View plan" CTA) hits
+        this endpoint without a user_id query param (see today.py's handling
+        of `current_user` when `user_id` is falsy)."""
+        mock_supabase_db.list_workouts.side_effect = [[], [], []]
 
-        assert response.status_code == 422
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get("/api/v1/workouts/today")
+
+        assert response.status_code == 200
+        mock_user_context_service.log_event.assert_called_once()
+        call_args = mock_user_context_service.log_event.call_args
+        assert call_args.kwargs["user_id"] == sample_user_id
 
     def test_get_today_workout_exercises_as_json_string(
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test parsing exercises when stored as JSON string."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_with_json_exercises = {
             "id": str(uuid.uuid4()),
             "name": "Workout with JSON exercises",
@@ -296,9 +351,16 @@ class TestGetTodayWorkout:
             ]),
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_with_json_exercises]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_with_json_exercises],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -308,7 +370,7 @@ class TestGetTodayWorkout:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test parsing exercises from exercises_json field."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_with_exercises_json = {
             "id": str(uuid.uuid4()),
             "name": "Workout with exercises_json",
@@ -322,9 +384,16 @@ class TestGetTodayWorkout:
             ],
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_with_exercises_json]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_with_exercises_json],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -344,9 +413,16 @@ class TestGetTodayWorkout:
         self, mock_supabase_db, mock_user_context_service, sample_user_id, today_workout_row
     ):
         """Test that analytics event is logged for quick start view."""
-        mock_supabase_db.list_workouts.return_value = [today_workout_row]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [today_workout_row],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
 
@@ -359,11 +435,32 @@ class TestGetTodayWorkout:
     def test_get_today_workout_logging_failure_does_not_fail_request(
         self, mock_supabase_db, mock_user_context_service, sample_user_id, today_workout_row
     ):
-        """Test that logging failure doesn't fail the main request."""
-        mock_supabase_db.list_workouts.return_value = [today_workout_row]
+        """Test that logging failure doesn't fail the main request.
+
+        The real `log_event` already swallows every exception internally
+        (services/user_context/service.py) — every /today-style endpoint
+        schedules it via `background_tasks.add_task` unwrapped, relying on
+        that contract rather than a try/except per call site. A background
+        task only runs AFTER the response has already been sent to the
+        client, so even if it raises, the client-observed behavior is still
+        a clean 200 — only the server-side logs would show the error.
+        Starlette's TestClient defaults to `raise_server_exceptions=True`
+        specifically so tests notice bugs there; asserting the actual
+        client-observed contract means opting out of that for this request.
+        """
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [today_workout_row],
+            [],
+            [],
+        ]
         mock_user_context_service.log_event.side_effect = Exception("Logging failed")
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        lenient_client = TestClient(app, raise_server_exceptions=False)
+
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = lenient_client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
 
@@ -371,7 +468,7 @@ class TestGetTodayWorkout:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test that primary muscles are correctly extracted from exercises."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_with_varied_muscles = {
             "id": str(uuid.uuid4()),
             "name": "Full Body",
@@ -390,9 +487,16 @@ class TestGetTodayWorkout:
             ],
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_with_varied_muscles]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_with_varied_muscles],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -402,7 +506,7 @@ class TestGetTodayWorkout:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test handling workout with no exercises."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_no_exercises = {
             "id": str(uuid.uuid4()),
             "name": "Empty Workout",
@@ -414,9 +518,16 @@ class TestGetTodayWorkout:
             "exercises": [],
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_no_exercises]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_no_exercises],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -440,8 +551,8 @@ class TestNextWorkoutsList:
     def test_multiple_future_workouts_all_surfaced(
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
-        friday = (date.today() + timedelta(days=2)).isoformat()
-        sunday = (date.today() + timedelta(days=4)).isoformat()
+        friday = (_utc_today() + timedelta(days=2)).isoformat()
+        sunday = (_utc_today() + timedelta(days=4)).isoformat()
 
         def _row(name, scheduled_date):
             return {
@@ -598,7 +709,7 @@ class TestTodayWorkoutEdgeCases:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test handling of malformed exercises JSON."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_bad_json = {
             "id": str(uuid.uuid4()),
             "name": "Workout with bad JSON",
@@ -610,9 +721,16 @@ class TestTodayWorkoutEdgeCases:
             "exercises": "{invalid json}",
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_bad_json]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_bad_json],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -622,16 +740,23 @@ class TestTodayWorkoutEdgeCases:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test that missing fields use appropriate defaults."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         minimal_workout = {
             "id": str(uuid.uuid4()),
             "scheduled_date": today_str,
             "is_completed": False,
         }
 
-        mock_supabase_db.list_workouts.return_value = [minimal_workout]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [minimal_workout],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -645,7 +770,7 @@ class TestTodayWorkoutEdgeCases:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test handling of different scheduled_date formats."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_with_datetime = {
             "id": str(uuid.uuid4()),
             "name": "Test Workout",
@@ -657,9 +782,16 @@ class TestTodayWorkoutEdgeCases:
             "exercises": [],
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_with_datetime]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_with_datetime],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -669,7 +801,7 @@ class TestTodayWorkoutEdgeCases:
         self, mock_supabase_db, mock_user_context_service, sample_user_id
     ):
         """Test handling of None exercises field."""
-        today_str = date.today().isoformat()
+        today_str = _utc_today().isoformat()
         workout_none_exercises = {
             "id": str(uuid.uuid4()),
             "name": "No Exercises",
@@ -681,9 +813,16 @@ class TestTodayWorkoutEdgeCases:
             "exercises": None,
         }
 
-        mock_supabase_db.list_workouts.return_value = [workout_none_exercises]
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [workout_none_exercises],
+            [],
+            [],
+        ]
 
-        response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None), \
+             patch("api.v1.workouts.today._is_today_a_workout_day", return_value=True):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
 
         assert response.status_code == 200
         data = response.json()

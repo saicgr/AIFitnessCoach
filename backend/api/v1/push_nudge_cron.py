@@ -2100,15 +2100,6 @@ async def _job_recovery_complete(supabase, notif_svc, users: List[dict]) -> int:
 
 # ─── Merch Milestone Nudges (migration 1931) ─────────────────────────────────
 
-# Next merch tier for a given level in the proximity window.
-_MERCH_NEXT_FOR_PROXIMITY = {
-    47: 50, 48: 50, 49: 50,
-    97: 100, 98: 100, 99: 100,
-    147: 150, 148: 150, 149: 150,
-    197: 200, 198: 200, 199: 200,
-    247: 250, 248: 250, 249: 250,
-}
-
 _MERCH_DISPLAY_NAME = {
     "sticker_pack": f"{branding.MERCH_PRODUCT_PREFIX} Sticker Pack",
     "t_shirt": f"{branding.MERCH_PRODUCT_PREFIX} T-Shirt",
@@ -2118,14 +2109,30 @@ _MERCH_DISPLAY_NAME = {
 }
 
 
-def _merch_type_for_level(level: int) -> Optional[str]:
-    return {
-        50: "sticker_pack",
-        100: "t_shirt",
-        150: "hoodie",
-        200: "full_merch_kit",
-        250: "signed_premium_kit",
-    }.get(level)
+def _get_merch_levels(supabase) -> Dict[int, str]:
+    """level -> merch_type, read from the DB (single source of truth: the
+    `merch_type_for_level()` SQL function, migration 2424) via the
+    `get_all_merch_levels` bulk RPC (migration 2432). See E2E #371 -- this
+    used to be a hardcoded Python dict at the OLD (pre-2424) thresholds
+    (50/100/150/200/250) that had drifted from the DB's rescaled ladder
+    (20/40/60/80/100). No hardcoded fallback ladder on RPC failure: an
+    empty dict just means no proximity nudge fires this run, rather than
+    silently reintroducing a second, staler source of truth."""
+    try:
+        result = supabase.client.rpc("get_all_merch_levels").execute()
+        return {row["lvl"]: row["merch_type"] for row in (result.data or [])}
+    except Exception as e:
+        logger.warning(f"[Nudge] Failed to fetch merch level ladder from DB: {e}")
+        return {}
+
+
+def _next_merch_proximity_map(merch_by_level: Dict[int, str]) -> Dict[int, int]:
+    """level -> next merch tier level, for the 1-3 levels below any tier."""
+    out: Dict[int, int] = {}
+    for lvl in sorted(merch_by_level):
+        for away in (1, 2, 3):
+            out.setdefault(lvl - away, lvl)
+    return out
 
 
 async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
@@ -2137,6 +2144,11 @@ async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
     sent = 0
     if not users:
         return 0
+
+    merch_by_level = _get_merch_levels(supabase)
+    if not merch_by_level:
+        return 0
+    next_for_proximity = _next_merch_proximity_map(merch_by_level)
 
     # Bulk-fetch current_level + last_merch_nudge_at for all users
     user_ids = [str(u["id"]) for u in users]
@@ -2158,11 +2170,11 @@ async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
             continue
 
         level = xp.get("current_level", 1)
-        next_merch_level = _MERCH_NEXT_FOR_PROXIMITY.get(level)
+        next_merch_level = next_for_proximity.get(level)
         if not next_merch_level:
             continue
 
-        merch_type = _merch_type_for_level(next_merch_level)
+        merch_type = merch_by_level.get(next_merch_level)
         if not merch_type:
             continue
 
@@ -2326,8 +2338,16 @@ async def _job_merch_claim_reminder(supabase, notif_svc, users: List[dict]) -> i
 
 
 # ─── Level Milestone Celebration (migration 1935) ────────────────────────────
-
-_MILESTONE_LEVELS_FOR_CELEBRATION = {5, 10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250}
+#
+# NOTE: there is no Python-side "which levels are milestones" list here
+# (E2E #371 class). Which levels count as major milestones is decided once,
+# by the `distribute_level_rewards()` SQL function (v_is_major, migration
+# 1935), and written onto `level_up_events.is_milestone` — the query below
+# already filters on that column. A hardcoded
+# `_MILESTONE_LEVELS_FOR_CELEBRATION = {5, 10, 25, 50, 75, ...}` set used to
+# live here and had drifted from the SQL function's actual set (missing
+# 15/20/30/40/60), silently swallowing the celebration push for those
+# level-ups. Do not reintroduce it.
 
 
 def _summarize_rewards(items: list) -> str:
@@ -2381,12 +2401,11 @@ async def _job_level_milestone_celebration(supabase, notif_svc, users: List[dict
         logger.warning(f"[Nudge] level_milestone_celebration fetch failed: {e}")
         return 0
 
-    # Pick one celebration per user (highest level reached in this window)
+    # Pick one celebration per user (highest level reached in this window).
+    # is_milestone=True is already enforced by the query above (DB is the
+    # single source of truth for which levels count -- see note above).
     by_user: Dict[str, dict] = {}
     for row in (result.data or []):
-        level = row.get("level_reached")
-        if level not in _MILESTONE_LEVELS_FOR_CELEBRATION:
-            continue
         existing = by_user.get(row["user_id"])
         if not existing or row["level_reached"] > existing["level_reached"]:
             by_user[row["user_id"]] = row

@@ -92,7 +92,7 @@ class TestGetExercisesByBodyPart:
 
     def test_get_exercises_by_body_part_success(self, exercise_service, mock_supabase, sample_exercises):
         """Test successfully getting exercises by body part."""
-        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.limit.return_value.execute.return_value = MagicMock(
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
             data=[e for e in sample_exercises if e["body_part"] == "chest"]
         )
 
@@ -103,7 +103,7 @@ class TestGetExercisesByBodyPart:
 
     def test_get_exercises_by_body_part_empty(self, exercise_service, mock_supabase):
         """Test getting exercises for body part with no results."""
-        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.limit.return_value.execute.return_value = MagicMock(
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
             data=[]
         )
 
@@ -131,14 +131,17 @@ class TestGetExercisesByBodyPart:
     def test_get_exercises_by_body_part_with_limit(self, exercise_service, mock_supabase, sample_exercises):
         """Test respecting limit parameter."""
         chest_exercises = [e for e in sample_exercises if e["body_part"] == "chest"]
-        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.limit.return_value.execute.return_value = MagicMock(
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
             data=chest_exercises
         )
 
         exercise_service.get_exercises_by_body_part("chest", limit=5)
 
-        # Verify limit was called with correct value
-        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.limit.assert_called_with(5)
+        # The query pulls an oversampled pool (limit * POOL_OVERSAMPLE, floored
+        # at MIN_POOL) so random sampling has real breadth; `limit` itself only
+        # bounds the final sample size, applied in Python after the fetch.
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.order.assert_called_with("exercise_name")
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.order.return_value.limit.assert_called_with(150)
 
     def test_get_exercises_by_body_part_error_handling(self, exercise_service, mock_supabase):
         """Test error handling returns empty list."""
@@ -405,7 +408,7 @@ class TestFocusAreaMapping:
 
         exercise_service.get_exercises_for_workout("chest", ["barbell"], 1)
 
-        mock_get.assert_called_with(body_part="chest", equipment=["barbell"], limit=15)
+        mock_get.assert_called_with(body_part="chest", equipment=["barbell"], limit=30)
 
     @patch.object(ExerciseLibraryService, 'get_exercises_by_body_part')
     def test_back_maps_correctly(self, mock_get, exercise_service):
@@ -414,7 +417,7 @@ class TestFocusAreaMapping:
 
         exercise_service.get_exercises_for_workout("back", ["barbell"], 1)
 
-        mock_get.assert_called_with(body_part="back", equipment=["barbell"], limit=15)
+        mock_get.assert_called_with(body_part="back", equipment=["barbell"], limit=30)
 
     @patch.object(ExerciseLibraryService, 'get_exercises_by_body_part')
     def test_legs_maps_to_upper_and_lower_legs(self, mock_get, exercise_service):

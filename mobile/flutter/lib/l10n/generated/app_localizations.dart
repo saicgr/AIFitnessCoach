@@ -96,7 +96,8 @@ import 'app_localizations_zh.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -104,7 +105,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -116,12 +118,13 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
@@ -160,7 +163,7 @@ abstract class AppLocalizations {
     Locale('tr'),
     Locale('ur'),
     Locale('vi'),
-    Locale('zh')
+    Locale('zh'),
   ];
 
   /// No description provided for @aboutDisableBeastMode.
@@ -1985,7 +1988,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Asian-inspired {meal} — one pick (rice bowl, noodles, sushi, stir fry), macros and prep.{budgetTail}'**
-  String aiCoachMealSuggestionSheetAsianInspiredOnePick(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetAsianInspiredThatS.
   ///
@@ -2045,7 +2051,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Got a {workoutType} later today. Solid pre-workout {meal} bite to load up right? Macros + timing.'**
-  String aiCoachMealSuggestionSheetGotALaterToday(Object meal, Object workoutType);
+  String aiCoachMealSuggestionSheetGotALaterToday(
+    Object meal,
+    Object workoutType,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetHeadacheComingOnAny.
   ///
@@ -2063,7 +2072,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'High-protein {meal} pick. One item, full macros, brief prep.{budgetTail}'**
-  String aiCoachMealSuggestionSheetHighProteinPickOne(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetHighProteinPickOne(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetHowAmITracking.
   ///
@@ -2105,19 +2117,28 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Indian {meal} — one authentic pick (north or south), macros, sides to skip/include to stay on track.{budgetTail}'**
-  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetItalianOrComfortOne.
   ///
   /// In en, this message translates to:
   /// **'Italian or comfort {meal} — one real pick, macros, lighter swap if needed.{budgetTail}'**
-  String aiCoachMealSuggestionSheetItalianOrComfortOne(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetJustFinishedMyRecovery.
   ///
   /// In en, this message translates to:
   /// **'Just finished my {workoutType}. Recovery {meal} that lines up with what I already ate?'**
-  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(Object meal, Object workoutType);
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
+    Object meal,
+    Object workoutType,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetKeepingSpendTightCheap.
   ///
@@ -2135,7 +2156,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Logging my {meal}. Hit me with one healthy real-food pick that fits my day — macros, short and direct.{budgetTail}'**
-  String aiCoachMealSuggestionSheetLoggingMyHitMe2(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetLowSugarPickThat.
   ///
@@ -2147,7 +2171,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Mediterranean {meal} — one pick (bowl, plate, wrap), macros, what makes it fit.{budgetTail}'**
-  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetMediterraneanStyleMacrosWhat.
   ///
@@ -2159,7 +2186,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Mexican {meal} — one real pick (bowl, tacos, etc.), macros, what to build it with to stay on track.{budgetTail}'**
-  String aiCoachMealSuggestionSheetMexicanOneRealPick(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetNoQuestionsMatch.
   ///
@@ -2177,7 +2207,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'No stove, no oven — one quick {meal} I can throw together in 5 minutes. Macros + what to grab.{budgetTail}'**
-  String aiCoachMealSuggestionSheetNoStoveNoOven2(Object budgetTail, Object meal);
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(
+    Object budgetTail,
+    Object meal,
+  );
 
   /// No description provided for @aiCoachMealSuggestionSheetOnMaintenanceGiveMe.
   ///
@@ -2447,7 +2480,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{message}: {displayCurrent} → {snappedDisplay} {unit}'**
-  String aiFeaturesMixinValue(Object displayCurrent, Object message, Object snappedDisplay, Object unit);
+  String aiFeaturesMixinValue(
+    Object displayCurrent,
+    Object message,
+    Object snappedDisplay,
+    Object unit,
+  );
 
   /// No description provided for @aiInputPreview.
   ///
@@ -3449,7 +3487,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Switched to {splitDisplayName}{scheduleSuffix}. Generating new workouts...'**
-  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(Object scheduleSuffix, Object splitDisplayName);
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
+    Object scheduleSuffix,
+    Object splitDisplayName,
+  );
 
   /// No description provided for @aiSplitPresetDetailSheetValue.
   ///
@@ -3863,13 +3904,19 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Instead of {exerciseName}'**
-  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(Object exerciseName);
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
+    Object exerciseName,
+  );
 
   /// No description provided for @avoidedExercisesScreenPartAvoidedExerciseCardUntil.
   ///
   /// In en, this message translates to:
   /// **'Until {day}/{month}/{year}'**
-  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(Object day, Object month, Object year);
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
+    Object day,
+    Object month,
+    Object year,
+  );
 
   /// No description provided for @avoidedExercisesScreenRemoveFromAvoidList.
   ///
@@ -7211,7 +7258,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{durationWeeks} weeks • {sessionsPerWeek} sessions per week'**
-  String comingSoonBottomSheetWeeksSessionsPerWeek(Object durationWeeks, Object sessionsPerWeek);
+  String comingSoonBottomSheetWeeksSessionsPerWeek(
+    Object durationWeeks,
+    Object sessionsPerWeek,
+  );
 
   /// No description provided for @comingSoonBottomWhatYouCanExpect.
   ///
@@ -7745,7 +7795,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{summary} kcal · {timesLogged} logs'**
-  String communityRecipeSearchScreenKcalLogs(Object summary, Object timesLogged);
+  String communityRecipeSearchScreenKcalLogs(
+    Object summary,
+    Object timesLogged,
+  );
 
   /// No description provided for @communityRecipeSearchSearchPublicRecipes.
   ///
@@ -7775,7 +7828,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{bestDurationMinutes}min • {exerciseCount} exercises'**
-  String compactWorkoutRowMinExercises(Object bestDurationMinutes, Object exerciseCount);
+  String compactWorkoutRowMinExercises(
+    Object bestDurationMinutes,
+    Object exerciseCount,
+  );
 
   /// No description provided for @companionPickerAddAll.
   ///
@@ -8063,7 +8119,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{length} selected ({minPhotos}-{maxPhotos} photos)'**
-  String comparisonViewExtSelectedPhotos(Object length, Object maxPhotos, Object minPhotos);
+  String comparisonViewExtSelectedPhotos(
+    Object length,
+    Object maxPhotos,
+    Object minPhotos,
+  );
 
   /// No description provided for @comparisonViewKg.
   ///
@@ -9503,7 +9563,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Added \"{trimmed}\" to your equipment'**
-  String customContentSectionPartCustomContentCardAddedToYourEquipment(Object trimmed);
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(
+    Object trimmed,
+  );
 
   /// No description provided for @customContentSectionPartCustomContentCardAreYouSureYou.
   ///
@@ -9527,7 +9589,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{trimmed} is already in your list'**
-  String customContentSectionPartCustomContentCardIsAlreadyInYour(Object trimmed);
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(
+    Object trimmed,
+  );
 
   /// No description provided for @customContentSectionPartCustomContentCardRemoved.
   ///
@@ -9629,7 +9693,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{totalCustomExercises} exercises, {totalUses} uses'**
-  String customExercisesScreenExercisesUses(Object totalCustomExercises, Object totalUses);
+  String customExercisesScreenExercisesUses(
+    Object totalCustomExercises,
+    Object totalUses,
+  );
 
   /// No description provided for @customExercisesSearchExercises.
   ///
@@ -9875,7 +9942,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{pairedPoints}/{kMinCorrelationPairs} shared days'**
-  String customTrendScreenSharedDays(Object kMinCorrelationPairs, Object pairedPoints);
+  String customTrendScreenSharedDays(
+    Object kMinCorrelationPairs,
+    Object pairedPoints,
+  );
 
   /// No description provided for @customWorkoutBuilderAddExercise.
   ///
@@ -11483,7 +11553,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Set {_currentSet} of {_currentExerciseSets}'**
-  String demoActiveWorkoutScreenUi1SetOf(Object _currentExerciseSets, Object _currentSet);
+  String demoActiveWorkoutScreenUi1SetOf(
+    Object _currentExerciseSets,
+    Object _currentSet,
+  );
 
   /// No description provided for @demoActiveWorkoutSignUpToGet.
   ///
@@ -12227,7 +12300,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Last {daysIncluded} days'**
-  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(Object daysIncluded);
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
+    Object daysIncluded,
+  );
 
   /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardMgDl.
   ///
@@ -12245,7 +12320,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{totalRapidUnits}U'**
-  String diabetesDashboardScreenPartCurrentGlucoseCardU2(Object totalRapidUnits);
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
+    Object totalRapidUnits,
+  );
 
   /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardU3.
   ///
@@ -13823,7 +13900,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{_generatingWorkout} of {_totalWorkoutsToGenerate}'**
-  String editProgramSheetPartEditProgramSheetStateOf(Object _generatingWorkout, Object _totalWorkoutsToGenerate);
+  String editProgramSheetPartEditProgramSheetStateOf(
+    Object _generatingWorkout,
+    Object _totalWorkoutsToGenerate,
+  );
 
   /// No description provided for @editProgramSheetPleaseLogInTo.
   ///
@@ -14087,7 +14167,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{goalLabel} → ~{weeks} wks ({dateStr}){deficitInfo}'**
-  String editTargetsSheetUWks(Object dateStr, Object deficitInfo, Object goalLabel, Object weeks);
+  String editTargetsSheetUWks(
+    Object dateStr,
+    Object deficitInfo,
+    Object goalLabel,
+    Object weeks,
+  );
 
   /// No description provided for @editTargetsSheetValue.
   ///
@@ -14411,7 +14496,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'({selectedInCategory}/{length})'**
-  String editWorkoutEquipmentSheetValue(Object length, Object selectedInCategory);
+  String editWorkoutEquipmentSheetValue(
+    Object length,
+    Object selectedInCategory,
+  );
 
   /// No description provided for @editWorkoutEquipmentUpdateWorkoutEquipment.
   ///
@@ -14573,19 +14661,26 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{_selectedWarmupDuration}+{_selectedStretchDuration} min'**
-  String editableFitnessCardPartEditableFitnessCardStateExtMin(Object _selectedStretchDuration, Object _selectedWarmupDuration);
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(
+    Object _selectedStretchDuration,
+    Object _selectedWarmupDuration,
+  );
 
   /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin.
   ///
   /// In en, this message translates to:
   /// **'{_selectedWarmupDuration} min'**
-  String editableFitnessCardPartEditableFitnessCardStateMin(Object _selectedWarmupDuration);
+  String editableFitnessCardPartEditableFitnessCardStateMin(
+    Object _selectedWarmupDuration,
+  );
 
   /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin2.
   ///
   /// In en, this message translates to:
   /// **'{_selectedStretchDuration} min'**
-  String editableFitnessCardPartEditableFitnessCardStateMin2(Object _selectedStretchDuration);
+  String editableFitnessCardPartEditableFitnessCardStateMin2(
+    Object _selectedStretchDuration,
+  );
 
   /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin3.
   ///
@@ -16487,31 +16582,44 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Failed to staple: {e}'**
-  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(Object e);
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
+    Object e,
+  );
 
   /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith.
   ///
   /// In en, this message translates to:
   /// **'Replaced \"{selected}\" with \"{exerciseName}\"'**
-  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(Object exerciseName, Object selected);
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
+    Object exerciseName,
+    Object selected,
+  );
 
   /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateStapledTo.
   ///
   /// In en, this message translates to:
   /// **'Stapled \"{exerciseName}\" to {section} ({timing})'**
-  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(Object exerciseName, Object section, Object timing);
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
+    Object exerciseName,
+    Object section,
+    Object timing,
+  );
 
   /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateUnstapled.
   ///
   /// In en, this message translates to:
   /// **'\"{exerciseName}\" unstapled'**
-  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(Object exerciseName);
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
+    Object exerciseName,
+  );
 
   /// No description provided for @exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo.
   ///
   /// In en, this message translates to:
   /// **'Remove the offline video for \"{exerciseName}\"? You can re-download it anytime.'**
-  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(Object exerciseName);
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
+    Object exerciseName,
+  );
 
   /// No description provided for @exerciseDetailSheetQueue.
   ///
@@ -17549,19 +17657,27 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Showing {length} of {length1}'**
-  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(Object length, Object length1);
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
+    Object length,
+    Object length1,
+  );
 
   /// No description provided for @exercisePickerSheetPartExercisePickerSheetStateValue.
   ///
   /// In en, this message translates to:
   /// **'({customCount})'**
-  String exercisePickerSheetPartExercisePickerSheetStateValue(Object customCount);
+  String exercisePickerSheetPartExercisePickerSheetStateValue(
+    Object customCount,
+  );
 
   /// No description provided for @exercisePickerSheetPartExercisePickerSheetStateValue2.
   ///
   /// In en, this message translates to:
   /// **'{name} ({count})'**
-  String exercisePickerSheetPartExercisePickerSheetStateValue2(Object count, Object name);
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(
+    Object count,
+    Object name,
+  );
 
   /// No description provided for @exercisePickerSheetSave.
   ///
@@ -18047,7 +18163,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{consecutiveEasy} / {_target} easy sessions'**
-  String exerciseProgressionsScreenEasySessions(Object _target, Object consecutiveEasy);
+  String exerciseProgressionsScreenEasySessions(
+    Object _target,
+    Object consecutiveEasy,
+  );
 
   /// No description provided for @exerciseProgressionsScreenKg.
   ///
@@ -18071,7 +18190,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You will move from {exerciseName} to {suggestedExercise}. '**
-  String exerciseProgressionsScreenYouWillMoveFrom(Object exerciseName, Object suggestedExercise);
+  String exerciseProgressionsScreenYouWillMoveFrom(
+    Object exerciseName,
+    Object suggestedExercise,
+  );
 
   /// No description provided for @exerciseProgressionsSessions.
   ///
@@ -18479,7 +18601,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'\"{exerciseName}\" - {totalResults} workouts found'**
-  String exerciseSearchResultsWorkoutsFound(Object exerciseName, Object totalResults);
+  String exerciseSearchResultsWorkoutsFound(
+    Object exerciseName,
+    Object totalResults,
+  );
 
   /// No description provided for @exerciseSetTracker15s.
   ///
@@ -18851,7 +18976,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Swapped to {newExerciseName}'**
-  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(Object newExerciseName);
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
+    Object newExerciseName,
+  );
 
   /// No description provided for @exerciseSwapSheetReason.
   ///
@@ -19673,7 +19800,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{goalsCompleted}/{goalsTotal} completed'**
-  String fastingCalendarWidgetCompleted(Object goalsCompleted, Object goalsTotal);
+  String fastingCalendarWidgetCompleted(
+    Object goalsCompleted,
+    Object goalsTotal,
+  );
 
   /// No description provided for @fastingCalendarWidgetHFast.
   ///
@@ -21425,7 +21555,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You felt stronger after {feelingStrongerCount} of {totalWorkouts} workouts!'**
-  String feelResultsScreenYouFeltStrongerAfter(Object feelingStrongerCount, Object totalWorkouts);
+  String feelResultsScreenYouFeltStrongerAfter(
+    Object feelingStrongerCount,
+    Object totalWorkouts,
+  );
 
   /// No description provided for @feelResultsStartTrackingYourProgress.
   ///
@@ -21551,7 +21684,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Estimate based on {effectiveSessions} sessions/week'**
-  String firstWorkoutForecastSheetEstimateBasedOnSessions(Object effectiveSessions);
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(
+    Object effectiveSessions,
+  );
 
   /// No description provided for @firstWorkoutForecastSheetThatS.
   ///
@@ -22337,13 +22472,19 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'elapsed-{_elapsedSeconds}-{_stillWorkingIndex}'**
-  String foodAnalysisLoadingElapsed(Object _elapsedSeconds, Object _stillWorkingIndex);
+  String foodAnalysisLoadingElapsed(
+    Object _elapsedSeconds,
+    Object _stillWorkingIndex,
+  );
 
   /// No description provided for @foodAnalysisLoadingS.
   ///
   /// In en, this message translates to:
   /// **'{analysisLoadingCopy}… {_elapsedSeconds}s'**
-  String foodAnalysisLoadingS(Object _elapsedSeconds, Object analysisLoadingCopy);
+  String foodAnalysisLoadingS(
+    Object _elapsedSeconds,
+    Object analysisLoadingCopy,
+  );
 
   /// No description provided for @foodAnalysisLoadingSElapsed.
   ///
@@ -22391,7 +22532,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Leaves you {remaining} cal for {mealLabel}'**
-  String foodAnalysisResultCardLeavesYouCalFor(Object mealLabel, Object remaining);
+  String foodAnalysisResultCardLeavesYouCalFor(
+    Object mealLabel,
+    Object remaining,
+  );
 
   /// No description provided for @foodAnalysisResultCardSelected.
   ///
@@ -22631,7 +22775,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{label} ({opt}{calDelta})'**
-  String foodBrowserPanelPartExpandableSearchCardStateValue(Object calDelta, Object label, Object opt);
+  String foodBrowserPanelPartExpandableSearchCardStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  );
 
   /// No description provided for @foodBrowserPanelPartFoodBrowserItemValue.
   ///
@@ -22655,7 +22803,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{label} ({opt}{calDelta})'**
-  String foodBrowserPanelPartNLItemSectionStateValue(Object calDelta, Object label, Object opt);
+  String foodBrowserPanelPartNLItemSectionStateValue(
+    Object calDelta,
+    Object label,
+    Object opt,
+  );
 
   /// No description provided for @foodBrowserPanelPureFat.
   ///
@@ -22907,13 +23059,21 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{_dateLabel}  ·  {_mealLabel}  ·  {_sourceLabel}'**
-  String foodHistoryScreenPartDateRangeValue(Object _dateLabel, Object _mealLabel, Object _sourceLabel);
+  String foodHistoryScreenPartDateRangeValue(
+    Object _dateLabel,
+    Object _mealLabel,
+    Object _sourceLabel,
+  );
 
   /// No description provided for @foodHistoryScreenPartFrequentFoodChipPCF.
   ///
   /// In en, this message translates to:
   /// **'{proteinG}P · {carbsG}C · {fatG}F'**
-  String foodHistoryScreenPartFrequentFoodChipPCF(Object carbsG, Object fatG, Object proteinG);
+  String foodHistoryScreenPartFrequentFoodChipPCF(
+    Object carbsG,
+    Object fatG,
+    Object proteinG,
+  );
 
   /// No description provided for @foodHistoryScreenPartFrequentFoodChipX.
   ///
@@ -24773,7 +24933,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{checkedCount} of {itemCount} checked'**
-  String groceryListsIndexScreenOfChecked(Object checkedCount, Object itemCount);
+  String groceryListsIndexScreenOfChecked(
+    Object checkedCount,
+    Object itemCount,
+  );
 
   /// No description provided for @groceryListsIndexTapToCreateA.
   ///
@@ -25175,7 +25338,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Showing {guestExerciseLimit} sample exercises. Sign up free to access 2300+ exercises!'**
-  String guestLibraryScreenShowingSampleExercisesSign(Object guestExerciseLimit);
+  String guestLibraryScreenShowingSampleExercisesSign(
+    Object guestExerciseLimit,
+  );
 
   /// No description provided for @guestLibrarySearchExercises.
   ///
@@ -25499,7 +25664,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{equipmentCount} equipment • {environmentDisplayName}'**
-  String gymProfileSwitcherEquipment(Object environmentDisplayName, Object equipmentCount);
+  String gymProfileSwitcherEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  );
 
   /// No description provided for @gymProfileSwitcherFailedToDelete.
   ///
@@ -25667,7 +25835,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{daysUntilBestStreak} days until you beat your personal best!'**
-  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(Object daysUntilBestStreak);
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
+    Object daysUntilBestStreak,
+  );
 
   /// No description provided for @habitDetailScreenPartCompactHeroSectionValue.
   ///
@@ -26879,7 +27049,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{shortLabel} {minutes}m ({percent}%)'**
-  String heartRateChartPartZoneLegendItemM(Object minutes, Object percent, Object shortLabel);
+  String heartRateChartPartZoneLegendItemM(
+    Object minutes,
+    Object percent,
+    Object shortLabel,
+  );
 
   /// No description provided for @heartRateChartPartZoneLegendItemZone.
   ///
@@ -27413,7 +27587,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{formattedDurationShort} • {exerciseCount} exercises'**
-  String heroWorkoutCardExtExercises(Object exerciseCount, Object formattedDurationShort);
+  String heroWorkoutCardExtExercises(
+    Object exerciseCount,
+    Object formattedDurationShort,
+  );
 
   /// No description provided for @heroWorkoutCardExtMoreExercises.
   ///
@@ -27503,13 +27680,17 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{exerciseCount} exercises'**
-  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(Object exerciseCount);
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
+    Object exerciseCount,
+  );
 
   /// No description provided for @heroWorkoutCardPartCompletedWorkoutHeroCardMin.
   ///
   /// In en, this message translates to:
   /// **'{bestDurationMinutes} min'**
-  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(Object bestDurationMinutes);
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
+    Object bestDurationMinutes,
+  );
 
   /// No description provided for @heroWorkoutCardPreview.
   ///
@@ -30401,7 +30582,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Matched ({matchedKeptCount}/{totalMatched})'**
-  String importEquipmentResultSheetMatched(Object matchedKeptCount, Object totalMatched);
+  String importEquipmentResultSheetMatched(
+    Object matchedKeptCount,
+    Object totalMatched,
+  );
 
   /// No description provided for @importEquipmentResultSheetSaveItems.
   ///
@@ -31049,7 +31233,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'How is your {bodyPartDisplay} feeling today?'**
-  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(Object bodyPartDisplay);
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
+    Object bodyPartDisplay,
+  );
 
   /// No description provided for @injuryDetailScreenValue.
   ///
@@ -31091,7 +31277,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Edit set, {_weightText} {unit} by {reps} reps'**
-  String inlineEditPillEditSetByReps(Object _weightText, Object reps, Object unit);
+  String inlineEditPillEditSetByReps(
+    Object _weightText,
+    Object reps,
+    Object unit,
+  );
 
   /// No description provided for @inlineEditPillSaveSet.
   ///
@@ -31349,7 +31539,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workoutsCompleted} of {workoutsScheduled} workouts'**
-  String insightsDetailScreenOfWorkouts(Object workoutsCompleted, Object workoutsScheduled);
+  String insightsDetailScreenOfWorkouts(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  );
 
   /// No description provided for @insightsDetailScreenPrs.
   ///
@@ -31553,7 +31746,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workoutsCompleted}/{workoutsScheduled} workouts  |  {totalTimeMinutes}min  |  {caloriesBurnedEstimate} kcal'**
-  String insightsScreenPartBodyCardWorkoutsMinKcal(Object caloriesBurnedEstimate, Object totalTimeMinutes, Object workoutsCompleted, Object workoutsScheduled);
+  String insightsScreenPartBodyCardWorkoutsMinKcal(
+    Object caloriesBurnedEstimate,
+    Object totalTimeMinutes,
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  );
 
   /// No description provided for @insightsScreenPartBodyFat.
   ///
@@ -32153,7 +32351,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{defaultReps} reps x {defaultHoldSeconds}s hold'**
-  String kegelSessionScreenRepsXSHold(Object defaultHoldSeconds, Object defaultReps);
+  String kegelSessionScreenRepsXSHold(
+    Object defaultHoldSeconds,
+    Object defaultReps,
+  );
 
   /// No description provided for @kegelSessionSessionComplete.
   ///
@@ -32693,7 +32894,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You gained {count} levels (up to L{highestLevel})'**
-  String levelUpCatchUpBannerYouGainedLevelsUp(Object count, Object highestLevel);
+  String levelUpCatchUpBannerYouGainedLevelsUp(
+    Object count,
+    Object highestLevel,
+  );
 
   /// No description provided for @levelUpCatchUpBannerYouLeveledUpTimes.
   ///
@@ -32837,7 +33041,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{daysRemaining} days until {nextTierName}'**
-  String lifetimeMemberBadgeDaysUntil(Object daysRemaining, Object nextTierName);
+  String lifetimeMemberBadgeDaysUntil(
+    Object daysRemaining,
+    Object nextTierName,
+  );
 
   /// No description provided for @lifetimeMemberBadgeEstimatedValueReceived.
   ///
@@ -32981,7 +33188,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{weightStr}{unitLabel}×{reps}  →  {oneRmStr} {unitLabel} 1RM, '**
-  String livePrSnackbarRm(Object oneRmStr, Object reps, Object unitLabel, Object weightStr);
+  String livePrSnackbarRm(
+    Object oneRmStr,
+    Object reps,
+    Object unitLabel,
+    Object weightStr,
+  );
 
   /// No description provided for @livePrSnackbarValue.
   ///
@@ -34151,7 +34363,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{verifiedCount} of {length} matched verified nutrition data · portions estimated'**
-  String logMealSheetUiOfItemsMatchedVerified(Object length, Object verifiedCount);
+  String logMealSheetUiOfItemsMatchedVerified(
+    Object length,
+    Object verifiedCount,
+  );
 
   /// No description provided for @logMealSheetUiValue.
   ///
@@ -34469,7 +34684,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Valid range: {minValue}-{maxValue} {label}'**
-  String logWeightSheetValidRange(Object label, Object maxValue, Object minValue);
+  String logWeightSheetValidRange(
+    Object label,
+    Object maxValue,
+    Object minValue,
+  );
 
   /// No description provided for @logWeightSyncedFromAppleHealth.
   ///
@@ -35375,7 +35594,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{equipmentCount} equipment • {environmentDisplayName}'**
-  String manageGymProfilesSheetEquipment(Object environmentDisplayName, Object equipmentCount);
+  String manageGymProfilesSheetEquipment(
+    Object environmentDisplayName,
+    Object equipmentCount,
+  );
 
   /// No description provided for @managedGymCardActive.
   ///
@@ -35939,7 +36161,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Export (length)\") measurement types as .(_selectedFormat)'**
-  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(Object _selectedFormat, Object length);
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
+    Object _selectedFormat,
+    Object length,
+  );
 
   /// No description provided for @measurementsScreenPartAddMeasurementSheetLog.
   ///
@@ -36353,7 +36578,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Physical exercise involves inherent risks. By using {appName}, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.'**
-  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Object appName);
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
+    Object appName,
+  );
 
   /// No description provided for @medicalDisclaimerScreenPleaseReadThisDisclaimer.
   ///
@@ -37751,7 +37978,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Average: {averageWorkoutDurationMinutes} min/workout'**
-  String milestonesScreenUiAverageMinWorkout(Object averageWorkoutDurationMinutes);
+  String milestonesScreenUiAverageMinWorkout(
+    Object averageWorkoutDurationMinutes,
+  );
 
   /// No description provided for @milestonesScreenUiCompleteWorkoutsToSee.
   ///
@@ -38939,7 +39168,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{multiplierDisplay} = {derivedWeight} kg • {relationshipDisplay}'**
-  String my1rmsScreenPartOneRMCardKg(Object derivedWeight, Object multiplierDisplay, Object relationshipDisplay);
+  String my1rmsScreenPartOneRMCardKg(
+    Object derivedWeight,
+    Object multiplierDisplay,
+    Object relationshipDisplay,
+  );
 
   /// No description provided for @my1rmsScreenPartOneRMCardLinkTo.
   ///
@@ -38957,13 +39190,18 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Linked {text} to {primaryExerciseName}'**
-  String my1rmsScreenPartOneRMCardLinkedTo(Object primaryExerciseName, Object text);
+  String my1rmsScreenPartOneRMCardLinkedTo(
+    Object primaryExerciseName,
+    Object text,
+  );
 
   /// No description provided for @my1rmsScreenPartOneRMCardRemoveFromLinkedExercises.
   ///
   /// In en, this message translates to:
   /// **'Remove {linkedExerciseName} from linked exercises?'**
-  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(Object linkedExerciseName);
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
+    Object linkedExerciseName,
+  );
 
   /// No description provided for @my1rmsScreenProgression.
   ///
@@ -39203,7 +39441,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{food} kcal · P:{food1}g · C:{food2}g · F:{food3}g'**
-  String myFoodsSheetKcalUBP(Object food, Object food1, Object food2, Object food3);
+  String myFoodsSheetKcalUBP(
+    Object food,
+    Object food1,
+    Object food2,
+    Object food3,
+  );
 
   /// No description provided for @myFoodsSheetLoggedX.
   ///
@@ -39461,7 +39704,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Best: {item}kg x {maxReps}'**
-  String myLibraryTabPartHistoryTimelineCardBestKgX(Object item, Object maxReps);
+  String myLibraryTabPartHistoryTimelineCardBestKgX(
+    Object item,
+    Object maxReps,
+  );
 
   /// No description provided for @myLibraryTabRecentActivity.
   ///
@@ -39479,7 +39725,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workoutDays}  •  {experience}  •  {goal}'**
-  String myProgramSummaryCardValue(Object experience, Object goal, Object workoutDays);
+  String myProgramSummaryCardValue(
+    Object experience,
+    Object goal,
+    Object workoutDays,
+  );
 
   /// No description provided for @myProgramSummaryMyProgram.
   ///
@@ -39587,7 +39837,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{monthName} Wrapped drops in {daysUntilDrop} days'**
-  String myWrappedScreenWrappedDropsInDays(Object daysUntilDrop, Object monthName);
+  String myWrappedScreenWrappedDropsInDays(
+    Object daysUntilDrop,
+    Object monthName,
+  );
 
   /// No description provided for @myWrappedScreenWrappedDropsSoon.
   ///
@@ -39899,7 +40152,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Quiet hours: {startTime} - {endTime}'**
-  String neatDashboardScreenPartStreaksCardQuietHours(Object endTime, Object startTime);
+  String neatDashboardScreenPartStreaksCardQuietHours(
+    Object endTime,
+    Object startTime,
+  );
 
   /// No description provided for @neatDashboardScreenPartStreaksCardSteps.
   ///
@@ -40313,7 +40569,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{daysPerWeek} days/week • {duration}'**
-  String netflixExercisesTabPartExerciseListCardDaysWeek(Object daysPerWeek, Object duration);
+  String netflixExercisesTabPartExerciseListCardDaysWeek(
+    Object daysPerWeek,
+    Object duration,
+  );
 
   /// No description provided for @netflixExercisesTabPartExerciseListCardFlexible.
   ///
@@ -40349,7 +40608,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Day {currentDay} of {totalDays}'**
-  String newTilesPartActiveChallengeCardDayOf(Object currentDay, Object totalDays);
+  String newTilesPartActiveChallengeCardDayOf(
+    Object currentDay,
+    Object totalDays,
+  );
 
   /// No description provided for @newTilesPartActiveChallengeCardRestingBpm.
   ///
@@ -40361,7 +40623,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Today: {todayReps} / {targetReps} reps'**
-  String newTilesPartActiveChallengeCardTodayReps(Object targetReps, Object todayReps);
+  String newTilesPartActiveChallengeCardTodayReps(
+    Object targetReps,
+    Object todayReps,
+  );
 
   /// No description provided for @newTilesPartActiveChallengeCardValue.
   ///
@@ -41471,7 +41736,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Current: {currentValue}{unit}'**
-  String nutrientExplorerPartNutrientScoreCardCurrent(Object currentValue, Object unit);
+  String nutrientExplorerPartNutrientScoreCardCurrent(
+    Object currentValue,
+    Object unit,
+  );
 
   /// No description provided for @nutrientExplorerPartNutrientScoreCardNutrients.
   ///
@@ -41483,7 +41751,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{optimalCount}/{totalCount} optimal'**
-  String nutrientExplorerPartNutrientScoreCardOptimal(Object optimalCount, Object totalCount);
+  String nutrientExplorerPartNutrientScoreCardOptimal(
+    Object optimalCount,
+    Object totalCount,
+  );
 
   /// No description provided for @nutrientExplorerPartNutrientScoreCardValue.
   ///
@@ -41939,7 +42210,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Activity Multiplier (×{activityMultiplier})'**
-  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(Object activityMultiplier);
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
+    Object activityMultiplier,
+  );
 
   /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetCal.
   ///
@@ -41975,7 +42248,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Macro Split ({displayName}: {carbPct}/{proteinPct}/{fatPct})'**
-  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(Object carbPct, Object displayName, Object fatPct, Object proteinPct);
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
+    Object carbPct,
+    Object displayName,
+    Object fatPct,
+    Object proteinPct,
+  );
 
   /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetValue.
   ///
@@ -43895,7 +44173,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{formattedSetsReps} @ {exercise}'**
-  String parsedExercisesPreviewSheetValue(Object exercise, Object formattedSetsReps);
+  String parsedExercisesPreviewSheetValue(
+    Object exercise,
+    Object formattedSetsReps,
+  );
 
   /// No description provided for @pauseInterceptGoingOnVacationLife.
   ///
@@ -46073,7 +46354,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{foodSummary}{extraCount} · {totalCalories} kcal'**
-  String postMealReviewSheetKcal(Object extraCount, Object foodSummary, Object totalCalories);
+  String postMealReviewSheetKcal(
+    Object extraCount,
+    Object foodSummary,
+    Object totalCalories,
+  );
 
   /// No description provided for @postMealReviewWhyTrackThis.
   ///
@@ -48353,7 +48638,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'LOCAL LEGEND SHEDS {weightLostText} IN {durationText}'**
-  String progressShareTemplatesLocalLegendShedsIn(Object durationText, Object weightLostText);
+  String progressShareTemplatesLocalLegendShedsIn(
+    Object durationText,
+    Object weightLostText,
+  );
 
   /// No description provided for @progressShareTemplatesLocalLegendTransformsIn.
   ///
@@ -48503,7 +48791,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{totalWorkouts} workouts · {currentStreak}-day streak'**
-  String progressShareTemplatesWorkoutsDayStreak(Object currentStreak, Object totalWorkouts);
+  String progressShareTemplatesWorkoutsDayStreak(
+    Object currentStreak,
+    Object totalWorkouts,
+  );
 
   /// No description provided for @progressShareTemplatesZealova.
   ///
@@ -48845,7 +49136,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{currentExercise} -> {suggestedExercise}'**
-  String progressionSuggestionCardValue2(Object currentExercise, Object suggestedExercise);
+  String progressionSuggestionCardValue2(
+    Object currentExercise,
+    Object suggestedExercise,
+  );
 
   /// No description provided for @progressionSuggestionCardValue3.
   ///
@@ -48995,7 +49289,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'by {authorDisplayName} · {viewCount} views · {saveCount} saves'**
-  String publicRecipeScreenByViewsSaves(Object authorDisplayName, Object saveCount, Object viewCount);
+  String publicRecipeScreenByViewsSaves(
+    Object authorDisplayName,
+    Object saveCount,
+    Object viewCount,
+  );
 
   /// No description provided for @queuePositionCardEstimatedWaitMin.
   ///
@@ -50111,25 +50409,34 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Generate {_selectedDuration}-min Workout'**
-  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(Object _selectedDuration);
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
+    Object _selectedDuration,
+  );
 
   /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle.
   ///
   /// In en, this message translates to:
   /// **'Mesocycle: {phaseDisplayName}'**
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(Object phaseDisplayName);
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
+    Object phaseDisplayName,
+  );
 
   /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateMin.
   ///
   /// In en, this message translates to:
   /// **'{_selectedDuration} min'**
-  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(Object _selectedDuration);
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
+    Object _selectedDuration,
+  );
 
   /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateWeek.
   ///
   /// In en, this message translates to:
   /// **'Week {weekNumber}/{totalWeeks}'**
-  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(Object totalWeeks, Object weekNumber);
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
+    Object totalWeeks,
+    Object weekNumber,
+  );
 
   /// No description provided for @quickWorkoutSheetPerfectForBusyDays.
   ///
@@ -50237,7 +50544,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{progressPercent}% complete • {totalCompletedSets} sets done'**
-  String quitWorkoutDialogCompleteSetsDone(Object progressPercent, Object totalCompletedSets);
+  String quitWorkoutDialogCompleteSetsDone(
+    Object progressPercent,
+    Object totalCompletedSets,
+  );
 
   /// No description provided for @quitWorkoutDialogSays.
   ///
@@ -50939,7 +51249,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Custom {_customFastingHours}:{_customEatingHours} protocol'**
-  String quizFastingCustomProtocol(Object _customEatingHours, Object _customFastingHours);
+  String quizFastingCustomProtocol(
+    Object _customEatingHours,
+    Object _customFastingHours,
+  );
 
   /// No description provided for @quizFastingEatingHours.
   ///
@@ -51029,7 +51342,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{meals} meals spaced ~{hoursBetweenMeals} hours apart'**
-  String quizFastingUiMealsSpacedHoursApart(Object hoursBetweenMeals, Object meals);
+  String quizFastingUiMealsSpacedHoursApart(
+    Object hoursBetweenMeals,
+    Object meals,
+  );
 
   /// No description provided for @quizFastingUiTipConsiderLargerNutrient.
   ///
@@ -51323,7 +51639,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{availablePoints}/{maxTotalPoints} available'**
-  String quizMuscleFocusAvailable(Object availablePoints, Object maxTotalPoints);
+  String quizMuscleFocusAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  );
 
   /// No description provided for @quizMuscleFocusCore.
   ///
@@ -51461,7 +51780,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'~{calPerMeal} kcal & {proteinPerMeal}g protein per meal'**
-  String quizNutritionGoalsKcalGProteinPer(Object calPerMeal, Object proteinPerMeal);
+  String quizNutritionGoalsKcalGProteinPer(
+    Object calPerMeal,
+    Object proteinPerMeal,
+  );
 
   /// No description provided for @quizNutritionGoalsMealsSnacksPerDay.
   ///
@@ -52217,7 +52539,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Logged {portionEaten} serving(s) of \"{recipeName}\": '**
-  String recipeBuilderSheetLoggedServingSOf(Object portionEaten, Object recipeName);
+  String recipeBuilderSheetLoggedServingSOf(
+    Object portionEaten,
+    Object recipeName,
+  );
 
   /// No description provided for @recipeBuilderSheetNutritionPerAmountAbove.
   ///
@@ -54269,25 +54594,37 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Failed to apply suggestion: {message}'**
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(Object message);
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
+    Object message,
+  );
 
   /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2.
   ///
   /// In en, this message translates to:
   /// **'Failed to apply suggestion: {e}'**
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(Object e);
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
+    Object e,
+  );
 
   /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate.
   ///
   /// In en, this message translates to:
   /// **'Failed to regenerate: {message}'**
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(Object message);
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
+    Object message,
+  );
 
   /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2.
   ///
   /// In en, this message translates to:
   /// **'Failed to regenerate: {e}'**
-  String regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(Object e);
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
+    Object e,
+  );
 
   /// No description provided for @regenerateWorkoutSheetPreviewNotSupportedBy.
   ///
@@ -54491,13 +54828,17 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Maximum Sets: {maxSets}'**
-  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(Object maxSets);
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
+    Object maxSets,
+  );
 
   /// No description provided for @repPreferencesSectionPartTrainingFocusOptionTileMinimumSets.
   ///
   /// In en, this message translates to:
   /// **'Minimum Sets: {minSets}'**
-  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(Object minSets);
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
+    Object minSets,
+  );
 
   /// No description provided for @repPreferencesSectionRecommended.
   ///
@@ -54587,7 +54928,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{preferredMinReps}-{preferredMaxReps} reps'**
-  String repProgressionCardReps(Object preferredMaxReps, Object preferredMinReps);
+  String repProgressionCardReps(
+    Object preferredMaxReps,
+    Object preferredMinReps,
+  );
 
   /// No description provided for @reportInjuryAdditionalNotesOptional.
   ///
@@ -56129,7 +56473,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{splitName} requires {requiredDays} days per week, but you currently have {currentDayCount} days selected.'**
-  String scheduleMismatchDialogRequiresDaysPerWeek(Object currentDayCount, Object requiredDays, Object splitName);
+  String scheduleMismatchDialogRequiresDaysPerWeek(
+    Object currentDayCount,
+    Object requiredDays,
+    Object splitName,
+  );
 
   /// No description provided for @scheduleMismatchDialogUpdateToSchedule.
   ///
@@ -56201,7 +56549,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Generating {_generatedCount}/{_totalToGenerate}...'**
-  String scheduleScreenGenerating(Object _generatedCount, Object _totalToGenerate);
+  String scheduleScreenGenerating(
+    Object _generatedCount,
+    Object _totalToGenerate,
+  );
 
   /// No description provided for @scheduleScreenPartMon.
   ///
@@ -57137,25 +57488,33 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'+{originalSetCount} added'**
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(Object originalSetCount);
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
+    Object originalSetCount,
+  );
 
   /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone.
   ///
   /// In en, this message translates to:
   /// **'{completedCount} done'**
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(Object completedCount);
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
+    Object completedCount,
+  );
 
   /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining.
   ///
   /// In en, this message translates to:
   /// **'{remainingCount} remaining'**
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(Object remainingCount);
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
+    Object remainingCount,
+  );
 
   /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved.
   ///
   /// In en, this message translates to:
   /// **'{length} removed'**
-  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(Object length);
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
+    Object length,
+  );
 
   /// No description provided for @setAdjustmentSheetPartSetAdjustmentReasonOfPlanned.
   ///
@@ -57167,7 +57526,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{completedSets} sets completed'**
-  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(Object completedSets);
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
+    Object completedSets,
+  );
 
   /// No description provided for @setAdjustmentSheetReps.
   ///
@@ -57527,7 +57888,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Set {currentSetNumber}/{totalSets} • Tap to expand'**
-  String setTrackingSectionSetTapToExpand(Object currentSetNumber, Object totalSets);
+  String setTrackingSectionSetTapToExpand(
+    Object currentSetNumber,
+    Object totalSets,
+  );
 
   /// No description provided for @setTrackingSectionSets.
   ///
@@ -57959,7 +58323,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{region} • {currentOffset}'**
-  String settingsCardPartAccentColorGridValue(Object currentOffset, Object region);
+  String settingsCardPartAccentColorGridValue(
+    Object currentOffset,
+    Object region,
+  );
 
   /// No description provided for @settingsCardPartChangingDaysWillReschedule.
   ///
@@ -58607,7 +58974,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'mailto:{supportEmail}?subject={appName} Support Request'**
-  String settingsScreenMailtoSubjectSupportRequest(Object appName, Object supportEmail);
+  String settingsScreenMailtoSubjectSupportRequest(
+    Object appName,
+    Object supportEmail,
+  );
 
   /// No description provided for @settingsScreenSameAsAppLanguage.
   ///
@@ -60185,7 +60555,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{missedDescription} · {durationMinutes}min · {exercisesCount} exercises'**
-  String stackedBannerPanelMinExercises(Object durationMinutes, Object exercisesCount, Object missedDescription);
+  String stackedBannerPanelMinExercises(
+    Object durationMinutes,
+    Object exercisesCount,
+    Object missedDescription,
+  );
 
   /// No description provided for @stackedBannerPanelMissedColon.
   ///
@@ -60227,7 +60601,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{tierLabel} renews in {days} days for {formattedAmount}'**
-  String stackedBannerPanelRenewsInDaysFor(Object days, Object formattedAmount, Object tierLabel);
+  String stackedBannerPanelRenewsInDaysFor(
+    Object days,
+    Object formattedAmount,
+    Object tierLabel,
+  );
 
   /// No description provided for @stackedBannerPanelSubscriptionRenewing.
   ///
@@ -60257,7 +60635,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{totalWorkouts} workouts · {volumeStr} lifted'**
-  String stackedBannerPanelWorkoutsLifted(Object totalWorkouts, Object volumeStr);
+  String stackedBannerPanelWorkoutsLifted(
+    Object totalWorkouts,
+    Object volumeStr,
+  );
 
   /// No description provided for @stackedBannerPanelWrapped.
   ///
@@ -61163,7 +61544,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Step goal progress: {currentSteps} of {goalSteps} steps, {percentage} percent complete'**
-  String stepGoalCardStepGoalProgressOf(Object currentSteps, Object goalSteps, Object percentage);
+  String stepGoalCardStepGoalProgressOf(
+    Object currentSteps,
+    Object goalSteps,
+    Object percentage,
+  );
 
   /// No description provided for @stepGoalCardSteps.
   ///
@@ -61217,7 +61602,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Step goal slider, from {_minGoal} to {_maxGoal} steps'**
-  String stepGoalEditorSheetStepGoalSliderFrom(Object _maxGoal, Object _minGoal);
+  String stepGoalEditorSheetStepGoalSliderFrom(
+    Object _maxGoal,
+    Object _minGoal,
+  );
 
   /// No description provided for @stepGoalEditorSheetSteps.
   ///
@@ -61943,7 +62331,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Subscription paused for {durationDays} days'**
-  String subscriptionManagementScreenSubscriptionPausedForDays(Object durationDays);
+  String subscriptionManagementScreenSubscriptionPausedForDays(
+    Object durationDays,
+  );
 
   /// No description provided for @subscriptionManagementScreenTakeABreakFor.
   ///
@@ -63113,7 +63503,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{name} + {name1}'**
-  String supersetPairSheetPartSupersetPairSheetStateValue(Object name, Object name1);
+  String supersetPairSheetPartSupersetPairSheetStateValue(
+    Object name,
+    Object name1,
+  );
 
   /// No description provided for @supersetPairSheetRestAfterSuperset.
   ///
@@ -63227,7 +63620,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Edit {_originalTypeLabel} {groupNumber}'**
-  String supersetReorderSheetEdit(Object _originalTypeLabel, Object groupNumber);
+  String supersetReorderSheetEdit(
+    Object _originalTypeLabel,
+    Object groupNumber,
+  );
 
   /// No description provided for @supersetRestAfter.
   ///
@@ -64889,7 +65285,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{availablePoints}/{maxTotalPoints} available'**
-  String trainingFocusScreenAvailable(Object availablePoints, Object maxTotalPoints);
+  String trainingFocusScreenAvailable(
+    Object availablePoints,
+    Object maxTotalPoints,
+  );
 
   /// No description provided for @trainingFocusScreenFailedToSave.
   ///
@@ -66107,7 +66506,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Mapped {rowsAffected} rows to \"{canonicalName}\".'**
-  String unresolvedExercisesBulkSheetMappedRowsTo(Object canonicalName, Object rowsAffected);
+  String unresolvedExercisesBulkSheetMappedRowsTo(
+    Object canonicalName,
+    Object rowsAffected,
+  );
 
   /// No description provided for @unresolvedExercisesBulkSheetRevertedRows.
   ///
@@ -66551,7 +66953,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{muscleGroupDisplay}: {formattedIncrease} increase'**
-  String volumeAlertCardIncrease(Object formattedIncrease, Object muscleGroupDisplay);
+  String volumeAlertCardIncrease(
+    Object formattedIncrease,
+    Object muscleGroupDisplay,
+  );
 
   /// No description provided for @volumeAlertCardVolumeAlert.
   ///
@@ -67385,7 +67790,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{current} / {target} days'**
-  String weeklyCheckinSheetPartRecommendationOptionCardDays(Object current, Object target);
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(
+    Object current,
+    Object target,
+  );
 
   /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardGC.
   ///
@@ -67421,7 +67829,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{dataQualityPercent}%'**
-  String weeklyCheckinSheetPartWeeklySummaryCardValue2(Object dataQualityPercent);
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
+    Object dataQualityPercent,
+  );
 
   /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardValue3.
   ///
@@ -67433,7 +67843,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Weight trend: {formattedWeeklyRate}'**
-  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(Object formattedWeeklyRate);
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
+    Object formattedWeeklyRate,
+  );
 
   /// No description provided for @weeklyCheckinSheetPlateauDetected.
   ///
@@ -67655,7 +68067,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'#{yourRank} of {totalActive} active users · tap for Discover'**
-  String weeklyPercentileHeroOfActiveUsersTap(Object totalActive, Object yourRank);
+  String weeklyPercentileHeroOfActiveUsersTap(
+    Object totalActive,
+    Object yourRank,
+  );
 
   /// No description provided for @weeklyPercentileHeroTopThisWeek.
   ///
@@ -67967,7 +68382,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{workoutsCompleted}/{workoutsScheduled} workouts completed'**
-  String weeklySummaryScreenWorkoutsCompleted(Object workoutsCompleted, Object workoutsScheduled);
+  String weeklySummaryScreenWorkoutsCompleted(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  );
 
   /// No description provided for @weeklySummaryShareReport.
   ///
@@ -68633,7 +69051,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{_regenerateMessage} ({_regenerateStep}/{_regenerateTotalSteps})'**
-  String workoutActionsSheetValue(Object _regenerateMessage, Object _regenerateStep, Object _regenerateTotalSteps);
+  String workoutActionsSheetValue(
+    Object _regenerateMessage,
+    Object _regenerateStep,
+    Object _regenerateTotalSteps,
+  );
 
   /// No description provided for @workoutActionsSheetWorkout.
   ///
@@ -68897,7 +69319,9 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Great! {suggestedNextVariant} will be included in future workouts.'**
-  String workoutCompleteScreenExt1GreatWillBeIncluded(Object suggestedNextVariant);
+  String workoutCompleteScreenExt1GreatWillBeIncluded(
+    Object suggestedNextVariant,
+  );
 
   /// No description provided for @workoutCompleteScreenExt2OfRated.
   ///
@@ -68975,7 +69399,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{_saunaMinutes} min sauna · ~{_saunaCalories} cal'**
-  String workoutCompleteScreenMinSaunaCal(Object _saunaCalories, Object _saunaMinutes);
+  String workoutCompleteScreenMinSaunaCal(
+    Object _saunaCalories,
+    Object _saunaMinutes,
+  );
 
   /// No description provided for @workoutCompleteScreenMood.
   ///
@@ -69107,13 +69534,18 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{streak} day streak, {totalWorkouts} total workouts'**
-  String workoutCompleteScreenUi1DayStreakTotalWorkouts(Object streak, Object totalWorkouts);
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
+    Object streak,
+    Object totalWorkouts,
+  );
 
   /// No description provided for @workoutCompleteScreenUi1MarkedAsTooEasy.
   ///
   /// In en, this message translates to:
   /// **'Marked as \"too easy\" {consecutiveEasySessions}x in a row'**
-  String workoutCompleteScreenUi1MarkedAsTooEasy(Object consecutiveEasySessions);
+  String workoutCompleteScreenUi1MarkedAsTooEasy(
+    Object consecutiveEasySessions,
+  );
 
   /// No description provided for @workoutCompleteScreenUi1RmKg.
   ///
@@ -69137,7 +69569,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{currentSets} sets, {currentReps} reps'**
-  String workoutCompleteScreenUi2SetsReps(Object currentReps, Object currentSets);
+  String workoutCompleteScreenUi2SetsReps(
+    Object currentReps,
+    Object currentSets,
+  );
 
   /// No description provided for @workoutCompleteScreenUnableToChallengeFriends.
   ///
@@ -70229,7 +70664,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{sets} sets × {reps} reps @ {weightKg} kg'**
-  String workoutHistoryImportScreenSetsRepsKg(Object reps, Object sets, Object weightKg);
+  String workoutHistoryImportScreenSetsRepsKg(
+    Object reps,
+    Object sets,
+    Object weightKg,
+  );
 
   /// No description provided for @workoutHistoryImportSets.
   ///
@@ -71819,7 +72258,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Set {set} logged — next target auto-raised to {weight} lb (+{delta} lb)'**
-  String workoutShowcaseNextTargetRaised(Object delta, Object set, Object weight);
+  String workoutShowcaseNextTargetRaised(
+    Object delta,
+    Object set,
+    Object weight,
+  );
 
   /// No description provided for @workoutShowcaseNote.
   ///
@@ -71903,7 +72346,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'TOTAL  {duration} · {volume} · {prs} PRS'**
-  String workoutShowcaseScreenTotalPrs(Object duration, Object prs, Object volume);
+  String workoutShowcaseScreenTotalPrs(
+    Object duration,
+    Object prs,
+    Object volume,
+  );
 
   /// No description provided for @workoutShowcaseScreenValue.
   ///
@@ -72245,7 +72692,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{completedCount} / {totalPlanned} exercises'**
-  String workoutSummaryAdvancedExercises(Object completedCount, Object totalPlanned);
+  String workoutSummaryAdvancedExercises(
+    Object completedCount,
+    Object totalPlanned,
+  );
 
   /// No description provided for @workoutSummaryAdvancedExercisesDone.
   ///
@@ -72713,7 +73163,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{weightLbs} {unit} x {reps} reps'**
-  String workoutSummaryGeneralLbXReps(Object reps, String unit, Object weightLbs);
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  );
 
   /// No description provided for @workoutSummaryGeneralLibraryId.
   ///
@@ -72881,7 +73335,11 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{weightKg} kg x {reps} reps  |  Est. 1RM: {estimated1rmKg} kg'**
-  String workoutSummaryScreenUiKgXRepsEst(Object estimated1rmKg, Object reps, Object weightKg);
+  String workoutSummaryScreenUiKgXRepsEst(
+    Object estimated1rmKg,
+    Object reps,
+    Object weightKg,
+  );
 
   /// No description provided for @workoutSummaryScreenUiValue.
   ///
@@ -73745,7 +74203,10 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{completedCount}/{length} checkpoints complete'**
-  String xpGoalsScreenUi1CheckpointsComplete(Object completedCount, Object length);
+  String xpGoalsScreenUi1CheckpointsComplete(
+    Object completedCount,
+    Object length,
+  );
 
   /// No description provided for @xpGoalsScreenUi1Complete.
   ///
@@ -75686,7 +76147,8 @@ abstract class AppLocalizations {
   String metricGridPlacementLine(String size, Object page, Object position);
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -75695,59 +76157,130 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['ar', 'bn', 'cs', 'de', 'en', 'es', 'fi', 'fr', 'ha', 'hi', 'id', 'it', 'ja', 'jv', 'kn', 'ko', 'ml', 'mr', 'ms', 'ne', 'nl', 'or', 'pa', 'pl', 'pt', 'ru', 'sv', 'sw', 'ta', 'te', 'th', 'tl', 'tr', 'ur', 'vi', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+    'ar',
+    'bn',
+    'cs',
+    'de',
+    'en',
+    'es',
+    'fi',
+    'fr',
+    'ha',
+    'hi',
+    'id',
+    'it',
+    'ja',
+    'jv',
+    'kn',
+    'ko',
+    'ml',
+    'mr',
+    'ms',
+    'ne',
+    'nl',
+    'or',
+    'pa',
+    'pl',
+    'pt',
+    'ru',
+    'sv',
+    'sw',
+    'ta',
+    'te',
+    'th',
+    'tl',
+    'tr',
+    'ur',
+    'vi',
+    'zh',
+  ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'ar': return AppLocalizationsAr();
-    case 'bn': return AppLocalizationsBn();
-    case 'cs': return AppLocalizationsCs();
-    case 'de': return AppLocalizationsDe();
-    case 'en': return AppLocalizationsEn();
-    case 'es': return AppLocalizationsEs();
-    case 'fi': return AppLocalizationsFi();
-    case 'fr': return AppLocalizationsFr();
-    case 'ha': return AppLocalizationsHa();
-    case 'hi': return AppLocalizationsHi();
-    case 'id': return AppLocalizationsId();
-    case 'it': return AppLocalizationsIt();
-    case 'ja': return AppLocalizationsJa();
-    case 'jv': return AppLocalizationsJv();
-    case 'kn': return AppLocalizationsKn();
-    case 'ko': return AppLocalizationsKo();
-    case 'ml': return AppLocalizationsMl();
-    case 'mr': return AppLocalizationsMr();
-    case 'ms': return AppLocalizationsMs();
-    case 'ne': return AppLocalizationsNe();
-    case 'nl': return AppLocalizationsNl();
-    case 'or': return AppLocalizationsOr();
-    case 'pa': return AppLocalizationsPa();
-    case 'pl': return AppLocalizationsPl();
-    case 'pt': return AppLocalizationsPt();
-    case 'ru': return AppLocalizationsRu();
-    case 'sv': return AppLocalizationsSv();
-    case 'sw': return AppLocalizationsSw();
-    case 'ta': return AppLocalizationsTa();
-    case 'te': return AppLocalizationsTe();
-    case 'th': return AppLocalizationsTh();
-    case 'tl': return AppLocalizationsTl();
-    case 'tr': return AppLocalizationsTr();
-    case 'ur': return AppLocalizationsUr();
-    case 'vi': return AppLocalizationsVi();
-    case 'zh': return AppLocalizationsZh();
+    case 'ar':
+      return AppLocalizationsAr();
+    case 'bn':
+      return AppLocalizationsBn();
+    case 'cs':
+      return AppLocalizationsCs();
+    case 'de':
+      return AppLocalizationsDe();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'fi':
+      return AppLocalizationsFi();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'ha':
+      return AppLocalizationsHa();
+    case 'hi':
+      return AppLocalizationsHi();
+    case 'id':
+      return AppLocalizationsId();
+    case 'it':
+      return AppLocalizationsIt();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'jv':
+      return AppLocalizationsJv();
+    case 'kn':
+      return AppLocalizationsKn();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'ml':
+      return AppLocalizationsMl();
+    case 'mr':
+      return AppLocalizationsMr();
+    case 'ms':
+      return AppLocalizationsMs();
+    case 'ne':
+      return AppLocalizationsNe();
+    case 'nl':
+      return AppLocalizationsNl();
+    case 'or':
+      return AppLocalizationsOr();
+    case 'pa':
+      return AppLocalizationsPa();
+    case 'pl':
+      return AppLocalizationsPl();
+    case 'pt':
+      return AppLocalizationsPt();
+    case 'ru':
+      return AppLocalizationsRu();
+    case 'sv':
+      return AppLocalizationsSv();
+    case 'sw':
+      return AppLocalizationsSw();
+    case 'ta':
+      return AppLocalizationsTa();
+    case 'te':
+      return AppLocalizationsTe();
+    case 'th':
+      return AppLocalizationsTh();
+    case 'tl':
+      return AppLocalizationsTl();
+    case 'tr':
+      return AppLocalizationsTr();
+    case 'ur':
+      return AppLocalizationsUr();
+    case 'vi':
+      return AppLocalizationsVi();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }

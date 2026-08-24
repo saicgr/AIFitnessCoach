@@ -338,15 +338,31 @@ class _FakeQuery:
         self._filters[f"gt_{col}"] = val
         return self
 
+    def gte(self, col, val):
+        self._filters[f"gte_{col}"] = val
+        return self
+
+    def lt(self, col, val):
+        self._filters[f"lt_{col}"] = val
+        return self
+
     def in_(self, col, ids):
         self._in_ids = list(ids)
         return self
 
     def _matches(self, row):
         for col, val in self._filters.items():
-            if col.startswith("gt_"):
+            if col.startswith("gte_"):
+                real = col[4:]
+                if not (str(row.get(real, "")) >= str(val)):
+                    return False
+            elif col.startswith("gt_"):
                 real = col[3:]
                 if not (str(row.get(real, "")) > str(val)):
+                    return False
+            elif col.startswith("lt_"):
+                real = col[3:]
+                if not (str(row.get(real, "")) < str(val)):
                     return False
             else:
                 if row.get(col) != val:
@@ -382,13 +398,17 @@ def test_invalidate_after_injury_change_deletes_future_incomplete(monkeypatch):
     from api.v1.workouts import utils as u
 
     today = "2026-06-20"
+    # scheduled_date is a timestamptz stored at NOON of the day (see
+    # CLAUDE.md's "Local-day windows on timestamptz columns" convention) —
+    # not a bare date — since the production code below reads it through a
+    # proper half-open [day_start, day_end) window, not a `.eq(date)`.
     store = {
         "rows": [
-            {"id": "today-open", "user_id": "user-1", "scheduled_date": today, "status": "scheduled", "is_completed": False},
-            {"id": "today-inprog", "user_id": "user-1", "scheduled_date": today, "status": "in_progress", "is_completed": False},
-            {"id": "today-done", "user_id": "user-1", "scheduled_date": today, "status": "completed", "is_completed": True},
-            {"id": "future-open", "user_id": "user-1", "scheduled_date": "2026-06-22", "status": "scheduled", "is_completed": False},
-            {"id": "past-done", "user_id": "user-1", "scheduled_date": "2026-06-10", "status": "completed", "is_completed": True},
+            {"id": "today-open", "user_id": "user-1", "scheduled_date": f"{today}T12:00:00+00:00", "status": "scheduled", "is_completed": False},
+            {"id": "today-inprog", "user_id": "user-1", "scheduled_date": f"{today}T12:00:00+00:00", "status": "in_progress", "is_completed": False},
+            {"id": "today-done", "user_id": "user-1", "scheduled_date": f"{today}T12:00:00+00:00", "status": "completed", "is_completed": True},
+            {"id": "future-open", "user_id": "user-1", "scheduled_date": "2026-06-22T12:00:00+00:00", "status": "scheduled", "is_completed": False},
+            {"id": "past-done", "user_id": "user-1", "scheduled_date": "2026-06-10T12:00:00+00:00", "status": "completed", "is_completed": True},
         ],
         "deleted": [],
     }

@@ -102,6 +102,28 @@ def no_background_generation():
 
 
 @pytest.fixture
+def frozen_today():
+    """Pin /today's notion of "today" to this process's local calendar day.
+
+    Root-caused as a real flake (not a code regression): `resolve_timezone`
+    correctly falls back to 'UTC' when a user has no stored/header timezone
+    (exactly per its documented contract), so `get_user_today` resolves via
+    `datetime.now(UTC)`. These tests instead anchor their fixture dates off
+    Python's LOCAL `date.today()`. For ~5 hours a day in any timezone west of
+    UTC (e.g. US evenings), UTC's calendar date is already tomorrow relative
+    to local — so the endpoint's "today" silently disagreed with the test's
+    "today" by one day, shifting every days-until-next/order-asc assertion.
+    Confirmed by forcing `TZ=UTC`: failure disappears with no production
+    change. Patching `get_user_today` to the SAME value the test builds its
+    fixtures from removes the race without touching any assertion or the
+    (correct, intentional) UTC-fallback behavior in production.
+    """
+    fixed = date.today()
+    with patch("api.v1.workouts.today.get_user_today", return_value=fixed.isoformat()):
+        yield fixed
+
+
+@pytest.fixture
 def auth_override(sample_user_id):
     """Satisfy the auth gate on GET /api/v1/workouts/today.
 
@@ -127,7 +149,7 @@ class TestNextWorkoutSortOrder:
 
     def test_order_asc_returns_earliest_workout(
         self, sample_user_id, mock_supabase_db, mock_user_context_service,
-        auth_override, no_background_generation
+        auth_override, no_background_generation, frozen_today
     ):
         """
         Critical test: When multiple future workouts exist,
@@ -138,7 +160,7 @@ class TestNextWorkoutSortOrder:
         - Old code with DESC order + limit=1 returned Feb 1 (27 days)
         - Fixed code with ASC order + limit=1 returns Jan 8 (2 days)
         """
-        today = date.today()
+        today = frozen_today
         tomorrow = today + timedelta(days=1)
 
         # Create workouts at different future dates
@@ -232,10 +254,10 @@ class TestNextWorkoutSortOrder:
 
     def test_list_workouts_called_with_order_asc(
         self, sample_user_id, mock_supabase_db, mock_user_context_service,
-        auth_override, no_background_generation
+        auth_override, no_background_generation, frozen_today
     ):
         """Verify that list_workouts is called with order_asc=True for future workouts."""
-        today = date.today()
+        today = frozen_today
 
         mock_supabase_db.get_user.return_value = {
             "id": sample_user_id,

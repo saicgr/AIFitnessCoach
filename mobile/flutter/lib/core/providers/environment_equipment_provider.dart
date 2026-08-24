@@ -216,6 +216,15 @@ enum WorkoutEnvironment {
           'trx',
           'suspension_trainer',
           'Suspension Trainer',
+          // Indian / traditional
+          'gada (mace)',
+          'gar nal (stone neck ring)',
+          'jori (indian clubs)',
+          'lathi (bamboo staff)',
+          'mallakhamb pole',
+          'matka (water pot)',
+          'nal (stone lock)',
+          'samtola (indian barbell)',
         ];
       case WorkoutEnvironment.homeGym:
         return [

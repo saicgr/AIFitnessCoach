@@ -19,8 +19,24 @@ import json
 import os
 import sys
 
+import pytest
+
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from core.config import get_settings
+
+# These tests make real calls to the Gemini API (no mocking) and need a
+# working key. `os.getenv("GEMINI_API_KEY")` would miss a key that only
+# lives in .env (pydantic-settings loads that file into Settings without
+# populating os.environ), so gate on the resolved setting instead.
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not get_settings().gemini_api_key,
+        reason="GEMINI_API_KEY not configured - skipping real Gemini integration tests",
+    ),
+]
 
 
 def get_test_image_base64() -> str:
