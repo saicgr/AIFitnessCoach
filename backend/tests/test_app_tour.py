@@ -1013,22 +1013,17 @@ class TestTourEdgeCases:
     async def test_complete_step_invalid_step_id(self, async_client: AsyncClient, test_device_id):
         """Test completing a step with invalid step_id.
 
-        *** KNOWN FAILURE — OPEN QUESTION, NOT A TEST BUG. ***
-        POST /demo/tour/step-completed accepts ANY step_id string and appends it
-        to app_tour_sessions.steps_completed, so this returns 200 and the junk
-        step id lands in the analytics aggregation
-        (get_tour_analytics buckets step_completion_rates BY step_id).
+        POST /demo/tour/step-completed used to accept ANY step_id string and
+        append it to app_tour_sessions.steps_completed, so an invalid id
+        silently 200'd and the junk step id landed in the analytics
+        aggregation (get_tour_analytics buckets step_completion_rates BY
+        step_id).
 
-        There is no authoritative step vocabulary to validate against today:
-          * DEFAULT_TOUR_CONFIG (api/v1/demo.py) uses welcome / workout_preview /
-            exercise_library / progress_tracking / ai_coach ...
-          * the app_tour_step_events CHECK (migration 102) uses welcome /
-            ai_workouts / chat_coach / library / progress / nutrition / complete
-          * no backend code writes app_tour_step_events at all, and no Flutter
-            code calls these endpoints yet.
-        Picking one of those lists and enforcing it is a product decision, not a
-        mechanical fix, so the test is left failing rather than silently
-        rewritten to bless the current behavior.
+        Two step-id vocabularies exist for historical reasons: DEFAULT_TOUR_
+        CONFIG (api/v1/demo.py, what /tour/start actually hands back) and the
+        app_tour_step_events.step_id CHECK list (migration 102). The endpoint
+        now validates step_id against the UNION of both (VALID_TOUR_STEP_
+        EVENT_IDS in api/v1/demo_models.py) and 400s on anything in neither.
         """
         # Start a tour
         start_response = await async_client.post(

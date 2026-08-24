@@ -78,6 +78,24 @@ VALID_TOUR_SKIP_REASONS = {
     "other",
 }
 
+# Valid values for TourStepCompletedRequest.step_id, mirroring the
+# app_tour_step_events.step_id CHECK constraint in migrations/102_app_tour_
+# tracking.sql. /tour/step-completed is validated against the UNION of this
+# set and DEFAULT_TOUR_CONFIG's step ids (api/v1/demo.py) — two vocabularies
+# exist for historical reasons (this table's own CHECK list, and the tour
+# config actually handed back by /tour/start) and neither caller is wrong, so
+# both are accepted; only ids in NEITHER list (garbage) are rejected.
+VALID_TOUR_STEP_EVENT_IDS = {
+    "welcome",
+    "ai_workouts",
+    "chat_coach",
+    "library",
+    "progress",
+    "nutrition",
+    "complete",
+    "custom_step",
+}
+
 
 class TourStepCompletedRequest(BaseModel):
     """Request when a tour step is completed."""

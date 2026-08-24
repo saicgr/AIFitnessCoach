@@ -142,17 +142,21 @@ class TestBuildSearchQuery:
 #   COMMERCIAL_GYM_DEFAULT_EQUIPMENT
 #       mobile/flutter/lib/core/providers/environment_equipment_provider.dart
 #       :137-228 — `WorkoutEnvironment.commercialGym.defaultEquipment`.
-#       83 entries, and the comment at :134 says it DELIBERATELY omits the
+#       75 entries, and the comment at :134 says it DELIBERATELY omits the
 #       `full_gym` marker. This is what a gym-profile user actually sends, so
-#       it must NOT reach a full-gym collapse.
+#       it must NOT reach a full-gym collapse. (Finding #36 dropped 8
+#       traditional-equipment items — gada/gar nal/jori/lathi/mallakhamb/
+#       matka/nal/samtola — from this list and from the onboarding preset
+#       below; that removal shifted every later line in this file up by 8,
+#       which is why the parse ranges here no longer read 137-228.)
 #   GYM_EQUIPMENT_SHEET_ALL_ITEMS
 #       mobile/flutter/lib/screens/home/widgets/gym_equipment_sheet.dart:13-67.
 #       The sheet STRIPS `full_gym` (:212-218) and writes back these 43 items.
 #   ONBOARDING_COMMERCIAL_GYM_PRESET
 #       mobile/flutter/lib/screens/onboarding/pre_auth_quiz_screen_ext.dart
-#       :22-126 — the ONE path that does keep `full_gym` (88 entries).
+#       :22-126 — the ONE path that does keep `full_gym` (80 entries).
 #   HOME_GYM_DEFAULT_EQUIPMENT
-#       environment_equipment_provider.dart:230-243 (12 entries, no marker).
+#       environment_equipment_provider.dart:222-235 (12 entries, no marker).
 #
 # Plus backend/api/v1/users/models.py:10-20, which sends the one-element lists
 # ['full_gym'] / ['home_gym'] / ['bodyweight'].
@@ -162,11 +166,11 @@ DART_INVENTORY_SOURCES = {
     # name -> (repo-relative dart path, start line, end line, dropped literals)
     "COMMERCIAL_GYM_DEFAULT_EQUIPMENT": (
         "mobile/flutter/lib/core/providers/environment_equipment_provider.dart",
-        137, 228, frozenset(),
+        137, 220, frozenset(),
     ),
     "HOME_GYM_DEFAULT_EQUIPMENT": (
         "mobile/flutter/lib/core/providers/environment_equipment_provider.dart",
-        230, 243, frozenset(),
+        222, 235, frozenset(),
     ),
     "ONBOARDING_COMMERCIAL_GYM_PRESET": (
         "mobile/flutter/lib/screens/onboarding/pre_auth_quiz_screen_ext.dart",
@@ -182,7 +186,10 @@ DART_INVENTORY_SOURCES = {
     ),
 }
 
-COMMERCIAL_GYM_DEFAULT_EQUIPMENT = [  # 83 entries
+COMMERCIAL_GYM_DEFAULT_EQUIPMENT = [  # 75 entries
+    # Finding #36 dropped the 8 traditional-equipment items (gada / gar nal /
+    # jori / lathi / mallakhamb / matka / nal / samtola) that used to trail
+    # this list — see DART_INVENTORY_SOURCES comment above.
     'bodyweight', 'barbell', 'ez_curl_bar', 'EZ Bar', 'Trap Bar', 'dumbbells',
     'kettlebell', 'kettlebells', 'weight_plates', 'Weight Plate', 'pull_up_bar',
     'dip_station', 'Dip Station', 'Assisted Pull Up Machine', 'Ab Roller',
@@ -200,9 +207,7 @@ COMMERCIAL_GYM_DEFAULT_EQUIPMENT = [  # 83 entries
     'Ski Ergometer', 'elliptical', 'Elliptical Machine', 'rowing_machine',
     'Rowing Machine', 'medicine_ball', 'Medicine Ball', 'Slam Ball',
     'battle_ropes', 'battle ropes', 'rope', 'sandbag', 'tire', 'tire, sledgehammer',
-    'hay bale', 'trx', 'suspension_trainer', 'Suspension Trainer', 'gada (mace)',
-    'gar nal (stone neck ring)', 'jori (indian clubs)', 'lathi (bamboo staff)',
-    'mallakhamb pole', 'matka (water pot)', 'nal (stone lock)', 'samtola (indian barbell)',
+    'hay bale', 'trx', 'suspension_trainer', 'Suspension Trainer',
 ]
 
 HOME_GYM_DEFAULT_EQUIPMENT = [  # 12 entries
@@ -211,7 +216,9 @@ HOME_GYM_DEFAULT_EQUIPMENT = [  # 12 entries
     'dip_station', 'medicine_ball', 'yoga_mat',
 ]
 
-ONBOARDING_COMMERCIAL_GYM_PRESET = [  # 88 entries
+ONBOARDING_COMMERCIAL_GYM_PRESET = [  # 80 entries
+    # Finding #36 dropped the same 8 traditional-equipment items from this
+    # preset as from COMMERCIAL_GYM_DEFAULT_EQUIPMENT above.
     'full_gym', 'bodyweight', 'barbell', 'olympic_barbell', 'ez_bar',
     'trap_bar', 'safety_squat_bar', 'cambered_bar', 'swiss_bar', 'log_bar',
     'dumbbells', 'kettlebell', 'kettlebells', 'weight_plates', 'Weight Plate',
@@ -230,9 +237,7 @@ ONBOARDING_COMMERCIAL_GYM_PRESET = [  # 88 entries
     'Elliptical Machine', 'rowing_machine', 'Rowing Machine', 'medicine_ball',
     'Medicine Ball', 'Slam Ball', 'battle_ropes', 'battle ropes', 'rope',
     'sandbag', 'tire', 'sledgehammer', 'hay bale', 'trx', 'suspension_trainer',
-    'Suspension Trainer', 'gada (mace)', 'gar nal (stone neck ring)',
-    'jori (indian clubs)', 'lathi (bamboo staff)', 'mallakhamb pole',
-    'matka (water pot)', 'nal (stone lock)', 'samtola (indian barbell)',
+    'Suspension Trainer',
 ]
 
 GYM_EQUIPMENT_SHEET_ALL_ITEMS = [  # 43 entries
@@ -317,9 +322,12 @@ class TestFixturesAreTheRealInventories:
             )
 
     def test_inventory_sizes(self):
-        assert len(COMMERCIAL_GYM_DEFAULT_EQUIPMENT) == 83
+        # Finding #36 dropped 8 traditional-equipment items from both the
+        # commercial-gym default list and the onboarding preset (83 -> 75,
+        # 88 -> 80).
+        assert len(COMMERCIAL_GYM_DEFAULT_EQUIPMENT) == 75
         assert len(GYM_EQUIPMENT_SHEET_ALL_ITEMS) == 43
-        assert len(ONBOARDING_COMMERCIAL_GYM_PRESET) == 88
+        assert len(ONBOARDING_COMMERCIAL_GYM_PRESET) == 80
         assert len(HOME_GYM_DEFAULT_EQUIPMENT) == 12
 
 
@@ -415,6 +423,11 @@ class TestCanonicalKeyHandlesRealDuplicates:
         """
         Round-1 regression: on the REAL list the dedupe only reached 83 -> 69
         with 'cable machine'/'Cable Pulley Machine' surviving as two items.
+
+        Finding #36 later dropped 8 traditional-equipment items (each its own
+        distinct canonical key) from the 83-entry source list, so the
+        fixture is now 75 entries and the correct collapse target is 52
+        (60 - 8), not 60.
         """
         from services.exercise_rag.search import (
             dedupe_equipment, canonical_equipment_key,
@@ -423,8 +436,8 @@ class TestCanonicalKeyHandlesRealDuplicates:
         deduped = dedupe_equipment(COMMERCIAL_GYM_DEFAULT_EQUIPMENT)
         keys = [canonical_equipment_key(e) for e in deduped]
         assert len(keys) == len(set(keys)), "residual duplicate canonical keys"
-        assert len(deduped) == 60, (
-            f"expected 83 -> 60 distinct implements, got {len(deduped)}: "
+        assert len(deduped) == 52, (
+            f"expected 75 -> 52 distinct implements, got {len(deduped)}: "
             f"{deduped}"
         )
 

@@ -856,6 +856,12 @@
   "recorded_at",
   "user_id"
  ],
+ "cardio_digest_sent": [
+  "id",
+  "sent_at",
+  "user_id",
+  "week_start"
+ ],
  "cardio_logs": [
   "activity_type",
   "avg_cadence",
@@ -2080,6 +2086,7 @@
   "default_speed_mph",
   "default_tempo",
   "difficulty_level",
+  "display_name",
   "energy_system",
   "equipment",
   "exercise_name",
@@ -2237,6 +2244,13 @@
   "total_volume_kg",
   "user_id",
   "workout_id",
+  "workout_log_id"
+ ],
+ "exercise_performance_summary_repair_2427": [
+  "exercise_name",
+  "old_total_reps",
+  "old_total_sets",
+  "repaired_at",
   "workout_log_id"
  ],
  "exercise_personal_records": [
@@ -9879,6 +9893,26 @@
   "user_id",
   "workout_id"
  ],
+ "workout_logs_completion_reconcile_backup_2436": [
+  "adjustment_count",
+  "backed_up_at",
+  "completed_at",
+  "device_source",
+  "duration_minutes",
+  "exercises_completed",
+  "exercises_performance",
+  "gym_profile_id",
+  "id",
+  "idempotency_key",
+  "metadata",
+  "performance_data",
+  "sets_adjusted",
+  "sets_json",
+  "status",
+  "total_time_seconds",
+  "user_id",
+  "workout_id"
+ ],
  "workout_logs_empty_sets_backup_2390": [
   "adjustment_count",
   "backed_up_at",
@@ -9904,6 +9938,26 @@
   "repaired_at",
   "workout_log_id"
  ],
+ "workout_logs_status_completion_backup_2414": [
+  "adjustment_count",
+  "backed_up_at",
+  "completed_at",
+  "device_source",
+  "duration_minutes",
+  "exercises_completed",
+  "exercises_performance",
+  "gym_profile_id",
+  "id",
+  "idempotency_key",
+  "metadata",
+  "performance_data",
+  "sets_adjusted",
+  "sets_json",
+  "status",
+  "total_time_seconds",
+  "user_id",
+  "workout_id"
+ ],
  "workout_performance_summary": [
   "active_time_seconds",
   "avg_rest_seconds",
@@ -9925,6 +9979,12 @@
   "workout_log_id",
   "workout_name",
   "workout_type"
+ ],
+ "workout_performance_summary_repair_2427": [
+  "old_total_reps",
+  "old_total_sets",
+  "repaired_at",
+  "workout_log_id"
  ],
  "workout_photos": [
   "caption",

@@ -20,7 +20,7 @@ from core.auth import get_admin_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
-from .demo_models import CURATED_TEMPLATES, CURATED_EXERCISES
+from .demo_models import CURATED_TEMPLATES, CURATED_EXERCISES, VALID_TOUR_STEP_EVENT_IDS
 
 
 def _demo_parent():
@@ -131,6 +131,19 @@ async def complete_tour_step(request: Request, body: TourStepCompletedRequest):
     Updates the session with completed step info and tracks
     any deep links that were clicked.
     """
+    DEFAULT_TOUR_CONFIG, _ = _demo_parent()
+    valid_step_ids = {
+        str(step.get("id")) for step in DEFAULT_TOUR_CONFIG.get("steps", [])
+    } | VALID_TOUR_STEP_EVENT_IDS
+    if body.step_id not in valid_step_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"step_id must be one of {sorted(valid_step_ids)} "
+                f"(got '{body.step_id}')"
+            ),
+        )
+
     try:
         db = get_supabase_db()
 
