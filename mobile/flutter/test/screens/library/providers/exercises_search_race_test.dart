@@ -18,6 +18,22 @@
 /// call that arrives mid-flight sets a pending flag, and the in-flight
 /// request chases it with one more `loadExercises(refresh: true)` once it
 /// settles — converging to whatever search text is current by then.
+///
+/// TEST-ORDER-POLLUTION NOTE (investigated during the post-fix-campaign test
+/// sweep): a full-suite `flutter test` run showed exactly one failure, in
+/// THIS file, at the assertion pinning the chase request. Isolated, this
+/// file always passed; it only flaked when run alongside the rest of
+/// `test/screens/library` (bisected down from the full suite). Instrumented
+/// `ExercisesNotifier.loadExercises` with temporary logging and confirmed
+/// the coalescing logic itself is correct and fires the chase promptly every
+/// time — the actual shortfall was `settle()`'s fixed 64-turn budget, too
+/// small to reliably drain a whole fresh Dio request pipeline (auth token +
+/// timezone + app-version interceptors, several of them real platform-channel
+/// round trips) under the CPU contention of a full concurrent test run.
+/// Raised to 300 turns (see `settle()` below) — reproduced-clean under both
+/// the full `test/screens/library` directory and artificial heavy CPU load.
+/// This was test-side flakiness, not a production regression: no production
+/// code changed.
 library;
 
 import 'dart:async';
@@ -107,8 +123,28 @@ void main() {
     addTearDown(container.dispose);
   });
 
+  /// Same fixed-budget interceptor-chain drain pattern as
+  /// `api_client_get_coalescing_test.dart`, but with a bigger budget: unlike
+  /// that file (which calls `settle()` after every small step), each call
+  /// here has to drain a WHOLE Dio request pipeline from scratch — auth
+  /// token lookup, the timezone header (SharedPreferences + platform-channel
+  /// fallback), the app-version header (another platform channel) — before
+  /// `_HoldingAdapter.fetch()` is even reached and `requestedSearches` grows.
+  /// 64 turns was flaky under load (verified: test-order pollution report
+  /// traced a suite-wide `flutter test` flake to this file — see the
+  /// investigation note above `main()`): CPU contention from the other ~300
+  /// widget tests in a full run stretches how many event-loop turns that
+  /// pipeline needs before `apiClient.get()`'s follower actually reaches the
+  /// adapter, and the production coalescing logic (`_pendingSearchReload` in
+  /// `ExercisesNotifier.loadExercises`) was confirmed correct by tracing it
+  /// with temporary instrumentation — the chase call was always issued
+  /// promptly; the shortfall was purely this drain running out of turns
+  /// before the adapter saw it. 300 turns is comfortably above the observed
+  /// worst case (reproduced with the whole `test/screens/library` directory
+  /// running concurrently, plus 14 artificial CPU-bound processes racing
+  /// for cores) with margin to spare.
   Future<void> settle() async {
-    for (var i = 0; i < 64; i++) {
+    for (var i = 0; i < 300; i++) {
       await Future<void>.delayed(Duration.zero);
     }
   }
@@ -169,6 +205,12 @@ void main() {
         reason: 'the list must reflect the exact-match result for the full '
             'typed query, not the "B"-only trigram matches',
       );
+
+      // `call1` (the original "B" request) only resolves once its chase
+      // (above) also resolves — both are released by now, so awaiting it
+      // here confirms the outer Future actually completes cleanly instead
+      // of hanging or throwing.
+      await call1;
     },
   );
 }
