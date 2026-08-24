@@ -249,11 +249,11 @@ PODS:
   - PromisesSwift (2.4.1):
     - PromisesObjC (= 2.4.1)
   - Protobuf (3.29.6)
-  - purchases_flutter (8.11.0):
+  - purchases_flutter (10.9.1):
     - Flutter
-    - PurchasesHybridCommon (= 14.3.0)
-  - PurchasesHybridCommon (14.3.0):
-    - RevenueCat (= 5.32.0)
+    - PurchasesHybridCommon (= 18.31.0)
+  - PurchasesHybridCommon (18.31.0):
+    - RevenueCat (= 5.84.0)
   - reactive_ble_mobile (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -264,7 +264,7 @@ PODS:
     - Flutter
   - record_ios (1.2.0):
     - Flutter
-  - RevenueCat (5.32.0)
+  - RevenueCat (5.84.0)
   - SDWebImage (5.21.7):
     - SDWebImage/Core (= 5.21.7)
   - SDWebImage/Core (5.21.7)
@@ -589,13 +589,13 @@ SPEC CHECKSUMS:
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
   Protobuf: 8d5596f7468be5400861a6bbfb2dfe9d0d1cde34
-  purchases_flutter: 3570127ba41583a75e553d68a763367007830eff
-  PurchasesHybridCommon: 7f0944cc5411bdcd1ea5d69affa6a6f9aaf87b13
+  purchases_flutter: 065239e32634b88dd09c631645bed871c800dea0
+  PurchasesHybridCommon: c3e8f89551e2c8b66691b9f3460ff0ba2e387ea8
   reactive_ble_mobile: ea97709e18fa6f0b0592909725d7ae7e1c595b64
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   receive_sharing_intent: 222384f00ffe7e952bbfabaa9e3967cb87e5fe00
   record_ios: 412daca2350b228e698fffcd08f1f94ceb1e3844
-  RevenueCat: 7e1d0768fb287c9983173c9b28e39ccbeeb828a9
+  RevenueCat: ab894398514fbeec7b1f9f5ae058be2c997f1403
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
   Sentry: 108fdbb76299c4189af12246bf0308c09c278922

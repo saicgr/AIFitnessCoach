@@ -1186,10 +1186,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       }
 
       // Make the purchase
-      final customerInfo = await Purchases.purchasePackage(package);
+      final purchaseResult =
+          await Purchases.purchase(PurchaseParams.package(package));
 
-      // Update state from the result (purchasePackage returns CustomerInfo directly)
-      _updateStateFromCustomerInfo(customerInfo);
+      // purchases_flutter 9+ returns a PurchaseResult (CustomerInfo + the
+      // StoreTransaction the purchase created) rather than a bare CustomerInfo.
+      _updateStateFromCustomerInfo(purchaseResult.customerInfo);
 
       state = state.copyWith(isLoading: false);
       _posthog?.capture(eventName: 'subscription_purchased', properties: {'product_id': productId});
