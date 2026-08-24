@@ -44,7 +44,12 @@ CardDoc prsDoc(Shareable data, ShareableAspect aspect) {
       textEl(
         pos: const Offset(0.5, 0.27),
         size: const Size(0.9, 0.14),
-        binding: const DataBinding(BindingSource.heroString),
+        // E2E #154 — a "PERSONAL RECORDS" headline must show the actual PR
+        // count, not `heroString` (which resolves to `data.heroValue`, the
+        // session's volume/exercise count for a `workoutComplete` Shareable).
+        // `requiresPrCount` (shareable_catalog.dart) already guarantees this
+        // docBuilder only ever runs when `data.prCount` is a positive int.
+        binding: const DataBinding(BindingSource.prCount),
         font: 1,
         fontSize: 150,
         align: TextAlign.center,

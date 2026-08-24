@@ -1,11 +1,12 @@
 """
 Favorite exercises and exercise queue endpoints.
 """
+import re
 from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
-from typing import List
+from typing import List, Optional, Tuple
 
 from core.logger import get_logger
 
@@ -21,8 +22,113 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+_PAREN_ASIDE_RE = re.compile(r"\([^)]*\)")
+_WHITESPACE_RE = re.compile(r"\s+")
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _normalize_for_alias_lookup(name: str) -> str:
+    """Reproduce `exercise_aliases.alias_name_normalized`'s normalization.
+
+    That column is precomputed as: lowercase, parenthetical asides dropped
+    (e.g. "Barbell Overhead Press (OHP)" -> "barbell overhead press"),
+    hyphens treated as word separators, whitespace collapsed. Matching this
+    exactly is what lets an exact (non-fuzzy) lookup against the alias table
+    hit real rows.
+    """
+    if not name:
+        return ""
+    cleaned = _PAREN_ASIDE_RE.sub(" ", name)
+    cleaned = cleaned.replace("-", " ")
+    cleaned = cleaned.lower()
+    return _WHITESPACE_RE.sub(" ", cleaned).strip()
+
+
+def _resolve_via_exercise_aliases(
+    db, exercise_name: str
+) -> Optional[Tuple[str, str]]:
+    """Exact-normalized lookup against the curated `exercise_aliases` table.
+
+    E2E #233 (audit follow-up): most Quick-Add staples ("Barbell Back
+    Squat", "Plank", "Dips", "Pull-Up", ...) have NO literal row in
+    `exercise_library_cleaned` — that table only carries heavily-qualified
+    variants ("Ring Dips", "Kneeling Plank", "Pull-Up Normal Grip", ...), so
+    an exact (or even substring) match against it fails for exactly the
+    common names the app's own suggestion chips show. `exercise_aliases`
+    exists precisely to map a commonly-typed name to a real exercise and
+    already carries entries for all of them. Its `canonical_exercise_id`
+    points at `exercise_canonical`, not `exercise_library_cleaned` — a
+    different id space — so the canonical row's own name is looked up there
+    rather than assumed to also exist in the cleaned view.
+    """
+    normalized = _normalize_for_alias_lookup(exercise_name)
+    if not normalized:
+        return None
+    try:
+        alias_match = (
+            db.client.table("exercise_aliases")
+            .select("canonical_exercise_id")
+            .eq("alias_name_normalized", normalized)
+            .limit(1)
+            .execute()
+        )
+        if not alias_match.data:
+            return None
+        canonical_id = alias_match.data[0].get("canonical_exercise_id")
+        if not canonical_id:
+            return None
+        canon = (
+            db.client.table("exercise_canonical")
+            .select("id, canonical_name, display_name")
+            .eq("id", canonical_id)
+            .limit(1)
+            .execute()
+        )
+        if canon.data:
+            row = canon.data[0]
+            name = row.get("display_name") or row.get("canonical_name") or exercise_name
+            return row["id"], name
+    except Exception as e:
+        logger.warning(f"Alias exercise lookup failed for '{exercise_name}': {e}")
+    return None
+
+
+def _resolve_via_token_match(db, exercise_name: str) -> Optional[Tuple[str, str]]:
+    """Last-resort token-overlap fallback against `exercise_library_cleaned`.
+
+    Requires every significant word of the query to appear in the candidate
+    name (an AND-chain of ILIKE substrings), then prefers whichever
+    candidate's own word count is closest to the query's — the fewest extra
+    qualifiers — so a generic query doesn't silently latch onto an
+    unrelated, heavily-qualified variant. Only reached when neither the
+    exact-match nor the curated alias table (above) resolved anything.
+    """
+    words = [w for w in _WORD_RE.findall(exercise_name.lower()) if w]
+    if not words:
+        return None
+    try:
+        query = db.client.table("exercise_library_cleaned").select("id, name")
+        for w in words:
+            query = query.ilike("name", f"%{w}%")
+        result = query.limit(25).execute()
+        candidates = result.data or []
+        if not candidates:
+            return None
+
+        def _rank(row):
+            name_words = _WORD_RE.findall((row.get("name") or "").lower())
+            return (abs(len(name_words) - len(words)), row.get("name") or "")
+
+        candidates.sort(key=_rank)
+        best = candidates[0]
+        return best["id"], best["name"]
+    except Exception as e:
+        logger.warning(f"Token-match exercise lookup failed for '{exercise_name}': {e}")
+    return None
+
+
 def _resolve_canonical_exercise(db, exercise_name: str, exercise_id):
-    """Resolve a Quick-Add/picker name against `exercise_library_cleaned`.
+    """Resolve a Quick-Add/picker name to a real canonical exercise row.
 
     The UI displays a title-cased/cleaned name while the library stores
     exercise_name inconsistently cased (e.g. "barbell bench press"), so an
@@ -32,13 +138,24 @@ def _resolve_canonical_exercise(db, exercise_name: str, exercise_id):
     `exercise_library_manual` and exposes the already-cleaned display name
     the Quick-Add chips show (e.g. "Lat Pulldown", "Leg Press" only exist
     under this cleaned name, sourced from `exercise_library_manual`, not the
-    raw `exercise_library` table). `ilike` with no wildcards is a
-    case-insensitive equality check, so this resolves the same row
-    regardless of casing without over-matching. If the caller already
-    supplied an exercise_id (picked from the library, already canonical) it
-    is trusted as-is. Falls back to the name/id as given when no library row
-    matches, so a genuinely-missing name still saves instead of failing the
-    request.
+    raw `exercise_library` table). If the caller already supplied an
+    exercise_id (picked from the library, already canonical) it is trusted
+    as-is.
+
+    Resolution order (exact match always wins; E2E #233 audit follow-up
+    adds the rest — an exact-only lookup left 9 of 12 of the app's own
+    suggested staples unresolved because the library only has
+    heavily-qualified variants of those names, never the plain form):
+      1. Exact case-insensitive match against `exercise_library_cleaned`
+         (`ilike` with no wildcards — a plain equality check, never a
+         substring match, so it can never over-match).
+      2. Exact-normalized lookup against the curated `exercise_aliases`
+         table (naming-variance handling for names the cleaned library
+         doesn't carry in plain form at all).
+      3. Conservative token-overlap match against
+         `exercise_library_cleaned`, for anything still unresolved.
+    Falls back to the name/id as given when nothing resolves, so a
+    genuinely-missing name still saves instead of failing the request.
     """
     if exercise_id:
         return exercise_id, exercise_name
@@ -53,6 +170,15 @@ def _resolve_canonical_exercise(db, exercise_name: str, exercise_id):
             return row["id"], row["name"]
     except Exception as e:
         logger.warning(f"Canonical exercise lookup failed for '{exercise_name}': {e}")
+
+    alias_hit = _resolve_via_exercise_aliases(db, exercise_name)
+    if alias_hit:
+        return alias_hit
+
+    token_hit = _resolve_via_token_match(db, exercise_name)
+    if token_hit:
+        return token_hit
+
     return exercise_id, exercise_name
 
 

@@ -1601,6 +1601,31 @@ async def get_workout_completion_summary(workout_id: str,
                 completion_method=completion_method, completed_at=str(completed_at) if completed_at else None,
             )
 
+        # E2E #140 + #141 (audit follow-up): finalize_open_logs_for_workout /
+        # finalize_workout_log_row were previously reachable ONLY from
+        # POST /complete, so a workout_logs row that closed before this
+        # reconciliation existed — or whose /complete call raced the Easy
+        # tier's fire-and-forget PATCH — stayed wrong forever: stale
+        # completed_at disagreeing with the parent workout, and
+        # exercises_completed stuck at 0 despite real logged sets. This is
+        # the read path: self-heal on every summary fetch instead of only at
+        # the one write path. Idempotent and fail-soft — a summary must still
+        # render even if the reconciliation call itself fails.
+        if completed_at:
+            try:
+                from api.v1.workouts.workout_log_finalize import (
+                    finalize_open_logs_for_workout,
+                )
+
+                finalize_open_logs_for_workout(
+                    db, workout_id, user_id, completed_at=str(completed_at)
+                )
+            except Exception as reconcile_err:
+                logger.warning(
+                    f"[LogFinalize] read-path reconcile failed for "
+                    f"workout_id={workout_id} user_id={user_id}: {reconcile_err}"
+                )
+
         # Get workout log
         workout_log_response = supabase.table("workout_logs").select(
             "id, total_time_seconds"

@@ -2135,6 +2135,10 @@ def _next_merch_proximity_map(merch_by_level: Dict[int, str]) -> Dict[int, int]:
     return out
 
 
+_MERCH_PROXIMITY_COOLDOWN_DAYS = 7  # a proximity window persists for days;
+                                    # without a cooldown a user parked one level
+                                    # short would be nudged every single day.
+
 async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
     """
     Nudge users who are 1-3 levels away from a merch tier (L50 / L100 / L150 / L200 / L250).
@@ -2150,11 +2154,11 @@ async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
         return 0
     next_for_proximity = _next_merch_proximity_map(merch_by_level)
 
-    # Bulk-fetch current_level + last_merch_nudge_at for all users
+    # Bulk-fetch current_level for all users
     user_ids = [str(u["id"]) for u in users]
     try:
         xp_rows = supabase.client.table("user_xp") \
-            .select("user_id,current_level,last_merch_nudge_at") \
+            .select("user_id,current_level") \
             .in_("user_id", user_ids) \
             .execute()
     except Exception as e:
@@ -2192,6 +2196,12 @@ async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
             continue
         if _is_in_quiet_hours(prefs, local_hour):
             continue
+        # push_nudge_log's UNIQUE(user_id, nudge_type, nudge_date) only caps this
+        # at once per DAY, and the proximity window spans several levels — so a
+        # user who stops levelling would otherwise get the same nudge daily.
+        if _sent_within_days(supabase, user_id, "merch_proximity",
+                             _MERCH_PROXIMITY_COOLDOWN_DAYS):
+            continue
 
         levels_away = next_merch_level - level
         success = await _send_nudge(supabase, notif_svc, user, "merch_proximity", {
@@ -2201,14 +2211,16 @@ async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
         })
         if success:
             sent += 1
-            # Mark last_merch_nudge_at so we don't spam (even if cron runs twice same day)
-            try:
-                supabase.client.table("user_xp") \
-                    .update({"last_merch_nudge_at": datetime.utcnow().isoformat(),
-                             "last_merch_nudge_level": level}) \
-                    .eq("user_id", user_id).execute()
-            except Exception:
-                pass
+            # NOTE (E2E audit): this used to also write
+            # user_xp.last_merch_nudge_at/last_merch_nudge_level here "so we
+            # don't spam" -- but nothing ever read either column back to gate
+            # a send (this loop only reads current_level), and the failure
+            # was swallowed, so the columns were pure dead weight. The real
+            # dedup is push_nudge_log's UNIQUE(user_id, nudge_type,
+            # nudge_date) constraint, enforced atomically inside
+            # _send_nudge() via _try_dedup_insert above. Removed rather than
+            # wired up: a second, non-atomic "gate" on these columns would
+            # just reintroduce the two-worker race this whole audit is about.
 
     return sent
 

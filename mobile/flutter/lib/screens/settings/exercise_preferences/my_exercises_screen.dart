@@ -147,7 +147,9 @@ class _FloatingPillTabs extends StatelessWidget {
   });
 
   static List<_PillItem> _items(BuildContext context) => [
-    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: AppLocalizations.of(context).myExercisesFavorites, accent: AppColors.error),  // accent-allowlist: error/destructive - must stay red
+    // E2E #235 — Favorites uses its own pink tint (favorite_exercises_screen.dart),
+    // keeping AppColors.error/red exclusive to the Avoided tab.
+    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: AppLocalizations.of(context).myExercisesFavorites, accent: AppColors.pink),
     _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: AppLocalizations.of(context).myExercisesStaples, accent: context.accentColor),
     _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: AppLocalizations.of(context).myExercisesAvoided, accent: context.accentColor),
     _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: AppLocalizations.of(context).myExercisesQueue, accent: context.accentColor),

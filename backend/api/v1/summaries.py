@@ -493,6 +493,7 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
     total_exercises = 0
     total_sets = 0
     total_time = 0
+    total_volume_kg = 0.0
     for w in completed:
         total_time += w.get("duration_minutes", 0)
         exercises_json = w.get("exercises_json", "[]")
@@ -500,7 +501,17 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
             exercises = json.loads(exercises_json) if isinstance(exercises_json, str) else exercises_json
             total_exercises += len(exercises)
             for ex in exercises:
-                total_sets += ex.get("sets", 3)
+                ex_sets = ex.get("sets", 3)
+                total_sets += ex_sets
+                # Volume = sets x reps x weight_kg, same fields `workouts`
+                # rows always carry per exercise. weight_kg is 0 for
+                # bodyweight moves, which correctly contributes 0 volume.
+                try:
+                    total_volume_kg += (
+                        float(ex_sets) * float(ex.get("reps") or 0) * float(ex.get("weight_kg") or 0)
+                    )
+                except (TypeError, ValueError):
+                    pass
         except Exception as e:
             logger.debug(f"Failed to parse exercises JSON: {e}")
 
@@ -600,6 +611,7 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
         "workouts_scheduled": total_scheduled,
         "total_exercises": total_exercises,
         "total_sets": total_sets,
+        "total_volume_kg": round(total_volume_kg, 2),
         "total_time_minutes": total_time,
         "calories_burned_estimate": calories_estimate,
         "current_streak": current_streak,

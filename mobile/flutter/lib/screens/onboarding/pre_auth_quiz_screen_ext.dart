@@ -114,15 +114,6 @@ const List<String> kCommercialGymEquipmentPreset = [
   'suspension_trainer',
   'Suspension Trainer',
 
-  // ── Indian / traditional ────────────────────────────────────────────
-  'gada (mace)',
-  'gar nal (stone neck ring)',
-  'jori (indian clubs)',
-  'lathi (bamboo staff)',
-  'mallakhamb pole',
-  'matka (water pot)',
-  'nal (stone lock)',
-  'samtola (indian barbell)',
 ];
 
 /// Splits a mixed preset list (canonical snake_case ids + raw "Other
@@ -268,7 +259,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
     }
   }
 
-
   /// Onboarding v5: Advance from Primary Goal directly to the body-metrics
   /// gate (step 7). The legacy "Your Personalized Plan" modal preview was
   /// removed because it duplicated the v5 plan-analyzing → weight-projection
@@ -299,7 +289,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       }
     }
   }
-
 
   /// Finish onboarding and navigate to coach selection
   Future<void> _finishOnboarding() async {
@@ -352,7 +341,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       }
     }
   }
-
 
   /// Extra widget shown in the scaffold's left pane (foldable only).
   /// Used for info buttons that belong near the question title.
@@ -533,7 +521,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
     }
   }
 
-
   Widget _buildCurrentQuestion({bool showHeader = true}) {
     // 13-SCREEN FLOW (Progressive Profiling)
     // Phase 1 (Required): 0-Goals, 1-Fitness+Exp, 2-Schedule, 3-WorkoutDays[COND], 4-Equipment, 5-Limitations, 6-PrimaryGoal+Generate
@@ -691,7 +678,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
     }
   }
 
-
   Widget _buildDayCheckbox(int day, String label, Duration delay) {
     final t = OnboardingTheme.of(context);
     final isSelected = _selectedWorkoutDays.contains(day);
@@ -764,7 +750,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
   }
 
-
   Widget _buildNutritionGoals({bool showHeader = true}) {
     return QuizNutritionGoals(
       key: const ValueKey('nutrition_goals'),
@@ -817,7 +802,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
     );
   }
 
-
   /// Handle environment selection - pre-populates equipment based on environment
   void _handleEnvironmentChange(String envId) {
     setState(() {
@@ -868,7 +852,6 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       }
     });
   }
-
 
   void _showEquipmentInfo(BuildContext context, String equipmentId, bool isDark) {
     final t = OnboardingTheme.of(context);

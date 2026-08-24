@@ -1004,8 +1004,10 @@ async def log_food_from_image_streaming(
             # Invalidate daily summary cache so the next fetch returns fresh data
             from api.v1.nutrition.summaries import invalidate_daily_summary_cache
             from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            from api.v1.timeline_cache import invalidate_timeline_cache
             await invalidate_daily_summary_cache(user_id)
             await invalidate_bootstrap_cache(user_id)
+            await invalidate_timeline_cache(user_id, get_user_today(stream_user_tz))
 
             # Send the completed food log
             response_data = {
@@ -2303,8 +2305,10 @@ async def log_food_from_multi_image_streaming(
 
                 from api.v1.nutrition.summaries import invalidate_daily_summary_cache
                 from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+                from api.v1.timeline_cache import invalidate_timeline_cache
                 await invalidate_daily_summary_cache(user_id)
                 await invalidate_bootstrap_cache(user_id)
+                await invalidate_timeline_cache(user_id, get_user_today(user_tz))
 
                 response_data = {
                     "success": True, "analysis_type": "plate",
@@ -2533,8 +2537,10 @@ async def log_selected_items(
 
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        from api.v1.timeline_cache import invalidate_timeline_cache
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
+        await invalidate_timeline_cache(body.user_id, get_user_today(user_tz))
     except Exception as e:
         logger.error(f"[log-selected-items] error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to log items")

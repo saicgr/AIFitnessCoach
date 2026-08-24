@@ -297,9 +297,15 @@ async def run_weekly_wrapped_cron(
             }
 
         # Render coach-voiced push title + body, compute volume for template.
-        volume_lbs = int((stats.get("total_volume_kg") or 0) * 2.20462) or (
-            row_stats["total_sets"] * 0  # fallback: volume unavailable -> 0
-        )
+        # total_volume_kg = sum(sets x reps x weight_kg) over the week's
+        # completed exercises (see _gather_week_stats in api/v1/summaries.py).
+        # NOTE (E2E audit): this used to be
+        #   `int(...) or (row_stats["total_sets"] * 0)` -- a no-op fallback
+        #   that always evaluates to 0 regardless of the left side, AND
+        #   _gather_week_stats never populated total_volume_kg at all, so
+        #   every push silently said "0 lbs moved" (coach_voice.py
+        #   weekly_summary_push templates render {volume_lbs} verbatim).
+        volume_lbs = int((stats.get("total_volume_kg") or 0) * 2.20462)
         data = {
             "workouts": row_stats["workouts_completed"],
             "prs": row_stats["prs_achieved"],
@@ -354,8 +360,8 @@ async def run_weekly_wrapped_cron(
     # ── Cardio digest push (SLICE_DIGEST) ───────────────────────────
     # Sunday MORNING (local 7am) cardio recap. Independent of the
     # 19:00 Wrapped push above — they're separate notifications on the
-    # same day. Per-user dedup is per-week-start via a memory cache
-    # (we don't have a schema column yet) plus FCM idempotency.
+    # same day. Per-user dedup is per-week-start via cardio_digest_sent
+    # (migration 2435), claimed atomically before send.
     cardio_sent, cardio_skipped, cardio_errors = await _send_cardio_digest_push(
         db, users, notif_svc
     )
@@ -380,20 +386,34 @@ async def run_weekly_wrapped_cron(
 
 # ── Cardio digest push helper (SLICE_DIGEST) ───────────────────────────────
 
-# Per-process dedup of cardio_digest pushes per (user_id, week_start). The
-# hourly cron may fire twice during the same Sunday-morning hour in DST
-# transitions; this avoids a duplicate push without requiring a schema
-# migration. The set is cleared every Monday in-process (best-effort).
-_CARDIO_PUSH_SENT_THIS_WEEK: set[str] = set()
-_CARDIO_PUSH_LAST_RESET: Optional[date] = None
 
+def _try_claim_cardio_digest(db, user_id: str, week_start: date) -> bool:
+    """Atomically claim the (user_id, week_start) cardio-digest send slot.
 
-def _reset_cardio_dedup_if_new_week(today_utc: date) -> None:
-    global _CARDIO_PUSH_LAST_RESET
-    # Reset on Monday UTC — covers all timezones' Sunday recap cycles.
-    if today_utc.weekday() == 0 and _CARDIO_PUSH_LAST_RESET != today_utc:
-        _CARDIO_PUSH_SENT_THIS_WEEK.clear()
-        _CARDIO_PUSH_LAST_RESET = today_utc
+    Returns True if the slot was claimed (this call should proceed to send).
+    Returns False if it was already claimed (UNIQUE(user_id, week_start)
+    conflict on `cardio_digest_sent`, migration 2435 -- already sent) OR the
+    insert failed for any other reason.
+
+    render.yaml runs this service with `-w 2` (two gunicorn workers, two
+    separate memory spaces), so an in-process set only dedupes a repeat that
+    happens to land on the SAME worker. This insert-before-send claim is the
+    atomic cross-process gate. Fail-safe by design (mirrors
+    push_nudge_cron._try_dedup_insert / trial_coach_cron._try_claim_slot):
+    on an unexpected error we skip the send this run rather than risk a
+    duplicate push.
+    """
+    try:
+        db.client.table("cardio_digest_sent").insert({
+            "user_id": user_id,
+            "week_start": str(week_start),
+        }).execute()
+        return True
+    except Exception as e:
+        if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
+            return False
+        logger.error(f"[CardioDigestPush] claim insert error for {user_id}: {e}", exc_info=True)
+        return False
 
 
 async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int, int]:
@@ -403,8 +423,6 @@ async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int
     """
     from services import cardio_digest_service as cardio_svc
     from services.notification_suppression import should_suppress_notification
-
-    _reset_cardio_dedup_if_new_week(date.today())
 
     sent = 0
     skipped = 0
@@ -456,9 +474,6 @@ async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int
 
         week_start, _ = _last_complete_week(local_now.date())
         dedup_key = f"{user_id}:{week_start.isoformat()}"
-        if dedup_key in _CARDIO_PUSH_SENT_THIS_WEEK:
-            skipped += 1
-            continue
 
         try:
             summary = cardio_svc.compute_weekly_cardio_summary(db, user_id, tz_str)
@@ -469,6 +484,12 @@ async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int
 
         if summary is None:
             # No cardio this week — skip silently.
+            skipped += 1
+            continue
+
+        # Claim BEFORE composing/sending (claim-then-send) — the atomic
+        # cross-process dedup gate. See _try_claim_cardio_digest.
+        if not _try_claim_cardio_digest(db, user_id, week_start):
             skipped += 1
             continue
 
@@ -498,7 +519,6 @@ async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int
             continue
 
         if ok:
-            _CARDIO_PUSH_SENT_THIS_WEEK.add(dedup_key)
             sent += 1
         else:
             errors += 1
