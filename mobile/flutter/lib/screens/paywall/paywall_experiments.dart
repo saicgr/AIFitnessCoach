@@ -64,9 +64,14 @@ class PaywallExperiments {
   /// tier → isHardLocked). RevenueCat's 2026 report puts hard paywalls at
   /// ~10.7% free→paid vs ~2.1% for freemium.
   ///
-  /// Defaults to FALSE = today's shipped soft skip, so flipping the PostHog
-  /// flag [flagHardGate] on is the experiment treatment (and instantly
-  /// reversible). The free trial is what keeps a hard gate palatable.
+  /// Rollout (2026-08-30): ON by default on iOS, OFF by default on Android —
+  /// see [defaultHardGate]. The PostHog flag [flagHardGate] still overrides in
+  /// BOTH directions on BOTH platforms, so this is instantly reversible and
+  /// Android can be switched on later without a redeploy.
+  ///
+  /// The free trial is what keeps a hard gate palatable — do NOT pair this
+  /// with removing the 7-day yearly trial. Hard gate + no trial is how apps
+  /// earn a one-star review wave.
   final bool hardGate;
 
   /// $1 first-month introductory offer on the MONTHLY plan (A/B vs the
@@ -142,6 +147,11 @@ class PaywallExperiments {
     pricingPsychology: true,
     hardPaywallDiscount: false,
     softPaywallExitOffer: false,
+    // NOTE: this const cannot read the platform. The ACTUAL default used at
+    // resolve time is [PaywallExperiments.defaultHardGate] (iOS true /
+    // Android false); this literal is only the value for callers that read
+    // `treatmentDefaults` directly. Keep it false so a direct reader is never
+    // MORE restrictive than the platform policy.
     hardGate: false,
     monthlyIntro: true, // kill-switch ON; ribbon still requires a live store intro offer — see field doc
     goalSpeedComparison: false,
@@ -158,6 +168,27 @@ class PaywallExperiments {
   static const String flagHardGate = 'paywall_hard_gate';
   static const String flagMonthlyIntro = 'paywall_monthly_intro';
   static const String flagGoalSpeedComparison = 'paywall_goal_speed_comparison';
+
+  /// Platform-aware default for [hardGate], used as the fallback when the
+  /// PostHog flag [flagHardGate] is not configured.
+  ///
+  /// iOS → TRUE. Apple explicitly permits a no-free-tier app to gate
+  /// onboarding behind a purchase when the price, trial length and renewal
+  /// terms are disclosed on the paywall (they are — see the legal block in
+  /// paywall_pricing_screen.dart). RevenueCat's 2026 benchmarks put hard
+  /// paywalls at ~10.7% download→paid vs ~2.1% for freemium, with
+  /// essentially IDENTICAL year-one retention, so the usual "you just buy
+  /// worse subscribers" objection does not hold.
+  ///
+  /// Android → FALSE, deliberately. Google Play's "Paywall Restriction"
+  /// enforcement issues deactivation warnings (14-day cure) over paywalls
+  /// that block the app without a findable dismiss, and this build ships
+  /// against a targetSdk deadline. Turning Android on is a PostHog flag
+  /// flip once Play's App Access reviewer credentials are confirmed
+  /// current — it does NOT need a new binary. That asymmetry is the whole
+  /// reason this lever reads a flag instead of a compile-time constant.
+  static bool get defaultHardGate =>
+      defaultTargetPlatform == TargetPlatform.iOS;
 }
 
 /// Maps a raw PostHog flag value to an enabled/disabled bool.
@@ -220,8 +251,9 @@ Future<PaywallExperiments> loadPaywallExperiments(
         defaults.hardPaywallDiscount),
     resolve(PaywallExperiments.flagSoftPaywallExitOffer,
         defaults.softPaywallExitOffer),
+    // Platform-aware fallback (iOS on / Android off), NOT defaults.hardGate.
     resolve(PaywallExperiments.flagHardGate,
-        defaults.hardGate),
+        PaywallExperiments.defaultHardGate),
     resolve(PaywallExperiments.flagMonthlyIntro,
         defaults.monthlyIntro),
     resolve(PaywallExperiments.flagGoalSpeedComparison,

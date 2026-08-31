@@ -783,6 +783,46 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
 
+                // HARD GATE ESCAPE HATCH.
+                //
+                // With `hardGate` on there is no "Maybe later" AND the screen
+                // is wrapped in `PopScope(canPop: false)`, so purchase and
+                // restore are the only two exits. That strands any user whose
+                // purchase CANNOT succeed — a lapsed/'.'-mismatched store
+                // account, family-sharing restrictions, a billing outage, or
+                // simply the wrong Apple ID signed in on the device. With no
+                // third exit their only remaining move is to delete the app
+                // (and leave the review that goes with it).
+                //
+                // `hard_paywall_screen.dart` already offers exactly this trio
+                // — subscribe / restore / sign out — so this makes the
+                // onboarding gate consistent with the lapsed gate rather than
+                // stricter than it. Renders ONLY under the hard gate, so the
+                // shipped soft-skip configuration is byte-for-byte unchanged.
+                if (!isSubscribed && _experiments.hardGate) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _signOutFromHardGate(context, ref),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          AppLocalizations.of(context).logoutSignOut,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
+                ],
+
                 SizedBox(height: isFoldable ? 10 : 16),
 
                 // Secure-checkout reassurance — handles the payment-safety
@@ -2322,6 +2362,30 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         effectiveDate: effectiveDate,
       ),
     );
+  }
+
+  /// Sign out from the hard-gated paywall — the third exit alongside
+  /// purchase and restore. Routed through [AuthRepository.signOut] rather
+  /// than `Supabase.instance.client.auth.signOut()` directly because the
+  /// repository also clears the `paywall_completed` pref: a user who signs
+  /// out of the gate must NOT come back marked as having completed it, or
+  /// they land straight in the lapsed hard-lock on their next sign-in.
+  Future<void> _signOutFromHardGate(BuildContext context, WidgetRef ref) async {
+    try {
+      ref.read(posthogServiceProvider).capture(
+            eventName: 'paywall_hard_gate_signed_out',
+            properties: const {},
+          );
+      await ref.read(authRepositoryProvider).signOut();
+      if (context.mounted) context.go('/');
+    } catch (e) {
+      debugPrint('❌ [Paywall] hard-gate sign-out failed: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not sign out. Please try again.')),
+        );
+      }
+    }
   }
 
   Future<void> _restorePurchases(BuildContext context, WidgetRef ref) async {
