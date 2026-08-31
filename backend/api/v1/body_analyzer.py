@@ -237,6 +237,12 @@ async def analyze(
     current_user: dict = Depends(get_current_user),
 ):
     """Run Gemini Vision body analysis and persist a snapshot."""
+
+    # Premium gate: Gemini Vision body analysis is a paid surface. Raised
+    # BEFORE the try/except below so the 402 propagates instead of being
+    # rewritten as a 500 by the generic handler.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(str(current_user["id"]), "body_analysis", "UTC")  # tz-allowlist: tier-gated, usage never metered
     try:
         sb = get_supabase_db()
         user_id = current_user["id"]
@@ -331,6 +337,12 @@ async def extract_measurements(
     """Estimate tape-measure values from the supplied photos and persist a
     new body_measurements row with measurement_source='photo_estimate' +
     estimate_confidence."""
+
+    # Premium gate: Gemini Vision body analysis is a paid surface. Raised
+    # BEFORE the try/except below so the 402 propagates instead of being
+    # rewritten as a 500 by the generic handler.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(str(current_user["id"]), "body_analysis", "UTC")  # tz-allowlist: tier-gated, usage never metered
     try:
         sb = get_supabase_db()
         user_id = current_user["id"]

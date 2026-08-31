@@ -163,6 +163,17 @@ async def export_my_data(
     """
     user_id = str(current_user["id"])
     user_email = current_user.get("email") or ""
+
+    # Premium gate: this is the IN-APP CONVENIENCE export (Settings -> Data &
+    # Privacy), which the Flutter client has always rendered behind
+    # `isSubscribed` (data_management_section.dart). The server now agrees.
+    #
+    # This is NOT the statutory export: GDPR Art. 15/20 is served by
+    # api/v1/dsar.py, which stays ungated and always will. Do not add a gate
+    # there — a data-subject access request cannot be put behind a paywall.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(user_id, "data_export", "UTC")  # tz-allowlist: tier-gated, usage never metered
+
     logger.info(
         f"📦 [Export] Requested by user={user_id} format={format} "
         f"range={start_date}→{end_date}"

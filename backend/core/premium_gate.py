@@ -36,6 +36,33 @@ PREMIUM_FEATURE_KEYS = [
     "food_scanning",
     "form_video_analysis",
     "text_to_calories",
+    # Tier-gated premium surfaces (free_limit 0 + minimum_tier premium).
+    # Listed here so an unseeded feature_gates table falls through to
+    # _get_fallback_gate() and stays CLOSED, instead of hitting the
+    # "unknown feature gate -> allow access" branch below and silently
+    # handing every free user an unlimited premium feature.
+    "program_start",
+    "body_analysis",
+    "audio_coach",
+    "data_export",
+]
+
+# Keys that exist only as backwards-compatible ALIASES — they are still
+# honoured by check_premium_gate() if a caller passes them, but they must never
+# be surfaced to the user as a separate quota (doing so shows two counters for
+# one feature). "ai_chat" is the pre-1864 name for "ai_chat_messages".
+LEGACY_FEATURE_KEYS = frozenset({"ai_chat"})
+
+# The list any USER-FACING quota display should iterate — e.g. the in-app
+# "N left today" strip served by GET /subscriptions/{id}/feature-limits.
+#
+# Derived, never hand-listed. api/v1/subscriptions/management.py used to keep
+# its own literal copy of this list; it drifted (it carried the phantom
+# `ai_meal_plan`, was missing `ai_chat`, and would silently have omitted every
+# gate added after it was written). A hardcoded per-call-site copy IS the bug —
+# the same lesson core/feature_gate_policy.py exists to enforce for tier ranks.
+USER_FACING_FEATURE_KEYS = [
+    k for k in PREMIUM_FEATURE_KEYS if k not in LEGACY_FEATURE_KEYS
 ]
 
 
@@ -85,7 +112,16 @@ async def check_premium_gate(user_id: str, feature_key: str, timezone_str: str) 
             logger.warning(f"Feature gate '{feature_key}' not found in DB, applying fallback limits", exc_info=True)
             gate_result = type('obj', (object,), {'data': _get_fallback_gate(feature_key)})()
         else:
-            logger.warning(f"Unknown feature gate '{feature_key}', allowing access", exc_info=True)
+            # Genuinely unknown key: allow, but log at ERROR. This branch is a
+            # safety valve for callers passing an ad-hoc key, NOT a place for a
+            # feature we meant to gate — anything we intend to charge for must
+            # appear in PREMIUM_FEATURE_KEYS above so it fails CLOSED via
+            # _get_fallback_gate() when the table row is missing.
+            logger.error(
+                f"Unknown feature gate '{feature_key}' — allowing access. If this "
+                f"feature is meant to be paid, add it to PREMIUM_FEATURE_KEYS.",
+                exc_info=True,
+            )
             return True, None
 
     if not gate_result.data:
@@ -152,6 +188,27 @@ def _get_fallback_gate(feature_key: str) -> dict:
         # LIFETIME cap (see core/feature_gate_policy, migrations 2330/2380).
         "form_video_analysis": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
         "text_to_calories": {"free_limit": 3, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
+        # ── Tier-gated premium surfaces (migration 2437) ──────────────────
+        # free_limit 0 + minimum_tier premium == "paid only, never metered".
+        # Same shape as form_video_analysis above: the tier check raises 402
+        # before usage is ever counted, so reset_period is inert but must
+        # still be a VALID_RESET_PERIODS value (a NULL here is what turned a
+        # daily cap into a lifetime one — migrations 2330/2380).
+        #
+        # Deliberately NOT gated, and must stay that way:
+        #   * manual workout / food logging  — never lock a user out of data
+        #     they already recorded (logged-data durability).
+        #   * browsing programs + exercises  — the free evaluation surface.
+        #   * health sync, basic stats       — cheap, and the retention hook.
+        #   * GDPR DSAR export (api/v1/dsar) — statutory, cannot be paywalled.
+        #     `data_export` below is the SEPARATE in-app convenience export
+        #     (Settings -> Data & Privacy, Hevy-importable); the client has
+        #     always shown it behind `isSubscribed`, this makes the server
+        #     agree. DSAR remains the free statutory path.
+        "program_start": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
+        "body_analysis": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
+        "audio_coach": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
+        "data_export": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
     }
     return fallbacks.get(feature_key, {"free_limit": None, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "free", "is_enabled": True})
 

@@ -400,6 +400,13 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
             detail="Either branded_program_id or custom_program_name must be provided"
         )
 
+    # Premium gate: the curated program library is paid content. Browsing the
+    # catalog stays free (GET endpoints are ungated) — STARTING one is the
+    # paid action. Tier-gated, so the 402 fires on tier before any usage is
+    # counted and the timezone argument is inert.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(user_id, "program_start", "UTC")  # tz-allowlist: tier-gated, usage never metered
+
     try:
         supabase = get_supabase()
 

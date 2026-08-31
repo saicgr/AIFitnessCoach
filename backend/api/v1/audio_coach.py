@@ -92,6 +92,12 @@ async def daily_brief(
     request: Request,
     current_user: dict = Depends(get_current_user),
 ):
+    # Premium gate: the generated audio brief is a paid surface (TTS + LLM
+    # cost per call). Raised BEFORE the try/except so the 402 propagates
+    # instead of being rewritten as a 500 by the generic handler.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(str(current_user["id"]), "audio_coach", "UTC")  # tz-allowlist: tier-gated, usage never metered
+
     try:
         sb = get_supabase_db()
         user_id = current_user["id"]
