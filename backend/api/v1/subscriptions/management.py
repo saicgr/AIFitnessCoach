@@ -423,14 +423,17 @@ async def get_usage_stats(user_id: str, http_request: Request, feature_key: Opti
 # is what the in-app "messages left today" strip reads. When they diverged
 # (enforcement on 'ai_chat', UI on 'ai_chat_messages') the counter never moved
 # and free users hit an invisible wall.
-_PREMIUM_FEATURE_KEYS = [
-    "ai_workout_generation",
-    "food_scanning",
-    "form_video_analysis",
-    "text_to_calories",
-    "ai_meal_plan",
-    "ai_chat_messages",
-]
+# DERIVED, never hand-listed. This used to be a literal copy of the key list,
+# and it drifted exactly the way core/feature_gate_policy.py warns about:
+#   * it carried "ai_meal_plan", a phantom gate migration 268 explicitly
+#     DELETEd (nothing meters it, so its counter never moved);
+#   * it omitted "ai_chat", the legacy alias;
+#   * and being a literal, it silently omitted every gate added afterwards —
+#     so a newly-gated feature would be enforced by the server while the
+#     in-app "N left" strip pretended it did not exist.
+# Importing the canonical list means adding a gate in ONE place now updates
+# enforcement and the UI counter together.
+from core.premium_gate import USER_FACING_FEATURE_KEYS as _PREMIUM_FEATURE_KEYS
 
 
 @router.get("/{user_id}/feature-limits")

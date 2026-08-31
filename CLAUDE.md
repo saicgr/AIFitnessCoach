@@ -419,6 +419,54 @@ strings in plain language (translate, don't delete: "RPE 7" → "effort 7 out of
 10", "hypertrophy" → "muscle growth", "eccentric" → "slow lowering") and update
 the generation prompt so the next run doesn't reintroduce them.
 
+## feature_gates: the DB row wins, the code constant is only a fallback
+
+`core/premium_gate._get_fallback_gate()` is consulted ONLY when a
+`feature_gates` row is missing. When the row exists it WINS. So the constants
+in code are a statement of intent and the table is the enforced reality — and
+for a long time nothing proved the two agreed.
+
+They did not. 2026-08-30, live table vs code:
+
+| feature | live | code | effect |
+|---|---|---|---|
+| `ai_workout_generation` | 100 / monthly | 2 / monthly | ~unlimited |
+| `food_scanning` | 100 / monthly | 1 / daily | ~unlimited |
+| `text_to_calories` | 100 / monthly | 3 / daily | ~unlimited |
+
+Migration 268 seeded the correct 2/1/3 and NO migration ever changed them; every
+`.table("feature_gates")` call site in the repo is a `.select()`. The drift came
+from an **out-of-band edit** (dashboard/psql), which is precisely the class no
+migration review can catch. The same edit resurrected `ai_meal_plan`, a phantom
+row 268 explicitly DELETEd.
+
+Second half of the same class: `api/v1/subscriptions/management.py` kept its own
+literal `_PREMIUM_FEATURE_KEYS` copy. It drifted too — carried the phantom
+`ai_meal_plan`, omitted `ai_chat`, and being a literal would silently omit every
+gate added later, so a newly-gated feature is enforced by the server while the
+in-app "N left" strip pretends it does not exist. It now imports
+`USER_FACING_FEATURE_KEYS` from `core/premium_gate.py`. **Never re-hardcode a
+per-call-site key list** — same lesson as `core/feature_gate_policy.py` for tier
+ranks.
+
+**Gate — run after any migration touching `feature_gates`, and after ANY manual
+edit to that table:**
+
+```bash
+cd backend && set -a && source ./.env && set +a && \
+  .venv/bin/python scripts/audit_feature_gate_drift.py --check
+```
+
+FAILs on a declared gate whose live row diverges (or is missing); WARNs on
+orphan rows that gate nothing because no call site passes the key (6 today:
+advanced_analytics, ai_meal_plan, custom_workouts, priority_support,
+trainer_mode, workout_sharing — wire them or delete them deliberately, the
+script never auto-deletes production config). `--apply` pushes the
+code-declared policy into the table.
+
+Adding a gate = add the key to `PREMIUM_FEATURE_KEYS` **and** `_get_fallback_gate()`
+(so a missing row fails CLOSED), seed the row in a migration, then run `--check`.
+
 ## Supabase column drift (phantom columns 500 whole queries)
 
 Explicit `.select("col, col")` strings rot as the schema evolves, and ONE
