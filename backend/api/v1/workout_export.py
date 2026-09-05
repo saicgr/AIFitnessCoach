@@ -92,6 +92,16 @@ async def export_workout_data(
 
     Response: `Content-Disposition: attachment; filename=...`
     """
+    # Premium gate: THIS is the export the Flutter client actually calls
+    # (export_data_screen.dart -> GET /workout-history/export). The sibling
+    # gate on api/v1/export.py covers the Settings -> Data & Privacy
+    # convenience export; both are the same paid action, so both are gated.
+    #
+    # NOT gated, and never will be: api/v1/dsar.py. That is the statutory
+    # GDPR Art. 15/20 path and cannot be put behind a paywall.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(str(current_user["id"]), "data_export", "UTC")  # tz-allowlist: tier-gated, usage never metered
+
     # Defensive: date range sanity. An inverted range would silently return
     # zero rows; better to 400 early so the client can fix.
     if from_date_q and to_date_q and from_date_q > to_date_q:

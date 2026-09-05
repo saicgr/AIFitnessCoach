@@ -180,6 +180,17 @@ async def assign_program(request: AssignProgramRequest):
     Assign a branded program to a user.
     Deactivates any existing active program for the user.
     """
+    # Premium gate: THIS is the endpoint the Flutter client actually calls to
+    # start a curated program (branded_program_repository.dart ->
+    # POST /library/branded-programs/assign). The sibling gate on
+    # api/v1/programs.py POST /assign/{user_id} covers the other id-space;
+    # both perform the same paid action, so both are gated.
+    #
+    # Raised BEFORE the try/except so the 402 propagates rather than being
+    # rewritten as a 500 by the generic handler below.
+    from core.premium_gate import check_premium_gate
+    await check_premium_gate(str(request.user_id), "program_start", "UTC")  # tz-allowlist: tier-gated, usage never metered
+
     try:
         db = get_supabase_db()
 
